@@ -105,27 +105,30 @@ export default function Dashboard() {
         <StatsCard 
           title="Working Capital Gains (Cash)"
           value="$356,200"
+          secondaryValue="Financial Savings (p.a.): $35,620"
           change={15}
           changeLabel="year-to-date" 
           icon="money-bill-wave"
           iconBgColor="indigo"
         />
         <StatsCard 
-          title="Financial Savings (p.a.)"
-          value="$35,620"
-          change={15}
-          changeLabel="year-to-date" 
-          icon="percentage"
-          iconBgColor="purple"
-        />
-        <StatsCard 
           title="FTE Benefits"
           value="3.5 FTE ($486,500)"
           change={18}
           changeLabel="year-to-date"
-          icon="chart-line"
-          iconBgColor="indigo"
+          icon="user-clock"
+          iconBgColor="purple"
         />
+        <StatsCard 
+          title="Process Capability"
+          value="Cp 1.67 / 5.0σ"
+          secondaryValue="Defects: 233 DPMO"
+          change={12}
+          changeLabel="improvement"
+          icon="chart-bar"
+          iconBgColor="yellow"
+        />
+
       </div>
       
       {/* Additional Benefits */}
