@@ -103,12 +103,20 @@ export default function Dashboard() {
           iconBgColor="green"
         />
         <StatsCard 
-          title="Working Capital (Cash) Benefits"
+          title="Working Capital Gains (Cash)"
           value="$356,200"
           change={15}
           changeLabel="year-to-date" 
           icon="money-bill-wave"
           iconBgColor="indigo"
+        />
+        <StatsCard 
+          title="Financial Savings (p.a.)"
+          value="$35,620"
+          change={15}
+          changeLabel="year-to-date" 
+          icon="percentage"
+          iconBgColor="purple"
         />
         <StatsCard 
           title="FTE Benefits"
