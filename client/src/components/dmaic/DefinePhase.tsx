@@ -339,22 +339,22 @@ export default function DefinePhase() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="savingsPerYear">Savings Per Year ($)</Label>
+                    <Label htmlFor="savingsPerYear">Quality Cost Savings (p.a.) ($)</Label>
                     <Input
                       id="savingsPerYear"
                       placeholder="e.g. 100000"
                       {...charterForm.register("savingsPerYear")}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Annual cost savings expected from this project</p>
+                    <p className="text-xs text-gray-500 mt-1">Annual cost savings expected from quality improvements</p>
                   </div>
                   <div>
-                    <Label htmlFor="cashBenefits">Cash Benefits ($)</Label>
+                    <Label htmlFor="cashBenefits">Working Capital (Cash) Benefits ($)</Label>
                     <Input
                       id="cashBenefits"
                       placeholder="e.g. 75000"
                       {...charterForm.register("cashBenefits")}
                     />
-                    <p className="text-xs text-gray-500 mt-1">One-time or direct cash benefits</p>
+                    <p className="text-xs text-gray-500 mt-1">Cash flow and working capital improvements</p>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -371,11 +371,11 @@ export default function DefinePhase() {
                     <Label htmlFor="softBenefits">Soft Benefits (Non-Quantifiable)</Label>
                     <Textarea
                       id="softBenefits"
-                      placeholder="e.g. Improved employee satisfaction, enhanced customer experience..."
-                      rows={3}
+                      placeholder="Categories include: Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler, Other"
+                      rows={4}
                       {...charterForm.register("softBenefits")}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Benefits that cannot be directly quantified</p>
+                    <p className="text-xs text-gray-500 mt-1">List any Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler and Other benefits</p>
                   </div>
                 </div>
               </div>

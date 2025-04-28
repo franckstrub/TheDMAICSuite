@@ -95,7 +95,7 @@ export default function Dashboard() {
           iconBgColor="blue"
         />
         <StatsCard 
-          title="Savings Per Year"
+          title="Quality Cost Savings (p.a.)"
           value="$842,000"
           change={22}
           changeLabel="YTD"
@@ -103,12 +103,12 @@ export default function Dashboard() {
           iconBgColor="green"
         />
         <StatsCard 
-          title="Cash Benefits"
+          title="Working Capital (Cash) Benefits"
           value="$356,200"
           change={15}
           changeLabel="year-to-date" 
           icon="money-bill-wave"
-          iconBgColor="emerald"
+          iconBgColor="indigo"
         />
         <StatsCard 
           title="FTP Benefits"
@@ -127,7 +127,7 @@ export default function Dashboard() {
             <CardTitle className="text-base font-medium">Soft Benefits (Non-Quantifiable)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div className="flex items-center mb-2">
                   <i className="fas fa-users text-blue-500 mr-2"></i>
@@ -148,6 +148,22 @@ export default function Dashboard() {
                   <span className="font-medium">Customer Satisfaction</span>
                 </div>
                 <p className="text-sm text-gray-600">Increased customer satisfaction and loyalty</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="flex items-center mb-2">
+                  <i className="fas fa-puzzle-piece text-purple-500 mr-2"></i>
+                  <span className="font-medium">Project Enabler</span>
+                </div>
+                <p className="text-sm text-gray-600">Enables future projects and improvements to be implemented</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="flex items-center mb-2">
+                  <i className="fas fa-star text-indigo-500 mr-2"></i>
+                  <span className="font-medium">Other Benefits</span>
+                </div>
+                <p className="text-sm text-gray-600">Additional non-quantifiable benefits specific to this project</p>
               </div>
             </div>
           </CardContent>
