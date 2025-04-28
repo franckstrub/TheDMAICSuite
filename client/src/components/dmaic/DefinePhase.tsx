@@ -54,6 +54,56 @@ export default function DefinePhase() {
     { requirement: "Order accuracy", importance: 5, satisfaction: 3 },
     { requirement: "", importance: 3, satisfaction: 3 },
   ]);
+  
+  // FTE calculation state
+  const [fteParams, setFteParams] = useState({
+    workingDaysPerYear: 245,
+    workingHoursPerDay: 8,
+    timeUnit: "day",
+    savedHours: 0,
+    fteCostPerYear: 100000,
+    calculatedFte: 0,
+    calculatedValue: 0
+  });
+
+  // Function to calculate FTE and its value
+  const calculateFte = () => {
+    const { workingDaysPerYear, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = fteParams;
+    const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
+    
+    let annualSavedHours = 0;
+    
+    // Convert saved hours to annual basis
+    if (timeUnit === "day") {
+      annualSavedHours = savedHours * workingDaysPerYear;
+    } else if (timeUnit === "week") {
+      annualSavedHours = savedHours * (workingDaysPerYear / 5);
+    } else if (timeUnit === "month") {
+      annualSavedHours = savedHours * (workingDaysPerYear / 20);
+    }
+    
+    // Calculate FTE and monetary value
+    const calculatedFte = annualSavedHours / totalAnnualHours;
+    const calculatedValue = calculatedFte * fteCostPerYear;
+    
+    setFteParams({
+      ...fteParams,
+      calculatedFte: parseFloat(calculatedFte.toFixed(2)),
+      calculatedValue: parseFloat(calculatedValue.toFixed(2))
+    });
+    
+    // Set the hidden input value for form submission
+    const fteString = `${calculatedFte.toFixed(2)} FTE ($${calculatedValue.toLocaleString()})`;
+    document.getElementById("ftpBenefits")?.setAttribute("value", fteString);
+  };
+
+  // Function to handle FTE parameter changes
+  const handleFteParamChange = (param: string, value: number | string) => {
+    setFteParams({
+      ...fteParams,
+      [param]: typeof value === 'string' ? value : parseFloat(value.toString())
+    });
+  };
 
   // Fetch project charter if exists
   const { data: charter } = useQuery({
@@ -359,13 +409,85 @@ export default function DefinePhase() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="ftpBenefits">FTP Benefits ($)</Label>
+                    <Label htmlFor="fteBenefits">FTE Benefits (Full Time Employee)</Label>
+                    <div className="space-y-4 mt-2 p-3 border border-gray-200 rounded-md">
+                      <div>
+                        <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
+                        <div className="grid grid-cols-2 gap-4 mt-1">
+                          <div>
+                            <Label htmlFor="workingDaysPerYear" className="text-xs">Working Days/Year</Label>
+                            <Input
+                              id="workingDaysPerYear"
+                              type="number"
+                              defaultValue={245}
+                              placeholder="e.g. 245"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="workingHoursPerDay" className="text-xs">Working Hours/Day</Label>
+                            <Input
+                              id="workingHoursPerDay"
+                              type="number"
+                              defaultValue={8}
+                              placeholder="e.g. 8"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="savedTime" className="text-xs font-medium">Saved Working Time</Label>
+                        <div className="grid grid-cols-2 gap-4 mt-1">
+                          <div>
+                            <select 
+                              className="w-full h-8 text-sm border border-gray-300 rounded-md" 
+                              defaultValue="day"
+                            >
+                              <option value="day">Per Day</option>
+                              <option value="week">Per Week</option>
+                              <option value="month">Per Month</option>
+                            </select>
+                          </div>
+                          <div>
+                            <Input
+                              id="savedHours"
+                              type="number"
+                              placeholder="Hours saved"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="fteCostPerYear" className="text-xs">Cost per FTE/Year ($)</Label>
+                        <Input
+                          id="fteCostPerYear"
+                          type="number"
+                          defaultValue={100000}
+                          placeholder="e.g. 100000"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <div>
+                          <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">0.25</span></p>
+                          <p className="text-sm font-medium">Calculated Value: <span className="text-green-600">$25,000</span></p>
+                        </div>
+                        <Button variant="outline" size="sm" className="text-xs">
+                          Calculate
+                        </Button>
+                      </div>
+                    </div>
+                    
                     <Input
                       id="ftpBenefits"
-                      placeholder="e.g. 50000"
+                      className="hidden"
                       {...charterForm.register("ftpBenefits")}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Full-time personnel savings</p>
                   </div>
                   <div>
                     <Label htmlFor="softBenefits">Soft Benefits (Non-Quantifiable)</Label>

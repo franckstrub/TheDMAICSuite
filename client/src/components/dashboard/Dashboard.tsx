@@ -111,8 +111,8 @@ export default function Dashboard() {
           iconBgColor="indigo"
         />
         <StatsCard 
-          title="FTP Benefits"
-          value="$486,500"
+          title="FTE Benefits"
+          value="3.5 FTE ($486,500)"
           change={18}
           changeLabel="year-to-date"
           icon="chart-line"
