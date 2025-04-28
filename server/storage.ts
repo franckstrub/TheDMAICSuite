@@ -12,6 +12,8 @@ import {
   type ActivityLog, type InsertLog,
   type ProcessData, type InsertProcessData
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc } from "drizzle-orm";
 
 // Interface for all storage operations
 export interface IStorage {
@@ -466,4 +468,337 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, id));
+  }
+
+  // Project operations
+  async getProjects(): Promise<Project[]> {
+    return await db.select().from(projects);
+  }
+
+  async getProjectsByUserId(userId: number): Promise<Project[]> {
+    return await db
+      .select()
+      .from(projects)
+      .where(eq(projects.createdBy, userId));
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project || undefined;
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const [project] = await db
+      .insert(projects)
+      .values({
+        ...insertProject,
+        actualEndDate: null,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return project;
+  }
+
+  async updateProject(id: number, projectUpdate: Partial<Project>): Promise<Project | undefined> {
+    const [project] = await db
+      .update(projects)
+      .set({
+        ...projectUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(projects.id, id))
+      .returning();
+    return project || undefined;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    const result = await db.delete(projects).where(eq(projects.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Project Charter operations
+  async getCharter(projectId: number): Promise<ProjectCharter | undefined> {
+    const [charter] = await db
+      .select()
+      .from(projectCharters)
+      .where(eq(projectCharters.projectId, projectId));
+    return charter || undefined;
+  }
+
+  async createCharter(insertCharter: InsertCharter): Promise<ProjectCharter> {
+    const [charter] = await db
+      .insert(projectCharters)
+      .values({
+        ...insertCharter,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return charter;
+  }
+
+  async updateCharter(id: number, charterUpdate: Partial<ProjectCharter>): Promise<ProjectCharter | undefined> {
+    const [charter] = await db
+      .update(projectCharters)
+      .set({
+        ...charterUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(projectCharters.id, id))
+      .returning();
+    return charter || undefined;
+  }
+
+  // SIPOC operations
+  async getSipoc(projectId: number): Promise<SipocDiagram | undefined> {
+    const [sipoc] = await db
+      .select()
+      .from(sipocDiagrams)
+      .where(eq(sipocDiagrams.projectId, projectId));
+    return sipoc || undefined;
+  }
+
+  async createSipoc(insertSipoc: InsertSipoc): Promise<SipocDiagram> {
+    const [sipoc] = await db
+      .insert(sipocDiagrams)
+      .values({
+        ...insertSipoc,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return sipoc;
+  }
+
+  async updateSipoc(id: number, sipocUpdate: Partial<SipocDiagram>): Promise<SipocDiagram | undefined> {
+    const [sipoc] = await db
+      .update(sipocDiagrams)
+      .set({
+        ...sipocUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(sipocDiagrams.id, id))
+      .returning();
+    return sipoc || undefined;
+  }
+
+  // Customer Requirements operations
+  async getRequirements(projectId: number): Promise<CustomerRequirement[]> {
+    return await db
+      .select()
+      .from(customerRequirements)
+      .where(eq(customerRequirements.projectId, projectId));
+  }
+
+  async createRequirement(insertRequirement: InsertRequirement): Promise<CustomerRequirement> {
+    const [requirement] = await db
+      .insert(customerRequirements)
+      .values({
+        ...insertRequirement,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return requirement;
+  }
+
+  async updateRequirement(id: number, requirementUpdate: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined> {
+    const [requirement] = await db
+      .update(customerRequirements)
+      .set({
+        ...requirementUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(customerRequirements.id, id))
+      .returning();
+    return requirement || undefined;
+  }
+
+  async deleteRequirement(id: number): Promise<boolean> {
+    const result = await db.delete(customerRequirements).where(eq(customerRequirements.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Dataset operations
+  async getDatasets(): Promise<Dataset[]> {
+    return await db.select().from(datasets);
+  }
+
+  async getDatasetsByProject(projectId: number): Promise<Dataset[]> {
+    return await db
+      .select()
+      .from(datasets)
+      .where(eq(datasets.projectId, projectId));
+  }
+
+  async getDataset(id: number): Promise<Dataset | undefined> {
+    const [dataset] = await db.select().from(datasets).where(eq(datasets.id, id));
+    return dataset || undefined;
+  }
+
+  async createDataset(insertDataset: InsertDataset): Promise<Dataset> {
+    const [dataset] = await db
+      .insert(datasets)
+      .values({
+        ...insertDataset,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return dataset;
+  }
+
+  async updateDataset(id: number, datasetUpdate: Partial<Dataset>): Promise<Dataset | undefined> {
+    const [dataset] = await db
+      .update(datasets)
+      .set({
+        ...datasetUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(datasets.id, id))
+      .returning();
+    return dataset || undefined;
+  }
+
+  async deleteDataset(id: number): Promise<boolean> {
+    const result = await db.delete(datasets).where(eq(datasets.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Data Collection Plan operations
+  async getDataCollectionPlans(projectId: number): Promise<DataCollectionPlan[]> {
+    return await db
+      .select()
+      .from(dataCollectionPlans)
+      .where(eq(dataCollectionPlans.projectId, projectId));
+  }
+
+  async createDataCollectionPlan(insertPlan: InsertPlan): Promise<DataCollectionPlan> {
+    const [plan] = await db
+      .insert(dataCollectionPlans)
+      .values({
+        ...insertPlan,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return plan;
+  }
+
+  async updateDataCollectionPlan(id: number, planUpdate: Partial<DataCollectionPlan>): Promise<DataCollectionPlan | undefined> {
+    const [plan] = await db
+      .update(dataCollectionPlans)
+      .set({
+        ...planUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(dataCollectionPlans.id, id))
+      .returning();
+    return plan || undefined;
+  }
+
+  async deleteDataCollectionPlan(id: number): Promise<boolean> {
+    const result = await db.delete(dataCollectionPlans).where(eq(dataCollectionPlans.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Storage Configuration operations
+  async getStorageConfig(userId: number): Promise<StorageConfig | undefined> {
+    const [config] = await db
+      .select()
+      .from(storageConfigs)
+      .where(eq(storageConfigs.userId, userId));
+    return config || undefined;
+  }
+
+  async createStorageConfig(insertConfig: InsertConfig): Promise<StorageConfig> {
+    const [config] = await db
+      .insert(storageConfigs)
+      .values(insertConfig)
+      .returning();
+    return config;
+  }
+
+  async updateStorageConfig(id: number, configUpdate: Partial<StorageConfig>): Promise<StorageConfig | undefined> {
+    const [config] = await db
+      .update(storageConfigs)
+      .set(configUpdate)
+      .where(eq(storageConfigs.id, id))
+      .returning();
+    return config || undefined;
+  }
+
+  // Activity Log operations
+  async getActivityLogs(projectId?: number): Promise<ActivityLog[]> {
+    if (projectId) {
+      return await db
+        .select()
+        .from(activityLogs)
+        .where(eq(activityLogs.projectId, projectId))
+        .orderBy(desc(activityLogs.timestamp));
+    }
+    
+    return await db
+      .select()
+      .from(activityLogs)
+      .orderBy(desc(activityLogs.timestamp));
+  }
+
+  async createActivityLog(insertLog: InsertLog): Promise<ActivityLog> {
+    const [log] = await db
+      .insert(activityLogs)
+      .values(insertLog)
+      .returning();
+    return log;
+  }
+
+  // Process Data operations
+  async getProcessData(datasetId: number): Promise<ProcessData | undefined> {
+    const [data] = await db
+      .select()
+      .from(processData)
+      .where(eq(processData.datasetId, datasetId));
+    return data || undefined;
+  }
+
+  async createProcessData(insertData: InsertProcessData): Promise<ProcessData> {
+    const [data] = await db
+      .insert(processData)
+      .values(insertData)
+      .returning();
+    return data;
+  }
+
+  async updateProcessData(id: number, dataUpdate: Partial<ProcessData>): Promise<ProcessData | undefined> {
+    const [data] = await db
+      .update(processData)
+      .set(dataUpdate)
+      .where(eq(processData.id, id))
+      .returning();
+    return data || undefined;
+  }
+}
+
+// Use the DatabaseStorage implementation instead of MemStorage
+export const storage = new DatabaseStorage();
