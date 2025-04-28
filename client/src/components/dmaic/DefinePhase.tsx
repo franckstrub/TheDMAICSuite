@@ -32,7 +32,7 @@ export default function DefinePhase() {
       targetEndDate: "",
       savingsPerYear: "",
       cashBenefits: "",
-      ftpBenefits: "",
+      fteBenefits: "",
       softBenefits: "",
     },
   });
@@ -125,7 +125,7 @@ export default function DefinePhase() {
             : "",
           savingsPerYear: data.charter.savingsPerYear || "",
           cashBenefits: data.charter.cashBenefits || "",
-          ftpBenefits: data.charter.ftpBenefits || "",
+          fteBenefits: data.charter.fteBenefits || "",
           softBenefits: data.charter.softBenefits || "",
         });
       }
@@ -175,7 +175,7 @@ export default function DefinePhase() {
         scope: data.scope,
         savingsPerYear: data.savingsPerYear,
         cashBenefits: data.cashBenefits,
-        ftpBenefits: data.ftpBenefits,
+        fteBenefits: data.fteBenefits,
         softBenefits: data.softBenefits,
         userId: user?.id,
       };
@@ -492,7 +492,7 @@ export default function DefinePhase() {
                     <Input
                       id="fteBenefits"
                       className="hidden"
-                      {...charterForm.register("ftpBenefits")}
+                      {...charterForm.register("fteBenefits")}
                     />
                   </div>
                   <div>
