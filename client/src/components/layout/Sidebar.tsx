@@ -62,7 +62,7 @@ export default function Sidebar() {
           <div className="flex items-center justify-between">
             <div className="flex items-center text-primary font-bold text-xl">
               <i className="fas fa-chart-line text-secondary mr-2"></i>
-              <span>Lean Sigma Flow</span>
+              <span>Lean Six Sigma DMAIC Suite</span>
             </div>
             <Button 
               variant="ghost" 
