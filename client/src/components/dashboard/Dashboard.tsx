@@ -119,16 +119,6 @@ export default function Dashboard() {
           icon="user-clock"
           iconBgColor="purple"
         />
-        <StatsCard 
-          title="Process Capability"
-          value="Cp 1.67 / 5.0σ"
-          secondaryValue="Defects: 233 DPMO"
-          change={12}
-          changeLabel="improvement"
-          icon="chart-bar"
-          iconBgColor="yellow"
-        />
-
       </div>
       
       {/* Additional Benefits */}
