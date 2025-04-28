@@ -18,6 +18,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from "recharts";
 
 // Sample data for charts
@@ -41,43 +48,73 @@ const defectData = [
 
 export default function Dashboard() {
   const { user } = useAppContext();
-  const [timeframe, setTimeframe] = useState("Last 30 Days");
+  const [timeframe, setTimeframe] = useState("Last 365 Days");
 
   // Fetch projects - focus on ones created by current user
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
-    queryKey: ["/api/projects", user?.id],
+    queryKey: ["/api/projects", user?.id, timeframe],
     enabled: !!user?.id,
   });
 
   // Fetch activity logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
-    queryKey: ["/api/activity-logs"],
+    queryKey: ["/api/activity-logs", timeframe],
     enabled: !!user?.id,
   });
+  
+  // Function to determine subtitle text based on timeframe
+  const getTimeframeSubtitle = () => {
+    switch(timeframe) {
+      case "Today":
+        return "Results for today only";
+      case "Last 7 Days":
+        return "Results from the past week";
+      case "Last 30 Days":
+        return "Results from the past month";
+      case "Last 365 Days":
+        return "Results from the past 365 days";
+      case "Last Year":
+        return "Results from last calendar year";
+      case "Last 3 Years":
+        return "Results from the past 3 years";
+      case "Since Beginning":
+        return "All-time results";
+      case "This Quarter":
+        return "Results from current quarter";
+      case "This Year":
+        return "Results from current year";
+      default:
+        return "Overview of your Six Sigma process improvement initiatives";
+    }
+  };
 
   return (
     <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">Overview of your Six Sigma process improvement initiatives</p>
+          <p className="mt-1 text-sm text-gray-500">{getTimeframeSubtitle()}</p>
         </div>
         <div className="flex space-x-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center">
-                {timeframe}
-                <ChevronDown className="ml-2 w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setTimeframe("Today")}>Today</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTimeframe("Last 7 Days")}>Last 7 Days</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTimeframe("Last 30 Days")}>Last 30 Days</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTimeframe("This Quarter")}>This Quarter</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTimeframe("This Year")}>This Year</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Select
+            value={timeframe}
+            onValueChange={setTimeframe}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Today">Today</SelectItem>
+              <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
+              <SelectItem value="Last 30 Days">Last 30 Days</SelectItem>
+              <SelectItem value="Last 365 Days">Last 365 Days</SelectItem>
+              <SelectItem value="Last Year">Last Year</SelectItem>
+              <SelectItem value="Last 3 Years">Last 3 Years</SelectItem>
+              <SelectItem value="Since Beginning">Since Beginning</SelectItem>
+              <SelectItem value="This Quarter">This Quarter</SelectItem>
+              <SelectItem value="This Year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
           <Button>
             Export Report
           </Button>
