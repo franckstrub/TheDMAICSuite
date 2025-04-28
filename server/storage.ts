@@ -1,0 +1,469 @@
+import {
+  users, projects, projectCharters, sipocDiagrams, customerRequirements,
+  datasets, dataCollectionPlans, storageConfigs, activityLogs, processData,
+  type User, type InsertUser,
+  type Project, type InsertProject,
+  type ProjectCharter, type InsertCharter,
+  type SipocDiagram, type InsertSipoc,
+  type CustomerRequirement, type InsertRequirement,
+  type Dataset, type InsertDataset,
+  type DataCollectionPlan, type InsertPlan,
+  type StorageConfig, type InsertConfig,
+  type ActivityLog, type InsertLog,
+  type ProcessData, type InsertProcessData
+} from "@shared/schema";
+
+// Interface for all storage operations
+export interface IStorage {
+  // User operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUserLastLogin(id: number): Promise<void>;
+
+  // Project operations
+  getProjects(): Promise<Project[]>;
+  getProjectsByUserId(userId: number): Promise<Project[]>;
+  getProject(id: number): Promise<Project | undefined>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, project: Partial<Project>): Promise<Project | undefined>;
+  deleteProject(id: number): Promise<boolean>;
+
+  // Project Charter operations
+  getCharter(projectId: number): Promise<ProjectCharter | undefined>;
+  createCharter(charter: InsertCharter): Promise<ProjectCharter>;
+  updateCharter(id: number, charter: Partial<ProjectCharter>): Promise<ProjectCharter | undefined>;
+
+  // SIPOC operations
+  getSipoc(projectId: number): Promise<SipocDiagram | undefined>;
+  createSipoc(sipoc: InsertSipoc): Promise<SipocDiagram>;
+  updateSipoc(id: number, sipoc: Partial<SipocDiagram>): Promise<SipocDiagram | undefined>;
+
+  // Customer Requirements operations
+  getRequirements(projectId: number): Promise<CustomerRequirement[]>;
+  createRequirement(requirement: InsertRequirement): Promise<CustomerRequirement>;
+  updateRequirement(id: number, requirement: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined>;
+  deleteRequirement(id: number): Promise<boolean>;
+
+  // Dataset operations
+  getDatasets(): Promise<Dataset[]>;
+  getDatasetsByProject(projectId: number): Promise<Dataset[]>;
+  getDataset(id: number): Promise<Dataset | undefined>;
+  createDataset(dataset: InsertDataset): Promise<Dataset>;
+  updateDataset(id: number, dataset: Partial<Dataset>): Promise<Dataset | undefined>;
+  deleteDataset(id: number): Promise<boolean>;
+
+  // Data Collection Plan operations
+  getDataCollectionPlans(projectId: number): Promise<DataCollectionPlan[]>;
+  createDataCollectionPlan(plan: InsertPlan): Promise<DataCollectionPlan>;
+  updateDataCollectionPlan(id: number, plan: Partial<DataCollectionPlan>): Promise<DataCollectionPlan | undefined>;
+  deleteDataCollectionPlan(id: number): Promise<boolean>;
+
+  // Storage Configuration operations
+  getStorageConfig(userId: number): Promise<StorageConfig | undefined>;
+  createStorageConfig(config: InsertConfig): Promise<StorageConfig>;
+  updateStorageConfig(id: number, config: Partial<StorageConfig>): Promise<StorageConfig | undefined>;
+
+  // Activity Log operations
+  getActivityLogs(projectId?: number): Promise<ActivityLog[]>;
+  createActivityLog(log: InsertLog): Promise<ActivityLog>;
+
+  // Process Data operations
+  getProcessData(datasetId: number): Promise<ProcessData | undefined>;
+  createProcessData(data: InsertProcessData): Promise<ProcessData>;
+  updateProcessData(id: number, data: Partial<ProcessData>): Promise<ProcessData | undefined>;
+}
+
+// In-memory storage implementation
+export class MemStorage implements IStorage {
+  private users: Map<number, User>;
+  private projects: Map<number, Project>;
+  private projectCharters: Map<number, ProjectCharter>;
+  private sipocDiagrams: Map<number, SipocDiagram>;
+  private customerRequirements: Map<number, CustomerRequirement>;
+  private datasets: Map<number, Dataset>;
+  private dataCollectionPlans: Map<number, DataCollectionPlan>;
+  private storageConfigs: Map<number, StorageConfig>;
+  private activityLogs: Map<number, ActivityLog>;
+  private processData: Map<number, ProcessData>;
+  
+  private currentUserId: number;
+  private currentProjectId: number;
+  private currentCharterId: number;
+  private currentSipocId: number;
+  private currentRequirementId: number;
+  private currentDatasetId: number;
+  private currentPlanId: number;
+  private currentConfigId: number;
+  private currentLogId: number;
+  private currentProcessDataId: number;
+
+  constructor() {
+    this.users = new Map();
+    this.projects = new Map();
+    this.projectCharters = new Map();
+    this.sipocDiagrams = new Map();
+    this.customerRequirements = new Map();
+    this.datasets = new Map();
+    this.dataCollectionPlans = new Map();
+    this.storageConfigs = new Map();
+    this.activityLogs = new Map();
+    this.processData = new Map();
+    
+    this.currentUserId = 1;
+    this.currentProjectId = 1;
+    this.currentCharterId = 1;
+    this.currentSipocId = 1;
+    this.currentRequirementId = 1;
+    this.currentDatasetId = 1;
+    this.currentPlanId = 1;
+    this.currentConfigId = 1;
+    this.currentLogId = 1;
+    this.currentProcessDataId = 1;
+    
+    // Create a default admin user
+    this.createUser({
+      username: 'admin',
+      password: 'admin123',
+      fullName: 'John Doe',
+      role: 'admin'
+    });
+  }
+
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.username === username,
+    );
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = this.currentUserId++;
+    const user: User = { ...insertUser, id, lastLogin: null };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    const user = await this.getUser(id);
+    if (user) {
+      user.lastLogin = new Date();
+      this.users.set(id, user);
+    }
+  }
+
+  // Project operations
+  async getProjects(): Promise<Project[]> {
+    return Array.from(this.projects.values());
+  }
+
+  async getProjectsByUserId(userId: number): Promise<Project[]> {
+    return Array.from(this.projects.values()).filter(
+      (project) => project.createdBy === userId,
+    );
+  }
+
+  async getProject(id: number): Promise<Project | undefined> {
+    return this.projects.get(id);
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const id = this.currentProjectId++;
+    const now = new Date();
+    const project: Project = { 
+      ...insertProject, 
+      id, 
+      actualEndDate: null, 
+      lastUpdated: now 
+    };
+    this.projects.set(id, project);
+    return project;
+  }
+
+  async updateProject(id: number, projectUpdate: Partial<Project>): Promise<Project | undefined> {
+    const project = await this.getProject(id);
+    if (project) {
+      const updatedProject = { 
+        ...project, 
+        ...projectUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.projects.set(id, updatedProject);
+      return updatedProject;
+    }
+    return undefined;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    return this.projects.delete(id);
+  }
+
+  // Project Charter operations
+  async getCharter(projectId: number): Promise<ProjectCharter | undefined> {
+    return Array.from(this.projectCharters.values()).find(
+      (charter) => charter.projectId === projectId,
+    );
+  }
+
+  async createCharter(insertCharter: InsertCharter): Promise<ProjectCharter> {
+    const id = this.currentCharterId++;
+    const charter: ProjectCharter = { 
+      ...insertCharter, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.projectCharters.set(id, charter);
+    return charter;
+  }
+
+  async updateCharter(id: number, charterUpdate: Partial<ProjectCharter>): Promise<ProjectCharter | undefined> {
+    const charter = this.projectCharters.get(id);
+    if (charter) {
+      const updatedCharter = { 
+        ...charter, 
+        ...charterUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.projectCharters.set(id, updatedCharter);
+      return updatedCharter;
+    }
+    return undefined;
+  }
+
+  // SIPOC operations
+  async getSipoc(projectId: number): Promise<SipocDiagram | undefined> {
+    return Array.from(this.sipocDiagrams.values()).find(
+      (sipoc) => sipoc.projectId === projectId,
+    );
+  }
+
+  async createSipoc(insertSipoc: InsertSipoc): Promise<SipocDiagram> {
+    const id = this.currentSipocId++;
+    const sipoc: SipocDiagram = { 
+      ...insertSipoc, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.sipocDiagrams.set(id, sipoc);
+    return sipoc;
+  }
+
+  async updateSipoc(id: number, sipocUpdate: Partial<SipocDiagram>): Promise<SipocDiagram | undefined> {
+    const sipoc = this.sipocDiagrams.get(id);
+    if (sipoc) {
+      const updatedSipoc = { 
+        ...sipoc, 
+        ...sipocUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.sipocDiagrams.set(id, updatedSipoc);
+      return updatedSipoc;
+    }
+    return undefined;
+  }
+
+  // Customer Requirements operations
+  async getRequirements(projectId: number): Promise<CustomerRequirement[]> {
+    return Array.from(this.customerRequirements.values()).filter(
+      (req) => req.projectId === projectId,
+    );
+  }
+
+  async createRequirement(insertRequirement: InsertRequirement): Promise<CustomerRequirement> {
+    const id = this.currentRequirementId++;
+    const requirement: CustomerRequirement = { 
+      ...insertRequirement, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.customerRequirements.set(id, requirement);
+    return requirement;
+  }
+
+  async updateRequirement(id: number, requirementUpdate: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined> {
+    const requirement = this.customerRequirements.get(id);
+    if (requirement) {
+      const updatedRequirement = { 
+        ...requirement, 
+        ...requirementUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.customerRequirements.set(id, updatedRequirement);
+      return updatedRequirement;
+    }
+    return undefined;
+  }
+
+  async deleteRequirement(id: number): Promise<boolean> {
+    return this.customerRequirements.delete(id);
+  }
+
+  // Dataset operations
+  async getDatasets(): Promise<Dataset[]> {
+    return Array.from(this.datasets.values());
+  }
+
+  async getDatasetsByProject(projectId: number): Promise<Dataset[]> {
+    return Array.from(this.datasets.values()).filter(
+      (dataset) => dataset.projectId === projectId,
+    );
+  }
+
+  async getDataset(id: number): Promise<Dataset | undefined> {
+    return this.datasets.get(id);
+  }
+
+  async createDataset(insertDataset: InsertDataset): Promise<Dataset> {
+    const id = this.currentDatasetId++;
+    const dataset: Dataset = { 
+      ...insertDataset, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.datasets.set(id, dataset);
+    return dataset;
+  }
+
+  async updateDataset(id: number, datasetUpdate: Partial<Dataset>): Promise<Dataset | undefined> {
+    const dataset = this.datasets.get(id);
+    if (dataset) {
+      const updatedDataset = { 
+        ...dataset, 
+        ...datasetUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.datasets.set(id, updatedDataset);
+      return updatedDataset;
+    }
+    return undefined;
+  }
+
+  async deleteDataset(id: number): Promise<boolean> {
+    return this.datasets.delete(id);
+  }
+
+  // Data Collection Plan operations
+  async getDataCollectionPlans(projectId: number): Promise<DataCollectionPlan[]> {
+    return Array.from(this.dataCollectionPlans.values()).filter(
+      (plan) => plan.projectId === projectId,
+    );
+  }
+
+  async createDataCollectionPlan(insertPlan: InsertPlan): Promise<DataCollectionPlan> {
+    const id = this.currentPlanId++;
+    const plan: DataCollectionPlan = { 
+      ...insertPlan, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.dataCollectionPlans.set(id, plan);
+    return plan;
+  }
+
+  async updateDataCollectionPlan(id: number, planUpdate: Partial<DataCollectionPlan>): Promise<DataCollectionPlan | undefined> {
+    const plan = this.dataCollectionPlans.get(id);
+    if (plan) {
+      const updatedPlan = { 
+        ...plan, 
+        ...planUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.dataCollectionPlans.set(id, updatedPlan);
+      return updatedPlan;
+    }
+    return undefined;
+  }
+
+  async deleteDataCollectionPlan(id: number): Promise<boolean> {
+    return this.dataCollectionPlans.delete(id);
+  }
+
+  // Storage Configuration operations
+  async getStorageConfig(userId: number): Promise<StorageConfig | undefined> {
+    return Array.from(this.storageConfigs.values()).find(
+      (config) => config.userId === userId,
+    );
+  }
+
+  async createStorageConfig(insertConfig: InsertConfig): Promise<StorageConfig> {
+    const id = this.currentConfigId++;
+    const config: StorageConfig = { 
+      ...insertConfig, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.storageConfigs.set(id, config);
+    return config;
+  }
+
+  async updateStorageConfig(id: number, configUpdate: Partial<StorageConfig>): Promise<StorageConfig | undefined> {
+    const config = this.storageConfigs.get(id);
+    if (config) {
+      const updatedConfig = { 
+        ...config, 
+        ...configUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.storageConfigs.set(id, updatedConfig);
+      return updatedConfig;
+    }
+    return undefined;
+  }
+
+  // Activity Log operations
+  async getActivityLogs(projectId?: number): Promise<ActivityLog[]> {
+    const logs = Array.from(this.activityLogs.values());
+    if (projectId) {
+      return logs.filter((log) => log.projectId === projectId);
+    }
+    return logs;
+  }
+
+  async createActivityLog(insertLog: InsertLog): Promise<ActivityLog> {
+    const id = this.currentLogId++;
+    const log: ActivityLog = { 
+      ...insertLog, 
+      id, 
+      timestamp: new Date() 
+    };
+    this.activityLogs.set(id, log);
+    return log;
+  }
+
+  // Process Data operations
+  async getProcessData(datasetId: number): Promise<ProcessData | undefined> {
+    return Array.from(this.processData.values()).find(
+      (data) => data.datasetId === datasetId,
+    );
+  }
+
+  async createProcessData(insertData: InsertProcessData): Promise<ProcessData> {
+    const id = this.currentProcessDataId++;
+    const data: ProcessData = { 
+      ...insertData, 
+      id, 
+      createdAt: new Date() 
+    };
+    this.processData.set(id, data);
+    return data;
+  }
+
+  async updateProcessData(id: number, dataUpdate: Partial<ProcessData>): Promise<ProcessData | undefined> {
+    const data = this.processData.get(id);
+    if (data) {
+      const updatedData = { 
+        ...data, 
+        ...dataUpdate, 
+      };
+      this.processData.set(id, updatedData);
+      return updatedData;
+    }
+    return undefined;
+  }
+}
+
+export const storage = new MemStorage();

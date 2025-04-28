@@ -1,0 +1,752 @@
+import type { Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { 
+  insertUserSchema, insertProjectSchema, insertCharterSchema, 
+  insertSipocSchema, insertRequirementSchema, insertDatasetSchema,
+  insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema
+} from "@shared/schema";
+import { 
+  CustomerRequirement, DataCollectionPlan, Dataset, InsertCharter, 
+  InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
+  InsertProject, InsertRequirement, InsertSipoc, InsertUser, Project, StorageConfig 
+} from "@shared/schema";
+import { z } from "zod";
+import { ZodError } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Error handling middleware
+  const handleErrors = (err: any, res: Response) => {
+    if (err instanceof ZodError) {
+      return res.status(400).json({
+        message: "Validation error",
+        errors: err.errors
+      });
+    }
+    
+    console.error("API Error:", err);
+    return res.status(500).json({
+      message: "An unexpected error occurred"
+    });
+  };
+
+  // Authentication routes
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+      
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      await storage.updateUserLastLogin(user.id);
+      
+      // For simplicity, just return the user (in a real app, you'd use JWT tokens)
+      const { password: _, ...userWithoutPassword } = user;
+      return res.status(200).json({ user: userWithoutPassword });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      const user = await storage.createUser(userData);
+      const { password: _, ...userWithoutPassword } = user;
+      
+      return res.status(201).json({ user: userWithoutPassword });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Project routes
+  app.get("/api/projects", async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+      
+      const projects = userId 
+        ? await storage.getProjectsByUserId(userId) 
+        : await storage.getProjects();
+        
+      return res.status(200).json({ projects });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.get("/api/projects/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const project = await storage.getProject(id);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      return res.status(200).json({ project });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects", async (req: Request, res: Response) => {
+    try {
+      const projectData = insertProjectSchema.parse(req.body);
+      const project = await storage.createProject(projectData);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId: projectData.createdBy,
+        projectId: project.id,
+        action: "create_project",
+        details: `Created project: ${project.title}`
+      });
+      
+      return res.status(201).json({ project });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/projects/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const projectData = req.body as Partial<Project>;
+      
+      const project = await storage.updateProject(id, projectData);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: project.id,
+          action: "update_project",
+          details: `Updated project: ${project.title}`
+        });
+      }
+      
+      return res.status(200).json({ project });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.delete("/api/projects/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.body.userId;
+      
+      const project = await storage.getProject(id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      await storage.deleteProject(id);
+      
+      // Log activity
+      if (userId) {
+        await storage.createActivityLog({
+          userId,
+          projectId: null,
+          action: "delete_project",
+          details: `Deleted project: ${project.title}`
+        });
+      }
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Project Charter routes
+  app.get("/api/projects/:projectId/charter", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const charter = await storage.getCharter(projectId);
+      
+      if (!charter) {
+        return res.status(404).json({ message: "Charter not found" });
+      }
+      
+      return res.status(200).json({ charter });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/charter", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const charterData: InsertCharter = {
+        ...req.body,
+        projectId
+      };
+      
+      const validatedData = insertCharterSchema.parse(charterData);
+      const charter = await storage.createCharter(validatedData);
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_charter",
+          details: "Created project charter"
+        });
+      }
+      
+      return res.status(201).json({ charter });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/charters/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const charterData = req.body;
+      
+      const charter = await storage.updateCharter(id, charterData);
+      if (!charter) {
+        return res.status(404).json({ message: "Charter not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: charter.projectId,
+          action: "update_charter",
+          details: "Updated project charter"
+        });
+      }
+      
+      return res.status(200).json({ charter });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // SIPOC routes
+  app.get("/api/projects/:projectId/sipoc", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const sipoc = await storage.getSipoc(projectId);
+      
+      if (!sipoc) {
+        return res.status(404).json({ message: "SIPOC diagram not found" });
+      }
+      
+      return res.status(200).json({ sipoc });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/sipoc", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const sipocData: InsertSipoc = {
+        ...req.body,
+        projectId
+      };
+      
+      const validatedData = insertSipocSchema.parse(sipocData);
+      const sipoc = await storage.createSipoc(validatedData);
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_sipoc",
+          details: "Created SIPOC diagram"
+        });
+      }
+      
+      return res.status(201).json({ sipoc });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/sipocs/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const sipocData = req.body;
+      
+      const sipoc = await storage.updateSipoc(id, sipocData);
+      if (!sipoc) {
+        return res.status(404).json({ message: "SIPOC diagram not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: sipoc.projectId,
+          action: "update_sipoc",
+          details: "Updated SIPOC diagram"
+        });
+      }
+      
+      return res.status(200).json({ sipoc });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Customer Requirements routes
+  app.get("/api/projects/:projectId/requirements", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const requirements = await storage.getRequirements(projectId);
+      
+      return res.status(200).json({ requirements });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/requirements", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const requirementData: InsertRequirement = {
+        ...req.body,
+        projectId
+      };
+      
+      const validatedData = insertRequirementSchema.parse(requirementData);
+      const requirement = await storage.createRequirement(validatedData);
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_requirement",
+          details: `Added requirement: ${requirement.requirement}`
+        });
+      }
+      
+      return res.status(201).json({ requirement });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/requirements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const requirementData = req.body as Partial<CustomerRequirement>;
+      
+      const requirement = await storage.updateRequirement(id, requirementData);
+      if (!requirement) {
+        return res.status(404).json({ message: "Requirement not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: requirement.projectId,
+          action: "update_requirement",
+          details: `Updated requirement: ${requirement.requirement}`
+        });
+      }
+      
+      return res.status(200).json({ requirement });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.delete("/api/requirements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.body.userId;
+      const projectId = req.body.projectId;
+      
+      await storage.deleteRequirement(id);
+      
+      // Log activity
+      if (userId && projectId) {
+        await storage.createActivityLog({
+          userId,
+          projectId,
+          action: "delete_requirement",
+          details: "Deleted a requirement"
+        });
+      }
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Datasets routes
+  app.get("/api/datasets", async (req: Request, res: Response) => {
+    try {
+      const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
+      
+      const datasets = projectId 
+        ? await storage.getDatasetsByProject(projectId) 
+        : await storage.getDatasets();
+        
+      return res.status(200).json({ datasets });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.get("/api/datasets/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const dataset = await storage.getDataset(id);
+      
+      if (!dataset) {
+        return res.status(404).json({ message: "Dataset not found" });
+      }
+      
+      return res.status(200).json({ dataset });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/datasets", async (req: Request, res: Response) => {
+    try {
+      const datasetData = insertDatasetSchema.parse(req.body);
+      const dataset = await storage.createDataset(datasetData);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId: datasetData.createdBy,
+        projectId: datasetData.projectId,
+        action: "create_dataset",
+        details: `Created dataset: ${dataset.name}`
+      });
+      
+      return res.status(201).json({ dataset });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/datasets/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const datasetData = req.body as Partial<Dataset>;
+      
+      const dataset = await storage.updateDataset(id, datasetData);
+      if (!dataset) {
+        return res.status(404).json({ message: "Dataset not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: dataset.projectId,
+          action: "update_dataset",
+          details: `Updated dataset: ${dataset.name}`
+        });
+      }
+      
+      return res.status(200).json({ dataset });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.delete("/api/datasets/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.body.userId;
+      
+      const dataset = await storage.getDataset(id);
+      if (!dataset) {
+        return res.status(404).json({ message: "Dataset not found" });
+      }
+      
+      await storage.deleteDataset(id);
+      
+      // Log activity
+      if (userId) {
+        await storage.createActivityLog({
+          userId,
+          projectId: dataset.projectId,
+          action: "delete_dataset",
+          details: `Deleted dataset: ${dataset.name}`
+        });
+      }
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Data Collection Plan routes
+  app.get("/api/projects/:projectId/data-collection-plans", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const plans = await storage.getDataCollectionPlans(projectId);
+      
+      return res.status(200).json({ plans });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/data-collection-plans", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const planData: InsertPlan = {
+        ...req.body,
+        projectId
+      };
+      
+      const validatedData = insertPlanSchema.parse(planData);
+      const plan = await storage.createDataCollectionPlan(validatedData);
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_data_plan",
+          details: `Created data collection plan for: ${plan.metric}`
+        });
+      }
+      
+      return res.status(201).json({ plan });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/data-collection-plans/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const planData = req.body as Partial<DataCollectionPlan>;
+      
+      const plan = await storage.updateDataCollectionPlan(id, planData);
+      if (!plan) {
+        return res.status(404).json({ message: "Data collection plan not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: plan.projectId,
+          action: "update_data_plan",
+          details: `Updated data collection plan for: ${plan.metric}`
+        });
+      }
+      
+      return res.status(200).json({ plan });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.delete("/api/data-collection-plans/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.body.userId;
+      const projectId = req.body.projectId;
+      
+      await storage.deleteDataCollectionPlan(id);
+      
+      // Log activity
+      if (userId && projectId) {
+        await storage.createActivityLog({
+          userId,
+          projectId,
+          action: "delete_data_plan",
+          details: "Deleted a data collection plan"
+        });
+      }
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Storage Configuration routes
+  app.get("/api/users/:userId/storage-config", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const config = await storage.getStorageConfig(userId);
+      
+      if (!config) {
+        // Return default config if none exists
+        return res.status(200).json({ 
+          config: {
+            userId,
+            cloudEnabled: true,
+            cloudRegion: "US East (N. Virginia)",
+            cloudRetention: "6 months",
+            cloudEncryption: true,
+            serverEnabled: false,
+            localEnabled: false
+          } 
+        });
+      }
+      
+      return res.status(200).json({ config });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/users/:userId/storage-config", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const configData: InsertConfig = {
+        ...req.body,
+        userId
+      };
+      
+      const validatedData = insertConfigSchema.parse(configData);
+      
+      // Check if config already exists
+      const existingConfig = await storage.getStorageConfig(userId);
+      if (existingConfig) {
+        const config = await storage.updateStorageConfig(existingConfig.id, validatedData);
+        return res.status(200).json({ config });
+      }
+      
+      const config = await storage.createStorageConfig(validatedData);
+      
+      // Log activity
+      await storage.createActivityLog({
+        userId,
+        projectId: null,
+        action: "update_storage_config",
+        details: "Updated storage configuration"
+      });
+      
+      return res.status(201).json({ config });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Activity Log routes
+  app.get("/api/activity-logs", async (req: Request, res: Response) => {
+    try {
+      const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : undefined;
+      const logs = await storage.getActivityLogs(projectId);
+      
+      return res.status(200).json({ logs });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/activity-logs", async (req: Request, res: Response) => {
+    try {
+      const logData = insertLogSchema.parse(req.body);
+      const log = await storage.createActivityLog(logData);
+      
+      return res.status(201).json({ log });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Process Data routes
+  app.get("/api/datasets/:datasetId/process-data", async (req: Request, res: Response) => {
+    try {
+      const datasetId = parseInt(req.params.datasetId);
+      const processData = await storage.getProcessData(datasetId);
+      
+      if (!processData) {
+        return res.status(404).json({ message: "Process data not found" });
+      }
+      
+      return res.status(200).json({ processData });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/datasets/:datasetId/process-data", async (req: Request, res: Response) => {
+    try {
+      const datasetId = parseInt(req.params.datasetId);
+      const processDataInput: InsertProcessData = {
+        ...req.body,
+        datasetId
+      };
+      
+      const validatedData = insertProcessDataSchema.parse(processDataInput);
+      const processData = await storage.createProcessData(validatedData);
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: processData.projectId,
+          action: "upload_process_data",
+          details: "Uploaded process data"
+        });
+      }
+      
+      return res.status(201).json({ processData });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/process-data/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const processDataUpdate = req.body;
+      
+      const processData = await storage.updateProcessData(id, processDataUpdate);
+      if (!processData) {
+        return res.status(404).json({ message: "Process data not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: processData.projectId,
+          action: "update_process_data",
+          details: "Updated process data"
+        });
+      }
+      
+      return res.status(200).json({ processData });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Create http server
+  const httpServer = createServer(app);
+  return httpServer;
+}
