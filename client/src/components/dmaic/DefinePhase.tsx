@@ -94,7 +94,7 @@ export default function DefinePhase() {
     
     // Set the hidden input value for form submission
     const fteString = `${calculatedFte.toFixed(2)} FTE ($${calculatedValue.toLocaleString()})`;
-    document.getElementById("ftpBenefits")?.setAttribute("value", fteString);
+    document.getElementById("fteBenefits")?.setAttribute("value", fteString);
   };
 
   // Function to handle FTE parameter changes
@@ -419,7 +419,8 @@ export default function DefinePhase() {
                             <Input
                               id="workingDaysPerYear"
                               type="number"
-                              defaultValue={245}
+                              value={fteParams.workingDaysPerYear}
+                              onChange={(e) => handleFteParamChange('workingDaysPerYear', e.target.value)}
                               placeholder="e.g. 245"
                               className="h-8 text-sm"
                             />
@@ -429,7 +430,8 @@ export default function DefinePhase() {
                             <Input
                               id="workingHoursPerDay"
                               type="number"
-                              defaultValue={8}
+                              value={fteParams.workingHoursPerDay}
+                              onChange={(e) => handleFteParamChange('workingHoursPerDay', e.target.value)}
                               placeholder="e.g. 8"
                               className="h-8 text-sm"
                             />
@@ -443,7 +445,8 @@ export default function DefinePhase() {
                           <div>
                             <select 
                               className="w-full h-8 text-sm border border-gray-300 rounded-md" 
-                              defaultValue="day"
+                              value={fteParams.timeUnit}
+                              onChange={(e) => handleFteParamChange('timeUnit', e.target.value)}
                             >
                               <option value="day">Per Day</option>
                               <option value="week">Per Week</option>
@@ -454,6 +457,8 @@ export default function DefinePhase() {
                             <Input
                               id="savedHours"
                               type="number"
+                              value={fteParams.savedHours}
+                              onChange={(e) => handleFteParamChange('savedHours', e.target.value)}
                               placeholder="Hours saved"
                               className="h-8 text-sm"
                             />
@@ -466,7 +471,8 @@ export default function DefinePhase() {
                         <Input
                           id="fteCostPerYear"
                           type="number"
-                          defaultValue={100000}
+                          value={fteParams.fteCostPerYear}
+                          onChange={(e) => handleFteParamChange('fteCostPerYear', e.target.value)}
                           placeholder="e.g. 100000"
                           className="h-8 text-sm"
                         />
@@ -474,17 +480,17 @@ export default function DefinePhase() {
                       
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                         <div>
-                          <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">0.25</span></p>
-                          <p className="text-sm font-medium">Calculated Value: <span className="text-green-600">$25,000</span></p>
+                          <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte}</span></p>
+                          <p className="text-sm font-medium">Calculated Value: <span className="text-green-600">${fteParams.calculatedValue.toLocaleString()}</span></p>
                         </div>
-                        <Button variant="outline" size="sm" className="text-xs">
+                        <Button variant="outline" size="sm" className="text-xs" onClick={calculateFte}>
                           Calculate
                         </Button>
                       </div>
                     </div>
                     
                     <Input
-                      id="ftpBenefits"
+                      id="fteBenefits"
                       className="hidden"
                       {...charterForm.register("ftpBenefits")}
                     />
