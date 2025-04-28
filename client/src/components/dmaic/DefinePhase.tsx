@@ -31,7 +31,9 @@ export default function DefinePhase() {
       startDate: "",
       targetEndDate: "",
       savingsPerYear: "",
-      cashBenefits: "",
+      workingCapitalGains: "",
+      waccPercentage: "10",
+      financialSavings: "",
       fteBenefits: "",
       softBenefits: "",
     },
@@ -124,7 +126,9 @@ export default function DefinePhase() {
             ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
             : "",
           savingsPerYear: data.charter.savingsPerYear || "",
-          cashBenefits: data.charter.cashBenefits || "",
+          workingCapitalGains: data.charter.workingCapitalGains || "",
+          waccPercentage: data.charter.waccPercentage || "10",
+          financialSavings: data.charter.financialSavings || "",
           fteBenefits: data.charter.fteBenefits || "",
           softBenefits: data.charter.softBenefits || "",
         });
@@ -174,7 +178,9 @@ export default function DefinePhase() {
         goals: data.goals,
         scope: data.scope,
         savingsPerYear: data.savingsPerYear,
-        cashBenefits: data.cashBenefits,
+        workingCapitalGains: data.workingCapitalGains,
+        waccPercentage: data.waccPercentage,
+        financialSavings: data.financialSavings,
         fteBenefits: data.fteBenefits,
         softBenefits: data.softBenefits,
         userId: user?.id,
@@ -398,13 +404,51 @@ export default function DefinePhase() {
                     <p className="text-xs text-gray-500 mt-1">Annual cost savings expected from quality improvements</p>
                   </div>
                   <div>
-                    <Label htmlFor="cashBenefits">Working Capital (Cash) Benefits ($)</Label>
+                    <Label htmlFor="workingCapitalGains">Working Capital Gains (Cash) ($)</Label>
                     <Input
-                      id="cashBenefits"
+                      id="workingCapitalGains"
                       placeholder="e.g. 75000"
-                      {...charterForm.register("cashBenefits")}
+                      {...charterForm.register("workingCapitalGains")}
+                      onChange={(e) => {
+                        charterForm.setValue("workingCapitalGains", e.target.value);
+                        // Calculate Financial Savings based on WACC
+                        const wcg = parseFloat(e.target.value) || 0;
+                        const wacc = parseFloat(charterForm.getValues("waccPercentage")) / 100 || 0;
+                        const financialSavings = (wcg * wacc).toFixed(2);
+                        charterForm.setValue("financialSavings", financialSavings);
+                      }}
                     />
                     <p className="text-xs text-gray-500 mt-1">Cash flow and working capital improvements</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="waccPercentage">WACC (%)</Label>
+                      <Input
+                        id="waccPercentage"
+                        placeholder="e.g. 10"
+                        {...charterForm.register("waccPercentage")}
+                        onChange={(e) => {
+                          charterForm.setValue("waccPercentage", e.target.value);
+                          // Calculate Financial Savings based on WACC
+                          const wcg = parseFloat(charterForm.getValues("workingCapitalGains")) || 0;
+                          const wacc = parseFloat(e.target.value) / 100 || 0;
+                          const financialSavings = (wcg * wacc).toFixed(2);
+                          charterForm.setValue("financialSavings", financialSavings);
+                        }}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Weighted Average Cost of Capital</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="financialSavings">Financial Savings (p.a.) ($)</Label>
+                      <Input
+                        id="financialSavings"
+                        readOnly
+                        className="bg-gray-50"
+                        {...charterForm.register("financialSavings")}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">WCG * WACC</p>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-4">
