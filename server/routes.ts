@@ -179,7 +179,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:projectId/charter", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const charter = await storage.getCharter(projectId);
+      // Import and use the debug helper
+      const { debugGetCharter } = await import('./debughelper');
+      const charter = await debugGetCharter(projectId);
       
       if (!charter) {
         return res.status(404).json({ message: "Charter not found" });
