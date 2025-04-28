@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 import StatsCard from "./StatsCard";
 import ProjectsTable from "./ProjectsTable";
 import ActivityItem from "./ActivityItem";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from "recharts";
 
 // Sample data for charts
@@ -49,26 +66,54 @@ const defectData = [
 export default function Dashboard() {
   const { user } = useAppContext();
   const [timeframe, setTimeframe] = useState("Last 365 Days");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [showDateRangePicker, setShowDateRangePicker] = useState(false);
+  const [customDateRange, setCustomDateRange] = useState<{start?: Date, end?: Date}>({});
+  
+  // Handle timeframe change
+  useEffect(() => {
+    if (timeframe === "Custom Range") {
+      setShowDateRangePicker(true);
+    } else {
+      setShowDateRangePicker(false);
+    }
+  }, [timeframe]);
+  
+  // Custom date range formatted string
+  const customRangeString = customDateRange.start && customDateRange.end
+    ? `${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')}`
+    : '';
+
+  // Append custom range to timeframe for queryKey if using custom range
+  const effectiveTimeframe = 
+    timeframe === "Custom Range" && customDateRange.start && customDateRange.end
+      ? `${timeframe}:${customRangeString}`
+      : timeframe;
 
   // Fetch projects - focus on ones created by current user
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
-    queryKey: ["/api/projects", user?.id, timeframe],
+    queryKey: ["/api/projects", user?.id, effectiveTimeframe],
     enabled: !!user?.id,
   });
 
   // Fetch activity logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
-    queryKey: ["/api/activity-logs", timeframe],
+    queryKey: ["/api/activity-logs", effectiveTimeframe],
     enabled: !!user?.id,
   });
+  
+  // Apply selected date range
+  const applyDateRange = () => {
+    if (startDate && endDate) {
+      setCustomDateRange({ start: startDate, end: endDate });
+      setShowDateRangePicker(false);
+    }
+  };
   
   // Function to determine subtitle text based on timeframe
   const getTimeframeSubtitle = () => {
     switch(timeframe) {
-      case "Today":
-        return "Results for today only";
-      case "Last 7 Days":
-        return "Results from the past week";
       case "Last 30 Days":
         return "Results from the past month";
       case "Last 365 Days":
@@ -83,6 +128,10 @@ export default function Dashboard() {
         return "Results from current quarter";
       case "This Year":
         return "Results from current year";
+      case "Custom Range":
+        return customDateRange.start && customDateRange.end
+          ? `Results from ${format(customDateRange.start, 'MMM d, yyyy')} to ${format(customDateRange.end, 'MMM d, yyyy')}`
+          : "Select a custom date range";
       default:
         return "Overview of your Six Sigma process improvement initiatives";
     }
@@ -104,8 +153,6 @@ export default function Dashboard() {
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Today">Today</SelectItem>
-              <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
               <SelectItem value="Last 30 Days">Last 30 Days</SelectItem>
               <SelectItem value="Last 365 Days">Last 365 Days</SelectItem>
               <SelectItem value="Last Year">Last Year</SelectItem>
@@ -113,6 +160,7 @@ export default function Dashboard() {
               <SelectItem value="Since Beginning">Since Beginning</SelectItem>
               <SelectItem value="This Quarter">This Quarter</SelectItem>
               <SelectItem value="This Year">This Year</SelectItem>
+              <SelectItem value="Custom Range">Custom Range</SelectItem>
             </SelectContent>
           </Select>
           <Button>
@@ -120,6 +168,73 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+      
+      {/* Custom Date Range Dialog */}
+      <Dialog open={showDateRangePicker} onOpenChange={setShowDateRangePicker}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Select Date Range</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="start-date">Start Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    id="start-date"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : "Select date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="end-date">End Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                    id="end-date"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP") : "Select date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    disabled={(date) => (startDate ? date < startDate : false)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="submit"
+              onClick={applyDateRange}
+              disabled={!startDate || !endDate}
+            >
+              Apply
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
