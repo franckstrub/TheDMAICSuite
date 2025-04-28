@@ -196,8 +196,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/charter", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Fix cashBenefits to workingCapitalGains migration
+      const requestBody = {...req.body};
+      if (requestBody.cashBenefits !== undefined && requestBody.workingCapitalGains === undefined) {
+        requestBody.workingCapitalGains = requestBody.cashBenefits;
+        delete requestBody.cashBenefits;
+      }
+      
+      // Handle WACC calculation if needed
+      if (requestBody.workingCapitalGains && requestBody.waccPercentage && !requestBody.financialSavings) {
+        const wcg = parseFloat(requestBody.workingCapitalGains);
+        const wacc = parseFloat(requestBody.waccPercentage) / 100;
+        requestBody.financialSavings = (wcg * wacc).toFixed(2);
+      }
+      
       const charterData: InsertCharter = {
-        ...req.body,
+        ...requestBody,
         projectId
       };
       
@@ -223,9 +238,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/charters/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const charterData = req.body;
       
-      const charter = await storage.updateCharter(id, charterData);
+      // Fix cashBenefits to workingCapitalGains migration
+      const requestBody = {...req.body};
+      if (requestBody.cashBenefits !== undefined && requestBody.workingCapitalGains === undefined) {
+        requestBody.workingCapitalGains = requestBody.cashBenefits;
+        delete requestBody.cashBenefits;
+      }
+      
+      // Handle WACC calculation if needed
+      if (requestBody.workingCapitalGains && requestBody.waccPercentage && !requestBody.financialSavings) {
+        const wcg = parseFloat(requestBody.workingCapitalGains);
+        const wacc = parseFloat(requestBody.waccPercentage) / 100;
+        requestBody.financialSavings = (wcg * wacc).toFixed(2);
+      }
+      
+      const charter = await storage.updateCharter(id, requestBody);
       if (!charter) {
         return res.status(404).json({ message: "Charter not found" });
       }
