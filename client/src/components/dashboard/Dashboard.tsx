@@ -95,29 +95,63 @@ export default function Dashboard() {
           iconBgColor="blue"
         />
         <StatsCard 
-          title="Avg. Cycle Time"
-          value="4.2 Days"
-          change={-12}
-          changeLabel="improvement"
-          icon="clock"
+          title="Savings Per Year"
+          value="$842,000"
+          change={22}
+          changeLabel="YTD"
+          icon="dollar-sign"
           iconBgColor="green"
         />
         <StatsCard 
-          title="Defect Rate"
-          value="3.4%"
-          change={-5}
-          changeLabel="from last quarter" 
-          icon="exclamation-triangle"
-          iconBgColor="yellow"
+          title="Cash Benefits"
+          value="$356,200"
+          change={15}
+          changeLabel="year-to-date" 
+          icon="money-bill-wave"
+          iconBgColor="emerald"
         />
         <StatsCard 
-          title="Cost Savings"
-          value="$128,500"
-          change={15}
-          changeLabel="YTD"
-          icon="dollar-sign"
-          iconBgColor="purple"
+          title="FTP Benefits"
+          value="$486,500"
+          change={18}
+          changeLabel="year-to-date"
+          icon="chart-line"
+          iconBgColor="indigo"
         />
+      </div>
+      
+      {/* Additional Benefits */}
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base font-medium">Soft Benefits (Non-Quantifiable)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="flex items-center mb-2">
+                  <i className="fas fa-users text-blue-500 mr-2"></i>
+                  <span className="font-medium">Employee Satisfaction</span>
+                </div>
+                <p className="text-sm text-gray-600">Improved workplace satisfaction through streamlined processes</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="flex items-center mb-2">
+                  <i className="fas fa-award text-amber-500 mr-2"></i>
+                  <span className="font-medium">Quality Improvement</span>
+                </div>
+                <p className="text-sm text-gray-600">Enhanced product and service quality perception</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="flex items-center mb-2">
+                  <i className="fas fa-handshake text-emerald-500 mr-2"></i>
+                  <span className="font-medium">Customer Satisfaction</span>
+                </div>
+                <p className="text-sm text-gray-600">Increased customer satisfaction and loyalty</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Charts and Graphs */}

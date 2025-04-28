@@ -53,6 +53,10 @@ export const projectCharters = pgTable("project_charters", {
   problemStatement: text("problem_statement"),
   goals: text("goals"),
   scope: text("scope"),
+  savingsPerYear: text("savings_per_year"),
+  cashBenefits: text("cash_benefits"),
+  ftpBenefits: text("ftp_benefits"),
+  softBenefits: text("soft_benefits"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -62,6 +66,10 @@ export const insertCharterSchema = createInsertSchema(projectCharters).pick({
   problemStatement: true,
   goals: true,
   scope: true,
+  savingsPerYear: true,
+  cashBenefits: true,
+  ftpBenefits: true,
+  softBenefits: true,
 });
 
 // SIPOC Diagrams
