@@ -319,7 +319,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-gray-600 italic mb-4">
-                "The DMAIC workflow guides our teams through each phase effortlessly. We've seen a 45% reduction in project completion time since implementing Lean Sigma Flow."
+                "The DMAIC workflow guides our teams through each phase effortlessly. We've seen a 45% reduction in project completion time since implementing Lean Six Sigma DMAIC Suite."
               </p>
               <div className="text-yellow-500">
                 <i className="fas fa-star"></i>
@@ -465,7 +465,7 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center text-xl font-bold mb-4">
                 <i className="fas fa-chart-line text-secondary mr-2"></i>
-                <span>Lean Sigma Flow</span>
+                <span>Lean Six Sigma DMAIC Suite</span>
               </div>
               <p className="text-gray-400 mb-4">
                 Empowering organizations to achieve process excellence through data-driven improvement.
@@ -507,7 +507,7 @@ export default function LandingPage() {
               <h4 className="text-lg font-semibold mb-4">Contact</h4>
               <ul className="space-y-2">
                 <li className="text-gray-400">
-                  <i className="fas fa-envelope mr-2 text-gray-500"></i> info@leansigmaflow.com
+                  <i className="fas fa-envelope mr-2 text-gray-500"></i> info@leansixsigmadmaic.com
                 </li>
                 <li className="text-gray-400">
                   <i className="fas fa-phone mr-2 text-gray-500"></i> +1 (555) 123-4567
@@ -520,7 +520,7 @@ export default function LandingPage() {
           </div>
           
           <div className="pt-8 mt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
-            <p>&copy; {new Date().getFullYear()} Lean Sigma Flow. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Lean Six Sigma DMAIC Suite. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -529,7 +529,7 @@ export default function LandingPage() {
       <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sign In to Lean Sigma Flow</DialogTitle>
+            <DialogTitle>Sign In to Lean Six Sigma DMAIC Suite</DialogTitle>
           </DialogHeader>
           
           <form onSubmit={handleLogin} className="space-y-4">
