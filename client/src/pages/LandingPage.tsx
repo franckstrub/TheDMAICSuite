@@ -68,7 +68,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center text-primary font-bold text-xl">
             <i className="fas fa-chart-line text-secondary mr-2"></i>
-            <span>Lean Sigma Flow</span>
+            <span>Lean Six Sigma DMAIC Suite</span>
           </div>
           
           <nav className="hidden md:flex items-center space-x-8">
@@ -253,7 +253,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">What Our Customers Say</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Hear from professionals who have transformed their process improvement initiatives with Lean Sigma Flow
+              Hear from professionals who have transformed their process improvement initiatives with Lean Six Sigma DMAIC Suite
             </p>
           </div>
           
