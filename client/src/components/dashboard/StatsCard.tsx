@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 interface StatsCardProps {
   title: string;
   value: string;
+  secondaryValue?: string;
   change: number;
   changeLabel: string;
   icon: string;
@@ -14,6 +15,7 @@ interface StatsCardProps {
 export default function StatsCard({
   title,
   value,
+  secondaryValue,
   change,
   changeLabel,
   icon,
@@ -64,6 +66,9 @@ export default function StatsCard({
           </div>
         </div>
         <p className="text-2xl font-semibold">{value}</p>
+        {secondaryValue && (
+          <p className="text-sm text-gray-600 mt-1">{secondaryValue}</p>
+        )}
         <div className="flex items-center mt-2 text-xs">
           <span className={cn("flex items-center", isNegativeGood && isNegative ? "text-green-500" : changeColorClass)}>
             {isPositive ? (
