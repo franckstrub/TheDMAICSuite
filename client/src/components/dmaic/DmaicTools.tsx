@@ -1,0 +1,137 @@
+import { useEffect } from "react";
+import { useParams } from "wouter";
+import { useAppContext } from "@/store/AppContext";
+import { Button } from "@/components/ui/button";
+import DefinePhase from "./DefinePhase";
+import MeasurePhase from "./MeasurePhase";
+import AnalyzePhase from "./AnalyzePhase";
+import ImprovePhase from "./ImprovePhase";
+import ControlPhase from "./ControlPhase";
+import { cn } from "@/lib/utils";
+
+type PhaseParams = {
+  phase?: string;
+};
+
+export default function DmaicTools() {
+  const { activePhase, setActivePhase, currentProject, setCurrentTab } = useAppContext();
+  const params = useParams<PhaseParams>();
+
+  // Set active phase from URL parameter if available
+  useEffect(() => {
+    if (params.phase && 
+        ['define', 'measure', 'analyze', 'improve', 'control'].includes(params.phase)) {
+      setActivePhase(params.phase);
+    }
+  }, [params.phase, setActivePhase]);
+
+  // Render the appropriate phase component based on activePhase
+  const renderPhaseContent = () => {
+    switch (activePhase) {
+      case "define":
+        return <DefinePhase />;
+      case "measure":
+        return <MeasurePhase />;
+      case "analyze":
+        return <AnalyzePhase />;
+      case "improve":
+        return <ImprovePhase />;
+      case "control":
+        return <ControlPhase />;
+      default:
+        return <DefinePhase />;
+    }
+  };
+
+  return (
+    <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">DMAIC Methodology</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {activePhase.charAt(0).toUpperCase() + activePhase.slice(1)} Phase Tools & Techniques
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0">
+          <Button 
+            variant="ghost" 
+            className="text-primary hover:text-primary-dark flex items-center"
+            onClick={() => setCurrentTab("projects")}
+          >
+            <i className="fas fa-arrow-left mr-1"></i> Back to Projects
+          </Button>
+        </div>
+      </div>
+      
+      {/* DMAIC Phase Navigation */}
+      <div className="flex overflow-x-auto mb-6">
+        <div className="flex-grow flex space-x-1">
+          <PhaseButton 
+            phase="define" 
+            activePhase={activePhase} 
+            setActivePhase={setActivePhase} 
+          />
+          <PhaseButton 
+            phase="measure" 
+            activePhase={activePhase} 
+            setActivePhase={setActivePhase} 
+          />
+          <PhaseButton 
+            phase="analyze" 
+            activePhase={activePhase} 
+            setActivePhase={setActivePhase} 
+          />
+          <PhaseButton 
+            phase="improve" 
+            activePhase={activePhase} 
+            setActivePhase={setActivePhase} 
+          />
+          <PhaseButton 
+            phase="control" 
+            activePhase={activePhase} 
+            setActivePhase={setActivePhase} 
+          />
+        </div>
+      </div>
+      
+      {/* Phase Content */}
+      {renderPhaseContent()}
+    </div>
+  );
+}
+
+interface PhaseButtonProps {
+  phase: string;
+  activePhase: string;
+  setActivePhase: (phase: string) => void;
+}
+
+function PhaseButton({ phase, activePhase, setActivePhase }: PhaseButtonProps) {
+  const isActive = activePhase === phase;
+  
+  return (
+    <button 
+      onClick={() => setActivePhase(phase)}
+      className={cn(
+        "flex-grow py-2 px-4 rounded-md font-medium text-sm focus:outline-none border",
+        isActive 
+          ? "bg-primary text-white" 
+          : "bg-white text-gray-700 hover:bg-gray-100"
+      )}
+    >
+      <div className="flex items-center justify-center">
+        <span 
+          className={cn(
+            "w-6 h-6 rounded-full bg-opacity-20 flex items-center justify-center mr-2",
+            isActive ? "bg-white" : "bg-primary"
+          )}
+        >
+          <span className={isActive ? "text-white" : "text-primary"}>
+            {phase.charAt(0).toUpperCase()}
+          </span>
+        </span>
+        <span className="hidden sm:inline capitalize">{phase}</span>
+      </div>
+    </button>
+  );
+}
