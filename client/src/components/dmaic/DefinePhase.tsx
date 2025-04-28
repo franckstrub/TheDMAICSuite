@@ -30,6 +30,10 @@ export default function DefinePhase() {
       scope: "",
       startDate: "",
       targetEndDate: "",
+      savingsPerYear: "",
+      cashBenefits: "",
+      ftpBenefits: "",
+      softBenefits: "",
     },
   });
 
@@ -69,6 +73,10 @@ export default function DefinePhase() {
           targetEndDate: currentProject?.targetEndDate 
             ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
             : "",
+          savingsPerYear: data.charter.savingsPerYear || "",
+          cashBenefits: data.charter.cashBenefits || "",
+          ftpBenefits: data.charter.ftpBenefits || "",
+          softBenefits: data.charter.softBenefits || "",
         });
       }
     },
@@ -115,6 +123,10 @@ export default function DefinePhase() {
         problemStatement: data.problemStatement,
         goals: data.goals,
         scope: data.scope,
+        savingsPerYear: data.savingsPerYear,
+        cashBenefits: data.cashBenefits,
+        ftpBenefits: data.ftpBenefits,
+        softBenefits: data.softBenefits,
         userId: user?.id,
       };
 
@@ -320,7 +332,56 @@ export default function DefinePhase() {
                 </div>
               </div>
             </div>
-            <Button type="submit" disabled={saveCharterMutation.isPending}>
+            
+            {/* Project Benefits Section */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Project Benefits</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="savingsPerYear">Savings Per Year ($)</Label>
+                    <Input
+                      id="savingsPerYear"
+                      placeholder="e.g. 100000"
+                      {...charterForm.register("savingsPerYear")}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Annual cost savings expected from this project</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="cashBenefits">Cash Benefits ($)</Label>
+                    <Input
+                      id="cashBenefits"
+                      placeholder="e.g. 75000"
+                      {...charterForm.register("cashBenefits")}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">One-time or direct cash benefits</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="ftpBenefits">FTP Benefits ($)</Label>
+                    <Input
+                      id="ftpBenefits"
+                      placeholder="e.g. 50000"
+                      {...charterForm.register("ftpBenefits")}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Full-time personnel savings</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="softBenefits">Soft Benefits (Non-Quantifiable)</Label>
+                    <Textarea
+                      id="softBenefits"
+                      placeholder="e.g. Improved employee satisfaction, enhanced customer experience..."
+                      rows={3}
+                      {...charterForm.register("softBenefits")}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Benefits that cannot be directly quantified</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <Button type="submit" disabled={saveCharterMutation.isPending} className="mt-6">
               {saveCharterMutation.isPending ? "Saving..." : "Save Project Charter"}
             </Button>
           </form>
