@@ -536,7 +536,7 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="FTE Benefits"
-          value={`${calculateMetric(projects?.projects || [], 'fteBenefits').toFixed(1)} FTE (${formatCurrency(calculateMetric(projects?.projects || [], 'fteValue'), currency)})`}
+          value={`${calculateMetric(projects?.projects || [], 'fteBenefits').toFixed(1)} FTE ${formatCurrency(calculateMetric(projects?.projects || [], 'fteValue'), currency)}`}
           change={implementationStatus === "implemented" ? 22 : implementationStatus === "not-implemented" ? 8 : 18}
           changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="user-clock"
