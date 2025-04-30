@@ -546,7 +546,7 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="ROI"
-          value={`${(calculateMetric(projects?.projects || [], 'roi') * 100).toFixed(1)}%`}
+          value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
           secondaryValue="(Benefits-Costs)/Costs"
           change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
           changeLabel="Return on Investment"

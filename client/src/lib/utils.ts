@@ -96,23 +96,13 @@ export function formatCurrency(value: number | string, currency: CurrencyType): 
     return `${currency}0`;
   }
   
-  // Format based on currency
+  // Format all currencies without decimal places
   switch (currency) {
-    case '¥':
-    case '₩':
-      // Yen and Won typically don't use decimal places
-      return `${currency}${Math.round(numericValue).toLocaleString()}`;
     case 'CHF':
       // Swiss Franc uses the abbreviation before the number
-      return `${currency} ${numericValue.toLocaleString(undefined, { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      })}`;
+      return `${currency} ${Math.round(numericValue).toLocaleString()}`;
     default:
-      // Dollar, Euro, Pound
-      return `${currency}${numericValue.toLocaleString(undefined, { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      })}`;
+      // All other currencies including Dollar, Euro, Pound, Yen, Won
+      return `${currency}${Math.round(numericValue).toLocaleString()}`;
   }
 }
