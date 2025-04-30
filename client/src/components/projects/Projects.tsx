@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,7 +42,8 @@ import {
 import { CalendarIcon, PlusCircle, Search } from "lucide-react";
 
 export default function Projects() {
-  const { user, setCurrentProject, setCurrentTab, navigate } = useAppContext();
+  const { user, setCurrentProject, setCurrentTab } = useAppContext();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
