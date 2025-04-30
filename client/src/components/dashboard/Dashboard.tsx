@@ -461,25 +461,66 @@ export default function Dashboard() {
   
   // Generate financial waterfall data for chart with fallback to empty data
   const financialWaterfallData = useMemo(() => {
-    const data = createFinancialWaterfallData(filteredProjectsArray);
-    // Provide a fallback if data is empty
-    if (!data || data.length === 0) {
-      return [{
-        name: "Summary",
-        qualityCostSavings: 0,
-        financialSavings: 0,
-        fteBenefits: 0, 
-        investment: 0,
-        netValue: 0,
-        qualityCostSavingsDisplay: 0,
-        financialSavingsDisplay: 0,
-        fteBenefitsDisplay: 0,
-        investmentDisplay: 0,
-        netValueDisplay: 0,
-        components: []
-      }];
-    }
-    return data;
+    // Calculate the individual values from filtered projects
+    const qualityCostSavings = filteredProjectsArray.reduce((sum, project) => {
+      return sum + (project.benefits?.qualityCostSavings || 0);
+    }, 0);
+    
+    const financialSavings = filteredProjectsArray.reduce((sum, project) => {
+      const wacc = project.benefits?.wacc || 0.1;
+      return sum + (project.benefits?.workingCapitalGains || 0) * wacc;
+    }, 0);
+    
+    const fteBenefits = filteredProjectsArray.reduce((sum, project) => {
+      const avgFTECost = project.benefits?.avgFTECost || 139000;
+      return sum + (project.benefits?.fteBenefits || 0) * avgFTECost;
+    }, 0);
+    
+    // Calculate total project costs
+    const totalCosts = filteredProjectsArray.reduce((sum, project) => {
+      const oneOffCosts = (project.costs?.oneOffPeopleCost || 0) + 
+                      (project.costs?.oneOffTechnologyCost || 0) + 
+                      (project.costs?.oneOffOtherCost || 0);
+      const capexCosts = project.costs?.capexCost || 0;
+      return sum + oneOffCosts + capexCosts;
+    }, 0);
+    
+    // Calculate net value
+    const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
+
+    // Create an array of waterfall data with 5 separate entries - not stacked
+    return [
+      {
+        name: "Quality Cost Savings", 
+        value: qualityCostSavings,
+        start: 0,
+        color: "#10b981" // Green
+      },
+      {
+        name: "Financial Savings", 
+        value: financialSavings,
+        start: qualityCostSavings, 
+        color: "#22c55e" // Lighter green
+      },
+      {
+        name: "FTE Benefits", 
+        value: fteBenefits,
+        start: qualityCostSavings + financialSavings,
+        color: "#4ade80" // Even lighter green
+      },
+      {
+        name: "Investment", 
+        value: -totalCosts,
+        start: qualityCostSavings + financialSavings + fteBenefits,
+        color: "#ef4444" // Red
+      },
+      {
+        name: "Net Value", 
+        value: netValue,
+        start: 0, // Net value always starts at 0
+        color: "#3b82f6" // Blue
+      }
+    ];
   }, [filteredProjectsArray]);
 
   // Fetch activity logs
@@ -893,12 +934,9 @@ export default function Dashboard() {
               </div>
             </div>
             <ResponsiveContainer width="100%" height="80%">
-              <BarChart 
+              <ComposedChart 
                 data={financialWaterfallData}
                 margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
-                barSize={40}
-                layout="horizontal"
-                maxBarSize={60}
                 barCategoryGap={8}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -924,17 +962,10 @@ export default function Dashboard() {
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
-                    // Based on the name of the data key, find the corresponding display value
-                    if (name === "Quality Cost Savings") {
-                      return [formatCurrency(props.payload.qualityCostSavingsDisplay, currency), name];
-                    } else if (name === "Financial Savings") {
-                      return [formatCurrency(props.payload.financialSavingsDisplay, currency), name];
-                    } else if (name === "FTE Benefits") {
-                      return [formatCurrency(props.payload.fteBenefitsDisplay, currency), name];
-                    } else if (name === "Investment") {
-                      return [formatCurrency(props.payload.investmentDisplay, currency), name];
-                    } else if (name === "Net Value") {
-                      return [formatCurrency(props.payload.netValueDisplay, currency), "Net Value (Final Result)"];
+                    // Filter out unwanted tooltip entries
+                    if (name === "start" || name === "color") return null;
+                    if (name === "value") {
+                      return [formatCurrency(value, currency), props.payload.name];
                     }
                     return [formatCurrency(value, currency), name];
                   }}
@@ -950,125 +981,52 @@ export default function Dashboard() {
                 {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Create separate bar series for each waterfall segment */}
-                {/* First bar - Quality Cost Savings */}
-                <Bar 
-                  dataKey="qualityCostSavings"
-                  fill="#10b981" // Green
-                  name="Quality Cost Savings"
-                  stackId="a"
-                  barSize={40}
-                />
-                
-                {/* Financial Savings - appears above Quality Cost Savings */}
-                <Bar 
-                  dataKey="financialSavings"
-                  fill="#22c55e" // Lighter green
-                  name="Financial Savings"
-                  stackId="a"
-                  barSize={40}
-                />
-                
-                {/* FTE Benefits - appears above Financial Savings */}
-                <Bar 
-                  dataKey="fteBenefits"
-                  fill="#4ade80" // Even lighter green
-                  name="FTE Benefits"
-                  stackId="a"
-                  barSize={40}
-                />
-                
-                {/* Investment (negative value) */}
-                <Bar 
-                  dataKey="investment"
-                  fill="#ef4444" // Red
-                  name="Investment"
-                  stackId="a"
-                  barSize={40}
-                />
-                
-                {/* Net Value - a separate bar */}
-                <Bar 
-                  dataKey="netValue"
-                  fill="#3b82f6" // Blue
-                  name="Net Value"
-                  stackId="b"
-                  barSize={40}
-                />
-                
-                {/* Dashed connector lines - with safety checks */}
-                {financialWaterfallData?.length > 0 && (
-                  <>
-                    <ReferenceLine 
-                      y={financialWaterfallData[0]?.qualityCostSavings || 0} 
-                      segment={[
-                        {x: 0, y: financialWaterfallData[0]?.qualityCostSavings || 0}, 
-                        {x: 1, y: financialWaterfallData[0]?.qualityCostSavings || 0}
-                      ]} 
-                      stroke="#aaa" 
-                      strokeDasharray="3 3" 
-                    />
-                    <ReferenceLine 
-                      y={(financialWaterfallData[0]?.qualityCostSavings || 0) + (financialWaterfallData[0]?.financialSavings || 0)} 
-                      segment={[
-                        {
-                          x: 1, 
-                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + (financialWaterfallData[0]?.financialSavings || 0)
-                        }, 
-                        {
-                          x: 2, 
-                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + (financialWaterfallData[0]?.financialSavings || 0)
-                        }
-                      ]} 
-                      stroke="#aaa" 
-                      strokeDasharray="3 3" 
-                    />
-                    <ReferenceLine 
-                      y={(financialWaterfallData[0]?.qualityCostSavings || 0) + 
-                         (financialWaterfallData[0]?.financialSavings || 0) + 
-                         (financialWaterfallData[0]?.fteBenefits || 0)} 
-                      segment={[
-                        {
-                          x: 2, 
-                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + 
-                             (financialWaterfallData[0]?.financialSavings || 0) + 
-                             (financialWaterfallData[0]?.fteBenefits || 0)
-                        }, 
-                        {
-                          x: 3, 
-                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + 
-                             (financialWaterfallData[0]?.financialSavings || 0) + 
-                             (financialWaterfallData[0]?.fteBenefits || 0)
-                        }
-                      ]} 
-                      stroke="#aaa" 
-                      strokeDasharray="3 3" 
-                    />
-                  </>
-                )}
-              </BarChart>
+                {/* Render all floating bars and connecting lines */}
+                {financialWaterfallData.map((item, index) => {
+                  const isLastBar = index === financialWaterfallData.length - 1;
+                  const isNetValueBar = item.name === "Net Value";
+                  
+                  // Don't render connecting lines for the last bar (Net Value)
+                  const renderConnectingLine = !isLastBar && !isNetValueBar;
+                  
+                  return (
+                    <React.Fragment key={`bar-${index}`}>
+                      {/* Custom floating bar using ReferenceArea */}
+                      <ReferenceArea
+                        key={`bar-${index}`}
+                        x1={index - 0.4}
+                        x2={index + 0.4}
+                        y1={item.start}
+                        y2={item.start + item.value}
+                        fill={item.color}
+                        fillOpacity={1}
+                      />
+                      
+                      {/* Connecting line to next bar */}
+                      {renderConnectingLine && (
+                        <ReferenceLine
+                          key={`connector-${index}`}
+                          y={item.start + item.value}
+                          segment={[
+                            { x: index + 0.4, y: item.start + item.value },
+                            { x: index + 1 - 0.4, y: item.start + item.value }
+                          ]}
+                          stroke="#aaa"
+                          strokeDasharray="3 3"
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </ComposedChart>
             </ResponsiveContainer>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-1">
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: "#10b981" }}></div>
-                <span className="text-xs text-gray-600">Quality Cost Savings</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: "#22c55e" }}></div>
-                <span className="text-xs text-gray-600">Financial Savings</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: "#4ade80" }}></div>
-                <span className="text-xs text-gray-600">FTE Benefits</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: "#ef4444" }}></div>
-                <span className="text-xs text-gray-600">Investment</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: "#3b82f6" }}></div>
-                <span className="text-xs text-gray-600">Net Value</span>
-              </div>
+              {financialWaterfallData.map((item, index) => (
+                <div key={`legend-${index}`} className="flex items-center">
+                  <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: item.color }}></div>
+                  <span className="text-xs text-gray-600">{item.name}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
