@@ -495,7 +495,7 @@ export default function Dashboard() {
       </Dialog>
       
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
         <StatsCard 
           title="Active Projects"
           value={projects?.projects?.length.toString() || "0"}
@@ -528,15 +528,6 @@ export default function Dashboard() {
           changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="user-clock"
           iconBgColor="purple"
-        />
-        <StatsCard 
-          title="Total Costs (p.a.)"
-          value={formatCurrency(calculateMetric(projects?.projects || [], 'totalCosts'), currency)}
-          secondaryValue="One-off + CAPEX Costs"
-          change={implementationStatus === "implemented" ? -15 : implementationStatus === "not-implemented" ? -5 : -12}
-          changeLabel="Total project investment costs"
-          icon="money-check-alt"
-          iconBgColor="red"
         />
         <StatsCard 
           title="ROI"
