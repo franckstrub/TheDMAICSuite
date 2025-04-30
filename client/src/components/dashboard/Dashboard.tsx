@@ -45,17 +45,87 @@ import {
 import { Label } from "@/components/ui/label";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from "recharts";
 
-// Create waterfall data
-const createWaterfallData = () => {
-  const investmentValue = -100000;  // Negative value for investment (cost)
-  const qualitySavings = 45000;
-  const financialSavings = 25000;
-  const fteBenefits = 60000;
+// Define the Project type at the top level so it's accessible
+type Project = {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: number;
+  phases?: {
+    define?: { status: string };
+    measure?: { status: string };
+    analyze?: { status: string };
+    improve?: { status: string };
+    control?: { status: string };
+  };
+  benefits?: {
+    qualityCostSavings?: number;
+    workingCapitalGains?: number;
+    wacc?: number;
+    fteBenefits?: number;
+    avgFTECost?: number;
+    [key: string]: any;
+  };
+  costs?: {
+    oneOffPeopleCost?: number;
+    oneOffTechnologyCost?: number;
+    oneOffOtherCost?: number;
+    capexCost?: number;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+// The waterfall data will be created from real project data
+const createWaterfallData = (projects: Project[]) => {
+  if (!projects || projects.length === 0) {
+    // Default values if no projects available
+    return [
+      { name: "Investment", value: 0, displayValue: 0, start: 0, end: 0, fill: "#ef4444", isTotal: false },
+      { name: "Quality Savings", value: 0, displayValue: 0, start: 0, end: 0, fill: "#22c55e", isTotal: false },
+      { name: "Financial Savings", value: 0, displayValue: 0, start: 0, end: 0, fill: "#3b82f6", isTotal: false },
+      { name: "FTE Benefits", value: 0, displayValue: 0, start: 0, end: 0, fill: "#8b5cf6", isTotal: false },
+      { name: "Net Value", value: 0, displayValue: 0, start: 0, end: 0, fill: "#15803d", isTotal: true }
+    ];
+  }
+  
+  // Calculate total project costs (investment is negative)
+  const totalCosts = projects.reduce((sum, project) => {
+    const oneOffCosts = (project.costs?.oneOffPeopleCost || 0) + 
+                     (project.costs?.oneOffTechnologyCost || 0) + 
+                     (project.costs?.oneOffOtherCost || 0);
+    const capexCosts = project.costs?.capexCost || 0;
+    return sum + oneOffCosts + capexCosts;
+  }, 0);
+  
+  // Investment value is negative
+  const investmentValue = -totalCosts;
+  
+  // Calculate benefit values from projects
+  const qualitySavings = projects.reduce((sum, project) => 
+    sum + (project.benefits?.qualityCostSavings || 0), 0);
+    
+  const financialSavings = projects.reduce((sum, project) => {
+    const wcg = project.benefits?.workingCapitalGains || 0;
+    const wacc = project.benefits?.wacc || 0.1;
+    return sum + (wcg * wacc);
+  }, 0);
+  
+  const fteBenefits = projects.reduce((sum, project) => {
+    const fteCount = project.benefits?.fteBenefits || 0;
+    const fteCost = project.benefits?.avgFTECost || 139000;
+    return sum + (fteCount * fteCost);
+  }, 0);
+  
+  // Calculate net value
   const netValue = investmentValue + qualitySavings + financialSavings + fteBenefits;
   
-  // True waterfall data structure
+  // Build the waterfall data structure
   return [
-    // Investment (start) - start at 0, end at -100,000
+    // Investment (start) - start at 0, end at negative investment value
     { 
       name: "Investment", 
       value: investmentValue, 
@@ -66,7 +136,7 @@ const createWaterfallData = () => {
       isTotal: false 
     },
     
-    // Quality savings - start at -100,000, end at -55,000
+    // Quality savings - start at investment, build up from there
     { 
       name: "Quality Savings", 
       value: qualitySavings, 
@@ -77,7 +147,7 @@ const createWaterfallData = () => {
       isTotal: false 
     },
     
-    // Financial savings - start at -55,000, end at -30,000
+    // Financial savings - continue building up
     { 
       name: "Financial Savings", 
       value: financialSavings, 
@@ -88,7 +158,7 @@ const createWaterfallData = () => {
       isTotal: false 
     },
     
-    // FTE Benefits - start at -30,000, end at +30,000
+    // FTE Benefits - continue to net value
     { 
       name: "FTE Benefits", 
       value: fteBenefits, 
@@ -112,14 +182,37 @@ const createWaterfallData = () => {
   ];
 };
 
-const roiWalkData = createWaterfallData();
+// Create cost breakdown data from projects
+const createCostBreakdownData = (projects: Project[]) => {
+  if (!projects || projects.length === 0) {
+    return [
+      { name: "People Costs", value: 0, fill: "#f97316" },
+      { name: "Technology", value: 0, fill: "#0ea5e9" },
+      { name: "CAPEX", value: 0, fill: "#8b5cf6" },
+      { name: "Other Costs", value: 0, fill: "#a3a3a3" }
+    ];
+  }
 
-const costBreakdownData = [
-  { name: "People Costs", value: 60000, fill: "#f97316" },
-  { name: "Technology", value: 30000, fill: "#0ea5e9" },
-  { name: "CAPEX", value: 80000, fill: "#8b5cf6" },
-  { name: "Other Costs", value: 15000, fill: "#a3a3a3" }
-];
+  // Calculate cost totals by category
+  const peopleCosts = projects.reduce((sum, project) => 
+    sum + (project.costs?.oneOffPeopleCost || 0), 0);
+    
+  const technologyCosts = projects.reduce((sum, project) => 
+    sum + (project.costs?.oneOffTechnologyCost || 0), 0);
+    
+  const capexCosts = projects.reduce((sum, project) => 
+    sum + (project.costs?.capexCost || 0), 0);
+    
+  const otherCosts = projects.reduce((sum, project) => 
+    sum + (project.costs?.oneOffOtherCost || 0), 0);
+  
+  return [
+    { name: "People Costs", value: peopleCosts, fill: "#f97316" },
+    { name: "Technology", value: technologyCosts, fill: "#0ea5e9" },
+    { name: "CAPEX", value: capexCosts, fill: "#8b5cf6" },
+    { name: "Other Costs", value: otherCosts, fill: "#a3a3a3" }
+  ];
+};
 
 export default function Dashboard() {
   const { user, currency, implementationStatus, setImplementationStatus } = useAppContext();
@@ -149,40 +242,7 @@ export default function Dashboard() {
       ? `${timeframe}:${customRangeString}`
       : timeframe;
 
-  // Define types for the project and project data structure
-  type Project = {
-    id: number;
-    title: string;
-    description: string;
-    status: string;
-    createdAt: string;
-    updatedAt: string;
-    userId: number;
-    phases?: {
-      define?: { status: string };
-      measure?: { status: string };
-      analyze?: { status: string };
-      improve?: { status: string };
-      control?: { status: string };
-    };
-    benefits?: {
-      qualityCostSavings?: number;
-      workingCapitalGains?: number;
-      wacc?: number;
-      fteBenefits?: number;
-      avgFTECost?: number;
-      [key: string]: any;
-    };
-    costs?: {
-      oneOffPeopleCost?: number;
-      oneOffTechnologyCost?: number;
-      oneOffOtherCost?: number;
-
-      capexCost?: number;
-      [key: string]: any;
-    };
-    [key: string]: any;
-  }
+  // ProjectsData type for API response
   
   type ProjectsData = {
     projects: Project[];
@@ -429,6 +489,16 @@ export default function Dashboard() {
     
     return { ...projectsWithBenefits, projects: filteredProjects };
   }, [projectsWithBenefits, implementationStatus]);
+  
+  // Generate chart data from projects based on implementation status filter
+  const filteredProjectsArray = useMemo(() => {
+    if (!projects?.projects) return [];
+    return projects.projects;
+  }, [projects]);
+  
+  // Generate chart data from filtered projects
+  const roiWalkData = useMemo(() => createWaterfallData(filteredProjectsArray), [filteredProjectsArray]);
+  const costBreakdownData = useMemo(() => createCostBreakdownData(filteredProjectsArray), [filteredProjectsArray]);
 
   // Fetch activity logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
