@@ -818,7 +818,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-medium">ROI Financial Walk</CardTitle>
+            <CardTitle className="text-base font-medium">ROI Financial Waterfall</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -882,32 +882,43 @@ export default function Dashboard() {
                   data={roiWalkData.filter(item => !item.isTotal)}
                 />
                 
-                {/* For each data point, create a bar from start to end */}
-                {roiWalkData.map((entry, index) => {
-                  // Skip the total bar for the waterfall
-                  if (entry.isTotal) return null;
-                  
-                  // Create a custom data array with just this entry
-                  const singleEntryData = [{
-                    ...entry,
-                    // Use a custom key for the bar's value
-                    valueBar: entry.start < entry.end 
-                      ? entry.end - entry.start 
-                      : entry.start - entry.end
-                  }];
-                  
-                  return (
-                    <Bar 
-                      key={`bar-${index}`}
-                      dataKey="valueBar" 
-                      fill={entry.fill}
-                      data={singleEntryData}
-                      // Positive bars start at "start", negative bars end at "start"
-                      stackId="stack"
-                      baseValue={entry.start}
-                    />
-                  );
-                })}
+                {/* Special handling for Investment bar (first bar - going down) */}
+                <Bar 
+                  key="investment-bar"
+                  dataKey="value"
+                  fill={roiWalkData[0].fill}
+                  name="Investment"
+                  // Only render for Investment
+                  data={[roiWalkData[0]]}
+                />
+
+                {/* The savings/benefits bars (going up) */}
+                <Bar 
+                  key="quality-savings-bar"
+                  dataKey="value"
+                  fill={roiWalkData[1].fill}
+                  name="Quality Savings"
+                  // Only render for Quality Savings
+                  data={[roiWalkData[1]]}
+                />
+                
+                <Bar 
+                  key="financial-savings-bar"
+                  dataKey="value"
+                  fill={roiWalkData[2].fill}
+                  name="Financial Savings"
+                  // Only render for Financial Savings
+                  data={[roiWalkData[2]]}
+                />
+                
+                <Bar 
+                  key="fte-benefits-bar"
+                  dataKey="value"
+                  fill={roiWalkData[3].fill}
+                  name="FTE Benefits"
+                  // Only render for FTE Benefits
+                  data={[roiWalkData[3]]}
+                />
                 
                 {/* Net Value bar - rendered separately */}
                 <Bar 
