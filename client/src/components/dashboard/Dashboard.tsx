@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 import StatsCard from "./StatsCard";
@@ -488,36 +488,38 @@ export default function Dashboard() {
     // Calculate net value
     const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
 
-    // Create an array of waterfall data with 5 separate entries - not stacked
+    // Create an array of waterfall data with 5 separate entries for the waterfall chart
+    // Using fixed positioning for the floating bars as requested in the design
+    // Bar 1 at 0, Bar 2 at first value, Bar 3 at sum of first+second, Bar 4 at sum of all benefits
     return [
       {
         name: "Quality Cost Savings", 
         value: qualityCostSavings,
-        start: 0,
+        start: 0, // First bar starts at 0
         color: "#10b981" // Green
       },
       {
         name: "Financial Savings", 
         value: financialSavings,
-        start: qualityCostSavings, 
+        start: qualityCostSavings, // Second bar starts after Quality Cost Savings
         color: "#22c55e" // Lighter green
       },
       {
         name: "FTE Benefits", 
         value: fteBenefits,
-        start: qualityCostSavings + financialSavings,
+        start: qualityCostSavings + financialSavings, // Third bar starts after combined previous values
         color: "#4ade80" // Even lighter green
       },
       {
         name: "Investment", 
-        value: -totalCosts,
-        start: qualityCostSavings + financialSavings + fteBenefits,
+        value: -totalCosts, // Negative value for investment costs
+        start: qualityCostSavings + financialSavings + fteBenefits, // Fourth bar starts at sum of all benefits
         color: "#ef4444" // Red
       },
       {
         name: "Net Value", 
         value: netValue,
-        start: 0, // Net value always starts at 0
+        start: 0, // Net value shown as a separate bar starting at 0
         color: "#3b82f6" // Blue
       }
     ];
@@ -989,34 +991,32 @@ export default function Dashboard() {
                   // Don't render connecting lines for the last bar (Net Value)
                   const renderConnectingLine = !isLastBar && !isNetValueBar;
                   
-                  return (
-                    <React.Fragment key={`bar-${index}`}>
-                      {/* Custom floating bar using ReferenceArea */}
-                      <ReferenceArea
-                        key={`bar-${index}`}
-                        x1={index - 0.4}
-                        x2={index + 0.4}
-                        y1={item.start}
-                        y2={item.start + item.value}
-                        fill={item.color}
-                        fillOpacity={1}
+                  return [
+                    // Custom floating bar using ReferenceArea
+                    <ReferenceArea
+                      key={`bar-${index}`}
+                      x1={index - 0.4}
+                      x2={index + 0.4}
+                      y1={item.start}
+                      y2={item.start + item.value}
+                      fill={item.color}
+                      fillOpacity={1}
+                    />,
+                    
+                    // Connecting line to next bar (if needed)
+                    renderConnectingLine && (
+                      <ReferenceLine
+                        key={`connector-${index}`}
+                        y={item.start + item.value}
+                        segment={[
+                          { x: index + 0.4, y: item.start + item.value },
+                          { x: index + 1 - 0.4, y: item.start + item.value }
+                        ]}
+                        stroke="#aaa"
+                        strokeDasharray="3 3"
                       />
-                      
-                      {/* Connecting line to next bar */}
-                      {renderConnectingLine && (
-                        <ReferenceLine
-                          key={`connector-${index}`}
-                          y={item.start + item.value}
-                          segment={[
-                            { x: index + 0.4, y: item.start + item.value },
-                            { x: index + 1 - 0.4, y: item.start + item.value }
-                          ]}
-                          stroke="#aaa"
-                          strokeDasharray="3 3"
-                        />
-                      )}
-                    </React.Fragment>
-                  );
+                    )
+                  ];
                 })}
               </ComposedChart>
             </ResponsiveContainer>
