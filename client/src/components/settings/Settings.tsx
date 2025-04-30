@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAppContext, CurrencyType } from "@/store/AppContext";
 import {
   Card,
@@ -16,13 +16,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { Search } from "lucide-react";
 
 export default function Settings() {
   const { currency, setCurrency } = useAppContext();
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyType>(currency);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const currencyOptions: { value: CurrencyType; label: string }[] = [
     // Main currencies
@@ -33,6 +36,7 @@ export default function Settings() {
     { value: "CHF", label: "Swiss Franc (CHF)" },
     
     // Asia & Pacific
+    { value: "CN¥", label: "Chinese Yuan (CN¥)" },
     { value: "₹", label: "Indian Rupee (₹)" },
     { value: "₩", label: "Korean Won (₩)" },
     { value: "A$", label: "Australian Dollar (A$)" },
@@ -51,7 +55,11 @@ export default function Settings() {
     // Europe
     { value: "₽", label: "Russian Ruble (₽)" },
     { value: "₺", label: "Turkish Lira (₺)" },
-    { value: "kr", label: "Swedish/Danish/Norwegian Krona (kr)" },
+    // Nordic currencies
+    { value: "DKK", label: "Danish Krone (DKK)" },
+    { value: "SEK", label: "Swedish Krona (SEK)" },
+    { value: "NOK", label: "Norwegian Krone (NOK)" },
+    { value: "ISK", label: "Icelandic Króna (ISK)" },
     { value: "zł", label: "Polish Złoty (zł)" },
     { value: "Ft", label: "Hungarian Forint (Ft)" },
     { value: "₴", label: "Ukrainian Hryvnia (₴)" },
@@ -65,6 +73,15 @@ export default function Settings() {
     // Other
     { value: "ƒ", label: "Dutch Guilder/Florin (ƒ)" },
   ];
+
+  // Filter currencies based on search query
+  const filteredCurrencies = useMemo(() => {
+    if (!searchQuery.trim()) return currencyOptions;
+    
+    return currencyOptions.filter(option => 
+      option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [currencyOptions, searchQuery]);
 
   const handleCurrencyChange = (value: CurrencyType) => {
     setSelectedCurrency(value);
@@ -111,35 +128,35 @@ export default function Settings() {
                     ))}
                     
                     <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Asia & Pacific</div>
-                    {currencyOptions.slice(5, 13).map((option) => (
+                    {currencyOptions.slice(5, 14).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}
                     
                     <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Americas</div>
-                    {currencyOptions.slice(13, 17).map((option) => (
+                    {currencyOptions.slice(14, 18).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}
                     
                     <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Europe</div>
-                    {currencyOptions.slice(17, 23).map((option) => (
+                    {currencyOptions.slice(18, 28).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}
                     
                     <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Africa & Middle East</div>
-                    {currencyOptions.slice(23, 27).map((option) => (
+                    {currencyOptions.slice(28, 32).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}
                     
                     <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Other</div>
-                    {currencyOptions.slice(27).map((option) => (
+                    {currencyOptions.slice(32).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

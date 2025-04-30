@@ -2,8 +2,9 @@ import { createContext, useContext } from "react";
 
 export type CurrencyType = 
   | "$" | "€" | "£" | "¥" | "₩" | "CHF" | "₹" | "₽" | "₺" | "A$" 
-  | "C$" | "HK$" | "kr" | "R$" | "R" | "₱" | "₴" | "฿" | "₦" | "SAR" 
-  | "AED" | "zł" | "Ft" | "RM" | "S$" | "₲" | "ƒ" | "CLP";
+  | "C$" | "HK$" | "R$" | "R" | "₱" | "₴" | "฿" | "₦" | "SAR" 
+  | "AED" | "zł" | "Ft" | "RM" | "S$" | "₲" | "ƒ" | "CLP" | "¥" 
+  | "CN¥" | "DKK" | "SEK" | "NOK" | "ISK";
 
 type AppContextType = {
   user: any | null;
