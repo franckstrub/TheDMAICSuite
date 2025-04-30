@@ -249,7 +249,7 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="Quality Cost Savings (p.a.)"
-          value="$842,000"
+          value={formatCurrency(842000, currency)}
           change={22}
           changeLabel="YTD"
           icon="dollar-sign"
@@ -257,8 +257,8 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="Working Capital Gains (Cash)"
-          value="$356,200"
-          secondaryValue="Financial Savings (p.a.): $35,620"
+          value={formatCurrency(356200, currency)}
+          secondaryValue={`Financial Savings (p.a.): ${formatCurrency(35620, currency)}`}
           change={15}
           changeLabel="year-to-date" 
           icon="money-bill-wave"
@@ -266,7 +266,7 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="FTE Benefits"
-          value="3.5 FTE ($486,500)"
+          value={`3.5 FTE (${formatCurrency(486500, currency)})`}
           change={18}
           changeLabel="year-to-date"
           icon="user-clock"
