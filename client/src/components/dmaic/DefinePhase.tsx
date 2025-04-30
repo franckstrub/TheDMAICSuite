@@ -4,6 +4,7 @@ import { useAppContext } from "@/store/AppContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -16,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 export default function DefinePhase() {
-  const { user, currentProject } = useAppContext();
+  const { user, currentProject, currency } = useAppContext();
   const { toast } = useToast();
   const projectId = currentProject?.id || 1; // Fallback to 1 for demo
 
@@ -395,19 +396,19 @@ export default function DefinePhase() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="savingsPerYear">Quality Cost Savings (p.a.) ($)</Label>
+                    <Label htmlFor="savingsPerYear">Quality Cost Savings (p.a.) ({currency})</Label>
                     <Input
                       id="savingsPerYear"
-                      placeholder="e.g. 100000"
+                      placeholder={`e.g. 100000`}
                       {...charterForm.register("savingsPerYear")}
                     />
                     <p className="text-xs text-gray-500 mt-1">Annual cost savings expected from quality improvements</p>
                   </div>
                   <div>
-                    <Label htmlFor="workingCapitalGains">Working Capital Gains (Cash) ($)</Label>
+                    <Label htmlFor="workingCapitalGains">Working Capital Gains (Cash) ({currency})</Label>
                     <Input
                       id="workingCapitalGains"
-                      placeholder="e.g. 75000"
+                      placeholder={`e.g. 75000`}
                       {...charterForm.register("workingCapitalGains")}
                       onChange={(e) => {
                         charterForm.setValue("workingCapitalGains", e.target.value);
@@ -440,7 +441,7 @@ export default function DefinePhase() {
                       <p className="text-xs text-gray-500 mt-1">Weighted Average Cost of Capital</p>
                     </div>
                     <div>
-                      <Label htmlFor="financialSavings">Financial Savings (p.a.) ($)</Label>
+                      <Label htmlFor="financialSavings">Financial Savings (p.a.) ({currency})</Label>
                       <Input
                         id="financialSavings"
                         readOnly
@@ -511,7 +512,7 @@ export default function DefinePhase() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="fteCostPerYear" className="text-xs">Cost per FTE/Year ($)</Label>
+                        <Label htmlFor="fteCostPerYear" className="text-xs">Cost per FTE/Year ({currency})</Label>
                         <Input
                           id="fteCostPerYear"
                           type="number"
@@ -525,7 +526,7 @@ export default function DefinePhase() {
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                         <div>
                           <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte}</span></p>
-                          <p className="text-sm font-medium">Calculated Value: <span className="text-green-600">${fteParams.calculatedValue.toLocaleString()}</span></p>
+                          <p className="text-sm font-medium">Calculated Value: <span className="text-green-600">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
                         </div>
                         <Button variant="outline" size="sm" className="text-xs" onClick={calculateFte}>
                           Calculate
