@@ -37,6 +37,18 @@ export default function DefinePhase() {
       financialSavings: "",
       fteBenefits: "",
       softBenefits: "",
+      // Project cost fields
+      oneOffPeopleCost: "",
+      oneOffTechnologyCost: "",
+      oneOffOtherCost: "",
+      oneOffOtherExplanation: "",
+      opexPeopleCost: "",
+      opexTechnologyCost: "",
+      opexOtherCost: "",
+      opexOtherExplanation: "",
+      opexPeriod: "month", // month, quarter, year
+      capexCost: "",
+      capexExplanation: "",
     },
   });
 
@@ -133,6 +145,18 @@ export default function DefinePhase() {
           financialSavings: data.charter.financialSavings || "",
           fteBenefits: data.charter.fteBenefits || "",
           softBenefits: data.charter.softBenefits || "",
+          // Project cost fields
+          oneOffPeopleCost: data.charter.oneOffPeopleCost || "",
+          oneOffTechnologyCost: data.charter.oneOffTechnologyCost || "",
+          oneOffOtherCost: data.charter.oneOffOtherCost || "",
+          oneOffOtherExplanation: data.charter.oneOffOtherExplanation || "",
+          opexPeopleCost: data.charter.opexPeopleCost || "",
+          opexTechnologyCost: data.charter.opexTechnologyCost || "",
+          opexOtherCost: data.charter.opexOtherCost || "",
+          opexOtherExplanation: data.charter.opexOtherExplanation || "",
+          opexPeriod: data.charter.opexPeriod || "month",
+          capexCost: data.charter.capexCost || "",
+          capexExplanation: data.charter.capexExplanation || "",
         });
       }
     },
@@ -185,6 +209,18 @@ export default function DefinePhase() {
         financialSavings: data.financialSavings,
         fteBenefits: data.fteBenefits,
         softBenefits: data.softBenefits,
+        // Project cost fields
+        oneOffPeopleCost: data.oneOffPeopleCost,
+        oneOffTechnologyCost: data.oneOffTechnologyCost,
+        oneOffOtherCost: data.oneOffOtherCost,
+        oneOffOtherExplanation: data.oneOffOtherExplanation,
+        opexPeopleCost: data.opexPeopleCost,
+        opexTechnologyCost: data.opexTechnologyCost,
+        opexOtherCost: data.opexOtherCost,
+        opexOtherExplanation: data.opexOtherExplanation,
+        opexPeriod: data.opexPeriod,
+        capexCost: data.capexCost,
+        capexExplanation: data.capexExplanation,
         userId: user?.id,
       };
 
