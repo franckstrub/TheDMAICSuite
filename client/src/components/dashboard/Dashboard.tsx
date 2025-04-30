@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 import StatsCard from "./StatsCard";
@@ -65,7 +65,7 @@ const defectData = [
 ];
 
 export default function Dashboard() {
-  const { user, currency } = useAppContext();
+  const { user, currency, implementationStatus, setImplementationStatus } = useAppContext();
   const [timeframe, setTimeframe] = useState("Last 365 Days");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -92,11 +92,62 @@ export default function Dashboard() {
       ? `${timeframe}:${customRangeString}`
       : timeframe;
 
+  // Helper function to check if a project is implemented
+  const isProjectImplemented = (project: any) => {
+    // A project is implemented if Improve phase is completed AND Control phase is in progress or completed
+    return (
+      project.phases?.improve?.status === "completed" && 
+      (project.phases?.control?.status === "in-progress" || project.phases?.control?.status === "completed")
+    );
+  };
+  
+  // Define types for the project and project data structure
+  type Project = {
+    id: number;
+    title: string;
+    description: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    userId: number;
+    phases?: {
+      define?: { status: string };
+      measure?: { status: string };
+      analyze?: { status: string };
+      improve?: { status: string };
+      control?: { status: string };
+    };
+    [key: string]: any;
+  }
+  
+  type ProjectsData = {
+    projects: Project[];
+    [key: string]: any;
+  }
+  
   // Fetch projects - focus on ones created by current user
-  const { data: projects, isLoading: isLoadingProjects } = useQuery({
+  const { data: allProjects, isLoading: isLoadingProjects } = useQuery<ProjectsData>({
     queryKey: ["/api/projects", user?.id, effectiveTimeframe],
     enabled: !!user?.id,
   });
+  
+  // Filter projects based on implementation status
+  const projects = useMemo(() => {
+    if (!allProjects?.projects) return { projects: [] };
+    
+    // If implementation status is "all", return all projects
+    if (implementationStatus === "all") {
+      return allProjects;
+    }
+    
+    // Filter projects based on implementation status
+    const filteredProjects = allProjects.projects.filter((project: Project) => {
+      const implemented = isProjectImplemented(project);
+      return implementationStatus === "implemented" ? implemented : !implemented;
+    });
+    
+    return { ...allProjects, projects: filteredProjects };
+  }, [allProjects, implementationStatus]);
 
   // Fetch activity logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
@@ -145,7 +196,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
           <p className="mt-1 text-sm text-gray-500">{getTimeframeSubtitle()}</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap gap-3">
           <Select
             value={timeframe}
             onValueChange={setTimeframe}
@@ -164,6 +215,21 @@ export default function Dashboard() {
               <SelectItem value="Custom Range">Custom Range</SelectItem>
             </SelectContent>
           </Select>
+          
+          <Select
+            value={implementationStatus}
+            onValueChange={(value) => setImplementationStatus(value as "all" | "implemented" | "not-implemented")}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Implementation Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              <SelectItem value="implemented">Implemented</SelectItem>
+              <SelectItem value="not-implemented">Not Implemented</SelectItem>
+            </SelectContent>
+          </Select>
+          
           <Button>
             Export Report
           </Button>
