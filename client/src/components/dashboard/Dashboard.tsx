@@ -114,15 +114,24 @@ const createFinancialWaterfallData = (projects: Project[]) => {
   
   // Define the data items with their values
   const items = [
-    { name: "Quality Cost Savings", value: qualityCostSavings, fill: "#10b981", isPositive: true },
+    { name: "Quality Cost Savings", value: qualityCostSavings, fill: "#10b981", isPositive: true, isFirst: true },
     { name: "Financial Savings", value: financialSavings, fill: "#22c55e", isPositive: true },
     { name: "FTE Benefits", value: fteBenefits, fill: "#4ade80", isPositive: true },
     { name: "Investment", value: -totalCosts, fill: "#ef4444", isPositive: false }, // Negative value
-    { name: "Net Value", value: netValue, fill: "#3b82f6", isTotal: true }
+    { name: "Net Value", value: netValue, fill: "#3b82f6", isTotal: true, isLast: true }
   ];
   
   // Create the true waterfall chart data
-  const waterfallData = [];
+  const waterfallData: Array<{
+    name: string;
+    start: number;
+    end: number;
+    actual: number;
+    fill: string;
+    isTotal?: boolean;
+    isFirst?: boolean;
+    isLast?: boolean;
+  }> = [];
   
   // Running total to track position
   let runningTotal = 0;
@@ -137,26 +146,34 @@ const createFinancialWaterfallData = (projects: Project[]) => {
         end: item.value,
         actual: item.value,
         fill: item.fill,
-        isTotal: true
+        isTotal: true,
+        isLast: true
       });
-    } else {
-      // Regular waterfall component
-      // Each bar starts at the current running total
-      const start = runningTotal;
-      // End position is start + item value
-      const end = start + item.value;
-      
+    } else if (item.isFirst) {
+      // First bar - starts at 0
       waterfallData.push({
         name: item.name,
-        start: start,
-        end: end,
+        start: 0,
+        end: item.value,
         actual: item.value,
         fill: item.fill,
-        isPositive: item.isPositive
+        isFirst: true
+      });
+      
+      // Update running total
+      runningTotal = item.value;
+    } else {
+      // Middle bars - start at previous end position
+      waterfallData.push({
+        name: item.name,
+        start: runningTotal,
+        end: runningTotal + item.value,
+        actual: item.value,
+        fill: item.fill
       });
       
       // Update running total for next item
-      runningTotal = end;
+      runningTotal += item.value;
     }
   });
   
@@ -938,10 +955,16 @@ export default function Dashboard() {
                   ))}
                 </Bar>
                 
-                {/* Show connecting lines between bars */}
+                {/* Connecting lines between consecutive bars */}
                 {financialWaterfallData.map((entry, i, arr) => {
-                  // No connector after last item or for total
-                  if (i === arr.length - 1 || entry.isTotal) return null;
+                  // Skip the last item (Net Value)
+                  if (i === arr.length - 1) return null;
+                  
+                  // Get the next entry in the array
+                  const nextEntry = arr[i + 1];
+                  
+                  // Skip if the next entry is the total/last bar
+                  if (nextEntry.isLast) return null;
                   
                   return (
                     <ReferenceLine 
@@ -949,7 +972,7 @@ export default function Dashboard() {
                       y={entry.end}
                       stroke="#aaa" 
                       strokeDasharray="3 3"
-                      isFront={false}
+                      ifOverflow="hidden"
                     />
                   );
                 })}
