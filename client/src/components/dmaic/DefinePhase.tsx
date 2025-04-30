@@ -513,7 +513,7 @@ export default function DefinePhase() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="fteCostPerYear" className="text-xs">Cost per FTE/Year ({currency})</Label>
+                        <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
                         <Input
                           id="fteCostPerYear"
                           type="number"

@@ -25,12 +25,45 @@ export default function Settings() {
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyType>(currency);
 
   const currencyOptions: { value: CurrencyType; label: string }[] = [
+    // Main currencies
     { value: "$", label: "US Dollar ($)" },
     { value: "€", label: "Euro (€)" },
     { value: "£", label: "British Pound (£)" },
     { value: "¥", label: "Japanese Yen (¥)" },
-    { value: "₩", label: "Korean Won (₩)" },
     { value: "CHF", label: "Swiss Franc (CHF)" },
+    
+    // Asia & Pacific
+    { value: "₹", label: "Indian Rupee (₹)" },
+    { value: "₩", label: "Korean Won (₩)" },
+    { value: "A$", label: "Australian Dollar (A$)" },
+    { value: "HK$", label: "Hong Kong Dollar (HK$)" },
+    { value: "₱", label: "Philippine Peso (₱)" },
+    { value: "฿", label: "Thai Baht (฿)" },
+    { value: "RM", label: "Malaysian Ringgit (RM)" },
+    { value: "S$", label: "Singapore Dollar (S$)" },
+    
+    // Americas
+    { value: "C$", label: "Canadian Dollar (C$)" },
+    { value: "R$", label: "Brazilian Real (R$)" },
+    { value: "₲", label: "Paraguayan Guarani (₲)" },
+    { value: "CLP", label: "Chilean Peso (CLP)" },
+    
+    // Europe
+    { value: "₽", label: "Russian Ruble (₽)" },
+    { value: "₺", label: "Turkish Lira (₺)" },
+    { value: "kr", label: "Swedish/Danish/Norwegian Krona (kr)" },
+    { value: "zł", label: "Polish Złoty (zł)" },
+    { value: "Ft", label: "Hungarian Forint (Ft)" },
+    { value: "₴", label: "Ukrainian Hryvnia (₴)" },
+    
+    // Africa & Middle East
+    { value: "R", label: "South African Rand (R)" },
+    { value: "₦", label: "Nigerian Naira (₦)" },
+    { value: "SAR", label: "Saudi Riyal (SAR)" },
+    { value: "AED", label: "UAE Dirham (AED)" },
+    
+    // Other
+    { value: "ƒ", label: "Dutch Guilder/Florin (ƒ)" },
   ];
 
   const handleCurrencyChange = (value: CurrencyType) => {
@@ -69,8 +102,44 @@ export default function Settings() {
                   <SelectTrigger id="currency" className="w-[240px]">
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {currencyOptions.map((option) => (
+                  <SelectContent className="max-h-80">
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Main Currencies</div>
+                    {currencyOptions.slice(0, 5).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                    
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Asia & Pacific</div>
+                    {currencyOptions.slice(5, 13).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                    
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Americas</div>
+                    {currencyOptions.slice(13, 17).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                    
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Europe</div>
+                    {currencyOptions.slice(17, 23).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                    
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Africa & Middle East</div>
+                    {currencyOptions.slice(23, 27).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                    
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Other</div>
+                    {currencyOptions.slice(27).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
