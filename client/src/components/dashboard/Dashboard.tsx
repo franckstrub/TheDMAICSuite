@@ -213,15 +213,42 @@ export default function Dashboard() {
       control: { status: "not-started" }
     };
 
-    // Assign benefits and phases based on project ID for demonstration
-    // Even IDs are implemented, odd IDs are not implemented
+    // For demonstration, we'll make sure we have at least one project of each type
+    // Create a modified project array with at least one implemented and one not implemented project
+    const modifiedProjects = [...allProjects.projects];
+    
+    // If we have at least one project, ensure it has benefits and phases
+    if (modifiedProjects.length > 0) {
+      // First project (index 0) is not implemented
+      modifiedProjects[0] = {
+        ...modifiedProjects[0],
+        phases: notImplementedPhases,
+        benefits: notImplementedBenefits
+      };
+      
+      // Create a second, implemented project by cloning the first if needed
+      if (modifiedProjects.length === 1) {
+        const implementedProject = {
+          ...modifiedProjects[0],
+          id: 2, // Give it a new ID
+          title: "Implemented " + modifiedProjects[0].title,
+          phases: implementedPhases,
+          benefits: implementedBenefits
+        };
+        modifiedProjects.push(implementedProject);
+      } else {
+        // We have at least 2 projects, make the second one implemented
+        modifiedProjects[1] = {
+          ...modifiedProjects[1],
+          phases: implementedPhases,
+          benefits: implementedBenefits
+        };
+      }
+    }
+    
     return {
       ...allProjects,
-      projects: allProjects.projects.map((project: Project) => ({
-        ...project,
-        phases: project.id % 2 === 0 ? implementedPhases : notImplementedPhases,
-        benefits: project.id % 2 === 0 ? implementedBenefits : notImplementedBenefits
-      }))
+      projects: modifiedProjects
     };
   }, [allProjects]);
   
