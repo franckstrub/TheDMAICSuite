@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { getProgressColor, getStatusColor, getPhaseLabel } from "@/lib/utils";
 
 export default function ProjectsTable() {
-  const { user, setCurrentProject, setCurrentTab, navigate } = useAppContext();
+  const { user, setCurrentProject, setCurrentTab } = useAppContext();
+  const [location, navigate] = useLocation();
 
   // Fetch projects
   const { data: projects, isLoading } = useQuery({
