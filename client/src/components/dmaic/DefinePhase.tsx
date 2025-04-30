@@ -866,55 +866,55 @@ export default function DefinePhase() {
               </div>
             </div>
             
-            {/* Financial Metrics: Net Value, ROI, and Breakeven */}
+            {/* Financial Metrics: Net Value, ROI, and Breakeven - All in one row */}
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-4">Financial Metrics</h3>
               
-              {/* Project Net Value */}
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-md mb-4">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="projectNetValue" className="font-medium text-blue-800 text-lg">Project Net Value ({currency})</Label>
-                  <Input
-                    id="projectNetValue"
-                    readOnly
-                    className="max-w-[200px] bg-white border-blue-200 text-blue-800 font-bold text-lg"
-                    {...charterForm.register("projectNetValue")}
-                  />
+              {/* Financial Metrics Grid - all in one row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Project Net Value Card */}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex flex-col">
+                    <Label htmlFor="projectNetValue" className="font-medium text-blue-800 mb-2">Project Net Value ({currency})</Label>
+                    <Input
+                      id="projectNetValue"
+                      readOnly
+                      className="bg-white border-blue-200 text-blue-800 font-bold text-lg mb-1"
+                      {...charterForm.register("projectNetValue")}
+                    />
+                    <p className="text-xs text-blue-600 mt-1">Total Project Financial Savings (p.a.) - Total Project Costs</p>
+                  </div>
                 </div>
-                <p className="text-sm text-blue-600 mt-1">Total Project Financial Savings (p.a.) - Total Project Costs</p>
-              </div>
-              
-              {/* ROI and Breakeven Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
                 {/* ROI Card */}
                 <div className="p-4 bg-purple-50 border border-purple-200 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="roi" className="font-medium text-purple-800">Return on Investment (ROI)</Label>
-                    <div className="flex items-center space-x-1">
+                  <div className="flex flex-col">
+                    <Label htmlFor="roi" className="font-medium text-purple-800 mb-2">Return on Investment (ROI)</Label>
+                    <div className="flex items-center space-x-1 mb-1">
                       <Input
                         id="roi"
                         readOnly
-                        className="max-w-[100px] bg-white border-purple-200 text-purple-800 font-bold"
+                        className="bg-white border-purple-200 text-purple-800 font-bold text-lg"
                         {...charterForm.register("roi")}
                       />
-                      <span className="text-purple-800 font-medium">%</span>
+                      <span className="text-purple-800 font-medium text-lg">%</span>
                     </div>
+                    <p className="text-xs text-purple-600 mt-1">(Net Value / Total Costs) x 100</p>
                   </div>
-                  <p className="text-sm text-purple-600 mt-1">(Net Value / Total Costs) x 100</p>
                 </div>
                 
                 {/* Breakeven Card */}
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="breakeven" className="font-medium text-amber-800">Breakeven Point</Label>
+                  <div className="flex flex-col">
+                    <Label htmlFor="breakeven" className="font-medium text-amber-800 mb-2">Breakeven Point</Label>
                     <Input
                       id="breakeven"
                       readOnly
-                      className="max-w-[200px] bg-white border-amber-200 text-amber-800 font-bold"
+                      className="bg-white border-amber-200 text-amber-800 font-bold text-lg mb-1"
                       {...charterForm.register("breakeven")}
                     />
+                    <p className="text-xs text-amber-600 mt-1">Time to recover investment</p>
                   </div>
-                  <p className="text-sm text-amber-600 mt-1">Time to recover investment</p>
                 </div>
               </div>
             </div>
