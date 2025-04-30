@@ -931,62 +931,85 @@ export default function Dashboard() {
                   tick={{fill: '#6b7280', fontSize: 12}}
                 />
                 <Tooltip 
-                  formatter={(value: number, name: string, props: any) => {
-                    // Only show tooltip for the value series, not the base
-                    if (name === "Value" && props.payload) {
-                      // Display the actual component value (not the stacked height)
-                      return [formatCurrency(props.payload.displayValue, currency), props.payload.name];
-                    }
-                    // For other series (like base), don't show in tooltip
-                    return ["", ""];
-                  }}
-                  cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
-                  contentStyle={{borderRadius: '6px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}
-                  labelFormatter={(label) => {
-                    // Find the entry for this label
-                    const entry = financialWaterfallData.find(entry => entry.name === label);
-                    if (entry) {
-                      if (entry.category === "total") {
-                        return `${entry.name} (Final Result)`;
-                      } else if (entry.category === "cost") {
-                        return `${entry.name} (Cost)`;
-                      } else {
-                        return `${entry.name} (Benefit)`;
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      // For our custom bar implementation using ReferenceArea
+                      // payload[0].name will be x1, x2, y1, or y2
+                      // We need to use a different approach:
+                      
+                      // Find which bar we're hovering over based on x-coordinate
+                      const xValue = payload[0].payload.x;
+                      // Round to nearest integer to get our index
+                      const barIndex = Math.round(xValue);
+                      
+                      // Get the data entry at this index
+                      const entry = financialWaterfallData[barIndex];
+                      
+                      if (entry) {
+                        // Determine the type of bar
+                        let barType = "";
+                        if (entry.category === "total") {
+                          barType = "Final Result";
+                        } else if (entry.category === "cost") {
+                          barType = "Cost";
+                        } else {
+                          barType = "Benefit";
+                        }
+                        
+                        // Return a custom tooltip
+                        return (
+                          <div className="bg-white p-2 rounded-md shadow-md border">
+                            <p className="font-medium">{`${entry.name} (${barType})`}</p>
+                            <p className="text-sm">{formatCurrency(entry.displayValue, currency)}</p>
+                          </div>
+                        );
                       }
                     }
-                    return label;
+                    return null;
                   }}
+                  cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
                 />
                 
                 {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Transparent bars for base values */}
-                <Bar 
-                  dataKey="base" 
-                  stackId="stack"
-                  fill="transparent"
-                  isAnimationActive={false}
-                  legendType="none"
-                />
-                
-                {/* Value bars stacked on top of base bars */}
-                <Bar 
-                  dataKey="value" 
-                  name="Value"
-                  stackId="stack"
-                  barSize={40}
-                >
-                  {financialWaterfallData.map((entry, i) => (
-                    <Cell 
-                      key={`cell-${i}`} 
-                      fill={entry.fill}
+                {/* Render bars as rectangles - this way we have complete control */}
+                {financialWaterfallData.map((entry, i) => {
+                  // First bar starts at 0
+                  // Last bar (Net Value) starts at 0
+                  // Middle bars start at the sum of previous values
+                  
+                  // Setting up the bar rendering
+                  let barProps = {};
+                  let barColor = entry.fill;
+                  let barStart, barEnd;
+                  
+                  if (entry.category === "total") {
+                    // Net Value - starts at 0, ends at net value
+                    barStart = 0;
+                    barEnd = entry.value;
+                  } else {
+                    // Regular bar - starts at base, ends at base + value
+                    barStart = entry.base;
+                    barEnd = entry.base + entry.value;
+                  }
+                  
+                  return (
+                    <ReferenceArea
+                      key={`bar-${i}`}
+                      x1={i - 0.4}
+                      x2={i + 0.4}
+                      y1={barStart}
+                      y2={barEnd}
+                      fill={barColor}
+                      fillOpacity={1}
+                      strokeWidth={0}
+                      ifOverflow="visible"
                     />
-                  ))}
-                </Bar>
+                  );
+                })}
                 
-                {/* Create individual connecting lines between consecutive bars */}
-                {/* We can't use segment with ReferenceLine, so create a separate line for each connection */}
+                {/* Create connecting lines between consecutive bars using ReferenceArea */}
                 {financialWaterfallData.map((entry, i, arr) => {
                   // Skip the last item or the total category
                   if (i === arr.length - 1 || entry.category === "total") return null;
@@ -1001,16 +1024,19 @@ export default function Dashboard() {
                   // End position of current bar = base + value
                   const linePosition = entry.base + entry.value;
                   
-                  // Draw a reference line at the end height of the current bar
+                  // Draw a connecting line using a thin ReferenceArea
+                  // This lets us specify the x-coordinates explicitly
                   return (
-                    <ReferenceLine 
+                    <ReferenceArea 
                       key={`connector-${i}`}
-                      y={linePosition}
-                      stroke="#aaa"
+                      x1={i + 0.4} // End of this bar
+                      x2={i + 1 - 0.4} // Start of next bar
+                      y1={linePosition - 0.5} // Make the line thin
+                      y2={linePosition + 0.5} // Make the line thin
                       strokeDasharray="3 3"
-                      // Only draw the line between this bar and the next bar
-                      // by setting xAxisId to include only these two points
-                      isFront={false}
+                      stroke="#aaa"
+                      fill="#aaa"
+                      fillOpacity={0.3}
                     />
                   );
                 })}
