@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AppContext, CurrencyType } from "@/store/AppContext";
+import { AppContext, CurrencyType, ImplementationStatusType } from "@/store/AppContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
@@ -28,6 +28,7 @@ function App() {
   const [currentProject, setCurrentProject] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currency, setCurrency] = useState<CurrencyType>("$");
+  const [implementationStatus, setImplementationStatus] = useState<ImplementationStatusType>("all");
 
   // Check for authenticated user and settings on app load
   useEffect(() => {
@@ -81,7 +82,9 @@ function App() {
           sidebarOpen,
           setSidebarOpen,
           currency,
-          setCurrency: handleSetCurrency
+          setCurrency: handleSetCurrency,
+          implementationStatus,
+          setImplementationStatus
         }}
       >
         <TooltipProvider>

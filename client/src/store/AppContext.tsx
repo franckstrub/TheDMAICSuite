@@ -7,6 +7,8 @@ export type CurrencyType =
   | "CN¥" | "DKK" | "SEK" | "NOK" | "ISK" | "₫" | "MXN" | "ARS"
   | "RON" | "CZK" | "BGN" | "ILS" | "EGP";
 
+export type ImplementationStatusType = "all" | "implemented" | "not-implemented";
+
 type AppContextType = {
   user: any | null;
   setUser: (user: any) => void;
@@ -21,6 +23,8 @@ type AppContextType = {
   setSidebarOpen: (open: boolean) => void;
   currency: CurrencyType;
   setCurrency: (currency: CurrencyType) => void;
+  implementationStatus: ImplementationStatusType;
+  setImplementationStatus: (status: ImplementationStatusType) => void;
 };
 
 export const AppContext = createContext<AppContextType>({
@@ -36,7 +40,9 @@ export const AppContext = createContext<AppContextType>({
   sidebarOpen: false,
   setSidebarOpen: () => {},
   currency: "$",
-  setCurrency: () => {}
+  setCurrency: () => {},
+  implementationStatus: "all",
+  setImplementationStatus: () => {}
 });
 
 export const useAppContext = () => useContext(AppContext);
