@@ -459,8 +459,28 @@ export default function Dashboard() {
     return projects.projects;
   }, [projects]);
   
-  // Generate financial waterfall data for chart
-  const financialWaterfallData = useMemo(() => createFinancialWaterfallData(filteredProjectsArray), [filteredProjectsArray]);
+  // Generate financial waterfall data for chart with fallback to empty data
+  const financialWaterfallData = useMemo(() => {
+    const data = createFinancialWaterfallData(filteredProjectsArray);
+    // Provide a fallback if data is empty
+    if (!data || data.length === 0) {
+      return [{
+        name: "Summary",
+        qualityCostSavings: 0,
+        financialSavings: 0,
+        fteBenefits: 0, 
+        investment: 0,
+        netValue: 0,
+        qualityCostSavingsDisplay: 0,
+        financialSavingsDisplay: 0,
+        fteBenefitsDisplay: 0,
+        investmentDisplay: 0,
+        netValueDisplay: 0,
+        components: []
+      }];
+    }
+    return data;
+  }, [filteredProjectsArray]);
 
   // Fetch activity logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
@@ -976,28 +996,56 @@ export default function Dashboard() {
                   barSize={40}
                 />
                 
-                {/* Dashed connector lines */}
-                <ReferenceLine y={financialWaterfallData[0].qualityCostSavings} 
-                  segment={[{x: 0, y: financialWaterfallData[0].qualityCostSavings}, {x: 1, y: financialWaterfallData[0].qualityCostSavings}]} 
-                  stroke="#aaa" 
-                  strokeDasharray="3 3" 
-                />
-                <ReferenceLine y={financialWaterfallData[0].qualityCostSavings + financialWaterfallData[0].financialSavings} 
-                  segment={[
-                    {x: 1, y: financialWaterfallData[0].qualityCostSavings + financialWaterfallData[0].financialSavings}, 
-                    {x: 2, y: financialWaterfallData[0].qualityCostSavings + financialWaterfallData[0].financialSavings}
-                  ]} 
-                  stroke="#aaa" 
-                  strokeDasharray="3 3" 
-                />
-                <ReferenceLine y={financialWaterfallData[0].qualityCostSavings + financialWaterfallData[0].financialSavings + financialWaterfallData[0].fteBenefits} 
-                  segment={[
-                    {x: 2, y: financialWaterfallData[0].qualityCostSavings + financialWaterfallData[0].financialSavings + financialWaterfallData[0].fteBenefits}, 
-                    {x: 3, y: financialWaterfallData[0].qualityCostSavings + financialWaterfallData[0].financialSavings + financialWaterfallData[0].fteBenefits}
-                  ]} 
-                  stroke="#aaa" 
-                  strokeDasharray="3 3" 
-                />
+                {/* Dashed connector lines - with safety checks */}
+                {financialWaterfallData?.length > 0 && (
+                  <>
+                    <ReferenceLine 
+                      y={financialWaterfallData[0]?.qualityCostSavings || 0} 
+                      segment={[
+                        {x: 0, y: financialWaterfallData[0]?.qualityCostSavings || 0}, 
+                        {x: 1, y: financialWaterfallData[0]?.qualityCostSavings || 0}
+                      ]} 
+                      stroke="#aaa" 
+                      strokeDasharray="3 3" 
+                    />
+                    <ReferenceLine 
+                      y={(financialWaterfallData[0]?.qualityCostSavings || 0) + (financialWaterfallData[0]?.financialSavings || 0)} 
+                      segment={[
+                        {
+                          x: 1, 
+                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + (financialWaterfallData[0]?.financialSavings || 0)
+                        }, 
+                        {
+                          x: 2, 
+                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + (financialWaterfallData[0]?.financialSavings || 0)
+                        }
+                      ]} 
+                      stroke="#aaa" 
+                      strokeDasharray="3 3" 
+                    />
+                    <ReferenceLine 
+                      y={(financialWaterfallData[0]?.qualityCostSavings || 0) + 
+                         (financialWaterfallData[0]?.financialSavings || 0) + 
+                         (financialWaterfallData[0]?.fteBenefits || 0)} 
+                      segment={[
+                        {
+                          x: 2, 
+                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + 
+                             (financialWaterfallData[0]?.financialSavings || 0) + 
+                             (financialWaterfallData[0]?.fteBenefits || 0)
+                        }, 
+                        {
+                          x: 3, 
+                          y: (financialWaterfallData[0]?.qualityCostSavings || 0) + 
+                             (financialWaterfallData[0]?.financialSavings || 0) + 
+                             (financialWaterfallData[0]?.fteBenefits || 0)
+                        }
+                      ]} 
+                      stroke="#aaa" 
+                      strokeDasharray="3 3" 
+                    />
+                  </>
+                )}
               </BarChart>
             </ResponsiveContainer>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-1">
