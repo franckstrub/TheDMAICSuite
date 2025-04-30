@@ -387,13 +387,13 @@ export default function Dashboard() {
     return { ...projectsWithBenefits, projects: filteredProjects };
   }, [projectsWithBenefits, implementationStatus]);
   
-  // Generate chart data from projects based on implementation status filter
+  // Get filtered projects array for charts
   const filteredProjectsArray = useMemo(() => {
     if (!projects?.projects) return [];
     return projects.projects;
   }, [projects]);
   
-  // Generate cost breakdown data from filtered projects
+  // Generate cost breakdown data for chart
   const costBreakdownData = useMemo(() => createCostBreakdownData(filteredProjectsArray), [filteredProjectsArray]);
 
   // Fetch activity logs
@@ -781,7 +781,7 @@ export default function Dashboard() {
       </div>
       
       {/* Charts and Graphs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base font-medium">Cost Breakdown</CardTitle>
@@ -798,31 +798,62 @@ export default function Dashboard() {
               </DropdownMenuContent>
             </DropdownMenu>
           </CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+          <CardContent className="h-80">
+            <div className="mb-3 px-2">
+              <p className="text-sm text-gray-600">Breakdown of costs across all {implementationStatus === "all" ? "" : implementationStatus === "implemented" ? "implemented " : "not implemented "}projects ({projects?.projects?.length || 0})</p>
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-sm text-gray-700">Total Project Costs:</span>
+                <span className="font-medium text-gray-900">{formatCurrency(calculateMetric(projects?.projects || [], 'totalCosts'), currency)}</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height="80%">
               <BarChart
                 data={costBreakdownData}
-                margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+                margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
+                barSize={60}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{fill: '#6b7280', fontSize: 12}}
+                />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
                   label={{ 
                     value: currency, 
                     angle: -90, 
                     position: 'insideLeft',
-                    style: { textAnchor: 'middle' }
+                    style: { textAnchor: 'middle', fill: '#6b7280', fontSize: 12 }
                   }}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{fill: '#6b7280', fontSize: 12}}
                 />
-                <Tooltip formatter={(value: number) => [formatCurrency(value, currency), "Cost"]} />
-                <Bar dataKey="value">
+                <Tooltip 
+                  formatter={(value: number) => [formatCurrency(value, currency), "Cost"]} 
+                  cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
+                  contentStyle={{borderRadius: '6px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}
+                />
+                <Bar 
+                  dataKey="value"
+                  radius={[4, 4, 0, 0]}
+                >
                   {costBreakdownData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            <div className="flex justify-center space-x-6 mt-1">
+              {costBreakdownData.map((entry, index) => (
+                <div key={`legend-${index}`} className="flex items-center">
+                  <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: entry.fill }}></div>
+                  <span className="text-xs text-gray-600">{entry.name}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
