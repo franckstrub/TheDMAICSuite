@@ -881,7 +881,7 @@ export default function DefinePhase() {
                     {...charterForm.register("projectNetValue")}
                   />
                 </div>
-                <p className="text-sm text-blue-600 mt-1">Total Project Financial Savings - Total Project Costs</p>
+                <p className="text-sm text-blue-600 mt-1">Total Project Financial Savings (p.a.) - Total Project Costs</p>
               </div>
               
               {/* ROI and Breakeven Grid */}
