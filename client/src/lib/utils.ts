@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { CurrencyType } from "@/store/AppContext";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -77,4 +78,41 @@ export function truncateText(text: string, maxLength: number): string {
   if (!text) return '';
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
+}
+
+/**
+ * Formats a number as a financial value with the given currency symbol
+ * @param value The number to format
+ * @param currency The currency symbol to use
+ * @returns Formatted currency string
+ */
+export function formatCurrency(value: number | string, currency: CurrencyType): string {
+  // Convert string to number if needed
+  const numericValue = typeof value === 'string' 
+    ? parseFloat(value.replace(/[^\d.-]/g, '')) 
+    : value;
+  
+  if (isNaN(numericValue)) {
+    return `${currency}0`;
+  }
+  
+  // Format based on currency
+  switch (currency) {
+    case '¥':
+    case '₩':
+      // Yen and Won typically don't use decimal places
+      return `${currency}${Math.round(numericValue).toLocaleString()}`;
+    case 'CHF':
+      // Swiss Franc uses the abbreviation before the number
+      return `${currency} ${numericValue.toLocaleString(undefined, { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      })}`;
+    default:
+      // Dollar, Euro, Pound
+      return `${currency}${numericValue.toLocaleString(undefined, { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      })}`;
+  }
 }

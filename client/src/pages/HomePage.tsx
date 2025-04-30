@@ -7,6 +7,7 @@ import DmaicTools from "@/components/dmaic/DmaicTools";
 import Projects from "@/components/projects/Projects";
 import DataManagement from "@/components/data/DataManagement";
 import StorageConfig from "@/components/storage/StorageConfig";
+import Settings from "@/components/settings/Settings";
 
 type HomeParams = {
   tab?: string;
@@ -54,7 +55,7 @@ export default function HomePage() {
       case "storage":
         return <StorageConfig />;
       case "settings":
-        return <Dashboard />; // Temporary fallback until Settings component is created
+        return <Settings />;
       default:
         return <Dashboard />;
     }
