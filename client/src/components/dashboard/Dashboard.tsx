@@ -495,7 +495,7 @@ export default function Dashboard() {
       </Dialog>
       
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-6">
         <StatsCard 
           title="Active Projects"
           value={projects?.projects?.length.toString() || "0"}
@@ -530,8 +530,18 @@ export default function Dashboard() {
           iconBgColor="purple"
         />
         <StatsCard 
+          title="Total Costs (p.a.)"
+          value={formatCurrency(calculateMetric(projects?.projects || [], 'totalCosts'), currency)}
+          secondaryValue="One-off + CAPEX Costs"
+          change={implementationStatus === "implemented" ? -15 : implementationStatus === "not-implemented" ? -5 : -12}
+          changeLabel="Total project investment costs"
+          icon="money-check-alt"
+          iconBgColor="red"
+        />
+        <StatsCard 
           title="ROI"
           value={`${(calculateMetric(projects?.projects || [], 'roi') * 100).toFixed(1)}%`}
+          secondaryValue="(Benefits-Costs)/Costs"
           change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
           changeLabel="Return on Investment"
           icon="chart-pie"
@@ -562,7 +572,7 @@ export default function Dashboard() {
                     `(${implementationStatus === "implemented" ? "Implemented" : "Not Implemented"} only)` : ""}
                   </div>
                   <div className="mt-1 italic text-xs">
-                    Note: Total includes one-off costs, annualized OPEX costs (p.a.), and CAPEX costs
+                    Note: Total includes one-off costs and CAPEX costs
                   </div>
                 </div>
               </div>
