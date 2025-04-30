@@ -46,7 +46,7 @@ export default function Header() {
           
           <div className="flex items-center text-primary font-bold text-xl">
             <i className="fas fa-chart-line text-secondary mr-2"></i>
-            <span>Lean Six Sigma DMAIC Suite</span>
+            <span>Lean Six Sigma DMAIC Suite™</span>
           </div>
         </div>
         
