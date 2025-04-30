@@ -139,6 +139,17 @@ export default function DefinePhase() {
       const calculatedFte = annualSavedHours / totalAnnualHours;
       const calculatedValue = calculatedFte * fteCostPerYear;
       
+      // Get current values for total financial savings calculation
+      const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear")) || 0;
+      const financialSavings = parseFloat(charterForm.getValues("financialSavings")) || 0;
+      
+      // Calculate total project financial savings immediately with the new FTE value
+      const totalFinancialSavings = qualityCostSavings + financialSavings + calculatedValue;
+      
+      // Update the Total Financial Savings field directly
+      charterForm.setValue("totalFinancialSavings", totalFinancialSavings.toFixed(2));
+      
+      // Update the FTE params state
       setFteParams(prevParams => ({
         ...prevParams,
         calculatedFte: parseFloat(calculatedFte.toFixed(2)),
@@ -150,8 +161,14 @@ export default function DefinePhase() {
       const fteString = `${calculatedFte.toFixed(2)} FTE (${formattedValue})`;
       document.getElementById("fteBenefits")?.setAttribute("value", fteString);
       
-      // Update total financial savings
-      setTimeout(updateTotalFinancialSavings, 0);
+      // Log for debugging
+      console.log("FTE updated:", { 
+        calculatedFte, 
+        calculatedValue,
+        qualityCostSavings,
+        financialSavings,
+        totalFinancialSavings
+      });
     }, 0);
   };
 
@@ -383,6 +400,13 @@ export default function DefinePhase() {
     
     // Update the form field
     charterForm.setValue("totalFinancialSavings", totalFinancialSavings.toFixed(2));
+    
+    console.log("Total Financial Savings updated:", {
+      qualityCostSavings,
+      financialSavings,
+      fteBenefits,
+      totalFinancialSavings
+    });
   };
 
   const handleSaveRequirements = () => {
