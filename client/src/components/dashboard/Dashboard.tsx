@@ -547,7 +547,7 @@ export default function Dashboard() {
           value={formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings'), currency)}
           secondaryValue="Quality Savings + Financial Savings + FTE Benefits"
           change={implementationStatus === "implemented" ? 30 : implementationStatus === "not-implemented" ? 12 : 25}
-          changeLabel="Combined annual financial impact"
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="coins"
           iconBgColor="green"
         />
@@ -556,7 +556,7 @@ export default function Dashboard() {
           value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
           secondaryValue="(Benefits-Costs)/Costs"
           change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
-          changeLabel="Return on Investment"
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="chart-pie"
           iconBgColor="indigo"
         />
