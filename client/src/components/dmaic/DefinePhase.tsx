@@ -272,36 +272,48 @@ export default function DefinePhase() {
   // Save project charter mutation
   const saveCharterMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Make sure all data is properly formatted
       const payload = {
         projectId,
-        businessCase: data.businessCase,
-        problemStatement: data.problemStatement,
-        goals: data.goals,
-        scope: data.scope,
-        savingsPerYear: data.savingsPerYear,
-        workingCapitalGains: data.workingCapitalGains,
-        waccPercentage: data.waccPercentage,
-        financialSavings: data.financialSavings,
-        fteBenefits: data.fteBenefits,
-        softBenefits: data.softBenefits,
+        businessCase: data.businessCase || "",
+        problemStatement: data.problemStatement || "",
+        goals: data.goals || "",
+        scope: data.scope || "",
+        savingsPerYear: parseFloat(data.savingsPerYear) || 0,
+        workingCapitalGains: parseFloat(data.workingCapitalGains) || 0,
+        waccPercentage: parseFloat(data.waccPercentage) || 0,
+        financialSavings: parseFloat(data.financialSavings) || 0,
+        fteBenefits: data.fteBenefits || "",
+        softBenefits: data.softBenefits || "",
         // Project cost fields
-        oneOffPeopleCost: data.oneOffPeopleCost,
-        oneOffTechnologyCost: data.oneOffTechnologyCost,
-        oneOffOtherCost: data.oneOffOtherCost,
-        oneOffOtherExplanation: data.oneOffOtherExplanation,
-        capexCost: data.capexCost,
-        capexExplanation: data.capexExplanation,
-        userId: user?.id,
+        oneOffPeopleCost: parseFloat(data.oneOffPeopleCost) || 0,
+        oneOffTechnologyCost: parseFloat(data.oneOffTechnologyCost) || 0,
+        oneOffOtherCost: parseFloat(data.oneOffOtherCost) || 0,
+        oneOffOtherExplanation: data.oneOffOtherExplanation || "",
+        capexCost: parseFloat(data.capexCost) || 0,
+        capexExplanation: data.capexExplanation || "",
+        // Include calculated values for reference/display
+        totalFinancialSavings: parseFloat(data.totalFinancialSavings) || 0,
+        totalProjectCosts: parseFloat(data.totalProjectCosts) || 0,
+        projectNetValue: parseFloat(data.projectNetValue) || 0,
+        roi: data.roi || "0",
+        breakeven: data.breakeven || "0 years 0 months",
+        userId: user?.id || 1,
       };
 
+      console.log("Sending charter data to API:", payload);
+
       // Check if charter exists
-      if (charter?.charter?.id) {
+      if (charter && charter.charter && charter.charter.id) {
+        console.log(`Updating existing charter ID: ${charter.charter.id}`);
         return apiRequest("PUT", `/api/charters/${charter.charter.id}`, payload);
       } else {
+        console.log(`Creating new charter for project ID: ${projectId}`);
         return apiRequest("POST", `/api/projects/${projectId}/charter`, payload);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Charter saved successfully, response:", data);
       toast({
         title: "Success",
         description: "Project charter saved successfully",
@@ -309,6 +321,7 @@ export default function DefinePhase() {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
     },
     onError: (error) => {
+      console.error("Error saving charter:", error);
       toast({
         title: "Error",
         description: `Failed to save project charter: ${error}`,
@@ -386,6 +399,27 @@ export default function DefinePhase() {
   });
 
   const handleSaveCharter = (data: any) => {
+    // Make sure all calculated values are properly set before submission
+    updateTotalFinancialSavings();
+    
+    // Update form data with the latest calculated values
+    data.totalFinancialSavings = charterForm.getValues("totalFinancialSavings");
+    data.totalProjectCosts = charterForm.getValues("totalProjectCosts");
+    data.projectNetValue = charterForm.getValues("projectNetValue");
+    data.roi = charterForm.getValues("roi");
+    data.breakeven = charterForm.getValues("breakeven");
+    
+    // Add calculated FTE benefits
+    if (fteParams.calculatedValue > 0) {
+      const formattedValue = formatCurrency(fteParams.calculatedValue, currency);
+      const fteString = `${fteParams.calculatedFte.toFixed(2)} FTE (${formattedValue})`;
+      data.fteBenefits = fteString;
+    }
+    
+    // Debug log
+    console.log("Submitting project charter with data:", data);
+    
+    // Submit the form
     saveCharterMutation.mutate(data);
   };
 
