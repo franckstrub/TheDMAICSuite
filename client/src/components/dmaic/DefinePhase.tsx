@@ -628,7 +628,7 @@ export default function DefinePhase() {
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                         <div>
                           <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte}</span></p>
-                          <p className="text-sm font-medium">Calculated Value: <span className="text-green-600">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
+                          <p className="text-sm font-medium">FTE Benefits: <span className="text-green-600">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
                         </div>
                         <div className="text-xs text-gray-500">Auto-calculated</div>
                       </div>
