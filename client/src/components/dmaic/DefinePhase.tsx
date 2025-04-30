@@ -108,12 +108,47 @@ export default function DefinePhase() {
     document.getElementById("fteBenefits")?.setAttribute("value", fteString);
   };
 
-  // Function to handle FTE parameter changes
+  // Function to handle FTE parameter changes with automatic calculation
   const handleFteParamChange = (param: string, value: number | string) => {
-    setFteParams({
+    const newParams = {
       ...fteParams,
       [param]: typeof value === 'string' ? value : parseFloat(value.toString())
-    });
+    };
+    
+    setFteParams(newParams);
+    
+    // Automatically calculate FTE after parameter change
+    setTimeout(() => {
+      // Extract parameters from the updated state
+      const { workingDaysPerYear, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = newParams;
+      const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
+      
+      let annualSavedHours = 0;
+      
+      // Convert saved hours to annual basis
+      if (timeUnit === "day") {
+        annualSavedHours = savedHours * workingDaysPerYear;
+      } else if (timeUnit === "week") {
+        annualSavedHours = savedHours * (workingDaysPerYear / 5);
+      } else if (timeUnit === "month") {
+        annualSavedHours = savedHours * (workingDaysPerYear / 20);
+      }
+      
+      // Calculate FTE and monetary value
+      const calculatedFte = annualSavedHours / totalAnnualHours;
+      const calculatedValue = calculatedFte * fteCostPerYear;
+      
+      setFteParams(prevParams => ({
+        ...prevParams,
+        calculatedFte: parseFloat(calculatedFte.toFixed(2)),
+        calculatedValue: parseFloat(calculatedValue.toFixed(2))
+      }));
+      
+      // Set the hidden input value for form submission
+      const formattedValue = formatCurrency(calculatedValue, currency);
+      const fteString = `${calculatedFte.toFixed(2)} FTE (${formattedValue})`;
+      document.getElementById("fteBenefits")?.setAttribute("value", fteString);
+    }, 0);
   };
 
   // Fetch project charter if exists
@@ -550,9 +585,7 @@ export default function DefinePhase() {
                           <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte}</span></p>
                           <p className="text-sm font-medium">Calculated Value: <span className="text-green-600">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
                         </div>
-                        <Button variant="outline" size="sm" className="text-xs" onClick={calculateFte}>
-                          Calculate
-                        </Button>
+                        <div className="text-xs text-gray-500">Auto-calculated</div>
                       </div>
                     </div>
                     
