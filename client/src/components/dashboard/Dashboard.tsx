@@ -527,6 +527,24 @@ export default function Dashboard() {
             <CardTitle className="text-base font-medium">Project Costs</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Total Project Costs - Prominently displayed at the top */}
+            <div className="mb-6">
+              <div className="bg-red-50 p-5 rounded-lg border border-red-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <i className="fas fa-money-bill text-red-600 text-2xl mr-3"></i>
+                    <div className="font-medium text-xl text-red-800">Total Project Costs</div>
+                  </div>
+                  <div className="font-bold text-2xl text-red-800">{formatCurrency(calculateMetric(projects?.projects || [], 'totalCosts'), currency)}</div>
+                </div>
+                <div className="mt-2 text-sm text-red-600 italic">
+                  Across {projects?.projects?.length || 0} projects {implementationStatus !== "all" ? 
+                  `(${implementationStatus === "implemented" ? "Implemented" : "Not Implemented"} only)` : ""}
+                </div>
+              </div>
+            </div>
+            
+            {/* Cost Categories */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-2">
@@ -575,10 +593,9 @@ export default function Dashboard() {
                   <span className="font-medium text-gray-700">CAPEX Costs</span>
                   <span className="text-lg font-semibold text-red-600">{formatCurrency(calculateMetric(projects?.projects || [], 'capexCosts'), currency)}</span>
                 </div>
-                <div className="mt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-lg text-red-800">Total Project Costs</div>
-                    <div className="font-bold text-xl text-red-800">{formatCurrency(calculateMetric(projects?.projects || [], 'totalCosts'), currency)}</div>
+                <div className="mt-3 pt-3 border-t border-slate-200">
+                  <div className="text-sm text-gray-600">
+                    Capital expenditures for long-term project assets
                   </div>
                 </div>
               </div>
