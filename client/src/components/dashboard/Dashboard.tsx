@@ -528,7 +528,7 @@ export default function Dashboard() {
       </Dialog>
       
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard 
           title="Active Projects"
           value={projects?.projects?.length.toString() || "0"}
@@ -536,6 +536,24 @@ export default function Dashboard() {
           changeLabel={`${implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}`}
           icon="project-diagram"
           iconBgColor="blue"
+        />
+        <StatsCard 
+          title="ROI"
+          value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
+          secondaryValue="(Financial Savings-Costs)/Costs"
+          change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
+          icon="chart-pie"
+          iconBgColor="indigo"
+        />
+        <StatsCard 
+          title="Breakeven"
+          value={formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}
+          secondaryValue="Costs ÷ Annual Financial Savings"
+          change={implementationStatus === "implemented" ? -15 : implementationStatus === "not-implemented" ? -8 : -12}
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Improved payback period" : "Not implemented only"}
+          icon="hourglass-half"
+          iconBgColor="yellow"
         />
       </div>
       
@@ -569,7 +587,7 @@ export default function Dashboard() {
             </div>
             
             {/* Benefits Categories */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-gray-700">Quality Cost Savings (p.a.)</span>
@@ -605,21 +623,6 @@ export default function Dashboard() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Financial Value:</span>
                     <span className="font-medium text-green-600">{formatCurrency(calculateMetric(projects?.projects || [], 'fteValue'), currency)}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <div className="flex flex-col">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-700">ROI</span>
-                    <span className="text-lg font-semibold text-indigo-600">{Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%</span>
-                  </div>
-                  <div className="mt-2 border-t pt-2 border-slate-200">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-700">Breakeven</span>
-                      <span className="text-lg font-semibold text-yellow-600">{formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}</span>
-                    </div>
                   </div>
                 </div>
               </div>
