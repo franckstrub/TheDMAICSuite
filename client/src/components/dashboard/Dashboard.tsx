@@ -116,6 +116,16 @@ export default function Dashboard() {
       avgFTECost?: number;
       [key: string]: any;
     };
+    costs?: {
+      oneOffPeopleCost?: number;
+      oneOffTechnologyCost?: number;
+      oneOffOtherCost?: number;
+      opexPeopleCost?: number;
+      opexTechnologyCost?: number;
+      opexOtherCost?: number;
+      capexCost?: number;
+      [key: string]: any;
+    };
     [key: string]: any;
   }
   
@@ -142,6 +152,7 @@ export default function Dashboard() {
       let value = 0;
       
       switch(metricType) {
+        // Benefit metrics
         case 'qualityCostSavings':
           value = project.benefits?.qualityCostSavings || 0;
           break;
@@ -160,6 +171,30 @@ export default function Dashboard() {
           // FTE value is typically calculated as FTE Benefits * Average FTE Cost
           const avgFTECost = project.benefits?.avgFTECost || 139000; // Default average FTE cost
           value = (project.benefits?.fteBenefits || 0) * avgFTECost;
+          break;
+          
+        // Cost metrics
+        case 'oneOffCosts':
+          value = (project.costs?.oneOffPeopleCost || 0) + 
+                  (project.costs?.oneOffTechnologyCost || 0) + 
+                  (project.costs?.oneOffOtherCost || 0);
+          break;
+        case 'opexCosts':
+          value = (project.costs?.opexPeopleCost || 0) + 
+                  (project.costs?.opexTechnologyCost || 0) + 
+                  (project.costs?.opexOtherCost || 0);
+          break;
+        case 'capexCosts':
+          value = project.costs?.capexCost || 0;
+          break;
+        case 'totalCosts':
+          value = (project.costs?.oneOffPeopleCost || 0) + 
+                  (project.costs?.oneOffTechnologyCost || 0) + 
+                  (project.costs?.oneOffOtherCost || 0) +
+                  (project.costs?.opexPeopleCost || 0) + 
+                  (project.costs?.opexTechnologyCost || 0) + 
+                  (project.costs?.opexOtherCost || 0) +
+                  (project.costs?.capexCost || 0);
           break;
         default:
           value = 0;
@@ -195,6 +230,27 @@ export default function Dashboard() {
       fteBenefits: 0.7,
       avgFTECost: 139000
     };
+    
+    // Sample cost data based on implementation status
+    const implementedCosts = {
+      oneOffPeopleCost: 35000,
+      oneOffTechnologyCost: 18000,
+      oneOffOtherCost: 7500,
+      opexPeopleCost: 22000,
+      opexTechnologyCost: 9500,
+      opexOtherCost: 4000,
+      capexCost: 75000
+    };
+    
+    const notImplementedCosts = {
+      oneOffPeopleCost: 15000,
+      oneOffTechnologyCost: 7500,
+      oneOffOtherCost: 2500,
+      opexPeopleCost: 10000,
+      opexTechnologyCost: 4500,
+      opexOtherCost: 1500,
+      capexCost: 25000
+    };
 
     // Sample phases data
     const implementedPhases = {
@@ -223,7 +279,8 @@ export default function Dashboard() {
       modifiedProjects[0] = {
         ...modifiedProjects[0],
         phases: notImplementedPhases,
-        benefits: notImplementedBenefits
+        benefits: notImplementedBenefits,
+        costs: notImplementedCosts
       };
       
       // Create a second, implemented project by cloning the first if needed
@@ -233,7 +290,8 @@ export default function Dashboard() {
           id: 2, // Give it a new ID
           title: "Implemented " + modifiedProjects[0].title,
           phases: implementedPhases,
-          benefits: implementedBenefits
+          benefits: implementedBenefits,
+          costs: implementedCosts
         };
         modifiedProjects.push(implementedProject);
       } else {
@@ -241,7 +299,8 @@ export default function Dashboard() {
         modifiedProjects[1] = {
           ...modifiedProjects[1],
           phases: implementedPhases,
-          benefits: implementedBenefits
+          benefits: implementedBenefits,
+          costs: implementedCosts
         };
       }
     }
