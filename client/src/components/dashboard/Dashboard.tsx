@@ -536,38 +536,36 @@ export default function Dashboard() {
       ];
     }
     
-    // Create an array of waterfall data with 5 separate entries for the waterfall chart
-    // Using fixed positioning for the floating bars as requested in the design
-    // Bar 1 at 0, Bar 2 at first value, Bar 3 at sum of first+second, Bar 4 at sum of all benefits
+    // Create an array of waterfall data with 5 entries for the standard bar chart
     const result = [
       {
         name: "Quality Cost Savings", 
         value: qualityCostSavings,
-        start: 0, // First bar starts at 0
+        start: 0,
         color: "#10b981" // Green
       },
       {
         name: "Financial Savings", 
         value: financialSavings,
-        start: qualityCostSavings, // Second bar starts after Quality Cost Savings
+        start: qualityCostSavings,
         color: "#22c55e" // Lighter green
       },
       {
         name: "FTE Benefits", 
         value: fteBenefits,
-        start: qualityCostSavings + financialSavings, // Third bar starts after combined previous values
+        start: qualityCostSavings + financialSavings,
         color: "#4ade80" // Even lighter green
       },
       {
         name: "Investment", 
         value: -totalCosts, // Negative value for investment costs
-        start: qualityCostSavings + financialSavings + fteBenefits, // Fourth bar starts at sum of all benefits
+        start: qualityCostSavings + financialSavings + fteBenefits,
         color: "#ef4444" // Red
       },
       {
         name: "Net Value", 
         value: netValue,
-        start: 0, // Net value shown as a separate bar starting at 0
+        start: 0,
         color: "#3b82f6" // Blue
       }
     ];
@@ -986,91 +984,63 @@ export default function Dashboard() {
                 <span className="font-medium text-gray-900">{formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings') - calculateMetric(projects?.projects || [], 'totalCosts'), currency)}</span>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height="80%">
-              <ComposedChart 
-                data={financialWaterfallData}
-                margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
-                barCategoryGap={8}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis 
-                  dataKey="name"
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{fill: '#6b7280', fontSize: 11}}
-                  height={50}
-                  interval={0}
-                />
-                <YAxis 
-                  tickFormatter={(value) => formatCurrency(value, currency)} 
-                  label={{ 
-                    value: currency, 
-                    angle: -90, 
-                    position: 'insideLeft',
-                    style: { textAnchor: 'middle', fill: '#6b7280', fontSize: 12 }
-                  }}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{fill: '#6b7280', fontSize: 12}}
-                />
-                <Tooltip 
-                  formatter={(value: number, name: string, props: any) => {
-                    // Filter out unwanted tooltip entries
-                    if (name === "start" || name === "color") return null;
-                    if (name === "value") {
-                      return [formatCurrency(value, currency), props.payload.name];
-                    }
-                    return [formatCurrency(value, currency), name];
-                  }}
-                  cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
-                  contentStyle={{
-                    backgroundColor: "white", 
-                    padding: "8px", 
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "6px"
-                  }}
-                />
-                
-                {/* Reference line at 0 */}
-                <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
-                
-                {/* Render all floating bars and connecting lines */}
-                {financialWaterfallData.map((item, index) => {
-                  const isLastBar = index === financialWaterfallData.length - 1;
-                  const isNetValueBar = item.name === "Net Value";
-                  
-                  // Don't render connecting lines for the last bar (Net Value)
-                  const renderConnectingLine = !isLastBar && !isNetValueBar;
-                  
-                  return [
-                    // Custom floating bar using ReferenceArea
-                    <ReferenceArea
-                      key={`bar-${index}`}
-                      x1={index - 0.4}
-                      x2={index + 0.4}
-                      y1={item.start}
-                      y2={item.start + item.value}
-                      fill={item.color}
-                      fillOpacity={1}
-                    />,
+            <div className="flex flex-col h-80">
+              <div className="flex-grow">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={financialWaterfallData}
+                    margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
+                    barSize={40}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis 
+                      dataKey="name"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{fill: '#6b7280', fontSize: 11}}
+                      height={50}
+                      interval={0}
+                    />
+                    <YAxis 
+                      tickFormatter={(value) => formatCurrency(value, currency)} 
+                      label={{ 
+                        value: currency, 
+                        angle: -90, 
+                        position: 'insideLeft',
+                        style: { textAnchor: 'middle', fill: '#6b7280', fontSize: 12 }
+                      }}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{fill: '#6b7280', fontSize: 12}}
+                    />
+                    <Tooltip 
+                      formatter={(value: number, name: string) => {
+                        return [formatCurrency(value, currency), name];
+                      }}
+                      cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
+                      contentStyle={{
+                        backgroundColor: "white", 
+                        padding: "8px", 
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px"
+                      }}
+                    />
                     
-                    // Connecting line to next bar (if needed)
-                    renderConnectingLine && (
-                      <ReferenceLine
-                        key={`connector-${index}`}
-                        y={item.start + item.value}
-                        segment={[
-                          { x: index + 0.4, y: item.start + item.value },
-                          { x: index + 1 - 0.4, y: item.start + item.value }
-                        ]}
-                        stroke="#aaa"
-                        strokeDasharray="3 3"
-                      />
-                    )
-                  ];
-                })}
-              </ComposedChart>
-            </ResponsiveContainer>
+                    {/* Reference line at 0 */}
+                    <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
+                    
+                    {/* Simple bar chart with custom colors */}
+                    <Bar dataKey="value">
+                      {
+                        financialWaterfallData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))
+                      }
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-1">
               {financialWaterfallData.map((item, index) => (
                 <div key={`legend-${index}`} className="flex items-center">
