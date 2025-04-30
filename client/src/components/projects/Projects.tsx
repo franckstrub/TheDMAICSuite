@@ -209,7 +209,7 @@ export default function Projects() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Projects</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your Six Sigma process improvement projects</p>
+          <p className="mt-1 text-sm text-gray-500">Manage your Lean Six Sigma process improvement projects</p>
         </div>
         <Dialog open={showNewProjectDialog} onOpenChange={setShowNewProjectDialog}>
           <DialogTrigger asChild>
@@ -222,7 +222,7 @@ export default function Projects() {
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
               <DialogDescription>
-                Enter the details for your new Six Sigma project.
+                Enter the details for your new Lean Six Sigma project.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateProject}>
