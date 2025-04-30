@@ -42,11 +42,6 @@ export default function DefinePhase() {
       oneOffTechnologyCost: "",
       oneOffOtherCost: "",
       oneOffOtherExplanation: "",
-      opexPeopleCost: "",
-      opexTechnologyCost: "",
-      opexOtherCost: "",
-      opexOtherExplanation: "",
-      opexPeriod: "month", // month, quarter, year
       capexCost: "",
       capexExplanation: "",
     },
@@ -150,11 +145,6 @@ export default function DefinePhase() {
           oneOffTechnologyCost: data.charter.oneOffTechnologyCost || "",
           oneOffOtherCost: data.charter.oneOffOtherCost || "",
           oneOffOtherExplanation: data.charter.oneOffOtherExplanation || "",
-          opexPeopleCost: data.charter.opexPeopleCost || "",
-          opexTechnologyCost: data.charter.opexTechnologyCost || "",
-          opexOtherCost: data.charter.opexOtherCost || "",
-          opexOtherExplanation: data.charter.opexOtherExplanation || "",
-          opexPeriod: data.charter.opexPeriod || "month",
           capexCost: data.charter.capexCost || "",
           capexExplanation: data.charter.capexExplanation || "",
         });
@@ -214,11 +204,6 @@ export default function DefinePhase() {
         oneOffTechnologyCost: data.oneOffTechnologyCost,
         oneOffOtherCost: data.oneOffOtherCost,
         oneOffOtherExplanation: data.oneOffOtherExplanation,
-        opexPeopleCost: data.opexPeopleCost,
-        opexTechnologyCost: data.opexTechnologyCost,
-        opexOtherCost: data.opexOtherCost,
-        opexOtherExplanation: data.opexOtherExplanation,
-        opexPeriod: data.opexPeriod,
         capexCost: data.capexCost,
         capexExplanation: data.capexExplanation,
         userId: user?.id,
@@ -631,61 +616,6 @@ export default function DefinePhase() {
                     placeholder="Detail any other one-off costs..."
                     rows={2}
                     {...charterForm.register("oneOffOtherExplanation")}
-                  />
-                </div>
-              </div>
-              
-              {/* OPEX Additional Costs */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-md font-medium">OPEX Additional Costs</h4>
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="opexPeriod" className="whitespace-nowrap">Cost Period:</Label>
-                    <select
-                      id="opexPeriod"
-                      className="rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                      {...charterForm.register("opexPeriod")}
-                    >
-                      <option value="month">Per Month</option>
-                      <option value="quarter">Per Quarter</option>
-                      <option value="year">Per Year</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="opexPeopleCost">People ({currency})</Label>
-                    <Input
-                      id="opexPeopleCost"
-                      placeholder="e.g. 1000"
-                      {...charterForm.register("opexPeopleCost")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="opexTechnologyCost">Technology ({currency})</Label>
-                    <Input
-                      id="opexTechnologyCost"
-                      placeholder="e.g. 500"
-                      {...charterForm.register("opexTechnologyCost")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="opexOtherCost">Others ({currency})</Label>
-                    <Input
-                      id="opexOtherCost"
-                      placeholder="e.g. 300"
-                      {...charterForm.register("opexOtherCost")}
-                    />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <Label htmlFor="opexOtherExplanation">Please explain Others</Label>
-                  <Textarea
-                    id="opexOtherExplanation"
-                    placeholder="Detail any other OPEX costs..."
-                    rows={2}
-                    {...charterForm.register("opexOtherExplanation")}
                   />
                 </div>
               </div>
