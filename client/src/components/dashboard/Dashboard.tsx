@@ -661,38 +661,44 @@ export default function Dashboard() {
             </div>
             
             {/* Cost Categories */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-gray-700">One-off Costs</span>
                   <span className="text-lg font-semibold text-red-600">{formatCurrency(calculateMetric(projects?.projects || [], 'oneOffCosts'), currency)}</span>
                 </div>
                 <div className="space-y-2 mt-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">People:</span>
-                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffPeopleCost || 0), 0), currency)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Technology:</span>
-                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffTechnologyCost || 0), 0), currency)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Others:</span>
-                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffOtherCost || 0), 0), currency)}</span>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-1">
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-sm">People:</span>
+                        <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffPeopleCost || 0), 0), currency)}</span>
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-sm">Technology:</span>
+                        <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffTechnologyCost || 0), 0), currency)}</span>
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-sm">Others:</span>
+                        <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffOtherCost || 0), 0), currency)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-
               
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-gray-700">CAPEX Costs</span>
                   <span className="text-lg font-semibold text-red-600">{formatCurrency(calculateMetric(projects?.projects || [], 'capexCosts'), currency)}</span>
                 </div>
-                <div className="mt-3 pt-3 border-t border-slate-200">
+                <div className="mt-2">
                   <div className="text-sm text-gray-600">
-                    Capital expenditures for long-term project assets
+                    Capital expenditures for long-term project assets and equipment that will be used over multiple years. These costs are typically depreciated over time.
                   </div>
                 </div>
               </div>
