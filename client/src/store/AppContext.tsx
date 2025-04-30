@@ -4,7 +4,8 @@ export type CurrencyType =
   | "$" | "€" | "£" | "¥" | "₩" | "CHF" | "₹" | "₽" | "₺" | "A$" 
   | "C$" | "HK$" | "R$" | "R" | "₱" | "₴" | "฿" | "₦" | "SAR" 
   | "AED" | "zł" | "Ft" | "RM" | "S$" | "₲" | "ƒ" | "CLP" | "¥" 
-  | "CN¥" | "DKK" | "SEK" | "NOK" | "ISK";
+  | "CN¥" | "DKK" | "SEK" | "NOK" | "ISK" | "₫" | "MXN" | "ARS"
+  | "RON" | "CZK" | "BGN" | "ILS" | "EGP";
 
 type AppContextType = {
   user: any | null;

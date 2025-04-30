@@ -33,10 +33,10 @@ export default function Settings() {
     { value: "€", label: "Euro (€)" },
     { value: "£", label: "British Pound (£)" },
     { value: "¥", label: "Japanese Yen (¥)" },
+    { value: "CN¥", label: "Chinese Yuan (CN¥)" },
     { value: "CHF", label: "Swiss Franc (CHF)" },
     
     // Asia & Pacific
-    { value: "CN¥", label: "Chinese Yuan (CN¥)" },
     { value: "₹", label: "Indian Rupee (₹)" },
     { value: "₩", label: "Korean Won (₩)" },
     { value: "A$", label: "Australian Dollar (A$)" },
@@ -45,12 +45,15 @@ export default function Settings() {
     { value: "฿", label: "Thai Baht (฿)" },
     { value: "RM", label: "Malaysian Ringgit (RM)" },
     { value: "S$", label: "Singapore Dollar (S$)" },
+    { value: "₫", label: "Vietnamese Dong (₫)" },
     
     // Americas
     { value: "C$", label: "Canadian Dollar (C$)" },
     { value: "R$", label: "Brazilian Real (R$)" },
     { value: "₲", label: "Paraguayan Guarani (₲)" },
     { value: "CLP", label: "Chilean Peso (CLP)" },
+    { value: "MXN", label: "Mexican Peso (MXN)" },
+    { value: "ARS", label: "Argentine Peso (ARS)" },
     
     // Europe
     { value: "₽", label: "Russian Ruble (₽)" },
@@ -63,12 +66,17 @@ export default function Settings() {
     { value: "zł", label: "Polish Złoty (zł)" },
     { value: "Ft", label: "Hungarian Forint (Ft)" },
     { value: "₴", label: "Ukrainian Hryvnia (₴)" },
+    { value: "RON", label: "Romanian Leu (RON)" },
+    { value: "CZK", label: "Czech Koruna (CZK)" },
+    { value: "BGN", label: "Bulgarian Lev (BGN)" },
     
     // Africa & Middle East
     { value: "R", label: "South African Rand (R)" },
     { value: "₦", label: "Nigerian Naira (₦)" },
     { value: "SAR", label: "Saudi Riyal (SAR)" },
     { value: "AED", label: "UAE Dirham (AED)" },
+    { value: "ILS", label: "Israeli Shekel (ILS)" },
+    { value: "EGP", label: "Egyptian Pound (EGP)" },
     
     // Other
     { value: "ƒ", label: "Dutch Guilder/Florin (ƒ)" },
@@ -151,42 +159,42 @@ export default function Settings() {
                       // Display grouped currencies when not searching
                       <>
                         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Main Currencies</div>
-                        {currencyOptions.slice(0, 5).map((option) => (
+                        {currencyOptions.slice(0, 6).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                         
                         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Asia & Pacific</div>
-                        {currencyOptions.slice(5, 14).map((option) => (
+                        {currencyOptions.slice(6, 15).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                         
                         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Americas</div>
-                        {currencyOptions.slice(14, 18).map((option) => (
+                        {currencyOptions.slice(15, 21).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                         
                         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Europe</div>
-                        {currencyOptions.slice(18, 28).map((option) => (
+                        {currencyOptions.slice(21, 32).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                         
                         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Africa & Middle East</div>
-                        {currencyOptions.slice(28, 32).map((option) => (
+                        {currencyOptions.slice(32, 38).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
                         ))}
                         
                         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Other</div>
-                        {currencyOptions.slice(32).map((option) => (
+                        {currencyOptions.slice(38).map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
