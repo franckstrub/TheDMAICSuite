@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 export default function Settings() {
   const { currency, setCurrency } = useAppContext();
@@ -80,7 +82,30 @@ export default function Settings() {
                 </p>
               </div>
               
-              <div className="flex justify-end">
+              <div className="mt-4">
+                <Separator className="my-4" />
+                <h3 className="font-medium text-sm mb-2">Preview</h3>
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-md border border-slate-200">
+                  <div>
+                    <p className="text-sm text-slate-500">Small Value</p>
+                    <p className="text-base font-medium">{formatCurrency(1234.56, selectedCurrency)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Medium Value</p>
+                    <p className="text-base font-medium">{formatCurrency(123456.78, selectedCurrency)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Large Value</p>
+                    <p className="text-base font-medium">{formatCurrency(1234567.89, selectedCurrency)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Financial Savings</p>
+                    <p className="text-base font-medium">{formatCurrency(35620, selectedCurrency)}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end mt-4">
                 <Button onClick={saveCurrencySettings}>Save Changes</Button>
               </div>
             </div>
