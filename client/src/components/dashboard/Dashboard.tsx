@@ -53,24 +53,62 @@ const createWaterfallData = () => {
   const fteBenefits = 60000;
   const netValue = investmentValue + qualitySavings + financialSavings + fteBenefits;
   
-  let cumulative = 0;
-  
   // Proper waterfall data structure
   return [
-    // Investment (start) - negative value
-    { name: "Investment", value: investmentValue, runningTotal: investmentValue, fill: "#ef4444", isTotal: false },
+    // Investment (start) - negative value at minimum
+    { 
+      name: "Investment", 
+      value: investmentValue, 
+      displayValue: investmentValue,
+      start: investmentValue, 
+      end: 0, 
+      fill: "#ef4444", 
+      isTotal: false 
+    },
     
-    // Quality savings - positive value
-    { name: "Quality Savings", value: qualitySavings, runningTotal: investmentValue + qualitySavings, fill: "#22c55e", isTotal: false },
+    // Quality savings - positive value starting at 0
+    { 
+      name: "Quality Savings", 
+      value: qualitySavings, 
+      displayValue: qualitySavings,
+      start: 0, 
+      end: qualitySavings, 
+      fill: "#22c55e", 
+      isTotal: false 
+    },
     
-    // Financial savings - positive value
-    { name: "Financial Savings", value: financialSavings, runningTotal: investmentValue + qualitySavings + financialSavings, fill: "#3b82f6", isTotal: false },
+    // Financial savings - positive value starting at quality savings
+    { 
+      name: "Financial Savings", 
+      value: financialSavings, 
+      displayValue: financialSavings,
+      start: qualitySavings, 
+      end: qualitySavings + financialSavings, 
+      fill: "#3b82f6", 
+      isTotal: false 
+    },
     
-    // FTE Benefits - positive value
-    { name: "FTE Benefits", value: fteBenefits, runningTotal: netValue, fill: "#8b5cf6", isTotal: false },
+    // FTE Benefits - positive value starting at quality + financial savings
+    { 
+      name: "FTE Benefits", 
+      value: fteBenefits, 
+      displayValue: fteBenefits,
+      start: qualitySavings + financialSavings, 
+      end: qualitySavings + financialSavings + fteBenefits, 
+      fill: "#8b5cf6", 
+      isTotal: false 
+    },
     
-    // Net Value - total bar
-    { name: "Net Value", value: netValue, runningTotal: netValue, fill: "#15803d", isTotal: true }
+    // Net Value - total bar starting at 0
+    { 
+      name: "Net Value", 
+      value: netValue, 
+      displayValue: netValue,
+      start: 0, 
+      end: netValue, 
+      fill: "#15803d", 
+      isTotal: true 
+    }
   ];
 };
 
@@ -799,48 +837,70 @@ export default function Dashboard() {
               <BarChart
                 data={roiWalkData}
                 margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
+                barGap={0}
+                maxBarSize={60}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
-                  domain={[roiWalkData[0].runningTotal * 1.1, roiWalkData[roiWalkData.length-1].runningTotal * 1.1]}
+                  domain={[roiWalkData[0].start * 1.1, Math.max(roiWalkData[2].end, roiWalkData[4].end) * 1.1]}
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
-                    // For individual steps, show the step value
-                    if (name === "value") {
-                      return [formatCurrency(value, currency), "Value"];
-                    } 
-                    // For running total, show as "Current Total"
-                    else if (name === "runningTotal") {
-                      return [formatCurrency(value, currency), "Current Total"];
+                    if (name === "value" && props.payload.displayValue !== undefined) {
+                      return [formatCurrency(props.payload.displayValue, currency), props.payload.name];
+                    }
+                    // Hide start/end values from tooltip
+                    if (name === "start" || name === "end") {
+                      return ["", ""];
                     }
                     return [formatCurrency(value, currency), name];
                   }}
                   cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                  labelFormatter={(name) => `${name}`}
                 />
-                <Bar dataKey="value" fill="#8884d8" name="Value">
-                  {roiWalkData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.isTotal ? "#15803d" : entry.value < 0 ? "#ef4444" : entry.fill} />
-                  ))}
-                </Bar>
-                {/* Draw connecting lines between bars */}
+                
+                {/* Show bars representing the financial values */}
                 {roiWalkData.map((entry, index) => {
-                  if (index === roiWalkData.length - 1) return null; // Skip the last entry
-                  return (
-                    <Line 
-                      key={`line-${index}`}
-                      type="step" 
-                      dataKey="runningTotal" 
-                      stroke="#333" 
-                      strokeWidth={2} 
-                      dot={false} 
-                      activeDot={false}
-                      connectNulls={true}
-                    />
-                  );
+                  if (entry.isTotal) {
+                    // Special handling for the total/net value bar
+                    return (
+                      <Bar 
+                        key={`total-${index}`}
+                        dataKey="value" 
+                        name="Value" 
+                        fill={entry.fill}
+                        stackId="a"
+                        // Only render for the total item (Net Value)
+                        data={[roiWalkData[roiWalkData.length - 1]]}
+                      />
+                    );
+                  } else {
+                    // For regular items, create a bar between start and end
+                    return (
+                      <Bar 
+                        key={`bar-${index}`}
+                        dataKey="value" 
+                        name="Value" 
+                        fill={entry.fill}
+                        // Only render for this specific item
+                        data={[roiWalkData[index]]}
+                        minPointSize={5}
+                      />
+                    );
+                  }
                 })}
+                
+                {/* Add connecting reference lines */}
+                <Line 
+                  type="monotone" 
+                  dataKey="end" 
+                  stroke="#333" 
+                  strokeWidth={2} 
+                  dot={false}
+                  connectNulls={true}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
