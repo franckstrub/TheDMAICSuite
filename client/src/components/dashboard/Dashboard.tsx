@@ -147,6 +147,16 @@ export default function Dashboard() {
   const calculateMetric = (projects: Project[], metricType: string): number => {
     if (!projects || projects.length === 0) return 0;
     
+    // Special case for ROI which needs to be calculated across all projects at once
+    if (metricType === 'roi') {
+      // Calculate total financial savings across all projects
+      const totalFinancialSavings = calculateMetric(projects, 'totalFinancialSavings');
+      // Calculate total costs across all projects
+      const totalProjectCosts = calculateMetric(projects, 'totalCosts');
+      // Avoid division by zero and calculate ROI from the aggregated totals
+      return totalProjectCosts > 0 ? ((totalFinancialSavings - totalProjectCosts) / totalProjectCosts) : 0;
+    }
+    
     return projects.reduce((total, project) => {
       // Get the value from the project, default to 0 if not found
       let value = 0;
@@ -218,11 +228,8 @@ export default function Dashboard() {
           value = totalBenefits - totalCosts;
           break;
         case 'roi':
-          // Calculate ROI as (Total Project Financial Savings (p.a.) - Total Project Costs) / Total Project Costs
-          const totalFinancialSavings = calculateMetric([project], 'totalFinancialSavings');
-          const totalProjectCosts = calculateMetric([project], 'totalCosts');
-          // Avoid division by zero
-          value = totalProjectCosts > 0 ? ((totalFinancialSavings - totalProjectCosts) / totalProjectCosts) : 0;
+          // ROI shouldn't be calculated per project - handled in special case at the top
+          value = 0; // This code should never be reached due to the special case for ROI
           break;
         default:
           value = 0;
