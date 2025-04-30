@@ -79,7 +79,7 @@ type Project = {
   [key: string]: any;
 }
 
-// Create Financial Benefits waterfall data from projects
+// Create Financial Benefits waterfall data for projects
 const createFinancialWaterfallData = (projects: Project[]) => {
   if (!projects || projects.length === 0) {
     return [];
@@ -100,7 +100,7 @@ const createFinancialWaterfallData = (projects: Project[]) => {
     return sum + (project.benefits?.fteBenefits || 0) * avgFTECost;
   }, 0);
   
-  // Calculate total project costs
+  // Calculate total project costs (as a negative value for waterfall)
   const totalCosts = projects.reduce((sum, project) => {
     const oneOffCosts = (project.costs?.oneOffPeopleCost || 0) + 
                      (project.costs?.oneOffTechnologyCost || 0) + 
@@ -112,65 +112,52 @@ const createFinancialWaterfallData = (projects: Project[]) => {
   // Calculate net value
   const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
   
-  // Waterfall chart data - for relative waterfall
-  // Each item has base and value properties
+  // Define the data items with their values
+  const items = [
+    { name: "Quality Cost Savings", value: qualityCostSavings, fill: "#10b981", isPositive: true },
+    { name: "Financial Savings", value: financialSavings, fill: "#22c55e", isPositive: true },
+    { name: "FTE Benefits", value: fteBenefits, fill: "#4ade80", isPositive: true },
+    { name: "Investment", value: -totalCosts, fill: "#ef4444", isPositive: false }, // Negative value
+    { name: "Net Value", value: netValue, fill: "#3b82f6", isTotal: true }
+  ];
+  
+  // Create the true waterfall chart data
   const waterfallData = [];
   
-  // Running total to calculate the base for each item
+  // Running total to track position
   let runningTotal = 0;
-
-  // Add Quality Cost Savings
-  waterfallData.push({
-    name: "Quality Cost Savings",
-    base: 0,
-    value: qualityCostSavings,
-    fill: "#10b981", // Darker green
-    total: runningTotal + qualityCostSavings,
-    displayValue: qualityCostSavings
-  });
-  runningTotal += qualityCostSavings;
   
-  // Add Financial Savings
-  waterfallData.push({
-    name: "Financial Savings",
-    base: runningTotal,
-    value: financialSavings,
-    fill: "#22c55e", // Medium green
-    total: runningTotal + financialSavings,
-    displayValue: financialSavings
-  });
-  runningTotal += financialSavings;
-  
-  // Add FTE Benefits
-  waterfallData.push({
-    name: "FTE Benefits",
-    base: runningTotal,
-    value: fteBenefits,
-    fill: "#4ade80", // Lighter green
-    total: runningTotal + fteBenefits,
-    displayValue: fteBenefits
-  });
-  runningTotal += fteBenefits;
-  
-  // Add Investment Costs (negative value)
-  waterfallData.push({
-    name: "Investment",
-    base: runningTotal,
-    value: -totalCosts,
-    fill: "#ef4444", // Red
-    total: runningTotal - totalCosts,
-    displayValue: -totalCosts
-  });
-  runningTotal -= totalCosts;
-  
-  // Add Net Value (final result)
-  waterfallData.push({
-    name: "Net Value",
-    base: 0,
-    value: netValue,
-    fill: "#3b82f6", // Blue
-    total: netValue,
-    displayValue: netValue
+  // Process each item to create waterfall effect
+  items.forEach((item, index) => {
+    if (item.isTotal) {
+      // Net Value - shown as a separate bar starting from 0
+      waterfallData.push({
+        name: item.name,
+        start: 0,
+        end: item.value,
+        actual: item.value,
+        fill: item.fill,
+        isTotal: true
+      });
+    } else {
+      // Regular waterfall component
+      // Each bar starts at the current running total
+      const start = runningTotal;
+      // End position is start + item value
+      const end = start + item.value;
+      
+      waterfallData.push({
+        name: item.name,
+        start: start,
+        end: end,
+        actual: item.value,
+        fill: item.fill,
+        isPositive: item.isPositive
+      });
+      
+      // Update running total for next item
+      runningTotal = end;
+    }
   });
   
   return waterfallData;
@@ -903,9 +890,12 @@ export default function Dashboard() {
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
-                    // Display the true value of the bar (from displayValue)
-                    const displayValue = props.payload.displayValue;
-                    return [formatCurrency(displayValue, currency), props.payload.name];
+                    // Display the actual value of the component
+                    if (name === "Value" && props.payload && props.payload.actual !== undefined) {
+                      return [formatCurrency(props.payload.actual, currency), props.payload.name];
+                    }
+                    // For other series (like base/start), don't show in tooltip
+                    return ["", ""];
                   }}
                   cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
                   contentStyle={{borderRadius: '6px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}
@@ -913,7 +903,13 @@ export default function Dashboard() {
                     // Find the entry for this label
                     const entry = financialWaterfallData.find(entry => entry.name === label);
                     if (entry) {
-                      return `${entry.name}${entry.name !== "Net Value" ? ` (${entry.name === "Investment" ? "Cost" : "Benefit"})` : ""}`;
+                      if (entry.isTotal) {
+                        return `${entry.name} (Final Result)`;
+                      } else if (entry.name === "Investment") {
+                        return `${entry.name} (Cost)`;
+                      } else {
+                        return `${entry.name} (Benefit)`;
+                      }
                     }
                     return label;
                   }}
@@ -924,16 +920,16 @@ export default function Dashboard() {
                 
                 {/* Base bars for waterfall effect */}
                 <Bar
-                  dataKey="base"
-                  stackId="stack"
+                  dataKey="start"
                   fill="transparent"
+                  stackId="stack"
                   isAnimationActive={false}
                   legendType="none"
                 />
                 
-                {/* Value bars for waterfall effect */}
+                {/* Actual value bars for waterfall effect */}
                 <Bar 
-                  dataKey="value" 
+                  dataKey="actual" 
                   name="Value"
                   stackId="stack"
                 >
@@ -942,20 +938,21 @@ export default function Dashboard() {
                   ))}
                 </Bar>
                 
-                {/* Show total labels */}
-                <ReferenceLine y={0} stroke="#aaa" />
-                
-                {financialWaterfallData.map((entry, i) => (
-                  entry.name !== "Net Value" && i < financialWaterfallData.length - 1 ? (
+                {/* Show connecting lines between bars */}
+                {financialWaterfallData.map((entry, i, arr) => {
+                  // No connector after last item or for total
+                  if (i === arr.length - 1 || entry.isTotal) return null;
+                  
+                  return (
                     <ReferenceLine 
                       key={`ref-${i}`}
-                      y={entry.total}
+                      y={entry.end}
                       stroke="#aaa" 
                       strokeDasharray="3 3"
                       isFront={false}
                     />
-                  ) : null
-                ))}
+                  );
+                })}
               </BarChart>
             </ResponsiveContainer>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-1">
