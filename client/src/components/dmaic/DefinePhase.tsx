@@ -400,27 +400,43 @@ export default function DefinePhase() {
 
   // Function to calculate and update total financial savings, net value, ROI, and breakeven
   const updateTotalFinancialSavings = () => {
-    // Get values from form for benefits
-    const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear")) || 0;
-    const financialSavings = parseFloat(charterForm.getValues("financialSavings")) || 0;
+    // Get values from form for benefits - ensure they're numbers
+    const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear").toString()) || 0;
+    const financialSavings = parseFloat(charterForm.getValues("financialSavings").toString()) || 0;
     
-    // Get FTE benefits value from the state
-    const fteBenefits = fteParams.calculatedValue || 0;
+    // Get FTE benefits value from the state - ensure it's a number
+    const fteBenefits = Number(fteParams.calculatedValue) || 0;
     
     // Calculate total project financial savings
     const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
     
-    // Get values from form for costs
-    const oneOffPeopleCost = parseFloat(charterForm.getValues("oneOffPeopleCost")) || 0;
-    const oneOffTechnologyCost = parseFloat(charterForm.getValues("oneOffTechnologyCost")) || 0;
-    const oneOffOtherCost = parseFloat(charterForm.getValues("oneOffOtherCost")) || 0;
-    const capexCost = parseFloat(charterForm.getValues("capexCost")) || 0;
+    // Get values from form for costs - ensure they're numbers
+    const oneOffPeopleCost = parseFloat(charterForm.getValues("oneOffPeopleCost").toString()) || 0;
+    const oneOffTechnologyCost = parseFloat(charterForm.getValues("oneOffTechnologyCost").toString()) || 0;
+    const oneOffOtherCost = parseFloat(charterForm.getValues("oneOffOtherCost").toString()) || 0;
+    const capexCost = parseFloat(charterForm.getValues("capexCost").toString()) || 0;
     
     // Calculate total project costs
     const totalProjectCosts = oneOffPeopleCost + oneOffTechnologyCost + oneOffOtherCost + capexCost;
     
     // Calculate project net value
     const projectNetValue = totalFinancialSavings - totalProjectCosts;
+    
+    // Debug log for net value calculation
+    console.log("Net Value Calculation:", {
+      totalFinancialSavings,
+      totalProjectCosts,
+      projectNetValue,
+      inputs: {
+        qualityCostSavings,
+        financialSavings,
+        fteBenefits,
+        oneOffPeopleCost,
+        oneOffTechnologyCost,
+        oneOffOtherCost,
+        capexCost
+      }
+    });
     
     // Calculate ROI (Return on Investment) as a percentage
     let roi = 0;
