@@ -45,20 +45,36 @@ import {
 import { Label } from "@/components/ui/label";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from "recharts";
 
-// Sample data for charts - using waterfall style for financial walk
-const investmentValue = -100000;  // Negative value for investment (cost)
-const qualitySavings = 45000;
-const financialSavings = 25000;
-const fteBenefits = 60000;
-const netValue = investmentValue + qualitySavings + financialSavings + fteBenefits;
+// Create waterfall data
+const createWaterfallData = () => {
+  const investmentValue = -100000;  // Negative value for investment (cost)
+  const qualitySavings = 45000;
+  const financialSavings = 25000;
+  const fteBenefits = 60000;
+  const netValue = investmentValue + qualitySavings + financialSavings + fteBenefits;
+  
+  let cumulative = 0;
+  
+  // Proper waterfall data structure
+  return [
+    // Investment (start) - negative value
+    { name: "Investment", value: investmentValue, runningTotal: investmentValue, fill: "#ef4444", isTotal: false },
+    
+    // Quality savings - positive value
+    { name: "Quality Savings", value: qualitySavings, runningTotal: investmentValue + qualitySavings, fill: "#22c55e", isTotal: false },
+    
+    // Financial savings - positive value
+    { name: "Financial Savings", value: financialSavings, runningTotal: investmentValue + qualitySavings + financialSavings, fill: "#3b82f6", isTotal: false },
+    
+    // FTE Benefits - positive value
+    { name: "FTE Benefits", value: fteBenefits, runningTotal: netValue, fill: "#8b5cf6", isTotal: false },
+    
+    // Net Value - total bar
+    { name: "Net Value", value: netValue, runningTotal: netValue, fill: "#15803d", isTotal: true }
+  ];
+};
 
-const roiWalkData = [
-  { name: "Investment", value: investmentValue, start: 0, end: investmentValue, fill: "#ef4444", displayValue: investmentValue },
-  { name: "Quality Savings", value: qualitySavings, start: investmentValue, end: investmentValue + qualitySavings, fill: "#22c55e", displayValue: qualitySavings },
-  { name: "Financial Savings", value: financialSavings, start: investmentValue + qualitySavings, end: investmentValue + qualitySavings + financialSavings, fill: "#3b82f6", displayValue: financialSavings },
-  { name: "FTE Benefits", value: fteBenefits, start: investmentValue + qualitySavings + financialSavings, end: netValue, fill: "#8b5cf6", displayValue: fteBenefits },
-  { name: "Net Value", value: netValue, start: 0, end: netValue, fill: "#15803d", displayValue: netValue },
-];
+const roiWalkData = createWaterfallData();
 
 const costBreakdownData = [
   { name: "People Costs", value: 60000, fill: "#f97316" },
@@ -788,26 +804,43 @@ export default function Dashboard() {
                 <XAxis dataKey="name" />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
-                  domain={[investmentValue * 1.1, netValue * 1.1]}
+                  domain={[roiWalkData[0].runningTotal * 1.1, roiWalkData[roiWalkData.length-1].runningTotal * 1.1]}
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
-                    if (name === "start" || name === "end") return ["", ""];
-                    if (props.payload.displayValue !== undefined) {
-                      return [formatCurrency(props.payload.displayValue, currency), "Value"];
+                    // For individual steps, show the step value
+                    if (name === "value") {
+                      return [formatCurrency(value, currency), "Value"];
+                    } 
+                    // For running total, show as "Current Total"
+                    else if (name === "runningTotal") {
+                      return [formatCurrency(value, currency), "Current Total"];
                     }
                     return [formatCurrency(value, currency), name];
                   }}
                   cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
-                  labelFormatter={(label) => `${label}`}
                 />
                 <Bar dataKey="value" fill="#8884d8" name="Value">
                   {roiWalkData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`cell-${index}`} fill={entry.isTotal ? "#15803d" : entry.value < 0 ? "#ef4444" : entry.fill} />
                   ))}
                 </Bar>
-                <Bar dataKey="start" stackId="a" fill="transparent" />
-                <Bar dataKey="end" stackId="a" fill="transparent" />
+                {/* Draw connecting lines between bars */}
+                {roiWalkData.map((entry, index) => {
+                  if (index === roiWalkData.length - 1) return null; // Skip the last entry
+                  return (
+                    <Line 
+                      key={`line-${index}`}
+                      type="step" 
+                      dataKey="runningTotal" 
+                      stroke="#333" 
+                      strokeWidth={2} 
+                      dot={false} 
+                      activeDot={false}
+                      connectNulls={true}
+                    />
+                  );
+                })}
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
