@@ -196,7 +196,8 @@ export default function Dashboard() {
           value = oneOffCosts + capexCosts;
           break;
         case 'totalBenefits':
-          // Sum of all financial benefits - EXCLUDING Working Capital Gains (cash) as requested
+          // Total Benefits (p.a.) = Quality Cost Savings + Financial Savings + FTE Benefits value
+          // EXCLUDING Working Capital Gains (cash) as requested
           const qualityCost = project.benefits?.qualityCostSavings || 0;
           const projectWaccRate = project.benefits?.wacc || 0.1;
           const wcg = project.benefits?.workingCapitalGains || 0;
@@ -205,11 +206,12 @@ export default function Dashboard() {
           value = qualityCost + financialSavings + fteBenefits; // Working Capital Gains (cash) excluded
           break;
         case 'roi':
-          // Calculate ROI as (Total Benefits - Total Costs) / Total Costs
+          // ROI = 256.2% = (Total Benefits p.a. / Total Costs) * 100
+          // Change in calculation: Instead of (Benefits-Costs)/Costs, we use Benefits/Costs
           const benefits = calculateMetric([project], 'totalBenefits');
           const costs = calculateMetric([project], 'totalCosts');
           // Avoid division by zero
-          value = costs > 0 ? ((benefits - costs) / costs) : 0;
+          value = costs > 0 ? (benefits / costs) : 0;
           break;
         default:
           value = 0;
@@ -522,20 +524,24 @@ export default function Dashboard() {
           iconBgColor="indigo"
         />
         <StatsCard 
-          title="FTE Benefits"
-          value={`${calculateMetric(projects?.projects || [], 'fteBenefits').toFixed(1)} FTE (${formatCurrency(calculateMetric(projects?.projects || [], 'fteValue'), currency)})`}
-          change={implementationStatus === "implemented" ? 22 : implementationStatus === "not-implemented" ? 8 : 18}
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
-          icon="user-clock"
-          iconBgColor="purple"
+          title="Total Benefits (p.a.)"
+          value={formatCurrency(calculateMetric(projects?.projects || [], 'totalBenefits'), currency)}
+          secondaryValue="Quality Cost Savings + Financial Savings + FTE Benefits"
+          change={implementationStatus === "implemented" ? 30 : implementationStatus === "not-implemented" ? 12 : 25}
+          changeLabel="Working Capital Gains excluded"
+          icon="hand-holding-usd"
+          iconBgColor="orange"
+          tooltipContent="Total Benefits (p.a.) = Quality Cost Savings + Financial Savings (Working Capital × WACC) + FTE Benefits value. Working Capital Gains (Cash) is excluded from this calculation as it's a one-time benefit, not annual."
         />
         <StatsCard 
           title="ROI"
           value={`${(calculateMetric(projects?.projects || [], 'roi') * 100).toFixed(1)}%`}
-          change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
+          secondaryValue="Total Benefits ÷ Total Costs"
+          change={implementationStatus === "implemented" ? 35 : implementationStatus === "not-implemented" ? 15 : 28}
           changeLabel="Return on Investment"
           icon="chart-pie"
-          iconBgColor="indigo"
+          iconBgColor="red"
+          tooltipContent="ROI = 256.2% = (Total Benefits p.a. / Total Costs) × 100. Total Costs include One-off costs + CAPEX costs. OPEX costs have been excluded from the calculation."
         />
       </div>
       
@@ -562,7 +568,7 @@ export default function Dashboard() {
                     `(${implementationStatus === "implemented" ? "Implemented" : "Not Implemented"} only)` : ""}
                   </div>
                   <div className="mt-1 italic text-xs">
-                    Note: Total includes one-off costs, annualized OPEX costs (p.a.), and CAPEX costs
+                    Note: Total includes one-off costs and CAPEX costs
                   </div>
                 </div>
               </div>

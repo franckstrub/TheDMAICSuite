@@ -1,15 +1,17 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, HelpCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface StatsCardProps {
+export interface StatsCardProps {
   title: string;
   value: string;
   secondaryValue?: string;
   change: number;
   changeLabel: string;
   icon: string;
-  iconBgColor: "blue" | "green" | "yellow" | "purple" | "red" | "indigo";
+  iconBgColor: "blue" | "green" | "yellow" | "purple" | "red" | "indigo" | "orange";
+  tooltipContent?: string;
 }
 
 export default function StatsCard({
@@ -20,6 +22,7 @@ export default function StatsCard({
   changeLabel,
   icon,
   iconBgColor,
+  tooltipContent,
 }: StatsCardProps) {
   // Determine the styling based on iconBgColor
   const iconBgColorMap = {
@@ -29,6 +32,7 @@ export default function StatsCard({
     purple: "bg-purple-100",
     red: "bg-red-100",
     indigo: "bg-indigo-100",
+    orange: "bg-orange-100",
   };
 
   const iconColorMap = {
@@ -38,6 +42,7 @@ export default function StatsCard({
     purple: "text-purple-500",
     red: "text-red-500",
     indigo: "text-indigo-500",
+    orange: "text-orange-500",
   };
 
   const bgColorClass = iconBgColorMap[iconBgColor];
@@ -60,7 +65,21 @@ export default function StatsCard({
     <Card>
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+          <div className="flex items-center">
+            <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+            {tooltipContent && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="ml-1">
+                    <HelpCircleIcon className="h-4 w-4 text-gray-400" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-sm">{tooltipContent}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
           <div className={cn("rounded-full p-2", bgColorClass)}>
             <i className={cn(`fas fa-${icon}`, textColorClass)}></i>
           </div>
