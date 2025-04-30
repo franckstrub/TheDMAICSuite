@@ -43,7 +43,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, ReferenceLine } from "recharts";
 
 // Define the Project type at the top level so it's accessible
 type Project = {
@@ -83,9 +83,9 @@ type Project = {
 const createFinancialWaterfallData = (projects: Project[]) => {
   if (!projects || projects.length === 0) {
     return [
-      { name: "Financial Savings", value: 0, displayValue: 0, start: 0, end: 0, fill: "#22c55e", isTotal: false },
-      { name: "Investment", value: 0, displayValue: 0, start: 0, end: 0, fill: "#ef4444", isTotal: false },
-      { name: "Net Value", value: 0, displayValue: 0, start: 0, end: 0, fill: "#3b82f6", isTotal: true }
+      { name: "Financial Savings", value: 0, displayValue: 0, start: 0, end: 0, fill: "#22c55e", isTotal: false, position: 1 },
+      { name: "Investment", value: 0, displayValue: 0, start: 0, end: 0, fill: "#ef4444", isTotal: false, position: 2 },
+      { name: "Net Value", value: 0, displayValue: 0, start: 0, end: 0, fill: "#3b82f6", isTotal: true, position: 3 }
     ];
   }
   
@@ -112,7 +112,7 @@ const createFinancialWaterfallData = (projects: Project[]) => {
   // Calculate net value (financial savings plus investment value)
   const netValue = financialSavings + investmentValue;
   
-  // Build the waterfall data structure
+  // Build the waterfall data structure with position property to space them out
   return [
     // Financial Savings (start at 0)
     { 
@@ -122,7 +122,8 @@ const createFinancialWaterfallData = (projects: Project[]) => {
       start: 0, 
       end: financialSavings, 
       fill: "#22c55e", 
-      isTotal: false 
+      isTotal: false,
+      position: 1 // Position at the left
     },
     
     // Investment (negative value, start at financial savings)
@@ -133,7 +134,8 @@ const createFinancialWaterfallData = (projects: Project[]) => {
       start: financialSavings, 
       end: financialSavings + investmentValue, 
       fill: "#ef4444", 
-      isTotal: false 
+      isTotal: false,
+      position: 2 // Position in the middle
     },
     
     // Net Value (total bar from 0 to net value)
@@ -144,7 +146,8 @@ const createFinancialWaterfallData = (projects: Project[]) => {
       start: 0, 
       end: netValue, 
       fill: "#3b82f6", 
-      isTotal: true 
+      isTotal: true,
+      position: 3 // Position at the right
     }
   ];
 };
@@ -845,17 +848,26 @@ export default function Dashboard() {
               </div>
             </div>
             <ResponsiveContainer width="100%" height="80%">
-              <BarChart
-                data={financialWaterfallData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                barSize={60}
+              <BarChart 
+                data={financialWaterfallData} 
+                margin={{ top: 20, right: 60, left: 60, bottom: 20 }}
+                barSize={80}
+                layout="horizontal"
+                maxBarSize={120}
+                barCategoryGap="35%"
+                barGap={20}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis 
-                  dataKey="name" 
+                  dataKey="position"
                   tickLine={false}
                   axisLine={false}
                   tick={{fill: '#6b7280', fontSize: 12}}
+                  tickFormatter={(value) => {
+                    // Map position back to name for axis labels
+                    const item = financialWaterfallData.find(entry => entry.position === value);
+                    return item ? item.name : "";
+                  }}
                 />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
@@ -892,23 +904,12 @@ export default function Dashboard() {
                   labelFormatter={(name) => `${name}`}
                 />
                 
-                {/* Reference area to show 0 line */}
-                <svg>
-                  <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="#aaa" strokeDasharray="4 4" />
-                </svg>
+                {/* Reference line to show 0 line */}
+                <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Create connecting segments */}
-                <Line 
-                  type="linear" 
-                  dataKey="end" 
-                  stroke="#333" 
-                  strokeWidth={2} 
-                  dot={false}
-                  activeDot={false}
-                  connectNulls={true}
-                  // Filter out the total item
-                  data={financialWaterfallData.filter(item => !item.isTotal)}
-                />
+                {/* Create connecting segments with ReferenceLines */}
+                <ReferenceLine x={1.5} stroke="#333" strokeWidth={2} />
+                <ReferenceLine x={2.5} stroke="#333" strokeWidth={2} />
                 
                 {/* The Financial Savings bar */}
                 <Bar 
