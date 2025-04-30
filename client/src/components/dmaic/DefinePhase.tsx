@@ -178,6 +178,7 @@ export default function DefinePhase() {
           waccPercentage: data.charter.waccPercentage || "10",
           financialSavings: data.charter.financialSavings || "",
           fteBenefits: data.charter.fteBenefits || "",
+          totalFinancialSavings: "",  // Will be calculated after form initialization
           softBenefits: data.charter.softBenefits || "",
           // Project cost fields
           oneOffPeopleCost: data.charter.oneOffPeopleCost || "",
@@ -187,6 +188,27 @@ export default function DefinePhase() {
           capexCost: data.charter.capexCost || "",
           capexExplanation: data.charter.capexExplanation || "",
         });
+        
+        // If there's an FTE benefit string in the loaded data, parse it and set the calculated value
+        if (data.charter.fteBenefits) {
+          try {
+            // Extract numeric value from a string like "0.80 FTE ($111,200)"
+            const fteMatch = data.charter.fteBenefits.match(/(\d+\.\d+)\s+FTE/);
+            if (fteMatch && fteMatch[1]) {
+              const fteValue = parseFloat(fteMatch[1]);
+              setFteParams(prev => ({
+                ...prev,
+                calculatedFte: fteValue,
+                calculatedValue: fteValue * (prev.fteCostPerYear || 100000)
+              }));
+            }
+          } catch (e) {
+            console.error("Error parsing FTE value:", e);
+          }
+        }
+        
+        // Calculate total financial savings after loading the form data
+        setTimeout(updateTotalFinancialSavings, 100);
       }
     },
   });
