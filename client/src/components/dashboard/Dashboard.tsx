@@ -79,26 +79,37 @@ type Project = {
   [key: string]: any;
 }
 
-// Create Financial Benefits waterfall data from projects
-const createFinancialWaterfallData = (projects: Project[]) => {
+// Create Financial Benefits breakdown data from projects
+const createFinancialBreakdownData = (projects: Project[]) => {
   if (!projects || projects.length === 0) {
     return [
-      { name: "Financial Savings", value: 0, displayValue: 0, start: 0, end: 0, fill: "#22c55e", isTotal: false, position: 1 },
-      { name: "Investment", value: 0, displayValue: 0, start: 0, end: 0, fill: "#ef4444", isTotal: false, position: 2 },
-      { name: "Net Value", value: 0, displayValue: 0, start: 0, end: 0, fill: "#3b82f6", isTotal: true, position: 3 }
+      { name: "Quality Cost Savings", value: 0, displayValue: 0, fill: "#10b981", category: "benefit" },
+      { name: "Financial Savings", value: 0, displayValue: 0, fill: "#22c55e", category: "benefit" },
+      { name: "FTE Benefits", value: 0, displayValue: 0, fill: "#4ade80", category: "benefit" },
+      { name: "Investment", value: 0, displayValue: 0, fill: "#ef4444", category: "cost" },
+      { name: "Net Value", value: 0, displayValue: 0, fill: "#3b82f6", category: "total" }
     ];
   }
   
-  // Calculate total financial savings across all projects
-  const financialSavings = projects.reduce((sum, project) => {
-    // Total Project Financial Savings p.a. = Quality Cost Savings (p.a.) + Financial Savings (p.a.) + FTE Benefits
-    const qualityCostSavingsPa = project.benefits?.qualityCostSavings || 0;
-    const financialSavingsPa = (project.benefits?.workingCapitalGains || 0) * (project.benefits?.wacc || 0.1);
-    const fteBenefitsValue = (project.benefits?.fteBenefits || 0) * (project.benefits?.avgFTECost || 139000);
-    return sum + qualityCostSavingsPa + financialSavingsPa + fteBenefitsValue;
+  // Calculate total values across all projects for each category
+  const qualityCostSavings = projects.reduce((sum, project) => {
+    return sum + (project.benefits?.qualityCostSavings || 0);
   }, 0);
   
-  // Calculate total project costs (investment is negative for waterfall)
+  const financialSavings = projects.reduce((sum, project) => {
+    const wacc = project.benefits?.wacc || 0.1;
+    return sum + (project.benefits?.workingCapitalGains || 0) * wacc;
+  }, 0);
+  
+  const fteBenefits = projects.reduce((sum, project) => {
+    const avgFTECost = project.benefits?.avgFTECost || 139000;
+    return sum + (project.benefits?.fteBenefits || 0) * avgFTECost;
+  }, 0);
+  
+  // Total Benefits
+  const totalBenefits = qualityCostSavings + financialSavings + fteBenefits;
+  
+  // Calculate total project costs
   const totalCosts = projects.reduce((sum, project) => {
     const oneOffCosts = (project.costs?.oneOffPeopleCost || 0) + 
                      (project.costs?.oneOffTechnologyCost || 0) + 
@@ -107,47 +118,54 @@ const createFinancialWaterfallData = (projects: Project[]) => {
     return sum + oneOffCosts + capexCosts;
   }, 0);
   
-  const investmentValue = -totalCosts; // Negative value for waterfall chart
+  // Calculate net value
+  const netValue = totalBenefits - totalCosts;
   
-  // Calculate net value (financial savings plus investment value)
-  const netValue = financialSavings + investmentValue;
-  
-  // Build the waterfall data structure with position property to space them out
+  // Build the financial breakdown data structure
   return [
-    // Financial Savings (start at 0)
+    // Quality Cost Savings
+    { 
+      name: "Quality Cost Savings", 
+      value: qualityCostSavings, 
+      displayValue: qualityCostSavings,
+      fill: "#10b981", // Darker green
+      category: "benefit"
+    },
+    
+    // Financial Savings from WCG
     { 
       name: "Financial Savings", 
       value: financialSavings, 
       displayValue: financialSavings,
-      start: 0, 
-      end: financialSavings, 
-      fill: "#22c55e", 
-      isTotal: false,
-      position: 1 // Position at the left
+      fill: "#22c55e", // Medium green
+      category: "benefit"
     },
     
-    // Investment (negative value, start at financial savings)
+    // FTE Benefits
+    { 
+      name: "FTE Benefits", 
+      value: fteBenefits, 
+      displayValue: fteBenefits,
+      fill: "#4ade80", // Lighter green
+      category: "benefit"
+    },
+    
+    // Investment Costs
     { 
       name: "Investment", 
-      value: investmentValue, 
-      displayValue: investmentValue,
-      start: financialSavings, 
-      end: financialSavings + investmentValue, 
-      fill: "#ef4444", 
-      isTotal: false,
-      position: 2 // Position in the middle
+      value: totalCosts, 
+      displayValue: totalCosts,
+      fill: "#ef4444", // Red
+      category: "cost"
     },
     
-    // Net Value (total bar from 0 to net value)
+    // Net Value
     { 
       name: "Net Value", 
       value: netValue, 
       displayValue: netValue,
-      start: 0, 
-      end: netValue, 
-      fill: "#3b82f6", 
-      isTotal: true,
-      position: 3 // Position at the right
+      fill: "#3b82f6", // Blue
+      category: "total"
     }
   ];
 };
@@ -434,8 +452,8 @@ export default function Dashboard() {
     return projects.projects;
   }, [projects]);
   
-  // Generate financial waterfall data for chart
-  const financialWaterfallData = useMemo(() => createFinancialWaterfallData(filteredProjectsArray), [filteredProjectsArray]);
+  // Generate financial breakdown data for chart
+  const financialBreakdownData = useMemo(() => createFinancialBreakdownData(filteredProjectsArray), [filteredProjectsArray]);
 
   // Fetch activity logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
@@ -825,7 +843,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-medium">Financial Benefits Waterfall</CardTitle>
+            <CardTitle className="text-base font-medium">Financial Benefits Breakdown</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -849,20 +867,21 @@ export default function Dashboard() {
             </div>
             <ResponsiveContainer width="100%" height="80%">
               <BarChart 
-                data={financialWaterfallData} 
-                margin={{ top: 20, right: 60, left: 60, bottom: 20 }}
-                barSize={60}
+                data={financialBreakdownData} 
+                margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
+                barSize={40}
                 layout="horizontal"
-                maxBarSize={100}
-                barCategoryGap={90}
-                barGap={80}
+                maxBarSize={60}
+                barCategoryGap={8}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis 
                   dataKey="name"
                   tickLine={false}
                   axisLine={false}
-                  tick={{fill: '#6b7280', fontSize: 12}}
+                  tick={{fill: '#6b7280', fontSize: 11}}
+                  height={50}
+                  interval={0}
                 />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
@@ -875,10 +894,6 @@ export default function Dashboard() {
                   tickLine={false}
                   axisLine={false}
                   tick={{fill: '#6b7280', fontSize: 12}}
-                  domain={[
-                    Math.min(0, financialWaterfallData[1].displayValue) * 1.1, // Min domain based on negative investment
-                    Math.max(financialWaterfallData[0].displayValue, financialWaterfallData[2].displayValue) * 1.1 // Max based on highest value
-                  ]}
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
@@ -891,17 +906,20 @@ export default function Dashboard() {
                 {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Simple bars without waterfall connecting lines for now */}
+                {/* Bars with individual fill colors */}
                 <Bar 
-                  dataKey="displayValue" 
-                  name="Value" 
-                  fill={(entry) => entry.fill}
-                />
+                  dataKey="value" 
+                  name="Value"
+                >
+                  {financialBreakdownData.map((entry, i) => (
+                    <Cell key={`cell-${i}`} fill={entry.fill} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
-            <div className="flex justify-center space-x-6 mt-1">
-              {financialWaterfallData.map((entry, index) => (
-                <div key={`legend-${index}`} className="flex items-center">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-1">
+              {financialBreakdownData.map((entry, i) => (
+                <div key={`legend-${i}`} className="flex items-center">
                   <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: entry.fill }}></div>
                   <span className="text-xs text-gray-600">{entry.name}</span>
                 </div>
