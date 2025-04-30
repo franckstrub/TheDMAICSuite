@@ -79,15 +79,15 @@ type Project = {
   [key: string]: any;
 }
 
-// Create Financial Benefits breakdown data from projects
-const createFinancialBreakdownData = (projects: Project[]) => {
+// Create Financial Benefits waterfall data from projects
+const createFinancialWaterfallData = (projects: Project[]) => {
   if (!projects || projects.length === 0) {
     return [
-      { name: "Quality Cost Savings", value: 0, displayValue: 0, fill: "#10b981", category: "benefit" },
-      { name: "Financial Savings", value: 0, displayValue: 0, fill: "#22c55e", category: "benefit" },
-      { name: "FTE Benefits", value: 0, displayValue: 0, fill: "#4ade80", category: "benefit" },
-      { name: "Investment", value: 0, displayValue: 0, fill: "#ef4444", category: "cost" },
-      { name: "Net Value", value: 0, displayValue: 0, fill: "#3b82f6", category: "total" }
+      { name: "Quality Cost Savings", value: 0, displayValue: 0, start: 0, end: 0, fill: "#10b981", category: "benefit" },
+      { name: "Financial Savings", value: 0, displayValue: 0, start: 0, end: 0, fill: "#22c55e", category: "benefit" },
+      { name: "FTE Benefits", value: 0, displayValue: 0, start: 0, end: 0, fill: "#4ade80", category: "benefit" },
+      { name: "Investment", value: 0, displayValue: 0, start: 0, end: 0, fill: "#ef4444", category: "cost" },
+      { name: "Net Value", value: 0, displayValue: 0, start: 0, end: 0, fill: "#3b82f6", category: "total" }
     ];
   }
   
@@ -106,9 +106,6 @@ const createFinancialBreakdownData = (projects: Project[]) => {
     return sum + (project.benefits?.fteBenefits || 0) * avgFTECost;
   }, 0);
   
-  // Total Benefits
-  const totalBenefits = qualityCostSavings + financialSavings + fteBenefits;
-  
   // Calculate total project costs
   const totalCosts = projects.reduce((sum, project) => {
     const oneOffCosts = (project.costs?.oneOffPeopleCost || 0) + 
@@ -119,15 +116,21 @@ const createFinancialBreakdownData = (projects: Project[]) => {
   }, 0);
   
   // Calculate net value
-  const netValue = totalBenefits - totalCosts;
+  const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
   
-  // Build the financial breakdown data structure
+  // For waterfall chart, we need running totals
+  // Start with 0, add each benefit, subtract costs, end with net value
+  let runningTotal = 0;
+  
+  // Build the financial waterfall data structure
   return [
     // Quality Cost Savings
     { 
       name: "Quality Cost Savings", 
       value: qualityCostSavings, 
       displayValue: qualityCostSavings,
+      start: runningTotal,
+      end: (runningTotal += qualityCostSavings),
       fill: "#10b981", // Darker green
       category: "benefit"
     },
@@ -137,6 +140,8 @@ const createFinancialBreakdownData = (projects: Project[]) => {
       name: "Financial Savings", 
       value: financialSavings, 
       displayValue: financialSavings,
+      start: runningTotal,
+      end: (runningTotal += financialSavings),
       fill: "#22c55e", // Medium green
       category: "benefit"
     },
@@ -146,24 +151,30 @@ const createFinancialBreakdownData = (projects: Project[]) => {
       name: "FTE Benefits", 
       value: fteBenefits, 
       displayValue: fteBenefits,
+      start: runningTotal,
+      end: (runningTotal += fteBenefits),
       fill: "#4ade80", // Lighter green
       category: "benefit"
     },
     
-    // Investment Costs
+    // Investment Costs (negative contribution)
     { 
       name: "Investment", 
-      value: totalCosts, 
-      displayValue: totalCosts,
+      value: -totalCosts, // Negative for waterfall
+      displayValue: -totalCosts,
+      start: runningTotal,
+      end: (runningTotal -= totalCosts), // Subtract costs from running total
       fill: "#ef4444", // Red
       category: "cost"
     },
     
-    // Net Value
+    // Net Value (this is the final value, not included in waterfall bars)
     { 
       name: "Net Value", 
       value: netValue, 
       displayValue: netValue,
+      start: 0,
+      end: netValue,
       fill: "#3b82f6", // Blue
       category: "total"
     }
@@ -452,8 +463,8 @@ export default function Dashboard() {
     return projects.projects;
   }, [projects]);
   
-  // Generate financial breakdown data for chart
-  const financialBreakdownData = useMemo(() => createFinancialBreakdownData(filteredProjectsArray), [filteredProjectsArray]);
+  // Generate financial waterfall data for chart
+  const financialWaterfallData = useMemo(() => createFinancialWaterfallData(filteredProjectsArray), [filteredProjectsArray]);
 
   // Fetch activity logs
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
@@ -843,7 +854,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-medium">Financial Benefits Breakdown</CardTitle>
+            <CardTitle className="text-base font-medium">Financial Benefits Waterfall</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -866,14 +877,36 @@ export default function Dashboard() {
               </div>
             </div>
             <ResponsiveContainer width="100%" height="80%">
-              <BarChart 
-                data={financialBreakdownData} 
+              <ComposedChart 
                 margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
                 barSize={40}
                 layout="horizontal"
                 maxBarSize={60}
                 barCategoryGap={8}
               >
+                {/* Connectors between bars for waterfall effect */}
+                {financialWaterfallData.filter(entry => entry.category !== "total").map((entry, i, arr) => {
+                  // Don't add connector after last item
+                  if (i === arr.length - 1) return null;
+                  
+                  // Create a connector between this bar and next bar
+                  const nextEntry = arr[i + 1];
+                  
+                  // For waterfall connectors
+                  return (
+                    <Line
+                      key={`connector-${i}`}
+                      type="linear"
+                      dataKey="end"
+                      stroke="#aaa"
+                      strokeWidth={1}
+                      strokeDasharray="3 3"
+                      dot={false}
+                      activeDot={false}
+                      data={[entry, nextEntry]}
+                    />
+                  );
+                })}
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis 
                   dataKey="name"
@@ -906,19 +939,40 @@ export default function Dashboard() {
                 {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Bars with individual fill colors */}
-                <Bar 
-                  dataKey="value" 
-                  name="Value"
-                >
-                  {financialBreakdownData.map((entry, i) => (
-                    <Cell key={`cell-${i}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
+                {/* True waterfall chart using start and end properties */}
+                {financialWaterfallData.map((entry, i) => {
+                  // Skip the Net Value for regular bars (will be rendered separately)
+                  if (entry.category === "total") return null;
+                  
+                  return (
+                    <Bar 
+                      key={`bar-${i}`}
+                      dataKey="value" 
+                      stackId="stack"
+                      name={entry.name}
+                      fill={entry.fill}
+                      // Only show this specific entry
+                      data={[financialWaterfallData[i]]}
+                    />
+                  );
+                })}
+                
+                {/* Net Value bar (shown if available) */}
+                {financialWaterfallData.filter(entry => entry.category === "total").map((entry, i) => (
+                  <Bar 
+                    key={`total-bar-${i}`}
+                    dataKey="value" 
+                    name={entry.name}
+                    fill={entry.fill}
+                    // Only show this specific entry
+                    data={[entry]}
+                    stackId="total"
+                  />
+                ))}
+              </ComposedChart>
             </ResponsiveContainer>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-1">
-              {financialBreakdownData.map((entry, i) => (
+              {financialWaterfallData.map((entry, i) => (
                 <div key={`legend-${i}`} className="flex items-center">
                   <div className="w-3 h-3 rounded-sm mr-1" style={{ backgroundColor: entry.fill }}></div>
                   <span className="text-xs text-gray-600">{entry.name}</span>
