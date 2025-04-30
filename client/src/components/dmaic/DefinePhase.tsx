@@ -747,17 +747,19 @@ export default function DefinePhase() {
                       {...charterForm.register("fteBenefits")}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="softBenefits">Soft Benefits (Non-Quantifiable)</Label>
-                    <Textarea
-                      id="softBenefits"
-                      placeholder="Categories include: Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler, Other"
-                      rows={4}
-                      {...charterForm.register("softBenefits")}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">List any Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler and Other benefits</p>
-                  </div>
                 </div>
+              </div>
+              
+              {/* Soft Benefits - Full Width */}
+              <div className="mt-6">
+                <Label htmlFor="softBenefits">Soft Benefits (Non-Quantifiable)</Label>
+                <Textarea
+                  id="softBenefits"
+                  placeholder="Categories include: Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler, Other"
+                  rows={4}
+                  {...charterForm.register("softBenefits")}
+                />
+                <p className="text-xs text-gray-500 mt-1">List any Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler and Other benefits</p>
               </div>
             </div>
             
