@@ -161,8 +161,8 @@ export default function Dashboard() {
           break;
         case 'financialSavings':
           // Financial savings is typically calculated as Working Capital Gains * WACC
-          const wacc = project.benefits?.wacc || 0.1; // Default to 10% WACC if not specified
-          value = (project.benefits?.workingCapitalGains || 0) * wacc;
+          const projectWacc = project.benefits?.wacc || 0.1; // Default to 10% WACC if not specified
+          value = (project.benefits?.workingCapitalGains || 0) * projectWacc;
           break;
         case 'fteBenefits':
           value = project.benefits?.fteBenefits || 0;
@@ -195,6 +195,22 @@ export default function Dashboard() {
                   (project.costs?.opexTechnologyCost || 0) + 
                   (project.costs?.opexOtherCost || 0) +
                   (project.costs?.capexCost || 0);
+          break;
+        case 'totalBenefits':
+          // Sum of all financial benefits
+          const qualityCost = project.benefits?.qualityCostSavings || 0;
+          const wcg = project.benefits?.workingCapitalGains || 0;
+          const projectWaccRate = project.benefits?.wacc || 0.1;
+          const financialSavings = wcg * projectWaccRate;
+          const fteBenefits = (project.benefits?.fteBenefits || 0) * (project.benefits?.avgFTECost || 139000);
+          value = qualityCost + wcg + financialSavings + fteBenefits;
+          break;
+        case 'roi':
+          // Calculate ROI as (Total Benefits - Total Costs) / Total Costs
+          const benefits = calculateMetric([project], 'totalBenefits');
+          const costs = calculateMetric([project], 'totalCosts');
+          // Avoid division by zero
+          value = costs > 0 ? ((benefits - costs) / costs) : 0;
           break;
         default:
           value = 0;
@@ -484,7 +500,7 @@ export default function Dashboard() {
       </Dialog>
       
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
         <StatsCard 
           title="Active Projects"
           value={projects?.projects?.length.toString() || "0"}
@@ -517,6 +533,14 @@ export default function Dashboard() {
           changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="user-clock"
           iconBgColor="purple"
+        />
+        <StatsCard 
+          title="ROI"
+          value={`${(calculateMetric(projects?.projects || [], 'roi') * 100).toFixed(1)}%`}
+          change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
+          changeLabel="Return on Investment"
+          icon="chart-pie"
+          iconBgColor="amber"
         />
       </div>
       
