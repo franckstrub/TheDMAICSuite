@@ -204,6 +204,13 @@ export default function Dashboard() {
           const fteBenefits = (project.benefits?.fteBenefits || 0) * (project.benefits?.avgFTECost || 139000);
           value = qualityCost + financialSavings + fteBenefits; // Working Capital Gains (cash) excluded
           break;
+        case 'totalFinancialSavings':
+          // Total Project Financial Savings p.a. = Quality Cost Savings (p.a.) + Financial Savings (p.a.) + FTE Benefits
+          const qualityCostSavingsPa = project.benefits?.qualityCostSavings || 0;
+          const financialSavingsPa = (project.benefits?.workingCapitalGains || 0) * (project.benefits?.wacc || 0.1);
+          const fteBenefitsValue = (project.benefits?.fteBenefits || 0) * (project.benefits?.avgFTECost || 139000);
+          value = qualityCostSavingsPa + financialSavingsPa + fteBenefitsValue;
+          break;
         case 'totalSavings':
           // Calculate total savings as Total Benefits - Total Costs
           const totalBenefits = calculateMetric([project], 'totalBenefits');
@@ -501,7 +508,7 @@ export default function Dashboard() {
       </Dialog>
       
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-6">
         <StatsCard 
           title="Active Projects"
           value={projects?.projects?.length.toString() || "0"}
@@ -534,6 +541,15 @@ export default function Dashboard() {
           changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="user-clock"
           iconBgColor="purple"
+        />
+        <StatsCard 
+          title="Total Project Financial Savings p.a."
+          value={formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings'), currency)}
+          secondaryValue="Quality Savings + Financial Savings + FTE Benefits"
+          change={implementationStatus === "implemented" ? 30 : implementationStatus === "not-implemented" ? 12 : 25}
+          changeLabel="Combined annual financial impact"
+          icon="coins"
+          iconBgColor="green"
         />
         <StatsCard 
           title="ROI"
