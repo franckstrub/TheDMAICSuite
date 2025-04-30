@@ -851,23 +851,18 @@ export default function Dashboard() {
               <BarChart 
                 data={financialWaterfallData} 
                 margin={{ top: 20, right: 60, left: 60, bottom: 20 }}
-                barSize={80}
+                barSize={60}
                 layout="horizontal"
-                maxBarSize={120}
-                barCategoryGap="35%"
-                barGap={20}
+                maxBarSize={100}
+                barCategoryGap={90}
+                barGap={80}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis 
-                  dataKey="position"
+                  dataKey="name"
                   tickLine={false}
                   axisLine={false}
                   tick={{fill: '#6b7280', fontSize: 12}}
-                  tickFormatter={(value) => {
-                    // Map position back to name for axis labels
-                    const item = financialWaterfallData.find(entry => entry.position === value);
-                    return item ? item.name : "";
-                  }}
                 />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
@@ -881,66 +876,26 @@ export default function Dashboard() {
                   axisLine={false}
                   tick={{fill: '#6b7280', fontSize: 12}}
                   domain={[
-                    Math.min(0, financialWaterfallData[1].end) * 1.1, // Min domain based on investment point
-                    Math.max(financialWaterfallData[0].end, financialWaterfallData[2].end) * 1.1 // Max domain based on financial savings or net value
+                    Math.min(0, financialWaterfallData[1].displayValue) * 1.1, // Min domain based on negative investment
+                    Math.max(financialWaterfallData[0].displayValue, financialWaterfallData[2].displayValue) * 1.1 // Max based on highest value
                   ]}
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
-                    // For bars, show the display value
-                    if (name === "value") {
-                      return [formatCurrency(props.payload.displayValue, currency), props.payload.name];
-                    }
-                    // Show the difference between end and start
-                    else if (name === "end") {
-                      return [formatCurrency(props.payload.end, currency), "Running Total"];
-                    }
-                    
-                    // Hide unused values
-                    return ["", ""];
+                    return [formatCurrency(value, currency), props.payload.name];
                   }}
                   cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
                   contentStyle={{borderRadius: '6px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}
-                  labelFormatter={(name) => `${name}`}
                 />
                 
-                {/* Reference line to show 0 line */}
+                {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Create connecting segments with ReferenceLines */}
-                <ReferenceLine x={1.5} stroke="#333" strokeWidth={2} />
-                <ReferenceLine x={2.5} stroke="#333" strokeWidth={2} />
-                
-                {/* The Financial Savings bar */}
+                {/* Simple bars without waterfall connecting lines for now */}
                 <Bar 
-                  key="financial-savings-bar"
-                  dataKey="value"
-                  fill={financialWaterfallData[0].fill}
-                  name="Financial Savings"
-                  // Only render for Financial Savings
-                  data={[financialWaterfallData[0]]}
-                />
-                
-                {/* Special handling for Investment bar (negative value) */}
-                <Bar 
-                  key="investment-bar"
-                  dataKey="value"
-                  fill={financialWaterfallData[1].fill}
-                  name="Investment"
-                  // Only render for Investment
-                  data={[financialWaterfallData[1]]}
-                />
-                
-                {/* Net Value bar - rendered separately */}
-                <Bar 
-                  dataKey="value" 
-                  name="Net Value" 
-                  fill={financialWaterfallData[2].fill}
-                  // Only show for the total item
-                  data={[financialWaterfallData[2]]}
-                  stackId="total"
-                  // Position at the right side of the chart
-                  barSize={40}
+                  dataKey="displayValue" 
+                  name="Value" 
+                  fill={(entry) => entry.fill}
                 />
               </BarChart>
             </ResponsiveContainer>
