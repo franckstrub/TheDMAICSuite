@@ -402,28 +402,72 @@ export default function DefinePhase() {
   });
 
   const handleSaveCharter = (data: any) => {
-    // Make sure all calculated values are properly set before submission
-    updateTotalFinancialSavings();
-    
-    // Update form data with the latest calculated values
-    data.totalFinancialSavings = charterForm.getValues("totalFinancialSavings");
-    data.totalProjectCosts = charterForm.getValues("totalProjectCosts");
-    data.projectNetValue = charterForm.getValues("projectNetValue");
-    data.roi = charterForm.getValues("roi");
-    data.breakeven = charterForm.getValues("breakeven");
-    
-    // Add calculated FTE benefits
-    if (fteParams.calculatedValue > 0) {
-      const formattedValue = formatCurrency(fteParams.calculatedValue, currency);
-      const fteString = `${fteParams.calculatedFte.toFixed(2)} FTE (${formattedValue})`;
-      data.fteBenefits = fteString;
+    try {
+      console.log("handleSaveCharter triggered with form data:", data);
+      
+      // Make sure all calculated values are properly set before submission
+      updateTotalFinancialSavings();
+      console.log("Total financial savings updated");
+      
+      // Update form data with the latest calculated values
+      data.totalFinancialSavings = charterForm.getValues("totalFinancialSavings");
+      data.totalProjectCosts = charterForm.getValues("totalProjectCosts");
+      data.projectNetValue = charterForm.getValues("projectNetValue");
+      data.roi = charterForm.getValues("roi");
+      data.breakeven = charterForm.getValues("breakeven");
+      
+      console.log("Form data updated with calculated values:", {
+        totalFinancialSavings: data.totalFinancialSavings,
+        totalProjectCosts: data.totalProjectCosts,
+        projectNetValue: data.projectNetValue,
+        roi: data.roi,
+        breakeven: data.breakeven
+      });
+      
+      // Add calculated FTE benefits
+      if (fteParams.calculatedValue > 0) {
+        const formattedValue = formatCurrency(fteParams.calculatedValue, currency);
+        const fteString = `${fteParams.calculatedFte.toFixed(2)} FTE (${formattedValue})`;
+        data.fteBenefits = fteString;
+        console.log("Added FTE benefits:", fteString);
+      }
+      
+      // Ensure all numeric fields are properly parsed
+      const preparedData = {
+        ...data,
+        projectId,
+        userId: user?.id || 1,
+        savingsPerYear: parseFloat(data.savingsPerYear) || 0,
+        workingCapitalGains: parseFloat(data.workingCapitalGains) || 0,
+        waccPercentage: parseFloat(data.waccPercentage) || 0,
+        financialSavings: parseFloat(data.financialSavings) || 0,
+        oneOffPeopleCost: parseFloat(data.oneOffPeopleCost) || 0,
+        oneOffTechnologyCost: parseFloat(data.oneOffTechnologyCost) || 0,
+        oneOffOtherCost: parseFloat(data.oneOffOtherCost) || 0,
+        capexCost: parseFloat(data.capexCost) || 0,
+        totalFinancialSavings: parseFloat(data.totalFinancialSavings) || 0,
+        totalProjectCosts: parseFloat(data.totalProjectCosts) || 0,
+        projectNetValue: parseFloat(data.projectNetValue) || 0,
+      };
+      
+      // Debug log
+      console.log("Submitting project charter with prepared data:", preparedData);
+      
+      // Check charter status
+      console.log("Charter status:", charter && charter.charter ? 
+        `Existing charter with ID ${charter.charter.id}` : 
+        "No existing charter, will create new one");
+      
+      // Submit the form
+      saveCharterMutation.mutate(preparedData);
+    } catch (error) {
+      console.error("Error in handleSaveCharter:", error);
+      toast({
+        title: "Error",
+        description: `Error preparing charter data: ${error}`,
+        variant: "destructive",
+      });
     }
-    
-    // Debug log
-    console.log("Submitting project charter with data:", data);
-    
-    // Submit the form
-    saveCharterMutation.mutate(data);
   };
 
   const handleSaveSipoc = (data: any) => {
