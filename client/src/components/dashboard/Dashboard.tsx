@@ -580,6 +580,15 @@ export default function Dashboard() {
           icon="chart-pie"
           iconBgColor="indigo"
         />
+        <StatsCard 
+          title="Breakeven"
+          value={formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}
+          secondaryValue="Costs ÷ Annual Financial Savings"
+          change={implementationStatus === "implemented" ? -15 : implementationStatus === "not-implemented" ? -8 : -12}
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Improved payback period" : "Not implemented only"}
+          icon="hourglass-half"
+          iconBgColor="yellow"
+        />
       </div>
       
       {/* Project Costs Section */}
