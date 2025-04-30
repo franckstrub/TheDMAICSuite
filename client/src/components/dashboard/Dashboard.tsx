@@ -43,7 +43,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, ReferenceLine, ComposedChart, ReferenceArea } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, ReferenceLine, ComposedChart } from "recharts";
 
 // Define the Project type at the top level so it's accessible
 type Project = {
@@ -112,11 +112,10 @@ const createFinancialWaterfallData = (projects: Project[]) => {
   // Calculate net value
   const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
   
-  // Define the data items with their exact values - following the example you provided
-  // 1st bar from 0 to 134000, 2nd bar from 134000 to 139000 with dashed lines at 134000 connecting them
+  // Define the data items with their values
   const items = [
-    { name: "Quality Cost Savings", value: 134000, fill: "#10b981", isPositive: true, isFirst: true },
-    { name: "Financial Savings", value: 5000, fill: "#22c55e", isPositive: true }, // 139000 - 134000 = 5000
+    { name: "Quality Cost Savings", value: qualityCostSavings, fill: "#10b981", isPositive: true, isFirst: true },
+    { name: "Financial Savings", value: financialSavings, fill: "#22c55e", isPositive: true },
     { name: "FTE Benefits", value: fteBenefits, fill: "#4ade80", isPositive: true },
     { name: "Investment", value: -totalCosts, fill: "#ef4444", isPositive: false }, // Negative value
     { name: "Net Value", value: netValue, fill: "#3b82f6", isTotal: true, isLast: true }
@@ -956,10 +955,10 @@ export default function Dashboard() {
                   ))}
                 </Bar>
                 
-                {/* Horizontal connecting lines - simple approach */}
+                {/* Connecting lines between consecutive bars */}
                 {financialWaterfallData.map((entry, i, arr) => {
-                  // Skip if this is the last bar (Net Value)
-                  if (i === arr.length - 1 || entry.isLast) return null;
+                  // Skip the last item (Net Value)
+                  if (i === arr.length - 1) return null;
                   
                   // Get the next entry in the array
                   const nextEntry = arr[i + 1];
@@ -967,14 +966,13 @@ export default function Dashboard() {
                   // Skip if the next entry is the total/last bar
                   if (nextEntry.isLast) return null;
                   
-                  // Draw a reference line at the end value of the current bar
                   return (
                     <ReferenceLine 
-                      key={`connector-${i}`}
+                      key={`ref-${i}`}
                       y={entry.end}
                       stroke="#aaa" 
                       strokeDasharray="3 3"
-                      segment={[{x: i, y: entry.end}, {x: i+1, y: entry.end}]}
+                      ifOverflow="hidden"
                     />
                   );
                 })}
