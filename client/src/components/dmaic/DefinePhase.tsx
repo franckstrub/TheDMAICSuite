@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useAppContext } from "@/store/AppContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -957,7 +957,12 @@ export default function DefinePhase() {
               </div>
             </div>
             
-            <Button type="submit" disabled={saveCharterMutation.isPending} className="mt-6">
+            <Button 
+              type="submit" 
+              disabled={saveCharterMutation.isPending} 
+              className="mt-6"
+              onClick={() => console.log("Save Project Charter button clicked")}
+            >
               {saveCharterMutation.isPending ? "Saving..." : "Save Project Charter"}
             </Button>
           </form>
