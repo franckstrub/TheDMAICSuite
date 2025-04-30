@@ -200,9 +200,9 @@ export default function Dashboard() {
           const qualityCost = project.benefits?.qualityCostSavings || 0;
           const projectWaccRate = project.benefits?.wacc || 0.1;
           const wcg = project.benefits?.workingCapitalGains || 0;
-          const financialSavings = wcg * projectWaccRate; // Financial Savings from WCG is still included
+          const waccSavings = wcg * projectWaccRate; // Financial Savings from WCG is still included
           const fteBenefits = (project.benefits?.fteBenefits || 0) * (project.benefits?.avgFTECost || 139000);
-          value = qualityCost + financialSavings + fteBenefits; // Working Capital Gains (cash) excluded
+          value = qualityCost + waccSavings + fteBenefits; // Working Capital Gains (cash) excluded
           break;
         case 'totalFinancialSavings':
           // Total Project Financial Savings p.a. = Quality Cost Savings (p.a.) + Financial Savings (p.a.) + FTE Benefits
@@ -218,11 +218,11 @@ export default function Dashboard() {
           value = totalBenefits - totalCosts;
           break;
         case 'roi':
-          // Calculate ROI as (Total Benefits - Total Costs) / Total Costs
-          const benefits = calculateMetric([project], 'totalBenefits');
-          const costs = calculateMetric([project], 'totalCosts');
+          // Calculate ROI as (Total Project Financial Savings (p.a.) - Total Project Costs) / Total Project Costs
+          const totalFinancialSavings = calculateMetric([project], 'totalFinancialSavings');
+          const totalProjectCosts = calculateMetric([project], 'totalCosts');
           // Avoid division by zero
-          value = costs > 0 ? ((benefits - costs) / costs) : 0;
+          value = totalProjectCosts > 0 ? ((totalFinancialSavings - totalProjectCosts) / totalProjectCosts) : 0;
           break;
         default:
           value = 0;
@@ -554,7 +554,7 @@ export default function Dashboard() {
         <StatsCard 
           title="ROI"
           value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
-          secondaryValue="(Benefits-Costs)/Costs"
+          secondaryValue="(Financial Savings-Costs)/Costs"
           change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
           changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="chart-pie"
