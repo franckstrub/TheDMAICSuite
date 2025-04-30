@@ -7,7 +7,7 @@ import ActivityItem from "./ActivityItem";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatBreakeven } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,6 +155,18 @@ export default function Dashboard() {
       const totalProjectCosts = calculateMetric(projects, 'totalCosts');
       // Avoid division by zero and calculate ROI from the aggregated totals
       return totalProjectCosts > 0 ? ((totalFinancialSavings - totalProjectCosts) / totalProjectCosts) : 0;
+    }
+    
+    // Special case for breakeven calculation
+    if (metricType === 'breakeven') {
+      // Calculate total financial savings across all projects (annual)
+      const totalFinancialSavings = calculateMetric(projects, 'totalFinancialSavings');
+      // Calculate total costs across all projects
+      const totalProjectCosts = calculateMetric(projects, 'totalCosts');
+      
+      // Breakeven in years = Total Costs / Annual Financial Savings
+      // Ensure we don't divide by zero
+      return totalFinancialSavings > 0 ? (totalProjectCosts / totalFinancialSavings) : 0;
     }
     
     return projects.reduce((total, project) => {

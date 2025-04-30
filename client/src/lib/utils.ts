@@ -106,3 +106,24 @@ export function formatCurrency(value: number | string, currency: CurrencyType): 
       return `${currency}${Math.round(numericValue).toLocaleString()}`;
   }
 }
+
+/**
+ * Formats a breakeven time period in years to a readable format with years and months
+ * @param years The number of years (can be decimal, e.g. 1.5 years)
+ * @returns Formatted string, e.g. "1 year, 6 months" or "6 months"
+ */
+export function formatBreakeven(years: number): string {
+  if (years === 0) return "Immediate";
+  if (years < 0) return "N/A"; // Negative value indicates no breakeven
+  
+  const wholeYears = Math.floor(years);
+  const months = Math.round((years - wholeYears) * 12);
+  
+  if (wholeYears === 0) {
+    return `${months} month${months !== 1 ? 's' : ''}`;
+  } else if (months === 0) {
+    return `${wholeYears} year${wholeYears !== 1 ? 's' : ''}`;
+  } else {
+    return `${wholeYears} year${wholeYears !== 1 ? 's' : ''}, ${months} month${months !== 1 ? 's' : ''}`;
+  }
+}
