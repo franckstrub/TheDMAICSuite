@@ -46,22 +46,19 @@ import { Label } from "@/components/ui/label";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from "recharts";
 
 // Sample data for charts
-const performanceData = [
-  { name: "Jan", value: 65 },
-  { name: "Feb", value: 59 },
-  { name: "Mar", value: 80 },
-  { name: "Apr", value: 81 },
-  { name: "May", value: 56 },
-  { name: "Jun", value: 55 },
-  { name: "Jul", value: 40 },
+const roiWalkData = [
+  { name: "Investment", value: -100000, fill: "#ef4444" },
+  { name: "Quality Savings", value: 45000, fill: "#22c55e" },
+  { name: "Financial Savings", value: 25000, fill: "#3b82f6" },
+  { name: "FTE Benefits", value: 60000, fill: "#8b5cf6" },
+  { name: "Net Value", value: 30000, fill: "#15803d" },
 ];
 
-const defectData = [
-  { name: "Documentation", value: 42 },
-  { name: "System Issues", value: 27 },
-  { name: "Approvals", value: 25 },
-  { name: "Training", value: 18 },
-  { name: "Communication", value: 8 },
+const costBreakdownData = [
+  { name: "People Costs", value: 60000, fill: "#f97316" },
+  { name: "Technology", value: 30000, fill: "#0ea5e9" },
+  { name: "CAPEX", value: 80000, fill: "#8b5cf6" },
+  { name: "Other Costs", value: 15000, fill: "#a3a3a3" }
 ];
 
 export default function Dashboard() {
@@ -761,46 +758,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-medium">Process Performance</CardTitle>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <i className="fas fa-ellipsis-v"></i>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Download CSV</DropdownMenuItem>
-                <DropdownMenuItem>Download Image</DropdownMenuItem>
-                <DropdownMenuItem>Share</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={performanceData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#2563eb" 
-                  strokeWidth={2} 
-                  dot={{ r: 4 }} 
-                  activeDot={{ r: 6 }} 
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-medium">Defect Distribution</CardTitle>
+            <CardTitle className="text-base font-medium">ROI Financial Walk</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -817,16 +775,59 @@ export default function Dashboard() {
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={defectData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                data={roiWalkData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                layout="vertical"
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" 
+                  domain={['dataMin', 'dataMax']} 
+                  tickFormatter={(value) => formatCurrency(value, currency)} 
+                />
+                <YAxis type="category" dataKey="name" />
+                <Tooltip 
+                  formatter={(value: number) => [formatCurrency(value, currency), "Value"]}
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                />
+                <Bar dataKey="value">
+                  {roiWalkData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base font-medium">Cost Breakdown</CardTitle>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <i className="fas fa-ellipsis-v"></i>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Download CSV</DropdownMenuItem>
+                <DropdownMenuItem>Download Image</DropdownMenuItem>
+                <DropdownMenuItem>Share</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={costBreakdownData}
+                margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#2563eb">
-                  {defectData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={`#${(index * 500 + 3000).toString(16)}`} />
+                <YAxis tickFormatter={(value) => formatCurrency(value, currency)} />
+                <Tooltip formatter={(value: number) => [formatCurrency(value, currency), "Cost"]} />
+                <Bar dataKey="value">
+                  {costBreakdownData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Bar>
               </BarChart>
