@@ -48,6 +48,9 @@ export default function DefinePhase() {
       // Summary financial fields
       totalProjectCosts: "",
       projectNetValue: "",
+      // Financial metrics
+      roi: "",
+      breakeven: "",
     },
   });
 
@@ -210,6 +213,9 @@ export default function DefinePhase() {
           // Summary financial fields
           totalProjectCosts: "",  // Will be calculated
           projectNetValue: "",    // Will be calculated
+          // Financial metrics
+          roi: "",               // Will be calculated
+          breakeven: ""          // Will be calculated
         });
         
         // If there's an FTE benefit string in the loaded data, parse it and set the calculated value
@@ -392,7 +398,7 @@ export default function DefinePhase() {
     saveSipocMutation.mutate(data);
   };
 
-  // Function to calculate and update total financial savings and net value
+  // Function to calculate and update total financial savings, net value, ROI, and breakeven
   const updateTotalFinancialSavings = () => {
     // Get values from form for benefits
     const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear")) || 0;
@@ -416,10 +422,29 @@ export default function DefinePhase() {
     // Calculate project net value
     const projectNetValue = totalFinancialSavings - totalProjectCosts;
     
+    // Calculate ROI (Return on Investment) as a percentage
+    let roi = 0;
+    if (totalProjectCosts > 0) {
+      roi = (projectNetValue / totalProjectCosts) * 100;
+    }
+    
+    // Calculate Breakeven in years
+    let breakeven = 0;
+    if (totalFinancialSavings > 0) {
+      breakeven = totalProjectCosts / totalFinancialSavings;
+    }
+    
+    // Format breakeven in years and months
+    const breakEvenYears = Math.floor(breakeven);
+    const breakEvenMonths = Math.round((breakeven - breakEvenYears) * 12);
+    const breakEvenFormatted = `${breakEvenYears} year${breakEvenYears !== 1 ? 's' : ''} ${breakEvenMonths} month${breakEvenMonths !== 1 ? 's' : ''}`;
+    
     // Update the form fields - without decimal places
     charterForm.setValue("totalFinancialSavings", Math.round(totalFinancialSavings).toString());
     charterForm.setValue("totalProjectCosts", Math.round(totalProjectCosts).toString());
     charterForm.setValue("projectNetValue", Math.round(projectNetValue).toString());
+    charterForm.setValue("roi", Math.round(roi).toString());
+    charterForm.setValue("breakeven", breakEvenFormatted);
     
     console.log("Financial values updated:", {
       qualityCostSavings,
@@ -427,7 +452,10 @@ export default function DefinePhase() {
       fteBenefits,
       totalFinancialSavings,
       totalProjectCosts,
-      projectNetValue
+      projectNetValue,
+      roi,
+      breakeven,
+      breakEvenFormatted
     });
   };
 
@@ -825,18 +853,57 @@ export default function DefinePhase() {
               </div>
             </div>
             
-            {/* Project Net Value */}
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="projectNetValue" className="font-medium text-blue-800 text-lg">Project Net Value ({currency})</Label>
-                <Input
-                  id="projectNetValue"
-                  readOnly
-                  className="max-w-[200px] bg-white border-blue-200 text-blue-800 font-bold text-lg"
-                  {...charterForm.register("projectNetValue")}
-                />
+            {/* Financial Metrics: Net Value, ROI, and Breakeven */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Financial Metrics</h3>
+              
+              {/* Project Net Value */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-md mb-4">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="projectNetValue" className="font-medium text-blue-800 text-lg">Project Net Value ({currency})</Label>
+                  <Input
+                    id="projectNetValue"
+                    readOnly
+                    className="max-w-[200px] bg-white border-blue-200 text-blue-800 font-bold text-lg"
+                    {...charterForm.register("projectNetValue")}
+                  />
+                </div>
+                <p className="text-sm text-blue-600 mt-1">Total Project Financial Savings - Total Project Costs</p>
               </div>
-              <p className="text-sm text-blue-600 mt-1">Total Project Financial Savings - Total Project Costs</p>
+              
+              {/* ROI and Breakeven Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ROI Card */}
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="roi" className="font-medium text-purple-800">Return on Investment (ROI)</Label>
+                    <div className="flex items-center space-x-1">
+                      <Input
+                        id="roi"
+                        readOnly
+                        className="max-w-[100px] bg-white border-purple-200 text-purple-800 font-bold"
+                        {...charterForm.register("roi")}
+                      />
+                      <span className="text-purple-800 font-medium">%</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-purple-600 mt-1">(Net Value / Total Costs) x 100</p>
+                </div>
+                
+                {/* Breakeven Card */}
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="breakeven" className="font-medium text-amber-800">Breakeven Point</Label>
+                    <Input
+                      id="breakeven"
+                      readOnly
+                      className="max-w-[200px] bg-white border-amber-200 text-amber-800 font-bold"
+                      {...charterForm.register("breakeven")}
+                    />
+                  </div>
+                  <p className="text-sm text-amber-600 mt-1">Time to recover investment</p>
+                </div>
+              </div>
             </div>
             
             <Button type="submit" disabled={saveCharterMutation.isPending} className="mt-6">
