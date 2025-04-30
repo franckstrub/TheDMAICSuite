@@ -258,10 +258,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/charters/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+      console.log("Updating charter with ID:", id);
+      console.log("Charter update request body:", req.body);
       
       // Fix cashBenefits to workingCapitalGains migration
       const requestBody = {...req.body};
       if (requestBody.cashBenefits !== undefined && requestBody.workingCapitalGains === undefined) {
+        console.log("Migrating cashBenefits to workingCapitalGains");
         requestBody.workingCapitalGains = requestBody.cashBenefits;
         delete requestBody.cashBenefits;
       }
@@ -271,12 +274,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const wcg = parseFloat(requestBody.workingCapitalGains);
         const wacc = parseFloat(requestBody.waccPercentage) / 100;
         requestBody.financialSavings = (wcg * wacc).toFixed(2);
+        console.log("Calculated financialSavings:", requestBody.financialSavings);
       }
       
+      console.log("Calling storage.updateCharter...");
       const charter = await storage.updateCharter(id, requestBody);
       if (!charter) {
+        console.log("Charter not found with ID:", id);
         return res.status(404).json({ message: "Charter not found" });
       }
+      console.log("Charter updated successfully:", charter);
       
       // Log activity
       if (req.body.userId) {
@@ -286,10 +293,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           action: "update_charter",
           details: "Updated project charter"
         });
+        console.log("Activity log created for user:", req.body.userId);
       }
       
       return res.status(200).json({ charter });
     } catch (err) {
+      console.error("Error updating charter:", err);
       return handleErrors(err, res);
     }
   });
