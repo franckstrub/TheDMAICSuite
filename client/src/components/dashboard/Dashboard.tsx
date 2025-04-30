@@ -229,20 +229,20 @@ export default function Dashboard() {
   const projectsWithBenefits = useMemo(() => {
     if (!allProjects?.projects) return { projects: [] };
 
-    // Sample benefits data based on implementation status - Adjusted to target ~100% ROI
+    // Sample benefits data based on implementation status - Adjusted to target 256.2% ROI
     const implementedBenefits = {
-      qualityCostSavings: 285000,
+      qualityCostSavings: 642000,
       workingCapitalGains: 256200, // Still kept for Financial Savings calculation
       wacc: 0.1,
-      fteBenefits: 1.5,
+      fteBenefits: 2.8,
       avgFTECost: 139000
     };
 
     const notImplementedBenefits = {
-      qualityCostSavings: 90000,
+      qualityCostSavings: 200000,
       workingCapitalGains: 100000, // Still kept for Financial Savings calculation
       wacc: 0.1,
-      fteBenefits: 0.3,
+      fteBenefits: 0.7,
       avgFTECost: 139000
     };
     
