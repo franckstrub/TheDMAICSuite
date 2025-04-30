@@ -196,10 +196,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/charter", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      console.log("Creating charter for project ID:", projectId);
+      console.log("Charter request body:", req.body);
       
       // Fix cashBenefits to workingCapitalGains migration
       const requestBody = {...req.body};
       if (requestBody.cashBenefits !== undefined && requestBody.workingCapitalGains === undefined) {
+        console.log("Migrating cashBenefits to workingCapitalGains");
         requestBody.workingCapitalGains = requestBody.cashBenefits;
         delete requestBody.cashBenefits;
       }
@@ -209,6 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const wcg = parseFloat(requestBody.workingCapitalGains);
         const wacc = parseFloat(requestBody.waccPercentage) / 100;
         requestBody.financialSavings = (wcg * wacc).toFixed(2);
+        console.log("Calculated financialSavings:", requestBody.financialSavings);
       }
       
       const charterData: InsertCharter = {
@@ -216,21 +220,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId
       };
       
-      const validatedData = insertCharterSchema.parse(charterData);
-      const charter = await storage.createCharter(validatedData);
-      
-      // Log activity
-      if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_charter",
-          details: "Created project charter"
-        });
+      console.log("Validating charter data structure...");
+      try {
+        const validatedData = insertCharterSchema.parse(charterData);
+        console.log("Charter validation successful", validatedData);
+        const charter = await storage.createCharter(validatedData);
+        console.log("Charter created successfully:", charter);
+        
+        // Log activity
+        if (req.body.userId) {
+          await storage.createActivityLog({
+            userId: req.body.userId,
+            projectId,
+            action: "create_charter",
+            details: "Created project charter"
+          });
+          console.log("Activity log created for user:", req.body.userId);
+        }
+        
+        return res.status(201).json({ charter });
+      } catch (validationError) {
+        console.error("Charter validation error:", validationError);
+        if (validationError instanceof ZodError) {
+          return res.status(400).json({
+            message: "Charter validation error",
+            errors: validationError.errors
+          });
+        }
+        throw validationError; // Re-throw if not a validation error
       }
-      
-      return res.status(201).json({ charter });
     } catch (err) {
+      console.error("Error creating charter:", err);
       return handleErrors(err, res);
     }
   });
