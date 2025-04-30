@@ -224,13 +224,13 @@ export default function Dashboard() {
           value = oneOffCosts + annualizedOpexCost + capexCosts;
           break;
         case 'totalBenefits':
-          // Sum of all financial benefits
+          // Sum of all financial benefits - EXCLUDING Working Capital Gains (cash) as requested
           const qualityCost = project.benefits?.qualityCostSavings || 0;
-          const wcg = project.benefits?.workingCapitalGains || 0;
           const projectWaccRate = project.benefits?.wacc || 0.1;
-          const financialSavings = wcg * projectWaccRate;
+          const wcg = project.benefits?.workingCapitalGains || 0;
+          const financialSavings = wcg * projectWaccRate; // Financial Savings from WCG is still included
           const fteBenefits = (project.benefits?.fteBenefits || 0) * (project.benefits?.avgFTECost || 139000);
-          value = qualityCost + wcg + financialSavings + fteBenefits;
+          value = qualityCost + financialSavings + fteBenefits; // Working Capital Gains (cash) excluded
           break;
         case 'roi':
           // Calculate ROI as (Total Benefits - Total Costs) / Total Costs
