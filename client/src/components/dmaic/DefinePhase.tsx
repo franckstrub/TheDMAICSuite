@@ -145,35 +145,30 @@ export default function DefinePhase() {
       const calculatedFte = annualSavedHours / totalAnnualHours;
       const calculatedValue = calculatedFte * fteCostPerYear;
       
-      // Get current values for total financial savings calculation
-      const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear")) || 0;
-      const financialSavings = parseFloat(charterForm.getValues("financialSavings")) || 0;
-      
-      // Calculate total project financial savings immediately with the new FTE value
-      const totalFinancialSavings = qualityCostSavings + financialSavings + calculatedValue;
-      
-      // Update the Total Financial Savings field directly without decimals
-      charterForm.setValue("totalFinancialSavings", Math.round(totalFinancialSavings).toString());
-      
-      // Update the FTE params state
+      // Update the FTE params state immediately so updateTotalFinancialSavings will use the right value
       setFteParams(prevParams => ({
         ...prevParams,
         calculatedFte: parseFloat(calculatedFte.toFixed(2)),
         calculatedValue: parseFloat(calculatedValue.toFixed(2))
       }));
       
+      // Call the updateTotalFinancialSavings function to recalculate everything
+      // with a slight delay to ensure state updates have propagated
+      setTimeout(() => {
+        updateTotalFinancialSavings();
+      }, 50);
+      
+      // FTE params state has already been updated above
+      
       // Set the hidden input value for form submission
       const formattedValue = formatCurrency(calculatedValue, currency);
       const fteString = `${calculatedFte.toFixed(2)} FTE (${formattedValue})`;
       document.getElementById("fteBenefits")?.setAttribute("value", fteString);
       
-      // Log for debugging
+      // Log for debugging - using only the calculated values
       console.log("FTE updated:", { 
         calculatedFte, 
-        calculatedValue,
-        qualityCostSavings,
-        financialSavings,
-        totalFinancialSavings
+        calculatedValue
       });
     }, 0);
   };
