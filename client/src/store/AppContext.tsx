@@ -1,5 +1,7 @@
 import { createContext, useContext } from "react";
 
+export type CurrencyType = "$" | "€" | "£" | "¥" | "₩" | "CHF";
+
 type AppContextType = {
   user: any | null;
   setUser: (user: any) => void;
@@ -12,6 +14,8 @@ type AppContextType = {
   setCurrentProject: (project: any | null) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  currency: CurrencyType;
+  setCurrency: (currency: CurrencyType) => void;
 };
 
 export const AppContext = createContext<AppContextType>({
@@ -25,7 +29,9 @@ export const AppContext = createContext<AppContextType>({
   currentProject: null,
   setCurrentProject: () => {},
   sidebarOpen: false,
-  setSidebarOpen: () => {}
+  setSidebarOpen: () => {},
+  currency: "$",
+  setCurrency: () => {}
 });
 
 export const useAppContext = () => useContext(AppContext);
