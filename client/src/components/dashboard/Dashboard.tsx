@@ -537,58 +537,95 @@ export default function Dashboard() {
           icon="project-diagram"
           iconBgColor="blue"
         />
-        <StatsCard 
-          title="Quality Cost Savings (p.a.)"
-          value={formatCurrency(calculateMetric(projects?.projects || [], 'qualityCostSavings'), currency)}
-          change={implementationStatus === "implemented" ? 25 : implementationStatus === "not-implemented" ? 10 : 22}
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
-          icon="dollar-sign"
-          iconBgColor="green"
-        />
-        <StatsCard 
-          title="Working Capital Gains (Cash)"
-          value={formatCurrency(calculateMetric(projects?.projects || [], 'workingCapitalGains'), currency)}
-          secondaryValue={`Financial Savings (p.a.): ${formatCurrency(calculateMetric(projects?.projects || [], 'financialSavings'), currency)}`}
-          change={implementationStatus === "implemented" ? 18 : implementationStatus === "not-implemented" ? 7 : 15}
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"} 
-          icon="money-bill-wave"
-          iconBgColor="indigo"
-        />
-        <StatsCard 
-          title="FTE Benefits"
-          value={`${calculateMetric(projects?.projects || [], 'fteBenefits').toFixed(1)} FTE ${formatCurrency(calculateMetric(projects?.projects || [], 'fteValue'), currency)}`}
-          change={implementationStatus === "implemented" ? 22 : implementationStatus === "not-implemented" ? 8 : 18}
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
-          icon="user-clock"
-          iconBgColor="purple"
-        />
-        <StatsCard 
-          title="Total Project Financial Savings (p.a.)"
-          value={formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings'), currency)}
-          secondaryValue="Quality Savings + Financial Savings + FTE Benefits"
-          change={implementationStatus === "implemented" ? 30 : implementationStatus === "not-implemented" ? 12 : 25}
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
-          icon="coins"
-          iconBgColor="green"
-        />
-        <StatsCard 
-          title="ROI"
-          value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
-          secondaryValue="(Financial Savings-Costs)/Costs"
-          change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
-          icon="chart-pie"
-          iconBgColor="indigo"
-        />
-        <StatsCard 
-          title="Breakeven"
-          value={formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}
-          secondaryValue="Costs ÷ Annual Financial Savings"
-          change={implementationStatus === "implemented" ? -15 : implementationStatus === "not-implemented" ? -8 : -12}
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Improved payback period" : "Not implemented only"}
-          icon="hourglass-half"
-          iconBgColor="yellow"
-        />
+      </div>
+      
+      {/* Project Benefits Section */}
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base font-medium">Project Benefits</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Total Financial Savings - Prominently displayed at the top */}
+            <div className="mb-6">
+              <div className="bg-green-50 p-5 rounded-lg border border-green-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <i className="fas fa-coins text-green-600 text-2xl mr-3"></i>
+                    <div className="font-medium text-xl text-green-800">Total Project Financial Savings (p.a.)</div>
+                  </div>
+                  <div className="font-bold text-2xl text-green-800">{formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings'), currency)}</div>
+                </div>
+                <div className="mt-2 text-sm text-green-600">
+                  <div>
+                    Across {projects?.projects?.length || 0} projects {implementationStatus !== "all" ? 
+                    `(${implementationStatus === "implemented" ? "Implemented" : "Not Implemented"} only)` : ""}
+                  </div>
+                  <div className="mt-1 italic text-xs">
+                    Note: Quality Savings + Financial Savings + FTE Benefits
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Benefits Categories */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-700">Quality Cost Savings (p.a.)</span>
+                  <span className="text-lg font-semibold text-green-600">{formatCurrency(calculateMetric(projects?.projects || [], 'qualityCostSavings'), currency)}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  <span className={`flex items-center ${implementationStatus === "implemented" ? "text-green-500" : implementationStatus === "not-implemented" ? "text-green-500" : "text-green-500"}`}>
+                    <i className="fas fa-arrow-up mr-1"></i> 
+                    {implementationStatus === "implemented" ? 25 : implementationStatus === "not-implemented" ? 10 : 22}%
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-700">Working Capital Gains (Cash)</span>
+                  <span className="text-lg font-semibold text-indigo-600">{formatCurrency(calculateMetric(projects?.projects || [], 'workingCapitalGains'), currency)}</span>
+                </div>
+                <div className="text-sm text-gray-600 mt-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Financial Savings (p.a.):</span>
+                    <span className="font-medium text-green-600">{formatCurrency(calculateMetric(projects?.projects || [], 'financialSavings'), currency)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-700">FTE Benefits</span>
+                  <span className="text-lg font-semibold text-purple-600">{calculateMetric(projects?.projects || [], 'fteBenefits').toFixed(1)} FTE</span>
+                </div>
+                <div className="text-sm text-gray-600 mt-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Financial Value:</span>
+                    <span className="font-medium text-green-600">{formatCurrency(calculateMetric(projects?.projects || [], 'fteValue'), currency)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="flex flex-col">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-gray-700">ROI</span>
+                    <span className="text-lg font-semibold text-indigo-600">{Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%</span>
+                  </div>
+                  <div className="mt-2 border-t pt-2 border-slate-200">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-700">Breakeven</span>
+                      <span className="text-lg font-semibold text-yellow-600">{formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Project Costs Section */}
