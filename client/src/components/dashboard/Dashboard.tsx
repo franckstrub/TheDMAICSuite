@@ -935,7 +935,7 @@ export default function Dashboard() {
                 {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Base bars for waterfall effect - transparent */}
+                {/* Base bars for waterfall effect */}
                 <Bar
                   dataKey="start"
                   fill="transparent"
@@ -944,60 +944,16 @@ export default function Dashboard() {
                   legendType="none"
                 />
                 
-                {/* Render the bars as ReferenceAreas to have better control */}
-                {financialWaterfallData.map((entry, i) => {
-                  // Special handling for the first bar (starting from 0)
-                  if (entry.isFirst) {
-                    return (
-                      <ReferenceArea 
-                        key={`bar-${i}`}
-                        x1={i-0.4}
-                        x2={i+0.4}
-                        y1={0}
-                        y2={entry.end}
-                        fill={entry.fill}
-                        ifOverflow="visible"
-                      />
-                    );
-                  }
-                  
-                  // Special handling for total bar (Net Value) - starts from 0
-                  if (entry.isTotal) {
-                    return (
-                      <ReferenceArea 
-                        key={`bar-${i}`}
-                        x1={i-0.4}
-                        x2={i+0.4}
-                        y1={0}
-                        y2={entry.end}
-                        fill={entry.fill}
-                        ifOverflow="visible"
-                      />
-                    );
-                  }
-                  
-                  // Middle bars - only show the actual value portion, not the base
-                  return (
-                    <ReferenceArea 
-                      key={`bar-${i}`}
-                      x1={i-0.4}
-                      x2={i+0.4}
-                      y1={entry.start}
-                      y2={entry.end}
-                      fill={entry.fill}
-                      ifOverflow="visible"
-                    />
-                  );
-                })}
-                
-                {/* Dummy transparent Bar to make tooltip and axes work correctly */}
+                {/* Actual value bars for waterfall effect */}
                 <Bar 
                   dataKey="actual" 
                   name="Value"
-                  fill="transparent"
-                  strokeWidth={0}
-                  isAnimationActive={false}
-                />
+                  stackId="stack"
+                >
+                  {financialWaterfallData.map((entry, i) => (
+                    <Cell key={`cell-${i}`} fill={entry.fill} />
+                  ))}
+                </Bar>
                 
                 {/* Connecting lines between consecutive bars */}
                 {financialWaterfallData.map((entry, i, arr) => {
