@@ -92,15 +92,6 @@ export default function Dashboard() {
       ? `${timeframe}:${customRangeString}`
       : timeframe;
 
-  // Helper function to check if a project is implemented
-  const isProjectImplemented = (project: any) => {
-    // A project is implemented if Improve phase is completed AND Control phase is in progress or completed
-    return (
-      project.phases?.improve?.status === "completed" && 
-      (project.phases?.control?.status === "in-progress" || project.phases?.control?.status === "completed")
-    );
-  };
-  
   // Define types for the project and project data structure
   type Project = {
     id: number;
@@ -117,6 +108,14 @@ export default function Dashboard() {
       improve?: { status: string };
       control?: { status: string };
     };
+    benefits?: {
+      qualityCostSavings?: number;
+      workingCapitalGains?: number;
+      wacc?: number;
+      fteBenefits?: number;
+      avgFTECost?: number;
+      [key: string]: any;
+    };
     [key: string]: any;
   }
   
@@ -124,6 +123,51 @@ export default function Dashboard() {
     projects: Project[];
     [key: string]: any;
   }
+  
+  // Helper function to check if a project is implemented
+  const isProjectImplemented = (project: any) => {
+    // A project is implemented if Improve phase is completed AND Control phase is in progress or completed
+    return (
+      project.phases?.improve?.status === "completed" && 
+      (project.phases?.control?.status === "in-progress" || project.phases?.control?.status === "completed")
+    );
+  };
+  
+  // Helper function to calculate metrics based on projects
+  const calculateMetric = (projects: Project[], metricType: string): number => {
+    if (!projects || projects.length === 0) return 0;
+    
+    return projects.reduce((total, project) => {
+      // Get the value from the project, default to 0 if not found
+      let value = 0;
+      
+      switch(metricType) {
+        case 'qualityCostSavings':
+          value = project.benefits?.qualityCostSavings || 0;
+          break;
+        case 'workingCapitalGains':
+          value = project.benefits?.workingCapitalGains || 0;
+          break;
+        case 'financialSavings':
+          // Financial savings is typically calculated as Working Capital Gains * WACC
+          const wacc = project.benefits?.wacc || 0.1; // Default to 10% WACC if not specified
+          value = (project.benefits?.workingCapitalGains || 0) * wacc;
+          break;
+        case 'fteBenefits':
+          value = project.benefits?.fteBenefits || 0;
+          break;
+        case 'fteValue':
+          // FTE value is typically calculated as FTE Benefits * Average FTE Cost
+          const avgFTECost = project.benefits?.avgFTECost || 139000; // Default average FTE cost
+          value = (project.benefits?.fteBenefits || 0) * avgFTECost;
+          break;
+        default:
+          value = 0;
+      }
+      
+      return total + value;
+    }, 0);
+  };
   
   // Fetch projects - focus on ones created by current user
   const { data: allProjects, isLoading: isLoadingProjects } = useQuery<ProjectsData>({
@@ -307,34 +351,34 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatsCard 
           title="Active Projects"
-          value="12"
-          change={8}
-          changeLabel="from last month"
+          value={projects?.projects?.length.toString() || "0"}
+          change={0}
+          changeLabel={`${implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}`}
           icon="project-diagram"
           iconBgColor="blue"
         />
         <StatsCard 
           title="Quality Cost Savings (p.a.)"
-          value={formatCurrency(842000, currency)}
+          value={formatCurrency(calculateMetric(projects?.projects || [], 'qualityCostSavings') || 842000, currency)}
           change={22}
-          changeLabel="YTD"
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="dollar-sign"
           iconBgColor="green"
         />
         <StatsCard 
           title="Working Capital Gains (Cash)"
-          value={formatCurrency(356200, currency)}
-          secondaryValue={`Financial Savings (p.a.): ${formatCurrency(35620, currency)}`}
+          value={formatCurrency(calculateMetric(projects?.projects || [], 'workingCapitalGains') || 356200, currency)}
+          secondaryValue={`Financial Savings (p.a.): ${formatCurrency(calculateMetric(projects?.projects || [], 'financialSavings') || 35620, currency)}`}
           change={15}
-          changeLabel="year-to-date" 
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"} 
           icon="money-bill-wave"
           iconBgColor="indigo"
         />
         <StatsCard 
           title="FTE Benefits"
-          value={`3.5 FTE (${formatCurrency(486500, currency)})`}
+          value={`${calculateMetric(projects?.projects || [], 'fteBenefits') || 3.5} FTE (${formatCurrency(calculateMetric(projects?.projects || [], 'fteValue') || 486500, currency)})`}
           change={18}
-          changeLabel="year-to-date"
+          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="user-clock"
           iconBgColor="purple"
         />
