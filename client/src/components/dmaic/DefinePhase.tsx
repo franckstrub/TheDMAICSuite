@@ -36,6 +36,7 @@ export default function DefinePhase() {
       waccPercentage: "10",
       financialSavings: "",
       fteBenefits: "",
+      totalFinancialSavings: "",
       softBenefits: "",
       // Project cost fields
       oneOffPeopleCost: "",
@@ -148,6 +149,9 @@ export default function DefinePhase() {
       const formattedValue = formatCurrency(calculatedValue, currency);
       const fteString = `${calculatedFte.toFixed(2)} FTE (${formattedValue})`;
       document.getElementById("fteBenefits")?.setAttribute("value", fteString);
+      
+      // Update total financial savings
+      setTimeout(updateTotalFinancialSavings, 0);
     }, 0);
   };
 
@@ -343,6 +347,22 @@ export default function DefinePhase() {
     saveSipocMutation.mutate(data);
   };
 
+  // Function to calculate and update total financial savings
+  const updateTotalFinancialSavings = () => {
+    // Get values from form
+    const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear")) || 0;
+    const financialSavings = parseFloat(charterForm.getValues("financialSavings")) || 0;
+    
+    // Get FTE benefits value from the state
+    const fteBenefits = fteParams.calculatedValue || 0;
+    
+    // Calculate total project financial savings
+    const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
+    
+    // Update the form field
+    charterForm.setValue("totalFinancialSavings", totalFinancialSavings.toFixed(2));
+  };
+
   const handleSaveRequirements = () => {
     saveRequirementsMutation.mutate(requirements);
   };
@@ -458,6 +478,11 @@ export default function DefinePhase() {
                       id="savingsPerYear"
                       placeholder={`e.g. 100000`}
                       {...charterForm.register("savingsPerYear")}
+                      onChange={(e) => {
+                        charterForm.setValue("savingsPerYear", e.target.value);
+                        // Update total financial savings
+                        updateTotalFinancialSavings();
+                      }}
                     />
                     <p className="text-xs text-gray-500 mt-1">Annual cost savings expected from quality improvements</p>
                   </div>
@@ -474,6 +499,9 @@ export default function DefinePhase() {
                         const wacc = parseFloat(charterForm.getValues("waccPercentage")) / 100 || 0;
                         const financialSavings = (wcg * wacc).toFixed(2);
                         charterForm.setValue("financialSavings", financialSavings);
+                        
+                        // Update total financial savings
+                        updateTotalFinancialSavings();
                       }}
                     />
                     <p className="text-xs text-gray-500 mt-1">Cash flow and working capital improvements</p>
@@ -493,6 +521,9 @@ export default function DefinePhase() {
                           const wacc = parseFloat(e.target.value) / 100 || 0;
                           const financialSavings = (wcg * wacc).toFixed(2);
                           charterForm.setValue("financialSavings", financialSavings);
+                          
+                          // Update total financial savings
+                          updateTotalFinancialSavings();
                         }}
                       />
                       <p className="text-xs text-gray-500 mt-1">Weighted Average Cost of Capital</p>
@@ -507,6 +538,20 @@ export default function DefinePhase() {
                       />
                       <p className="text-xs text-gray-500 mt-1">WCG * WACC</p>
                     </div>
+                  </div>
+                  
+                  {/* Total Project Financial Savings */}
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="totalFinancialSavings" className="font-medium text-green-800">Total Project Financial Savings (p.a.) ({currency})</Label>
+                      <Input
+                        id="totalFinancialSavings"
+                        readOnly
+                        className="max-w-[200px] bg-white border-green-200 text-green-800 font-bold"
+                        {...charterForm.register("totalFinancialSavings")}
+                      />
+                    </div>
+                    <p className="text-xs text-green-600 mt-1">Sum of Quality Cost Savings + Financial Savings + FTE Benefits</p>
                   </div>
                 </div>
                 <div className="space-y-4">
