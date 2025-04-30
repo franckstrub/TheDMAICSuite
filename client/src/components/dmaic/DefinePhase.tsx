@@ -177,65 +177,68 @@ export default function DefinePhase() {
   const { data: charter } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!user?.id && !!projectId,
-    onSuccess: (data) => {
-      if (data?.charter) {
-        charterForm.reset({
-          projectTitle: currentProject?.title || "",
-          businessCase: data.charter.businessCase || "",
-          problemStatement: data.charter.problemStatement || "",
-          goals: data.charter.goals || "",
-          scope: data.charter.scope || "",
-          startDate: currentProject?.startDate 
-            ? new Date(currentProject.startDate).toISOString().split('T')[0] 
-            : "",
-          targetEndDate: currentProject?.targetEndDate 
-            ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
-            : "",
-          savingsPerYear: data.charter.savingsPerYear || "",
-          workingCapitalGains: data.charter.workingCapitalGains || "",
-          waccPercentage: data.charter.waccPercentage || "10",
-          financialSavings: data.charter.financialSavings || "",
-          fteBenefits: data.charter.fteBenefits || "",
-          totalFinancialSavings: "",  // Will be calculated after form initialization
-          softBenefits: data.charter.softBenefits || "",
-          // Project cost fields
-          oneOffPeopleCost: data.charter.oneOffPeopleCost || "",
-          oneOffTechnologyCost: data.charter.oneOffTechnologyCost || "",
-          oneOffOtherCost: data.charter.oneOffOtherCost || "",
-          oneOffOtherExplanation: data.charter.oneOffOtherExplanation || "",
-          capexCost: data.charter.capexCost || "",
-          capexExplanation: data.charter.capexExplanation || "",
-          // Summary financial fields
-          totalProjectCosts: "",  // Will be calculated
-          projectNetValue: "",    // Will be calculated
-          // Financial metrics
-          roi: "",               // Will be calculated
-          breakeven: ""          // Will be calculated
-        });
-        
-        // If there's an FTE benefit string in the loaded data, parse it and set the calculated value
-        if (data.charter.fteBenefits) {
-          try {
-            // Extract numeric value from a string like "0.80 FTE ($111,200)"
-            const fteMatch = data.charter.fteBenefits.match(/(\d+\.\d+)\s+FTE/);
-            if (fteMatch && fteMatch[1]) {
-              const fteValue = parseFloat(fteMatch[1]);
-              setFteParams(prev => ({
-                ...prev,
-                calculatedFte: fteValue,
-                calculatedValue: fteValue * (prev.fteCostPerYear || 100000)
-              }));
-            }
-          } catch (e) {
-            console.error("Error parsing FTE value:", e);
-          }
-        }
-        
-        // Calculate total financial savings after loading the form data
-        setTimeout(updateTotalFinancialSavings, 100);
-      }
-    },
+    refetchOnWindowFocus: false
   });
+
+  // Set charter form values when data is fetched
+  useEffect(() => {
+    if (charter?.charter) {
+      charterForm.reset({
+        projectTitle: currentProject?.title || "",
+        businessCase: charter.charter.businessCase || "",
+        problemStatement: charter.charter.problemStatement || "",
+        goals: charter.charter.goals || "",
+        scope: charter.charter.scope || "",
+        startDate: currentProject?.startDate 
+          ? new Date(currentProject.startDate).toISOString().split('T')[0] 
+          : "",
+        targetEndDate: currentProject?.targetEndDate 
+          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
+          : "",
+        savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
+        workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
+        waccPercentage: charter.charter.waccPercentage?.toString() || "10",
+        financialSavings: charter.charter.financialSavings?.toString() || "",
+        fteBenefits: charter.charter.fteBenefits || "",
+        totalFinancialSavings: "",  // Will be calculated after form initialization
+        softBenefits: charter.charter.softBenefits || "",
+        // Project cost fields
+        oneOffPeopleCost: charter.charter.oneOffPeopleCost?.toString() || "",
+        oneOffTechnologyCost: charter.charter.oneOffTechnologyCost?.toString() || "",
+        oneOffOtherCost: charter.charter.oneOffOtherCost?.toString() || "",
+        oneOffOtherExplanation: charter.charter.oneOffOtherExplanation || "",
+        capexCost: charter.charter.capexCost?.toString() || "",
+        capexExplanation: charter.charter.capexExplanation || "",
+        // Summary financial fields
+        totalProjectCosts: "",  // Will be calculated
+        projectNetValue: "",    // Will be calculated
+        // Financial metrics
+        roi: "",               // Will be calculated
+        breakeven: ""          // Will be calculated
+      });
+      
+      // If there's an FTE benefit string in the loaded data, parse it and set the calculated value
+      if (charter.charter.fteBenefits) {
+        try {
+          // Extract numeric value from a string like "0.80 FTE ($111,200)"
+          const fteMatch = charter.charter.fteBenefits.match(/(\d+\.\d+)\s+FTE/);
+          if (fteMatch && fteMatch[1]) {
+            const fteValue = parseFloat(fteMatch[1]);
+            setFteParams(prev => ({
+              ...prev,
+              calculatedFte: fteValue,
+              calculatedValue: fteValue * (prev.fteCostPerYear || 100000)
+            }));
+          }
+        } catch (e) {
+          console.error("Error parsing FTE value:", e);
+        }
+      }
+      
+      // Calculate total financial savings after loading the form data
+      setTimeout(updateTotalFinancialSavings, 100);
+    }
+  }, [charter, currentProject]);
 
   // Fetch SIPOC diagram if exists
   const { data: sipoc } = useQuery({
