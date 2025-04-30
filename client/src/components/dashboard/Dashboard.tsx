@@ -7,6 +7,7 @@ import ActivityItem from "./ActivityItem";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +65,7 @@ const defectData = [
 ];
 
 export default function Dashboard() {
-  const { user } = useAppContext();
+  const { user, currency } = useAppContext();
   const [timeframe, setTimeframe] = useState("Last 365 Days");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
