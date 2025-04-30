@@ -120,29 +120,21 @@ const createWaterfallData = (projects: Project[]) => {
     return sum + (fteCount * fteCost);
   }, 0);
   
-  // Calculate net value
-  const netValue = investmentValue + qualitySavings + financialSavings + fteBenefits;
+  // Calculate benefits total
+  const benefitsTotal = qualitySavings + financialSavings + fteBenefits;
+  
+  // Calculate net value (benefits minus investment)
+  const netValue = benefitsTotal + investmentValue; // investmentValue is negative
   
   // Build the waterfall data structure
   return [
-    // Investment (start) - start at 0, end at negative investment value
-    { 
-      name: "Investment", 
-      value: investmentValue, 
-      displayValue: investmentValue,
-      start: 0, 
-      end: investmentValue, 
-      fill: "#ef4444", 
-      isTotal: false 
-    },
-    
-    // Quality savings - start at investment, build up from there
+    // Quality savings - start at 0, build up from there
     { 
       name: "Quality Savings", 
       value: qualitySavings, 
       displayValue: qualitySavings,
-      start: investmentValue, 
-      end: investmentValue + qualitySavings, 
+      start: 0, 
+      end: qualitySavings, 
       fill: "#22c55e", 
       isTotal: false 
     },
@@ -152,20 +144,31 @@ const createWaterfallData = (projects: Project[]) => {
       name: "Financial Savings", 
       value: financialSavings, 
       displayValue: financialSavings,
-      start: investmentValue + qualitySavings, 
-      end: investmentValue + qualitySavings + financialSavings, 
+      start: qualitySavings, 
+      end: qualitySavings + financialSavings, 
       fill: "#3b82f6", 
       isTotal: false 
     },
     
-    // FTE Benefits - continue to net value
+    // FTE Benefits - continue to total benefits
     { 
       name: "FTE Benefits", 
       value: fteBenefits, 
       displayValue: fteBenefits,
-      start: investmentValue + qualitySavings + financialSavings, 
-      end: netValue, 
+      start: qualitySavings + financialSavings, 
+      end: benefitsTotal, 
       fill: "#8b5cf6", 
+      isTotal: false 
+    },
+    
+    // Investment (negative value) - subtract from benefits total
+    { 
+      name: "Investment", 
+      value: investmentValue, 
+      displayValue: investmentValue,
+      start: benefitsTotal, 
+      end: benefitsTotal + investmentValue, // This will go down since investment is negative
+      fill: "#ef4444", 
       isTotal: false 
     },
     
@@ -914,7 +917,10 @@ export default function Dashboard() {
                 <XAxis dataKey="name" />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
-                  domain={[roiWalkData[0].end * 1.1, Math.max(30000, roiWalkData[4].end) * 1.1]}
+                  domain={[
+                    Math.min(0, roiWalkData[3].end) * 1.1, // Min domain based on investment point
+                    Math.max(roiWalkData[2].end, roiWalkData[4].end) * 1.1 // Max domain based on benefits total or net value
+                  ]}
                   label={{ 
                     value: currency, 
                     angle: -90, 
@@ -958,41 +964,43 @@ export default function Dashboard() {
                   data={roiWalkData.filter(item => !item.isTotal)}
                 />
                 
-                {/* Special handling for Investment bar (first bar - going down) */}
-                <Bar 
-                  key="investment-bar"
-                  dataKey="value"
-                  fill={roiWalkData[0].fill}
-                  name="Investment"
-                  // Only render for Investment
-                  data={[roiWalkData[0]]}
-                />
-
-                {/* The savings/benefits bars (going up) */}
+                {/* The Quality Savings bar (first bar) */}
                 <Bar 
                   key="quality-savings-bar"
                   dataKey="value"
-                  fill={roiWalkData[1].fill}
+                  fill={roiWalkData[0].fill}
                   name="Quality Savings"
                   // Only render for Quality Savings
-                  data={[roiWalkData[1]]}
+                  data={[roiWalkData[0]]}
                 />
                 
+                {/* The Financial Savings bar */}
                 <Bar 
                   key="financial-savings-bar"
                   dataKey="value"
-                  fill={roiWalkData[2].fill}
+                  fill={roiWalkData[1].fill}
                   name="Financial Savings"
                   // Only render for Financial Savings
-                  data={[roiWalkData[2]]}
+                  data={[roiWalkData[1]]}
                 />
                 
+                {/* The FTE Benefits bar */}
                 <Bar 
                   key="fte-benefits-bar"
                   dataKey="value"
-                  fill={roiWalkData[3].fill}
+                  fill={roiWalkData[2].fill}
                   name="FTE Benefits"
                   // Only render for FTE Benefits
+                  data={[roiWalkData[2]]}
+                />
+                
+                {/* Special handling for Investment bar (negative value) */}
+                <Bar 
+                  key="investment-bar"
+                  dataKey="value"
+                  fill={roiWalkData[3].fill}
+                  name="Investment"
+                  // Only render for Investment
                   data={[roiWalkData[3]]}
                 />
                 
