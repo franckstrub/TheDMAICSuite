@@ -776,15 +776,14 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={roiWalkData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                layout="vertical"
+                margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" 
-                  domain={['dataMin', 'dataMax']} 
+                <XAxis dataKey="name" />
+                <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
+                  domain={['auto', 'auto']}
                 />
-                <YAxis type="category" dataKey="name" />
                 <Tooltip 
                   formatter={(value: number) => [formatCurrency(value, currency), "Value"]}
                   cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
