@@ -100,7 +100,7 @@ const createFinancialWaterfallData = (projects: Project[]) => {
     return sum + (project.benefits?.fteBenefits || 0) * avgFTECost;
   }, 0);
   
-  // Calculate total project costs (as a negative value for waterfall)
+  // Calculate total project costs
   const totalCosts = projects.reduce((sum, project) => {
     const oneOffCosts = (project.costs?.oneOffPeopleCost || 0) + 
                      (project.costs?.oneOffTechnologyCost || 0) + 
@@ -112,70 +112,95 @@ const createFinancialWaterfallData = (projects: Project[]) => {
   // Calculate net value
   const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
   
-  // Define the data items with their values
-  const items = [
-    { name: "Quality Cost Savings", value: qualityCostSavings, fill: "#10b981", isPositive: true, isFirst: true },
-    { name: "Financial Savings", value: financialSavings, fill: "#22c55e", isPositive: true },
-    { name: "FTE Benefits", value: fteBenefits, fill: "#4ade80", isPositive: true },
-    { name: "Investment", value: -totalCosts, fill: "#ef4444", isPositive: false }, // Negative value
-    { name: "Net Value", value: netValue, fill: "#3b82f6", isTotal: true, isLast: true }
-  ];
-  
   // Create the true waterfall chart data
-  const waterfallData: Array<{
-    name: string;
-    start: number;
-    end: number;
-    actual: number;
-    fill: string;
-    isTotal?: boolean;
-    isFirst?: boolean;
-    isLast?: boolean;
-  }> = [];
-  
-  // Running total to track position
+  // For a waterfall chart, we need the following structure:
+  // Each component has a "base" (starting point) and a "value" (height of the bar)
+  // For intermediate bars, the base is the sum of previous values
+
+  // Create a structure where each bar has the appropriate positioning
+  // Setup initial data series - each component has two segments:
+  // 1. A transparent segment from 0 to the starting point (base)
+  // 2. A colored segment representing the actual value
+
+  // Running total
   let runningTotal = 0;
   
-  // Process each item to create waterfall effect
-  items.forEach((item, index) => {
-    if (item.isTotal) {
-      // Net Value - shown as a separate bar starting from 0
-      waterfallData.push({
-        name: item.name,
-        start: 0,
-        end: item.value,
-        actual: item.value,
-        fill: item.fill,
-        isTotal: true,
-        isLast: true
-      });
-    } else if (item.isFirst) {
-      // First bar - starts at 0
-      waterfallData.push({
-        name: item.name,
-        start: 0,
-        end: item.value,
-        actual: item.value,
-        fill: item.fill,
-        isFirst: true
-      });
-      
-      // Update running total
-      runningTotal = item.value;
-    } else {
-      // Middle bars - start at previous end position
-      waterfallData.push({
-        name: item.name,
-        start: runningTotal,
-        end: runningTotal + item.value,
-        actual: item.value,
-        fill: item.fill
-      });
-      
-      // Update running total for next item
-      runningTotal += item.value;
+  const waterfallData = [
+    // Quality Cost Savings (first bar - starts at 0)
+    {
+      name: "Quality Cost Savings",
+      // For the base segment, value = 0 (no base)
+      base: 0,
+      // For the value segment, value = actual value
+      value: qualityCostSavings,
+      // For tooltip and display
+      displayValue: qualityCostSavings,
+      // For coloring
+      fill: "#10b981",
+      // Category
+      category: "benefit"
+    },
+    
+    // Financial Savings
+    {
+      name: "Financial Savings",
+      // Base is the running total after Quality Cost Savings
+      base: qualityCostSavings,
+      // Value is the Financial Savings amount
+      value: financialSavings,
+      // For tooltip and display
+      displayValue: financialSavings,
+      // For coloring
+      fill: "#22c55e",
+      // Category
+      category: "benefit"
+    },
+    
+    // FTE Benefits
+    {
+      name: "FTE Benefits",
+      // Base is the running total after Financial Savings
+      base: qualityCostSavings + financialSavings,
+      // Value is the FTE Benefits amount
+      value: fteBenefits,
+      // For tooltip and display
+      displayValue: fteBenefits,
+      // For coloring
+      fill: "#4ade80",
+      // Category
+      category: "benefit"
+    },
+    
+    // Investment (negative value)
+    {
+      name: "Investment",
+      // Base is the running total after FTE Benefits
+      base: qualityCostSavings + financialSavings + fteBenefits,
+      // Value is negative (cost)
+      value: -totalCosts,
+      // For tooltip and display (negative)
+      displayValue: -totalCosts,
+      // For coloring
+      fill: "#ef4444",
+      // Category
+      category: "cost"
+    },
+    
+    // Net Value (final result)
+    {
+      name: "Net Value",
+      // The Net Value starts from zero and goes to the final value
+      base: 0,
+      // Value is the Net Value
+      value: netValue,
+      // For tooltip and display
+      displayValue: netValue,
+      // For coloring
+      fill: "#3b82f6",
+      // Category
+      category: "total"
     }
-  });
+  ];
   
   return waterfallData;
 };
@@ -907,11 +932,12 @@ export default function Dashboard() {
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
-                    // Display the actual value of the component
-                    if (name === "Value" && props.payload && props.payload.actual !== undefined) {
-                      return [formatCurrency(props.payload.actual, currency), props.payload.name];
+                    // Only show tooltip for the value series, not the base
+                    if (name === "Value" && props.payload) {
+                      // Display the actual component value (not the stacked height)
+                      return [formatCurrency(props.payload.displayValue, currency), props.payload.name];
                     }
-                    // For other series (like base/start), don't show in tooltip
+                    // For other series (like base), don't show in tooltip
                     return ["", ""];
                   }}
                   cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
@@ -920,9 +946,9 @@ export default function Dashboard() {
                     // Find the entry for this label
                     const entry = financialWaterfallData.find(entry => entry.name === label);
                     if (entry) {
-                      if (entry.isTotal) {
+                      if (entry.category === "total") {
                         return `${entry.name} (Final Result)`;
-                      } else if (entry.name === "Investment") {
+                      } else if (entry.category === "cost") {
                         return `${entry.name} (Cost)`;
                       } else {
                         return `${entry.name} (Benefit)`;
@@ -935,49 +961,56 @@ export default function Dashboard() {
                 {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Base bars for waterfall effect */}
-                <Bar
-                  dataKey="start"
-                  fill="transparent"
+                {/* Transparent bars for base values */}
+                <Bar 
+                  dataKey="base" 
                   stackId="stack"
+                  fill="transparent"
                   isAnimationActive={false}
                   legendType="none"
                 />
                 
-                {/* Actual value bars for waterfall effect */}
+                {/* Value bars stacked on top of base bars */}
                 <Bar 
-                  dataKey="actual" 
+                  dataKey="value" 
                   name="Value"
                   stackId="stack"
+                  barSize={40}
                 >
                   {financialWaterfallData.map((entry, i) => (
-                    <Cell key={`cell-${i}`} fill={entry.fill} />
+                    <Cell 
+                      key={`cell-${i}`} 
+                      fill={entry.fill}
+                    />
                   ))}
                 </Bar>
                 
-                {/* Connecting lines between consecutive bars */}
+                {/* Create individual connecting lines between consecutive bars */}
+                {/* We can't use segment with ReferenceLine, so create a separate line for each connection */}
                 {financialWaterfallData.map((entry, i, arr) => {
-                  // Skip the last item (Net Value)
-                  if (i === arr.length - 1) return null;
+                  // Skip the last item or the total category
+                  if (i === arr.length - 1 || entry.category === "total") return null;
                   
                   // Get the next entry in the array
                   const nextEntry = arr[i + 1];
                   
-                  // Skip if the next entry is the total/last bar
-                  if (nextEntry.isLast) return null;
+                  // Skip if the next entry is the total
+                  if (nextEntry.category === "total") return null;
                   
-                  // Use reference area to draw a dashed connector line between consecutive bars
+                  // Calculate position Y for the connecting line
+                  // End position of current bar = base + value
+                  const linePosition = entry.base + entry.value;
+                  
+                  // Draw a reference line at the end height of the current bar
                   return (
-                    <ReferenceArea 
+                    <ReferenceLine 
                       key={`connector-${i}`}
-                      x1={i}
-                      x2={i+1}
-                      y1={entry.end}
-                      y2={entry.end}
-                      strokeDasharray="3 3"
+                      y={linePosition}
                       stroke="#aaa"
-                      strokeWidth={1}
-                      fill="none"
+                      strokeDasharray="3 3"
+                      // Only draw the line between this bar and the next bar
+                      // by setting xAxisId to include only these two points
+                      isFront={false}
                     />
                   );
                 })}
