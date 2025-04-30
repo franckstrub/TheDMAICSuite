@@ -520,6 +520,73 @@ export default function Dashboard() {
         />
       </div>
       
+      {/* Project Costs Section */}
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base font-medium">Project Costs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-700">One-off Costs</span>
+                  <span className="text-lg font-semibold text-red-600">{formatCurrency(calculateMetric(projects?.projects || [], 'oneOffCosts'), currency)}</span>
+                </div>
+                <div className="space-y-2 mt-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">People:</span>
+                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffPeopleCost || 0), 0), currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Technology:</span>
+                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffTechnologyCost || 0), 0), currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Others:</span>
+                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffOtherCost || 0), 0), currency)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-700">OPEX Costs</span>
+                  <span className="text-lg font-semibold text-red-600">{formatCurrency(calculateMetric(projects?.projects || [], 'opexCosts'), currency)}</span>
+                </div>
+                <div className="space-y-2 mt-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">People:</span>
+                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.opexPeopleCost || 0), 0), currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Technology:</span>
+                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.opexTechnologyCost || 0), 0), currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Others:</span>
+                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.opexOtherCost || 0), 0), currency)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-700">CAPEX Costs</span>
+                  <span className="text-lg font-semibold text-red-600">{formatCurrency(calculateMetric(projects?.projects || [], 'capexCosts'), currency)}</span>
+                </div>
+                <div className="mt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-lg text-red-800">Total Project Costs</div>
+                    <div className="font-bold text-xl text-red-800">{formatCurrency(calculateMetric(projects?.projects || [], 'totalCosts'), currency)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       {/* Additional Benefits */}
       <div className="grid grid-cols-1 gap-6 mb-6">
         <Card>
