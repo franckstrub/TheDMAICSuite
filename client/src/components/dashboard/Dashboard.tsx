@@ -82,13 +82,7 @@ type Project = {
 // Create Financial Benefits waterfall data from projects
 const createFinancialWaterfallData = (projects: Project[]) => {
   if (!projects || projects.length === 0) {
-    return [
-      { name: "Quality Cost Savings", value: 0, fill: "#10b981", category: "benefit", isBase: false },
-      { name: "Financial Savings", value: 0, fill: "#22c55e", category: "benefit", isBase: false },
-      { name: "FTE Benefits", value: 0, fill: "#4ade80", category: "benefit", isBase: false },
-      { name: "Investment", value: 0, fill: "#ef4444", category: "cost", isBase: false },
-      { name: "Net Value", value: 0, fill: "#3b82f6", category: "total", isBase: true }
-    ];
+    return [];
   }
   
   // Calculate total values across all projects for each category
@@ -118,53 +112,68 @@ const createFinancialWaterfallData = (projects: Project[]) => {
   // Calculate net value
   const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
   
-  // Build the financial waterfall data structure
-  return [
-    // Quality Cost Savings
-    { 
-      name: "Quality Cost Savings", 
-      value: qualityCostSavings,
-      fill: "#10b981", // Darker green
-      category: "benefit",
-      isBase: false
-    },
-    
-    // Financial Savings from WCG
-    { 
-      name: "Financial Savings", 
-      value: financialSavings,
-      fill: "#22c55e", // Medium green
-      category: "benefit",
-      isBase: false
-    },
-    
-    // FTE Benefits
-    { 
-      name: "FTE Benefits", 
-      value: fteBenefits,
-      fill: "#4ade80", // Lighter green
-      category: "benefit",
-      isBase: false
-    },
-    
-    // Investment Costs (negative contribution)
-    { 
-      name: "Investment", 
-      value: -totalCosts, // Negative for waterfall
-      fill: "#ef4444", // Red
-      category: "cost",
-      isBase: false
-    },
-    
-    // Net Value
-    { 
-      name: "Net Value", 
-      value: netValue,
-      fill: "#3b82f6", // Blue
-      category: "total",
-      isBase: true
-    }
-  ];
+  // Waterfall chart data - for relative waterfall
+  // Each item has base and value properties
+  const waterfallData = [];
+  
+  // Running total to calculate the base for each item
+  let runningTotal = 0;
+
+  // Add Quality Cost Savings
+  waterfallData.push({
+    name: "Quality Cost Savings",
+    base: 0,
+    value: qualityCostSavings,
+    fill: "#10b981", // Darker green
+    total: runningTotal + qualityCostSavings,
+    displayValue: qualityCostSavings
+  });
+  runningTotal += qualityCostSavings;
+  
+  // Add Financial Savings
+  waterfallData.push({
+    name: "Financial Savings",
+    base: runningTotal,
+    value: financialSavings,
+    fill: "#22c55e", // Medium green
+    total: runningTotal + financialSavings,
+    displayValue: financialSavings
+  });
+  runningTotal += financialSavings;
+  
+  // Add FTE Benefits
+  waterfallData.push({
+    name: "FTE Benefits",
+    base: runningTotal,
+    value: fteBenefits,
+    fill: "#4ade80", // Lighter green
+    total: runningTotal + fteBenefits,
+    displayValue: fteBenefits
+  });
+  runningTotal += fteBenefits;
+  
+  // Add Investment Costs (negative value)
+  waterfallData.push({
+    name: "Investment",
+    base: runningTotal,
+    value: -totalCosts,
+    fill: "#ef4444", // Red
+    total: runningTotal - totalCosts,
+    displayValue: -totalCosts
+  });
+  runningTotal -= totalCosts;
+  
+  // Add Net Value (final result)
+  waterfallData.push({
+    name: "Net Value",
+    base: 0,
+    value: netValue,
+    fill: "#3b82f6", // Blue
+    total: netValue,
+    displayValue: netValue
+  });
+  
+  return waterfallData;
 };
 
 export default function Dashboard() {
@@ -894,24 +903,59 @@ export default function Dashboard() {
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
-                    return [formatCurrency(value, currency), props.payload.name];
+                    // Display the true value of the bar (from displayValue)
+                    const displayValue = props.payload.displayValue;
+                    return [formatCurrency(displayValue, currency), props.payload.name];
                   }}
                   cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
                   contentStyle={{borderRadius: '6px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}
+                  labelFormatter={(label) => {
+                    // Find the entry for this label
+                    const entry = financialWaterfallData.find(entry => entry.name === label);
+                    if (entry) {
+                      return `${entry.name}${entry.name !== "Net Value" ? ` (${entry.name === "Investment" ? "Cost" : "Benefit"})` : ""}`;
+                    }
+                    return label;
+                  }}
                 />
                 
                 {/* Reference line at 0 */}
                 <ReferenceLine y={0} stroke="#aaa" strokeDasharray="4 4" />
                 
-                {/* Waterfall chart with all bars */}
+                {/* Base bars for waterfall effect */}
+                <Bar
+                  dataKey="base"
+                  stackId="stack"
+                  fill="transparent"
+                  isAnimationActive={false}
+                  legendType="none"
+                />
+                
+                {/* Value bars for waterfall effect */}
                 <Bar 
                   dataKey="value" 
                   name="Value"
+                  stackId="stack"
                 >
                   {financialWaterfallData.map((entry, i) => (
                     <Cell key={`cell-${i}`} fill={entry.fill} />
                   ))}
                 </Bar>
+                
+                {/* Show total labels */}
+                <ReferenceLine y={0} stroke="#aaa" />
+                
+                {financialWaterfallData.map((entry, i) => (
+                  entry.name !== "Net Value" && i < financialWaterfallData.length - 1 ? (
+                    <ReferenceLine 
+                      key={`ref-${i}`}
+                      y={entry.total}
+                      stroke="#aaa" 
+                      strokeDasharray="3 3"
+                      isFront={false}
+                    />
+                  ) : null
+                ))}
               </BarChart>
             </ResponsiveContainer>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-1">
