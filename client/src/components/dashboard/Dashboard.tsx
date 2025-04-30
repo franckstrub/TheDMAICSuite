@@ -845,6 +845,12 @@ export default function Dashboard() {
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
                   domain={[roiWalkData[0].end * 1.1, Math.max(30000, roiWalkData[4].end) * 1.1]}
+                  label={{ 
+                    value: currency, 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { textAnchor: 'middle' }
+                  }}
                 />
                 <Tooltip 
                   formatter={(value: number, name: string, props: any) => {
@@ -960,7 +966,15 @@ export default function Dashboard() {
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => formatCurrency(value, currency)} />
+                <YAxis 
+                  tickFormatter={(value) => formatCurrency(value, currency)} 
+                  label={{ 
+                    value: currency, 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { textAnchor: 'middle' }
+                  }}
+                />
                 <Tooltip formatter={(value: number) => [formatCurrency(value, currency), "Cost"]} />
                 <Bar dataKey="value">
                   {costBreakdownData.map((entry, index) => (
