@@ -543,7 +543,7 @@ export default function Dashboard() {
           iconBgColor="purple"
         />
         <StatsCard 
-          title="Total Project Financial Savings p.a."
+          title="Total Project Financial Savings (p.a.)"
           value={formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings'), currency)}
           secondaryValue="Quality Savings + Financial Savings + FTE Benefits"
           change={implementationStatus === "implemented" ? 30 : implementationStatus === "not-implemented" ? 12 : 25}
