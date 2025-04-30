@@ -204,6 +204,12 @@ export default function Dashboard() {
           const fteBenefits = (project.benefits?.fteBenefits || 0) * (project.benefits?.avgFTECost || 139000);
           value = qualityCost + financialSavings + fteBenefits; // Working Capital Gains (cash) excluded
           break;
+        case 'totalSavings':
+          // Calculate total savings as Total Benefits - Total Costs
+          const totalBenefits = calculateMetric([project], 'totalBenefits');
+          const totalCosts = calculateMetric([project], 'totalCosts');
+          value = totalBenefits - totalCosts;
+          break;
         case 'roi':
           // Calculate ROI as (Total Benefits - Total Costs) / Total Costs
           const benefits = calculateMetric([project], 'totalBenefits');
@@ -495,7 +501,7 @@ export default function Dashboard() {
       </Dialog>
       
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-6">
         <StatsCard 
           title="Active Projects"
           value={projects?.projects?.length.toString() || "0"}
@@ -528,6 +534,15 @@ export default function Dashboard() {
           changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
           icon="user-clock"
           iconBgColor="purple"
+        />
+        <StatsCard 
+          title="Total Project Savings"
+          value={formatCurrency(calculateMetric(projects?.projects || [], 'totalSavings'), currency)}
+          secondaryValue="Benefits minus Costs"
+          change={implementationStatus === "implemented" ? 30 : implementationStatus === "not-implemented" ? 12 : 25}
+          changeLabel="Net financial impact"
+          icon="piggy-bank"
+          iconBgColor="green"
         />
         <StatsCard 
           title="ROI"
