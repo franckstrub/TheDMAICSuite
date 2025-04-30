@@ -647,19 +647,6 @@ export default function DefinePhase() {
                     </div>
                   </div>
                   
-                  {/* Total Project Financial Savings */}
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="totalFinancialSavings" className="font-medium text-green-800">Total Project Financial Savings (p.a.) ({currency})</Label>
-                      <Input
-                        id="totalFinancialSavings"
-                        readOnly
-                        className="max-w-[200px] bg-white border-green-200 text-green-800 font-bold"
-                        {...charterForm.register("totalFinancialSavings")}
-                      />
-                    </div>
-                    <p className="text-xs text-green-600 mt-1">Sum of Quality Cost Savings + Financial Savings + FTE Benefits</p>
-                  </div>
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -748,6 +735,20 @@ export default function DefinePhase() {
                     />
                   </div>
                 </div>
+              </div>
+              
+              {/* Total Project Financial Savings - Full Width */}
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="totalFinancialSavings" className="font-medium text-green-800 text-lg">Total Project Financial Savings (p.a.) ({currency})</Label>
+                  <Input
+                    id="totalFinancialSavings"
+                    readOnly
+                    className="max-w-[200px] bg-white border-green-200 text-green-800 font-bold text-lg"
+                    {...charterForm.register("totalFinancialSavings")}
+                  />
+                </div>
+                <p className="text-sm text-green-600 mt-1">Sum of Quality Cost Savings + Financial Savings + FTE Benefits</p>
               </div>
               
               {/* Soft Benefits - Full Width */}
