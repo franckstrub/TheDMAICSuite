@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AppContext } from "@/store/AppContext";
+import { AppContext, CurrencyType } from "@/store/AppContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
@@ -27,9 +27,11 @@ function App() {
   const [activePhase, setActivePhase] = useState("define");
   const [currentProject, setCurrentProject] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currency, setCurrency] = useState<CurrencyType>("$");
 
-  // Check for authenticated user on app load
+  // Check for authenticated user and settings on app load
   useEffect(() => {
+    // Load user data
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
@@ -38,6 +40,12 @@ function App() {
         console.error("Failed to parse stored user:", error);
         localStorage.removeItem("user");
       }
+    }
+    
+    // Load currency preference
+    const storedCurrency = localStorage.getItem("currency");
+    if (storedCurrency && ["$", "€", "£", "¥", "₩", "CHF"].includes(storedCurrency)) {
+      setCurrency(storedCurrency as CurrencyType);
     }
   }, []);
 
@@ -49,6 +57,12 @@ function App() {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+  };
+  
+  // Update currency and save to localStorage
+  const handleSetCurrency = (newCurrency: CurrencyType) => {
+    setCurrency(newCurrency);
+    localStorage.setItem("currency", newCurrency);
   };
 
   return (
@@ -65,7 +79,9 @@ function App() {
           currentProject,
           setCurrentProject,
           sidebarOpen,
-          setSidebarOpen
+          setSidebarOpen,
+          currency,
+          setCurrency: handleSetCurrency
         }}
       >
         <TooltipProvider>
