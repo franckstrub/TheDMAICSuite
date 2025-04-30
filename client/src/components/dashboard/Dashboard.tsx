@@ -6,7 +6,7 @@ import ProjectsTable from "./ProjectsTable";
 import ActivityItem from "./ActivityItem";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -123,6 +123,7 @@ export default function Dashboard() {
       opexPeopleCost?: number;
       opexTechnologyCost?: number;
       opexOtherCost?: number;
+      opexPeriod?: string; // 'monthly', 'quarterly', 'annual'
       capexCost?: number;
       [key: string]: any;
     };
@@ -143,6 +144,50 @@ export default function Dashboard() {
     );
   };
   
+  // Helper function to adjust OPEX costs based on the period set in Define phase and dashboard timeframe
+  const adjustOpexCostForPeriod = (project: Project, timeframe: string): number => {
+    // Default period is annual if not specified
+    const opexPeriod = project.costs?.opexPeriod || 'annual';
+    
+    // Base OPEX cost (sum of OPEX components)
+    const baseOpexCost = (project.costs?.opexPeopleCost || 0) + 
+                         (project.costs?.opexTechnologyCost || 0) + 
+                         (project.costs?.opexOtherCost || 0);
+    
+    // Convert base OPEX cost to annual value first based on project's OPEX period setting
+    let annualizedOpexCost = baseOpexCost;
+    if (opexPeriod === 'monthly') {
+      annualizedOpexCost = baseOpexCost * 12;
+    } else if (opexPeriod === 'quarterly') {
+      annualizedOpexCost = baseOpexCost * 4;
+    }
+    
+    // Adjust based on dashboard timeframe setting
+    if (timeframe === 'Last 30 Days' || timeframe === 'This Month') {
+      return annualizedOpexCost / 12; // Show monthly cost
+    } else if (timeframe === 'This Quarter' || timeframe.includes('Quarter')) {
+      return annualizedOpexCost / 4; // Show quarterly cost
+    } else if (timeframe === 'This Year' || timeframe === 'Last Year' || 
+               timeframe === 'Last 365 Days' || timeframe === 'Since Beginning') {
+      return annualizedOpexCost; // Show annual cost
+    } else if (timeframe === 'Last 3 Years') {
+      return annualizedOpexCost * 3; // Show 3-year cost
+    } else if (timeframe === 'Custom Range') {
+      // For custom range, calculate based on days in range
+      if (customDateRange.start && customDateRange.end) {
+        // Calculate days manually using milliseconds
+        const msInDay = 1000 * 60 * 60 * 24;
+        const daysInRange = Math.round(
+          (customDateRange.end.getTime() - customDateRange.start.getTime()) / msInDay
+        ) + 1;
+        return (annualizedOpexCost / 365) * daysInRange;
+      }
+    }
+    
+    // Default to annual cost if timeframe is not recognized
+    return annualizedOpexCost;
+  };
+
   // Helper function to calculate metrics based on projects
   const calculateMetric = (projects: Project[], metricType: string): number => {
     if (!projects || projects.length === 0) return 0;
@@ -180,21 +225,23 @@ export default function Dashboard() {
                   (project.costs?.oneOffOtherCost || 0);
           break;
         case 'opexCosts':
-          value = (project.costs?.opexPeopleCost || 0) + 
-                  (project.costs?.opexTechnologyCost || 0) + 
-                  (project.costs?.opexOtherCost || 0);
+          // Use the adjustOpexCostForPeriod function to get adjusted OPEX cost
+          value = adjustOpexCostForPeriod(project, timeframe);
           break;
         case 'capexCosts':
           value = project.costs?.capexCost || 0;
           break;
         case 'totalCosts':
-          value = (project.costs?.oneOffPeopleCost || 0) + 
-                  (project.costs?.oneOffTechnologyCost || 0) + 
-                  (project.costs?.oneOffOtherCost || 0) +
-                  (project.costs?.opexPeopleCost || 0) + 
-                  (project.costs?.opexTechnologyCost || 0) + 
-                  (project.costs?.opexOtherCost || 0) +
-                  (project.costs?.capexCost || 0);
+          // One-off costs
+          const oneOffCosts = (project.costs?.oneOffPeopleCost || 0) + 
+                             (project.costs?.oneOffTechnologyCost || 0) + 
+                             (project.costs?.oneOffOtherCost || 0);
+          // OPEX costs (adjusted for period)
+          const opexCosts = adjustOpexCostForPeriod(project, timeframe);
+          // CAPEX costs
+          const capexCosts = project.costs?.capexCost || 0;
+          
+          value = oneOffCosts + opexCosts + capexCosts;
           break;
         case 'totalBenefits':
           // Sum of all financial benefits
@@ -255,6 +302,7 @@ export default function Dashboard() {
       opexPeopleCost: 22000,
       opexTechnologyCost: 9500,
       opexOtherCost: 4000,
+      opexPeriod: 'monthly', // monthly, quarterly, annual
       capexCost: 75000
     };
     
@@ -265,6 +313,7 @@ export default function Dashboard() {
       opexPeopleCost: 10000,
       opexTechnologyCost: 4500,
       opexOtherCost: 1500,
+      opexPeriod: 'quarterly', // monthly, quarterly, annual
       capexCost: 25000
     };
 
@@ -540,7 +589,7 @@ export default function Dashboard() {
           change={implementationStatus === "implemented" ? 20 : implementationStatus === "not-implemented" ? 8 : 15}
           changeLabel="Return on Investment"
           icon="chart-pie"
-          iconBgColor="amber"
+          iconBgColor="indigo"
         />
       </div>
       
@@ -599,15 +648,63 @@ export default function Dashboard() {
                 <div className="space-y-2 mt-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">People:</span>
-                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.opexPeopleCost || 0), 0), currency)}</span>
+                    <span className="font-medium">{formatCurrency(
+                      projects?.projects?.reduce((t, p) => {
+                        // Get base people cost
+                        const baseCost = p.costs?.opexPeopleCost || 0;
+                        // Get project's opex period
+                        const opexPeriod = p.costs?.opexPeriod || 'annual';
+                        // Calculate adjusted cost based on period
+                        let multiplier = 1;
+                        if (opexPeriod === 'monthly' && (timeframe === 'Last Year' || timeframe === 'Last 365 Days' || timeframe === 'Since Beginning')) {
+                          multiplier = 12;
+                        } else if (opexPeriod === 'quarterly' && (timeframe === 'Last Year' || timeframe === 'Last 365 Days' || timeframe === 'Since Beginning')) {
+                          multiplier = 4;
+                        }
+                        return t + (baseCost * multiplier);
+                      }, 0), 
+                    currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Technology:</span>
-                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.opexTechnologyCost || 0), 0), currency)}</span>
+                    <span className="font-medium">{formatCurrency(
+                      projects?.projects?.reduce((t, p) => {
+                        // Get base technology cost
+                        const baseCost = p.costs?.opexTechnologyCost || 0;
+                        // Get project's opex period
+                        const opexPeriod = p.costs?.opexPeriod || 'annual';
+                        // Calculate adjusted cost based on period
+                        let multiplier = 1;
+                        if (opexPeriod === 'monthly' && (timeframe === 'Last Year' || timeframe === 'Last 365 Days' || timeframe === 'Since Beginning')) {
+                          multiplier = 12;
+                        } else if (opexPeriod === 'quarterly' && (timeframe === 'Last Year' || timeframe === 'Last 365 Days' || timeframe === 'Since Beginning')) {
+                          multiplier = 4;
+                        }
+                        return t + (baseCost * multiplier);
+                      }, 0), 
+                    currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Others:</span>
-                    <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.opexOtherCost || 0), 0), currency)}</span>
+                    <span className="font-medium">{formatCurrency(
+                      projects?.projects?.reduce((t, p) => {
+                        // Get base other cost
+                        const baseCost = p.costs?.opexOtherCost || 0;
+                        // Get project's opex period
+                        const opexPeriod = p.costs?.opexPeriod || 'annual';
+                        // Calculate adjusted cost based on period
+                        let multiplier = 1;
+                        if (opexPeriod === 'monthly' && (timeframe === 'Last Year' || timeframe === 'Last 365 Days' || timeframe === 'Since Beginning')) {
+                          multiplier = 12;
+                        } else if (opexPeriod === 'quarterly' && (timeframe === 'Last Year' || timeframe === 'Last 365 Days' || timeframe === 'Since Beginning')) {
+                          multiplier = 4;
+                        }
+                        return t + (baseCost * multiplier);
+                      }, 0), 
+                    currency)}</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-slate-200 text-xs text-gray-500 italic">
+                    Note: OPEX costs are adjusted based on period settings (monthly/quarterly/annual) in the Define phase.
                   </div>
                 </div>
               </div>
