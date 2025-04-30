@@ -45,6 +45,9 @@ export default function DefinePhase() {
       oneOffOtherExplanation: "",
       capexCost: "",
       capexExplanation: "",
+      // Summary financial fields
+      totalProjectCosts: "",
+      projectNetValue: "",
     },
   });
 
@@ -204,6 +207,9 @@ export default function DefinePhase() {
           oneOffOtherExplanation: data.charter.oneOffOtherExplanation || "",
           capexCost: data.charter.capexCost || "",
           capexExplanation: data.charter.capexExplanation || "",
+          // Summary financial fields
+          totalProjectCosts: "",  // Will be calculated
+          projectNetValue: "",    // Will be calculated
         });
         
         // If there's an FTE benefit string in the loaded data, parse it and set the calculated value
@@ -386,9 +392,9 @@ export default function DefinePhase() {
     saveSipocMutation.mutate(data);
   };
 
-  // Function to calculate and update total financial savings
+  // Function to calculate and update total financial savings and net value
   const updateTotalFinancialSavings = () => {
-    // Get values from form
+    // Get values from form for benefits
     const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear")) || 0;
     const financialSavings = parseFloat(charterForm.getValues("financialSavings")) || 0;
     
@@ -398,14 +404,30 @@ export default function DefinePhase() {
     // Calculate total project financial savings
     const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
     
-    // Update the form field
-    charterForm.setValue("totalFinancialSavings", totalFinancialSavings.toFixed(2));
+    // Get values from form for costs
+    const oneOffPeopleCost = parseFloat(charterForm.getValues("oneOffPeopleCost")) || 0;
+    const oneOffTechnologyCost = parseFloat(charterForm.getValues("oneOffTechnologyCost")) || 0;
+    const oneOffOtherCost = parseFloat(charterForm.getValues("oneOffOtherCost")) || 0;
+    const capexCost = parseFloat(charterForm.getValues("capexCost")) || 0;
     
-    console.log("Total Financial Savings updated:", {
+    // Calculate total project costs
+    const totalProjectCosts = oneOffPeopleCost + oneOffTechnologyCost + oneOffOtherCost + capexCost;
+    
+    // Calculate project net value
+    const projectNetValue = totalFinancialSavings - totalProjectCosts;
+    
+    // Update the form fields
+    charterForm.setValue("totalFinancialSavings", totalFinancialSavings.toFixed(2));
+    charterForm.setValue("totalProjectCosts", totalProjectCosts.toFixed(2));
+    charterForm.setValue("projectNetValue", projectNetValue.toFixed(2));
+    
+    console.log("Financial values updated:", {
       qualityCostSavings,
       financialSavings,
       fteBenefits,
-      totalFinancialSavings
+      totalFinancialSavings,
+      totalProjectCosts,
+      projectNetValue
     });
   };
 
@@ -714,6 +736,11 @@ export default function DefinePhase() {
                       id="oneOffPeopleCost"
                       placeholder="e.g. 5000"
                       {...charterForm.register("oneOffPeopleCost")}
+                      onChange={(e) => {
+                        charterForm.setValue("oneOffPeopleCost", e.target.value);
+                        // Update net value
+                        updateTotalFinancialSavings();
+                      }}
                     />
                   </div>
                   <div>
@@ -722,6 +749,11 @@ export default function DefinePhase() {
                       id="oneOffTechnologyCost"
                       placeholder="e.g. 10000"
                       {...charterForm.register("oneOffTechnologyCost")}
+                      onChange={(e) => {
+                        charterForm.setValue("oneOffTechnologyCost", e.target.value);
+                        // Update net value
+                        updateTotalFinancialSavings();
+                      }}
                     />
                   </div>
                   <div>
@@ -730,6 +762,11 @@ export default function DefinePhase() {
                       id="oneOffOtherCost"
                       placeholder="e.g. 2000"
                       {...charterForm.register("oneOffOtherCost")}
+                      onChange={(e) => {
+                        charterForm.setValue("oneOffOtherCost", e.target.value);
+                        // Update net value
+                        updateTotalFinancialSavings();
+                      }}
                     />
                   </div>
                 </div>
@@ -745,7 +782,7 @@ export default function DefinePhase() {
               </div>
               
               {/* CAPEX Costs */}
-              <div>
+              <div className="mb-6">
                 <h4 className="text-md font-medium mb-3">CAPEX Costs</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -754,6 +791,11 @@ export default function DefinePhase() {
                       id="capexCost"
                       placeholder="e.g. 25000"
                       {...charterForm.register("capexCost")}
+                      onChange={(e) => {
+                        charterForm.setValue("capexCost", e.target.value);
+                        // Update net value
+                        updateTotalFinancialSavings();
+                      }}
                     />
                   </div>
                   <div>
@@ -767,6 +809,34 @@ export default function DefinePhase() {
                   </div>
                 </div>
               </div>
+              
+              {/* Total Project Costs */}
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-md mb-6">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="totalProjectCosts" className="font-medium text-gray-800">Total Project Costs ({currency})</Label>
+                  <Input
+                    id="totalProjectCosts"
+                    readOnly
+                    className="max-w-[200px] bg-white border-gray-200 text-gray-800 font-bold"
+                    {...charterForm.register("totalProjectCosts")}
+                  />
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Sum of all one-off and CAPEX costs</p>
+              </div>
+            </div>
+            
+            {/* Project Net Value */}
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="projectNetValue" className="font-medium text-blue-800 text-lg">Project Net Value ({currency})</Label>
+                <Input
+                  id="projectNetValue"
+                  readOnly
+                  className="max-w-[200px] bg-white border-blue-200 text-blue-800 font-bold text-lg"
+                  {...charterForm.register("projectNetValue")}
+                />
+              </div>
+              <p className="text-sm text-blue-600 mt-1">Total Project Financial Savings - Total Project Costs</p>
             </div>
             
             <Button type="submit" disabled={saveCharterMutation.isPending} className="mt-6">
