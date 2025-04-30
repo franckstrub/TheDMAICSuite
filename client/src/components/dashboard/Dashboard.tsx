@@ -43,7 +43,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, ReferenceLine, ComposedChart } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, ReferenceLine, ComposedChart, ReferenceArea } from "recharts";
 
 // Define the Project type at the top level so it's accessible
 type Project = {
@@ -966,13 +966,18 @@ export default function Dashboard() {
                   // Skip if the next entry is the total/last bar
                   if (nextEntry.isLast) return null;
                   
+                  // Use reference area to draw a dashed connector line between consecutive bars
                   return (
-                    <ReferenceLine 
-                      key={`ref-${i}`}
-                      y={entry.end}
-                      stroke="#aaa" 
+                    <ReferenceArea 
+                      key={`connector-${i}`}
+                      x1={i}
+                      x2={i+1}
+                      y1={entry.end}
+                      y2={entry.end}
                       strokeDasharray="3 3"
-                      ifOverflow="hidden"
+                      stroke="#aaa"
+                      strokeWidth={1}
+                      fill="none"
                     />
                   );
                 })}
