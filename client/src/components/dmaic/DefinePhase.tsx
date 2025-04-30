@@ -96,7 +96,8 @@ export default function DefinePhase() {
     });
     
     // Set the hidden input value for form submission
-    const fteString = `${calculatedFte.toFixed(2)} FTE ($${calculatedValue.toLocaleString()})`;
+    const formattedValue = formatCurrency(calculatedValue, currency);
+    const fteString = `${calculatedFte.toFixed(2)} FTE (${formattedValue})`;
     document.getElementById("fteBenefits")?.setAttribute("value", fteString);
   };
 
