@@ -45,13 +45,19 @@ import {
 import { Label } from "@/components/ui/label";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from "recharts";
 
-// Sample data for charts
+// Sample data for charts - using waterfall style for financial walk
+const investmentValue = -100000;  // Negative value for investment (cost)
+const qualitySavings = 45000;
+const financialSavings = 25000;
+const fteBenefits = 60000;
+const netValue = investmentValue + qualitySavings + financialSavings + fteBenefits;
+
 const roiWalkData = [
-  { name: "Investment", value: -100000, fill: "#ef4444" },
-  { name: "Quality Savings", value: 45000, fill: "#22c55e" },
-  { name: "Financial Savings", value: 25000, fill: "#3b82f6" },
-  { name: "FTE Benefits", value: 60000, fill: "#8b5cf6" },
-  { name: "Net Value", value: 30000, fill: "#15803d" },
+  { name: "Investment", value: investmentValue, start: 0, end: investmentValue, fill: "#ef4444", displayValue: investmentValue },
+  { name: "Quality Savings", value: qualitySavings, start: investmentValue, end: investmentValue + qualitySavings, fill: "#22c55e", displayValue: qualitySavings },
+  { name: "Financial Savings", value: financialSavings, start: investmentValue + qualitySavings, end: investmentValue + qualitySavings + financialSavings, fill: "#3b82f6", displayValue: financialSavings },
+  { name: "FTE Benefits", value: fteBenefits, start: investmentValue + qualitySavings + financialSavings, end: netValue, fill: "#8b5cf6", displayValue: fteBenefits },
+  { name: "Net Value", value: netValue, start: 0, end: netValue, fill: "#15803d", displayValue: netValue },
 ];
 
 const costBreakdownData = [
@@ -782,17 +788,26 @@ export default function Dashboard() {
                 <XAxis dataKey="name" />
                 <YAxis 
                   tickFormatter={(value) => formatCurrency(value, currency)} 
-                  domain={['auto', 'auto']}
+                  domain={[investmentValue * 1.1, netValue * 1.1]}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value, currency), "Value"]}
+                  formatter={(value: number, name: string, props: any) => {
+                    if (name === "start" || name === "end") return ["", ""];
+                    if (props.payload.displayValue !== undefined) {
+                      return [formatCurrency(props.payload.displayValue, currency), "Value"];
+                    }
+                    return [formatCurrency(value, currency), name];
+                  }}
                   cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                  labelFormatter={(label) => `${label}`}
                 />
-                <Bar dataKey="value">
+                <Bar dataKey="value" fill="#8884d8" name="Value">
                   {roiWalkData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Bar>
+                <Bar dataKey="start" stackId="a" fill="transparent" />
+                <Bar dataKey="end" stackId="a" fill="transparent" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
