@@ -149,8 +149,8 @@ export default function DefinePhase() {
       // Calculate total project financial savings immediately with the new FTE value
       const totalFinancialSavings = qualityCostSavings + financialSavings + calculatedValue;
       
-      // Update the Total Financial Savings field directly
-      charterForm.setValue("totalFinancialSavings", totalFinancialSavings.toFixed(2));
+      // Update the Total Financial Savings field directly without decimals
+      charterForm.setValue("totalFinancialSavings", Math.round(totalFinancialSavings).toString());
       
       // Update the FTE params state
       setFteParams(prevParams => ({
@@ -416,10 +416,10 @@ export default function DefinePhase() {
     // Calculate project net value
     const projectNetValue = totalFinancialSavings - totalProjectCosts;
     
-    // Update the form fields
-    charterForm.setValue("totalFinancialSavings", totalFinancialSavings.toFixed(2));
-    charterForm.setValue("totalProjectCosts", totalProjectCosts.toFixed(2));
-    charterForm.setValue("projectNetValue", projectNetValue.toFixed(2));
+    // Update the form fields - without decimal places
+    charterForm.setValue("totalFinancialSavings", Math.round(totalFinancialSavings).toString());
+    charterForm.setValue("totalProjectCosts", Math.round(totalProjectCosts).toString());
+    charterForm.setValue("projectNetValue", Math.round(projectNetValue).toString());
     
     console.log("Financial values updated:", {
       qualityCostSavings,
@@ -565,7 +565,7 @@ export default function DefinePhase() {
                         // Calculate Financial Savings based on WACC
                         const wcg = parseFloat(e.target.value) || 0;
                         const wacc = parseFloat(charterForm.getValues("waccPercentage")) / 100 || 0;
-                        const financialSavings = (wcg * wacc).toFixed(2);
+                        const financialSavings = Math.round(wcg * wacc).toString();
                         charterForm.setValue("financialSavings", financialSavings);
                         
                         // Update total financial savings
@@ -587,7 +587,7 @@ export default function DefinePhase() {
                           // Calculate Financial Savings based on WACC
                           const wcg = parseFloat(charterForm.getValues("workingCapitalGains")) || 0;
                           const wacc = parseFloat(e.target.value) / 100 || 0;
-                          const financialSavings = (wcg * wacc).toFixed(2);
+                          const financialSavings = Math.round(wcg * wacc).toString();
                           charterForm.setValue("financialSavings", financialSavings);
                           
                           // Update total financial savings
