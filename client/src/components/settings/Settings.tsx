@@ -120,47 +120,79 @@ export default function Settings() {
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
                   <SelectContent className="max-h-80">
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Main Currencies</div>
-                    {currencyOptions.slice(0, 5).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    <div className="px-2 py-2 sticky top-0 bg-white border-b">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search currency..."
+                          className="pl-8 h-9"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                    </div>
                     
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Asia & Pacific</div>
-                    {currencyOptions.slice(5, 14).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                    
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Americas</div>
-                    {currencyOptions.slice(14, 18).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                    
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Europe</div>
-                    {currencyOptions.slice(18, 28).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                    
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Africa & Middle East</div>
-                    {currencyOptions.slice(28, 32).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                    
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Other</div>
-                    {currencyOptions.slice(32).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    {searchQuery ? (
+                      // Display search results
+                      filteredCurrencies.length > 0 ? (
+                        <div className="p-1">
+                          {filteredCurrencies.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                          No currencies found
+                        </div>
+                      )
+                    ) : (
+                      // Display grouped currencies when not searching
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Main Currencies</div>
+                        {currencyOptions.slice(0, 5).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                        
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Asia & Pacific</div>
+                        {currencyOptions.slice(5, 14).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                        
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Americas</div>
+                        {currencyOptions.slice(14, 18).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                        
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Europe</div>
+                        {currencyOptions.slice(18, 28).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                        
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Africa & Middle East</div>
+                        {currencyOptions.slice(28, 32).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                        
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground mt-2">Other</div>
+                        {currencyOptions.slice(32).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground mt-1">
