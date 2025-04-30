@@ -59,6 +59,18 @@ export const projectCharters = pgTable("project_charters", {
   financialSavings: text("financial_savings"),
   fteBenefits: text("fte_benefits"),
   softBenefits: text("soft_benefits"),
+  // Project cost fields
+  oneOffPeopleCost: text("one_off_people_cost"),
+  oneOffTechnologyCost: text("one_off_technology_cost"),
+  oneOffOtherCost: text("one_off_other_cost"),
+  oneOffOtherExplanation: text("one_off_other_explanation"),
+  opexPeopleCost: text("opex_people_cost"),
+  opexTechnologyCost: text("opex_technology_cost"),
+  opexOtherCost: text("opex_other_cost"),
+  opexOtherExplanation: text("opex_other_explanation"),
+  opexPeriod: text("opex_period"),
+  capexCost: text("capex_cost"),
+  capexExplanation: text("capex_explanation"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -74,6 +86,18 @@ export const insertCharterSchema = createInsertSchema(projectCharters).pick({
   financialSavings: true,
   fteBenefits: true,
   softBenefits: true,
+  // Project cost fields
+  oneOffPeopleCost: true,
+  oneOffTechnologyCost: true,
+  oneOffOtherCost: true,
+  oneOffOtherExplanation: true,
+  opexPeopleCost: true,
+  opexTechnologyCost: true,
+  opexOtherCost: true,
+  opexOtherExplanation: true,
+  opexPeriod: true,
+  capexCost: true,
+  capexExplanation: true,
 });
 
 // SIPOC Diagrams

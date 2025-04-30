@@ -591,6 +591,130 @@ export default function DefinePhase() {
               </div>
             </div>
             
+            {/* Project Cost Section */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Project Costs</h3>
+              
+              {/* One-off Project Costs */}
+              <div className="mb-6">
+                <h4 className="text-md font-medium mb-3">One-off Project Costs</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="oneOffPeopleCost">People ({currency})</Label>
+                    <Input
+                      id="oneOffPeopleCost"
+                      placeholder="e.g. 5000"
+                      {...charterForm.register("oneOffPeopleCost")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="oneOffTechnologyCost">Technology ({currency})</Label>
+                    <Input
+                      id="oneOffTechnologyCost"
+                      placeholder="e.g. 10000"
+                      {...charterForm.register("oneOffTechnologyCost")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="oneOffOtherCost">Others ({currency})</Label>
+                    <Input
+                      id="oneOffOtherCost"
+                      placeholder="e.g. 2000"
+                      {...charterForm.register("oneOffOtherCost")}
+                    />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <Label htmlFor="oneOffOtherExplanation">Please explain Others</Label>
+                  <Textarea
+                    id="oneOffOtherExplanation"
+                    placeholder="Detail any other one-off costs..."
+                    rows={2}
+                    {...charterForm.register("oneOffOtherExplanation")}
+                  />
+                </div>
+              </div>
+              
+              {/* OPEX Additional Costs */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-md font-medium">OPEX Additional Costs</h4>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="opexPeriod" className="whitespace-nowrap">Cost Period:</Label>
+                    <select
+                      id="opexPeriod"
+                      className="rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                      {...charterForm.register("opexPeriod")}
+                    >
+                      <option value="month">Per Month</option>
+                      <option value="quarter">Per Quarter</option>
+                      <option value="year">Per Year</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="opexPeopleCost">People ({currency})</Label>
+                    <Input
+                      id="opexPeopleCost"
+                      placeholder="e.g. 1000"
+                      {...charterForm.register("opexPeopleCost")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="opexTechnologyCost">Technology ({currency})</Label>
+                    <Input
+                      id="opexTechnologyCost"
+                      placeholder="e.g. 500"
+                      {...charterForm.register("opexTechnologyCost")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="opexOtherCost">Others ({currency})</Label>
+                    <Input
+                      id="opexOtherCost"
+                      placeholder="e.g. 300"
+                      {...charterForm.register("opexOtherCost")}
+                    />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <Label htmlFor="opexOtherExplanation">Please explain Others</Label>
+                  <Textarea
+                    id="opexOtherExplanation"
+                    placeholder="Detail any other OPEX costs..."
+                    rows={2}
+                    {...charterForm.register("opexOtherExplanation")}
+                  />
+                </div>
+              </div>
+              
+              {/* CAPEX Costs */}
+              <div>
+                <h4 className="text-md font-medium mb-3">CAPEX Costs</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="capexCost">CAPEX Cost ({currency})</Label>
+                    <Input
+                      id="capexCost"
+                      placeholder="e.g. 25000"
+                      {...charterForm.register("capexCost")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="capexExplanation">Please explain</Label>
+                    <Textarea
+                      id="capexExplanation"
+                      placeholder="Detail capital expenditure costs..."
+                      rows={2}
+                      {...charterForm.register("capexExplanation")}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <Button type="submit" disabled={saveCharterMutation.isPending} className="mt-6">
               {saveCharterMutation.isPending ? "Saving..." : "Save Project Charter"}
             </Button>
