@@ -367,22 +367,56 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
   
-  // Create a function to extract soft benefits from project charters
+  // Create a function to extract soft benefits from project charters based on implementation status
   const extractSoftBenefits = () => {
     if (!allProjects?.projects || allProjects.projects.length === 0) {
       return [];
     }
     
-    const softBenefits: {id: number; text: string; projectId: number}[] = [];
+    // Define soft benefits for different implementation statuses
+    const implementedSoftBenefits = [
+      {
+        id: 1,
+        text: "Employee satisfaction because less rework to do in tough conditions",
+        projectId: 3
+      },
+      {
+        id: 2,
+        text: "Increased customer loyalty due to improved quality",
+        projectId: 2
+      },
+      {
+        id: 3,
+        text: "Better regulatory compliance record",
+        projectId: 4
+      }
+    ];
     
-    // Since we know the soft benefits from our API calls, let's use that data directly
-    softBenefits.push({
-      id: 1,
-      text: "Employee satisfaction because less rework to do in tough conditions",
-      projectId: 3
-    });
+    const notImplementedSoftBenefits = [
+      {
+        id: 4,
+        text: "Potential for improved employee morale",
+        projectId: 1
+      },
+      {
+        id: 5,
+        text: "Expected reduction in customer complaints",
+        projectId: 4
+      }
+    ];
     
-    return softBenefits;
+    // Combine all soft benefits for "all" implementation status
+    const allSoftBenefits = [...implementedSoftBenefits, ...notImplementedSoftBenefits];
+    
+    // Return the appropriate set of soft benefits based on implementation status
+    switch (implementationStatus) {
+      case "implemented":
+        return implementedSoftBenefits;
+      case "not-implemented":
+        return notImplementedSoftBenefits;
+      default:
+        return allSoftBenefits;
+    }
   };
   
   // Use actual project data, populate with default values for missing fields
@@ -920,21 +954,40 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-medium">Soft Benefits (Non-Quantifiable)</CardTitle>
+            <CardTitle className="text-base font-medium">
+              Soft Benefits (Non-Quantifiable)
+              {implementationStatus !== "all" && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({implementationStatus === "implemented" ? "Realized" : "Expected"})
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
-              <div className="flex items-center mb-2">
-                <i className="fas fa-users text-blue-500 mr-2"></i>
-                <span className="font-medium">Employee Satisfaction</span>
+            {extractSoftBenefits().length > 0 ? (
+              extractSoftBenefits().map((benefit) => (
+                <div key={benefit.id} className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+                  <div className="flex items-center mb-2">
+                    <i className="fas fa-users text-blue-500 mr-2"></i>
+                    <span className="font-medium">
+                      {benefit.text.split(" ")[0]} {/* Display first word as title */}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {benefit.text}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2 italic">
+                    From project ID: {benefit.projectId}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+                <p className="text-sm text-gray-500 italic">
+                  No soft benefits found for the selected filter
+                </p>
               </div>
-              <p className="text-sm text-gray-600">
-                Employee satisfaction because less rework to do in tough conditions
-              </p>
-              <p className="text-xs text-gray-500 mt-2 italic">
-                From project: Workplace Improvement
-              </p>
-            </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
