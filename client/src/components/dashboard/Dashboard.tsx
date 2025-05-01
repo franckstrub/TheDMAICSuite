@@ -368,95 +368,114 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
   
-  // Create a function to extract soft benefits from project charters
+  // Create a function to extract soft benefits from project data
   const extractSoftBenefits = () => {
-    if (!allProjects?.projects || allProjects.projects.length === 0) {
+    // Get the relevant projects based on current filters
+    let relevantProjects = projects?.projects || [];
+    
+    if (!relevantProjects || relevantProjects.length === 0) {
       return [];
     }
     
-    // Define soft benefits with four categories: employee, customer, process, growth
-    const softBenefits: {
+    type SoftBenefit = {
       id: number; 
       text: string; 
       projectId: number;
       category: 'employee' | 'customer' | 'process' | 'growth';
-    }[] = [
-      // Employee Benefits
-      {
-        id: 1,
-        text: "Employee satisfaction from less rework in tough conditions",
-        projectId: 3,
-        category: 'employee'
-      },
-      {
-        id: 2,
-        text: "Improved workplace safety metrics",
-        projectId: 4,
-        category: 'employee'
-      },
-      {
-        id: 3,
-        text: "Higher job satisfaction reported in surveys",
-        projectId: 2,
-        category: 'employee'
-      },
+    };
+    
+    // Generate benefits based on project attributes
+    const generateBenefitsForProject = (project: Project): SoftBenefit[] => {
+      const benefits: SoftBenefit[] = [];
+      const projectId = project.id;
       
-      // Customer Benefits
-      {
-        id: 4,
-        text: "Increased customer satisfaction from faster delivery",
-        projectId: 1,
-        category: 'customer'
-      },
-      {
-        id: 5,
-        text: "Improved product quality perception in surveys",
-        projectId: 4,
-        category: 'customer'
-      },
+      // Generate a semi-random base ID for each project to avoid duplicates
+      const baseId = projectId * 100;
       
-      // Process Benefits
-      {
-        id: 6,
-        text: "Enhanced cross-department communication",
-        projectId: 2,
-        category: 'process'
-      },
-      {
-        id: 7,
-        text: "More effective production planning",
-        projectId: 3,
-        category: 'process'
-      },
-      {
-        id: 8,
-        text: "Better documentation and knowledge sharing",
-        projectId: 4,
-        category: 'process'
-      },
-      
-      // Growth & Learning Benefits
-      {
-        id: 9,
-        text: "Team skill development with process improvement tools",
-        projectId: 2,
-        category: 'growth'
-      },
-      {
-        id: 10,
-        text: "Management experience with structured improvement methods",
-        projectId: 3,
-        category: 'growth'
+      // Employee Benefits - based on project details
+      if (project.title.toLowerCase().includes('quality') || 
+          project.description?.toLowerCase().includes('quality') ||
+          project.description?.toLowerCase().includes('defect')) {
+        benefits.push({
+          id: baseId + 1,
+          text: "Reduced employee stress from fewer quality issues",
+          projectId,
+          category: 'employee'
+        });
       }
-    ];
+      
+      if (project.currentPhase === 'improve' || project.currentPhase === 'control' ||
+          project.status === 'completed') {
+        benefits.push({
+          id: baseId + 2,
+          text: "Higher job satisfaction from streamlined processes",
+          projectId,
+          category: 'employee'
+        });
+      }
+      
+      // Customer Benefits - based on project details
+      if (project.title.toLowerCase().includes('quality') || 
+          project.description?.toLowerCase().includes('delivery') ||
+          project.description?.toLowerCase().includes('inspection')) {
+        benefits.push({
+          id: baseId + 3,
+          text: "Improved product quality perception in customer surveys",
+          projectId,
+          category: 'customer'
+        });
+      }
+      
+      if (project.status === 'active' || project.status === 'completed') {
+        benefits.push({
+          id: baseId + 4,
+          text: "Increased customer satisfaction from faster delivery",
+          projectId,
+          category: 'customer'
+        });
+      }
+      
+      // Process Benefits - all projects have process benefits
+      benefits.push({
+        id: baseId + 5,
+        text: "Better documentation and knowledge sharing",
+        projectId,
+        category: 'process'
+      });
+      
+      if (project.currentPhase === 'analyze' || project.currentPhase === 'improve') {
+        benefits.push({
+          id: baseId + 6,
+          text: "Enhanced cross-department communication",
+          projectId,
+          category: 'process'
+        });
+      }
+      
+      // Growth Benefits - all projects contribute to organizational learning
+      benefits.push({
+        id: baseId + 7,
+        text: "Team skill development with process improvement tools",
+        projectId,
+        category: 'growth'
+      });
+      
+      if (project.status === 'completed' || project.currentPhase === 'control') {
+        benefits.push({
+          id: baseId + 8,
+          text: "Management experience with structured improvement methods",
+          projectId,
+          category: 'growth'
+        });
+      }
+      
+      return benefits;
+    };
     
-    // Filter benefits based on current implementation filter
-    if (implementationStatus !== "all") {
-      const relevantProjects = projectsWithBenefits?.projects.map(p => p.id) || [];
-      return softBenefits.filter(benefit => relevantProjects.includes(benefit.projectId));
-    }
+    // Generate all benefits for all relevant projects
+    const allBenefits = relevantProjects.flatMap(generateBenefitsForProject);
     
-    return softBenefits;
+    return allBenefits;
   };
   
   // Use actual project data, populate with default values for missing fields
