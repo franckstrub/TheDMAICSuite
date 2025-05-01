@@ -189,7 +189,7 @@ export default function DefinePhase() {
   };
 
   // Fetch project charter if exists
-  const { data: charter } = useQuery({
+  const { data: charter, isError: charterError } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!user?.id && !!projectId,
     refetchOnWindowFocus: false
@@ -197,6 +197,7 @@ export default function DefinePhase() {
 
   // Set charter form values when data is fetched
   useEffect(() => {
+    // If we have a charter, use it
     if (charter?.charter) {
       // First load the FTE parameters so we can use them in the calculation
       let fteBenefitsValue = 0;
@@ -319,6 +320,49 @@ export default function DefinePhase() {
       setTimeout(() => updateTotalFinancialSavings(fteBenefitsValue), 100);
     }
   }, [charter, currentProject]);
+
+  // Initialize form with defaults if no charter exists yet
+  useEffect(() => {
+    // Only initialize if charterError is true (charter not found) or charter query returned but no charter data
+    if ((charterError || (charter && !charter.charter)) && currentProject) {
+      console.log("No charter found for project, initializing form with default values");
+      
+      // Initialize form with project data and default values
+      charterForm.reset({
+        projectTitle: currentProject?.title || "",
+        businessCase: "",
+        problemStatement: "",
+        goals: "",
+        scope: "",
+        startDate: currentProject?.startDate 
+          ? new Date(currentProject.startDate).toISOString().split('T')[0] 
+          : "",
+        targetEndDate: currentProject?.targetEndDate 
+          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
+          : "",
+        savingsPerYear: "",
+        workingCapitalGains: "",
+        waccPercentage: "10",
+        financialSavings: "",
+        fteBenefits: "",
+        totalFinancialSavings: "",
+        softBenefits: "",
+        // Project cost fields
+        oneOffPeopleCost: "",
+        oneOffTechnologyCost: "",
+        oneOffOtherCost: "",
+        oneOffOtherExplanation: "",
+        capexCost: "",
+        capexExplanation: "",
+        // Summary financial fields
+        totalProjectCosts: "",
+        projectNetValue: "",
+        // Financial metrics
+        roi: "",
+        breakeven: ""
+      });
+    }
+  }, [charterError, charter, currentProject]);
 
   // Fetch SIPOC diagram if exists
   const { data: sipoc } = useQuery({
