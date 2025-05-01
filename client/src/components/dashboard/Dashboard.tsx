@@ -1203,11 +1203,7 @@ export default function Dashboard() {
                   <span className="font-medium text-gray-700">Quality Cost Savings (p.a.)</span>
                   <span className="text-lg font-semibold text-green-600">{formatCurrency(calculateMetric(projects?.projects || [], 'qualityCostSavings'), currency)}</span>
                 </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  <span className="flex items-center text-gray-500">
-                    Based on real project data
-                  </span>
-                </div>
+                {/* Removed "Based on real project data" text as requested */}
               </div>
               
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
