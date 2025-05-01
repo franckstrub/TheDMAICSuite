@@ -38,7 +38,7 @@ export default function Sidebar() {
       
       // If we're navigating to a DMAIC phase and have a current project, include the project ID
       if (tab === "dmaic" && currentProject?.id) {
-        navigate(`/app/${tab}/${phase}?projectId=${currentProject.id}`);
+        navigate(`/app/${tab}/${phase}/${currentProject.id}`);
       } else {
         navigate(`/app/${tab}/${phase}`);
       }

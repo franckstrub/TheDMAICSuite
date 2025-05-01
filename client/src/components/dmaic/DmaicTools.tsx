@@ -134,9 +134,9 @@ function PhaseButton({ phase, activePhase, setActivePhase }: PhaseButtonProps) {
   const handlePhaseChange = () => {
     setActivePhase(phase);
     
-    // Navigate to the URL with both phase and projectId parameters
+    // Navigate to the URL with both phase and projectId parameters in the path
     if (currentProject?.id) {
-      navigate(`/app/dmaic/${phase}?projectId=${currentProject.id}`);
+      navigate(`/app/dmaic/${phase}/${currentProject.id}`);
     } else {
       navigate(`/app/dmaic/${phase}`);
     }

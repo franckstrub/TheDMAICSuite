@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -30,8 +31,8 @@ import {
 export default function ImprovePhase() {
   const { user, currentProject } = useAppContext();
   const { toast } = useToast();
-  const params = new URLSearchParams(window.location.search);
-  const urlProjectId = params.get('projectId');
+  const params = useParams<{ projectId?: string }>();
+  const urlProjectId = params.projectId;
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);

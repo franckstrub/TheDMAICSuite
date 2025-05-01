@@ -16,6 +16,7 @@ function Router() {
       <Route path="/app" component={HomePage}/>
       <Route path="/app/:tab" component={HomePage}/>
       <Route path="/app/:tab/:phase" component={HomePage}/>
+      <Route path="/app/:tab/:phase/:projectId" component={HomePage}/>
       <Route component={NotFound} />
     </Switch>
   );
