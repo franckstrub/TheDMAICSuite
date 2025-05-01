@@ -228,7 +228,17 @@ export default function Dashboard() {
   // Helper function to calculate metrics based on projects
   // Helper function that returns fixed values for metrics as specified by user
   const calculateMetric = (projects: Project[], metricType: string): number => {
-    // Always return fixed values regardless of projects
+    // Check if there are any implemented projects
+    const implementedProjects = projects.filter(project => isProjectImplemented(project));
+    const hasImplementedProjects = implementationStatus !== "implemented" || implementedProjects.length > 0;
+    
+    // If implementation status is "implemented" and there are no implemented projects,
+    // return 0 for all financial metrics
+    if (implementationStatus === "implemented" && implementedProjects.length === 0) {
+      return 0;
+    }
+
+    // Return fixed values for metrics
     switch(metricType) {
       // Benefit metrics
       case 'qualityCostSavings':
@@ -401,19 +411,19 @@ export default function Dashboard() {
   const financialWaterfallData = useMemo(() => {
     console.log("Filtered projects:", filteredProjectsArray);
     
-    // Override with the exact financial data specified by the user
-    const qualityCostSavings = 30000; // Quality cost savings
-    const financialSavings = 2000;    // Financial savings
-    const fteBenefits = 45000;        // FTE Benefits (0.45 FTE at €100,000)
+    // Use the calculateMetric function to get values (will return 0 for implemented filter with no projects)
+    const qualityCostSavings = calculateMetric(filteredProjectsArray, 'qualityCostSavings');
+    const financialSavings = calculateMetric(filteredProjectsArray, 'financialSavings');
+    const fteBenefits = calculateMetric(filteredProjectsArray, 'fteValue');
     
-    // Investment costs breakdown
-    const oneOffPeopleCost = 15000;
-    const oneOffTechnologyCost = 1000;
-    const oneOffOtherCost = 1500;
-    const capexCost = 12000;
+    // Get costs using the calculateMetric function
+    const oneOffPeopleCost = calculateMetric(filteredProjectsArray, 'oneOffPeopleCost');
+    const oneOffTechnologyCost = calculateMetric(filteredProjectsArray, 'oneOffTechnologyCost');
+    const oneOffOtherCost = calculateMetric(filteredProjectsArray, 'oneOffOtherCost');
+    const capexCost = calculateMetric(filteredProjectsArray, 'capexCosts');
     
     // Calculate total project costs
-    const totalCosts = oneOffPeopleCost + oneOffTechnologyCost + oneOffOtherCost + capexCost; // = 29500
+    const totalCosts = calculateMetric(filteredProjectsArray, 'totalCosts');
     
     // Calculate net value
     const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
