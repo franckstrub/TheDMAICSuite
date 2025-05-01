@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAppContext, ImplementationStatusType } from "@/store/AppContext";
@@ -11,6 +11,7 @@ import { ChevronDown, Calendar as CalendarIcon, FileDown } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { saveAs } from 'file-saver';
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatBreakeven } from "@/lib/utils";
 import {
@@ -1336,8 +1337,81 @@ export default function Dashboard() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Download CSV</DropdownMenuItem>
-                <DropdownMenuItem>Download Image</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  // Generate CSV from financialWaterfallData
+                  if (financialWaterfallData.length === 0) {
+                    toast({
+                      title: "No Data Available",
+                      description: "There is no financial data to export.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  // Create CSV content
+                  let csvContent = "Category,Value,Currency\n";
+                  financialWaterfallData.forEach(item => {
+                    // Format the value with the correct currency symbol for CSV
+                    csvContent += `${item.name},${item.value},${currency}\n`;
+                  });
+                  
+                  // Create and download CSV file
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+                  saveAs(blob, `Financial_Benefits_Waterfall_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+                  
+                  toast({
+                    title: "CSV Downloaded",
+                    description: "Financial waterfall data has been exported to CSV."
+                  });
+                }}>Download CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  // Create a reference to the chart container
+                  const chartContainer = document.querySelector('.waterfall-chart-container');
+                  if (!chartContainer) {
+                    toast({
+                      title: "Error",
+                      description: "Could not find chart to capture.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  toast({
+                    title: "Capturing Chart",
+                    description: "Please wait while we process the image...",
+                  });
+                  
+                  // Use html2canvas to capture the chart
+                  html2canvas(chartContainer as HTMLElement, {
+                    scale: 2, // Higher quality
+                    backgroundColor: "#ffffff" // White background
+                  }).then(canvas => {
+                    // Convert canvas to blob
+                    canvas.toBlob((blob) => {
+                      if (blob) {
+                        // Use FileSaver to save the blob
+                        saveAs(blob, `Financial_Benefits_Waterfall_${format(new Date(), 'yyyy-MM-dd')}.png`);
+                        
+                        toast({
+                          title: "Image Downloaded",
+                          description: "Financial waterfall chart has been saved as an image."
+                        });
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Failed to create image file.",
+                          variant: "destructive"
+                        });
+                      }
+                    });
+                  }).catch(err => {
+                    toast({
+                      title: "Error",
+                      description: "Failed to capture chart: " + err.message,
+                      variant: "destructive"
+                    });
+                  });
+                }}>Download Image</DropdownMenuItem>
                 <DropdownMenuItem>Share</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1363,7 +1437,7 @@ export default function Dashboard() {
                 <span className="font-medium text-gray-900">{formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings') - calculateMetric(projects?.projects || [], 'totalCosts'), currency)}</span>
               </div>
             </div>
-            <div className="flex flex-col h-80">
+            <div className="flex flex-col h-80 waterfall-chart-container">
               <div className="flex-grow">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart 
