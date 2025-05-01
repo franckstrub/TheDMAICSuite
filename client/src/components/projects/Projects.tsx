@@ -138,6 +138,27 @@ export default function Projects() {
     },
   });
   
+  // Mutation for permanently deleting a project
+  const permanentDeleteMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      return apiRequest("DELETE", `/api/projects/${projectId}`, { userId: user?.id });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Project permanently deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to permanently delete project",
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Mutation for updating a project's status
   const updateProjectStatusMutation = useMutation({
     mutationFn: async (data: { projectId: number; status: string }) => {
@@ -194,6 +215,12 @@ export default function Projects() {
   const handleDeleteProject = (projectId: number) => {
     if (confirm("Are you sure you want to move this project to trash? You can recover it later.")) {
       deleteProjectMutation.mutate(projectId);
+    }
+  };
+  
+  const handlePermanentDelete = (projectId: number) => {
+    if (confirm("Are you sure you want to permanently delete this project? This action CANNOT be undone.")) {
+      permanentDeleteMutation.mutate(projectId);
     }
   };
   
@@ -602,7 +629,18 @@ export default function Projects() {
                             
                             <DropdownMenuSeparator />
                             
-                            {project.status.toLowerCase() !== 'deleted' && (
+                            {project.status.toLowerCase() === 'deleted' ? (
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePermanentDelete(project.id);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete Permanently</span>
+                              </DropdownMenuItem>
+                            ) : (
                               <DropdownMenuItem
                                 className="text-red-600"
                                 onClick={(e) => {
