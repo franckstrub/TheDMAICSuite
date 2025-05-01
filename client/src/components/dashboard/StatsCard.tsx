@@ -70,24 +70,24 @@ export default function StatsCard({
           <p className="text-sm text-gray-600 mt-1">{secondaryValue}</p>
         )}
         <div className="mt-2">
-          {/* Only show change percentage if change is not null */}
+          {/* Always show the change label first, with adjusted styling for better readability */}
+          <div className="text-gray-600 text-xs leading-tight mb-2" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
+            {changeLabel}
+          </div>
+          
+          {/* Show change percentage below the detailed count if change is not null */}
           {change !== null && (
-            <div className="flex items-center text-xs mb-1">
+            <div className="flex items-center text-xs mt-1">
               <span className={cn("flex items-center", isNegativeGood && isNegative ? "text-green-500" : changeColorClass)}>
                 {isPositive ? (
                   <ArrowUpIcon className="w-3 h-3 mr-1" />
                 ) : isNegative ? (
                   <ArrowDownIcon className="w-3 h-3 mr-1" />
                 ) : null}
-                {Math.abs(change)}%
+                {Math.abs(change)}% from previous period
               </span>
             </div>
           )}
-          
-          {/* Always show the change label, with adjusted styling for better readability */}
-          <div className="text-gray-600 text-xs leading-tight" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
-            {changeLabel}
-          </div>
         </div>
       </CardContent>
     </Card>
