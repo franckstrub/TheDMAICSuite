@@ -624,7 +624,7 @@ export default function Dashboard() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard 
-          title="Active Projects"
+          title={implementationStatus === "all" ? "All Projects" : "Active Projects"}
           value={projects?.projects?.length.toString() || "0"}
           change={0}
           changeLabel={`${implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}`}
