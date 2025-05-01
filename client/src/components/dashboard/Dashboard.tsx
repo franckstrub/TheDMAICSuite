@@ -894,7 +894,28 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="ROI"
-          value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
+          value={(() => {
+            // Ensure filter-specific ROI calculation
+            const filteredProjects = projects?.projects || [];
+            
+            // Calculate total financial savings (quality, financial and FTE)
+            const qualityCostSavings = calculateMetric(filteredProjects, 'qualityCostSavings');
+            const financialSavings = calculateMetric(filteredProjects, 'financialSavings');
+            const fteBenefits = calculateMetric(filteredProjects, 'fteValue');
+            const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
+            
+            // Calculate total costs
+            const totalCosts = calculateMetric(filteredProjects, 'totalCosts');
+            
+            // Calculate ROI: (Savings - Costs) / Costs
+            let roi = 0;
+            if (totalCosts > 0) {
+              roi = (totalFinancialSavings - totalCosts) / totalCosts;
+            }
+            
+            // Format as percentage
+            return `${Math.round(roi * 100)}%`;
+          })()}
           secondaryValue="(Financial Savings-Costs)/Costs"
           change={0} // No comparison data available yet for change calculation
           changeLabel={(() => {
@@ -916,7 +937,28 @@ export default function Dashboard() {
         />
         <StatsCard 
           title="Breakeven"
-          value={formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}
+          value={(() => {
+            // Ensure filter-specific Breakeven calculation
+            const filteredProjects = projects?.projects || [];
+            
+            // Calculate total financial savings (quality, financial and FTE)
+            const qualityCostSavings = calculateMetric(filteredProjects, 'qualityCostSavings');
+            const financialSavings = calculateMetric(filteredProjects, 'financialSavings');
+            const fteBenefits = calculateMetric(filteredProjects, 'fteValue');
+            const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
+            
+            // Calculate total costs
+            const totalCosts = calculateMetric(filteredProjects, 'totalCosts');
+            
+            // Calculate breakeven in years: Costs / Annual Financial Savings
+            let breakeven = 0;
+            if (totalFinancialSavings > 0) {
+              breakeven = totalCosts / totalFinancialSavings;
+            }
+            
+            // Format as years and months
+            return formatBreakeven(breakeven);
+          })()}
           secondaryValue="Costs ÷ Annual Financial Savings"
           change={0} // No comparison data available yet for change calculation
           changeLabel={(() => {
