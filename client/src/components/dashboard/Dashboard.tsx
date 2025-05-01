@@ -747,19 +747,19 @@ export default function Dashboard() {
                     <div className="col-span-1">
                       <div className="flex flex-col">
                         <span className="text-gray-600 text-sm">People:</span>
-                        <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffPeopleCost || 0), 0), currency)}</span>
+                        <span className="font-medium">{formatCurrency(calculateMetric(projects?.projects || [], 'oneOffPeopleCost'), currency)}</span>
                       </div>
                     </div>
                     <div className="col-span-1">
                       <div className="flex flex-col">
                         <span className="text-gray-600 text-sm">Technology:</span>
-                        <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffTechnologyCost || 0), 0), currency)}</span>
+                        <span className="font-medium">{formatCurrency(calculateMetric(projects?.projects || [], 'oneOffTechnologyCost'), currency)}</span>
                       </div>
                     </div>
                     <div className="col-span-1">
                       <div className="flex flex-col">
                         <span className="text-gray-600 text-sm">Others:</span>
-                        <span className="font-medium">{formatCurrency(projects?.projects?.reduce((t, p) => t + (p.costs?.oneOffOtherCost || 0), 0), currency)}</span>
+                        <span className="font-medium">{formatCurrency(calculateMetric(projects?.projects || [], 'oneOffOtherCost'), currency)}</span>
                       </div>
                     </div>
                   </div>
