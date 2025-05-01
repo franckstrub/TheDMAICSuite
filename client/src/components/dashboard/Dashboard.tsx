@@ -44,13 +44,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, BarChart, Bar, Cell, ReferenceLine, ComposedChart, ReferenceArea } from "recharts";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, ReferenceLine, ComposedChart, ReferenceArea } from "recharts";
 
 // Define the Project type at the top level so it's accessible
 type Project = {
@@ -639,62 +633,45 @@ export default function Dashboard() {
       
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <StatsCard 
-                  title={implementationStatus === "all" 
-                    ? "All Projects" 
-                    : implementationStatus === "implemented" 
-                      ? "Implemented Projects" 
-                      : "Not Implemented Projects"}
-                  value={projects?.projects?.length.toString() || "0"}
-                  change={0}
-                  changeLabel={(() => {
-                    // Get counts by status
-                    const activeCount = projectsWithBenefits?.projects?.filter(p => 
-                      p.status === "active" || 
-                      p.status === "in-progress").length || 0;
-                    const completedCount = projectsWithBenefits?.projects?.filter(p => 
-                      p.status === "completed").length || 0;
-                    const onHoldCount = projectsWithBenefits?.projects?.filter(p => 
-                      p.status === "not-started" || 
-                      p.status === "on-hold").length || 0;
-                    const abandonedCount = projectsWithBenefits?.projects?.filter(p => 
-                      p.status === "abandoned" || 
-                      p.status === "canceled").length || 0;
-                    
-                    // Get counts by implementation status
-                    const implementedCount = projectsWithBenefits?.projects?.filter(p => 
-                      isProjectImplemented(p)).length || 0;
-                    const notImplementedCount = projectsWithBenefits?.projects?.length - implementedCount || 0;
-                    
-                    // Return appropriate breakdown based on filter
-                    if (implementationStatus === "all") {
-                      return `A: ${activeCount} C: ${completedCount} H: ${onHoldCount} X: ${abandonedCount}`;
-                    } else if (implementationStatus === "implemented") {
-                      return `Implemented: ${implementedCount} projects`;
-                    } else {
-                      return `Not Implemented: ${notImplementedCount} projects`;
-                    }
-                  })()}
-                  icon="project-diagram"
-                  iconBgColor="blue"
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="bg-slate-800 text-white p-3 text-sm">
-              <p className="font-semibold mb-1">Project Status Legend:</p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <div><span className="text-green-400 font-bold">A:</span> Active</div>
-                <div><span className="text-blue-400 font-bold">C:</span> Completed</div>
-                <div><span className="text-amber-400 font-bold">H:</span> On-Hold</div>
-                <div><span className="text-red-400 font-bold">X:</span> Abandoned</div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <StatsCard 
+          title={implementationStatus === "all" 
+            ? "All Projects" 
+            : implementationStatus === "implemented" 
+              ? "Implemented Projects" 
+              : "Not Implemented Projects"}
+          value={projects?.projects?.length.toString() || "0"}
+          change={0}
+          changeLabel={(() => {
+            // Get counts by status
+            const activeCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "active" || 
+              p.status === "in-progress").length || 0;
+            const completedCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "completed").length || 0;
+            const onHoldCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "not-started" || 
+              p.status === "on-hold").length || 0;
+            const abandonedCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "abandoned" || 
+              p.status === "canceled").length || 0;
+            
+            // Get counts by implementation status
+            const implementedCount = projectsWithBenefits?.projects?.filter(p => 
+              isProjectImplemented(p)).length || 0;
+            const notImplementedCount = projectsWithBenefits?.projects?.length - implementedCount || 0;
+            
+            // Return appropriate breakdown based on filter
+            if (implementationStatus === "all") {
+              return `Active: ${activeCount} | Completed: ${completedCount} | On-Hold: ${onHoldCount} | Abandoned: ${abandonedCount}`;
+            } else if (implementationStatus === "implemented") {
+              return `Total: ${implementedCount} | Implemented Projects`;
+            } else {
+              return `Total: ${notImplementedCount} | Not Implemented Projects`;
+            }
+          })()}
+          icon="project-diagram"
+          iconBgColor="blue"
+        />
         <StatsCard 
           title="ROI"
           value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
@@ -966,7 +943,7 @@ export default function Dashboard() {
                       axisLine={false}
                       tick={{fill: '#6b7280', fontSize: 12}}
                     />
-                    <RechartsTooltip 
+                    <Tooltip 
                       formatter={(value: number, name: string) => {
                         return [formatCurrency(value, currency), name];
                       }}
