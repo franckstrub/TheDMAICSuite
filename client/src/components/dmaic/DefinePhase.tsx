@@ -855,6 +855,7 @@ export default function DefinePhase() {
                               onChange={(e) => handleFteParamChange('workingHoursPerDay', e.target.value)}
                               placeholder="e.g. 8"
                               className="h-8 text-sm"
+                              step="0.01"
                             />
                           </div>
                         </div>
