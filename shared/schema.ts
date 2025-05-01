@@ -58,6 +58,13 @@ export const projectCharters = pgTable("project_charters", {
   waccPercentage: text("wacc_percentage"),
   financialSavings: text("financial_savings"),
   fteBenefits: text("fte_benefits"),
+  // FTE calculation parameters
+  fteWorkingDaysPerYear: text("fte_working_days_per_year"),
+  fteWorkingHoursPerDay: text("fte_working_hours_per_day"),
+  fteTimeUnit: text("fte_time_unit"),
+  fteSavedHours: text("fte_saved_hours"),
+  fteCostPerYear: text("fte_cost_per_year"),
+  fteCalculatedValue: text("fte_calculated_value"),
   softBenefits: text("soft_benefits"),
   // Project cost fields
   oneOffPeopleCost: text("one_off_people_cost"),
@@ -85,6 +92,13 @@ export const insertCharterSchema = createInsertSchema(projectCharters).pick({
   waccPercentage: true,
   financialSavings: true,
   fteBenefits: true,
+  // FTE calculation parameters
+  fteWorkingDaysPerYear: true,
+  fteWorkingHoursPerDay: true,
+  fteTimeUnit: true,
+  fteSavedHours: true,
+  fteCostPerYear: true,
+  fteCalculatedValue: true,
   softBenefits: true,
   // Project cost fields
   oneOffPeopleCost: true,

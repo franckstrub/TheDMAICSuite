@@ -223,9 +223,60 @@ export default function DefinePhase() {
         breakeven: ""          // Will be calculated
       });
       
-      // If there's an FTE benefit string in the loaded data, parse it and set the calculated value
-      if (charter.charter.fteBenefits) {
-        try {
+      // Load FTE parameters if they exist
+      try {
+        // First, try to load stored FTE parameters
+        if (charter.charter.fteWorkingDaysPerYear && 
+            charter.charter.fteWorkingHoursPerDay && 
+            charter.charter.fteSavedHours && 
+            charter.charter.fteCostPerYear) {
+          // Use the stored FTE parameters
+          const workingDaysPerYear = parseFloat(charter.charter.fteWorkingDaysPerYear);
+          const workingHoursPerDay = parseFloat(charter.charter.fteWorkingHoursPerDay);
+          const timeUnit = charter.charter.fteTimeUnit || "day";
+          const savedHours = parseFloat(charter.charter.fteSavedHours);
+          const fteCostPerYear = parseFloat(charter.charter.fteCostPerYear);
+          const calculatedValue = parseFloat(charter.charter.fteCalculatedValue || "0");
+          
+          // Calculate FTE from these parameters
+          const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
+          let annualSavedHours = 0;
+          
+          // Convert saved hours to annual basis
+          if (timeUnit === "day") {
+            annualSavedHours = savedHours * workingDaysPerYear;
+          } else if (timeUnit === "week") {
+            annualSavedHours = savedHours * (workingDaysPerYear / 5);
+          } else if (timeUnit === "month") {
+            annualSavedHours = savedHours * (workingDaysPerYear / 20);
+          }
+          
+          // Calculate FTE
+          const calculatedFte = annualSavedHours / totalAnnualHours;
+          
+          // Update FTE parameters
+          setFteParams({
+            workingDaysPerYear, 
+            workingHoursPerDay, 
+            timeUnit, 
+            savedHours, 
+            fteCostPerYear,
+            calculatedFte: parseFloat(calculatedFte.toFixed(2)),
+            calculatedValue: calculatedValue
+          });
+          
+          console.log("Loaded FTE parameters from database:", {
+            workingDaysPerYear, 
+            workingHoursPerDay, 
+            timeUnit, 
+            savedHours, 
+            fteCostPerYear,
+            calculatedFte: parseFloat(calculatedFte.toFixed(2)),
+            calculatedValue
+          });
+        } 
+        // Fallback: if we don't have the parameters but have the FTE string
+        else if (charter.charter.fteBenefits) {
           // Extract numeric value from a string like "0.80 FTE ($111,200)"
           const fteMatch = charter.charter.fteBenefits.match(/(\d+\.\d+)\s+FTE/);
           if (fteMatch && fteMatch[1]) {
@@ -235,10 +286,11 @@ export default function DefinePhase() {
               calculatedFte: fteValue,
               calculatedValue: fteValue * (prev.fteCostPerYear || 100000)
             }));
+            console.log("Fallback: Parsed FTE value from string:", fteValue);
           }
-        } catch (e) {
-          console.error("Error parsing FTE value:", e);
         }
+      } catch (e) {
+        console.error("Error loading FTE parameters:", e);
       }
       
       // Calculate total financial savings after loading the form data
@@ -293,6 +345,13 @@ export default function DefinePhase() {
         waccPercentage: (data.waccPercentage || "0").toString(),
         financialSavings: (data.financialSavings || "0").toString(),
         fteBenefits: data.fteBenefits || "",
+        // FTE calculation parameters
+        fteWorkingDaysPerYear: fteParams.workingDaysPerYear.toString(),
+        fteWorkingHoursPerDay: fteParams.workingHoursPerDay.toString(),
+        fteTimeUnit: fteParams.timeUnit,
+        fteSavedHours: fteParams.savedHours.toString(),
+        fteCostPerYear: fteParams.fteCostPerYear.toString(),
+        fteCalculatedValue: fteParams.calculatedValue.toString(),
         softBenefits: data.softBenefits || "",
         // Project cost fields
         oneOffPeopleCost: (data.oneOffPeopleCost || "0").toString(),
