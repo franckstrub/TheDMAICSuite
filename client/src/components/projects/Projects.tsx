@@ -525,7 +525,9 @@ export default function Projects() {
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             
                             {/* Show different actions based on current status */}
-                            {(project.status.toLowerCase() === 'on hold' || project.status.toLowerCase() === 'abandoned') && (
+                            {(project.status.toLowerCase() === 'on hold' || 
+                              project.status.toLowerCase() === 'abandoned' || 
+                              project.status.toLowerCase() === 'completed') && (
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
