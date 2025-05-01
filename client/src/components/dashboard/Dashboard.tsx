@@ -641,7 +641,33 @@ export default function Dashboard() {
               : "Not Implemented Projects"}
           value={projects?.projects?.length.toString() || "0"}
           change={0}
-          changeLabel={`${implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}`}
+          changeLabel={(() => {
+            // Get counts by status
+            const activeCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "active" || 
+              p.status === "in-progress").length || 0;
+            const completedCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "completed").length || 0;
+            const notStartedCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "not-started").length || 0;
+            const abandonedCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "abandoned" || 
+              p.status === "canceled").length || 0;
+            
+            // Get counts by implementation status
+            const implementedCount = projectsWithBenefits?.projects?.filter(p => 
+              isProjectImplemented(p)).length || 0;
+            const notImplementedCount = projectsWithBenefits?.projects?.length - implementedCount || 0;
+            
+            // Return appropriate breakdown based on filter
+            if (implementationStatus === "all") {
+              return `Active: ${activeCount} | Completed: ${completedCount} | Not Started: ${notStartedCount} | Abandoned: ${abandonedCount}`;
+            } else if (implementationStatus === "implemented") {
+              return `Total: ${implementedCount} | Implemented Projects`;
+            } else {
+              return `Total: ${notImplementedCount} | Not Implemented Projects`;
+            }
+          })()}
           icon="project-diagram"
           iconBgColor="blue"
         />
