@@ -271,8 +271,11 @@ export default function Projects() {
     }
   ];
 
-  // Use sample data if no projects are returned from API
-  const projects = filterProjects(projectsData?.projects || sampleProjects);
+  // Logs for debugging
+  console.log("Raw API response for projects:", projectsData);
+  
+  // Use API data - NEVER use sample data for this feature
+  const projects = filterProjects(projectsData?.projects || []);
 
   return (
     <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
