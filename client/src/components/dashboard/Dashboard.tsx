@@ -992,6 +992,17 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       
+      {/* Implementation Status Definition - Show only when relevant */}
+      {(implementationStatus === "implemented" || implementationStatus === "not-implemented") && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <h3 className="text-sm font-medium text-blue-800 mb-1">Implementation Status Definition:</h3>
+          <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
+            <li><span className="font-medium">Implemented Projects:</span> Status is "completed" OR Improve phase is completed AND Control phase is in progress/completed</li>
+            <li><span className="font-medium">Not Implemented Projects:</span> All other projects</li>
+          </ul>
+        </div>
+      )}
+      
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard 
@@ -1046,9 +1057,9 @@ export default function Dashboard() {
               case "active-completed":
                 return `Active: ${activeCount} | Completed: ${completedCount} | Total: ${activeCount + completedCount}`;
               case "implemented":
-                return `Total: ${implementedCount} | Implemented Projects`;
+                return `Total: ${implementedCount} | Implemented Projects (Status "completed" OR Improve phase completed + Control in progress/completed)`;
               case "not-implemented":
-                return `Total: ${notImplementedCount} | Not Implemented Projects`;
+                return `Total: ${notImplementedCount} | Not Implemented Projects (All other statuses)`;
               default:
                 return `All Projects: ${projectsWithBenefits?.projects?.length || 0}`;
             }
