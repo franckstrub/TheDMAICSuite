@@ -40,7 +40,7 @@ async function addProjects() {
   
   for (const project of projectsToAdd) {
     try {
-      const response = await fetch('http://0.0.0.0:3000/api/projects', {
+      const response = await fetch('http://0.0.0.0:5000/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
