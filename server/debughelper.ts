@@ -4,7 +4,25 @@ import { eq } from "drizzle-orm";
 
 export async function debugGetCharter(projectId: number) {
   try {
+    console.log(`Retrieving charter for project ID: ${projectId}`);
+    
+    // First, let's check if there are multiple charters for this project
+    const charters = await db
+      .select()
+      .from(projectCharters)
+      .where(eq(projectCharters.projectId, projectId));
+      
+    const charterCount = charters.length;
+      
+    console.log(`Found ${charterCount} charters for project ID ${projectId}`);
+    
+    if (charterCount === 0) {
+      console.log(`No charter found for project ID ${projectId}`);
+      return null;
+    }
+    
     // Get all columns from the project charter
+    // Use ORDER BY and LIMIT to get the latest charter (with highest ID)
     const [result] = await db
       .select({
         id: projectCharters.id,
@@ -47,9 +65,11 @@ export async function debugGetCharter(projectId: number) {
         lastUpdated: projectCharters.lastUpdated
       })
       .from(projectCharters)
-      .where(eq(projectCharters.projectId, projectId));
+      .where(eq(projectCharters.projectId, projectId))
+      .orderBy(desc(projectCharters.id))
+      .limit(1);
     
-    console.log("Charter data retrieved:", result);
+    console.log(`Charter data retrieved for project ID ${projectId}:`, result);
     return result;
   } catch (err) {
     console.error("Debug charter error:", err);
