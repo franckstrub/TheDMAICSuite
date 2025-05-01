@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -21,8 +22,8 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Cart
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
   const { toast } = useToast();
-  const params = new URLSearchParams(window.location.search);
-  const urlProjectId = params.get('projectId');
+  const params = useParams<{ projectId?: string }>();
+  const urlProjectId = params.projectId;
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
