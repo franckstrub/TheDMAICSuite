@@ -201,155 +201,168 @@ export default function Dashboard() {
         description: "Please wait while we prepare your report...",
       });
       
-      // Create a new PDF document
-      const doc = new jsPDF('portrait', 'mm', 'a4');
-      
-      // Add title
-      doc.setFontSize(18);
-      doc.setTextColor(33, 37, 41);
-      doc.text("Lean Six Sigma DMAIC Suite™ - Dashboard Report", 20, 20);
-      
-      // Add subtitle with timeframe and filter information
-      doc.setFontSize(12);
-      doc.setTextColor(85, 85, 85);
-      
-      // Get the current date
-      const currentDate = format(new Date(), "MMMM d, yyyy");
-      doc.text(`Generated on ${currentDate}`, 20, 30);
-      
-      // Get filter information
-      let filterText = "Timeframe: ";
-      if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
-        filterText += `${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')}`;
-      } else {
-        filterText += timeframe;
-      }
-      doc.text(filterText, 20, 38);
-      
-      // Add status filter info
-      let statusFilterText = "Project Status Filter: ";
-      switch(implementationStatus) {
-        case "all": statusFilterText += "All Projects"; break;
-        case "active": statusFilterText += "Active Projects"; break;
-        case "completed": statusFilterText += "Completed Projects"; break;
-        case "on-hold": statusFilterText += "On-Hold Projects"; break;
-        case "abandoned": statusFilterText += "Abandoned Projects"; break;
-        case "active-completed": statusFilterText += "Active + Completed Projects"; break;
-        case "implemented": statusFilterText += "Implemented Projects"; break;
-        case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
-        default: statusFilterText += "All Projects";
-      }
-      doc.text(statusFilterText, 20, 46);
-      
-      // Add divider line
-      doc.setDrawColor(220, 220, 220);
-      doc.line(20, 50, 190, 50);
-      
-      // Add key metrics section
-      doc.setFontSize(14);
-      doc.setTextColor(33, 37, 41);
-      doc.text("Key Financial Metrics", 20, 60);
-      
-      // Collect metrics for the report
-      const filteredProjects = projects?.projects || [];
-      
-      // Calculate key metrics
-      const qualityCostSavings = calculateMetric(filteredProjects, 'qualityCostSavings');
-      const financialSavings = calculateMetric(filteredProjects, 'financialSavings');
-      const fteBenefits = calculateMetric(filteredProjects, 'fteValue');
-      const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
-      
-      const oneOffCosts = calculateMetric(filteredProjects, 'oneOffCosts');
-      const capexCosts = calculateMetric(filteredProjects, 'capexCosts');
-      const totalCosts = oneOffCosts + capexCosts;
-      
-      const netValue = totalFinancialSavings - totalCosts;
-      
-      // Calculate ROI
-      let roi = 0;
-      if (totalCosts > 0) {
-        roi = (totalFinancialSavings - totalCosts) / totalCosts;
-      }
-      
-      // Calculate breakeven
-      let breakeven = 0;
-      if (totalFinancialSavings > 0) {
-        breakeven = totalCosts / totalFinancialSavings;
-      }
-      
-      // Create a table for key metrics
-      const metricsData = [
-        ['Metric', 'Value'],
-        ['Total Projects', `${filteredProjects.length}`],
-        ['Quality Cost Savings (p.a.)', `${formatCurrency(qualityCostSavings, currency)}`],
-        ['Financial Savings (p.a.)', `${formatCurrency(financialSavings, currency)}`],
-        ['FTE Benefits', `${fteBenefits.toFixed(1)} FTE (${formatCurrency(fteBenefits, currency)})`],
-        ['Total Financial Savings (p.a.)', `${formatCurrency(totalFinancialSavings, currency)}`],
-        ['Total Costs', `${formatCurrency(totalCosts, currency)}`],
-        ['Net Value', `${formatCurrency(netValue, currency)}`],
-        ['ROI', `${Math.round(roi * 100)}%`],
-        ['Breakeven', formatBreakeven(breakeven)]
-      ];
-      
-      // Add metrics table to PDF
-      (doc as any).autoTable({
-        startY: 65,
-        head: [metricsData[0]],
-        body: metricsData.slice(1),
-        theme: 'grid',
-        headStyles: { fillColor: [41, 98, 255], textColor: [255, 255, 255] },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
-        margin: { top: 65 },
-      });
-      
-      // Add projects table section
-      const tableY = (doc as any).lastAutoTable.finalY + 15;
-      doc.setFontSize(14);
-      doc.text("Project Overview", 20, tableY);
-      
-      // Create a table for projects data
-      const projectsTableData = [
-        ['ID', 'Title', 'Status', 'Phase', 'Progress']
-      ];
-      
-      // Add project data to table
-      filteredProjects.forEach(project => {
-        projectsTableData.push([
-          project.id.toString(),
-          project.title,
-          project.status.charAt(0).toUpperCase() + project.status.slice(1),
-          (project as any).currentPhase ? (project as any).currentPhase.charAt(0).toUpperCase() + (project as any).currentPhase.slice(1) : 'N/A',
-          `${(project as any).progress !== undefined ? (project as any).progress : 0}%`
-        ]);
-      });
-      
-      // Add projects table to PDF
-      (doc as any).autoTable({
-        startY: tableY + 5,
-        head: [projectsTableData[0]],
-        body: projectsTableData.slice(1),
-        theme: 'grid',
-        headStyles: { fillColor: [41, 98, 255], textColor: [255, 255, 255] },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
-        margin: { top: tableY + 5 },
-      });
-      
-      // Add footer with page number
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(10);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Lean Six Sigma DMAIC Suite™ | Page ${i} of ${pageCount}`, 20, 290);
-      }
-      
-      // Save the PDF
-      const filename = `DMAIC_Dashboard_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      doc.save(filename);
-      
-      toast({
-        title: "Report Generated",
-        description: `Your report has been downloaded as ${filename}`,
+      // Import jsPDF with autotable dynamically to avoid TypeScript errors
+      import('jspdf-autotable').then(() => {
+        // Create a new PDF document
+        const doc = new jsPDF('portrait', 'mm', 'a4');
+        
+        // Add title
+        doc.setFontSize(18);
+        doc.setTextColor(33, 37, 41);
+        doc.text("Lean Six Sigma DMAIC Suite™ - Dashboard Report", 20, 20);
+        
+        // Add subtitle with timeframe and filter information
+        doc.setFontSize(12);
+        doc.setTextColor(85, 85, 85);
+        
+        // Get the current date
+        const currentDate = format(new Date(), "MMMM d, yyyy");
+        doc.text(`Generated on ${currentDate}`, 20, 30);
+        
+        // Get filter information
+        let filterText = "Timeframe: ";
+        if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
+          filterText += `${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')}`;
+        } else {
+          filterText += timeframe;
+        }
+        doc.text(filterText, 20, 38);
+        
+        // Add status filter info
+        let statusFilterText = "Project Status Filter: ";
+        switch(implementationStatus) {
+          case "all": statusFilterText += "All Projects"; break;
+          case "active": statusFilterText += "Active Projects"; break;
+          case "completed": statusFilterText += "Completed Projects"; break;
+          case "on-hold": statusFilterText += "On-Hold Projects"; break;
+          case "abandoned": statusFilterText += "Abandoned Projects"; break;
+          case "active-completed": statusFilterText += "Active + Completed Projects"; break;
+          case "implemented": statusFilterText += "Implemented Projects"; break;
+          case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
+          default: statusFilterText += "All Projects";
+        }
+        doc.text(statusFilterText, 20, 46);
+        
+        // Add divider line
+        doc.setDrawColor(220, 220, 220);
+        doc.line(20, 50, 190, 50);
+        
+        // Add key metrics section
+        doc.setFontSize(14);
+        doc.setTextColor(33, 37, 41);
+        doc.text("Key Financial Metrics", 20, 60);
+        
+        // Collect metrics for the report
+        const filteredProjects = projects?.projects || [];
+        
+        // Calculate key metrics
+        const qualityCostSavings = calculateMetric(filteredProjects, 'qualityCostSavings');
+        const financialSavings = calculateMetric(filteredProjects, 'financialSavings');
+        const fteBenefits = calculateMetric(filteredProjects, 'fteValue');
+        const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
+        
+        const oneOffCosts = calculateMetric(filteredProjects, 'oneOffCosts');
+        const capexCosts = calculateMetric(filteredProjects, 'capexCosts');
+        const totalCosts = oneOffCosts + capexCosts;
+        
+        const netValue = totalFinancialSavings - totalCosts;
+        
+        // Calculate ROI
+        let roi = 0;
+        if (totalCosts > 0) {
+          roi = (totalFinancialSavings - totalCosts) / totalCosts;
+        }
+        
+        // Calculate breakeven
+        let breakeven = 0;
+        if (totalFinancialSavings > 0) {
+          breakeven = totalCosts / totalFinancialSavings;
+        }
+        
+        // Create a table for key metrics
+        const metricsData = [
+          ['Metric', 'Value'],
+          ['Total Projects', `${filteredProjects.length}`],
+          ['Quality Cost Savings (p.a.)', `${formatCurrency(qualityCostSavings, currency)}`],
+          ['Financial Savings (p.a.)', `${formatCurrency(financialSavings, currency)}`],
+          ['FTE Benefits', `${fteBenefits.toFixed(1)} FTE (${formatCurrency(fteBenefits, currency)})`],
+          ['Total Financial Savings (p.a.)', `${formatCurrency(totalFinancialSavings, currency)}`],
+          ['Total Costs', `${formatCurrency(totalCosts, currency)}`],
+          ['Net Value', `${formatCurrency(netValue, currency)}`],
+          ['ROI', `${Math.round(roi * 100)}%`],
+          ['Breakeven', formatBreakeven(breakeven)]
+        ];
+        
+        // Use autoTable from a properly typed interface
+        const autoTable = (doc as any).autoTable;
+        
+        // Add metrics table to PDF
+        autoTable({
+          startY: 65,
+          head: [metricsData[0]],
+          body: metricsData.slice(1),
+          theme: 'grid',
+          headStyles: { fillColor: [41, 98, 255], textColor: [255, 255, 255] },
+          alternateRowStyles: { fillColor: [240, 240, 240] },
+          margin: { top: 65 },
+        });
+        
+        // Add projects table section
+        const tableY = (doc as any).lastAutoTable.finalY + 15;
+        doc.setFontSize(14);
+        doc.text("Project Overview", 20, tableY);
+        
+        // Create a table for projects data
+        const projectsTableData = [
+          ['ID', 'Title', 'Status', 'Phase', 'Progress']
+        ];
+        
+        // Add project data to table
+        filteredProjects.forEach(project => {
+          projectsTableData.push([
+            project.id.toString(),
+            project.title,
+            project.status.charAt(0).toUpperCase() + project.status.slice(1),
+            (project as any).currentPhase ? (project as any).currentPhase.charAt(0).toUpperCase() + (project as any).currentPhase.slice(1) : 'N/A',
+            `${(project as any).progress !== undefined ? (project as any).progress : 0}%`
+          ]);
+        });
+        
+        // Add projects table to PDF
+        autoTable({
+          startY: tableY + 5,
+          head: [projectsTableData[0]],
+          body: projectsTableData.slice(1),
+          theme: 'grid',
+          headStyles: { fillColor: [41, 98, 255], textColor: [255, 255, 255] },
+          alternateRowStyles: { fillColor: [240, 240, 240] },
+          margin: { top: tableY + 5 },
+        });
+        
+        // Add footer with page number
+        const pageCount = doc.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(10);
+          doc.setTextColor(150, 150, 150);
+          doc.text(`Lean Six Sigma DMAIC Suite™ | Page ${i} of ${pageCount}`, 20, 290);
+        }
+        
+        // Save the PDF
+        const filename = `DMAIC_Dashboard_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        doc.save(filename);
+        
+        toast({
+          title: "Report Generated",
+          description: `Your report has been downloaded as ${filename}`,
+        });
+      }).catch(err => {
+        console.error("Error loading jsPDF-AutoTable:", err);
+        toast({
+          title: "Error",
+          description: "Failed to load PDF generation library. Please try again.",
+          variant: "destructive",
+        });
       });
     } catch (error) {
       console.error("Error generating report:", error);
