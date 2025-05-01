@@ -771,7 +771,9 @@ export default function DefinePhase() {
                         <Label htmlFor="savedTime" className="text-xs font-medium">Saved Working Time</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
+                            <Label htmlFor="timeUnit" className="text-xs">Time Period</Label>
                             <select 
+                              id="timeUnit"
                               className="w-full h-8 text-sm border border-gray-300 rounded-md" 
                               value={fteParams.timeUnit}
                               onChange={(e) => handleFteParamChange('timeUnit', e.target.value)}
@@ -782,6 +784,7 @@ export default function DefinePhase() {
                             </select>
                           </div>
                           <div>
+                            <Label htmlFor="savedHours" className="text-xs">Hours Saved</Label>
                             <Input
                               id="savedHours"
                               type="number"
