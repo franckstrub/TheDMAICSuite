@@ -225,19 +225,8 @@ export default function Dashboard() {
   
   // Calculate the percentage change in projects based on historical data
   const calculateProjectsChange = (projects: any[] | undefined): number => {
-    if (!projects || projects.length === 0) {
-      return 0;
-    }
-    
-    // Count active projects (not canceled or abandoned)
-    const activeProjects = projects.filter(p => 
-      p.status !== "abandoned" && 
-      p.status !== "canceled"
-    ).length;
-    
-    // In a real app, we would compare this to historical data from previous period
-    // For demo purposes, we'll use a 7% growth rate for active projects
-    return activeProjects > 0 ? 7 : 0;
+    // Always return 0% as specified by user requirements
+    return 0;
   };
 
   // Helper function to calculate metrics based on projects
