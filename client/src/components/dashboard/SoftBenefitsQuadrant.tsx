@@ -7,6 +7,7 @@ interface SoftBenefit {
   id: number;
   text: string;
   projectId: number;
+  projectTitle: string; // Added project title
   category: 'employee' | 'customer' | 'process' | 'growth';
 }
 
@@ -21,7 +22,7 @@ const SoftBenefitsQuadrant: React.FC<SoftBenefitsQuadrantProps> = ({ benefits })
   const processBenefits = benefits.filter(b => b.category === 'process');
   const growthBenefits = benefits.filter(b => b.category === 'growth');
 
-  // Get project IDs that contribute to benefits
+  // Get unique project count
   const projectIds = [...new Set(benefits.map(b => b.projectId))];
 
   // Helper function to render a quadrant
@@ -38,7 +39,9 @@ const SoftBenefitsQuadrant: React.FC<SoftBenefitsQuadrantProps> = ({ benefits })
               <span className="mr-2 flex-shrink-0">•</span>
               <div>
                 <p>{benefit.text}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Project ID: {benefit.projectId}</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  From: <span className="font-medium">{benefit.projectTitle}</span>
+                </p>
               </div>
             </li>
           ))}

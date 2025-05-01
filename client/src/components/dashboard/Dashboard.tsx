@@ -381,6 +381,7 @@ export default function Dashboard() {
       id: number; 
       text: string; 
       projectId: number;
+      projectTitle: string;
       category: 'employee' | 'customer' | 'process' | 'growth';
     };
     
@@ -388,6 +389,7 @@ export default function Dashboard() {
     const generateBenefitsForProject = (project: Project): SoftBenefit[] => {
       const benefits: SoftBenefit[] = [];
       const projectId = project.id;
+      const projectTitle = project.title || `Project ${projectId}`;
       
       // Generate a semi-random base ID for each project to avoid duplicates
       const baseId = projectId * 100;
@@ -400,6 +402,7 @@ export default function Dashboard() {
           id: baseId + 1,
           text: "Reduced employee stress from fewer quality issues",
           projectId,
+          projectTitle,
           category: 'employee'
         });
       }
