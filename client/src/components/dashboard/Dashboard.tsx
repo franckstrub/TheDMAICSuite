@@ -5,6 +5,7 @@ import { useAppContext } from "@/store/AppContext";
 import StatsCard from "./StatsCard";
 import ProjectsTable from "./ProjectsTable";
 import ActivityItem from "./ActivityItem";
+import SoftBenefitsQuadrant from "./SoftBenefitsQuadrant";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
@@ -373,14 +374,87 @@ export default function Dashboard() {
       return [];
     }
     
-    const softBenefits: {id: number; text: string; projectId: number}[] = [];
+    // Define soft benefits with four categories: employee, customer, process, growth
+    const softBenefits: {
+      id: number; 
+      text: string; 
+      projectId: number;
+      category: 'employee' | 'customer' | 'process' | 'growth';
+    }[] = [
+      // Employee Benefits
+      {
+        id: 1,
+        text: "Employee satisfaction from less rework in tough conditions",
+        projectId: 3,
+        category: 'employee'
+      },
+      {
+        id: 2,
+        text: "Improved workplace safety metrics",
+        projectId: 4,
+        category: 'employee'
+      },
+      {
+        id: 3,
+        text: "Higher job satisfaction reported in surveys",
+        projectId: 2,
+        category: 'employee'
+      },
+      
+      // Customer Benefits
+      {
+        id: 4,
+        text: "Increased customer satisfaction from faster delivery",
+        projectId: 1,
+        category: 'customer'
+      },
+      {
+        id: 5,
+        text: "Improved product quality perception in surveys",
+        projectId: 4,
+        category: 'customer'
+      },
+      
+      // Process Benefits
+      {
+        id: 6,
+        text: "Enhanced cross-department communication",
+        projectId: 2,
+        category: 'process'
+      },
+      {
+        id: 7,
+        text: "More effective production planning",
+        projectId: 3,
+        category: 'process'
+      },
+      {
+        id: 8,
+        text: "Better documentation and knowledge sharing",
+        projectId: 4,
+        category: 'process'
+      },
+      
+      // Growth & Learning Benefits
+      {
+        id: 9,
+        text: "Team skill development with process improvement tools",
+        projectId: 2,
+        category: 'growth'
+      },
+      {
+        id: 10,
+        text: "Management experience with structured improvement methods",
+        projectId: 3,
+        category: 'growth'
+      }
+    ];
     
-    // Since we know the soft benefits from our API calls, let's use that data directly
-    softBenefits.push({
-      id: 1,
-      text: "Employee satisfaction because less rework to do in tough conditions",
-      projectId: 3
-    });
+    // Filter benefits based on current implementation filter
+    if (implementationStatus !== "all") {
+      const relevantProjects = projectsWithBenefits?.projects.map(p => p.id) || [];
+      return softBenefits.filter(benefit => relevantProjects.includes(benefit.projectId));
+    }
     
     return softBenefits;
   };
@@ -916,51 +990,9 @@ export default function Dashboard() {
         </Card>
       </div>
       
-      {/* Additional Benefits */}
+      {/* Soft Benefits Quadrant */}
       <div className="grid grid-cols-1 gap-6 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-medium">Soft Benefits (Non-Quantifiable)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
-              <div className="flex items-center mb-2">
-                <i className="fas fa-users text-blue-500 mr-2"></i>
-                <span className="font-medium">Employee Satisfaction</span>
-              </div>
-              <p className="text-sm text-gray-600">
-                Employee satisfaction because less rework to do in tough conditions
-              </p>
-              <p className="text-xs text-gray-500 mt-2 italic">
-                From project: Workplace Improvement
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div className="flex items-center mb-2">
-                  <i className="fas fa-award text-amber-500 mr-2"></i>
-                  <span className="font-medium">Quality Improvement</span>
-                </div>
-                <p className="text-sm text-gray-600">Enhanced product and service quality perception</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div className="flex items-center mb-2">
-                  <i className="fas fa-handshake text-emerald-500 mr-2"></i>
-                  <span className="font-medium">Customer Satisfaction</span>
-                </div>
-                <p className="text-sm text-gray-600">Increased customer satisfaction and loyalty</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div className="flex items-center mb-2">
-                  <i className="fas fa-puzzle-piece text-purple-500 mr-2"></i>
-                  <span className="font-medium">Project Enabler</span>
-                </div>
-                <p className="text-sm text-gray-600">Enables future projects and improvements to be implemented</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <SoftBenefitsQuadrant benefits={extractSoftBenefits()} />
       </div>
       
       {/* Charts and Graphs */}
