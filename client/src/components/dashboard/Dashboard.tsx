@@ -560,7 +560,7 @@ export default function Dashboard() {
     };
   }, [allProjects]);
   
-  // Filter projects based on implementation status
+  // Filter projects based on implementation and status filters
   const projects = useMemo(() => {
     if (!projectsWithBenefits?.projects) return { projects: [] };
     
@@ -569,10 +569,28 @@ export default function Dashboard() {
       return projectsWithBenefits;
     }
     
-    // Filter projects based on implementation status
+    // Filter projects based on implementation status or specific status values
     const filteredProjects = projectsWithBenefits.projects.filter((project: Project) => {
-      const implemented = isProjectImplemented(project);
-      return implementationStatus === "implemented" ? implemented : !implemented;
+      switch (implementationStatus) {
+        case "implemented":
+          return isProjectImplemented(project); // Completed projects
+        case "not-implemented":
+          return !isProjectImplemented(project); // Non-completed projects
+        case "active":
+          return project.status === "active" || project.status === "in-progress";
+        case "completed":
+          return project.status === "completed"; // Same as implemented
+        case "on-hold":
+          return project.status === "on-hold" || project.status === "not-started";
+        case "abandoned":
+          return project.status === "abandoned" || project.status === "canceled";
+        case "active-completed":
+          return (project.status === "active" || 
+                 project.status === "in-progress" || 
+                 project.status === "completed");
+        default:
+          return true; // Fallback to display all projects if filter is unrecognized
+      }
     });
     
     return { ...projectsWithBenefits, projects: filteredProjects };
@@ -723,13 +741,18 @@ export default function Dashboard() {
           
           <Select
             value={implementationStatus}
-            onValueChange={(value) => setImplementationStatus(value as "all" | "implemented" | "not-implemented")}
+            onValueChange={(value) => setImplementationStatus(value as ImplementationStatusType)}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Implementation Status" />
+              <SelectValue placeholder="Project Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Projects</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="on-hold">On Hold</SelectItem>
+              <SelectItem value="abandoned">Abandoned</SelectItem>
+              <SelectItem value="active-completed">Active + Completed</SelectItem>
               <SelectItem value="implemented">Implemented</SelectItem>
               <SelectItem value="not-implemented">Not Implemented</SelectItem>
             </SelectContent>
