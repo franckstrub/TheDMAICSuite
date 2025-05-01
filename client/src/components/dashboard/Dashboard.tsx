@@ -413,6 +413,7 @@ export default function Dashboard() {
           id: baseId + 2,
           text: "Higher job satisfaction from streamlined processes",
           projectId,
+          projectTitle,
           category: 'employee'
         });
       }
@@ -425,6 +426,7 @@ export default function Dashboard() {
           id: baseId + 3,
           text: "Improved product quality perception in customer surveys",
           projectId,
+          projectTitle,
           category: 'customer'
         });
       }
@@ -434,6 +436,7 @@ export default function Dashboard() {
           id: baseId + 4,
           text: "Increased customer satisfaction from faster delivery",
           projectId,
+          projectTitle,
           category: 'customer'
         });
       }
@@ -443,6 +446,7 @@ export default function Dashboard() {
         id: baseId + 5,
         text: "Better documentation and knowledge sharing",
         projectId,
+        projectTitle,
         category: 'process'
       });
       
@@ -451,6 +455,7 @@ export default function Dashboard() {
           id: baseId + 6,
           text: "Enhanced cross-department communication",
           projectId,
+          projectTitle,
           category: 'process'
         });
       }
@@ -460,6 +465,7 @@ export default function Dashboard() {
         id: baseId + 7,
         text: "Team skill development with process improvement tools",
         projectId,
+        projectTitle,
         category: 'growth'
       });
       
@@ -468,6 +474,7 @@ export default function Dashboard() {
           id: baseId + 8,
           text: "Management experience with structured improvement methods",
           projectId,
+          projectTitle,
           category: 'growth'
         });
       }
