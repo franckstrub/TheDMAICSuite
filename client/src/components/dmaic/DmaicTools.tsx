@@ -82,7 +82,10 @@ export default function DmaicTools() {
           <Button 
             variant="ghost" 
             className="text-primary hover:text-primary-dark flex items-center"
-            onClick={() => setCurrentTab("projects")}
+            onClick={() => {
+              setCurrentTab("projects");
+              navigate("/app/projects");
+            }}
           >
             <i className="fas fa-arrow-left mr-1"></i> Back to Projects
           </Button>
