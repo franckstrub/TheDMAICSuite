@@ -624,7 +624,11 @@ export default function Dashboard() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard 
-          title={implementationStatus === "all" ? "All Projects" : "Active Projects"}
+          title={implementationStatus === "all" 
+            ? "All Projects" 
+            : implementationStatus === "implemented" 
+              ? "Implemented Projects" 
+              : "Not Implemented Projects"}
           value={projects?.projects?.length.toString() || "0"}
           change={0}
           changeLabel={`${implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}`}
@@ -636,7 +640,7 @@ export default function Dashboard() {
           value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
           secondaryValue="(Financial Savings-Costs)/Costs"
           change={0} // No comparison data available yet for change calculation
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
+          changeLabel={implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}
           icon="chart-pie"
           iconBgColor="indigo"
         />
@@ -645,7 +649,7 @@ export default function Dashboard() {
           value={formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}
           secondaryValue="Costs ÷ Annual Financial Savings"
           change={0} // No comparison data available yet for change calculation
-          changeLabel={implementationStatus === "all" ? "All projects" : implementationStatus === "implemented" ? "Implemented only" : "Not implemented only"}
+          changeLabel={implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}
           icon="hourglass-half"
           iconBgColor="yellow"
         />
