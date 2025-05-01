@@ -7,7 +7,15 @@ export type CurrencyType =
   | "CN¥" | "DKK" | "SEK" | "NOK" | "ISK" | "₫" | "MXN" | "ARS"
   | "RON" | "CZK" | "BGN" | "ILS" | "EGP";
 
-export type ImplementationStatusType = "all" | "implemented" | "not-implemented";
+export type ImplementationStatusType = 
+  | "all"                  // All projects
+  | "implemented"          // Completed projects
+  | "not-implemented"      // Projects not yet completed
+  | "active"               // Active projects
+  | "completed"            // Completed projects (same as implemented)
+  | "on-hold"              // On-hold projects
+  | "abandoned"            // Abandoned projects
+  | "active-completed";    // Active + Completed projects
 
 type AppContextType = {
   user: any | null;
