@@ -275,7 +275,11 @@ export default function Projects() {
   console.log("Raw API response for projects:", projectsData);
   
   // Use API data - NEVER use sample data for this feature
-  const projects = filterProjects(projectsData?.projects || []);
+  // Sort projects by ID to maintain a stable order regardless of status changes
+  const sortedProjects = projectsData?.projects 
+    ? [...projectsData.projects].sort((a, b) => a.id - b.id) 
+    : [];
+  const projects = filterProjects(sortedProjects);
 
   return (
     <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
