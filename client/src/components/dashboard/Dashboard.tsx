@@ -510,43 +510,8 @@ export default function Dashboard() {
       netValue
     });
 
-    // If all values are zero, provide some sample data for visualization
-    if (qualityCostSavings === 0 && financialSavings === 0 && fteBenefits === 0 && totalCosts === 0) {
-      console.log("All values are zero, providing sample data for visualization");
-      // Sample data that matches the required waterfall layout
-      return [
-        {
-          name: "Quality Cost Savings", 
-          value: 1340000,
-          start: 0,
-          color: "#10b981" // Green
-        },
-        {
-          name: "Financial Savings", 
-          value: 50000,
-          start: 1340000,
-          color: "#22c55e" // Lighter green
-        },
-        {
-          name: "FTE Benefits", 
-          value: 389200,
-          start: 1390000,
-          color: "#4ade80" // Even lighter green
-        },
-        {
-          name: "Investment", 
-          value: -450000,
-          start: 1779200,
-          color: "#ef4444" // Red
-        },
-        {
-          name: "Net Value", 
-          value: 1329200,
-          start: 0,
-          color: "#3b82f6" // Blue
-        }
-      ];
-    }
+    // Always use actual project data for visualizations, even if values are zero
+    console.log("Using actual project financial data for visualization");
     
     // Create an array of waterfall data with 5 entries for the standard bar chart
     const result = [
