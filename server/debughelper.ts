@@ -1,6 +1,7 @@
 import { projectCharters } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { desc } from "drizzle-orm/pg-core";
 
 export async function debugGetCharter(projectId: number) {
   try {
