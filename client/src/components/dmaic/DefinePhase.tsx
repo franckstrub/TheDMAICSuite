@@ -74,7 +74,7 @@ export default function DefinePhase() {
   
   // FTE calculation state
   const [fteParams, setFteParams] = useState({
-    workingDaysPerYear: 245,
+    workingDaysPerWeek: 5,
     workingHoursPerDay: 8,
     timeUnit: "day",
     savedHours: 0,
@@ -85,7 +85,9 @@ export default function DefinePhase() {
 
   // Function to calculate FTE and its value
   const calculateFte = () => {
-    const { workingDaysPerYear, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = fteParams;
+    const { workingDaysPerWeek, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = fteParams;
+    // 52 weeks in a year, so multiply days/week by 52 to get annual working days
+    const workingDaysPerYear = workingDaysPerWeek * 52;
     const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
     
     let annualSavedHours = 0;
@@ -94,9 +96,9 @@ export default function DefinePhase() {
     if (timeUnit === "day") {
       annualSavedHours = savedHours * workingDaysPerYear;
     } else if (timeUnit === "week") {
-      annualSavedHours = savedHours * (workingDaysPerYear / 5);
+      annualSavedHours = savedHours * 52; // 52 weeks in a year
     } else if (timeUnit === "month") {
-      annualSavedHours = savedHours * (workingDaysPerYear / 20);
+      annualSavedHours = savedHours * 12; // 12 months in a year
     }
     
     // Calculate FTE and monetary value
@@ -129,7 +131,9 @@ export default function DefinePhase() {
     };
     
     // Immediately calculate the FTE values
-    const { workingDaysPerYear, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = newParams;
+    const { workingDaysPerWeek, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = newParams;
+    // 52 weeks in a year, so multiply days/week by 52 to get annual working days
+    const workingDaysPerYear = workingDaysPerWeek * 52;
     const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
     
     let annualSavedHours = 0;
@@ -138,9 +142,9 @@ export default function DefinePhase() {
     if (timeUnit === "day") {
       annualSavedHours = savedHours * workingDaysPerYear;
     } else if (timeUnit === "week") {
-      annualSavedHours = savedHours * (workingDaysPerYear / 5);
+      annualSavedHours = savedHours * 52; // 52 weeks in a year
     } else if (timeUnit === "month") {
-      annualSavedHours = savedHours * (workingDaysPerYear / 20);
+      annualSavedHours = savedHours * 12; // 12 months in a year
     }
     
     // Calculate FTE and monetary value
@@ -199,7 +203,9 @@ export default function DefinePhase() {
             charter.charter.fteSavedHours && 
             charter.charter.fteCostPerYear) {
           // Use the stored FTE parameters
-          const workingDaysPerYear = parseFloat(charter.charter.fteWorkingDaysPerYear);
+          const storedWorkingDaysPerYear = parseFloat(charter.charter.fteWorkingDaysPerYear);
+          // Convert from days/year to days/week (assuming 52 weeks in a year)
+          const workingDaysPerWeek = storedWorkingDaysPerYear / 52;
           const workingHoursPerDay = parseFloat(charter.charter.fteWorkingHoursPerDay);
           const timeUnit = charter.charter.fteTimeUnit || "day";
           const savedHours = parseFloat(charter.charter.fteSavedHours);
@@ -207,7 +213,8 @@ export default function DefinePhase() {
           const calculatedValue = parseFloat(charter.charter.fteCalculatedValue || "0");
           fteBenefitsValue = calculatedValue;
           
-          // Calculate FTE from these parameters
+          // Calculate FTE from these parameters (using the original workingDaysPerYear for compatibility)
+          const workingDaysPerYear = workingDaysPerWeek * 52;
           const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
           let annualSavedHours = 0;
           
@@ -215,17 +222,17 @@ export default function DefinePhase() {
           if (timeUnit === "day") {
             annualSavedHours = savedHours * workingDaysPerYear;
           } else if (timeUnit === "week") {
-            annualSavedHours = savedHours * (workingDaysPerYear / 5);
+            annualSavedHours = savedHours * 52; // 52 weeks in a year
           } else if (timeUnit === "month") {
-            annualSavedHours = savedHours * (workingDaysPerYear / 20);
+            annualSavedHours = savedHours * 12; // 12 months in a year
           }
           
           // Calculate FTE
           const calculatedFte = annualSavedHours / totalAnnualHours;
           
-          // Update FTE parameters
+          // Update FTE parameters with the new workingDaysPerWeek parameter
           setFteParams({
-            workingDaysPerYear, 
+            workingDaysPerWeek, 
             workingHoursPerDay, 
             timeUnit, 
             savedHours, 
@@ -235,7 +242,8 @@ export default function DefinePhase() {
           });
           
           console.log("Loaded FTE parameters from database:", {
-            workingDaysPerYear, 
+            workingDaysPerYear,
+            workingDaysPerWeek, 
             workingHoursPerDay, 
             timeUnit, 
             savedHours, 
@@ -355,7 +363,8 @@ export default function DefinePhase() {
         financialSavings: (data.financialSavings || "0").toString(),
         fteBenefits: data.fteBenefits || "",
         // FTE calculation parameters
-        fteWorkingDaysPerYear: fteParams.workingDaysPerYear.toString(),
+        // Convert workingDaysPerWeek back to workingDaysPerYear for backward compatibility
+        fteWorkingDaysPerYear: (fteParams.workingDaysPerWeek * 52).toString(),
         fteWorkingHoursPerDay: fteParams.workingHoursPerDay.toString(),
         fteTimeUnit: fteParams.timeUnit,
         fteSavedHours: fteParams.savedHours.toString(),
@@ -526,7 +535,8 @@ export default function DefinePhase() {
         softBenefits: data.softBenefits || "",
         
         // FTE calculation parameters - already a separate section in the mutation
-        fteWorkingDaysPerYear: fteParams.workingDaysPerYear.toString(),
+        // Convert workingDaysPerWeek back to workingDaysPerYear for backward compatibility
+        fteWorkingDaysPerYear: (fteParams.workingDaysPerWeek * 52).toString(),
         fteWorkingHoursPerDay: fteParams.workingHoursPerDay.toString(), 
         fteTimeUnit: fteParams.timeUnit,
         fteSavedHours: fteParams.savedHours.toString(),
@@ -836,14 +846,15 @@ export default function DefinePhase() {
                         <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
-                            <Label htmlFor="workingDaysPerYear" className="text-xs">Working Days/Year</Label>
+                            <Label htmlFor="workingDaysPerWeek" className="text-xs">Working Days/Week</Label>
                             <Input
-                              id="workingDaysPerYear"
+                              id="workingDaysPerWeek"
                               type="number"
-                              value={fteParams.workingDaysPerYear}
-                              onChange={(e) => handleFteParamChange('workingDaysPerYear', e.target.value)}
-                              placeholder="e.g. 245"
+                              value={fteParams.workingDaysPerWeek}
+                              onChange={(e) => handleFteParamChange('workingDaysPerWeek', e.target.value)}
+                              placeholder="e.g. 5"
                               className="h-8 text-sm"
+                              step="0.01"
                             />
                           </div>
                           <div>
