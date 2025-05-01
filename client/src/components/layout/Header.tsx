@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, ChevronDown, HelpCircle, Menu } from "lucide-react";
+import logoImage from "@/assets/logo.png";
 
 export default function Header() {
   const { user, logout, setSidebarOpen } = useAppContext();
@@ -44,9 +45,9 @@ export default function Header() {
             <Menu className="w-5 h-5" />
           </Button>
           
-          <div className="flex items-center text-primary font-bold text-xl">
-            <i className="fas fa-chart-line text-secondary mr-2"></i>
-            <span>Lean Six Sigma DMAIC Suite™</span>
+          <div className="flex items-center">
+            <img src={logoImage} alt="Equable Solutions Logo" className="h-10 mr-3" />
+            <span className="text-primary font-bold text-xl">Lean Six Sigma DMAIC Suite™</span>
           </div>
         </div>
         
