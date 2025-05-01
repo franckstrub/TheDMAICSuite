@@ -318,8 +318,8 @@ export default function Dashboard() {
           project.id.toString(),
           project.title,
           project.status.charAt(0).toUpperCase() + project.status.slice(1),
-          project.currentPhase ? project.currentPhase.charAt(0).toUpperCase() + project.currentPhase.slice(1) : 'N/A',
-          `${project.progress || 0}%`
+          (project as any).currentPhase ? (project as any).currentPhase.charAt(0).toUpperCase() + (project as any).currentPhase.slice(1) : 'N/A',
+          `${(project as any).progress !== undefined ? (project as any).progress : 0}%`
         ]);
       });
       
@@ -1515,7 +1515,7 @@ export default function Dashboard() {
                   } else if (log.action === "create_charter") {
                     title = "Charter Created";
                   } else {
-                    title = log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    title = log.action.replace(/_/g, ' ').replace(/\b\w/g, function(l: string) { return l.toUpperCase(); });
                   }
                   
                   return (
