@@ -42,8 +42,14 @@ export default function DmaicTools() {
     if (params.phase && 
         ['define', 'measure', 'analyze', 'improve', 'control'].includes(params.phase)) {
       setActivePhase(params.phase);
+      
+      // Ensure we update the URL if we're missing a projectId but have currentProject
+      if (!params.projectId && currentProject?.id) {
+        console.log(`Updating URL to include current project ID: ${currentProject.id}`);
+        navigate(`/app/dmaic/${params.phase}/${currentProject.id}`);
+      }
     }
-  }, [params.phase, setActivePhase]);
+  }, [params.phase, params.projectId, currentProject, setActivePhase, navigate]);
 
   // Render the appropriate phase component based on activePhase
   const renderPhaseContent = () => {
