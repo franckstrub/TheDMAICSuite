@@ -78,6 +78,12 @@ export const projectCharters = pgTable("project_charters", {
   opexPeriod: text("opex_period"),
   capexCost: text("capex_cost"),
   capexExplanation: text("capex_explanation"),
+  // Financial summary fields (calculated values)
+  totalFinancialSavings: text("total_financial_savings"),
+  totalProjectCosts: text("total_project_costs"),
+  projectNetValue: text("project_net_value"),
+  roi: text("roi"),
+  breakeven: text("breakeven"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -112,6 +118,12 @@ export const insertCharterSchema = createInsertSchema(projectCharters).pick({
   opexPeriod: true,
   capexCost: true,
   capexExplanation: true,
+  // Financial summary fields
+  totalFinancialSavings: true,
+  totalProjectCosts: true,
+  projectNetValue: true,
+  roi: true,
+  breakeven: true,
 });
 
 // SIPOC Diagrams
