@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import StatsCard from "./StatsCard";
 import ProjectsTable from "./ProjectsTable";
@@ -178,7 +179,8 @@ const createFinancialWaterfallData = (projects: Project[]) => {
 };
 
 export default function Dashboard() {
-  const { user, currency, implementationStatus, setImplementationStatus } = useAppContext();
+  const { user, currency, implementationStatus, setImplementationStatus, setCurrentTab } = useAppContext();
+  const [location, navigate] = useLocation();
   const [timeframe, setTimeframe] = useState("Last 365 Days");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -1059,7 +1061,16 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base font-medium">Recent Projects</CardTitle>
-              <Button variant="link" className="text-primary text-sm p-0">View all</Button>
+              <Button 
+                variant="link" 
+                className="text-primary text-sm p-0"
+                onClick={() => {
+                  setCurrentTab("projects");
+                  navigate("/app/projects");
+                }}
+              >
+                View all
+              </Button>
             </CardHeader>
             <CardContent>
               <ProjectsTable />
