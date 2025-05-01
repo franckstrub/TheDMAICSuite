@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, Calendar as CalendarIcon, FileDown } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatBreakeven } from "@/lib/utils";
 import {
@@ -191,78 +192,147 @@ export default function Dashboard() {
   const [customDateRange, setCustomDateRange] = useState<{start?: Date, end?: Date}>({});
   const { toast } = useToast();
   
+  // Reference to the dashboard container for capturing a screenshot
+  const dashboardRef = React.useRef<HTMLDivElement>(null);
+  
   // Function to generate and download a PDF report of the dashboard
-  const generateDashboardReport = () => {
+  const generateDashboardReport = async () => {
     toast({
-      title: "Generating Simple Report",
-      description: "Please wait while we prepare your report...",
+      title: "Generating PDF Report",
+      description: "Please wait while we capture the dashboard...",
     });
     
     try {
-      // Create a text-based report with project information
-      const filteredProjects = projects?.projects || [];
-      
-      // Calculate key metrics
-      const qualityCostSavings = calculateMetric(filteredProjects, 'qualityCostSavings');
-      const financialSavings = calculateMetric(filteredProjects, 'financialSavings');
-      const fteBenefits = calculateMetric(filteredProjects, 'fteValue');
-      const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
-      
-      const oneOffCosts = calculateMetric(filteredProjects, 'oneOffCosts');
-      const capexCosts = calculateMetric(filteredProjects, 'capexCosts');
-      const totalCosts = oneOffCosts + capexCosts;
-      
-      const netValue = totalFinancialSavings - totalCosts;
-      
-      // Calculate ROI
-      let roi = 0;
-      if (totalCosts > 0) {
-        roi = (totalFinancialSavings - totalCosts) / totalCosts;
+      if (!dashboardRef.current) {
+        throw new Error("Dashboard element not found");
       }
       
-      // Format report content
-      const reportContent = `# Lean Six Sigma DMAIC Suite™ - Dashboard Report
-Generated on ${format(new Date(), "MMMM d, yyyy")}
-Timeframe: ${timeframe}
-Status: ${implementationStatus}
-
-## Key Financial Metrics
-Total Projects: ${filteredProjects.length}
-Quality Cost Savings (p.a.): ${formatCurrency(qualityCostSavings, currency)}
-Financial Savings (p.a.): ${formatCurrency(financialSavings, currency)}
-FTE Benefits: ${fteBenefits.toFixed(1)} FTE (${formatCurrency(fteBenefits, currency)})
-Total Financial Savings (p.a.): ${formatCurrency(totalFinancialSavings, currency)}
-Total Costs: ${formatCurrency(totalCosts, currency)}
-Net Value: ${formatCurrency(netValue, currency)}
-ROI: ${Math.round(roi * 100)}%
-
-## Project Overview
-${filteredProjects.map(project => 
-  `- Project ${project.id}: ${project.title} (${project.status})
-   Phase: ${(project as any).currentPhase || 'N/A'}, Progress: ${(project as any).progress || 0}%`
-).join('\n')}
-`;
+      // Use html2canvas to capture the dashboard as an image
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 1.5, // Higher quality
+        useCORS: true, // Allow cross-origin images
+        logging: false, // Disable logging
+        allowTaint: true, // Allow tainted canvas
+        backgroundColor: "#ffffff" // White background
+      });
       
-      // Create a simple text blob and download it
-      const blob = new Blob([reportContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `DMAIC_Dashboard_Report_${format(new Date(), 'yyyy-MM-dd')}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Create a new jsPDF instance
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Calculate dimensions
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasRatio = canvas.height / canvas.width;
+      const imgWidth = pdfWidth;
+      const imgHeight = pdfWidth * canvasRatio;
+      
+      // Add title
+      pdf.setFontSize(18);
+      pdf.setTextColor(33, 37, 41);
+      pdf.text("Lean Six Sigma DMAIC Suite™ - Dashboard Report", 14, 15);
+      
+      // Add date and filter information
+      pdf.setFontSize(10);
+      pdf.setTextColor(85, 85, 85);
+      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 22);
+      
+      // Add filter information
+      let filterText = `Timeframe: ${timeframe}`;
+      if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
+        filterText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
+      }
+      pdf.text(filterText, 14, 26);
+      
+      // Add status filter info
+      let statusFilterText = "Status Filter: ";
+      switch(implementationStatus) {
+        case "all": statusFilterText += "All Projects"; break;
+        case "active": statusFilterText += "Active Projects"; break;
+        case "completed": statusFilterText += "Completed Projects"; break;
+        case "on-hold": statusFilterText += "On-Hold Projects"; break;
+        case "abandoned": statusFilterText += "Abandoned Projects"; break;
+        case "active-completed": statusFilterText += "Active + Completed Projects"; break;
+        case "implemented": statusFilterText += "Implemented Projects"; break;
+        case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
+        default: statusFilterText += "All Projects";
+      }
+      pdf.text(statusFilterText, 14, 30);
+      
+      // Add horizontal line
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(14, 32, pdfWidth - 14, 32);
+      
+      // Calculate page count based on image height
+      const totalPages = Math.ceil(imgHeight / (pdfHeight - 40));
+      
+      // Split image across multiple pages if needed
+      let remainingHeight = imgHeight;
+      let sourceY = 0;
+      
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate how much of the image will fit on this page
+        const pageHeight = pdfHeight - (page === 0 ? 40 : 20); // First page has header
+        const printHeight = Math.min(remainingHeight, pageHeight);
+        const sourceHeight = (printHeight / imgHeight) * canvas.height;
+        
+        // Create a temporary canvas to hold just this portion of the image
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = sourceHeight;
+        
+        // Draw the portion of the original canvas onto the temporary canvas
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(
+            canvas, 
+            0, sourceY, canvas.width, sourceHeight,
+            0, 0, tempCanvas.width, tempCanvas.height
+          );
+          
+          // Convert the temporary canvas to a data URL
+          const pageImgData = tempCanvas.toDataURL('image/png');
+          
+          // Add this portion to the PDF
+          const yPosition = page === 0 ? 40 : 15;
+          pdf.addImage(pageImgData, 'PNG', 14, yPosition, imgWidth - 28, printHeight);
+          
+          // Update for next page
+          remainingHeight -= printHeight;
+          sourceY += sourceHeight;
+        }
+        
+        // Add page number at the bottom
+        pdf.setFontSize(10);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+      }
+      
+      // Add footer to all pages
+      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
+      }
+      
+      // Save the PDF
+      const filename = `DMAIC_Dashboard_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      pdf.save(filename);
       
       toast({
-        title: "Report Generated",
-        description: "Your report has been downloaded as a text file.",
+        title: "Report Generated Successfully",
+        description: `Your dashboard has been captured and saved as ${filename}`,
       });
     } catch (error) {
-      console.error("Error generating report:", error);
+      console.error("Error generating PDF report:", error);
       toast({
         title: "Error",
-        description: "There was an error generating your report. Please try again.",
+        description: "There was a problem creating the PDF. Please try again.",
         variant: "destructive",
       });
     }
@@ -804,7 +874,7 @@ ${filteredProjects.map(project =>
   };
 
   return (
-    <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+    <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8" ref={dashboardRef}>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
