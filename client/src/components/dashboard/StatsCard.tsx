@@ -6,7 +6,7 @@ interface StatsCardProps {
   title: string;
   value: string;
   secondaryValue?: string;
-  change: number;
+  change: number | null;
   changeLabel: string;
   icon: string;
   iconBgColor: "blue" | "green" | "yellow" | "purple" | "red" | "indigo";
@@ -43,9 +43,9 @@ export default function StatsCard({
   const bgColorClass = iconBgColorMap[iconBgColor];
   const textColorClass = iconColorMap[iconBgColor];
 
-  // Determine whether the change is positive or negative
-  const isPositive = change > 0;
-  const isNegative = change < 0;
+  // Determine whether the change is positive or negative (if change is not null)
+  const isPositive = change !== null && change > 0;
+  const isNegative = change !== null && change < 0;
   
   // For some metrics like "improvement", negative change is good
   const isNegativeGood = changeLabel.includes("improvement");
@@ -69,16 +69,25 @@ export default function StatsCard({
         {secondaryValue && (
           <p className="text-sm text-gray-600 mt-1">{secondaryValue}</p>
         )}
-        <div className="flex items-center mt-2 text-xs">
-          <span className={cn("flex items-center", isNegativeGood && isNegative ? "text-green-500" : changeColorClass)}>
-            {isPositive ? (
-              <ArrowUpIcon className="w-3 h-3 mr-1" />
-            ) : isNegative ? (
-              <ArrowDownIcon className="w-3 h-3 mr-1" />
-            ) : null}
-            {Math.abs(change)}%
-          </span>
-          <span className="text-gray-500 ml-2">{changeLabel}</span>
+        <div className="mt-2">
+          {/* Only show change percentage if change is not null */}
+          {change !== null && (
+            <div className="flex items-center text-xs mb-1">
+              <span className={cn("flex items-center", isNegativeGood && isNegative ? "text-green-500" : changeColorClass)}>
+                {isPositive ? (
+                  <ArrowUpIcon className="w-3 h-3 mr-1" />
+                ) : isNegative ? (
+                  <ArrowDownIcon className="w-3 h-3 mr-1" />
+                ) : null}
+                {Math.abs(change)}%
+              </span>
+            </div>
+          )}
+          
+          {/* Always show the change label, with adjusted styling for better readability */}
+          <div className="text-gray-600 text-xs leading-tight" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
+            {changeLabel}
+          </div>
         </div>
       </CardContent>
     </Card>
