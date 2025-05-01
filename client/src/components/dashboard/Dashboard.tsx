@@ -990,12 +990,7 @@ export default function Dashboard() {
         </Card>
       </div>
       
-      {/* Soft Benefits Quadrant */}
-      <div className="grid grid-cols-1 gap-6 mb-6">
-        <SoftBenefitsQuadrant benefits={extractSoftBenefits()} />
-      </div>
-      
-      {/* Charts and Graphs */}
+      {/* Financial Benefits Waterfall Chart */}
       <div className="grid grid-cols-1 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -1088,6 +1083,11 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Soft Benefits Quadrant */}
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <SoftBenefitsQuadrant benefits={extractSoftBenefits()} />
       </div>
       
       {/* Recent Projects / Activity */}
