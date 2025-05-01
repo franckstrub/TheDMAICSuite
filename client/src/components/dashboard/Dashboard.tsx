@@ -640,7 +640,6 @@ export default function Dashboard() {
               ? "Implemented Projects" 
               : "Not Implemented Projects"}
           value={projects?.projects?.length.toString() || "0"}
-          secondaryValue="0% change"
           change={0}
           changeLabel={(() => {
             // Get counts by status
