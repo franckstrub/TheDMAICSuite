@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import DefinePhase from "./DefinePhase";
 import MeasurePhase from "./MeasurePhase";
@@ -11,11 +12,30 @@ import { cn } from "@/lib/utils";
 
 type PhaseParams = {
   phase?: string;
+  projectId?: string;
 };
 
 export default function DmaicTools() {
-  const { activePhase, setActivePhase, currentProject, setCurrentTab } = useAppContext();
+  const { activePhase, setActivePhase, currentProject, setCurrentProject, setCurrentTab } = useAppContext();
   const params = useParams<PhaseParams>();
+  const [location, navigate] = useLocation();
+  const { data: projectsData } = useQuery({
+    queryKey: ["/api/projects"],
+    enabled: true
+  });
+
+  // Ensure we have the correct project loaded
+  useEffect(() => {
+    if (projectsData?.projects && params.projectId) {
+      const projectId = parseInt(params.projectId);
+      // Find the project with the matching ID
+      const project = projectsData.projects.find(p => p.id === projectId);
+      if (project && (!currentProject || currentProject.id !== projectId)) {
+        console.log(`Setting current project to ID ${projectId} (${project.title})`);
+        setCurrentProject(project);
+      }
+    }
+  }, [projectsData, params.projectId, currentProject, setCurrentProject]);
 
   // Set active phase from URL parameter if available
   useEffect(() => {
@@ -108,10 +128,23 @@ interface PhaseButtonProps {
 
 function PhaseButton({ phase, activePhase, setActivePhase }: PhaseButtonProps) {
   const isActive = activePhase === phase;
+  const { currentProject } = useAppContext();
+  const [location, navigate] = useLocation();
+  
+  const handlePhaseChange = () => {
+    setActivePhase(phase);
+    
+    // Navigate to the URL with both phase and projectId parameters
+    if (currentProject?.id) {
+      navigate(`/app/dmaic/${phase}?projectId=${currentProject.id}`);
+    } else {
+      navigate(`/app/dmaic/${phase}`);
+    }
+  };
   
   return (
     <button 
-      onClick={() => setActivePhase(phase)}
+      onClick={handlePhaseChange}
       className={cn(
         "flex-grow py-2 px-4 rounded-md font-medium text-sm focus:outline-none border",
         isActive 
