@@ -972,40 +972,57 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-5">
-              <ActivityItem 
-                type="data-import"
-                title="Data Import"
-                description="Quality Inspection Process: 243 new records imported"
-                time="10 minutes ago"
-              />
-              
-              <ActivityItem 
-                type="phase-completed"
-                title="Phase Completed"
-                description="Order Processing: Measure phase completed"
-                time="1 hour ago"
-              />
-              
-              <ActivityItem 
-                type="comment"
-                title="New Comment"
-                description="Lisa added a comment to Inventory Management"
-                time="3 hours ago"
-              />
-              
-              <ActivityItem 
-                type="alert"
-                title="Process Alert"
-                description="Quality Inspection Process: Defect rate above threshold"
-                time="5 hours ago"
-              />
-              
-              <ActivityItem 
-                type="report"
-                title="Report Generated"
-                description="Monthly process performance report generated"
-                time="1 day ago"
-              />
+              {logs?.logs && logs.logs.length > 0 ? (
+                logs.logs.slice(0, 5).map((log: any, index: number) => {
+                  // Get project name from projects
+                  const project = allProjects?.projects?.find(p => p.id === log.projectId);
+                  const projectName = project?.title || `Project ID: ${log.projectId}`;
+                  
+                  // Format the timestamp
+                  const timestamp = new Date(log.timestamp);
+                  const now = new Date();
+                  const diffMs = now.getTime() - timestamp.getTime();
+                  const diffMins = Math.floor(diffMs / 60000);
+                  const diffHours = Math.floor(diffMins / 60);
+                  const diffDays = Math.floor(diffHours / 24);
+                  
+                  let timeAgo = "";
+                  if (diffMins < 60) {
+                    timeAgo = `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+                  } else if (diffHours < 24) {
+                    timeAgo = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+                  } else {
+                    timeAgo = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+                  }
+                  
+                  // Format title based on action
+                  let title = "";
+                  if (log.action === "create_project") {
+                    title = "Project Created";
+                  } else if (log.action === "update_charter") {
+                    title = "Charter Updated";
+                  } else if (log.action === "create_charter") {
+                    title = "Charter Created";
+                  } else {
+                    title = log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  }
+                  
+                  return (
+                    <ActivityItem 
+                      key={log.id}
+                      type={log.action}
+                      title={title}
+                      description={log.details}
+                      time={timeAgo}
+                      projectName={projectName}
+                    />
+                  );
+                })
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No recent activity</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

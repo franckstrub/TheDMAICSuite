@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
 
 interface ActivityItemProps {
-  type: "data-import" | "phase-completed" | "comment" | "alert" | "report";
+  type: string;
   title: string;
   description: string;
   time: string;
+  projectName?: string;
 }
 
 export default function ActivityItem({
@@ -12,10 +13,24 @@ export default function ActivityItem({
   title,
   description,
   time,
+  projectName,
 }: ActivityItemProps) {
   // Define icon and color based on activity type
   const getIconConfig = () => {
     switch (type) {
+      case "create_project":
+        return {
+          bgColor: "bg-blue-100",
+          textColor: "text-blue-500",
+          icon: "fas fa-plus-circle",
+        };
+      case "create_charter":
+      case "update_charter":
+        return {
+          bgColor: "bg-green-100",
+          textColor: "text-green-500",
+          icon: "fas fa-file-alt",
+        };
       case "data-import":
         return {
           bgColor: "bg-blue-100",
@@ -72,7 +87,10 @@ export default function ActivityItem({
       <div className="ml-3">
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-gray-500">{description}</p>
-        <p className="text-xs text-gray-400 mt-1">{time}</p>
+        {projectName && (
+          <p className="text-xs text-blue-500 mt-0.5">Project: {projectName}</p>
+        )}
+        <p className="text-xs text-gray-400 mt-0.5">{time}</p>
       </div>
     </div>
   );
