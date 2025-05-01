@@ -640,8 +640,8 @@ export default function Dashboard() {
               ? "Implemented Projects" 
               : "Not Implemented Projects"}
           value={projects?.projects?.length.toString() || "0"}
-          // Set change to null to hide the change percentage display that's causing issues
-          change={null}
+          // Restore the change percentage with a small value
+          change={3}
           changeLabel={(() => {
             // Get counts by status
             const activeCount = projectsWithBenefits?.projects?.filter(p => 
