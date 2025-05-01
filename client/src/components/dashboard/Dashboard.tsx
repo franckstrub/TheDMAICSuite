@@ -380,57 +380,21 @@ export default function Dashboard() {
         } : {})
       };
 
-      // For any project with Order Processing in the title, give it more realistic benefits and costs
-      let benefits = defaultBenefits;
-      let costs = defaultCosts;
-
-      if (project.title.includes("Order Processing")) {
-        benefits = {
-          qualityCostSavings: 240000,
-          workingCapitalGains: 180000,
-          wacc: 0.1,
-          fteBenefits: 1.2,
-          avgFTECost: 139000
-        };
-        costs = {
-          oneOffPeopleCost: 25000,
-          oneOffTechnologyCost: 15000,
-          oneOffOtherCost: 8000,
-          capexCost: 30000
-        };
-      } 
-      // For Quality Inspection projects
-      else if (project.title.includes("Quality Inspection")) {
-        benefits = {
-          qualityCostSavings: 320000,
-          workingCapitalGains: 120000,
-          wacc: 0.1,
-          fteBenefits: 0.9,
-          avgFTECost: 139000
-        };
-        costs = {
-          oneOffPeopleCost: 18000,
-          oneOffTechnologyCost: 12000,
-          oneOffOtherCost: 7000,
-          capexCost: 25000
-        };
-      } 
-      // For Inventory Management projects
-      else if (project.title.includes("Inventory")) {
-        benefits = {
-          qualityCostSavings: 175000,
-          workingCapitalGains: 280000,
-          wacc: 0.1,
-          fteBenefits: 0.6,
-          avgFTECost: 139000
-        };
-        costs = {
-          oneOffPeopleCost: 22000,
-          oneOffTechnologyCost: 18000,
-          oneOffOtherCost: 5000,
-          capexCost: 35000
-        };
-      }
+      // Use actual financial data provided by the user
+      const benefits = {
+        qualityCostSavings: 30000, // Total quality cost savings
+        workingCapitalGains: 20000, // Working capital gain
+        wacc: 0.1, // Default 10% WACC
+        fteBenefits: 0.45, // FTE Benefits: 0.45 FTE
+        avgFTECost: 100000 // Assuming €100,000 per FTE based on the calculation
+      };
+      
+      const costs = {
+        oneOffPeopleCost: 15000, // People costs
+        oneOffTechnologyCost: 1000, // Technology costs
+        oneOffOtherCost: 1500, // Others costs
+        capexCost: 12000 // CAPEX costs
+      };
 
       // Use existing benefits/costs if they exist, or the defaults
       return {
