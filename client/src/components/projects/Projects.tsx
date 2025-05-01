@@ -39,7 +39,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CalendarIcon, PlusCircle, Search } from "lucide-react";
+import { 
+  CalendarIcon, 
+  PlusCircle, 
+  Search, 
+  MoreHorizontal, 
+  Ban, 
+  Pause, 
+  Play, 
+  CheckCircle 
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Projects() {
   const { user, setCurrentProject, setCurrentTab } = useAppContext();
@@ -48,6 +65,9 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const [showStatusChangeDialog, setShowStatusChangeDialog] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [newStatus, setNewStatus] = useState("");
   
   // Form state for new project
   const [newProject, setNewProject] = useState({
@@ -112,6 +132,32 @@ export default function Projects() {
       });
     },
   });
+  
+  // Mutation for updating a project's status
+  const updateProjectStatusMutation = useMutation({
+    mutationFn: async (data: { projectId: number; status: string }) => {
+      return apiRequest("PUT", `/api/projects/${data.projectId}`, { 
+        status: data.status,
+        lastUpdated: new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Project status updated successfully",
+      });
+      setShowStatusChangeDialog(false);
+      setSelectedProject(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update project status",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleProjectClick = (project: any) => {
     setCurrentProject(project);
@@ -139,6 +185,22 @@ export default function Projects() {
     if (confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
       deleteProjectMutation.mutate(projectId);
     }
+  };
+  
+  const openStatusChangeDialog = (project: any, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent navigating to project details
+    setSelectedProject(project);
+    setNewStatus(project.status.toLowerCase());
+    setShowStatusChangeDialog(true);
+  };
+  
+  const handleStatusChange = () => {
+    if (!selectedProject || !newStatus) return;
+    
+    updateProjectStatusMutation.mutate({
+      projectId: selectedProject.id,
+      status: newStatus
+    });
   };
 
   // Filter and search projects
@@ -434,17 +496,95 @@ export default function Projects() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProject(project.id);
-                          }}
-                        >
-                          <i className="fas fa-trash"></i>
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            
+                            {/* Show different actions based on current status */}
+                            {(project.status.toLowerCase() === 'on hold' || project.status.toLowerCase() === 'abandoned') && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateProjectStatusMutation.mutate({
+                                    projectId: project.id,
+                                    status: 'active'
+                                  });
+                                }}
+                              >
+                                <Play className="mr-2 h-4 w-4" />
+                                <span>Reactivate Project</span>
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {project.status.toLowerCase() === 'active' && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateProjectStatusMutation.mutate({
+                                    projectId: project.id,
+                                    status: 'on hold'
+                                  });
+                                }}
+                              >
+                                <Pause className="mr-2 h-4 w-4" />
+                                <span>Put On Hold</span>
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {project.status.toLowerCase() !== 'abandoned' && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm("Are you sure you want to abandon this project?")) {
+                                    updateProjectStatusMutation.mutate({
+                                      projectId: project.id,
+                                      status: 'abandoned'
+                                    });
+                                  }
+                                }}
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                <span>Abandon Project</span>
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {project.status.toLowerCase() !== 'completed' && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateProjectStatusMutation.mutate({
+                                    projectId: project.id,
+                                    status: 'completed'
+                                  });
+                                }}
+                              >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                <span>Mark as Completed</span>
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProject(project.id);
+                              }}
+                            >
+                              <span>Delete Project</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
