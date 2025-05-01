@@ -275,30 +275,30 @@ export default function DefinePhase() {
   // Save project charter mutation
   const saveCharterMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Make sure all data is properly formatted
+      // Make sure all data is properly formatted - all numeric values should be converted to strings for storage
       const payload = {
         projectId,
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
         scope: data.scope || "",
-        savingsPerYear: parseFloat(data.savingsPerYear) || 0,
-        workingCapitalGains: parseFloat(data.workingCapitalGains) || 0,
-        waccPercentage: parseFloat(data.waccPercentage) || 0,
-        financialSavings: parseFloat(data.financialSavings) || 0,
+        savingsPerYear: (data.savingsPerYear || "0").toString(),
+        workingCapitalGains: (data.workingCapitalGains || "0").toString(),
+        waccPercentage: (data.waccPercentage || "0").toString(),
+        financialSavings: (data.financialSavings || "0").toString(),
         fteBenefits: data.fteBenefits || "",
         softBenefits: data.softBenefits || "",
         // Project cost fields
-        oneOffPeopleCost: parseFloat(data.oneOffPeopleCost) || 0,
-        oneOffTechnologyCost: parseFloat(data.oneOffTechnologyCost) || 0,
-        oneOffOtherCost: parseFloat(data.oneOffOtherCost) || 0,
+        oneOffPeopleCost: (data.oneOffPeopleCost || "0").toString(),
+        oneOffTechnologyCost: (data.oneOffTechnologyCost || "0").toString(),
+        oneOffOtherCost: (data.oneOffOtherCost || "0").toString(),
         oneOffOtherExplanation: data.oneOffOtherExplanation || "",
-        capexCost: parseFloat(data.capexCost) || 0,
+        capexCost: (data.capexCost || "0").toString(),
         capexExplanation: data.capexExplanation || "",
         // Include calculated values for reference/display
-        totalFinancialSavings: parseFloat(data.totalFinancialSavings) || 0,
-        totalProjectCosts: parseFloat(data.totalProjectCosts) || 0,
-        projectNetValue: parseFloat(data.projectNetValue) || 0,
+        totalFinancialSavings: (data.totalFinancialSavings || "0").toString(),
+        totalProjectCosts: (data.totalProjectCosts || "0").toString(),
+        projectNetValue: (data.projectNetValue || "0").toString(),
         roi: data.roi || "0",
         breakeven: data.breakeven || "0 years 0 months",
         userId: user?.id || 1,
@@ -432,22 +432,22 @@ export default function DefinePhase() {
         console.log("Added FTE benefits:", fteString);
       }
       
-      // Ensure all numeric fields are properly parsed
+      // Ensure all numeric fields are converted to strings as required by the schema
       const preparedData = {
         ...data,
         projectId,
         userId: user?.id || 1,
-        savingsPerYear: parseFloat(data.savingsPerYear) || 0,
-        workingCapitalGains: parseFloat(data.workingCapitalGains) || 0,
-        waccPercentage: parseFloat(data.waccPercentage) || 0,
-        financialSavings: parseFloat(data.financialSavings) || 0,
-        oneOffPeopleCost: parseFloat(data.oneOffPeopleCost) || 0,
-        oneOffTechnologyCost: parseFloat(data.oneOffTechnologyCost) || 0,
-        oneOffOtherCost: parseFloat(data.oneOffOtherCost) || 0,
-        capexCost: parseFloat(data.capexCost) || 0,
-        totalFinancialSavings: parseFloat(data.totalFinancialSavings) || 0,
-        totalProjectCosts: parseFloat(data.totalProjectCosts) || 0,
-        projectNetValue: parseFloat(data.projectNetValue) || 0,
+        savingsPerYear: (data.savingsPerYear || "0").toString(),
+        workingCapitalGains: (data.workingCapitalGains || "0").toString(),
+        waccPercentage: (data.waccPercentage || "0").toString(),
+        financialSavings: (data.financialSavings || "0").toString(),
+        oneOffPeopleCost: (data.oneOffPeopleCost || "0").toString(),
+        oneOffTechnologyCost: (data.oneOffTechnologyCost || "0").toString(),
+        oneOffOtherCost: (data.oneOffOtherCost || "0").toString(),
+        capexCost: (data.capexCost || "0").toString(),
+        totalFinancialSavings: (data.totalFinancialSavings || "0").toString(),
+        totalProjectCosts: (data.totalProjectCosts || "0").toString(),
+        projectNetValue: (data.projectNetValue || "0").toString(),
       };
       
       // Debug log
