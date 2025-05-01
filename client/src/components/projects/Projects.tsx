@@ -136,12 +136,16 @@ export default function Projects() {
   // Mutation for updating a project's status
   const updateProjectStatusMutation = useMutation({
     mutationFn: async (data: { projectId: number; status: string }) => {
-      return apiRequest("PUT", `/api/projects/${data.projectId}`, { 
+      console.log("Sending API request to update project status:", data);
+      const response = await apiRequest("PUT", `/api/projects/${data.projectId}`, { 
         status: data.status,
         lastUpdated: new Date().toISOString()
       });
+      console.log("API response for status update:", response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Status update successful:", data);
       toast({
         title: "Success",
         description: "Project status updated successfully",
@@ -151,6 +155,7 @@ export default function Projects() {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error) => {
+      console.error("Status update failed:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update project status",
@@ -206,6 +211,9 @@ export default function Projects() {
   // Filter and search projects
   const filterProjects = (projects: any[]) => {
     if (!projects) return [];
+    
+    // Log projects data to inspect
+    console.log("All projects:", projects);
     
     return projects.filter(project => {
       // Filter by status
@@ -514,6 +522,7 @@ export default function Projects() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log("Reactivating project:", project.id, project.title);
                                   updateProjectStatusMutation.mutate({
                                     projectId: project.id,
                                     status: 'active'
@@ -529,6 +538,7 @@ export default function Projects() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log("Putting project on hold:", project.id, project.title);
                                   updateProjectStatusMutation.mutate({
                                     projectId: project.id,
                                     status: 'on hold'
@@ -545,6 +555,7 @@ export default function Projects() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (confirm("Are you sure you want to abandon this project?")) {
+                                    console.log("Abandoning project:", project.id, project.title);
                                     updateProjectStatusMutation.mutate({
                                       projectId: project.id,
                                       status: 'abandoned'
@@ -561,6 +572,7 @@ export default function Projects() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  console.log("Marking project as completed:", project.id, project.title);
                                   updateProjectStatusMutation.mutate({
                                     projectId: project.id,
                                     status: 'completed'
