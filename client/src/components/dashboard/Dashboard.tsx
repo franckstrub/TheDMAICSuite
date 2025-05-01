@@ -648,8 +648,9 @@ export default function Dashboard() {
               p.status === "in-progress").length || 0;
             const completedCount = projectsWithBenefits?.projects?.filter(p => 
               p.status === "completed").length || 0;
-            const notStartedCount = projectsWithBenefits?.projects?.filter(p => 
-              p.status === "not-started").length || 0;
+            const onHoldCount = projectsWithBenefits?.projects?.filter(p => 
+              p.status === "not-started" || 
+              p.status === "on-hold").length || 0;
             const abandonedCount = projectsWithBenefits?.projects?.filter(p => 
               p.status === "abandoned" || 
               p.status === "canceled").length || 0;
@@ -661,7 +662,7 @@ export default function Dashboard() {
             
             // Return appropriate breakdown based on filter
             if (implementationStatus === "all") {
-              return `Active: ${activeCount} | Completed: ${completedCount} | Not Started: ${notStartedCount} | Abandoned: ${abandonedCount}`;
+              return `Active: ${activeCount} | Completed: ${completedCount} | On-Hold: ${onHoldCount} | Abandoned: ${abandonedCount}`;
             } else if (implementationStatus === "implemented") {
               return `Total: ${implementedCount} | Implemented Projects`;
             } else {
