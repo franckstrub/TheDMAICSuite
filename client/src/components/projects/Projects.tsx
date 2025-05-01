@@ -47,7 +47,8 @@ import {
   Ban, 
   Pause, 
   Play, 
-  CheckCircle 
+  CheckCircle,
+  Trash2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -112,22 +113,26 @@ export default function Projects() {
     },
   });
 
-  // Mutation for deleting a project
+  // Mutation for soft-deleting a project by changing its status
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
-      return apiRequest("DELETE", `/api/projects/${projectId}`, { userId: user?.id });
+      // Soft delete by setting status to "deleted" instead of actually deleting
+      return apiRequest("PUT", `/api/projects/${projectId}`, { 
+        status: 'deleted',
+        lastUpdated: new Date().toISOString()
+      });
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Project deleted successfully",
+        description: "Project moved to trash",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete project",
+        description: error instanceof Error ? error.message : "Failed to move project to trash",
         variant: "destructive",
       });
     },
@@ -187,7 +192,7 @@ export default function Projects() {
   };
 
   const handleDeleteProject = (projectId: number) => {
-    if (confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
+    if (confirm("Are you sure you want to move this project to trash? You can recover it later.")) {
       deleteProjectMutation.mutate(projectId);
     }
   };
@@ -602,7 +607,8 @@ export default function Projects() {
                                 handleDeleteProject(project.id);
                               }}
                             >
-                              <span>Delete Project</span>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Move to Trash</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
