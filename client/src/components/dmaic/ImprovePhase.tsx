@@ -30,7 +30,11 @@ import {
 export default function ImprovePhase() {
   const { user, currentProject } = useAppContext();
   const { toast } = useToast();
-  const projectId = currentProject?.id || 1; // Fallback to 1 for demo
+  const params = new URLSearchParams(window.location.search);
+  const urlProjectId = params.get('projectId');
+  
+  // Use URL project ID if available, otherwise fall back to current project
+  const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
 
   // Solution Generation state
   const [solutions, setSolutions] = useState([
