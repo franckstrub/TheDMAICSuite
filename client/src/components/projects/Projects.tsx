@@ -287,6 +287,7 @@ export default function Projects() {
                         <SelectItem value="on track">On Track</SelectItem>
                         <SelectItem value="at risk">At Risk</SelectItem>
                         <SelectItem value="on hold">On Hold</SelectItem>
+                        <SelectItem value="abandoned">Abandoned</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
@@ -352,6 +353,7 @@ export default function Projects() {
             <SelectItem value="on track">On Track</SelectItem>
             <SelectItem value="at risk">At Risk</SelectItem>
             <SelectItem value="on hold">On Hold</SelectItem>
+            <SelectItem value="abandoned">Abandoned</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
