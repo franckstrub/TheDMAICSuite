@@ -497,22 +497,47 @@ export default function DefinePhase() {
         console.log("Added FTE benefits:", fteString);
       }
       
-      // Ensure all numeric fields are converted to strings as required by the schema
+      // Ensure all numeric fields are properly converted to strings as required by the schema
+      // Note: This is where we consolidate all the data from multiple sources
       const preparedData = {
-        ...data,
+        // This will include the FTE parameters from the FTE state
         projectId,
         userId: user?.id || 1,
+        businessCase: data.businessCase || "",
+        problemStatement: data.problemStatement || "",
+        goals: data.goals || "",
+        scope: data.scope || "",
+        
+        // Project benefits - ensure all numeric values are converted to strings
         savingsPerYear: (data.savingsPerYear || "0").toString(),
         workingCapitalGains: (data.workingCapitalGains || "0").toString(),
         waccPercentage: (data.waccPercentage || "0").toString(),
         financialSavings: (data.financialSavings || "0").toString(),
+        fteBenefits: data.fteBenefits || "",
+        softBenefits: data.softBenefits || "",
+        
+        // FTE calculation parameters - already a separate section in the mutation
+        fteWorkingDaysPerYear: fteParams.workingDaysPerYear.toString(),
+        fteWorkingHoursPerDay: fteParams.workingHoursPerDay.toString(), 
+        fteTimeUnit: fteParams.timeUnit,
+        fteSavedHours: fteParams.savedHours.toString(),
+        fteCostPerYear: fteParams.fteCostPerYear.toString(),
+        fteCalculatedValue: fteParams.calculatedValue.toString(),
+        
+        // Project cost fields - ensure they're all included and converted to strings
         oneOffPeopleCost: (data.oneOffPeopleCost || "0").toString(),
-        oneOffTechnologyCost: (data.oneOffTechnologyCost || "0").toString(),
+        oneOffTechnologyCost: (data.oneOffTechnologyCost || "0").toString(), 
         oneOffOtherCost: (data.oneOffOtherCost || "0").toString(),
+        oneOffOtherExplanation: data.oneOffOtherExplanation || "",
         capexCost: (data.capexCost || "0").toString(),
+        capexExplanation: data.capexExplanation || "",
+        
+        // Calculated summary values
         totalFinancialSavings: (data.totalFinancialSavings || "0").toString(),
         totalProjectCosts: (data.totalProjectCosts || "0").toString(),
         projectNetValue: (data.projectNetValue || "0").toString(),
+        roi: data.roi || "0",
+        breakeven: data.breakeven || "0 years 0 months",
       };
       
       // Debug log
