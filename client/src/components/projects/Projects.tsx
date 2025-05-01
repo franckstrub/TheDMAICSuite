@@ -284,8 +284,6 @@ export default function Projects() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="on track">On Track</SelectItem>
-                        <SelectItem value="at risk">At Risk</SelectItem>
                         <SelectItem value="on hold">On Hold</SelectItem>
                         <SelectItem value="abandoned">Abandoned</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
@@ -350,8 +348,6 @@ export default function Projects() {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="on track">On Track</SelectItem>
-            <SelectItem value="at risk">At Risk</SelectItem>
             <SelectItem value="on hold">On Hold</SelectItem>
             <SelectItem value="abandoned">Abandoned</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>

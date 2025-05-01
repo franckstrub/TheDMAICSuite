@@ -65,8 +65,6 @@ export default function ProjectsTable() {
   const getStatusBgColor = (status: string): string => {
     const statusLower = status.toLowerCase();
     if (statusLower === 'active' || statusLower === 'in progress') return 'bg-green-100 text-green-800';
-    if (statusLower === 'at risk') return 'bg-yellow-100 text-yellow-800';
-    if (statusLower === 'on track') return 'bg-blue-100 text-blue-800';
     if (statusLower === 'completed') return 'bg-purple-100 text-purple-800';
     if (statusLower === 'abandoned') return 'bg-red-100 text-red-800';
     if (statusLower === 'on hold') return 'bg-gray-100 text-gray-800';
