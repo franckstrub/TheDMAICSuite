@@ -1226,7 +1226,7 @@ export default function Dashboard() {
                 </div>
                 <div className="text-sm text-gray-600 mt-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Financial Value:</span>
+                    <span className="text-gray-600">Financial Value (p.a.):</span>
                     <span className="font-medium text-green-600">{formatCurrency(calculateMetric(projects?.projects || [], 'fteValue'), currency)}</span>
                   </div>
                 </div>
