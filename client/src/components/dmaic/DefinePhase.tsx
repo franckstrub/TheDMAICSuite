@@ -117,60 +117,66 @@ export default function DefinePhase() {
 
   // Function to handle FTE parameter changes with automatic calculation
   const handleFteParamChange = (param: string, value: number | string) => {
+    // First, ensure the value is properly converted
+    const convertedValue = typeof value === 'string' ? 
+      (param === 'timeUnit' ? value : parseFloat(value) || 0) : 
+      parseFloat(value.toString()) || 0;
+    
+    // Update the state with the new parameter
     const newParams = {
       ...fteParams,
-      [param]: typeof value === 'string' ? value : parseFloat(value.toString())
+      [param]: convertedValue
     };
     
-    setFteParams(newParams);
+    // Immediately calculate the FTE values
+    const { workingDaysPerYear, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = newParams;
+    const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
     
-    // Automatically calculate FTE after parameter change
-    setTimeout(() => {
-      // Extract parameters from the updated state
-      const { workingDaysPerYear, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = newParams;
-      const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
-      
-      let annualSavedHours = 0;
-      
-      // Convert saved hours to annual basis
-      if (timeUnit === "day") {
-        annualSavedHours = savedHours * workingDaysPerYear;
-      } else if (timeUnit === "week") {
-        annualSavedHours = savedHours * (workingDaysPerYear / 5);
-      } else if (timeUnit === "month") {
-        annualSavedHours = savedHours * (workingDaysPerYear / 20);
-      }
-      
-      // Calculate FTE and monetary value
-      const calculatedFte = annualSavedHours / totalAnnualHours;
-      const calculatedValue = calculatedFte * fteCostPerYear;
-      
-      // Update the FTE params state immediately so updateTotalFinancialSavings will use the right value
-      setFteParams(prevParams => ({
-        ...prevParams,
-        calculatedFte: parseFloat(calculatedFte.toFixed(2)),
-        calculatedValue: parseFloat(calculatedValue.toFixed(2))
-      }));
-      
-      // Call the updateTotalFinancialSavings function to recalculate everything
-      // with a slight delay to ensure state updates have propagated
-      setTimeout(() => {
-        updateTotalFinancialSavings();
-      }, 50);
-      
-      // FTE params state has already been updated above
-      
-      // Set the hidden input value for form submission
-      const formattedValue = formatCurrency(calculatedValue, currency);
-      const fteString = `${calculatedFte.toFixed(2)} FTE (${formattedValue})`;
-      document.getElementById("fteBenefits")?.setAttribute("value", fteString);
-      
-      // Log for debugging - using only the calculated values
-      console.log("FTE updated:", { 
-        calculatedFte, 
-        calculatedValue
-      });
-    }, 0);
+    let annualSavedHours = 0;
+    
+    // Convert saved hours to annual basis
+    if (timeUnit === "day") {
+      annualSavedHours = savedHours * workingDaysPerYear;
+    } else if (timeUnit === "week") {
+      annualSavedHours = savedHours * (workingDaysPerYear / 5);
+    } else if (timeUnit === "month") {
+      annualSavedHours = savedHours * (workingDaysPerYear / 20);
+    }
+    
+    // Calculate FTE and monetary value
+    const calculatedFte = annualSavedHours / totalAnnualHours;
+    const calculatedValue = calculatedFte * fteCostPerYear;
+    
+    // Format the values
+    const formattedFte = parseFloat(calculatedFte.toFixed(2));
+    const formattedValue = parseFloat(calculatedValue.toFixed(2));
+    
+    // Update the FTE params state with calculated values
+    setFteParams({
+      ...newParams,
+      calculatedFte: formattedFte,
+      calculatedValue: formattedValue
+    });
+    
+    // Set the hidden input value for form submission
+    const formattedCurrency = formatCurrency(formattedValue, currency);
+    const fteString = `${formattedFte.toFixed(2)} FTE (${formattedCurrency})`;
+    
+    // Update both the DOM element and the form value in React Hook Form
+    document.getElementById("fteBenefits")?.setAttribute("value", fteString);
+    charterForm.setValue("fteBenefits", fteString);
+    
+    // Now update all financial calculations with the new FTE value
+    updateTotalFinancialSavings(formattedValue);
+    
+    // Log for debugging
+    console.log("FTE updated:", { 
+      param,
+      newValue: convertedValue,
+      calculatedFte: formattedFte, 
+      calculatedValue: formattedValue,
+      fteString
+    });
   };
 
   // Fetch project charter if exists
@@ -475,13 +481,13 @@ export default function DefinePhase() {
   };
 
   // Function to calculate and update total financial savings, net value, ROI, and breakeven
-  const updateTotalFinancialSavings = () => {
+  const updateTotalFinancialSavings = (overrideFteValue?: number) => {
     // Get values from form for benefits - ensure they're numbers
     const qualityCostSavings = parseFloat(charterForm.getValues("savingsPerYear").toString()) || 0;
     const financialSavings = parseFloat(charterForm.getValues("financialSavings").toString()) || 0;
     
-    // Get FTE benefits value from the state - ensure it's a number
-    const fteBenefits = Number(fteParams.calculatedValue) || 0;
+    // Get FTE benefits value - preferring the override value if provided
+    const fteBenefits = overrideFteValue !== undefined ? overrideFteValue : (Number(fteParams.calculatedValue) || 0);
     
     // Calculate total project financial savings
     const totalFinancialSavings = qualityCostSavings + financialSavings + fteBenefits;
