@@ -67,9 +67,9 @@ export default function LandingPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center text-primary font-bold text-xl">
-            <i className="fas fa-chart-line text-secondary mr-2"></i>
-            <span>Lean Six Sigma DMAIC Suite™</span>
+          <div className="flex items-center">
+            <img src={logoImage} alt="Equable Solutions Logo" className="h-10 mr-3" />
+            <span className="text-primary font-bold text-xl">Lean Six Sigma DMAIC Suite™</span>
           </div>
           
           <nav className="hidden md:flex items-center space-x-8">
