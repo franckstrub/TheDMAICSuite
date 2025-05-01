@@ -216,10 +216,12 @@ export default function Dashboard() {
   
   // Helper function to check if a project is implemented
   const isProjectImplemented = (project: any) => {
-    // A project is implemented if Improve phase is completed AND Control phase is in progress or completed
+    // A project is implemented if it has status "completed"
+    // OR if Improve phase is completed AND Control phase is in progress or completed
     return (
-      project.phases?.improve?.status === "completed" && 
-      (project.phases?.control?.status === "in-progress" || project.phases?.control?.status === "completed")
+      project.status === "completed" ||
+      (project.phases?.improve?.status === "completed" && 
+       (project.phases?.control?.status === "in-progress" || project.phases?.control?.status === "completed"))
     );
   };
   
