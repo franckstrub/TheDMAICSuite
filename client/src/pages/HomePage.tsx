@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 import MainLayout from "@/components/layout/MainLayout";
 import Dashboard from "@/components/dashboard/Dashboard";
@@ -12,10 +13,11 @@ import Settings from "@/components/settings/Settings";
 type HomeParams = {
   tab?: string;
   phase?: string;
+  projectId?: string;
 };
 
 export default function HomePage() {
-  const { user, setCurrentTab, setActivePhase } = useAppContext();
+  const { user, setCurrentTab, setActivePhase, setCurrentProject } = useAppContext();
   const [location, navigate] = useLocation();
   const params = useParams<HomeParams>();
   
@@ -36,6 +38,25 @@ export default function HomePage() {
       }
     }
   }, [params, setCurrentTab, setActivePhase]);
+  
+  // Fetch projects and handle the projectId parameter
+  const { data: projectsData } = useQuery({ 
+    queryKey: ["/api/projects"] 
+  });
+  
+  // Update the current project based on the projectId URL parameter
+  useEffect(() => {
+    if (projectsData && params.projectId) {
+      const projectId = parseInt(params.projectId);
+      // Find the project with the matching ID
+      const projects = projectsData.projects || [];
+      const project = projects.find((p: any) => p.id === projectId);
+      if (project) {
+        console.log(`Setting current project from URL to ID ${projectId} (${project.title})`);
+        setCurrentProject(project);
+      }
+    }
+  }, [projectsData, params.projectId, setCurrentProject]);
 
   if (!user) {
     return null;
