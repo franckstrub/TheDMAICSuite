@@ -46,6 +46,8 @@ export function getStatusColor(status: string): string {
       return 'bg-gray-100 text-gray-800';
     case 'abandoned':
       return 'bg-red-100 text-red-800';
+    case 'deleted':
+      return 'bg-gray-300 text-gray-900 line-through';
     default:
       return 'bg-gray-100 text-gray-800';
   }

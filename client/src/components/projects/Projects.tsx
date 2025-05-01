@@ -433,6 +433,7 @@ export default function Projects() {
             <SelectItem value="on hold">On Hold</SelectItem>
             <SelectItem value="abandoned">Abandoned</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="deleted">Trash</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -532,7 +533,8 @@ export default function Projects() {
                             {/* Show different actions based on current status */}
                             {(project.status.toLowerCase() === 'on hold' || 
                               project.status.toLowerCase() === 'abandoned' || 
-                              project.status.toLowerCase() === 'completed') && (
+                              project.status.toLowerCase() === 'completed' ||
+                              project.status.toLowerCase() === 'deleted') && (
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -544,7 +546,7 @@ export default function Projects() {
                                 }}
                               >
                                 <Play className="mr-2 h-4 w-4" />
-                                <span>Reactivate Project</span>
+                                <span>{project.status.toLowerCase() === 'deleted' ? 'Restore from Trash' : 'Reactivate Project'}</span>
                               </DropdownMenuItem>
                             )}
                             
@@ -600,16 +602,18 @@ export default function Projects() {
                             
                             <DropdownMenuSeparator />
                             
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteProject(project.id);
-                              }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Move to Trash</span>
-                            </DropdownMenuItem>
+                            {project.status.toLowerCase() !== 'deleted' && (
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteProject(project.id);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Move to Trash</span>
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
