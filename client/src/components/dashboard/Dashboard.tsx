@@ -232,130 +232,127 @@ export default function Dashboard() {
     return 0;
   };
 
-  // Helper function to calculate metrics based on projects
-  // Helper function that calculates actual values from project data based on implementation status
+  // Helper function to calculate metrics based on projects using actual project data
   const calculateMetric = (projects: Project[], metricType: string): number => {
     // If there are no projects, return 0
     if (!projects || projects.length === 0) {
       return 0;
     }
     
-    // Define different values for Implemented vs Not Implemented projects
-    // These values match what the user has specified for the financial calculations
-    const implementedValues = {
-      qualityCostSavings: 25000,
-      workingCapitalGains: 15000,
-      wacc: 0.1,
-      financialSavings: 1500,
-      fteBenefits: 0.35,
-      fteValue: 35000,
-      oneOffPeopleCost: 12000,
-      oneOffTechnologyCost: 800,
-      oneOffOtherCost: 1200,
-      oneOffCosts: 14000,
-      capexCosts: 10000,
-      totalCosts: 24000,
-      totalBenefits: 61500, // 25000 + 1500 + 35000
-      totalFinancialSavings: 61500,
-      totalSavings: 37500, // 61500 - 24000
-      roi: 1.56, // (61500 - 24000) / 24000
-      breakeven: 0.39 // 24000 / 61500
-    };
+    // Calculate actual totals based on the provided projects
+    // This uses the real, filtered project data
     
-    const notImplementedValues = {
-      qualityCostSavings: 5000,
-      workingCapitalGains: 5000,
-      wacc: 0.1,
-      financialSavings: 500,
-      fteBenefits: 0.1,
-      fteValue: 10000,
-      oneOffPeopleCost: 3000,
-      oneOffTechnologyCost: 200,
-      oneOffOtherCost: 300,
-      oneOffCosts: 3500,
-      capexCosts: 2000,
-      totalCosts: 5500,
-      totalBenefits: 15500, // 5000 + 500 + 10000
-      totalFinancialSavings: 15500,
-      totalSavings: 10000, // 15500 - 5500
-      roi: 1.82, // (15500 - 5500) / 5500
-      breakeven: 0.35 // 5500 / 15500
-    };
+    // BENEFITS
+    // Calculate total quality cost savings from all projects
+    const qualityCostSavings = projects.reduce((sum, project) => {
+      return sum + (project.benefits?.qualityCostSavings || 0);
+    }, 0);
     
-    // All projects combined values
-    const allProjectsValues = {
-      qualityCostSavings: 30000, // 25000 + 5000
-      workingCapitalGains: 20000, // 15000 + 5000
-      wacc: 0.1,
-      financialSavings: 2000, // 1500 + 500
-      fteBenefits: 0.45, // 0.35 + 0.1
-      fteValue: 45000, // 35000 + 10000
-      oneOffPeopleCost: 15000, // 12000 + 3000
-      oneOffTechnologyCost: 1000, // 800 + 200
-      oneOffOtherCost: 1500, // 1200 + 300
-      oneOffCosts: 17500, // 14000 + 3500
-      capexCosts: 12000, // 10000 + 2000
-      totalCosts: 29500, // 24000 + 5500
-      totalBenefits: 77000, // 61500 + 15500
-      totalFinancialSavings: 77000, // 61500 + 15500
-      totalSavings: 47500, // 37500 + 10000
-      roi: 1.61, // (77000 - 29500) / 29500
-      breakeven: 0.38 // 29500 / 77000
-    };
+    // Calculate working capital gains
+    const workingCapitalGains = projects.reduce((sum, project) => {
+      return sum + (project.benefits?.workingCapitalGains || 0);
+    }, 0);
     
-    // Select the appropriate values based on implementation status
-    let values;
-    if (implementationStatus === "implemented") {
-      values = implementedValues;
-    } else if (implementationStatus === "not-implemented") {
-      values = notImplementedValues;
-    } else {
-      values = allProjectsValues;
-    }
+    // Calculate financial savings using WACC
+    const financialSavings = projects.reduce((sum, project) => {
+      const wacc = project.benefits?.wacc || 0.1; // Default 10% if not specified
+      return sum + (project.benefits?.workingCapitalGains || 0) * wacc;
+    }, 0);
+    
+    // Calculate FTE benefits
+    const fteBenefits = projects.reduce((sum, project) => {
+      return sum + (project.benefits?.fteBenefits || 0);
+    }, 0);
+    
+    // Calculate financial value of FTE benefits
+    const fteValue = projects.reduce((sum, project) => {
+      const avgFTECost = project.benefits?.avgFTECost || 100000; // Default value if not specified
+      return sum + (project.benefits?.fteBenefits || 0) * avgFTECost;
+    }, 0);
+    
+    // COSTS
+    // Calculate one-off people costs
+    const oneOffPeopleCost = projects.reduce((sum, project) => {
+      return sum + (project.costs?.oneOffPeopleCost || 0);
+    }, 0);
+    
+    // Calculate one-off technology costs
+    const oneOffTechnologyCost = projects.reduce((sum, project) => {
+      return sum + (project.costs?.oneOffTechnologyCost || 0);
+    }, 0);
+    
+    // Calculate one-off other costs
+    const oneOffOtherCost = projects.reduce((sum, project) => {
+      return sum + (project.costs?.oneOffOtherCost || 0);
+    }, 0);
+    
+    // Calculate total one-off costs
+    const oneOffCosts = oneOffPeopleCost + oneOffTechnologyCost + oneOffOtherCost;
+    
+    // Calculate CAPEX costs
+    const capexCosts = projects.reduce((sum, project) => {
+      return sum + (project.costs?.capexCost || 0);
+    }, 0);
+    
+    // Calculate total costs
+    const totalCosts = oneOffCosts + capexCosts;
+    
+    // AGGREGATE METRICS
+    // Calculate total benefits
+    const totalFinancialSavings = qualityCostSavings + financialSavings + fteValue;
+    
+    // Calculate net savings (benefits - costs)
+    const totalSavings = totalFinancialSavings - totalCosts;
+    
+    // Calculate ROI
+    const roi = totalCosts > 0 ? totalSavings / totalCosts : 0;
+    
+    // Calculate breakeven in years
+    const breakeven = totalFinancialSavings > 0 ? totalCosts / totalFinancialSavings : 0;
     
     // Return the requested metric
     switch(metricType) {
       // Benefit metrics
       case 'qualityCostSavings':
-        return values.qualityCostSavings;
+        return qualityCostSavings;
       case 'workingCapitalGains':
-        return values.workingCapitalGains;
+        return workingCapitalGains;
       case 'financialSavings':
-        return values.financialSavings;
+        return financialSavings;
       case 'fteBenefits':
-        return values.fteBenefits;
+        return fteBenefits;
       case 'fteValue':
-        return values.fteValue;
+        return fteValue;
         
       // Cost metrics
       case 'oneOffPeopleCost':
-        return values.oneOffPeopleCost;
+        return oneOffPeopleCost;
       case 'oneOffTechnologyCost':
-        return values.oneOffTechnologyCost;
+        return oneOffTechnologyCost;
       case 'oneOffOtherCost':
-        return values.oneOffOtherCost;
+        return oneOffOtherCost;
       case 'oneOffCosts':
-        return values.oneOffCosts;
+        return oneOffCosts;
       case 'capexCosts':
-        return values.capexCosts;
+        return capexCosts;
       case 'totalCosts':
-        return values.totalCosts;
+        return totalCosts;
         
       // Aggregate financial metrics
       case 'totalBenefits':
-        return values.totalBenefits;
+        return totalFinancialSavings; // Total financial benefits
       case 'totalFinancialSavings':
-        return values.totalFinancialSavings;
+        return totalFinancialSavings; // Quality + Financial + FTE benefits
       case 'totalSavings':
-        return values.totalSavings;
+        return totalSavings; // Benefits - Costs
         
       // ROI calculation
       case 'roi':
-        return values.roi;
+        return roi; // Return on investment
         
       // Breakeven calculation
       case 'breakeven':
-        return values.breakeven;
+        return breakeven; // Breakeven period
         
       default:
         return 0;
