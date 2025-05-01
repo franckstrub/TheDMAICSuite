@@ -189,41 +189,9 @@ export default function DefinePhase() {
   // Set charter form values when data is fetched
   useEffect(() => {
     if (charter?.charter) {
-      charterForm.reset({
-        projectTitle: currentProject?.title || "",
-        businessCase: charter.charter.businessCase || "",
-        problemStatement: charter.charter.problemStatement || "",
-        goals: charter.charter.goals || "",
-        scope: charter.charter.scope || "",
-        startDate: currentProject?.startDate 
-          ? new Date(currentProject.startDate).toISOString().split('T')[0] 
-          : "",
-        targetEndDate: currentProject?.targetEndDate 
-          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
-          : "",
-        savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
-        workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
-        waccPercentage: charter.charter.waccPercentage?.toString() || "10",
-        financialSavings: charter.charter.financialSavings?.toString() || "",
-        fteBenefits: charter.charter.fteBenefits || "",
-        totalFinancialSavings: "",  // Will be calculated after form initialization
-        softBenefits: charter.charter.softBenefits || "",
-        // Project cost fields
-        oneOffPeopleCost: charter.charter.oneOffPeopleCost?.toString() || "",
-        oneOffTechnologyCost: charter.charter.oneOffTechnologyCost?.toString() || "",
-        oneOffOtherCost: charter.charter.oneOffOtherCost?.toString() || "",
-        oneOffOtherExplanation: charter.charter.oneOffOtherExplanation || "",
-        capexCost: charter.charter.capexCost?.toString() || "",
-        capexExplanation: charter.charter.capexExplanation || "",
-        // Summary financial fields
-        totalProjectCosts: "",  // Will be calculated
-        projectNetValue: "",    // Will be calculated
-        // Financial metrics
-        roi: "",               // Will be calculated
-        breakeven: ""          // Will be calculated
-      });
+      // First load the FTE parameters so we can use them in the calculation
+      let fteBenefitsValue = 0;
       
-      // Load FTE parameters if they exist
       try {
         // First, try to load stored FTE parameters
         if (charter.charter.fteWorkingDaysPerYear && 
@@ -237,6 +205,7 @@ export default function DefinePhase() {
           const savedHours = parseFloat(charter.charter.fteSavedHours);
           const fteCostPerYear = parseFloat(charter.charter.fteCostPerYear);
           const calculatedValue = parseFloat(charter.charter.fteCalculatedValue || "0");
+          fteBenefitsValue = calculatedValue;
           
           // Calculate FTE from these parameters
           const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
@@ -272,7 +241,8 @@ export default function DefinePhase() {
             savedHours, 
             fteCostPerYear,
             calculatedFte: parseFloat(calculatedFte.toFixed(2)),
-            calculatedValue
+            calculatedValue,
+            fteBenefitsValue
           });
         } 
         // Fallback: if we don't have the parameters but have the FTE string
@@ -281,20 +251,59 @@ export default function DefinePhase() {
           const fteMatch = charter.charter.fteBenefits.match(/(\d+\.\d+)\s+FTE/);
           if (fteMatch && fteMatch[1]) {
             const fteValue = parseFloat(fteMatch[1]);
+            const fteCostPerYear = 100000; // Default value
+            fteBenefitsValue = fteValue * fteCostPerYear;
+            
             setFteParams(prev => ({
               ...prev,
               calculatedFte: fteValue,
-              calculatedValue: fteValue * (prev.fteCostPerYear || 100000)
+              calculatedValue: fteBenefitsValue
             }));
-            console.log("Fallback: Parsed FTE value from string:", fteValue);
+            console.log("Fallback: Parsed FTE value from string:", fteValue, "calculated value:", fteBenefitsValue);
           }
         }
       } catch (e) {
         console.error("Error loading FTE parameters:", e);
       }
       
+      // Now reset the form with the loaded values
+      charterForm.reset({
+        projectTitle: currentProject?.title || "",
+        businessCase: charter.charter.businessCase || "",
+        problemStatement: charter.charter.problemStatement || "",
+        goals: charter.charter.goals || "",
+        scope: charter.charter.scope || "",
+        startDate: currentProject?.startDate 
+          ? new Date(currentProject.startDate).toISOString().split('T')[0] 
+          : "",
+        targetEndDate: currentProject?.targetEndDate 
+          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
+          : "",
+        savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
+        workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
+        waccPercentage: charter.charter.waccPercentage?.toString() || "10",
+        financialSavings: charter.charter.financialSavings?.toString() || "",
+        fteBenefits: charter.charter.fteBenefits || "",
+        totalFinancialSavings: charter.charter.totalFinancialSavings?.toString() || "",
+        softBenefits: charter.charter.softBenefits || "",
+        // Project cost fields
+        oneOffPeopleCost: charter.charter.oneOffPeopleCost?.toString() || "",
+        oneOffTechnologyCost: charter.charter.oneOffTechnologyCost?.toString() || "",
+        oneOffOtherCost: charter.charter.oneOffOtherCost?.toString() || "",
+        oneOffOtherExplanation: charter.charter.oneOffOtherExplanation || "",
+        capexCost: charter.charter.capexCost?.toString() || "",
+        capexExplanation: charter.charter.capexExplanation || "",
+        // Summary financial fields
+        totalProjectCosts: charter.charter.totalProjectCosts?.toString() || "",
+        projectNetValue: charter.charter.projectNetValue?.toString() || "",
+        // Financial metrics
+        roi: charter.charter.roi?.toString() || "",
+        breakeven: charter.charter.breakeven || ""
+      });
+      
       // Calculate total financial savings after loading the form data
-      setTimeout(updateTotalFinancialSavings, 100);
+      // Pass the fteBenefitsValue to ensure it's included in the calculation
+      setTimeout(() => updateTotalFinancialSavings(fteBenefitsValue), 100);
     }
   }, [charter, currentProject]);
 
