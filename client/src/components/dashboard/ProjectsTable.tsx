@@ -68,6 +68,8 @@ export default function ProjectsTable() {
     if (statusLower === 'at risk') return 'bg-yellow-100 text-yellow-800';
     if (statusLower === 'on track') return 'bg-blue-100 text-blue-800';
     if (statusLower === 'completed') return 'bg-purple-100 text-purple-800';
+    if (statusLower === 'abandoned') return 'bg-red-100 text-red-800';
+    if (statusLower === 'on hold') return 'bg-gray-100 text-gray-800';
     return 'bg-gray-100 text-gray-800';
   };
   
