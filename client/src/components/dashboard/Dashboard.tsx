@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useAppContext } from "@/store/AppContext";
+import { useAppContext, ImplementationStatusType } from "@/store/AppContext";
 import StatsCard from "./StatsCard";
 import ProjectsTable from "./ProjectsTable";
 import ActivityItem from "./ActivityItem";
@@ -834,11 +834,20 @@ export default function Dashboard() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatsCard 
-          title={implementationStatus === "all" 
-            ? "All Projects" 
-            : implementationStatus === "implemented" 
-              ? "Implemented Projects" 
-              : "Not Implemented Projects"}
+          title={(() => {
+            // Generate card title based on current filter
+            switch(implementationStatus) {
+              case "all": return "All Projects";
+              case "active": return "Active Projects";
+              case "completed": return "Completed Projects";
+              case "on-hold": return "On-Hold Projects";
+              case "abandoned": return "Abandoned Projects";
+              case "active-completed": return "Active + Completed Projects";
+              case "implemented": return "Implemented Projects";
+              case "not-implemented": return "Not Implemented Projects";
+              default: return "Projects";
+            }
+          })()}
           value={projects?.projects?.length.toString() || "0"}
           // Calculate the percentage change based on actual data
           change={calculateProjectsChange(projects?.projects)}
@@ -862,12 +871,25 @@ export default function Dashboard() {
             const notImplementedCount = projectsWithBenefits?.projects?.length - implementedCount || 0;
             
             // Return appropriate breakdown based on filter
-            if (implementationStatus === "all") {
-              return `Active: ${activeCount} | Completed: ${completedCount} | On-Hold: ${onHoldCount} | Abandoned: ${abandonedCount}`;
-            } else if (implementationStatus === "implemented") {
-              return `Total: ${implementedCount} | Implemented Projects`;
-            } else {
-              return `Total: ${notImplementedCount} | Not Implemented Projects`;
+            switch(implementationStatus) {
+              case "all":
+                return `Active: ${activeCount} | Completed: ${completedCount} | On-Hold: ${onHoldCount} | Abandoned: ${abandonedCount}`;
+              case "active":
+                return `Total: ${activeCount} | Active Projects`;
+              case "completed":
+                return `Total: ${completedCount} | Completed Projects`;
+              case "on-hold":
+                return `Total: ${onHoldCount} | On-Hold Projects`;
+              case "abandoned":
+                return `Total: ${abandonedCount} | Abandoned Projects`;
+              case "active-completed":
+                return `Active: ${activeCount} | Completed: ${completedCount} | Total: ${activeCount + completedCount}`;
+              case "implemented":
+                return `Total: ${implementedCount} | Implemented Projects`;
+              case "not-implemented":
+                return `Total: ${notImplementedCount} | Not Implemented Projects`;
+              default:
+                return `All Projects: ${projectsWithBenefits?.projects?.length || 0}`;
             }
           })()}
           icon="project-diagram"
@@ -878,7 +900,20 @@ export default function Dashboard() {
           value={`${Math.round(calculateMetric(projects?.projects || [], 'roi') * 100)}%`}
           secondaryValue="(Financial Savings-Costs)/Costs"
           change={0} // No comparison data available yet for change calculation
-          changeLabel={implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}
+          changeLabel={(() => {
+            // Generate change label based on current filter
+            switch(implementationStatus) {
+              case "all": return "All Projects";
+              case "active": return "Active Projects";
+              case "completed": return "Completed Projects";
+              case "on-hold": return "On-Hold Projects";
+              case "abandoned": return "Abandoned Projects";
+              case "active-completed": return "Active + Completed Projects";
+              case "implemented": return "Implemented Projects";
+              case "not-implemented": return "Not Implemented Projects";
+              default: return "Projects";
+            }
+          })()}
           icon="chart-pie"
           iconBgColor="indigo"
         />
@@ -887,7 +922,20 @@ export default function Dashboard() {
           value={formatBreakeven(calculateMetric(projects?.projects || [], 'breakeven'))}
           secondaryValue="Costs ÷ Annual Financial Savings"
           change={0} // No comparison data available yet for change calculation
-          changeLabel={implementationStatus === "all" ? "All Projects" : implementationStatus === "implemented" ? "Implemented Projects" : "Not Implemented Projects"}
+          changeLabel={(() => {
+            // Generate change label based on current filter
+            switch(implementationStatus) {
+              case "all": return "All Projects";
+              case "active": return "Active Projects";
+              case "completed": return "Completed Projects";
+              case "on-hold": return "On-Hold Projects";
+              case "abandoned": return "Abandoned Projects";
+              case "active-completed": return "Active + Completed Projects";
+              case "implemented": return "Implemented Projects";
+              case "not-implemented": return "Not Implemented Projects";
+              default: return "Projects";
+            }
+          })()}
           icon="hourglass-half"
           iconBgColor="yellow"
         />
@@ -913,7 +961,19 @@ export default function Dashboard() {
                 <div className="mt-2 text-sm text-green-600">
                   <div>
                     Across {projects?.projects?.length || 0} projects {implementationStatus !== "all" ? 
-                    `(${implementationStatus === "implemented" ? "Implemented" : "Not Implemented"} only)` : ""}
+                    (() => {
+                      // Generate appropriate status label based on filter
+                      switch(implementationStatus) {
+                        case "active": return "(Active only)";
+                        case "completed": return "(Completed only)"; 
+                        case "on-hold": return "(On-Hold only)";
+                        case "abandoned": return "(Abandoned only)";
+                        case "active-completed": return "(Active + Completed)";
+                        case "implemented": return "(Implemented only)";
+                        case "not-implemented": return "(Not Implemented only)";
+                        default: return "";
+                      }
+                    })() : ""}
                   </div>
                   <div className="mt-1 italic text-xs">
                     Note: Quality Savings + Financial Savings + FTE Benefits
@@ -986,7 +1046,19 @@ export default function Dashboard() {
                 <div className="mt-2 text-sm text-red-600">
                   <div>
                     Across {projects?.projects?.length || 0} projects {implementationStatus !== "all" ? 
-                    `(${implementationStatus === "implemented" ? "Implemented" : "Not Implemented"} only)` : ""}
+                    (() => {
+                      // Generate appropriate status label based on filter
+                      switch(implementationStatus) {
+                        case "active": return "(Active only)";
+                        case "completed": return "(Completed only)"; 
+                        case "on-hold": return "(On-Hold only)";
+                        case "abandoned": return "(Abandoned only)";
+                        case "active-completed": return "(Active + Completed)";
+                        case "implemented": return "(Implemented only)";
+                        case "not-implemented": return "(Not Implemented only)";
+                        default: return "";
+                      }
+                    })() : ""}
                   </div>
                   <div className="mt-1 italic text-xs">
                     Note: Total includes one-off costs and CAPEX costs
@@ -1062,7 +1134,20 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="h-80">
             <div className="mb-3 px-2">
-              <p className="text-sm text-gray-600">Financial impact across all {implementationStatus === "all" ? "" : implementationStatus === "implemented" ? "implemented " : "not implemented "}projects ({projects?.projects?.length || 0})</p>
+              <p className="text-sm text-gray-600">Financial impact across {(() => {
+                  // Generate appropriate status description based on filter
+                  switch(implementationStatus) {
+                    case "all": return "all";
+                    case "active": return "active"; 
+                    case "completed": return "completed";
+                    case "on-hold": return "on-hold";
+                    case "abandoned": return "abandoned";
+                    case "active-completed": return "active and completed";
+                    case "implemented": return "implemented";
+                    case "not-implemented": return "not implemented";
+                    default: return "";
+                  }
+                })()} projects ({projects?.projects?.length || 0})</p>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-sm text-gray-700">Net Financial Value:</span>
                 <span className="font-medium text-gray-900">{formatCurrency(calculateMetric(projects?.projects || [], 'totalFinancialSavings') - calculateMetric(projects?.projects || [], 'totalCosts'), currency)}</span>
