@@ -21,7 +21,11 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Cart
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
   const { toast } = useToast();
-  const projectId = currentProject?.id || 1; // Fallback to 1 for demo
+  const params = new URLSearchParams(window.location.search);
+  const urlProjectId = params.get('projectId');
+  
+  // Use URL project ID if available, otherwise fall back to current project
+  const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
 
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState([

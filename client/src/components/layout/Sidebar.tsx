@@ -26,7 +26,8 @@ export default function Sidebar() {
     activePhase, 
     setActivePhase, 
     sidebarOpen, 
-    setSidebarOpen 
+    setSidebarOpen,
+    currentProject
   } = useAppContext();
   const [location, navigate] = useLocation();
 
@@ -34,7 +35,13 @@ export default function Sidebar() {
     setCurrentTab(tab);
     if (phase) {
       setActivePhase(phase);
-      navigate(`/app/${tab}/${phase}`);
+      
+      // If we're navigating to a DMAIC phase and have a current project, include the project ID
+      if (tab === "dmaic" && currentProject?.id) {
+        navigate(`/app/${tab}/${phase}?projectId=${currentProject.id}`);
+      } else {
+        navigate(`/app/${tab}/${phase}`);
+      }
     } else {
       navigate(`/app/${tab}`);
     }
