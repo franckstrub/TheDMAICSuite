@@ -73,9 +73,22 @@ export default function DmaicTools() {
     <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">DMAIC Methodology</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {currentProject?.title ? (
+              <>
+                <span className="text-primary">{currentProject.title}</span> - DMAIC
+              </>
+            ) : (
+              "DMAIC Methodology"
+            )}
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             {activePhase.charAt(0).toUpperCase() + activePhase.slice(1)} Phase Tools & Techniques
+            {currentProject?.projectType && (
+              <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
+                {currentProject.projectType}
+              </span>
+            )}
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
