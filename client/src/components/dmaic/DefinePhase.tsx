@@ -607,6 +607,7 @@ export default function DefinePhase() {
       // Initialize form with project data and default values
       charterForm.reset({
         projectTitle: currentProject?.title || "",
+        projectReferenceNumber: "",
         projectLeader: "",
         sponsor: "",
         sponsorFunction: "",
@@ -697,6 +698,7 @@ export default function DefinePhase() {
       // Make sure all data is properly formatted - all numeric values should be converted to strings for storage
       const payload = {
         projectId,
+        projectReferenceNumber: data.projectReferenceNumber || "",
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
@@ -956,6 +958,7 @@ export default function DefinePhase() {
         // This will include the FTE parameters from the FTE state
         projectId,
         userId: user?.id || 1,
+        projectReferenceNumber: data.projectReferenceNumber || "",
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
@@ -1164,6 +1167,14 @@ export default function DefinePhase() {
                       id="projectTitle"
                       placeholder="Order Processing Optimization"
                       {...charterForm.register("projectTitle")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="projectReferenceNumber">Project Reference Number</Label>
+                    <Input
+                      id="projectReferenceNumber"
+                      placeholder="LSS-2025-001"
+                      {...charterForm.register("projectReferenceNumber")}
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
