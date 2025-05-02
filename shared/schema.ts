@@ -100,12 +100,12 @@ export const projectCharters = pgTable("project_charters", {
     category: 'employee' | 'customer' | 'process' | 'growth';
   }>>(),
   // Milestone dates
-  kick_off_date: text("kick_off_date"),
-  define_phase_date: text("define_phase_date"),
-  measure_phase_date: text("measure_phase_date"),
-  analyze_phase_date: text("analyze_phase_date"),
-  improve_phase_date: text("improve_phase_date"),
-  control_phase_date: text("control_phase_date"),
+  kick_off_date: date("kick_off_date"),
+  define_phase_date: date("define_phase_date"),
+  measure_phase_date: date("measure_phase_date"),
+  analyze_phase_date: date("analyze_phase_date"),
+  improve_phase_date: date("improve_phase_date"),
+  control_phase_date: date("control_phase_date"),
   
   // Project cost fields
   oneOffPeopleCost: text("one_off_people_cost"),
