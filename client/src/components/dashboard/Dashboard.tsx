@@ -656,7 +656,16 @@ export default function Dashboard() {
         case "not-implemented":
           return !isProjectImplemented(project); // Non-completed projects
         case "active":
-          return project.status === "active" || project.status === "in-progress";
+          // An active project is NOT completed, cancelled, or abandoned
+          // and is being worked on in a DMAIC phase
+          return (
+            project.status !== "completed" && 
+            project.status !== "canceled" && 
+            project.status !== "abandoned" &&
+            (project.status === "active" || 
+             project.status === "in-progress" || 
+             project.currentPhase !== undefined)
+          );
         case "completed":
           return project.status === "completed"; // Same as implemented
         case "on-hold":
@@ -924,13 +933,24 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       
-      {/* Implementation Status Definition - Show only when relevant */}
+      {/* Status Definition - Show only when relevant */}
       {(implementationStatus === "implemented" || implementationStatus === "not-implemented") && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
           <h3 className="text-sm font-medium text-blue-800 mb-1">Implementation Status Definition:</h3>
           <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
             <li><span className="font-medium">Implemented Projects:</span> Status is "completed" OR Improve phase is completed AND Control phase is in progress/completed</li>
             <li><span className="font-medium">Not Implemented Projects:</span> All other projects</li>
+          </ul>
+        </div>
+      )}
+      
+      {/* Active Projects Definition */}
+      {implementationStatus === "active" && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <h3 className="text-sm font-medium text-blue-800 mb-1">Active Projects Definition:</h3>
+          <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
+            <li>Projects NOT marked as "Completed", "Canceled", or "Abandoned"</li>
+            <li>AND being worked on in any DMAIC phase</li>
           </ul>
         </div>
       )}
@@ -956,10 +976,14 @@ export default function Dashboard() {
           // Calculate the percentage change based on actual data
           change={calculateProjectsChange(projects?.projects)}
           changeLabel={(() => {
-            // Get counts by status
+            // Get counts by status - using our active project definition
             const activeCount = projectsWithBenefits?.projects?.filter(p => 
-              p.status === "active" || 
-              p.status === "in-progress").length || 0;
+              p.status !== "completed" && 
+              p.status !== "canceled" && 
+              p.status !== "abandoned" &&
+              (p.status === "active" || 
+               p.status === "in-progress" || 
+               p.currentPhase !== undefined)).length || 0;
             const completedCount = projectsWithBenefits?.projects?.filter(p => 
               p.status === "completed").length || 0;
             const onHoldCount = projectsWithBenefits?.projects?.filter(p => 
