@@ -453,9 +453,10 @@ export default function Dashboard() {
     // COSTS
     // Calculate one-off people costs
     const oneOffPeopleCost = projects.reduce((sum, project) => {
-      // Handle both number and string types
+      // Use parseNumericValue for consistent handling of all numeric fields
       const opc = project.costs?.oneOffPeopleCost;
-      const opcValue = typeof opc === 'string' ? parseFloat(opc) : (opc || 0);
+      const opcValue = parseNumericValue(opc, 0);
+      console.log(`Project ${project.id} one-off people cost:`, opc, "parsed as:", opcValue);
       return sum + opcValue;
     }, 0);
     
