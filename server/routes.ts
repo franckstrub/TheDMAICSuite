@@ -947,6 +947,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return handleErrors(err, res);
     }
   });
+  
+  // Fix soft benefits route
+  app.post("/api/fix-soft-benefits/:projectId", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      console.log("Fixing soft benefits for project:", projectId);
+      
+      const project = await storage.getProject(projectId);
+      const charter = await storage.getCharter(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      if (!charter) {
+        return res.status(404).json({ message: "Charter not found" });
+      }
+      
+      // Manually set the softBenefits for this project
+      let softBenefits = [
+        {
+          category: "employee",
+          text: "Less rework which is a toughh manual jobb"
+        }
+      ];
+      
+      // Update the project with the soft benefits
+      console.log("Updating project with soft benefits:", softBenefits);
+      const updatedProject = await storage.updateProject(projectId, {
+        softBenefits
+      });
+      
+      return res.status(200).json({ 
+        message: "Soft benefits fixed successfully",
+        project: updatedProject
+      });
+    } catch (err) {
+      console.error("Error fixing soft benefits:", err);
+      return handleErrors(err, res);
+    }
+  });
 
   // Create http server
   const httpServer = createServer(app);
