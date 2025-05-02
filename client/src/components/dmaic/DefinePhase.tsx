@@ -42,6 +42,9 @@ export default function DefinePhase() {
   // State for stakeholders management
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   
+  // State for team members management
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
 
@@ -304,6 +307,21 @@ export default function DefinePhase() {
         }
       }
       
+      // Load team members if available
+      if (charter.charter.teamMembers) {
+        try {
+          const teamMembersData = Array.isArray(charter.charter.teamMembers) 
+            ? charter.charter.teamMembers 
+            : JSON.parse(charter.charter.teamMembers as string);
+          
+          setTeamMembers(teamMembersData);
+          console.log("Loaded team members:", teamMembersData);
+        } catch (e) {
+          console.error("Error parsing team members:", e);
+          setTeamMembers([]);
+        }
+      }
+      
       // First load the FTE parameters so we can use them in the calculation
       let fteBenefitsValue = 0;
       
@@ -532,6 +550,8 @@ export default function DefinePhase() {
         sponsorFunction: data.sponsorFunction || "",
         // Store stakeholders as an array
         stakeholders: stakeholders,
+        // Store team members as an array
+        teamMembers: teamMembers,
         // Keep legacy fields for backward compatibility
         stakeholder: stakeholders.length > 0 ? stakeholders[0].name : "",
         stakeholderFunction: stakeholders.length > 0 ? stakeholders[0].function : "",
@@ -677,8 +697,9 @@ export default function DefinePhase() {
     try {
       console.log("handleSaveCharter triggered with form data:", data);
       
-      // Create a working copy of the stakeholders list
+      // Create working copies of the stakeholders and team members lists
       let workingStakeholders = [...stakeholders];
+      let workingTeamMembers = [...teamMembers];
       
       // Check for any pending stakeholder in the form
       const stakeholderForm = document.querySelector('.stakeholder-form');
@@ -706,6 +727,39 @@ export default function DefinePhase() {
           if (functionInput) functionInput.value = "";
           
           console.log("Updated stakeholders list:", workingStakeholders);
+        }
+      }
+      
+      // Check for any pending team member in the form
+      const teamMemberForm = document.querySelector('.team-member-form');
+      if (teamMemberForm) {
+        const nameInput = document.querySelector('.team-member-name-input') as HTMLInputElement;
+        const functionInput = document.querySelector('.team-member-function-input') as HTMLInputElement;
+        const dedicationInput = document.querySelector('.team-member-dedication-input') as HTMLInputElement;
+        
+        if (nameInput && nameInput.value.trim()) {
+          console.log("Found pending team member data:", nameInput.value, functionInput?.value, dedicationInput?.value);
+          
+          // Create the new team member
+          const pendingTeamMember = {
+            name: nameInput.value.trim(),
+            function: functionInput && functionInput.value.trim() ? functionInput.value.trim() : undefined,
+            dedication: dedicationInput && dedicationInput.value ? 
+              Math.min(100, Math.max(0, parseInt(dedicationInput.value))) : 100
+          };
+          
+          // Add it to our copy
+          workingTeamMembers.push(pendingTeamMember);
+          
+          // Update the state
+          setTeamMembers(workingTeamMembers);
+          
+          // Clear the inputs
+          nameInput.value = "";
+          if (functionInput) functionInput.value = "";
+          if (dedicationInput) dedicationInput.value = "100";
+          
+          console.log("Updated team members list:", workingTeamMembers);
         }
       }
       
@@ -747,6 +801,8 @@ export default function DefinePhase() {
         sponsorFunction: data.sponsorFunction || "",
         // Include stakeholders as an array with any pending data
         stakeholders: workingStakeholders,
+        // Include team members as an array with any pending data
+        teamMembers: workingTeamMembers,
         // Keep legacy fields for backward compatibility
         stakeholder: workingStakeholders.length > 0 ? workingStakeholders[0].name : "",
         stakeholderFunction: workingStakeholders.length > 0 ? workingStakeholders[0].function : "",
@@ -1035,6 +1091,13 @@ export default function DefinePhase() {
                     <StakeholderManagement 
                       stakeholders={stakeholders}
                       onChange={setStakeholders}
+                    />
+                  </div>
+                  <div>
+                    {/* Team Member Management Component */}
+                    <TeamMemberManagement 
+                      teamMembers={teamMembers}
+                      onChange={setTeamMembers}
                     />
                   </div>
                   <div>
