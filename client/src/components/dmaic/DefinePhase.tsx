@@ -921,6 +921,24 @@ export default function DefinePhase() {
                       </Select>
                     </div>
                   </div>
+                  <div>
+                    <Label htmlFor="businessCase">Business Case</Label>
+                    <Textarea
+                      id="businessCase"
+                      placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not this project"
+                      rows={3}
+                      {...charterForm.register("businessCase")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="problemStatement">Problem Statement</Label>
+                    <Textarea
+                      id="problemStatement"
+                      placeholder="Define the problem to be solved in a SMART statement (Specific, Measurable, Attainable, Realistic, Tangible)..."
+                      rows={3}
+                      {...charterForm.register("problemStatement")}
+                    />
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="sponsor">Sponsor</Label>
@@ -947,24 +965,6 @@ export default function DefinePhase() {
                       {...charterForm.register("financialController")}
                     />
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="businessCase">Business Case</Label>
-                  <Textarea
-                    id="businessCase"
-                    placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not this project"
-                    rows={3}
-                    {...charterForm.register("businessCase")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="problemStatement">Problem Statement</Label>
-                  <Textarea
-                    id="problemStatement"
-                    placeholder="Define the problem to be solved in a SMART statement (Specific, Measurable, Attainable, Realistic, Tangible)..."
-                    rows={3}
-                    {...charterForm.register("problemStatement")}
-                  />
                 </div>
               </div>
               <div className="space-y-4">
