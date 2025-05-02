@@ -54,6 +54,8 @@ export const projectCharters = pgTable("project_charters", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
   projectLeader: text("project_leader"),
+  sponsor: text("sponsor"),
+  sponsorFunction: text("sponsor_function"),
   beltLevel: text("belt_level"),
   projectType: text("project_type"),
   projectCategory: text("project_category"),
@@ -99,6 +101,8 @@ export const projectCharters = pgTable("project_charters", {
 export const insertCharterSchema = createInsertSchema(projectCharters).pick({
   projectId: true,
   projectLeader: true,
+  sponsor: true,
+  sponsorFunction: true,
   beltLevel: true,
   projectType: true,
   projectCategory: true,
