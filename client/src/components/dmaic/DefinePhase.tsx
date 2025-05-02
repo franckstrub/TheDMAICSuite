@@ -25,7 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import StakeholderManagement from "@/components/stakeholders/StakeholderManagement";
-import { Stakeholder } from "@shared/schema";
+import TeamMemberManagement from "@/components/team/TeamMemberManagement";
+import { Stakeholder, TeamMember } from "@shared/schema";
 
 export default function DefinePhase() {
   const { user, currentProject, currency } = useAppContext();
