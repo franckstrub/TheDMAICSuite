@@ -478,6 +478,7 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         beltLevel: data.beltLevel || "Green Belt",
         projectType: data.projectType || "Green Belt",
+        projectCategory: data.projectCategory || "Process Improvement",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -650,6 +651,7 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         beltLevel: data.beltLevel || "Green Belt",
         projectType: data.projectType || "Green Belt",
+        projectCategory: data.projectCategory || "Process Improvement",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -880,6 +882,25 @@ export default function DefinePhase() {
                         <SelectItem value="Green Belt">Green Belt</SelectItem>
                         <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
                         <SelectItem value="White Belt">White Belt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="projectCategory">Project Category</Label>
+                    <Select 
+                      onValueChange={(value) => charterForm.setValue("projectCategory", value)}
+                      value={charterForm.watch("projectCategory") || "Process Improvement"}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select project category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Process Improvement">Process Improvement</SelectItem>
+                        <SelectItem value="Process Redesign">Process Redesign</SelectItem>
+                        <SelectItem value="Process Design">Process Design</SelectItem>
+                        <SelectItem value="Project Scoping">Project Scoping</SelectItem>
+                        <SelectItem value="Kaizen">Kaizen</SelectItem>
+                        <SelectItem value="Quick Action">Quick Action</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
