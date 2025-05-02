@@ -44,6 +44,8 @@ export default function DefinePhase() {
     defaultValues: {
       projectTitle: "",
       projectLeader: "",
+      sponsor: "",
+      sponsorFunction: "",
       beltLevel: "Green Belt", 
       projectType: "Green Belt",
       projectCategory: "Process Improvement",
@@ -349,6 +351,8 @@ export default function DefinePhase() {
       charterForm.reset({
         projectTitle: currentProject?.title || "",
         projectLeader: charter.charter.projectLeader || "",
+        sponsor: charter.charter.sponsor || "",
+        sponsorFunction: charter.charter.sponsorFunction || "",
         beltLevel: charter.charter.beltLevel || "Black Belt",
         projectType: charter.charter.projectType || "Green Belt",
         projectCategory: charter.charter.projectCategory || "Process Improvement",
@@ -400,6 +404,8 @@ export default function DefinePhase() {
       charterForm.reset({
         projectTitle: currentProject?.title || "",
         projectLeader: "",
+        sponsor: "",
+        sponsorFunction: "",
         beltLevel: "Green Belt",
         projectType: "Green Belt",
         projectCategory: "Process Improvement",
@@ -476,6 +482,8 @@ export default function DefinePhase() {
       const payload = {
         projectId,
         projectLeader: data.projectLeader || "",
+        sponsor: data.sponsor || "",
+        sponsorFunction: data.sponsorFunction || "",
         beltLevel: data.beltLevel || "Green Belt",
         projectType: data.projectType || "Green Belt",
         projectCategory: data.projectCategory || "Process Improvement",
@@ -844,6 +852,22 @@ export default function DefinePhase() {
                       id="projectLeader"
                       placeholder="Enter name of project leader"
                       {...charterForm.register("projectLeader")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sponsor">Sponsor</Label>
+                    <Input
+                      id="sponsor"
+                      placeholder="Enter name of project sponsor"
+                      {...charterForm.register("sponsor")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sponsorFunction">Function</Label>
+                    <Input
+                      id="sponsorFunction"
+                      placeholder="Enter sponsor's function/department"
+                      {...charterForm.register("sponsorFunction")}
                     />
                   </div>
                 </div>
