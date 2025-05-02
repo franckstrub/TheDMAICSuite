@@ -49,6 +49,8 @@ export const insertProjectSchema = createInsertSchema(projects).pick({
 export const projectCharters = pgTable("project_charters", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
+  projectLeader: text("project_leader"),
+  beltLevel: text("belt_level"),
   businessCase: text("business_case"),
   problemStatement: text("problem_statement"),
   goals: text("goals"),
@@ -90,6 +92,8 @@ export const projectCharters = pgTable("project_charters", {
 
 export const insertCharterSchema = createInsertSchema(projectCharters).pick({
   projectId: true,
+  projectLeader: true,
+  beltLevel: true,
   businessCase: true,
   problemStatement: true,
   goals: true,
