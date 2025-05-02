@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { Image } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -22,6 +23,11 @@ export default function DefinePhase() {
   const { toast } = useToast();
   const params = useParams<{ projectId?: string }>();
   const urlProjectId = params.projectId;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // State for project image handling
+  const [projectImage, setProjectImage] = useState<string | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
@@ -195,10 +201,58 @@ export default function DefinePhase() {
     refetchOnWindowFocus: false
   });
 
+  // Handle image upload
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setIsImageLoading(true);
+      const file = files[0];
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        if (e.target && typeof e.target.result === 'string') {
+          setProjectImage(e.target.result);
+          setIsImageLoading(false);
+        }
+      };
+      
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "Failed to load the image",
+          variant: "destructive",
+        });
+        setIsImageLoading(false);
+      };
+      
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Trigger file input click
+  const handleChooseImage = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Remove current image
+  const handleRemoveImage = () => {
+    setProjectImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
   // Set charter form values when data is fetched
   useEffect(() => {
     // If we have a charter, use it
     if (charter?.charter) {
+      // Load project image if available
+      if (charter.charter.projectImage) {
+        setProjectImage(charter.charter.projectImage);
+      }
+      
       // First load the FTE parameters so we can use them in the calculation
       let fteBenefitsValue = 0;
       
@@ -406,6 +460,7 @@ export default function DefinePhase() {
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
         scope: data.scope || "",
+        projectImage: projectImage || "",
         savingsPerYear: (data.savingsPerYear || "0").toString(),
         workingCapitalGains: (data.workingCapitalGains || "0").toString(),
         waccPercentage: (data.waccPercentage || "0").toString(),
@@ -574,6 +629,7 @@ export default function DefinePhase() {
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
         scope: data.scope || "",
+        projectImage: projectImage || "",
         
         // Project benefits - ensure all numeric values are converted to strings
         savingsPerYear: (data.savingsPerYear || "0").toString(),
@@ -791,6 +847,45 @@ export default function DefinePhase() {
                     rows={3}
                     {...charterForm.register("scope")}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="projectImage">Project Image</Label>
+                  <div className="mt-2">
+                    {projectImage ? (
+                      <div className="relative w-full max-w-md mb-2">
+                        <img
+                          src={projectImage}
+                          alt="Project"
+                          className="w-full h-auto object-contain rounded-md border border-gray-200"
+                          style={{ maxHeight: '200px' }}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={handleRemoveImage}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ) : (
+                      <div 
+                        className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-6 cursor-pointer"
+                        onClick={handleChooseImage}
+                      >
+                        <Image className="h-10 w-10 text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-500">Click to upload an image</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

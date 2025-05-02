@@ -94,6 +94,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters).pick({
   problemStatement: true,
   goals: true,
   scope: true,
+  projectImage: true,
   savingsPerYear: true,
   workingCapitalGains: true,
   waccPercentage: true,
