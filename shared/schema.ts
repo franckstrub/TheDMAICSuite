@@ -36,6 +36,7 @@ export const projects = pgTable("projects", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   benefits: jsonb("benefits"),
   costs: jsonb("costs"),
+  softBenefits: jsonb("soft_benefits"),
 });
 
 export const insertProjectSchema = createInsertSchema(projects).pick({
