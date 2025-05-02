@@ -52,7 +52,7 @@ export const insertProjectSchema = createInsertSchema(projects).pick({
 // Stakeholder schema
 export const stakeholderSchema = z.object({
   name: z.string(),
-  function: z.string(),
+  function: z.string().optional(),
 });
 
 export type Stakeholder = z.infer<typeof stakeholderSchema>;

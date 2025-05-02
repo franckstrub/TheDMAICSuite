@@ -23,11 +23,12 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
 
   // Add new stakeholder
   const handleAddStakeholder = () => {
-    if (newName.trim() === "" || newFunction.trim() === "") return;
+    // Only name is required, function is optional
+    if (newName.trim() === "") return;
     
     const newStakeholder: Stakeholder = {
       name: newName,
-      function: newFunction,
+      function: newFunction.trim() || undefined,
     };
     
     const updatedStakeholders = [...stakeholders, newStakeholder];
@@ -92,7 +93,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
                 </td>
                 <td className="px-4 py-2">
                   <Input
-                    placeholder="Enter function/department"
+                    placeholder="Enter function/department (optional)"
                     value={stakeholder.function}
                     onChange={(e) => updateStakeholder(index, 'function', e.target.value)}
                     className="h-8"
@@ -125,7 +126,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
                 </td>
                 <td className="px-4 py-2">
                   <Input 
-                    placeholder="Stakeholder Function"
+                    placeholder="Stakeholder Function (optional)"
                     value={newFunction}
                     onChange={(e) => setNewFunction(e.target.value)}
                     className="h-8"
