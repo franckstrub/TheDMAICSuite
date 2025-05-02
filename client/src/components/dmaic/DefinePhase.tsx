@@ -109,6 +109,17 @@ export default function DefinePhase() {
     }
   };
   
+  // Helper function to get category icon (matching the dashboard)
+  const getCategoryIcon = (category: SoftBenefit['category']) => {
+    switch (category) {
+      case "employee": return "👥"; // Employee icon
+      case "customer": return "🤝"; // Customer icon
+      case "process": return "⚙️"; // Process icon
+      case "growth": return "📈"; // Growth icon
+      default: return "✓";
+    }
+  };
+  
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
 
@@ -1645,6 +1656,9 @@ export default function DefinePhase() {
                   <div className="space-y-2 mb-3">
                     {softBenefits.map((benefit, index) => (
                       <div key={index} className="flex items-start gap-2 p-2 rounded-md border bg-gray-50">
+                        <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 text-lg">
+                          {getCategoryIcon(benefit.category)}
+                        </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <Badge variant={getBadgeVariantForCategory(benefit.category)}>
@@ -1692,6 +1706,12 @@ export default function DefinePhase() {
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
                         <Label htmlFor="benefitCategory">Benefit Category</Label>
+                        <div className="mb-2 flex items-center gap-2">
+                          <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 text-lg bg-gray-50 rounded-md">
+                            {getCategoryIcon(newBenefitCategory)}
+                          </div>
+                          <span className="text-sm">{getCategoryLabel(newBenefitCategory)}</span>
+                        </div>
                         <Select 
                           value={newBenefitCategory} 
                           onValueChange={(value) => setNewBenefitCategory(value as SoftBenefit['category'])}
@@ -1700,10 +1720,10 @@ export default function DefinePhase() {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="employee">Employee Benefits</SelectItem>
-                            <SelectItem value="customer">Customer Benefits</SelectItem>
-                            <SelectItem value="process">Process Benefits</SelectItem>
-                            <SelectItem value="growth">Growth & Learning</SelectItem>
+                            <SelectItem value="employee">👥 Employee Benefits</SelectItem>
+                            <SelectItem value="customer">🤝 Customer Benefits</SelectItem>
+                            <SelectItem value="process">⚙️ Process Benefits</SelectItem>
+                            <SelectItem value="growth">📈 Growth & Learning</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
