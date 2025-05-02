@@ -961,7 +961,7 @@ export default function DefinePhase() {
                   <Label htmlFor="problemStatement">Problem Statement</Label>
                   <Textarea
                     id="problemStatement"
-                    placeholder="Define the problem to be solved..."
+                    placeholder="Define the problem to be solved in a SMART statement (Specific, Measurable, Attainable, Realistic, Tangible)..."
                     rows={3}
                     {...charterForm.register("problemStatement")}
                   />
