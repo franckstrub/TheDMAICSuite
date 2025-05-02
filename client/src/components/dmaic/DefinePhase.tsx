@@ -52,9 +52,12 @@ export default function DefinePhase() {
   
   // Handler for adding new soft benefit
   const handleAddSoftBenefit = () => {
-    setNewBenefitText("");
-    setNewBenefitCategory("employee");
-    setShowSoftBenefitDialog(true);
+    // Only show the dialog if we haven't reached the max number of benefits
+    if (softBenefits.length < 4) {
+      setNewBenefitText("");
+      setNewBenefitCategory("employee");
+      setShowSoftBenefitDialog(true);
+    }
   };
   
   // Handler for saving the new soft benefit
@@ -1519,6 +1522,7 @@ export default function DefinePhase() {
                     variant="outline" 
                     size="sm"
                     onClick={handleAddSoftBenefit}
+                    disabled={softBenefits.length >= 4} // Allow maximum 4 soft benefits
                   >
                     Add Benefit
                   </Button>
@@ -1562,7 +1566,8 @@ export default function DefinePhase() {
                 />
                 
                 <p className="text-xs text-gray-500 mt-1">
-                  Add employee, customer, process, and growth & learning benefits that can't be measured financially.
+                  Add employee, customer, process, and growth & learning benefits that can't be measured financially. 
+                  Maximum {softBenefits.length}/4 benefits.
                 </p>
                 
                 {/* Dialog for adding new soft benefit */}
