@@ -726,6 +726,9 @@ export default function DefinePhase() {
         goals: data.goals || "",
         scope: data.scope || "",
         projectImage: projectImage || "",
+        // Project dates from the form
+        startDate: data.startDate || "",
+        targetEndDate: data.targetEndDate || "",
         // Milestone dates
         kick_off_date: data.kick_off_date || "",
         define_phase_date: data.define_phase_date || "",
@@ -986,6 +989,10 @@ export default function DefinePhase() {
         goals: data.goals || "",
         scope: data.scope || "",
         projectImage: projectImage || "",
+        
+        // Project dates from the form
+        startDate: data.startDate || "",
+        targetEndDate: data.targetEndDate || "",
         
         // Milestone dates
         kick_off_date: data.kick_off_date || "",
