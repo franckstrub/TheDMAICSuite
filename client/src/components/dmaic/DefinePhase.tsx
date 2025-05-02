@@ -511,6 +511,12 @@ export default function DefinePhase() {
         targetEndDate: currentProject?.targetEndDate 
           ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
           : "",
+        // Add milestone dates
+        kickOffDate: charter.charter.kick_off_date || "",
+        definePhaseDate: charter.charter.define_phase_date || "",
+        measurePhaseDate: charter.charter.measure_phase_date || "",
+        analyzePhaseDate: charter.charter.analyze_phase_date || "",
+        improvePhaseDate: charter.charter.improve_phase_date || "",
         savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
         workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
         waccPercentage: charter.charter.waccPercentage?.toString() || "10",
@@ -567,6 +573,12 @@ export default function DefinePhase() {
         targetEndDate: currentProject?.targetEndDate 
           ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
           : "",
+        // Add milestone dates
+        kickOffDate: "",
+        definePhaseDate: "",
+        measurePhaseDate: "",
+        analyzePhaseDate: "",
+        improvePhaseDate: "",
         savingsPerYear: "",
         workingCapitalGains: "",
         waccPercentage: "10",
@@ -1271,6 +1283,53 @@ export default function DefinePhase() {
                       type="date"
                       {...charterForm.register("targetEndDate")}
                     />
+                  </div>
+                </div>
+                
+                {/* Milestone Dates Section */}
+                <div className="mt-4">
+                  <h4 className="text-md font-medium mb-2">Milestone Dates</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="kickOffDate">Kick-Off</Label>
+                      <Input
+                        id="kickOffDate"
+                        type="date"
+                        {...charterForm.register("kickOffDate")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="definePhaseDate">Define Phase</Label>
+                      <Input
+                        id="definePhaseDate"
+                        type="date"
+                        {...charterForm.register("definePhaseDate")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="measurePhaseDate">Measure Phase</Label>
+                      <Input
+                        id="measurePhaseDate"
+                        type="date"
+                        {...charterForm.register("measurePhaseDate")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="analyzePhaseDate">Analyze Phase</Label>
+                      <Input
+                        id="analyzePhaseDate"
+                        type="date"
+                        {...charterForm.register("analyzePhaseDate")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="improvePhaseDate">Improve Phase</Label>
+                      <Input
+                        id="improvePhaseDate"
+                        type="date"
+                        {...charterForm.register("improvePhaseDate")}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
