@@ -36,6 +36,8 @@ export default function DefinePhase() {
   const charterForm = useForm({
     defaultValues: {
       projectTitle: "",
+      projectLeader: "",
+      beltLevel: "Black Belt",
       businessCase: "",
       problemStatement: "",
       goals: "",
@@ -337,6 +339,8 @@ export default function DefinePhase() {
       // Now reset the form with the loaded values
       charterForm.reset({
         projectTitle: currentProject?.title || "",
+        projectLeader: charter.charter.projectLeader || "",
+        beltLevel: charter.charter.beltLevel || "Black Belt",
         businessCase: charter.charter.businessCase || "",
         problemStatement: charter.charter.problemStatement || "",
         goals: charter.charter.goals || "",
@@ -809,6 +813,32 @@ export default function DefinePhase() {
                     placeholder="Order Processing Optimization"
                     {...charterForm.register("projectTitle")}
                   />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="projectLeader">Project Leader</Label>
+                    <Input
+                      id="projectLeader"
+                      placeholder="Enter name of project leader"
+                      {...charterForm.register("projectLeader")}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="beltLevel">Belt Level</Label>
+                    <Select 
+                      onValueChange={(value) => charterForm.setValue("beltLevel", value)}
+                      defaultValue={charterForm.getValues("beltLevel")}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select belt level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Black Belt">Black Belt</SelectItem>
+                        <SelectItem value="Green Belt">Green Belt</SelectItem>
+                        <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="businessCase">Business Case</Label>
