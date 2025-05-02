@@ -447,7 +447,7 @@ export default function DefinePhase() {
             timeUnit, 
             savedHours, 
             fteCostPerYear,
-            calculatedFte: parseFloat(calculatedFte.toFixed(2)),
+            calculatedFte: parseFloat(calculatedFte.toFixed(3)),
             calculatedValue: calculatedValue
           });
           
@@ -458,7 +458,7 @@ export default function DefinePhase() {
             timeUnit, 
             savedHours, 
             fteCostPerYear,
-            calculatedFte: parseFloat(calculatedFte.toFixed(2)),
+            calculatedFte: parseFloat(calculatedFte.toFixed(3)),
             calculatedValue,
             fteBenefitsValue
           });
