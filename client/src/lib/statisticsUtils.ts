@@ -1,6 +1,26 @@
 // Simple statistics utilities for Lean Six Sigma calculations
 
 /**
+ * Safely parse numeric value from either string or number
+ * @param value Value to parse
+ * @param defaultValue Default value if parsing fails
+ * @returns Parsed number or default value
+ */
+export function parseNumericValue(value: any, defaultValue: number = 0): number {
+  if (value === null || value === undefined) return defaultValue;
+  
+  if (typeof value === 'number') return value;
+  
+  if (typeof value === 'string') {
+    // Try to parse the string as a number
+    const parsedValue = parseFloat(value);
+    return isNaN(parsedValue) ? defaultValue : parsedValue;
+  }
+  
+  return defaultValue;
+}
+
+/**
  * Calculate the mean (average) of an array of numbers
  */
 export function mean(values: number[]): number {
