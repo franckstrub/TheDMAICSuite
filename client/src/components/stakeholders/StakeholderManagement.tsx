@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,13 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
   const [newName, setNewName] = useState("");
   const [newFunction, setNewFunction] = useState("");
 
-  // Removed the requirement for at least one stakeholder
+  // This ref tracks if there's pending stakeholder data
+  const hasPendingData = useRef(false);
+
+  // Update the hasPendingData ref whenever user inputs something
+  useEffect(() => {
+    hasPendingData.current = isAddingNew && (newName !== "" || newFunction !== "");
+  }, [isAddingNew, newName, newFunction]);
 
   // Add new stakeholder - allow empty values
   const handleAddStakeholder = () => {
@@ -32,8 +38,28 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     onChange(updatedStakeholders);
     setNewName("");
     setNewFunction("");
+    hasPendingData.current = false;
     // Keep input form open for adding more stakeholders
   };
+  
+  // Helper function to save pending stakeholder data
+  // This will be called when the parent form submits
+  useEffect(() => {
+    // Create a function to save pending stakeholder data
+    const savePendingStakeholder = () => {
+      if (hasPendingData.current && isAddingNew) {
+        handleAddStakeholder();
+      }
+    };
+    
+    // Add an event listener to catch form submission
+    document.addEventListener('submit', savePendingStakeholder);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('submit', savePendingStakeholder);
+    };
+  }, [isAddingNew, newName, newFunction, stakeholders]);
 
   // Remove stakeholder - allow removing all stakeholders
   const handleRemoveStakeholder = (index: number) => {
