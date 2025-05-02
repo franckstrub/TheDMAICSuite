@@ -19,12 +19,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
   const [newName, setNewName] = useState("");
   const [newFunction, setNewFunction] = useState("");
 
-  // Make sure there's always at least one stakeholder
-  useEffect(() => {
-    if (stakeholders.length === 0) {
-      onChange([{ name: "", function: "" }]);
-    }
-  }, [stakeholders, onChange]);
+  // Removed the requirement for at least one stakeholder
 
   // Add new stakeholder
   const handleAddStakeholder = () => {
@@ -42,11 +37,8 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     setIsAddingNew(false);
   };
 
-  // Remove stakeholder - maintain minimum 1 stakeholder
+  // Remove stakeholder - allow removing all stakeholders
   const handleRemoveStakeholder = (index: number) => {
-    // If this is the last stakeholder, don't remove it
-    if (stakeholders.length <= 1) return;
-    
     const updatedStakeholders = stakeholders.filter((_, i) => i !== index);
     onChange(updatedStakeholders);
   };
@@ -178,8 +170,8 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
       </div>
       
       <p className="text-xs text-muted-foreground italic">
-        Note: Add all relevant stakeholders who have a direct interest in or influence on the project.
-        At least one stakeholder is required.
+        Note: Add relevant stakeholders who have a direct interest in or influence on the project.
+        Projects can have any number of stakeholders, including none.
       </p>
     </div>
   );
