@@ -837,96 +837,102 @@ export default function DefinePhase() {
           <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="projectTitle">Project Title</Label>
-                  <Input
-                    id="projectTitle"
-                    placeholder="Order Processing Optimization"
-                    {...charterForm.register("projectTitle")}
-                  />
-                </div>
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <Label htmlFor="projectLeader">Project Leader</Label>
+                    <Label htmlFor="projectTitle">Project Title</Label>
                     <Input
-                      id="projectLeader"
-                      placeholder="Enter name of project leader"
-                      {...charterForm.register("projectLeader")}
+                      id="projectTitle"
+                      placeholder="Order Processing Optimization"
+                      {...charterForm.register("projectTitle")}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="sponsor">Sponsor</Label>
-                    <Input
-                      id="sponsor"
-                      placeholder="Enter name of project sponsor"
-                      {...charterForm.register("sponsor")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sponsorFunction">Function</Label>
-                    <Input
-                      id="sponsorFunction"
-                      placeholder="Enter sponsor's function/department"
-                      {...charterForm.register("sponsorFunction")}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="projectType">Project Type</Label>
+                      <Select 
+                        onValueChange={(value) => charterForm.setValue("projectType", value)}
+                        value={charterForm.watch("projectType") || "Green Belt"}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select project type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Black Belt">Black Belt</SelectItem>
+                          <SelectItem value="Green Belt">Green Belt</SelectItem>
+                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                          <SelectItem value="White Belt">White Belt</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="projectCategory">Project Category</Label>
+                      <Select 
+                        onValueChange={(value) => charterForm.setValue("projectCategory", value)}
+                        value={charterForm.watch("projectCategory") || "Process Improvement"}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select project category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Process Improvement">Process Improvement</SelectItem>
+                          <SelectItem value="Process Redesign">Process Redesign</SelectItem>
+                          <SelectItem value="Process Design">Process Design</SelectItem>
+                          <SelectItem value="Project Scoping">Project Scoping</SelectItem>
+                          <SelectItem value="Kaizen">Kaizen</SelectItem>
+                          <SelectItem value="Quick Action">Quick Action</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="beltLevel">Belt Level</Label>
-                    <Select 
-                      onValueChange={(value) => charterForm.setValue("beltLevel", value)}
-                      defaultValue={charterForm.getValues("beltLevel")}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select belt level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Black Belt">Black Belt</SelectItem>
-                        <SelectItem value="Green Belt">Green Belt</SelectItem>
-                        <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                        <SelectItem value="White Belt">White Belt</SelectItem>
-                        <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
-                        <SelectItem value="Champion">Champion</SelectItem>
-                        <SelectItem value="none">None</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="projectLeader">Project Leader</Label>
+                      <Input
+                        id="projectLeader"
+                        placeholder="Enter name of project leader"
+                        {...charterForm.register("projectLeader")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="beltLevel">Belt Level</Label>
+                      <Select 
+                        onValueChange={(value) => charterForm.setValue("beltLevel", value)}
+                        defaultValue={charterForm.getValues("beltLevel")}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select belt level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Black Belt">Black Belt</SelectItem>
+                          <SelectItem value="Green Belt">Green Belt</SelectItem>
+                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                          <SelectItem value="White Belt">White Belt</SelectItem>
+                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
+                          <SelectItem value="Champion">Champion</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="projectType">Project Type</Label>
-                    <Select 
-                      onValueChange={(value) => charterForm.setValue("projectType", value)}
-                      value={charterForm.watch("projectType") || "Green Belt"}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select project type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Black Belt">Black Belt</SelectItem>
-                        <SelectItem value="Green Belt">Green Belt</SelectItem>
-                        <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                        <SelectItem value="White Belt">White Belt</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="projectCategory">Project Category</Label>
-                    <Select 
-                      onValueChange={(value) => charterForm.setValue("projectCategory", value)}
-                      value={charterForm.watch("projectCategory") || "Process Improvement"}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select project category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Process Improvement">Process Improvement</SelectItem>
-                        <SelectItem value="Process Redesign">Process Redesign</SelectItem>
-                        <SelectItem value="Process Design">Process Design</SelectItem>
-                        <SelectItem value="Project Scoping">Project Scoping</SelectItem>
-                        <SelectItem value="Kaizen">Kaizen</SelectItem>
-                        <SelectItem value="Quick Action">Quick Action</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="sponsor">Sponsor</Label>
+                      <Input
+                        id="sponsor"
+                        placeholder="Enter name of project sponsor"
+                        {...charterForm.register("sponsor")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sponsorFunction">Function</Label>
+                      <Input
+                        id="sponsorFunction"
+                        placeholder="Enter sponsor's function/department"
+                        {...charterForm.register("sponsorFunction")}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div>
