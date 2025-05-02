@@ -1223,8 +1223,16 @@ export default function DefinePhase() {
                             <Input
                               id="workingDaysPerWeek"
                               type="number"
+                              min="0"
                               value={fteParams.workingDaysPerWeek}
-                              onChange={(e) => handleFteParamChange('workingDaysPerWeek', e.target.value)}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                if (value < 0 || isNaN(value)) {
+                                  handleFteParamChange('workingDaysPerWeek', "0");
+                                } else {
+                                  handleFteParamChange('workingDaysPerWeek', e.target.value);
+                                }
+                              }}
                               placeholder="e.g. 5"
                               className="h-8 text-sm"
                               step="0.01"
@@ -1235,8 +1243,16 @@ export default function DefinePhase() {
                             <Input
                               id="workingHoursPerDay"
                               type="number"
+                              min="0"
                               value={fteParams.workingHoursPerDay}
-                              onChange={(e) => handleFteParamChange('workingHoursPerDay', e.target.value)}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                if (value < 0 || isNaN(value)) {
+                                  handleFteParamChange('workingHoursPerDay', "0");
+                                } else {
+                                  handleFteParamChange('workingHoursPerDay', e.target.value);
+                                }
+                              }}
                               placeholder="e.g. 8"
                               className="h-8 text-sm"
                               step="0.01"
@@ -1266,8 +1282,16 @@ export default function DefinePhase() {
                             <Input
                               id="savedHours"
                               type="number"
+                              min="0"
                               value={fteParams.savedHours}
-                              onChange={(e) => handleFteParamChange('savedHours', e.target.value)}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                if (value < 0 || isNaN(value)) {
+                                  handleFteParamChange('savedHours', "0");
+                                } else {
+                                  handleFteParamChange('savedHours', e.target.value);
+                                }
+                              }}
                               placeholder="Hours saved"
                               className="h-8 text-sm"
                             />
@@ -1280,8 +1304,16 @@ export default function DefinePhase() {
                         <Input
                           id="fteCostPerYear"
                           type="number"
+                          min="0"
                           value={fteParams.fteCostPerYear}
-                          onChange={(e) => handleFteParamChange('fteCostPerYear', e.target.value)}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (value < 0 || isNaN(value)) {
+                              handleFteParamChange('fteCostPerYear', "0");
+                            } else {
+                              handleFteParamChange('fteCostPerYear', e.target.value);
+                            }
+                          }}
                           placeholder="e.g. 100000"
                           className="h-8 text-sm"
                         />
