@@ -46,7 +46,12 @@ export default function DefinePhase() {
       projectLeader: "",
       sponsor: "",
       sponsorFunction: "",
+      stakeholder: "",
+      stakeholderFunction: "",
+      financialController: "",
+      projectCoach: "",
       beltLevel: "Green Belt", 
+      coachBeltLevel: "Master Black Belt",
       projectType: "Green Belt",
       projectCategory: "Process Improvement",
       businessCase: "",
@@ -353,7 +358,12 @@ export default function DefinePhase() {
         projectLeader: charter.charter.projectLeader || "",
         sponsor: charter.charter.sponsor || "",
         sponsorFunction: charter.charter.sponsorFunction || "",
+        stakeholder: charter.charter.stakeholder || "",
+        stakeholderFunction: charter.charter.stakeholderFunction || "",
+        financialController: charter.charter.financialController || "",
+        projectCoach: charter.charter.projectCoach || "",
         beltLevel: charter.charter.beltLevel || "Black Belt",
+        coachBeltLevel: charter.charter.coachBeltLevel || "Master Black Belt",
         projectType: charter.charter.projectType || "Green Belt",
         projectCategory: charter.charter.projectCategory || "Process Improvement",
         businessCase: charter.charter.businessCase || "",
@@ -485,8 +495,12 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
+        stakeholder: data.stakeholder || "",
+        stakeholderFunction: data.stakeholderFunction || "",
         financialController: data.financialController || "",
+        projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",
+        coachBeltLevel: data.coachBeltLevel || "Master Black Belt",
         projectType: data.projectType || "Green Belt",
         projectCategory: data.projectCategory || "Process Improvement",
         businessCase: data.businessCase || "",
@@ -661,8 +675,12 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
+        stakeholder: data.stakeholder || "",
+        stakeholderFunction: data.stakeholderFunction || "",
         financialController: data.financialController || "",
+        projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",
+        coachBeltLevel: data.coachBeltLevel || "Master Black Belt",
         projectType: data.projectType || "Green Belt",
         projectCategory: data.projectCategory || "Process Improvement",
         businessCase: data.businessCase || "",
@@ -993,18 +1011,19 @@ export default function DefinePhase() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="beltLevel">Belt Level</Label>
+                      <Label htmlFor="coachBeltLevel">Belt Level</Label>
                       <Select
-                        onValueChange={(value) => charterForm.setValue("beltLevel", value)}
-                        defaultValue={charterForm.getValues("beltLevel") || "Green Belt"}
+                        onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
+                        defaultValue={charterForm.getValues("coachBeltLevel") || "Master Black Belt"}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select belt level" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                          <SelectItem value="Green Belt">Green Belt</SelectItem>
                           <SelectItem value="Black Belt">Black Belt</SelectItem>
+                          <SelectItem value="Green Belt">Green Belt</SelectItem>
+                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                          <SelectItem value="White Belt">White Belt</SelectItem>
                           <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
                         </SelectContent>
                       </Select>
