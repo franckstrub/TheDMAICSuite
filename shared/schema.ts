@@ -70,6 +70,8 @@ export const projectCharters = pgTable("project_charters", {
   sponsorFunction: text("sponsor_function"),
   // Replace single stakeholder with array
   stakeholders: jsonb("stakeholders").$type<Stakeholder[]>(),
+  // Team members array
+  teamMembers: jsonb("team_members").$type<Stakeholder[]>(),
   // Keep old fields for backwards compatibility
   stakeholder: text("stakeholder"),
   stakeholderFunction: text("stakeholder_function"),
@@ -133,6 +135,8 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   .extend({
     // Set default empty array for stakeholders
     stakeholders: z.array(stakeholderSchema).default([]),
+    // Set default empty array for team members
+    teamMembers: z.array(stakeholderSchema).default([]),
   })
   .pick({
   projectId: true,
@@ -141,6 +145,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   sponsor: true,
   sponsorFunction: true,
   stakeholders: true,
+  teamMembers: true,
   // Keep old fields for backwards compatibility
   stakeholder: true,
   stakeholderFunction: true,
