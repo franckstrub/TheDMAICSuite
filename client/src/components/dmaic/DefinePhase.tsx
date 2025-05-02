@@ -17,6 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function DefinePhase() {
   const { user, currentProject, currency } = useAppContext();
@@ -388,6 +395,8 @@ export default function DefinePhase() {
       // Initialize form with project data and default values
       charterForm.reset({
         projectTitle: currentProject?.title || "",
+        projectLeader: "",
+        beltLevel: "Black Belt",
         businessCase: "",
         problemStatement: "",
         goals: "",
@@ -460,6 +469,8 @@ export default function DefinePhase() {
       // Make sure all data is properly formatted - all numeric values should be converted to strings for storage
       const payload = {
         projectId,
+        projectLeader: data.projectLeader || "",
+        beltLevel: data.beltLevel || "Black Belt",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -629,6 +640,8 @@ export default function DefinePhase() {
         // This will include the FTE parameters from the FTE state
         projectId,
         userId: user?.id || 1,
+        projectLeader: data.projectLeader || "",
+        beltLevel: data.beltLevel || "Black Belt",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
