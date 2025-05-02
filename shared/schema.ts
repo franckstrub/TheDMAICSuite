@@ -53,6 +53,7 @@ export const projectCharters = pgTable("project_charters", {
   problemStatement: text("problem_statement"),
   goals: text("goals"),
   scope: text("scope"),
+  projectImage: text("project_image"),
   savingsPerYear: text("savings_per_year"),
   workingCapitalGains: text("working_capital_gains"),
   waccPercentage: text("wacc_percentage"),
