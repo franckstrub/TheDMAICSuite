@@ -676,19 +676,36 @@ export default function DefinePhase() {
     try {
       console.log("handleSaveCharter triggered with form data:", data);
       
-      // Check for any pending stakeholder data in the form
-      const currentStakeholders = [...stakeholders];
-      const nameInput = document.querySelector('.stakeholder-name-input') as HTMLInputElement;
-      const functionInput = document.querySelector('.stakeholder-function-input') as HTMLInputElement;
+      // Create a working copy of the stakeholders list
+      let workingStakeholders = [...stakeholders];
       
-      // If there are inputs with content that haven't been added to the stakeholders list yet
-      if (nameInput && functionInput && (nameInput.value || functionInput.value)) {
-        console.log("Found pending stakeholder data to include:", nameInput.value, functionInput.value);
-        currentStakeholders.push({
-          name: nameInput.value,
-          function: functionInput.value || undefined
-        });
-        console.log("Updated stakeholders list with pending data:", currentStakeholders);
+      // Check for any pending stakeholder in the form
+      const stakeholderForm = document.querySelector('.stakeholder-form');
+      if (stakeholderForm) {
+        const nameInput = document.querySelector('.stakeholder-name-input') as HTMLInputElement;
+        const functionInput = document.querySelector('.stakeholder-function-input') as HTMLInputElement;
+        
+        if (nameInput && (nameInput.value.trim() || (functionInput && functionInput.value.trim()))) {
+          console.log("Found pending stakeholder data:", nameInput.value, functionInput?.value);
+          
+          // Create the new stakeholder
+          const pendingStakeholder = {
+            name: nameInput.value.trim() || "Unnamed Stakeholder",
+            function: functionInput && functionInput.value.trim() ? functionInput.value.trim() : undefined
+          };
+          
+          // Add it to our copy
+          workingStakeholders.push(pendingStakeholder);
+          
+          // Update the state
+          setStakeholders(workingStakeholders);
+          
+          // Clear the inputs
+          nameInput.value = "";
+          if (functionInput) functionInput.value = "";
+          
+          console.log("Updated stakeholders list:", workingStakeholders);
+        }
       }
       
       // Make sure all calculated values are properly set before submission
@@ -728,10 +745,10 @@ export default function DefinePhase() {
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
         // Include stakeholders as an array with any pending data
-        stakeholders: currentStakeholders,
+        stakeholders: workingStakeholders,
         // Keep legacy fields for backward compatibility
-        stakeholder: currentStakeholders.length > 0 ? currentStakeholders[0].name : "",
-        stakeholderFunction: currentStakeholders.length > 0 ? currentStakeholders[0].function : "",
+        stakeholder: workingStakeholders.length > 0 ? workingStakeholders[0].name : "",
+        stakeholderFunction: workingStakeholders.length > 0 ? workingStakeholders[0].function : "",
         financialController: data.financialController || "",
         projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",

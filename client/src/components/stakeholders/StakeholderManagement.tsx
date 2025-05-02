@@ -61,50 +61,44 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     // Keep input form open for adding more stakeholders
   };
   
-  // Helper function to save pending stakeholder data
-  // This will be called when the parent form submits
+  // This will be called before form submission to ensure pending data is saved
   useEffect(() => {
-    // Create a function to save pending stakeholder data that preserves the input fields
-    const savePendingStakeholder = (e: Event) => {
-      // Check if there's actually data to save
+    // Define a handler function within the effect to avoid dependency issues
+    const handleFormSubmit = (e: Event) => {
+      // Only save if there's actually data to add
       if (isAddingNew && (newName.trim() || newFunction.trim())) {
-        console.log("StakeholderManagement: saving pending stakeholder data", newName, newFunction);
+        console.log("StakeholderManagement: manually saving pending data", newName, newFunction);
         
-        // Get the current stakeholders list
-        const currentStakeholders = [...stakeholders];
-        
-        // Add the new stakeholder to the list without clearing the form
-        const newStakeholder: Stakeholder = {
-          name: newName.trim() || "Unnamed Stakeholder", // Ensure there's at least a name
+        // Create a new stakeholder object
+        const pendingStakeholder: Stakeholder = {
+          name: newName.trim() || "Unnamed Stakeholder",
           function: newFunction.trim() ? newFunction.trim() : undefined,
         };
         
-        console.log("Adding pending stakeholder:", newStakeholder);
+        // Update the stakeholders list without losing form data
+        onChange([...stakeholders, pendingStakeholder]);
         
-        // Update stakeholders without losing form data
-        onChange([...currentStakeholders, newStakeholder]);
+        // Clear the inputs to prevent duplicate entries
+        setNewName("");
+        setNewFunction("");
+        setIsAddingNew(false);
         
-        // Important: Prevent the default form reset behavior that would clear our inputs
-        e.preventDefault();
-        
-        // Mark that we have pending data
-        hasPendingData.current = true;
-        
-        // Clear inputs after saving to prevent duplicate entries
-        // but only if we're actually processing a form submit
-        if (e.type === 'submit') {
-          setNewName("");
-          setNewFunction("");
-        }
+        // Mark that we've handled the pending data
+        hasPendingData.current = false;
       }
     };
     
-    // Add an event listener to catch form submission
-    document.addEventListener('submit', savePendingStakeholder);
+    // 1. Expose the save function to the parent form component
+    const parentForm = document.querySelector('form');
+    if (parentForm) {
+      parentForm.addEventListener('submit', handleFormSubmit);
+    }
     
     // Clean up
     return () => {
-      document.removeEventListener('submit', savePendingStakeholder);
+      if (parentForm) {
+        parentForm.removeEventListener('submit', handleFormSubmit);
+      }
     };
   }, [isAddingNew, newName, newFunction, stakeholders, onChange]);
 
