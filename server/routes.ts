@@ -104,15 +104,9 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
       }
     }
     
-    // For the specific benefit requested by the user
+    // No more hardcoded benefits
     if (softBenefits.length === 0) {
-      console.log("Adding manual employee benefit");
-      softBenefits = [
-        {
-          category: "employee",
-          text: "Less rework which is a toughh manual jobb"
-        }
-      ];
+      console.log("No soft benefits found in charter");
     }
     
     console.log("Synchronized project soft benefits:", softBenefits);
