@@ -406,6 +406,7 @@ export default function DefinePhase() {
         projectLeader: "",
         sponsor: "",
         sponsorFunction: "",
+        financialController: "",
         beltLevel: "Green Belt",
         projectType: "Green Belt",
         projectCategory: "Process Improvement",
@@ -484,6 +485,7 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
+        financialController: data.financialController || "",
         beltLevel: data.beltLevel || "Green Belt",
         projectType: data.projectType || "Green Belt",
         projectCategory: data.projectCategory || "Process Improvement",
@@ -657,6 +659,9 @@ export default function DefinePhase() {
         projectId,
         userId: user?.id || 1,
         projectLeader: data.projectLeader || "",
+        sponsor: data.sponsor || "",
+        sponsorFunction: data.sponsorFunction || "",
+        financialController: data.financialController || "",
         beltLevel: data.beltLevel || "Green Belt",
         projectType: data.projectType || "Green Belt",
         projectCategory: data.projectCategory || "Process Improvement",
@@ -933,6 +938,14 @@ export default function DefinePhase() {
                         {...charterForm.register("sponsorFunction")}
                       />
                     </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="financialController">Financial Controller</Label>
+                    <Input
+                      id="financialController"
+                      placeholder="Enter name of financial controller"
+                      {...charterForm.register("financialController")}
+                    />
                   </div>
                 </div>
                 <div>
