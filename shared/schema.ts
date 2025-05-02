@@ -99,6 +99,13 @@ export const projectCharters = pgTable("project_charters", {
     text: string;
     category: 'employee' | 'customer' | 'process' | 'growth';
   }>>(),
+  // Milestone dates
+  kickOffDate: text("kick_off_date"),
+  definePhaseDate: text("define_phase_date"),
+  measurePhaseDate: text("measure_phase_date"),
+  analyzePhaseDate: text("analyze_phase_date"),
+  improvePhaseDate: text("improve_phase_date"),
+  
   // Project cost fields
   oneOffPeopleCost: text("one_off_people_cost"),
   oneOffTechnologyCost: text("one_off_technology_cost"),
@@ -158,6 +165,12 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   fteCostPerYear: true,
   fteCalculatedValue: true,
   softBenefits: true,
+  // Milestone dates
+  kickOffDate: true,
+  definePhaseDate: true,
+  measurePhaseDate: true,
+  analyzePhaseDate: true,
+  improvePhaseDate: true,
   // Project cost fields
   oneOffPeopleCost: true,
   oneOffTechnologyCost: true,
