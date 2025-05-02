@@ -12,8 +12,11 @@ import {
   type ActivityLog, type InsertLog,
   type ProcessData, type InsertProcessData
 } from "@shared/schema";
-import { db } from "./db";
+// Import just database types, not the actual db connection
 import { eq, and, desc } from "drizzle-orm";
+
+// Comment this out for now to use in-memory storage
+// import { db } from "./db";
 
 // Interface for all storage operations
 export interface IStorage {
@@ -800,5 +803,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use the DatabaseStorage implementation instead of MemStorage
-export const storage = new DatabaseStorage();
+// Use MemStorage for testing to avoid database issues
+export const storage = new MemStorage();
