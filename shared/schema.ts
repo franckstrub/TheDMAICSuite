@@ -49,6 +49,14 @@ export const insertProjectSchema = createInsertSchema(projects).pick({
   createdBy: true,
 });
 
+// Stakeholder schema
+export const stakeholderSchema = z.object({
+  name: z.string(),
+  function: z.string(),
+});
+
+export type Stakeholder = z.infer<typeof stakeholderSchema>;
+
 // Project Charter
 export const projectCharters = pgTable("project_charters", {
   id: serial("id").primaryKey(),
@@ -56,6 +64,9 @@ export const projectCharters = pgTable("project_charters", {
   projectLeader: text("project_leader"),
   sponsor: text("sponsor"),
   sponsorFunction: text("sponsor_function"),
+  // Replace single stakeholder with array
+  stakeholders: jsonb("stakeholders").$type<Stakeholder[]>(),
+  // Keep old fields for backwards compatibility
   stakeholder: text("stakeholder"),
   stakeholderFunction: text("stakeholder_function"),
   financialController: text("financial_controller"),
@@ -103,11 +114,18 @@ export const projectCharters = pgTable("project_charters", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertCharterSchema = createInsertSchema(projectCharters).pick({
+export const insertCharterSchema = createInsertSchema(projectCharters)
+  .extend({
+    // Set default empty array for stakeholders
+    stakeholders: z.array(stakeholderSchema).default([]),
+  })
+  .pick({
   projectId: true,
   projectLeader: true,
   sponsor: true,
   sponsorFunction: true,
+  stakeholders: true,
+  // Keep old fields for backwards compatibility
   stakeholder: true,
   stakeholderFunction: true,
   financialController: true,
