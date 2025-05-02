@@ -711,6 +711,9 @@ export default function Dashboard() {
 
     // Map through all projects and ensure they have the necessary data structure
     const enhancedProjects = allProjects.projects.map(project => {
+      // Debug log the project cost data that's coming in
+      console.log(`Project ${project.id} original costs data:`, project.costs);
+      
       // Create phase data if missing
       const phases = project.phases || {
         ...defaultPhases,
