@@ -111,15 +111,30 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
     
     console.log("Synchronized project soft benefits:", softBenefits);
     
-    // Update the project with the new benefits, costs, and soft benefits
-    await storage.updateProject(charter.projectId, {
+    // Create project update object with benefits and costs
+    const projectUpdate: Partial<Project> = {
       benefits,
       costs,
       softBenefits
-    });
+    };
+    
+    // Also sync important dates from charter to project
+    if (charter.startDate) {
+      projectUpdate.startDate = charter.startDate;
+      console.log("Synchronizing start date from charter to project:", charter.startDate);
+    }
+    
+    if (charter.targetEndDate) {
+      projectUpdate.targetEndDate = charter.targetEndDate;
+      console.log("Synchronizing target end date from charter to project:", charter.targetEndDate);
+    }
+    
+    // Update the project with all synchronized data
+    await storage.updateProject(charter.projectId, projectUpdate);
     
     console.log("Synchronized project benefits:", benefits);
     console.log("Synchronized project costs:", costs);
+    console.log("Synchronized project dates - startDate:", charter.startDate, "targetEndDate:", charter.targetEndDate);
   } catch (error) {
     console.error("Error synchronizing project benefits from charter:", error);
   }
