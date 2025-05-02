@@ -687,12 +687,12 @@ export default function DefinePhase() {
         scope: data.scope || "",
         projectImage: projectImage || "",
         // Milestone dates
-        kick_off_date: data.kickOffDate || "",
-        define_phase_date: data.definePhaseDate || "",
-        measure_phase_date: data.measurePhaseDate || "",
-        analyze_phase_date: data.analyzePhaseDate || "",
-        improve_phase_date: data.improvePhaseDate || "",
-        control_phase_date: data.controlPhaseDate || "",
+        kick_off_date: data.kick_off_date || "",
+        define_phase_date: data.define_phase_date || "",
+        measure_phase_date: data.measure_phase_date || "",
+        analyze_phase_date: data.analyze_phase_date || "",
+        improve_phase_date: data.improve_phase_date || "",
+        control_phase_date: data.control_phase_date || "",
         savingsPerYear: (data.savingsPerYear || "0").toString(),
         workingCapitalGains: (data.workingCapitalGains || "0").toString(),
         waccPercentage: (data.waccPercentage || "0").toString(),
@@ -913,12 +913,12 @@ export default function DefinePhase() {
         projectImage: projectImage || "",
         
         // Milestone dates
-        kick_off_date: data.kickOffDate || "",
-        define_phase_date: data.definePhaseDate || "",
-        measure_phase_date: data.measurePhaseDate || "",
-        analyze_phase_date: data.analyzePhaseDate || "",
-        improve_phase_date: data.improvePhaseDate || "",
-        control_phase_date: data.controlPhaseDate || "",
+        kick_off_date: data.kick_off_date || "",
+        define_phase_date: data.define_phase_date || "",
+        measure_phase_date: data.measure_phase_date || "",
+        analyze_phase_date: data.analyze_phase_date || "",
+        improve_phase_date: data.improve_phase_date || "",
+        control_phase_date: data.control_phase_date || "",
         
         // Project benefits - ensure all numeric values are converted to strings
         savingsPerYear: (data.savingsPerYear || "0").toString(),
