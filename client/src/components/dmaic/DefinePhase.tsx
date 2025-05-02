@@ -552,14 +552,19 @@ export default function DefinePhase() {
     if (currentProject?.targetEndDate) {
       const targetEndDate = new Date(currentProject.targetEndDate).toISOString().split('T')[0];
       console.log("Setting Control Phase date to match target end date:", targetEndDate);
+      console.log("Current Control Phase date value:", charterForm.getValues("controlPhaseDate"));
+      console.log("Current form values:", charterForm.getValues());
       
-      // Schedule this after a short delay to ensure form is ready
+      // Always force the control phase date to match the target end date
+      charterForm.setValue("controlPhaseDate", targetEndDate);
+      console.log("Control Phase date set to:", targetEndDate);
+      
+      // Verify value was set
       setTimeout(() => {
-        // Only set if the field is empty
-        if (!charterForm.getValues("controlPhaseDate")) {
-          charterForm.setValue("controlPhaseDate", targetEndDate);
-        }
-      }, 300);
+        console.log("Verifying control phase date was set:", charterForm.getValues("controlPhaseDate"));
+      }, 100);
+    } else {
+      console.log("Project has no target end date, cannot set control phase date");
     }
   }, [currentProject, charterForm]);
 
