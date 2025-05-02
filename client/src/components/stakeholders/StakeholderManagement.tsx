@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,13 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
   const [newName, setNewName] = useState("");
   const [newFunction, setNewFunction] = useState("");
 
+  // Make sure there's always at least one stakeholder
+  useEffect(() => {
+    if (stakeholders.length === 0) {
+      onChange([{ name: "", function: "" }]);
+    }
+  }, [stakeholders, onChange]);
+
   // Add new stakeholder
   const handleAddStakeholder = () => {
     if (newName.trim() === "" || newFunction.trim() === "") return;
@@ -35,9 +42,22 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     setIsAddingNew(false);
   };
 
-  // Remove stakeholder
+  // Remove stakeholder - can't remove the first one
   const handleRemoveStakeholder = (index: number) => {
+    // Prevent removal of the first stakeholder
+    if (index === 0) return;
+    
     const updatedStakeholders = stakeholders.filter((_, i) => i !== index);
+    onChange(updatedStakeholders);
+  };
+
+  // Update stakeholder field
+  const updateStakeholder = (index: number, field: keyof Stakeholder, value: string) => {
+    const updatedStakeholders = [...stakeholders];
+    updatedStakeholders[index] = {
+      ...updatedStakeholders[index],
+      [field]: value
+    };
     onChange(updatedStakeholders);
   };
 
@@ -70,18 +90,35 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
           <tbody className="divide-y divide-border">
             {stakeholders.map((stakeholder, index) => (
               <tr key={index}>
-                <td className="px-4 py-2">{stakeholder.name}</td>
-                <td className="px-4 py-2">{stakeholder.function}</td>
                 <td className="px-4 py-2">
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleRemoveStakeholder(index)}
-                    className="h-8 w-8 text-destructive hover:text-destructive/80"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Input
+                    placeholder="Enter stakeholder name"
+                    value={stakeholder.name}
+                    onChange={(e) => updateStakeholder(index, 'name', e.target.value)}
+                    className="h-8"
+                  />
+                </td>
+                <td className="px-4 py-2">
+                  <Input
+                    placeholder="Enter function/department"
+                    value={stakeholder.function}
+                    onChange={(e) => updateStakeholder(index, 'function', e.target.value)}
+                    className="h-8"
+                  />
+                </td>
+                <td className="px-4 py-2">
+                  {/* Show delete button only for stakeholders after the first one */}
+                  {index > 0 && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleRemoveStakeholder(index)}
+                      className="h-8 w-8 text-destructive hover:text-destructive/80"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -144,7 +181,8 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
       </div>
       
       <p className="text-xs text-muted-foreground italic">
-        Note: Add all relevant stakeholders who have a direct interest in or influence on the project.
+        Note: Add all relevant stakeholders who have a direct interest in or influence on the project. 
+        The first stakeholder cannot be removed.
       </p>
     </div>
   );
