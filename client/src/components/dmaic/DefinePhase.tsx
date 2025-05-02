@@ -957,6 +957,24 @@ export default function DefinePhase() {
                       />
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="stakeholder">Stakeholder</Label>
+                      <Input
+                        id="stakeholder"
+                        placeholder="Enter name of key stakeholder"
+                        {...charterForm.register("stakeholder")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="stakeholderFunction">Function</Label>
+                      <Input
+                        id="stakeholderFunction"
+                        placeholder="Enter stakeholder's function/department"
+                        {...charterForm.register("stakeholderFunction")}
+                      />
+                    </div>
+                  </div>
                   <div>
                     <Label htmlFor="financialController">Financial Controller</Label>
                     <Input
