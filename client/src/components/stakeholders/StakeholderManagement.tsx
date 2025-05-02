@@ -32,7 +32,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     onChange(updatedStakeholders);
     setNewName("");
     setNewFunction("");
-    setIsAddingNew(false);
+    // Keep input form open for adding more stakeholders
   };
 
   // Remove stakeholder - allow removing all stakeholders
@@ -61,7 +61,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
           size="sm"
           onClick={() => {
             if (isAddingNew) {
-              // Save current stakeholder
+              // Save current stakeholder and keep form open
               handleAddStakeholder();
             } else {
               setIsAddingNew(true);
