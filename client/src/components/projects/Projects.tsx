@@ -397,6 +397,7 @@ export default function Projects() {
                         <SelectItem value="Black Belt">Black Belt</SelectItem>
                         <SelectItem value="Green Belt">Green Belt</SelectItem>
                         <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                        <SelectItem value="White Belt">White Belt</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
