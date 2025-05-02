@@ -45,6 +45,7 @@ export default function DefinePhase() {
       projectTitle: "",
       projectLeader: "",
       beltLevel: "Green Belt",
+      projectType: "Green Belt",
       businessCase: "",
       problemStatement: "",
       goals: "",
@@ -348,6 +349,7 @@ export default function DefinePhase() {
         projectTitle: currentProject?.title || "",
         projectLeader: charter.charter.projectLeader || "",
         beltLevel: charter.charter.beltLevel || "Black Belt",
+        projectType: charter.charter.projectType || "Green Belt",
         businessCase: charter.charter.businessCase || "",
         problemStatement: charter.charter.problemStatement || "",
         goals: charter.charter.goals || "",
@@ -397,6 +399,7 @@ export default function DefinePhase() {
         projectTitle: currentProject?.title || "",
         projectLeader: "",
         beltLevel: "Green Belt",
+        projectType: "Green Belt",
         businessCase: "",
         problemStatement: "",
         goals: "",
@@ -471,6 +474,7 @@ export default function DefinePhase() {
         projectId,
         projectLeader: data.projectLeader || "",
         beltLevel: data.beltLevel || "Green Belt",
+        projectType: data.projectType || "Green Belt",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -642,6 +646,7 @@ export default function DefinePhase() {
         userId: user?.id || 1,
         projectLeader: data.projectLeader || "",
         beltLevel: data.beltLevel || "Green Belt",
+        projectType: data.projectType || "Green Belt",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -827,7 +832,7 @@ export default function DefinePhase() {
                     {...charterForm.register("projectTitle")}
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <Label htmlFor="projectLeader">Project Leader</Label>
                     <Input
@@ -836,6 +841,8 @@ export default function DefinePhase() {
                       {...charterForm.register("projectLeader")}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="beltLevel">Belt Level</Label>
                     <Select 
@@ -853,6 +860,22 @@ export default function DefinePhase() {
                         <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
                         <SelectItem value="Champion">Champion</SelectItem>
                         <SelectItem value="none">None</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="projectType">Project Type</Label>
+                    <Select 
+                      onValueChange={(value) => charterForm.setValue("projectType", value)}
+                      value={charterForm.watch("projectType") || "Green Belt"}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select project type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Black Belt">Black Belt</SelectItem>
+                        <SelectItem value="Green Belt">Green Belt</SelectItem>
+                        <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
