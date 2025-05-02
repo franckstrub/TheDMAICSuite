@@ -517,6 +517,7 @@ export default function DefinePhase() {
         measurePhaseDate: charter.charter.measure_phase_date || "",
         analyzePhaseDate: charter.charter.analyze_phase_date || "",
         improvePhaseDate: charter.charter.improve_phase_date || "",
+        controlPhaseDate: charter.charter.control_phase_date || "",
         savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
         workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
         waccPercentage: charter.charter.waccPercentage?.toString() || "10",
