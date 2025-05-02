@@ -102,7 +102,7 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
     };
   }, [isAddingNew, newName, newRole, teamMembers, onChange]);
 
-  // Remove team member - allow removing all team members
+  // Remove team member
   const handleRemoveTeamMember = (index: number) => {
     const updatedTeamMembers = teamMembers.filter((_, i) => i !== index);
     onChange(updatedTeamMembers);
@@ -121,7 +121,7 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <Label htmlFor="teamMembers" className="text-md font-medium">Project Team Members & SMEs</Label>
+        <Label htmlFor="teamMembers" className="text-md font-medium">Project Team Members / Subject Matter Experts</Label>
         <Button 
           type="button" 
           variant="outline" 
@@ -145,7 +145,7 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
           <thead className="bg-muted border-b">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Role/Expertise</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Role / Expertise</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-16">Actions</th>
             </tr>
           </thead>
@@ -162,7 +162,7 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
                 </td>
                 <td className="px-4 py-2">
                   <Input
-                    placeholder="Enter role or expertise (optional)"
+                    placeholder="Enter role or area of expertise (optional)"
                     value={teamMember.role}
                     onChange={(e) => updateTeamMember(index, 'role', e.target.value)}
                     className="h-8"
@@ -195,7 +195,7 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
                 </td>
                 <td className="px-4 py-2">
                   <Input 
-                    placeholder="Role or Expertise (optional)"
+                    placeholder="Role or Area of Expertise (optional)"
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
                     className="h-8 team-member-role-input"
@@ -232,8 +232,8 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
       </div>
       
       <p className="text-xs text-muted-foreground italic">
-        Note: Add team members who will actively work on the project and subject matter experts (SMEs) who will provide specialized knowledge.
-        The project can have any number of team members, including none.
+        Note: List all core team members and subject matter experts (SMEs) who will contribute to the project.
+        Include their roles or areas of expertise to clarify responsibilities.
       </p>
     </div>
   );
