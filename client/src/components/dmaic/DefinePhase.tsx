@@ -579,6 +579,9 @@ export default function DefinePhase() {
         measurePhaseDate: "",
         analyzePhaseDate: "",
         improvePhaseDate: "",
+        controlPhaseDate: currentProject?.targetEndDate 
+          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
+          : "",
         savingsPerYear: "",
         workingCapitalGains: "",
         waccPercentage: "10",
@@ -666,6 +669,7 @@ export default function DefinePhase() {
         measure_phase_date: data.measurePhaseDate || "",
         analyze_phase_date: data.analyzePhaseDate || "",
         improve_phase_date: data.improvePhaseDate || "",
+        control_phase_date: data.controlPhaseDate || "",
         savingsPerYear: (data.savingsPerYear || "0").toString(),
         workingCapitalGains: (data.workingCapitalGains || "0").toString(),
         waccPercentage: (data.waccPercentage || "0").toString(),
@@ -888,6 +892,7 @@ export default function DefinePhase() {
         measure_phase_date: data.measurePhaseDate || "",
         analyze_phase_date: data.analyzePhaseDate || "",
         improve_phase_date: data.improvePhaseDate || "",
+        control_phase_date: data.controlPhaseDate || "",
         
         // Project benefits - ensure all numeric values are converted to strings
         savingsPerYear: (data.savingsPerYear || "0").toString(),
@@ -1341,6 +1346,14 @@ export default function DefinePhase() {
                         id="improvePhaseDate"
                         type="date"
                         {...charterForm.register("improvePhaseDate")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="controlPhaseDate">Control Phase</Label>
+                      <Input
+                        id="controlPhaseDate"
+                        type="date"
+                        {...charterForm.register("controlPhaseDate")}
                       />
                     </div>
                   </div>
