@@ -27,24 +27,36 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     hasPendingData.current = isAddingNew && (newName !== "" || newFunction !== "");
   }, [isAddingNew, newName, newFunction]);
 
-  // Add new stakeholder - allow empty values
+  // Add new stakeholder - allow empty values but ensure validation
   const handleAddStakeholder = (keepValues = false) => {
-    const newStakeholder: Stakeholder = {
-      name: newName,
-      function: newFunction || undefined,
-    };
+    console.log("handleAddStakeholder called with", {keepValues, newName, newFunction});
     
-    const updatedStakeholders = [...stakeholders, newStakeholder];
-    onChange(updatedStakeholders);
-    
-    // Only clear the form if we don't want to keep the values
-    if (!keepValues) {
-      setNewName("");
-      setNewFunction("");
-      hasPendingData.current = false;
+    // Only add if there's actually something worth adding
+    if (newName.trim() || newFunction.trim()) {
+      const newStakeholder: Stakeholder = {
+        name: newName.trim() || "Unnamed Stakeholder", // Ensure there's at least a name
+        function: newFunction.trim() ? newFunction.trim() : undefined,
+      };
+      
+      console.log("Adding new stakeholder:", newStakeholder);
+      
+      // Update the stakeholders list
+      const updatedStakeholders = [...stakeholders, newStakeholder];
+      onChange(updatedStakeholders);
+      
+      console.log("Updated stakeholders list:", updatedStakeholders);
+      
+      // Only clear the form if we don't want to keep the values
+      if (!keepValues) {
+        setNewName("");
+        setNewFunction("");
+        hasPendingData.current = false;
+      } else {
+        // Make sure we track that there's still pending data
+        hasPendingData.current = true;
+      }
     } else {
-      // Make sure we track that there's still pending data
-      hasPendingData.current = true;
+      console.log("No stakeholder data to add, skipping");
     }
     // Keep input form open for adding more stakeholders
   };
@@ -58,27 +70,32 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
       if (isAddingNew && (newName.trim() || newFunction.trim())) {
         console.log("StakeholderManagement: saving pending stakeholder data", newName, newFunction);
         
-        // Make a temporary copy of the values before saving
-        const tempName = newName;
-        const tempFunction = newFunction;
-        
         // Get the current stakeholders list
         const currentStakeholders = [...stakeholders];
         
         // Add the new stakeholder to the list without clearing the form
         const newStakeholder: Stakeholder = {
-          name: tempName,
-          function: tempFunction || undefined,
+          name: newName.trim() || "Unnamed Stakeholder", // Ensure there's at least a name
+          function: newFunction.trim() ? newFunction.trim() : undefined,
         };
+        
+        console.log("Adding pending stakeholder:", newStakeholder);
         
         // Update stakeholders without losing form data
         onChange([...currentStakeholders, newStakeholder]);
         
-        // Prevent the default form reset behavior that would clear our inputs
+        // Important: Prevent the default form reset behavior that would clear our inputs
         e.preventDefault();
         
         // Mark that we have pending data
         hasPendingData.current = true;
+        
+        // Clear inputs after saving to prevent duplicate entries
+        // but only if we're actually processing a form submit
+        if (e.type === 'submit') {
+          setNewName("");
+          setNewFunction("");
+        }
       }
     };
     
