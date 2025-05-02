@@ -51,7 +51,7 @@ export default function DefinePhase() {
       financialController: "",
       projectCoach: "",
       beltLevel: "Green Belt", 
-      coachBeltLevel: "Master Black Belt",
+      coachBeltLevel: "None",
       projectType: "Green Belt",
       projectCategory: "Process Improvement",
       businessCase: "",
@@ -417,7 +417,9 @@ export default function DefinePhase() {
         sponsor: "",
         sponsorFunction: "",
         financialController: "",
+        projectCoach: "",
         beltLevel: "Green Belt",
+        coachBeltLevel: "None",
         projectType: "Green Belt",
         projectCategory: "Process Improvement",
         businessCase: "",
@@ -1014,17 +1016,19 @@ export default function DefinePhase() {
                       <Label htmlFor="coachBeltLevel">Belt Level</Label>
                       <Select
                         onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
-                        defaultValue={charterForm.getValues("coachBeltLevel") || "Master Black Belt"}
+                        defaultValue={charterForm.getValues("coachBeltLevel") || "None"}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select belt level" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
                           <SelectItem value="Black Belt">Black Belt</SelectItem>
                           <SelectItem value="Green Belt">Green Belt</SelectItem>
                           <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
                           <SelectItem value="White Belt">White Belt</SelectItem>
-                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
+                          <SelectItem value="Champion">Champion</SelectItem>
+                          <SelectItem value="None">None</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
