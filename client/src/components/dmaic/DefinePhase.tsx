@@ -6,7 +6,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2 } from "lucide-react";
+import { Image, Trash2, X } from "lucide-react";
+import { SoftBenefit } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -40,6 +43,68 @@ export default function DefinePhase() {
   
   // State for stakeholders management
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  
+  // State for soft benefits management
+  const [softBenefits, setSoftBenefits] = useState<SoftBenefit[]>([]);
+  const [showSoftBenefitDialog, setShowSoftBenefitDialog] = useState(false);
+  const [newBenefitText, setNewBenefitText] = useState("");
+  const [newBenefitCategory, setNewBenefitCategory] = useState<SoftBenefit['category']>("employee");
+  
+  // Handler for adding new soft benefit
+  const handleAddSoftBenefit = () => {
+    setNewBenefitText("");
+    setNewBenefitCategory("employee");
+    setShowSoftBenefitDialog(true);
+  };
+  
+  // Handler for saving the new soft benefit
+  const handleSaveSoftBenefit = () => {
+    if (newBenefitText.trim()) {
+      const newBenefit: SoftBenefit = {
+        text: newBenefitText.trim(),
+        category: newBenefitCategory
+      };
+      
+      setSoftBenefits([...softBenefits, newBenefit]);
+      setShowSoftBenefitDialog(false);
+      
+      // Update the hidden input with the JSON string
+      const updatedBenefits = [...softBenefits, newBenefit];
+      charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
+    }
+  };
+  
+  // Handler for removing a soft benefit
+  const handleRemoveSoftBenefit = (index: number) => {
+    const updatedBenefits = [...softBenefits];
+    updatedBenefits.splice(index, 1);
+    setSoftBenefits(updatedBenefits);
+    
+    // Update the hidden input with the JSON string
+    charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
+  };
+  
+  // Helper function to get badge variant based on category
+  const getBadgeVariantForCategory = (category: SoftBenefit['category']) => {
+    switch (category) {
+      case "employee": return "secondary";
+      case "customer": return "outline";
+      case "process": return "default";
+      case "growth": return "secondary";
+      default: return "secondary";
+    }
+  };
+  
+  // Helper function to get category label
+  const getCategoryLabel = (category: SoftBenefit['category']) => {
+    switch (category) {
+      case "employee": return "Employee";
+      case "customer": return "Customer";
+      case "process": return "Process";
+      case "growth": return "Growth";
+      default: return "Other";
+    }
+  };
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
@@ -300,6 +365,41 @@ export default function DefinePhase() {
             function: stakeholderFunction 
           }]);
           console.log("Converted legacy stakeholder to new format");
+        }
+      }
+      
+      // Load soft benefits if available
+      if (charter.charter.softBenefits) {
+        try {
+          let parsedBenefits: SoftBenefit[] = [];
+          
+          // If it's a string, try to parse it as JSON
+          if (typeof charter.charter.softBenefits === 'string') {
+            // Check if it looks like a JSON array
+            if (charter.charter.softBenefits.trim().startsWith('[') && 
+                charter.charter.softBenefits.trim().endsWith(']')) {
+              parsedBenefits = JSON.parse(charter.charter.softBenefits);
+            } else {
+              // Legacy format - convert to new format with a default category
+              parsedBenefits = [{ 
+                text: charter.charter.softBenefits, 
+                category: "process" 
+              }];
+            }
+          } else if (Array.isArray(charter.charter.softBenefits)) {
+            // It's already an array
+            parsedBenefits = charter.charter.softBenefits;
+          }
+          
+          // Apply the parsed benefits
+          setSoftBenefits(parsedBenefits);
+          console.log("Loaded soft benefits:", parsedBenefits);
+          
+          // Make sure form value is updated too
+          charterForm.setValue("softBenefits", JSON.stringify(parsedBenefits));
+        } catch (e) {
+          console.error("Error parsing soft benefits:", e);
+          setSoftBenefits([]);
         }
       }
       
@@ -1412,14 +1512,114 @@ export default function DefinePhase() {
               
               {/* Soft Benefits - Full Width */}
               <div className="mt-6">
-                <Label htmlFor="softBenefits">Soft Benefits (Non-Quantifiable)</Label>
-                <Textarea
-                  id="softBenefits"
-                  placeholder="Categories include: Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler, Other"
-                  rows={4}
-                  {...charterForm.register("softBenefits")}
+                <div className="flex justify-between items-center mb-2">
+                  <Label htmlFor="softBenefits" className="text-base">Soft Benefits (Non-Quantifiable)</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleAddSoftBenefit}
+                  >
+                    Add Benefit
+                  </Button>
+                </div>
+                
+                {/* Display existing soft benefits */}
+                {softBenefits.length > 0 ? (
+                  <div className="space-y-2 mb-3">
+                    {softBenefits.map((benefit, index) => (
+                      <div key={index} className="flex items-start gap-2 p-2 rounded-md border bg-gray-50">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={getBadgeVariantForCategory(benefit.category)}>
+                              {getCategoryLabel(benefit.category)}
+                            </Badge>
+                            <p className="text-sm">{benefit.text}</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveSoftBenefit(index)}
+                          className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 italic mb-3 p-3 border border-dashed rounded-md">
+                    No soft benefits added yet. Add benefits that can't be quantified financially.
+                  </div>
+                )}
+                
+                <input 
+                  type="hidden" 
+                  {...charterForm.register("softBenefits")} 
+                  value={JSON.stringify(softBenefits)} 
                 />
-                <p className="text-xs text-gray-500 mt-1">List any Employee Satisfaction, Quality Improvement, Customer Satisfaction, Project Enabler and Other benefits</p>
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  Add employee, customer, process, and growth & learning benefits that can't be measured financially.
+                </p>
+                
+                {/* Dialog for adding new soft benefit */}
+                <Dialog open={showSoftBenefitDialog} onOpenChange={setShowSoftBenefitDialog}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Soft Benefit</DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="benefitCategory">Benefit Category</Label>
+                        <Select 
+                          value={newBenefitCategory} 
+                          onValueChange={(value) => setNewBenefitCategory(value as SoftBenefit['category'])}
+                        >
+                          <SelectTrigger id="benefitCategory">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="employee">Employee Benefits</SelectItem>
+                            <SelectItem value="customer">Customer Benefits</SelectItem>
+                            <SelectItem value="process">Process Benefits</SelectItem>
+                            <SelectItem value="growth">Growth & Learning</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="benefitText">Benefit Description</Label>
+                        <Textarea 
+                          id="benefitText" 
+                          value={newBenefitText}
+                          onChange={(e) => setNewBenefitText(e.target.value)}
+                          placeholder="Describe the soft benefit..."
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                    
+                    <DialogFooter>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowSoftBenefitDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="button" 
+                        onClick={handleSaveSoftBenefit}
+                        disabled={!newBenefitText.trim()}
+                      >
+                        Add Benefit
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
             
