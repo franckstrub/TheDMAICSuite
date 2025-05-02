@@ -42,9 +42,17 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
       benefits.wacc = parseFloat(charter.waccPercentage) / 100 || 0.1;
     }
     
-    // Update FTE benefits
+    // Update FTE benefits - handle formatted string like "0.13 FTE (€12,500)"
     if (charter.fteBenefits) {
-      benefits.fteBenefits = parseFloat(charter.fteBenefits) || 0;
+      // Try to extract the numeric value at the beginning
+      const fteMatch = charter.fteBenefits.match(/^(\d+\.?\d*)/);
+      if (fteMatch && fteMatch[1]) {
+        benefits.fteBenefits = parseFloat(fteMatch[1]) || 0;
+        console.log(`Parsed FTE benefits from '${charter.fteBenefits}' as ${benefits.fteBenefits}`);
+      } else {
+        benefits.fteBenefits = 0;
+        console.log(`Could not parse FTE benefits from '${charter.fteBenefits}', using 0`);
+      }
     }
     
     // Update avg FTE cost
@@ -985,6 +993,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (err) {
       console.error("Error fixing soft benefits:", err);
+      return handleErrors(err, res);
+    }
+  });
+  
+  // Endpoint to force sync project benefits and costs from charter
+  app.post("/api/sync-project-benefits/:projectId", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      console.log("Syncing project benefits for project:", projectId);
+      
+      // Get the project
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Get the charter
+      const charter = await storage.getCharter(projectId);
+      if (!charter) {
+        return res.status(404).json({ message: "Charter not found" });
+      }
+      
+      console.log("Charter fteBenefits:", charter.fteBenefits);
+      
+      // Sync project benefits and costs from charter data
+      await syncProjectBenefitsFromCharter(charter, project);
+      
+      // Get the updated project to return
+      const updatedProject = await storage.getProject(projectId);
+      
+      return res.status(200).json({ 
+        message: "Successfully synchronized project benefits and costs from charter",
+        project: updatedProject
+      });
+    } catch (err) {
+      console.error("Error syncing project benefits:", err);
       return handleErrors(err, res);
     }
   });
