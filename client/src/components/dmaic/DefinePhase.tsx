@@ -577,16 +577,18 @@ export default function DefinePhase() {
     }
   }, [charter, currentProject]);
 
-  // Set Control Phase date to project end date
+  // Set Control Phase date to project end date only on initial load
   useEffect(() => {
     // Only update the Control Phase date field if we have a valid project with a target end date
-    if (currentProject?.targetEndDate) {
+    // AND the control_phase_date hasn't been set yet (to avoid overriding user changes)
+    const currentControlDate = charterForm.getValues("control_phase_date");
+    
+    if (currentProject?.targetEndDate && (!currentControlDate || charter?.isLoading)) {
       const targetEndDate = new Date(currentProject.targetEndDate).toISOString().split('T')[0];
       console.log("Setting Control Phase date to match target end date:", targetEndDate);
-      console.log("Current Control Phase date value:", charterForm.getValues("control_phase_date"));
-      console.log("Current form values:", charterForm.getValues());
+      console.log("Current Control Phase date value:", currentControlDate);
       
-      // Always force the control phase date to match the target end date
+      // Set the control phase date to match the target end date only if it's not already set
       charterForm.setValue("control_phase_date", targetEndDate);
       console.log("Control Phase date set to:", targetEndDate);
       
@@ -595,9 +597,11 @@ export default function DefinePhase() {
         console.log("Verifying control phase date was set:", charterForm.getValues("control_phase_date"));
       }, 100);
     } else {
-      console.log("Project has no target end date, cannot set control phase date");
+      console.log("Not updating control phase date:", 
+        currentProject?.targetEndDate ? "Has target date" : "No target date", 
+        currentControlDate ? "Control date already set" : "No control date set");
     }
-  }, [currentProject, charterForm]);
+  }, [currentProject, charterForm, charter?.isLoading]);
 
   // Initialize form with defaults if no charter exists yet
   useEffect(() => {
