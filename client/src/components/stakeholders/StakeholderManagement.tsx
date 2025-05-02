@@ -42,10 +42,10 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     setIsAddingNew(false);
   };
 
-  // Remove stakeholder - can't remove the first one
+  // Remove stakeholder - maintain minimum 1 stakeholder
   const handleRemoveStakeholder = (index: number) => {
-    // Prevent removal of the first stakeholder
-    if (index === 0) return;
+    // If this is the last stakeholder, don't remove it
+    if (stakeholders.length <= 1) return;
     
     const updatedStakeholders = stakeholders.filter((_, i) => i !== index);
     onChange(updatedStakeholders);
@@ -107,18 +107,15 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
                   />
                 </td>
                 <td className="px-4 py-2">
-                  {/* Show delete button only for stakeholders after the first one */}
-                  {index > 0 && (
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleRemoveStakeholder(index)}
-                      className="h-8 w-8 text-destructive hover:text-destructive/80"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleRemoveStakeholder(index)}
+                    className="h-8 w-8 text-destructive hover:text-destructive/80"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -181,8 +178,8 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
       </div>
       
       <p className="text-xs text-muted-foreground italic">
-        Note: Add all relevant stakeholders who have a direct interest in or influence on the project. 
-        The first stakeholder cannot be removed.
+        Note: Add all relevant stakeholders who have a direct interest in or influence on the project.
+        At least one stakeholder is required.
       </p>
     </div>
   );
