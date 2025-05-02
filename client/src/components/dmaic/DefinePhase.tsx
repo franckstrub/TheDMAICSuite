@@ -1078,42 +1078,6 @@ export default function DefinePhase() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="businessCase">Business Case</Label>
-                  <Textarea
-                    id="businessCase"
-                    placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not this project"
-                    rows={3}
-                    {...charterForm.register("businessCase")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="problemStatement">Problem Statement</Label>
-                  <Textarea
-                    id="problemStatement"
-                    placeholder="Define the problem to be solved in a SMART statement (Specific, Measurable, Attainable, Realistic, Tangible)..."
-                    rows={3}
-                    {...charterForm.register("problemStatement")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="goals">Goals & Objectives</Label>
-                  <Textarea
-                    id="goals"
-                    placeholder="List SMART (Specific, Measurable, Achievable, Realistic, Tangible) goals and objectives that address the problem statement..."
-                    rows={3}
-                    {...charterForm.register("goals")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="scope">Project Scope</Label>
-                  <Textarea
-                    id="scope"
-                    placeholder="Define what is in and out of scope..."
-                    rows={3}
-                    {...charterForm.register("scope")}
-                  />
-                </div>
-                <div>
                   <Label htmlFor="projectImage">Project Image</Label>
                   <div className="mt-2">
                     {projectImage ? (
@@ -1151,6 +1115,42 @@ export default function DefinePhase() {
                       onChange={handleImageUpload}
                     />
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="businessCase">Business Case</Label>
+                  <Textarea
+                    id="businessCase"
+                    placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not this project"
+                    rows={3}
+                    {...charterForm.register("businessCase")}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="problemStatement">Problem Statement</Label>
+                  <Textarea
+                    id="problemStatement"
+                    placeholder="Define the problem to be solved in a SMART statement (Specific, Measurable, Attainable, Realistic, Tangible)..."
+                    rows={3}
+                    {...charterForm.register("problemStatement")}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="goals">Goals & Objectives</Label>
+                  <Textarea
+                    id="goals"
+                    placeholder="List SMART (Specific, Measurable, Achievable, Realistic, Tangible) goals and objectives that address the problem statement..."
+                    rows={3}
+                    {...charterForm.register("goals")}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="scope">Project Scope</Label>
+                  <Textarea
+                    id="scope"
+                    placeholder="Define what is in and out of scope..."
+                    rows={3}
+                    {...charterForm.register("scope")}
+                  />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
