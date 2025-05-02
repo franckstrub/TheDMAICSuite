@@ -285,6 +285,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.log("Charter updated successfully:", charter);
       
+      // Update the project benefits object to reflect the charter values
+      const project = await storage.getProject(charter.projectId);
+      if (project) {
+        // Create or update the benefits object with the charter values
+        const benefits = project.benefits || {};
+        
+        // Update the quality cost savings from savingsPerYear
+        if (charter.savingsPerYear) {
+          benefits.qualityCostSavings = parseFloat(charter.savingsPerYear) || 0;
+        }
+        
+        // Update working capital gains
+        if (charter.workingCapitalGains) {
+          benefits.workingCapitalGains = parseFloat(charter.workingCapitalGains) || 0;
+        }
+        
+        // Update WACC percentage
+        if (charter.waccPercentage) {
+          benefits.wacc = parseFloat(charter.waccPercentage) / 100 || 0.1;
+        }
+        
+        // Update FTE benefits
+        if (charter.fteBenefits) {
+          benefits.fteBenefits = parseFloat(charter.fteBenefits) || 0;
+        }
+        
+        // Update avg FTE cost
+        if (charter.fteCostPerYear) {
+          benefits.avgFTECost = parseFloat(charter.fteCostPerYear) || 100000;
+        }
+        
+        // Update costs
+        const costs = project.costs || {};
+        
+        // Update one-off costs
+        if (charter.oneOffPeopleCost) {
+          costs.oneOffPeopleCost = parseFloat(charter.oneOffPeopleCost) || 0;
+        }
+        if (charter.oneOffTechnologyCost) {
+          costs.oneOffTechnologyCost = parseFloat(charter.oneOffTechnologyCost) || 0;
+        }
+        if (charter.oneOffOtherCost) {
+          costs.oneOffOtherCost = parseFloat(charter.oneOffOtherCost) || 0;
+        }
+        
+        // Update capex costs
+        if (charter.capexCost) {
+          costs.capexCost = parseFloat(charter.capexCost) || 0;
+        }
+        
+        // Update the project with the new benefits and costs
+        await storage.updateProject(charter.projectId, {
+          benefits,
+          costs
+        });
+        
+        console.log("Updated project benefits:", benefits);
+        console.log("Updated project costs:", costs);
+      }
+      
       // Log activity
       if (req.body.userId) {
         await storage.createActivityLog({
