@@ -1091,11 +1091,11 @@ export default function DefinePhase() {
                         <Button
                           type="button"
                           variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8"
                           onClick={handleRemoveImage}
                         >
-                          Remove
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ) : (
