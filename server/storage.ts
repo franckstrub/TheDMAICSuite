@@ -133,6 +133,20 @@ export class MemStorage implements IStorage {
       fullName: 'John Doe',
       role: 'admin'
     });
+    
+    // Create a sample project for testing
+    this.createProject({
+      title: 'Sample Six Sigma Project',
+      description: 'This is a sample project created for testing purposes',
+      projectType: 'Black Belt',
+      projectCategory: 'Process Improvement',
+      currentPhase: 'define',
+      status: 'active',
+      progress: 10,
+      startDate: new Date('2025-04-01').toISOString().split('T')[0],
+      targetEndDate: new Date('2025-07-31').toISOString().split('T')[0],
+      createdBy: 1
+    });
   }
 
   // User operations
@@ -471,8 +485,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Database storage implementation
-export class DatabaseStorage implements IStorage {
+// Database storage implementation - commented out while we use memory storage
+/* export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -801,7 +815,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return data || undefined;
   }
-}
+} */
 
 // Use MemStorage for testing to avoid database issues
 export const storage = new MemStorage();
