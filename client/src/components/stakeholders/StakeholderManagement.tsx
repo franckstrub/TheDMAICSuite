@@ -21,14 +21,11 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
 
   // Removed the requirement for at least one stakeholder
 
-  // Add new stakeholder
+  // Add new stakeholder - allow empty values
   const handleAddStakeholder = () => {
-    // Only name is required, function is optional
-    if (newName.trim() === "") return;
-    
     const newStakeholder: Stakeholder = {
       name: newName,
-      function: newFunction.trim() || undefined,
+      function: newFunction || undefined,
     };
     
     const updatedStakeholders = [...stakeholders, newStakeholder];
@@ -58,16 +55,21 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Label htmlFor="stakeholders" className="text-md font-medium">Stakeholders</Label>
-        {!isAddingNew && (
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsAddingNew(true)}
-          >
-            <Plus className="h-4 w-4 mr-1" /> Add Stakeholder
-          </Button>
-        )}
+        <Button 
+          type="button" 
+          variant="outline" 
+          size="sm"
+          onClick={() => {
+            if (isAddingNew) {
+              // Save current stakeholder
+              handleAddStakeholder();
+            } else {
+              setIsAddingNew(true);
+            }
+          }}
+        >
+          <Plus className="h-4 w-4 mr-1" /> Add Stakeholder
+        </Button>
       </div>
 
       {/* Stakeholders Table */}
@@ -132,27 +134,19 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
                     className="h-8"
                   />
                 </td>
-                <td className="px-4 py-2 flex space-x-1">
+                <td className="px-4 py-2">
                   <Button 
                     type="button" 
-                    size="sm"
-                    onClick={handleAddStakeholder}
-                    className="h-8"
-                  >
-                    Save
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
+                    variant="ghost" 
+                    size="icon"
                     onClick={() => {
                       setIsAddingNew(false);
                       setNewName("");
                       setNewFunction("");
                     }}
-                    className="h-8"
+                    className="h-8 w-8 text-destructive hover:text-destructive/80"
                   >
-                    Cancel
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </td>
               </tr>
