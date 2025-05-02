@@ -57,14 +57,6 @@ export const stakeholderSchema = z.object({
 
 export type Stakeholder = z.infer<typeof stakeholderSchema>;
 
-// Team Member schema
-export const teamMemberSchema = z.object({
-  name: z.string(),
-  role: z.string().optional(),
-});
-
-export type TeamMember = z.infer<typeof teamMemberSchema>;
-
 // Project Charter
 export const projectCharters = pgTable("project_charters", {
   id: serial("id").primaryKey(),
@@ -74,8 +66,6 @@ export const projectCharters = pgTable("project_charters", {
   sponsorFunction: text("sponsor_function"),
   // Replace single stakeholder with array
   stakeholders: jsonb("stakeholders").$type<Stakeholder[]>(),
-  // Team Members list
-  teamMembers: jsonb("team_members").$type<TeamMember[]>(),
   // Keep old fields for backwards compatibility
   stakeholder: text("stakeholder"),
   stakeholderFunction: text("stakeholder_function"),
@@ -126,9 +116,8 @@ export const projectCharters = pgTable("project_charters", {
 
 export const insertCharterSchema = createInsertSchema(projectCharters)
   .extend({
-    // Set default empty arrays for stakeholders and team members
+    // Set default empty array for stakeholders
     stakeholders: z.array(stakeholderSchema).default([]),
-    teamMembers: z.array(teamMemberSchema).default([]),
   })
   .pick({
   projectId: true,
@@ -136,7 +125,6 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   sponsor: true,
   sponsorFunction: true,
   stakeholders: true,
-  teamMembers: true,
   // Keep old fields for backwards compatibility
   stakeholder: true,
   stakeholderFunction: true,
