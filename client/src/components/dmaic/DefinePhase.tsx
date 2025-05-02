@@ -386,6 +386,21 @@ export default function DefinePhase() {
         }
       }
       
+      // Load team members if available
+      if (charter.charter.teamMembers) {
+        try {
+          const teamMembersData = Array.isArray(charter.charter.teamMembers) 
+            ? charter.charter.teamMembers 
+            : JSON.parse(charter.charter.teamMembers as string);
+          
+          setTeamMembers(teamMembersData);
+          console.log("Loaded team members:", teamMembersData);
+        } catch (e) {
+          console.error("Error parsing team members:", e);
+          setTeamMembers([]);
+        }
+      }
+      
       // Load soft benefits if available
       if (charter.charter.softBenefits) {
         try {
@@ -690,6 +705,8 @@ export default function DefinePhase() {
         // Keep legacy fields for backward compatibility
         stakeholder: stakeholders.length > 0 ? stakeholders[0].name : "",
         stakeholderFunction: stakeholders.length > 0 ? stakeholders[0].function : "",
+        // Store team members as an array
+        teamMembers: teamMembers,
         financialController: data.financialController || "",
         projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",
@@ -874,6 +891,38 @@ export default function DefinePhase() {
         }
       }
       
+      // Create a working copy of the team members list
+      let workingTeamMembers = [...teamMembers];
+      
+      // Check for any pending team member in the form
+      const teamMemberForm = document.querySelector('.team-member-form');
+      if (teamMemberForm) {
+        const nameInput = document.querySelector('.team-member-name-input') as HTMLInputElement;
+        const functionInput = document.querySelector('.team-member-function-input') as HTMLInputElement;
+        
+        if (nameInput && (nameInput.value.trim() || (functionInput && functionInput.value.trim()))) {
+          console.log("Found pending team member data:", nameInput.value, functionInput?.value);
+          
+          // Create the new team member
+          const pendingTeamMember = {
+            name: nameInput.value.trim() || "Unnamed Team Member",
+            function: functionInput && functionInput.value.trim() ? functionInput.value.trim() : undefined
+          };
+          
+          // Add it to our copy
+          workingTeamMembers.push(pendingTeamMember);
+          
+          // Update the state
+          setTeamMembers(workingTeamMembers);
+          
+          // Clear the inputs
+          nameInput.value = "";
+          if (functionInput) functionInput.value = "";
+          
+          console.log("Updated team members list:", workingTeamMembers);
+        }
+      }
+      
       // Make sure all calculated values are properly set before submission
       updateTotalFinancialSavings();
       console.log("Total financial savings updated");
@@ -915,6 +964,8 @@ export default function DefinePhase() {
         // Keep legacy fields for backward compatibility
         stakeholder: workingStakeholders.length > 0 ? workingStakeholders[0].name : "",
         stakeholderFunction: workingStakeholders.length > 0 ? workingStakeholders[0].function : "",
+        // Include team members as an array
+        teamMembers: workingTeamMembers,
         financialController: data.financialController || "",
         projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",
@@ -1247,6 +1298,13 @@ export default function DefinePhase() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+                  <div>
+                    {/* Team Members Management Component */}
+                    <TeamMemberManagement 
+                      teamMembers={teamMembers}
+                      onChange={setTeamMembers}
+                    />
                   </div>
                 </div>
               </div>
