@@ -75,6 +75,7 @@ export default function Projects() {
     title: "",
     description: "",
     projectType: "Green Belt",
+    projectCategory: "Process Improvement",
     currentPhase: "define",
     status: "active",
     startDate: new Date().toISOString().split('T')[0],
@@ -202,6 +203,7 @@ export default function Projects() {
       title: "",
       description: "",
       projectType: "Green Belt",
+      projectCategory: "Process Improvement",
       currentPhase: "define",
       status: "active",
       startDate: new Date().toISOString().split('T')[0],
@@ -383,7 +385,7 @@ export default function Projects() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="projectType">Project Type</Label>
                     <Select
@@ -398,6 +400,25 @@ export default function Projects() {
                         <SelectItem value="Green Belt">Green Belt</SelectItem>
                         <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
                         <SelectItem value="White Belt">White Belt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="projectCategory">Project Category</Label>
+                    <Select
+                      value={newProject.projectCategory}
+                      onValueChange={(value) => setNewProject({ ...newProject, projectCategory: value })}
+                    >
+                      <SelectTrigger id="projectCategory">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Process Improvement">Process Improvement</SelectItem>
+                        <SelectItem value="Process Redesign">Process Redesign</SelectItem>
+                        <SelectItem value="Process Design">Process Design</SelectItem>
+                        <SelectItem value="Project Scoping">Project Scoping</SelectItem>
+                        <SelectItem value="Kaizen">Kaizen</SelectItem>
+                        <SelectItem value="Quick Action">Quick Action</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
