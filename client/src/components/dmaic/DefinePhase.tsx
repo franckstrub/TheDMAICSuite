@@ -1304,7 +1304,7 @@ export default function DefinePhase() {
                   <h4 className="text-md font-medium mb-2">Milestone Dates</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="kickOffDate">Kick-Off</Label>
+                      <Label htmlFor="kickOffDate">Kick-Off with team</Label>
                       <Input
                         id="kickOffDate"
                         type="date"
