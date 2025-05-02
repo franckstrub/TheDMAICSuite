@@ -74,6 +74,7 @@ export default function Projects() {
   const [newProject, setNewProject] = useState({
     title: "",
     description: "",
+    projectType: "Green Belt",
     currentPhase: "define",
     status: "active",
     startDate: new Date().toISOString().split('T')[0],
@@ -200,6 +201,7 @@ export default function Projects() {
     setNewProject({
       title: "",
       description: "",
+      projectType: "Green Belt",
       currentPhase: "define",
       status: "active",
       startDate: new Date().toISOString().split('T')[0],
@@ -379,6 +381,24 @@ export default function Projects() {
                         onChange={(e) => setNewProject({ ...newProject, targetEndDate: e.target.value })}
                       />
                     </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="projectType">Project Type</Label>
+                    <Select
+                      value={newProject.projectType}
+                      onValueChange={(value) => setNewProject({ ...newProject, projectType: value })}
+                    >
+                      <SelectTrigger id="projectType">
+                        <SelectValue placeholder="Select project type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Black Belt">Black Belt</SelectItem>
+                        <SelectItem value="Green Belt">Green Belt</SelectItem>
+                        <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
