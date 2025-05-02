@@ -54,7 +54,10 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
   useEffect(() => {
     // Create a function to save pending stakeholder data that preserves the input fields
     const savePendingStakeholder = (e: Event) => {
-      if (hasPendingData.current && isAddingNew) {
+      // Check if there's actually data to save
+      if (isAddingNew && (newName.trim() || newFunction.trim())) {
+        console.log("StakeholderManagement: saving pending stakeholder data", newName, newFunction);
+        
         // Make a temporary copy of the values before saving
         const tempName = newName;
         const tempFunction = newFunction;
@@ -74,7 +77,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
         // Prevent the default form reset behavior that would clear our inputs
         e.preventDefault();
         
-        // Don't clear the inputs - keep them in the form
+        // Mark that we have pending data
         hasPendingData.current = true;
       }
     };
@@ -170,13 +173,13 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
             
             {/* Form for adding a new stakeholder */}
             {isAddingNew && (
-              <tr className="bg-accent/50">
+              <tr className="bg-accent/50 stakeholder-form">
                 <td className="px-4 py-2">
                   <Input 
                     placeholder="Stakeholder Name"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="h-8"
+                    className="h-8 stakeholder-name-input"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -184,7 +187,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
                     placeholder="Stakeholder Function (optional)"
                     value={newFunction}
                     onChange={(e) => setNewFunction(e.target.value)}
-                    className="h-8"
+                    className="h-8 stakeholder-function-input"
                   />
                 </td>
                 <td className="px-4 py-2">
