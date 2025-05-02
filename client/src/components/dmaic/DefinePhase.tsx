@@ -520,6 +520,7 @@ export default function DefinePhase() {
       // Now reset the form with the loaded values
       charterForm.reset({
         projectTitle: currentProject?.title || "",
+        projectReferenceNumber: charter.charter.projectReferenceNumber || "",
         projectLeader: charter.charter.projectLeader || "",
         sponsor: charter.charter.sponsor || "",
         sponsorFunction: charter.charter.sponsorFunction || "",
