@@ -24,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import StakeholderManagement from "@/components/stakeholders/StakeholderManagement";
+import { Stakeholder } from "@shared/schema";
 
 export default function DefinePhase() {
   const { user, currentProject, currency } = useAppContext();
@@ -35,6 +37,9 @@ export default function DefinePhase() {
   // State for project image handling
   const [projectImage, setProjectImage] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  
+  // State for stakeholders management
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
@@ -271,6 +276,33 @@ export default function DefinePhase() {
         setProjectImage(charter.charter.projectImage);
       }
       
+      // Load stakeholders if available
+      if (charter.charter.stakeholders) {
+        try {
+          const stakeholdersData = Array.isArray(charter.charter.stakeholders) 
+            ? charter.charter.stakeholders 
+            : JSON.parse(charter.charter.stakeholders as string);
+          
+          setStakeholders(stakeholdersData);
+          console.log("Loaded stakeholders:", stakeholdersData);
+        } catch (e) {
+          console.error("Error parsing stakeholders:", e);
+          setStakeholders([]);
+        }
+      } else if (charter.charter.stakeholder) {
+        // Convert legacy single stakeholder to array format if available
+        const stakeholder = charter.charter.stakeholder;
+        const stakeholderFunction = charter.charter.stakeholderFunction || "";
+        
+        if (stakeholder) {
+          setStakeholders([{ 
+            name: stakeholder, 
+            function: stakeholderFunction 
+          }]);
+          console.log("Converted legacy stakeholder to new format");
+        }
+      }
+      
       // First load the FTE parameters so we can use them in the calculation
       let fteBenefitsValue = 0;
       
@@ -497,8 +529,11 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
-        stakeholder: data.stakeholder || "",
-        stakeholderFunction: data.stakeholderFunction || "",
+        // Store stakeholders as a JSON string
+        stakeholders: JSON.stringify(stakeholders),
+        // Keep legacy fields for backward compatibility
+        stakeholder: stakeholders.length > 0 ? stakeholders[0].name : "",
+        stakeholderFunction: stakeholders.length > 0 ? stakeholders[0].function : "",
         financialController: data.financialController || "",
         projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",
@@ -677,8 +712,11 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
-        stakeholder: data.stakeholder || "",
-        stakeholderFunction: data.stakeholderFunction || "",
+        // Include stakeholders array as a JSON string
+        stakeholders: JSON.stringify(stakeholders),
+        // Keep legacy fields for backward compatibility
+        stakeholder: stakeholders.length > 0 ? stakeholders[0].name : "",
+        stakeholderFunction: stakeholders.length > 0 ? stakeholders[0].function : "",
         financialController: data.financialController || "",
         projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",
