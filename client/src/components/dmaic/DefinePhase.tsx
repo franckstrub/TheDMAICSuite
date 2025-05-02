@@ -512,12 +512,12 @@ export default function DefinePhase() {
           ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
           : "",
         // Add milestone dates
-        kickOffDate: charter.charter.kick_off_date || "",
-        definePhaseDate: charter.charter.define_phase_date || "",
-        measurePhaseDate: charter.charter.measure_phase_date || "",
-        analyzePhaseDate: charter.charter.analyze_phase_date || "",
-        improvePhaseDate: charter.charter.improve_phase_date || "",
-        controlPhaseDate: charter.charter.control_phase_date || "",
+        kick_off_date: charter.charter.kick_off_date || "",
+        define_phase_date: charter.charter.define_phase_date || "",
+        measure_phase_date: charter.charter.measure_phase_date || "",
+        analyze_phase_date: charter.charter.analyze_phase_date || "",
+        improve_phase_date: charter.charter.improve_phase_date || "",
+        control_phase_date: charter.charter.control_phase_date || "",
         savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
         workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
         waccPercentage: charter.charter.waccPercentage?.toString() || "10",
@@ -552,16 +552,16 @@ export default function DefinePhase() {
     if (currentProject?.targetEndDate) {
       const targetEndDate = new Date(currentProject.targetEndDate).toISOString().split('T')[0];
       console.log("Setting Control Phase date to match target end date:", targetEndDate);
-      console.log("Current Control Phase date value:", charterForm.getValues("controlPhaseDate"));
+      console.log("Current Control Phase date value:", charterForm.getValues("control_phase_date"));
       console.log("Current form values:", charterForm.getValues());
       
       // Always force the control phase date to match the target end date
-      charterForm.setValue("controlPhaseDate", targetEndDate);
+      charterForm.setValue("control_phase_date", targetEndDate);
       console.log("Control Phase date set to:", targetEndDate);
       
       // Verify value was set
       setTimeout(() => {
-        console.log("Verifying control phase date was set:", charterForm.getValues("controlPhaseDate"));
+        console.log("Verifying control phase date was set:", charterForm.getValues("control_phase_date"));
       }, 100);
     } else {
       console.log("Project has no target end date, cannot set control phase date");
@@ -597,12 +597,12 @@ export default function DefinePhase() {
           ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
           : "",
         // Add milestone dates
-        kickOffDate: "",
-        definePhaseDate: "",
-        measurePhaseDate: "",
-        analyzePhaseDate: "",
-        improvePhaseDate: "",
-        controlPhaseDate: currentProject?.targetEndDate 
+        kick_off_date: "",
+        define_phase_date: "",
+        measure_phase_date: "",
+        analyze_phase_date: "",
+        improve_phase_date: "",
+        control_phase_date: currentProject?.targetEndDate 
           ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
           : "",
         savingsPerYear: "",
@@ -1335,52 +1335,52 @@ export default function DefinePhase() {
                   <h4 className="text-md font-medium mb-2">Milestone Dates</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="kickOffDate">Kick-Off with team</Label>
+                      <Label htmlFor="kick_off_date">Kick-Off with team</Label>
                       <Input
-                        id="kickOffDate"
+                        id="kick_off_date"
                         type="date"
-                        {...charterForm.register("kickOffDate")}
+                        {...charterForm.register("kick_off_date")}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="definePhaseDate">Define Phase</Label>
+                      <Label htmlFor="define_phase_date">Define Phase</Label>
                       <Input
-                        id="definePhaseDate"
+                        id="define_phase_date"
                         type="date"
-                        {...charterForm.register("definePhaseDate")}
+                        {...charterForm.register("define_phase_date")}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="measurePhaseDate">Measure Phase</Label>
+                      <Label htmlFor="measure_phase_date">Measure Phase</Label>
                       <Input
-                        id="measurePhaseDate"
+                        id="measure_phase_date"
                         type="date"
-                        {...charterForm.register("measurePhaseDate")}
+                        {...charterForm.register("measure_phase_date")}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="analyzePhaseDate">Analyze Phase</Label>
+                      <Label htmlFor="analyze_phase_date">Analyze Phase</Label>
                       <Input
-                        id="analyzePhaseDate"
+                        id="analyze_phase_date"
                         type="date"
-                        {...charterForm.register("analyzePhaseDate")}
+                        {...charterForm.register("analyze_phase_date")}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="improvePhaseDate">Improve Phase</Label>
+                      <Label htmlFor="improve_phase_date">Improve Phase</Label>
                       <Input
-                        id="improvePhaseDate"
+                        id="improve_phase_date"
                         type="date"
-                        {...charterForm.register("improvePhaseDate")}
+                        {...charterForm.register("improve_phase_date")}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="controlPhaseDate">Control Phase</Label>
+                      <Label htmlFor="control_phase_date">Control Phase</Label>
                       <Input
-                        id="controlPhaseDate"
+                        id="control_phase_date"
                         type="date"
-                        value={charterForm.watch("controlPhaseDate") || (currentProject?.targetEndDate ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] : "")}
-                        onChange={(e) => charterForm.setValue("controlPhaseDate", e.target.value)}
+                        value={charterForm.watch("control_phase_date") || (currentProject?.targetEndDate ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] : "")}
+                        onChange={(e) => charterForm.setValue("control_phase_date", e.target.value)}
                       />
                     </div>
                   </div>
