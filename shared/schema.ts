@@ -167,12 +167,12 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   fteCalculatedValue: true,
   softBenefits: true,
   // Milestone dates
-  kickOffDate: true,
-  definePhaseDate: true,
-  measurePhaseDate: true,
-  analyzePhaseDate: true,
-  improvePhaseDate: true,
-  controlPhaseDate: true,
+  kick_off_date: true,
+  define_phase_date: true,
+  measure_phase_date: true,
+  analyze_phase_date: true,
+  improve_phase_date: true,
+  control_phase_date: true,
   // Project cost fields
   oneOffPeopleCost: true,
   oneOffTechnologyCost: true,
