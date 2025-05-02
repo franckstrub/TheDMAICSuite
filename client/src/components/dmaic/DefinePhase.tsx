@@ -44,7 +44,7 @@ export default function DefinePhase() {
     defaultValues: {
       projectTitle: "",
       projectLeader: "",
-      beltLevel: "Black Belt",
+      beltLevel: "Green Belt",
       businessCase: "",
       problemStatement: "",
       goals: "",
@@ -396,7 +396,7 @@ export default function DefinePhase() {
       charterForm.reset({
         projectTitle: currentProject?.title || "",
         projectLeader: "",
-        beltLevel: "Black Belt",
+        beltLevel: "Green Belt",
         businessCase: "",
         problemStatement: "",
         goals: "",
@@ -470,7 +470,7 @@ export default function DefinePhase() {
       const payload = {
         projectId,
         projectLeader: data.projectLeader || "",
-        beltLevel: data.beltLevel || "Black Belt",
+        beltLevel: data.beltLevel || "Green Belt",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -641,7 +641,7 @@ export default function DefinePhase() {
         projectId,
         userId: user?.id || 1,
         projectLeader: data.projectLeader || "",
-        beltLevel: data.beltLevel || "Black Belt",
+        beltLevel: data.beltLevel || "Green Belt",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
