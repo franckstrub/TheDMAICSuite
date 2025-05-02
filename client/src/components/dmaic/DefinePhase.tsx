@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import StakeholderManagement from "@/components/stakeholders/StakeholderManagement";
+import TeamMemberManagement from "@/components/stakeholders/TeamMemberManagement";
 import { Stakeholder } from "@shared/schema";
 
 export default function DefinePhase() {
@@ -43,6 +44,9 @@ export default function DefinePhase() {
   
   // State for stakeholders management
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  
+  // State for team members management
+  const [teamMembers, setTeamMembers] = useState<Stakeholder[]>([]);
   
   // State for soft benefits management
   const [softBenefits, setSoftBenefits] = useState<SoftBenefit[]>([]);
