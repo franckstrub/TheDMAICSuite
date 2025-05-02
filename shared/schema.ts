@@ -34,6 +34,8 @@ export const projects = pgTable("projects", {
   actualEndDate: date("actual_end_date"),
   createdBy: integer("created_by").notNull(),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  benefits: jsonb("benefits"),
+  costs: jsonb("costs"),
 });
 
 export const insertProjectSchema = createInsertSchema(projects).pick({
@@ -334,7 +336,18 @@ export const insertProcessDataSchema = createInsertSchema(processData).pick({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export type Project = typeof projects.$inferSelect;
+export type Project = typeof projects.$inferSelect & {
+  // Additional fields that are added at runtime but not stored in DB directly
+  benefits?: ProjectBenefits;
+  costs?: ProjectCosts;
+  phases?: {
+    define?: { status: string };
+    measure?: { status: string };
+    analyze?: { status: string };
+    improve?: { status: string };
+    control?: { status: string };
+  };
+};
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 
 export type ProjectCharter = typeof projectCharters.$inferSelect;
@@ -365,4 +378,22 @@ export type InsertProcessData = z.infer<typeof insertProcessDataSchema>;
 export type SoftBenefit = {
   text: string;
   category: 'employee' | 'customer' | 'process' | 'growth';
+};
+
+// Benefits type definition
+export type ProjectBenefits = {
+  qualityCostSavings: number;
+  workingCapitalGains: number;
+  wacc: number;
+  fteBenefits: number;
+  avgFTECost: number;
+};
+
+// Costs type definition
+export type ProjectCosts = {
+  oneOffPeopleCost: number;
+  oneOffTechnologyCost: number;
+  oneOffOtherCost: number;
+  capexCost: number;
+  // Add any other cost types as needed
 };
