@@ -972,7 +972,7 @@ export default function DefinePhase() {
                   <Label htmlFor="goals">Goals & Objectives</Label>
                   <Textarea
                     id="goals"
-                    placeholder="List specific, measurable goals..."
+                    placeholder="List SMART (Specific, Measurable, Achievable, Realistic, Tangible) goals and objectives that address the problem statement..."
                     rows={3}
                     {...charterForm.register("goals")}
                   />
