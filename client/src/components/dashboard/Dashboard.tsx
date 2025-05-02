@@ -522,7 +522,10 @@ export default function Dashboard() {
     // Get the relevant projects based on current filters
     let relevantProjects = projects?.projects || [];
     
+    console.log("Extracting soft benefits from projects:", relevantProjects);
+    
     if (!relevantProjects || relevantProjects.length === 0) {
+      console.log("No relevant projects found for soft benefits");
       return [];
     }
     
@@ -541,10 +544,13 @@ export default function Dashboard() {
       const projectId = project.id;
       const projectTitle = project.title || `Project ${projectId}`;
       
+      console.log(`Project ${projectId} (${projectTitle}) has softBenefits:`, project.softBenefits);
+      
       // Check if project has soft benefits data and use it
       if (project.softBenefits && Array.isArray(project.softBenefits)) {
         // Use the actual softBenefits from the project data
         project.softBenefits.forEach((benefit, index) => {
+          console.log(`Processing benefit ${index}:`, benefit);
           if (benefit.text && benefit.category) {
             benefits.push({
               id: projectId * 100 + index,
@@ -555,15 +561,19 @@ export default function Dashboard() {
             });
           }
         });
+      } else {
+        console.log(`Project ${projectId} has no valid softBenefits array`);
       }
       
       // Return only actual benefits, not generated ones
+      console.log(`Generated ${benefits.length} benefits for project ${projectId}`);
       return benefits;
     };
     
     // Generate all benefits for all relevant projects
     const allBenefits = relevantProjects.flatMap(generateBenefitsForProject);
     
+    console.log("Total soft benefits extracted:", allBenefits.length);
     return allBenefits;
   };
   
@@ -623,13 +633,26 @@ export default function Dashboard() {
         oneOffOtherCost: 0,
         capexCost: 0
       };
+      
+      // Parse softBenefits if they're stored as a string (which happens from API)
+      let softBenefits = project.softBenefits;
+      if (typeof project.softBenefits === 'string') {
+        try {
+          softBenefits = JSON.parse(project.softBenefits);
+          console.log("Parsed softBenefits from string:", softBenefits);
+        } catch (e) {
+          console.error("Error parsing softBenefits string:", e);
+          softBenefits = [];
+        }
+      }
 
       // Use existing benefits/costs if they exist, or the defaults
       return {
         ...project,
         phases: project.phases || phases,
         benefits: project.benefits || benefits,
-        costs: project.costs || costs
+        costs: project.costs || costs,
+        softBenefits: softBenefits || []
       };
     });
     
