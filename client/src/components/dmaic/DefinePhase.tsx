@@ -206,13 +206,13 @@ export default function DefinePhase() {
     
     setFteParams({
       ...fteParams,
-      calculatedFte: parseFloat(calculatedFte.toFixed(2)),
+      calculatedFte: parseFloat(calculatedFte.toFixed(3)),
       calculatedValue: parseFloat(calculatedValue.toFixed(2))
     });
     
     // Set the hidden input value for form submission
     const formattedValue = formatCurrency(calculatedValue, currency);
-    const fteString = `${calculatedFte.toFixed(2)} FTE (${formattedValue})`;
+    const fteString = `${calculatedFte.toFixed(3)} FTE (${formattedValue})`;
     document.getElementById("fteBenefits")?.setAttribute("value", fteString);
   };
 
@@ -251,7 +251,7 @@ export default function DefinePhase() {
     const calculatedValue = calculatedFte * fteCostPerYear;
     
     // Format the values
-    const formattedFte = parseFloat(calculatedFte.toFixed(2));
+    const formattedFte = parseFloat(calculatedFte.toFixed(3));
     const formattedValue = parseFloat(calculatedValue.toFixed(2));
     
     // Update the FTE params state with calculated values
@@ -263,7 +263,7 @@ export default function DefinePhase() {
     
     // Set the hidden input value for form submission
     const formattedCurrency = formatCurrency(formattedValue, currency);
-    const fteString = `${formattedFte.toFixed(2)} FTE (${formattedCurrency})`;
+    const fteString = `${formattedFte.toFixed(3)} FTE (${formattedCurrency})`;
     
     // Update both the DOM element and the form value in React Hook Form
     document.getElementById("fteBenefits")?.setAttribute("value", fteString);
@@ -1480,7 +1480,7 @@ export default function DefinePhase() {
                       
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                         <div>
-                          <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte}</span></p>
+                          <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte.toFixed(3)}</span></p>
                           <p className="text-sm font-medium">FTE Benefits: <span className="text-green-600">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
                         </div>
                         <div className="text-xs text-gray-500">Auto-calculated</div>
