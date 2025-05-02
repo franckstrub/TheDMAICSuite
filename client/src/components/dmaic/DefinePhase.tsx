@@ -1476,6 +1476,15 @@ export default function DefinePhase() {
               </div>
             </div>
             
+            {/* Team Members/SMEs Section */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-4">Team Members/SMEs</h3>
+              <TeamMemberManagement 
+                teamMembers={teamMembers}
+                onChange={setTeamMembers}
+              />
+            </div>
+            
             {/* Project Cost Section */}
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-4">Project Costs</h3>
