@@ -619,14 +619,14 @@ export default function Projects() {
                               </DropdownMenuItem>
                             )}
                             
-                            {project.status.toLowerCase() === 'active' && (
+                            {(project.status.toLowerCase() === 'active' || project.status.toLowerCase() === 'in progress') && (
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   console.log("Putting project on hold:", project.id, project.title);
                                   updateProjectStatusMutation.mutate({
                                     projectId: project.id,
-                                    status: 'on hold'
+                                    status: 'On Hold'
                                   });
                                 }}
                               >
