@@ -4,11 +4,11 @@
 -- Update all projects with benefits values from project charters
 UPDATE projects p
 SET benefits = JSONB_BUILD_OBJECT(
-  'qualityCostSavings', NULLIF(pc.savings_per_year, '')::numeric, 
-  'workingCapitalGains', NULLIF(pc.working_capital_gains, '')::numeric,
-  'wacc', NULLIF(pc.wacc_percentage, '')::numeric / 100,
-  'fteBenefits', NULLIF(pc.fte_benefits, '')::numeric,
-  'avgFTECost', NULLIF(pc.fte_cost_per_year, '')::numeric
+  'qualityCostSavings', COALESCE(NULLIF(pc.savings_per_year, '')::numeric, 0), 
+  'workingCapitalGains', COALESCE(NULLIF(pc.working_capital_gains, '')::numeric, 0),
+  'wacc', COALESCE(NULLIF(pc.wacc_percentage, '')::numeric / 100, 0.1),
+  'fteBenefits', COALESCE(NULLIF(pc.fte_benefits, '')::numeric, 0),
+  'avgFTECost', COALESCE(NULLIF(pc.fte_cost_per_year, '')::numeric, 0)
 )
 FROM project_charters pc
 WHERE p.id = pc.project_id;
@@ -16,10 +16,10 @@ WHERE p.id = pc.project_id;
 -- Update all projects with cost values from project charters
 UPDATE projects p
 SET costs = JSONB_BUILD_OBJECT(
-  'oneOffPeopleCost', NULLIF(pc.one_off_people_cost, '')::numeric,
-  'oneOffTechnologyCost', NULLIF(pc.one_off_technology_cost, '')::numeric,
-  'oneOffOtherCost', NULLIF(pc.one_off_other_cost, '')::numeric,
-  'capexCost', NULLIF(pc.capex_cost, '')::numeric
+  'oneOffPeopleCost', COALESCE(NULLIF(pc.one_off_people_cost, '')::numeric, 0),
+  'oneOffTechnologyCost', COALESCE(NULLIF(pc.one_off_technology_cost, '')::numeric, 0),
+  'oneOffOtherCost', COALESCE(NULLIF(pc.one_off_other_cost, '')::numeric, 0),
+  'capexCost', COALESCE(NULLIF(pc.capex_cost, '')::numeric, 0)
 )
 FROM project_charters pc
 WHERE p.id = pc.project_id;
