@@ -529,8 +529,8 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
-        // Store stakeholders as a JSON string
-        stakeholders: JSON.stringify(stakeholders),
+        // Store stakeholders as an array
+        stakeholders: stakeholders,
         // Keep legacy fields for backward compatibility
         stakeholder: stakeholders.length > 0 ? stakeholders[0].name : "",
         stakeholderFunction: stakeholders.length > 0 ? stakeholders[0].function : "",
@@ -712,8 +712,8 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
-        // Include stakeholders array as a JSON string
-        stakeholders: JSON.stringify(stakeholders),
+        // Include stakeholders as an array
+        stakeholders: stakeholders,
         // Keep legacy fields for backward compatibility
         stakeholder: stakeholders.length > 0 ? stakeholders[0].name : "",
         stakeholderFunction: stakeholders.length > 0 ? stakeholders[0].function : "",
