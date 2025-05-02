@@ -84,6 +84,7 @@ type Project = {
     capexCost?: number;
     [key: string]: any;
   };
+  softBenefits?: Array<BaseSoftBenefit> | string;
   [key: string]: any;
 }
 
