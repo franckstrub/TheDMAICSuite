@@ -546,6 +546,23 @@ export default function DefinePhase() {
     }
   }, [charter, currentProject]);
 
+  // Set Control Phase date to project end date
+  useEffect(() => {
+    // Only update the Control Phase date field if we have a valid project with a target end date
+    if (currentProject?.targetEndDate) {
+      const targetEndDate = new Date(currentProject.targetEndDate).toISOString().split('T')[0];
+      console.log("Setting Control Phase date to match target end date:", targetEndDate);
+      
+      // Schedule this after a short delay to ensure form is ready
+      setTimeout(() => {
+        // Only set if the field is empty
+        if (!charterForm.getValues("controlPhaseDate")) {
+          charterForm.setValue("controlPhaseDate", targetEndDate);
+        }
+      }, 300);
+    }
+  }, [currentProject, charterForm]);
+
   // Initialize form with defaults if no charter exists yet
   useEffect(() => {
     // Only initialize if charterError is true (charter not found) or charter query returned but no charter data
@@ -1354,6 +1371,9 @@ export default function DefinePhase() {
                       <Input
                         id="controlPhaseDate"
                         type="date"
+                        defaultValue={currentProject?.targetEndDate 
+                          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
+                          : undefined}
                         {...charterForm.register("controlPhaseDate")}
                       />
                     </div>
