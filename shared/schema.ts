@@ -86,6 +86,9 @@ export const projectCharters = pgTable("project_charters", {
   goals: text("goals"),
   scope: text("scope"),
   projectImage: text("project_image"),
+  // Project dates
+  startDate: text("start_date"),
+  targetEndDate: text("target_end_date"),
   savingsPerYear: text("savings_per_year"),
   workingCapitalGains: text("working_capital_gains"),
   waccPercentage: text("wacc_percentage"),
@@ -160,6 +163,9 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   goals: true,
   scope: true,
   projectImage: true,
+  // Project dates
+  startDate: true,
+  targetEndDate: true,
   savingsPerYear: true,
   workingCapitalGains: true,
   waccPercentage: true,
