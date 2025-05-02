@@ -744,6 +744,9 @@ export default function DefinePhase() {
     },
     onError: (error) => {
       console.error("Error saving charter:", error);
+      // Add more detailed debugging
+      console.error("Payload that caused error:", charterForm.getValues());
+      
       toast({
         title: "Error",
         description: `Failed to save project charter: ${error}`,
@@ -1376,10 +1379,8 @@ export default function DefinePhase() {
                       <Input
                         id="controlPhaseDate"
                         type="date"
-                        defaultValue={currentProject?.targetEndDate 
-                          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
-                          : undefined}
-                        {...charterForm.register("controlPhaseDate")}
+                        value={charterForm.watch("controlPhaseDate") || (currentProject?.targetEndDate ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] : "")}
+                        onChange={(e) => charterForm.setValue("controlPhaseDate", e.target.value)}
                       />
                     </div>
                   </div>
