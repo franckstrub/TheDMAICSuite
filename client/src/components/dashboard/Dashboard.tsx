@@ -605,17 +605,7 @@ export default function Dashboard() {
       
       console.log(`Project ${projectId} (${projectTitle}) has softBenefits:`, project.softBenefits);
       
-      // Hard-coded benefit for testing - this ensures we have at least one benefit to display
-      if (projectId === 1) {
-        benefits.push({
-          id: projectId * 100,
-          text: "Less rework which is a toughh manual jobb",
-          projectId,
-          projectTitle,
-          category: 'employee'
-        });
-        console.log("Added hard-coded employee benefit for project 1");
-      }
+      // We'll use all soft benefits from the project data now, no need for hard-coded benefits
       
       // Check if project has soft benefits data and use it
       if (project.softBenefits && Array.isArray(project.softBenefits)) {
@@ -623,14 +613,7 @@ export default function Dashboard() {
         project.softBenefits.forEach((benefit, index) => {
           console.log(`Processing benefit ${index}:`, benefit);
           if (benefit.text && benefit.category) {
-            // Skip if we already added this one as our hard-coded test
-            if (projectId === 1 && 
-                benefit.category === 'employee' && 
-                benefit.text === "Less rework which is a toughh manual jobb") {
-              console.log("Skipping duplicate of our hard-coded benefit");
-              return;
-            }
-            
+            // Use all benefits from project data
             benefits.push({
               id: projectId * 100 + index + 1, // +1 to avoid collision with hard-coded
               text: benefit.text,
@@ -649,14 +632,7 @@ export default function Dashboard() {
           if (Array.isArray(parsedBenefits)) {
             parsedBenefits.forEach((benefit, index) => {
               if (benefit.text && benefit.category) {
-                // Skip if we already added this one as our hard-coded test
-                if (projectId === 1 && 
-                    benefit.category === 'employee' && 
-                    benefit.text === "Less rework which is a toughh manual jobb") {
-                  console.log("Skipping duplicate of our hard-coded benefit");
-                  return;
-                }
-                
+                // Use all benefits from project data
                 benefits.push({
                   id: projectId * 100 + index + 1,
                   text: benefit.text,
