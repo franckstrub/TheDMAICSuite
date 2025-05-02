@@ -1124,9 +1124,16 @@ export default function DefinePhase() {
                     <Input
                       id="savingsPerYear"
                       placeholder={`e.g. 100000`}
+                      type="number"
+                      min="0"
                       {...charterForm.register("savingsPerYear")}
                       onChange={(e) => {
-                        charterForm.setValue("savingsPerYear", e.target.value);
+                        const value = parseFloat(e.target.value);
+                        if (value < 0 || isNaN(value)) {
+                          charterForm.setValue("savingsPerYear", "0");
+                        } else {
+                          charterForm.setValue("savingsPerYear", e.target.value);
+                        }
                         // Update total financial savings
                         updateTotalFinancialSavings();
                       }}
@@ -1138,9 +1145,17 @@ export default function DefinePhase() {
                     <Input
                       id="workingCapitalGains"
                       placeholder={`e.g. 75000`}
+                      type="number"
+                      min="0"
                       {...charterForm.register("workingCapitalGains")}
                       onChange={(e) => {
-                        charterForm.setValue("workingCapitalGains", e.target.value);
+                        const value = parseFloat(e.target.value);
+                        if (value < 0 || isNaN(value)) {
+                          charterForm.setValue("workingCapitalGains", "0");
+                        } else {
+                          charterForm.setValue("workingCapitalGains", e.target.value);
+                        }
+                        
                         // Calculate Financial Savings based on WACC
                         const wcg = parseFloat(e.target.value) || 0;
                         const wacc = parseFloat(charterForm.getValues("waccPercentage")) / 100 || 0;
@@ -1160,9 +1175,17 @@ export default function DefinePhase() {
                       <Input
                         id="waccPercentage"
                         placeholder="e.g. 10"
+                        type="number"
+                        min="0"
                         {...charterForm.register("waccPercentage")}
                         onChange={(e) => {
-                          charterForm.setValue("waccPercentage", e.target.value);
+                          const value = parseFloat(e.target.value);
+                          if (value < 0 || isNaN(value)) {
+                            charterForm.setValue("waccPercentage", "0");
+                          } else {
+                            charterForm.setValue("waccPercentage", e.target.value);
+                          }
+                          
                           // Calculate Financial Savings based on WACC
                           const wcg = parseFloat(charterForm.getValues("workingCapitalGains")) || 0;
                           const wacc = parseFloat(e.target.value) / 100 || 0;
@@ -1322,9 +1345,16 @@ export default function DefinePhase() {
                     <Input
                       id="oneOffPeopleCost"
                       placeholder="e.g. 5000"
+                      type="number"
+                      min="0"
                       {...charterForm.register("oneOffPeopleCost")}
                       onChange={(e) => {
-                        charterForm.setValue("oneOffPeopleCost", e.target.value);
+                        const value = parseFloat(e.target.value);
+                        if (value < 0 || isNaN(value)) {
+                          charterForm.setValue("oneOffPeopleCost", "0");
+                        } else {
+                          charterForm.setValue("oneOffPeopleCost", e.target.value);
+                        }
                         // Update net value
                         updateTotalFinancialSavings();
                       }}
@@ -1335,9 +1365,16 @@ export default function DefinePhase() {
                     <Input
                       id="oneOffTechnologyCost"
                       placeholder="e.g. 10000"
+                      type="number"
+                      min="0"
                       {...charterForm.register("oneOffTechnologyCost")}
                       onChange={(e) => {
-                        charterForm.setValue("oneOffTechnologyCost", e.target.value);
+                        const value = parseFloat(e.target.value);
+                        if (value < 0 || isNaN(value)) {
+                          charterForm.setValue("oneOffTechnologyCost", "0");
+                        } else {
+                          charterForm.setValue("oneOffTechnologyCost", e.target.value);
+                        }
                         // Update net value
                         updateTotalFinancialSavings();
                       }}
@@ -1348,9 +1385,16 @@ export default function DefinePhase() {
                     <Input
                       id="oneOffOtherCost"
                       placeholder="e.g. 2000"
+                      type="number"
+                      min="0"
                       {...charterForm.register("oneOffOtherCost")}
                       onChange={(e) => {
-                        charterForm.setValue("oneOffOtherCost", e.target.value);
+                        const value = parseFloat(e.target.value);
+                        if (value < 0 || isNaN(value)) {
+                          charterForm.setValue("oneOffOtherCost", "0");
+                        } else {
+                          charterForm.setValue("oneOffOtherCost", e.target.value);
+                        }
                         // Update net value
                         updateTotalFinancialSavings();
                       }}
@@ -1377,9 +1421,16 @@ export default function DefinePhase() {
                     <Input
                       id="capexCost"
                       placeholder="e.g. 25000"
+                      type="number"
+                      min="0"
                       {...charterForm.register("capexCost")}
                       onChange={(e) => {
-                        charterForm.setValue("capexCost", e.target.value);
+                        const value = parseFloat(e.target.value);
+                        if (value < 0 || isNaN(value)) {
+                          charterForm.setValue("capexCost", "0");
+                        } else {
+                          charterForm.setValue("capexCost", e.target.value);
+                        }
                         // Update net value
                         updateTotalFinancialSavings();
                       }}
