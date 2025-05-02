@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAppContext, ImplementationStatusType } from "@/store/AppContext";
+import { SoftBenefit as BaseSoftBenefit } from "@shared/schema";
 import StatsCard from "./StatsCard";
 import ProjectsTable from "./ProjectsTable";
 import ActivityItem from "./ActivityItem";
@@ -525,12 +526,13 @@ export default function Dashboard() {
       return [];
     }
     
+    // Extend the SoftBenefit type for dashboard display purposes
     type SoftBenefit = {
       id: number; 
-      text: string; 
+      text: string;
       projectId: number;
       projectTitle: string;
-      category: 'employee' | 'customer' | 'process' | 'growth';
+      category: BaseSoftBenefit['category'];
     };
     
     // Use only actual soft benefits data from the project

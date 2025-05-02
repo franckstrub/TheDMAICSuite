@@ -92,7 +92,10 @@ export const projectCharters = pgTable("project_charters", {
   fteSavedHours: text("fte_saved_hours"),
   fteCostPerYear: text("fte_cost_per_year"),
   fteCalculatedValue: text("fte_calculated_value"),
-  softBenefits: text("soft_benefits"),
+  softBenefits: jsonb("soft_benefits").$type<Array<{
+    text: string;
+    category: 'employee' | 'customer' | 'process' | 'growth';
+  }>>(),
   // Project cost fields
   oneOffPeopleCost: text("one_off_people_cost"),
   oneOffTechnologyCost: text("one_off_technology_cost"),
@@ -357,3 +360,9 @@ export type InsertLog = z.infer<typeof insertLogSchema>;
 
 export type ProcessData = typeof processData.$inferSelect;
 export type InsertProcessData = z.infer<typeof insertProcessDataSchema>;
+
+// Define a SoftBenefit type for TypeScript usage
+export type SoftBenefit = {
+  text: string;
+  category: 'employee' | 'customer' | 'process' | 'growth';
+};
