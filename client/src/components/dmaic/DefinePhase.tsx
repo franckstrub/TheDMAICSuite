@@ -577,31 +577,27 @@ export default function DefinePhase() {
     }
   }, [charter, currentProject]);
 
-  // Set Control Phase date to project end date only on initial load
+  // Set Control Phase date to project end date ONLY on first load (when there's no charter yet)
   useEffect(() => {
-    // Only update the Control Phase date field if we have a valid project with a target end date
-    // AND the control_phase_date hasn't been set yet (to avoid overriding user changes)
-    const currentControlDate = charterForm.getValues("control_phase_date");
-    
-    if (currentProject?.targetEndDate && (!currentControlDate || charter?.isLoading)) {
-      const targetEndDate = new Date(currentProject.targetEndDate).toISOString().split('T')[0];
-      console.log("Setting Control Phase date to match target end date:", targetEndDate);
-      console.log("Current Control Phase date value:", currentControlDate);
+    // Only run this effect if we're creating a new charter for the first time
+    // This ensures we don't override user's custom date after it's been saved
+    if (charterError || !charter || charter.isLoading) {
+      const currentControlDate = charterForm.getValues("control_phase_date");
       
-      // Set the control phase date to match the target end date only if it's not already set
-      charterForm.setValue("control_phase_date", targetEndDate);
-      console.log("Control Phase date set to:", targetEndDate);
-      
-      // Verify value was set
-      setTimeout(() => {
-        console.log("Verifying control phase date was set:", charterForm.getValues("control_phase_date"));
-      }, 100);
-    } else {
-      console.log("Not updating control phase date:", 
-        currentProject?.targetEndDate ? "Has target date" : "No target date", 
-        currentControlDate ? "Control date already set" : "No control date set");
+      if (currentProject?.targetEndDate && !currentControlDate) {
+        const targetEndDate = new Date(currentProject.targetEndDate).toISOString().split('T')[0];
+        console.log("Initial load: Setting Control Phase date to match target end date:", targetEndDate);
+        
+        // Set the control phase date to match the target end date only on first load
+        charterForm.setValue("control_phase_date", targetEndDate);
+        console.log("Control Phase date set to:", targetEndDate);
+      } else {
+        console.log("Not setting initial control phase date:", 
+          currentProject?.targetEndDate ? "Has target date" : "No target date", 
+          currentControlDate ? "Control date already set" : "No control date set");
+      }
     }
-  }, [currentProject, charterForm, charter?.isLoading]);
+  }, [charterError, charter, currentProject, charterForm]);
 
   // Initialize form with defaults if no charter exists yet
   useEffect(() => {
