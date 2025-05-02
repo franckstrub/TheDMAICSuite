@@ -408,20 +408,35 @@ export default function DefinePhase() {
           
           // If it's a string, try to parse it as JSON
           if (typeof charter.charter.softBenefits === 'string') {
-            // Check if it looks like a JSON array
-            if (charter.charter.softBenefits.trim().startsWith('[') && 
-                charter.charter.softBenefits.trim().endsWith(']')) {
-              parsedBenefits = JSON.parse(charter.charter.softBenefits);
-            } else {
+            // Check if it looks like a JSON array (after removing extra quotes if needed)
+            const benefitsStr = charter.charter.softBenefits.trim();
+            
+            // Handle case where the string is stored with extra quotes (JSON string of a JSON string)
+            // This often happens when the database stores the value with extra quotes
+            if (benefitsStr.startsWith('"[') && benefitsStr.endsWith(']"')) {
+              // Remove the extra quotes and escape characters
+              const cleanedStr = benefitsStr.slice(1, -1).replace(/\\"/g, '"');
+              parsedBenefits = JSON.parse(cleanedStr);
+              console.log("Parsed soft benefits from double-quoted JSON string:", parsedBenefits);
+            }
+            // Standard case: JSON array stored as a string
+            else if (benefitsStr.startsWith('[') && benefitsStr.endsWith(']')) {
+              parsedBenefits = JSON.parse(benefitsStr);
+              console.log("Parsed soft benefits from JSON string:", parsedBenefits);
+            } 
+            // Legacy format case
+            else {
               // Legacy format - convert to new format with a default category
               parsedBenefits = [{ 
                 text: charter.charter.softBenefits, 
                 category: "process" 
               }];
+              console.log("Converted legacy soft benefit format");
             }
           } else if (Array.isArray(charter.charter.softBenefits)) {
             // It's already an array
             parsedBenefits = charter.charter.softBenefits;
+            console.log("Using already parsed soft benefits array");
           }
           
           // Apply the parsed benefits
@@ -431,7 +446,7 @@ export default function DefinePhase() {
           // Make sure form value is updated too
           charterForm.setValue("softBenefits", JSON.stringify(parsedBenefits));
         } catch (e) {
-          console.error("Error parsing soft benefits:", e);
+          console.error("Error parsing soft benefits:", e, "Value was:", charter.charter.softBenefits);
           setSoftBenefits([]);
         }
       }
