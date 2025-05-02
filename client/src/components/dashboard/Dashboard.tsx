@@ -675,9 +675,16 @@ export default function Dashboard() {
         case "abandoned":
           return project.status === "abandoned" || project.status === "canceled";
         case "active-completed":
-          return (project.status === "active" || 
-                 project.status === "in-progress" || 
-                 project.status === "completed");
+          // Either it's completed OR meets our active project criteria
+          return project.status === "completed" || 
+                 (project.status !== "completed" && 
+                  project.status !== "canceled" && 
+                  project.status !== "abandoned" &&
+                  project.status !== "on-hold" &&
+                  project.status !== "not-started" &&
+                  (project.status === "active" || 
+                   project.status === "in-progress" || 
+                   project.currentPhase !== undefined));
         default:
           return true; // Fallback to display all projects if filter is unrecognized
       }
