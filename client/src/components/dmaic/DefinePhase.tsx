@@ -983,6 +983,33 @@ export default function DefinePhase() {
                       {...charterForm.register("financialController")}
                     />
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="projectCoach">Project Coach</Label>
+                      <Input
+                        id="projectCoach"
+                        placeholder="Enter name of project coach"
+                        {...charterForm.register("projectCoach")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="beltLevel">Belt Level</Label>
+                      <Select
+                        onValueChange={(value) => charterForm.setValue("beltLevel", value)}
+                        defaultValue={charterForm.getValues("beltLevel") || "Green Belt"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select belt level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                          <SelectItem value="Green Belt">Green Belt</SelectItem>
+                          <SelectItem value="Black Belt">Black Belt</SelectItem>
+                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="space-y-4">
