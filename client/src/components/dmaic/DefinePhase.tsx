@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import StakeholderManagement from "@/components/stakeholders/StakeholderManagement";
 import TeamMemberManagement from "@/components/stakeholders/TeamMemberManagement";
+import CharterSoftBenefitsQuadrant from "./CharterSoftBenefitsQuadrant";
 import { Stakeholder } from "@shared/schema";
 
 export default function DefinePhase() {
@@ -1752,34 +1753,12 @@ export default function DefinePhase() {
                   </Button>
                 </div>
                 
-                {/* Display existing soft benefits */}
+                {/* Display existing soft benefits in quadrant layout */}
                 {softBenefits.length > 0 ? (
-                  <div className="space-y-2 mb-3">
-                    {softBenefits.map((benefit, index) => (
-                      <div key={index} className="flex items-start gap-2 p-2 rounded-md border bg-gray-50">
-                        <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 text-lg">
-                          {getCategoryIcon(benefit.category)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={getBadgeVariantForCategory(benefit.category)}>
-                              {getCategoryLabel(benefit.category)}
-                            </Badge>
-                            <p className="text-sm">{benefit.text}</p>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveSoftBenefit(index)}
-                          className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                  <CharterSoftBenefitsQuadrant 
+                    benefits={softBenefits} 
+                    onRemove={handleRemoveSoftBenefit} 
+                  />
                 ) : (
                   <div className="text-sm text-gray-500 italic mb-3 p-3 border border-dashed rounded-md">
                     No soft benefits added yet. Add benefits that can't be quantified financially.
