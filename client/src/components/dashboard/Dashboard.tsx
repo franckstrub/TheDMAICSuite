@@ -656,12 +656,14 @@ export default function Dashboard() {
         case "not-implemented":
           return !isProjectImplemented(project); // Non-completed projects
         case "active":
-          // An active project is NOT completed, cancelled, or abandoned
+          // An active project is NOT completed, cancelled, abandoned, or on-hold
           // and is being worked on in a DMAIC phase
           return (
             project.status !== "completed" && 
             project.status !== "canceled" && 
             project.status !== "abandoned" &&
+            project.status !== "on-hold" &&
+            project.status !== "not-started" &&
             (project.status === "active" || 
              project.status === "in-progress" || 
              project.currentPhase !== undefined)
@@ -949,7 +951,7 @@ export default function Dashboard() {
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
           <h3 className="text-sm font-medium text-blue-800 mb-1">Active Projects Definition:</h3>
           <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
-            <li>Projects NOT marked as "Completed", "Canceled", or "Abandoned"</li>
+            <li>Projects NOT marked as "Completed", "Canceled", "Abandoned", "On-Hold", or "Not Started"</li>
             <li>AND being worked on in any DMAIC phase</li>
           </ul>
         </div>
@@ -976,11 +978,13 @@ export default function Dashboard() {
           // Calculate the percentage change based on actual data
           change={calculateProjectsChange(projects?.projects)}
           changeLabel={(() => {
-            // Get counts by status - using our active project definition
+            // Get counts by status - using our updated active project definition
             const activeCount = projectsWithBenefits?.projects?.filter(p => 
               p.status !== "completed" && 
               p.status !== "canceled" && 
               p.status !== "abandoned" &&
+              p.status !== "on-hold" &&
+              p.status !== "not-started" &&
               (p.status === "active" || 
                p.status === "in-progress" || 
                p.currentPhase !== undefined)).length || 0;
