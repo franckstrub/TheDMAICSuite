@@ -105,6 +105,7 @@ export const projectCharters = pgTable("project_charters", {
   measurePhaseDate: text("measure_phase_date"),
   analyzePhaseDate: text("analyze_phase_date"),
   improvePhaseDate: text("improve_phase_date"),
+  controlPhaseDate: text("control_phase_date"),
   
   // Project cost fields
   oneOffPeopleCost: text("one_off_people_cost"),
@@ -171,6 +172,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   measurePhaseDate: true,
   analyzePhaseDate: true,
   improvePhaseDate: true,
+  controlPhaseDate: true,
   // Project cost fields
   oneOffPeopleCost: true,
   oneOffTechnologyCost: true,
