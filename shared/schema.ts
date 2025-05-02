@@ -340,6 +340,7 @@ export type Project = typeof projects.$inferSelect & {
   // Additional fields that are added at runtime but not stored in DB directly
   benefits?: ProjectBenefits;
   costs?: ProjectCosts;
+  softBenefits?: SoftBenefit[];
   phases?: {
     define?: { status: string };
     measure?: { status: string };
