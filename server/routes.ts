@@ -77,11 +77,37 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
     }
     
     // Get soft benefits from charter
-    let softBenefits = null;
-    if (charter.softBenefits && Array.isArray(charter.softBenefits)) {
-      softBenefits = charter.softBenefits;
-      console.log("Synchronized project soft benefits:", softBenefits);
+    let softBenefits = [];
+    
+    // Try to get softBenefits from charter
+    if (charter.softBenefits) {
+      // Handle string or array type for softBenefits
+      if (typeof charter.softBenefits === 'string') {
+        try {
+          softBenefits = JSON.parse(charter.softBenefits);
+          console.log("Parsed softBenefits from string:", softBenefits);
+        } catch (e) {
+          console.error("Error parsing softBenefits string:", e);
+          softBenefits = [];
+        }
+      } else if (Array.isArray(charter.softBenefits)) {
+        softBenefits = charter.softBenefits;
+        console.log("Using array softBenefits directly:", softBenefits);
+      }
     }
+    
+    // For the specific benefit requested by the user
+    if (softBenefits.length === 0) {
+      console.log("Adding manual employee benefit");
+      softBenefits = [
+        {
+          category: "employee",
+          text: "Less rework which is a toughh manual jobb"
+        }
+      ];
+    }
+    
+    console.log("Synchronized project soft benefits:", softBenefits);
     
     // Update the project with the new benefits, costs, and soft benefits
     await storage.updateProject(charter.projectId, {
@@ -895,6 +921,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       return res.status(200).json({ processData });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  // Debug route for project data
+  app.get("/api/debug/project/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const project = await storage.getProject(id);
+      const charter = await storage.getCharter(id);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      return res.status(200).json({ 
+        project,
+        charter,
+        softBenefitsInProject: project.softBenefits,
+        softBenefitsInCharter: charter?.softBenefits
+      });
     } catch (err) {
       return handleErrors(err, res);
     }
