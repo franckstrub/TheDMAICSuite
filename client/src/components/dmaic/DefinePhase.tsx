@@ -536,12 +536,17 @@ export default function DefinePhase() {
         problemStatement: charter.charter.problemStatement || "",
         goals: charter.charter.goals || "",
         scope: charter.charter.scope || "",
-        startDate: currentProject?.startDate 
-          ? new Date(currentProject.startDate).toISOString().split('T')[0] 
-          : "",
-        targetEndDate: currentProject?.targetEndDate 
-          ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
-          : "",
+        // Use startDate and targetEndDate from the charter if available, otherwise use the project dates
+        startDate: charter.charter.startDate 
+          ? charter.charter.startDate 
+          : currentProject?.startDate 
+            ? new Date(currentProject.startDate).toISOString().split('T')[0] 
+            : "",
+        targetEndDate: charter.charter.targetEndDate 
+          ? charter.charter.targetEndDate 
+          : currentProject?.targetEndDate 
+            ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
+            : "",
         // Add milestone dates
         kick_off_date: charter.charter.kick_off_date || "",
         define_phase_date: charter.charter.define_phase_date || "",
