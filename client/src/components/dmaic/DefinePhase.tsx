@@ -676,6 +676,21 @@ export default function DefinePhase() {
     try {
       console.log("handleSaveCharter triggered with form data:", data);
       
+      // Check for any pending stakeholder data in the form
+      const currentStakeholders = [...stakeholders];
+      const nameInput = document.querySelector('.stakeholder-name-input') as HTMLInputElement;
+      const functionInput = document.querySelector('.stakeholder-function-input') as HTMLInputElement;
+      
+      // If there are inputs with content that haven't been added to the stakeholders list yet
+      if (nameInput && functionInput && (nameInput.value || functionInput.value)) {
+        console.log("Found pending stakeholder data to include:", nameInput.value, functionInput.value);
+        currentStakeholders.push({
+          name: nameInput.value,
+          function: functionInput.value || undefined
+        });
+        console.log("Updated stakeholders list with pending data:", currentStakeholders);
+      }
+      
       // Make sure all calculated values are properly set before submission
       updateTotalFinancialSavings();
       console.log("Total financial savings updated");
@@ -712,11 +727,11 @@ export default function DefinePhase() {
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
         sponsorFunction: data.sponsorFunction || "",
-        // Include stakeholders as an array
-        stakeholders: stakeholders,
+        // Include stakeholders as an array with any pending data
+        stakeholders: currentStakeholders,
         // Keep legacy fields for backward compatibility
-        stakeholder: stakeholders.length > 0 ? stakeholders[0].name : "",
-        stakeholderFunction: stakeholders.length > 0 ? stakeholders[0].function : "",
+        stakeholder: currentStakeholders.length > 0 ? currentStakeholders[0].name : "",
+        stakeholderFunction: currentStakeholders.length > 0 ? currentStakeholders[0].function : "",
         financialController: data.financialController || "",
         projectCoach: data.projectCoach || "",
         beltLevel: data.beltLevel || "Green Belt",
