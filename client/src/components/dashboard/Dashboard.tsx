@@ -1319,7 +1319,7 @@ export default function Dashboard() {
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium text-gray-700">FTE Benefits</span>
-                  <span className="text-lg font-semibold text-purple-600">{calculateMetric(projects?.projects || [], 'fteBenefits').toFixed(1)} FTE</span>
+                  <span className="text-lg font-semibold text-purple-600">{calculateMetric(projects?.projects || [], 'fteBenefits').toFixed(2)} FTE</span>
                 </div>
                 <div className="text-sm text-gray-600 mt-2">
                   <div className="flex justify-between text-sm">
