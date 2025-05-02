@@ -402,40 +402,78 @@ export default function Dashboard() {
     
     // Calculate working capital gains
     const workingCapitalGains = projects.reduce((sum, project) => {
-      return sum + (project.benefits?.workingCapitalGains || 0);
+      // Handle both number and string types for workingCapitalGains
+      const wcg = project.benefits?.workingCapitalGains;
+      const wcgValue = typeof wcg === 'string' ? parseFloat(wcg) : (wcg || 0);
+      console.log(`Project ${project.id} workingCapitalGains:`, wcg, "parsed as:", wcgValue);
+      return sum + wcgValue;
     }, 0);
     
     // Calculate financial savings using WACC
     const financialSavings = projects.reduce((sum, project) => {
-      const wacc = project.benefits?.wacc || 0.1; // Default 10% if not specified
-      return sum + (project.benefits?.workingCapitalGains || 0) * wacc;
+      // Handle both number and string types for wacc
+      const waccRaw = project.benefits?.wacc;
+      const wacc = typeof waccRaw === 'string' ? parseFloat(waccRaw) : (waccRaw || 0.1); // Default 10% if not specified
+      
+      // Handle both number and string types for workingCapitalGains
+      const wcg = project.benefits?.workingCapitalGains;
+      const wcgValue = typeof wcg === 'string' ? parseFloat(wcg) : (wcg || 0);
+      
+      console.log(`Project ${project.id} wacc:`, waccRaw, "parsed as:", wacc);
+      console.log(`Financial savings for project ${project.id}:`, wcgValue * wacc);
+      
+      return sum + wcgValue * wacc;
     }, 0);
     
     // Calculate FTE benefits
     const fteBenefits = projects.reduce((sum, project) => {
-      return sum + (project.benefits?.fteBenefits || 0);
+      // Handle both number and string types for fteBenefits
+      const fteb = project.benefits?.fteBenefits;
+      const ftebValue = typeof fteb === 'string' ? parseFloat(fteb) : (fteb || 0);
+      console.log(`Project ${project.id} fteBenefits:`, fteb, "parsed as:", ftebValue);
+      return sum + ftebValue;
     }, 0);
     
     // Calculate financial value of FTE benefits
     const fteValue = projects.reduce((sum, project) => {
-      const avgFTECost = project.benefits?.avgFTECost || 100000; // Default value if not specified
-      return sum + (project.benefits?.fteBenefits || 0) * avgFTECost;
+      // Handle both number and string types for avgFTECost
+      const avgFTECostRaw = project.benefits?.avgFTECost;
+      const avgFTECost = typeof avgFTECostRaw === 'string' ? parseFloat(avgFTECostRaw) : (avgFTECostRaw || 100000); // Default value if not specified
+      
+      // Handle both number and string types for fteBenefits
+      const fteb = project.benefits?.fteBenefits;
+      const ftebValue = typeof fteb === 'string' ? parseFloat(fteb) : (fteb || 0);
+      
+      console.log(`Project ${project.id} FTE cost:`, avgFTECostRaw, "parsed as:", avgFTECost);
+      console.log(`FTE value for project ${project.id}:`, ftebValue * avgFTECost);
+      
+      return sum + ftebValue * avgFTECost;
     }, 0);
     
     // COSTS
     // Calculate one-off people costs
     const oneOffPeopleCost = projects.reduce((sum, project) => {
-      return sum + (project.costs?.oneOffPeopleCost || 0);
+      // Handle both number and string types
+      const opc = project.costs?.oneOffPeopleCost;
+      const opcValue = typeof opc === 'string' ? parseFloat(opc) : (opc || 0);
+      return sum + opcValue;
     }, 0);
     
     // Calculate one-off technology costs
     const oneOffTechnologyCost = projects.reduce((sum, project) => {
-      return sum + (project.costs?.oneOffTechnologyCost || 0);
+      // Handle both number and string types
+      const otc = project.costs?.oneOffTechnologyCost;
+      const otcValue = typeof otc === 'string' ? parseFloat(otc) : (otc || 0);
+      console.log(`Project ${project.id} one-off technology cost:`, otc, "parsed as:", otcValue);
+      return sum + otcValue;
     }, 0);
     
     // Calculate one-off other costs
     const oneOffOtherCost = projects.reduce((sum, project) => {
-      return sum + (project.costs?.oneOffOtherCost || 0);
+      // Handle both number and string types
+      const ooc = project.costs?.oneOffOtherCost;
+      const oocValue = typeof ooc === 'string' ? parseFloat(ooc) : (ooc || 0);
+      return sum + oocValue;
     }, 0);
     
     // Calculate total one-off costs
@@ -443,7 +481,10 @@ export default function Dashboard() {
     
     // Calculate CAPEX costs
     const capexCosts = projects.reduce((sum, project) => {
-      return sum + (project.costs?.capexCost || 0);
+      // Handle both number and string types
+      const cc = project.costs?.capexCost;
+      const ccValue = typeof cc === 'string' ? parseFloat(cc) : (cc || 0);
+      return sum + ccValue;
     }, 0);
     
     // Calculate total costs
