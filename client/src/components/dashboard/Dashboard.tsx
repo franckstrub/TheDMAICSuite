@@ -533,100 +533,29 @@ export default function Dashboard() {
       category: 'employee' | 'customer' | 'process' | 'growth';
     };
     
-    // Generate benefits based on project attributes
+    // Use only actual soft benefits data from the project
     const generateBenefitsForProject = (project: Project): SoftBenefit[] => {
       const benefits: SoftBenefit[] = [];
       const projectId = project.id;
       const projectTitle = project.title || `Project ${projectId}`;
       
-      // Generate a semi-random base ID for each project to avoid duplicates
-      const baseId = projectId * 100;
-      
-      // Employee Benefits - based on project details
-      if (project.title.toLowerCase().includes('quality') || 
-          project.description?.toLowerCase().includes('quality') ||
-          project.description?.toLowerCase().includes('defect')) {
-        benefits.push({
-          id: baseId + 1,
-          text: "Reduced employee stress from fewer quality issues",
-          projectId,
-          projectTitle,
-          category: 'employee'
+      // Check if project has soft benefits data and use it
+      if (project.softBenefits && Array.isArray(project.softBenefits)) {
+        // Use the actual softBenefits from the project data
+        project.softBenefits.forEach((benefit, index) => {
+          if (benefit.text && benefit.category) {
+            benefits.push({
+              id: projectId * 100 + index,
+              text: benefit.text,
+              projectId,
+              projectTitle,
+              category: benefit.category as 'employee' | 'customer' | 'process' | 'growth'
+            });
+          }
         });
       }
       
-      if (project.currentPhase === 'improve' || project.currentPhase === 'control' ||
-          project.status === 'completed') {
-        benefits.push({
-          id: baseId + 2,
-          text: "Higher job satisfaction from streamlined processes",
-          projectId,
-          projectTitle,
-          category: 'employee'
-        });
-      }
-      
-      // Customer Benefits - based on project details
-      if (project.title.toLowerCase().includes('quality') || 
-          project.description?.toLowerCase().includes('delivery') ||
-          project.description?.toLowerCase().includes('inspection')) {
-        benefits.push({
-          id: baseId + 3,
-          text: "Improved product quality perception in customer surveys",
-          projectId,
-          projectTitle,
-          category: 'customer'
-        });
-      }
-      
-      if (project.status === 'active' || project.status === 'completed') {
-        benefits.push({
-          id: baseId + 4,
-          text: "Increased customer satisfaction from faster delivery",
-          projectId,
-          projectTitle,
-          category: 'customer'
-        });
-      }
-      
-      // Process Benefits - all projects have process benefits
-      benefits.push({
-        id: baseId + 5,
-        text: "Better documentation and knowledge sharing",
-        projectId,
-        projectTitle,
-        category: 'process'
-      });
-      
-      if (project.currentPhase === 'analyze' || project.currentPhase === 'improve') {
-        benefits.push({
-          id: baseId + 6,
-          text: "Enhanced cross-department communication",
-          projectId,
-          projectTitle,
-          category: 'process'
-        });
-      }
-      
-      // Growth Benefits - all projects contribute to organizational learning
-      benefits.push({
-        id: baseId + 7,
-        text: "Team skill development with process improvement tools",
-        projectId,
-        projectTitle,
-        category: 'growth'
-      });
-      
-      if (project.status === 'completed' || project.currentPhase === 'control') {
-        benefits.push({
-          id: baseId + 8,
-          text: "Management experience with structured improvement methods",
-          projectId,
-          projectTitle,
-          category: 'growth'
-        });
-      }
-      
+      // Return only actual benefits, not generated ones
       return benefits;
     };
     
@@ -677,20 +606,20 @@ export default function Dashboard() {
         } : {})
       };
 
-      // Use actual financial data provided by the user
+      // Use empty values when actual data is missing - do not use mock data
       const benefits = {
-        qualityCostSavings: 30000, // Total quality cost savings
-        workingCapitalGains: 20000, // Working capital gain
-        wacc: 0.1, // Default 10% WACC
-        fteBenefits: 0.45, // FTE Benefits: 0.45 FTE
-        avgFTECost: 100000 // Assuming €100,000 per FTE based on the calculation
+        qualityCostSavings: 0,
+        workingCapitalGains: 0,
+        wacc: 0.1, // Default 10% WACC as a reasonable default
+        fteBenefits: 0,
+        avgFTECost: 100000 // Standard FTE cost as a reasonable default
       };
       
       const costs = {
-        oneOffPeopleCost: 15000, // People costs
-        oneOffTechnologyCost: 1000, // Technology costs
-        oneOffOtherCost: 1500, // Others costs
-        capexCost: 12000 // CAPEX costs
+        oneOffPeopleCost: 0,
+        oneOffTechnologyCost: 0,
+        oneOffOtherCost: 0,
+        capexCost: 0
       };
 
       // Use existing benefits/costs if they exist, or the defaults
