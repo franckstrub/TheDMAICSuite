@@ -76,10 +76,18 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
       costs.capexCost = parseFloat(charter.capexCost) || 0;
     }
     
-    // Update the project with the new benefits and costs
+    // Get soft benefits from charter
+    let softBenefits = null;
+    if (charter.softBenefits && Array.isArray(charter.softBenefits)) {
+      softBenefits = charter.softBenefits;
+      console.log("Synchronized project soft benefits:", softBenefits);
+    }
+    
+    // Update the project with the new benefits, costs, and soft benefits
     await storage.updateProject(charter.projectId, {
       benefits,
-      costs
+      costs,
+      softBenefits
     });
     
     console.log("Synchronized project benefits:", benefits);
