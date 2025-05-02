@@ -101,17 +101,14 @@ export const projectCharters = pgTable("project_charters", {
   fteSavedHours: text("fte_saved_hours"),
   fteCostPerYear: text("fte_cost_per_year"),
   fteCalculatedValue: text("fte_calculated_value"),
-  softBenefits: jsonb("soft_benefits").$type<Array<{
-    text: string;
-    category: 'employee' | 'customer' | 'process' | 'growth';
-  }>>(),
+  softBenefits: text("soft_benefits"),
   // Milestone dates
-  kick_off_date: date("kick_off_date"),
-  define_phase_date: date("define_phase_date"),
-  measure_phase_date: date("measure_phase_date"),
-  analyze_phase_date: date("analyze_phase_date"),
-  improve_phase_date: date("improve_phase_date"),
-  control_phase_date: date("control_phase_date"),
+  kick_off_date: text("kick_off_date"),
+  define_phase_date: text("define_phase_date"),
+  measure_phase_date: text("measure_phase_date"),
+  analyze_phase_date: text("analyze_phase_date"),
+  improve_phase_date: text("improve_phase_date"),
+  control_phase_date: text("control_phase_date"),
   
   // Project cost fields
   oneOffPeopleCost: text("one_off_people_cost"),
