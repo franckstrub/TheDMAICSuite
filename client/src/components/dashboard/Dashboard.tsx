@@ -217,117 +217,174 @@ export default function Dashboard() {
         throw new Error("Dashboard element not found");
       }
       
-      // Use html2canvas to capture the dashboard as an image
-      const canvas = await html2canvas(dashboardRef.current, {
-        scale: 1.5, // Higher quality
-        useCORS: true, // Allow cross-origin images
-        logging: false, // Disable logging
-        allowTaint: true, // Allow tainted canvas
-        backgroundColor: "#ffffff" // White background
-      });
-      
-      // Create a new jsPDF instance
+      // Create a new jsPDF instance for our report
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // Calculate dimensions
-      const imgData = canvas.toDataURL('image/png');
+      // Get PDF dimensions
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasRatio = canvas.height / canvas.width;
-      const imgWidth = pdfWidth;
-      const imgHeight = pdfWidth * canvasRatio;
       
-      // Add title
+      // Define margins and spacing
+      const margin = 14; // mm
+      const footerHeight = 15; // mm
+      const headerHeight = 50; // mm - increased for filters
+      
+      // Use html2canvas to capture the dashboard content
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2.5, // Higher scale for better quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        imageTimeout: 15000,
+        logging: false, // Disable logging for production
+        removeContainer: false
+      });
+      
+      // Get canvas dimensions for calculations
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      
+      // Add title to PDF
       pdf.setFontSize(18);
       pdf.setTextColor(33, 37, 41);
-      pdf.text("Lean Six Sigma DMAIC Suite™ - Dashboard Report", 14, 15);
+      pdf.text("Lean Six Sigma DMAIC Suite™ - Dashboard Report", margin, 15);
       
-      // Add date and filter information
+      // Add generated date
       pdf.setFontSize(10);
       pdf.setTextColor(85, 85, 85);
-      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 22);
+      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 22);
       
-      // Add filter information
-      let filterText = `Timeframe: ${timeframe}`;
+      // Create a larger filter section with rounded corners
+      pdf.setFillColor(240, 240, 240);
+      if (pdf.roundedRect) {
+        pdf.roundedRect(margin, 24, pdfWidth - (2 * margin), 20, 2, 2, 'F');
+        pdf.setDrawColor(200, 200, 200);
+        pdf.roundedRect(margin, 24, pdfWidth - (2 * margin), 20, 2, 2, 'S');
+      } else {
+        // Fallback if roundedRect is not available
+        pdf.rect(margin, 24, pdfWidth - (2 * margin), 20, 'F');
+        pdf.setDrawColor(200, 200, 200);
+        pdf.rect(margin, 24, pdfWidth - (2 * margin), 20, 'S');
+      }
+      
+      // Add filter information with improved styling
+      pdf.setFontSize(10);
+      pdf.setTextColor(50, 50, 50);
+      
+      // Period filter - first line
+      pdf.setFont('helvetica', 'bold');
+      pdf.text("Period:", margin + 3, 30);
+      
+      pdf.setFont('helvetica', 'normal');
+      let timeframeText = timeframe;
       if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
-        filterText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
+        timeframeText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
       }
-      pdf.text(filterText, 14, 26);
+      pdf.text(timeframeText, margin + 25, 30);
       
-      // Add status filter info
-      let statusFilterText = "Status Filter: ";
+      // Status filter - second line
+      pdf.setFont('helvetica', 'bold');
+      pdf.text("Status Filter:", margin + 3, 38);
+      
+      pdf.setFont('helvetica', 'normal');
+      let statusText = "";
       switch(implementationStatus) {
-        case "all": statusFilterText += "All Projects"; break;
-        case "active": statusFilterText += "Active Projects"; break;
-        case "completed": statusFilterText += "Completed Projects"; break;
-        case "on-hold": statusFilterText += "On-Hold Projects"; break;
-        case "abandoned": statusFilterText += "Abandoned Projects"; break;
-        case "active-completed": statusFilterText += "Active + Completed Projects"; break;
-        case "implemented": statusFilterText += "Implemented Projects"; break;
-        case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
-        default: statusFilterText += "All Projects";
+        case "all": statusText = "All Projects"; break;
+        case "active": statusText = "Active Projects"; break;
+        case "completed": statusText = "Completed Projects"; break;
+        case "on-hold": statusText = "On-Hold Projects"; break;
+        case "abandoned": statusText = "Abandoned Projects"; break;
+        case "active-completed": statusText = "Active + Completed Projects"; break;
+        case "implemented": statusText = "Implemented Projects"; break;
+        case "not-implemented": statusText = "Not Implemented Projects"; break;
+        default: statusText = "All Projects";
       }
-      pdf.text(statusFilterText, 14, 30);
+      pdf.text(statusText, margin + 40, 38);
       
-      // Add horizontal line
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(14, 32, pdfWidth - 14, 32);
+      // Calculate content dimensions
+      const contentWidth = pdfWidth - (2 * margin);
+      const imgWidth = contentWidth;
+      const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
       
-      // Calculate page count based on image height
-      const totalPages = Math.ceil(imgHeight / (pdfHeight - 40));
+      // Calculate content height available on each page
+      const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
+      const regularPageContentHeight = pdfHeight - (2 * margin) - footerHeight;
       
-      // Split image across multiple pages if needed
-      let remainingHeight = imgHeight;
+      // Calculate how many pages we need
+      let totalPages = 1;
+      let contentLeft = imgHeight;
+      
+      // Remove height available on first page
+      contentLeft -= firstPageContentHeight;
+      
+      // Add pages as needed for remaining content
+      while (contentLeft > 0) {
+        totalPages++;
+        contentLeft -= regularPageContentHeight;
+      }
+      
+      // Prepare to add image data to PDF pages
+      let remainingImgHeight = imgHeight;
       let sourceY = 0;
       
+      // Add content to each page
       for (let page = 0; page < totalPages; page++) {
+        // Create new pages after the first
         if (page > 0) {
           pdf.addPage();
         }
         
-        // Calculate how much of the image will fit on this page
-        const pageHeight = pdfHeight - (page === 0 ? 40 : 20); // First page has header
-        const printHeight = Math.min(remainingHeight, pageHeight);
-        const sourceHeight = (printHeight / imgHeight) * canvas.height;
+        // Calculate height for current page
+        const currentPageHeight = page === 0 ? firstPageContentHeight : regularPageContentHeight;
         
-        // Create a temporary canvas to hold just this portion of the image
+        // Calculate how much content to include on this page
+        const printHeight = Math.min(remainingImgHeight, currentPageHeight);
+        
+        // Calculate which portion of source canvas to use
+        const sourceHeight = (printHeight / imgHeight) * canvasHeight;
+        
+        // Create a temporary canvas for this page section
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
+        tempCanvas.width = canvasWidth;
         tempCanvas.height = sourceHeight;
         
-        // Draw the portion of the original canvas onto the temporary canvas
+        // Draw the portion of the original canvas to this temporary canvas
         const tempCtx = tempCanvas.getContext('2d');
         if (tempCtx) {
           tempCtx.drawImage(
             canvas, 
-            0, sourceY, canvas.width, sourceHeight,
+            0, sourceY, canvasWidth, sourceHeight,
             0, 0, tempCanvas.width, tempCanvas.height
           );
           
-          // Convert the temporary canvas to a data URL
-          const pageImgData = tempCanvas.toDataURL('image/png');
+          // Convert to JPEG format for better reliability
+          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
           
-          // Add this portion to the PDF
-          const yPosition = page === 0 ? 40 : 15;
-          pdf.addImage(pageImgData, 'PNG', 14, yPosition, imgWidth - 28, printHeight);
+          // Add the image to PDF at the correct position
+          const yPosition = page === 0 ? headerHeight : margin;
+          pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, printHeight);
           
-          // Update for next page
-          remainingHeight -= printHeight;
+          // Update tracking variables for next page
+          remainingImgHeight -= printHeight;
           sourceY += sourceHeight;
         }
         
-        // Add page number at the bottom
-        pdf.setFontSize(10);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+        // Add page number in footer area
+        pdf.setFontSize(9);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+        
+        // Add a separator line above footer
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(margin, pdfHeight - footerHeight, pdfWidth - margin, pdfHeight - footerHeight);
       }
       
-      // Add footer to all pages
+      // Add consistent footer to all pages
       for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
         pdf.setPage(i);
         pdf.setFontSize(8);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text('Lean Six Sigma DMAIC Suite™', margin, pdfHeight - 5);
       }
       
       // Save the PDF

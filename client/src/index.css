@@ -57,3 +57,86 @@
   }
 }
 
+/* PDF Export Styling */
+.pdf-text {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Hide elements during normal display that should only show in PDF */
+.html2canvas-show {
+  display: none !important;
+}
+
+/* When PDF is being generated, adjust display properties */
+.html2canvas-container .pdf-text {
+  position: static;
+  opacity: 1 !important;
+  z-index: auto;
+  pointer-events: auto;
+  font-size: 14px;
+  font-weight: normal;
+  color: #000;
+}
+
+.html2canvas-container .html2canvas-hide {
+  display: none !important;
+}
+
+.html2canvas-container .html2canvas-show {
+  display: block !important;
+}
+
+/* Project image specific styling to preserve original image size in PDF */
+.html2canvas-container img {
+  max-width: 100% !important;
+  max-height: 300px !important;
+  height: auto !important;
+  width: auto !important;
+  object-fit: contain !important;
+}
+
+.html2canvas-container input,
+.html2canvas-container button {
+  opacity: 0 !important;
+  position: absolute !important;
+  pointer-events: none !important;
+}
+
+.html2canvas-container .print-hide {
+  display: none !important;
+}
+
+.pdf-friendly-table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pdf-friendly-table th,
+.pdf-friendly-table td {
+  padding: 8px;
+  text-align: left;
+  vertical-align: middle;
+  position: relative;
+}
+
+@media print {
+  input, button, select, textarea {
+    display: none !important;
+  }
+  
+  .pdf-text {
+    position: static;
+    opacity: 1;
+    z-index: auto;
+    pointer-events: auto;
+  }
+  
+  .print-hide {
+    display: none !important;
+  }
+}
+
