@@ -1600,6 +1600,9 @@ export default function Dashboard() {
         </Card>
       </div>
       
+      {/* Add a page break marker for PDF export that's only visible during PDF generation */}
+      <div className="html2canvas-show" style={{ pageBreakAfter: 'always' }}></div>
+      
       {/* Soft Benefits Quadrant */}
       <div className="grid grid-cols-1 gap-6 mb-6">
         <SoftBenefitsQuadrant benefits={extractSoftBenefits()} />
