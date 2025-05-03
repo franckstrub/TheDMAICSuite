@@ -18,6 +18,13 @@ import { ZodError } from "zod";
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
   try {
+    // Add extensive debugging for title synchronization
+    console.log("Charter data being synced:", {
+      projectId: charter.projectId,
+      projectTitle: charter.projectTitle,
+      currentProjectTitle: project.title
+    });
+    
     // Create or update the benefits object with the charter values
     const benefits: ProjectBenefits = project.benefits || {
       qualityCostSavings: 0,
@@ -399,6 +406,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       console.log("Updating charter with ID:", id);
       console.log("Charter update request body:", req.body);
+      
+      // Debug project title specifically
+      console.log("Project Title in update request:", req.body.projectTitle);
       
       // Fix cashBenefits to workingCapitalGains migration
       const requestBody = {...req.body};
