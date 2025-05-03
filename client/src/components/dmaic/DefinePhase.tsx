@@ -1549,7 +1549,7 @@ export default function DefinePhase() {
                       <div className="html2canvas-hide">
                         <Select 
                           onValueChange={(value) => charterForm.setValue("beltLevel", value)}
-                          defaultValue={charterForm.getValues("beltLevel")}
+                          value={charterForm.watch("beltLevel") || ""}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select belt level" />
@@ -1568,7 +1568,7 @@ export default function DefinePhase() {
                       
                       {/* Plain text representation for PDF export */}
                       <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
-                        {charterForm.getValues("beltLevel") || ""}
+                        {charterForm.watch("beltLevel") || ""}
                       </div>
                     </div>
                   </div>
@@ -1620,7 +1620,7 @@ export default function DefinePhase() {
                       <div className="html2canvas-hide">
                         <Select
                           onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
-                          defaultValue={charterForm.getValues("coachBeltLevel") || "None"}
+                          value={charterForm.watch("coachBeltLevel") || "None"}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select belt level" />
@@ -1639,7 +1639,7 @@ export default function DefinePhase() {
                       
                       {/* Plain text representation for PDF export */}
                       <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
-                        {charterForm.getValues("coachBeltLevel") || "None"}
+                        {charterForm.watch("coachBeltLevel") || "None"}
                       </div>
                     </div>
                   </div>
