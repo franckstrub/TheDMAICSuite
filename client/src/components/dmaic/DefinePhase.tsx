@@ -1364,6 +1364,13 @@ export default function DefinePhase() {
       
       try {
         console.log("Attempting to generate PDF with safer settings");
+        
+        // Show a toast notification to inform user that PDF generation is in progress
+        toast({
+          title: "Generating PDF",
+          description: "Creating PDF with current view state...",
+        });
+        
         // Using a completely different approach specifically for handling complex charts and financial metrics
         // Use html2canvas with much safer settings to avoid scale errors
         const pdfCanvas = await html2canvas(charterElement, {
@@ -1372,7 +1379,7 @@ export default function DefinePhase() {
           allowTaint: true,
           backgroundColor: "#ffffff", 
           imageTimeout: 60000, // Longer timeout for complex pages with expanded financial metrics
-          logging: true,
+          logging: false, // Set to false to reduce console noise
           removeContainer: false, // Don't remove container to avoid flickering
           foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
           onclone: (clonedDoc) => {
@@ -1491,11 +1498,16 @@ export default function DefinePhase() {
         }
       } catch (e) {
         console.error("Error during canvas generation:", e);
-        // If we still have an error, we'll use an even simpler approach with smaller segments
-        toast({
-          title: "Trying alternative method",
-          description: "First attempt failed, trying with simpler settings...",
-        });
+        
+        // If we already generated a PDF successfully, don't show error messages
+        if (pdfGenerated) {
+          // PDF was already saved, so we can just silently exit
+          console.log("PDF was already generated successfully, ignoring additional error");
+          return;
+        }
+        
+        // If no PDF was generated yet, try the alternative method silently without error messages
+        console.log("Attempting alternative PDF generation method...");
         
         try {
           // Force collapse ALL accordions to simplify the structure for backup method
@@ -1655,92 +1667,6 @@ export default function DefinePhase() {
         }
       }
       
-      // Calculate dimensions
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Get canvas dimensions
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      
-      // Define footer height and adjust page dimensions to account for footer
-      const footerHeight = 15; // mm
-      
-      // Calculate how many pages we need - with more space for footer
-      const pageHeight = pdfHeight - 40 - footerHeight; // Account for header space on first page and footer on all pages
-      const contentWidth = pdfWidth - 20; // 10mm margin on each side
-      const imgWidth = contentWidth;
-      const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
-      const totalPages = Math.ceil(imgHeight / pageHeight);
-      
-      // Add image data to PDF, splitting across pages if needed
-      let remainingHeight = imgHeight;
-      let sourceY = 0;
-      
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) {
-          pdf.addPage();
-        }
-        
-        // Calculate current page dimensions - ensuring space for footer on all pages
-        const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20 - footerHeight);
-        const printHeight = Math.min(remainingHeight, currentPageHeight);
-        const sourceHeight = (printHeight / imgHeight) * canvasHeight;
-        
-        // Create a temporary canvas for this page section
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvasWidth;
-        tempCanvas.height = sourceHeight;
-        
-        // Draw the portion of the original canvas
-        const tempCtx = tempCanvas.getContext('2d');
-        if (tempCtx) {
-          tempCtx.drawImage(
-            canvas, 
-            0, sourceY, canvasWidth, sourceHeight,
-            0, 0, tempCanvas.width, tempCanvas.height
-          );
-          
-          // Add to PDF with JPEG format instead of PNG to avoid corruption
-          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
-          
-          const yPosition = page === 0 ? 40 : 10;
-          pdf.addImage(pageImgData, 'JPEG', 10, yPosition, imgWidth, printHeight);
-          
-          // Update for next page
-          remainingHeight -= printHeight;
-          sourceY += sourceHeight;
-        }
-        
-        // Add page number in footer area
-        pdf.setFontSize(10);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
-        
-        // Optional: Add a separator line above footer
-        pdf.setDrawColor(200, 200, 200);
-        pdf.line(10, pdfHeight - footerHeight, pdfWidth - 10, pdfHeight - footerHeight);
-      }
-      
-      // Add footer to all pages
-      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
-      }
-      
-      // Save the PDF
-      const filename = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      pdf.save(filename);
-    } catch (error) {
-      console.error("Error exporting to PDF:", error);
-      
-      toast({
-        title: "Export failed",
-        description: `An error occurred during export: ${error}`,
-        variant: "destructive",
-      });
     } finally {
       // Always clean up the DOM regardless of success or failure
       const cleanupElement = document.getElementById('project-charter');
