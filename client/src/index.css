@@ -114,19 +114,6 @@
   font-weight: normal !important;
 }
 
-/* For elements that shouldn't show their label in PDF export */
-.html2canvas-container .pdf-value-only {
-  position: relative !important;
-  display: inline-block !important;
-  margin-left: 8px !important;
-  padding: 2px 5px !important;
-  background-color: #f8f8f8 !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 4px !important;
-  color: #000 !important;
-  font-size: 12px !important;
-}
-
 /* Special styling for form inputs when generating PDF */
 .html2canvas-container input,
 .html2canvas-container select,
