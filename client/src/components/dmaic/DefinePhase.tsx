@@ -2133,7 +2133,7 @@ export default function DefinePhase() {
                     
                     <Input
                       id="fteBenefits"
-                      className="hidden html2canvas-hide"
+                      className="hidden"
                       {...charterForm.register("fteBenefits")}
                     />
                   </div>
