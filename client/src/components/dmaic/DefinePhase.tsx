@@ -1306,6 +1306,51 @@ export default function DefinePhase() {
         return;
       }
       
+      // Add project type and category directly to the PDF container
+      if (projectId && project) {
+        const projectInfoSection = document.createElement('div');
+        projectInfoSection.style.marginBottom = '20px';
+        projectInfoSection.style.padding = '15px';
+        projectInfoSection.style.border = '1px solid #eee';
+        projectInfoSection.style.borderRadius = '5px';
+        projectInfoSection.style.backgroundColor = '#f9f9f9';
+        
+        const projectTitle = document.createElement('h2');
+        projectTitle.textContent = project.title || '';
+        projectTitle.style.fontSize = '18px';
+        projectTitle.style.marginBottom = '10px';
+        projectTitle.style.fontWeight = 'bold';
+        
+        const projectDetails = document.createElement('div');
+        projectDetails.style.display = 'grid';
+        projectDetails.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        projectDetails.style.gap = '8px';
+        
+        const typeLabel = document.createElement('div');
+        typeLabel.textContent = 'Project Type:';
+        typeLabel.style.fontWeight = 'bold';
+        
+        const typeValue = document.createElement('div');
+        typeValue.textContent = project.projectType || '';
+        
+        const categoryLabel = document.createElement('div');
+        categoryLabel.textContent = 'Project Category:';
+        categoryLabel.style.fontWeight = 'bold';
+        
+        const categoryValue = document.createElement('div');
+        categoryValue.textContent = project.projectCategory || '';
+        
+        projectDetails.appendChild(typeLabel);
+        projectDetails.appendChild(typeValue);
+        projectDetails.appendChild(categoryLabel);
+        projectDetails.appendChild(categoryValue);
+        
+        projectInfoSection.appendChild(projectTitle);
+        projectInfoSection.appendChild(projectDetails);
+        
+        pdfContainer.appendChild(projectInfoSection);
+      }
+      
       // Clone the charter and modify it for PDF rendering
       const clone = charterElement.cloneNode(true) as HTMLElement;
       
@@ -1313,20 +1358,11 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide');
       removeElements.forEach(el => el.remove());
       
-      // Make printable elements visible and ensure data shows properly
+      // Make printable elements visible
       const showElements = clone.querySelectorAll('.html2canvas-show');
       showElements.forEach(el => {
         if (el instanceof HTMLElement) {
           el.style.display = 'block';
-          
-          // Special handling for select fields that show project type and category
-          const dataField = el.getAttribute('data-field');
-          if (dataField && (dataField === 'projectType' || dataField === 'projectCategory' || 
-                           dataField === 'beltLevel' || dataField === 'coachBeltLevel')) {
-            // Make sure the text content from the form data is visible
-            const formValue = charterForm.watch(dataField) || '';
-            el.textContent = formValue;
-          }
         }
       });
       
