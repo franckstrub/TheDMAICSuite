@@ -1246,7 +1246,10 @@ export default function DefinePhase() {
       pdf.text(`Project: ${projectTitle}`, 14, 26);
       
       // Add an extra class to the element during PDF generation
-      element.classList.add('html2canvas-container');
+      const charterElement = document.getElementById('project-charter');
+      if (charterElement) {
+        charterElement.classList.add('html2canvas-container');
+      }
       
       // Using a different approach to avoid PNG corruption
       // Use html2canvas with different settings
