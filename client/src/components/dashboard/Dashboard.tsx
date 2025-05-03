@@ -109,7 +109,7 @@ const createFinancialWaterfallData = (projects: Project[]) => {
   
   const fteBenefits = projects.reduce((sum, project) => {
     const avgFTECostRaw = project.benefits?.avgFTECost;
-    const avgFTECost = parseNumericValue(avgFTECostRaw, 139000);
+    const avgFTECost = parseNumericValue(avgFTECostRaw, 100000);
     const fteb = project.benefits?.fteBenefits;
     return sum + parseNumericValue(fteb, 0) * avgFTECost;
   }, 0);
@@ -463,12 +463,7 @@ export default function Dashboard() {
     
     // Calculate financial value of FTE benefits
     const fteValue = projects.reduce((sum, project) => {
-      // Use the fixed value of 12500 for the project with FTE benefits
-      if (project.id === 1) {
-        return sum + 12500; // Use the exact value of 12500 as requested
-      }
-      
-      // For other projects, fall back to the calculation method
+      // For all projects, calculate the FTE benefits using the consistent method
       const avgFTECostRaw = project.benefits?.avgFTECost;
       const avgFTECost = parseNumericValue(avgFTECostRaw, 100000); // Default value if not specified
       
@@ -689,7 +684,7 @@ export default function Dashboard() {
       workingCapitalGains: 0,
       wacc: 0.1, // Default 10% WACC
       fteBenefits: 0,
-      avgFTECost: 139000 // Default average FTE cost
+      avgFTECost: 100000 // Default average FTE cost
     };
     
     const defaultCosts = {
