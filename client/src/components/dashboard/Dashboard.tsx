@@ -217,34 +217,8 @@ export default function Dashboard() {
         throw new Error("Dashboard element not found");
       }
       
-      // Create a temporary clone of the dashboard and modify for PDF export
-      const clone = dashboardRef.current.cloneNode(true) as HTMLElement;
-      document.body.appendChild(clone);
-      
-      // Find and replace the dropdown elements with plain text in the clone
-      const filterTextElement = document.createElement('div');
-      filterTextElement.style.padding = '10px';
-      filterTextElement.style.margin = '10px 0';
-      filterTextElement.style.fontSize = '16px';
-      filterTextElement.style.fontWeight = 'bold';
-      filterTextElement.innerHTML = `<div style="margin-bottom: 8px;">Timeframe: ${timeframe}</div>
-                                     <div>Status: ${implementationStatus === 'all' ? 'All Projects' : 
-                                     implementationStatus === 'active' ? 'Active Projects' :
-                                     implementationStatus === 'completed' ? 'Completed Projects' :
-                                     implementationStatus === 'on-hold' ? 'On-Hold Projects' :
-                                     implementationStatus === 'abandoned' ? 'Abandoned Projects' :
-                                     implementationStatus === 'active-completed' ? 'Active + Completed Projects' :
-                                     implementationStatus === 'implemented' ? 'Implemented Projects' :
-                                     implementationStatus === 'not-implemented' ? 'Not Implemented Projects' : 'All Projects'}</div>`;
-      
-      // Find the filter container in the clone and replace it
-      const filterContainers = clone.querySelectorAll('.flex.items-center');
-      if (filterContainers.length > 0) {
-        filterContainers[0].replaceWith(filterTextElement);
-      }
-      
-      // Use html2canvas to capture the modified clone
-      const canvas = await html2canvas(clone, {
+      // Use html2canvas to capture the dashboard as an image with improved settings
+      const canvas = await html2canvas(dashboardRef.current, {
         scale: 2.5, // Higher scale for better quality
         useCORS: true, // Allow cross-origin images
         allowTaint: true, // Allow tainted canvas for better image quality
@@ -254,9 +228,6 @@ export default function Dashboard() {
         removeContainer: false, // Don't remove container to avoid flickering
         foreignObjectRendering: false // Disable foreignObject rendering which can cause issues
       });
-      
-      // Remove the clone from the document
-      document.body.removeChild(clone);
       
       // Create a new jsPDF instance
       const pdf = new jsPDF('p', 'mm', 'a4');
