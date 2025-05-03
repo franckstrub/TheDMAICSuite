@@ -1268,12 +1268,14 @@ export default function DefinePhase() {
       pdf.setDrawColor(200, 200, 200);
       pdf.line(14, 38, 196, 38);
 
-      // First make sure all collapsible sections are expanded for PDF export
-      // Find all collapsible sections and expand them temporarily
+      // We want to preserve the collapsed state instead of expanding everything
+      // For PDF export, we'll respect the current state of collapsible sections
+      // First, identify which sections are currently collapsed so we can remember them
       const collapsibles = charterElement.querySelectorAll('[data-state="closed"]');
       collapsibles.forEach(collapsible => {
         collapsible.setAttribute('data-pdf-was-closed', 'true');
-        collapsible.setAttribute('data-state', 'open');
+        // DON'T expand them - we want to preserve the collapsed state
+        // collapsible.setAttribute('data-state', 'open');
       });
       
       // CRITICAL FIX: Check for expanded financial metrics section that causes PDF scale errors
@@ -1767,6 +1769,12 @@ export default function DefinePhase() {
         cleanupElement.querySelectorAll('[data-pdf-was-expanded="true"]').forEach(section => {
           section.setAttribute('data-state', 'open');
           section.removeAttribute('data-pdf-was-expanded');
+        });
+        
+        // Restore collapsed sections to their original state
+        cleanupElement.querySelectorAll('[data-pdf-was-closed="true"]').forEach(section => {
+          section.setAttribute('data-state', 'closed');
+          section.removeAttribute('data-pdf-was-closed');
         });
         
         // Remove any notes we added
