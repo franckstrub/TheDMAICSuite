@@ -1365,12 +1365,6 @@ export default function DefinePhase() {
       try {
         console.log("Attempting to generate PDF with safer settings");
         
-        // Show a single toast notification that we'll update when complete
-        const toastId = toast({
-          title: "Generating PDF",
-          description: "Creating PDF with current view state...",
-        });
-        
         // Using a completely different approach specifically for handling complex charts and financial metrics
         // Use html2canvas with much safer settings to avoid scale errors
         const pdfCanvas = await html2canvas(charterElement, {
@@ -1491,8 +1485,8 @@ export default function DefinePhase() {
           pdf.save(pdfOutput);
           pdfGenerated = true;
           
-          // Update the existing toast with success message
-          toast.update(toastId, {
+          // Show a single toast with success message at the end
+          toast({
             title: "Report Generated Successfully",
             description: `Your project charter has been captured and saved as ${pdfOutput}`,
           });
@@ -1637,8 +1631,8 @@ export default function DefinePhase() {
             pdf.save(pdfOutput);
             pdfGenerated = true;
             
-            // Update the single toast with fallback success message
-            toast.update(toastId, {
+            // Show success message for fallback method
+            toast({
               title: "Report Generated Successfully",
               description: `Your project charter has been saved as ${pdfOutput}`,
             });
@@ -1646,8 +1640,8 @@ export default function DefinePhase() {
         } catch (error) {
           console.error("Final backup method failed:", error);
           if (!pdfGenerated) {
-            // Update with error message using the same toast ID
-            toast.update(toastId, {
+            // Show error message
+            toast({
               title: "Export Failed",
               description: "Unable to generate PDF. Try collapsing all sections manually before exporting.",
               variant: "destructive",
