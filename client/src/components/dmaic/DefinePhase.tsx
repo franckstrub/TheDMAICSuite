@@ -1568,7 +1568,7 @@ export default function DefinePhase() {
                       
                       {/* Plain text representation for PDF export */}
                       <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
-                        {charterForm.getValues("beltLevel") || ""}
+                        {charterForm.watch("beltLevel") || ""}
                       </div>
                     </div>
                   </div>
@@ -1639,7 +1639,7 @@ export default function DefinePhase() {
                       
                       {/* Plain text representation for PDF export */}
                       <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
-                        {charterForm.getValues("coachBeltLevel") || "None"}
+                        {charterForm.watch("coachBeltLevel") || "None"}
                       </div>
                     </div>
                   </div>
