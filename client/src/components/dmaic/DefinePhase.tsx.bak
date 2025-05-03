@@ -148,6 +148,9 @@ export default function DefinePhase() {
       default: return "✓";
     }
   };
+  
+  // Use URL project ID if available, otherwise fall back to current project
+  const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
 
   // Project Charter form
   const charterForm = useForm({
