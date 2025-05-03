@@ -56,8 +56,25 @@ export default function DefinePhase() {
   const [newBenefitText, setNewBenefitText] = useState("");
   const [newBenefitCategory, setNewBenefitCategory] = useState<SoftBenefit['category']>("employee");
   
-  // State for collapsible sections
-  const [isFinancialSectionExpanded, setIsFinancialSectionExpanded] = useState(true);
+  // State for collapsible sections - default to collapsed
+  const [isFinancialSectionExpanded, setIsFinancialSectionExpanded] = useState(false);
+  
+  // Load the expanded state from localStorage if available
+  useEffect(() => {
+    if (projectId) {
+      const savedState = localStorage.getItem(`financial_section_expanded_${projectId}`);
+      if (savedState !== null) {
+        setIsFinancialSectionExpanded(savedState === 'true');
+      }
+    }
+  }, [projectId]);
+  
+  // Save expanded state to localStorage when it changes
+  useEffect(() => {
+    if (projectId) {
+      localStorage.setItem(`financial_section_expanded_${projectId}`, isFinancialSectionExpanded.toString());
+    }
+  }, [isFinancialSectionExpanded, projectId]);
   
   // Handler for adding new soft benefit
   const handleAddSoftBenefit = () => {
@@ -1859,12 +1876,15 @@ export default function DefinePhase() {
             <div className="mt-6">
               {/* Section header with toggle button */}
               <div 
-                className="flex justify-between items-center cursor-pointer p-3 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                onClick={() => setIsFinancialSectionExpanded(!isFinancialSectionExpanded)}
+                className="flex justify-between items-center p-3 bg-gray-100 rounded-md transition-colors"
               >
                 <h3 className="text-lg font-medium">Project Costs & Financial Metrics</h3>
-                <Button variant="ghost" size="sm" className="p-1">
-                  {isFinancialSectionExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsFinancialSectionExpanded(!isFinancialSectionExpanded)}
+                >
+                  {isFinancialSectionExpanded ? "Hide Section" : "Show Section"}
                 </Button>
               </div>
               
