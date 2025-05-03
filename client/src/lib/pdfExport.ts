@@ -149,9 +149,13 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
     
     // Calculate the total height and set up PDF dimensions
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = 210; // A4 width in mm
-    const pdfHeight = 297; // A4 height in mm
-    const margin = 10; // Margin in mm
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+    // Define footer height and adjust page dimensions
+    const footerHeight = 15; // mm
+    const headerHeight = 30; // mm for first page
+    const margin = 10; // mm
     const contentWidth = pdfWidth - (2 * margin);
     
     // Create a temporary container to hold our cloned element
@@ -161,11 +165,10 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
     container.style.width = contentWidth + 'mm';
     document.body.appendChild(container);
     
-    // Clone the element and expand all collapsed content
+    // Clone the element and maintain current display state
     const clonedElement = element.cloneNode(true) as HTMLElement;
     
-    // Preserve the exact state as seen on screen
-    // Add CSS rules for proper rendering without changing visibility
+    // Add special CSS rules for proper rendering
     const styleRules = document.createElement('style');
     styleRules.textContent = `
       * {
@@ -173,40 +176,100 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
         color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
+      
+      img {
+        max-width: 100% !important;
+        max-height: 300px !important;
+        height: auto !important;
+        width: auto !important;
+        object-fit: contain !important;
+      }
     `;
     container.appendChild(styleRules);
-    
     container.appendChild(clonedElement);
     
-    // Render to canvas
+    // Render to canvas with improved settings
     const canvas = await html2canvas(container, {
-      scale: 2, // Higher scale for better quality
+      scale: 2.5, // Higher scale for better quality
       useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff'
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      imageTimeout: 15000, // Longer timeout for complex pages
+      logging: true,
+      removeContainer: false,
+      foreignObjectRendering: false
     });
     
     // Remove the temporary container
     document.body.removeChild(container);
     
-    // Convert canvas to image data
-    const imgData = canvas.toDataURL('image/png');
+    // Convert canvas to image data - using JPEG instead of PNG to avoid corruption
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     
     // Calculate dimensions
     const imgWidth = contentWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    // Add pages as needed
-    let heightLeft = imgHeight;
-    let position = 0;
+    // Calculate how many pages we need
+    const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
+    const subsequentPageContentHeight = pdfHeight - (2 * margin) - footerHeight;
+    const totalPages = Math.ceil((imgHeight - firstPageContentHeight) / subsequentPageContentHeight) + 1;
     
-    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+    // Add image data to PDF, splitting across pages if needed
+    let remainingHeight = imgHeight;
+    let sourceY = 0;
     
-    while (heightLeft > (pdfHeight - 2 * margin)) {
-      position = (pdfHeight - 2 * margin);
-      heightLeft -= position;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', margin, margin - heightLeft, imgWidth, imgHeight);
+    for (let page = 0; page < totalPages; page++) {
+      if (page > 0) {
+        pdf.addPage();
+      }
+      
+      // Calculate current page dimensions
+      const currentPageHeight = page === 0 ? firstPageContentHeight : subsequentPageContentHeight;
+      const printHeight = Math.min(remainingHeight, currentPageHeight);
+      const sourceHeight = (printHeight / imgHeight) * canvas.height;
+      
+      // Create a temporary canvas for this page section
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = sourceHeight;
+      
+      // Draw the portion of the original canvas
+      const tempCtx = tempCanvas.getContext('2d');
+      if (tempCtx) {
+        tempCtx.drawImage(
+          canvas, 
+          0, sourceY, canvas.width, sourceHeight,
+          0, 0, tempCanvas.width, tempCanvas.height
+        );
+        
+        // Add to PDF with JPEG format
+        const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+        
+        const yPosition = page === 0 ? headerHeight : margin;
+        pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, printHeight);
+        
+        // Update for next page
+        remainingHeight -= printHeight;
+        sourceY += sourceHeight;
+      }
+      
+      // Add page number in footer area
+      pdf.setFontSize(10);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+      
+      // Add a separator line above footer
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, pdfHeight - footerHeight, pdfWidth - margin, pdfHeight - footerHeight);
+    }
+    
+    // Add footer to all pages
+    for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
     }
     
     // Save the PDF
