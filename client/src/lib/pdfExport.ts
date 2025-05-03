@@ -200,24 +200,86 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     console.log("PDF dimensions:", pdfWidth, "x", pdfHeight);
     console.log("Image dimensions:", imgWidth, "x", imgHeight);
     
-    // Add first page
-    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-    
-    // If content is taller than the page, add additional pages
-    let heightLeft = imgHeight;
-    let position = 10; // Starting Y position
-    
-    while (heightLeft > (pdfHeight - 20)) {
-      position = pdfHeight - 10; // Bottom margin
-      heightLeft -= position;
+    // Check if content fits on a single page or needs multiple pages
+    if (imgHeight <= pdfHeight - 20) {
+      // Content fits on a single page
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+    } else {
+      // Content is too tall for a single page, so we'll use a multi-page approach
+      console.log("Content is too tall for a single page, using multi-page approach");
       
-      // Add a new page
-      pdf.addPage();
+      // Calculate the height of content that can fit on the first page
+      const firstPageImgHeight = pdfHeight - 20; // Leave 20mm total margin
       
-      // Add the same image but position it to show the next part
-      pdf.addImage(imgData, 'PNG', 10, -(imgHeight - heightLeft - 10), imgWidth, imgHeight);
+      // Create a temporary canvas for just the first page portion
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      if (!tempCtx) {
+        throw new Error("Failed to get canvas context");
+      }
       
-      console.log("Added new page, height left:", heightLeft);
+      // Set canvas dimensions to match the source image for the first page
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = (firstPageImgHeight / imgHeight) * canvas.height;
+      
+      // Draw the first portion of the original canvas
+      tempCtx.drawImage(
+        canvas, 
+        0, 0, canvas.width, tempCanvas.height,
+        0, 0, tempCanvas.width, tempCanvas.height
+      );
+      
+      // Add this portion to first page
+      const firstPageImgData = tempCanvas.toDataURL('image/png');
+      pdf.addImage(firstPageImgData, 'PNG', 10, 10, imgWidth, firstPageImgHeight);
+      
+      // Calculate how many additional pages we need
+      const remainingHeight = imgHeight - firstPageImgHeight;
+      const additionalPagesCount = Math.ceil(remainingHeight / (pdfHeight - 20));
+      
+      console.log(`Content requires ${additionalPagesCount + 1} pages total`);
+      
+      // Create additional pages for the remaining content
+      let heightRendered = firstPageImgHeight;
+      
+      for (let i = 0; i < additionalPagesCount; i++) {
+        // Add a new page
+        pdf.addPage();
+        
+        // Calculate the height for this page
+        const thisPageImgHeight = Math.min(pdfHeight - 20, imgHeight - heightRendered);
+        
+        // Calculate source y position in the original canvas
+        const sourceY = (heightRendered / imgHeight) * canvas.height;
+        const sourceHeight = (thisPageImgHeight / imgHeight) * canvas.height;
+        
+        // Create a temporary canvas for this page section
+        const pageCanvas = document.createElement('canvas');
+        const pageCtx = pageCanvas.getContext('2d');
+        if (!pageCtx) {
+          throw new Error("Failed to get page canvas context");
+        }
+        
+        // Set canvas dimensions for this page section
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+        
+        // Draw the portion of the original canvas for this page
+        pageCtx.drawImage(
+          canvas, 
+          0, sourceY, canvas.width, sourceHeight,
+          0, 0, pageCanvas.width, pageCanvas.height
+        );
+        
+        // Add this portion to the PDF
+        const pageImgData = pageCanvas.toDataURL('image/png');
+        pdf.addImage(pageImgData, 'PNG', 10, 10, imgWidth, thisPageImgHeight);
+        
+        // Update how much height we've rendered
+        heightRendered += thisPageImgHeight;
+        
+        console.log(`Added page ${i + 2}, rendered ${heightRendered}px of ${imgHeight}px total`);
+      }
     }
     
     // Save the PDF
@@ -380,46 +442,58 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
     // Calculate how many pages we need
     const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
     const subsequentPageContentHeight = pdfHeight - (2 * margin) - footerHeight;
-    const totalPages = Math.ceil((imgHeight - firstPageContentHeight) / subsequentPageContentHeight) + 1;
     
-    // Add image data to PDF, splitting across pages if needed
-    let remainingHeight = imgHeight;
-    let sourceY = 0;
-    
-    for (let page = 0; page < totalPages; page++) {
-      if (page > 0) {
-        pdf.addPage();
+    // Check if the content fits in a single page
+    if (imgHeight <= firstPageContentHeight) {
+      // Content fits on a single page, just add it
+      pdf.addImage(imgData, 'JPEG', margin, headerHeight, imgWidth, imgHeight);
+    } else {
+      // Content requires multiple pages
+      const totalPages = Math.ceil((imgHeight - firstPageContentHeight) / subsequentPageContentHeight) + 1;
+      console.log(`Multi-page PDF: Content requires ${totalPages} pages`);
+      
+      // Add image data to PDF, splitting across pages if needed
+      let remainingHeight = imgHeight;
+      let sourceY = 0;
+      
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate current page dimensions
+        const currentPageHeight = page === 0 ? firstPageContentHeight : subsequentPageContentHeight;
+        const printHeight = Math.min(remainingHeight, currentPageHeight);
+        const sourceHeight = (printHeight / imgHeight) * canvas.height;
+        
+        // Create a temporary canvas for this page section
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = sourceHeight;
+        
+        // Draw the portion of the original canvas
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(
+            canvas, 
+            0, sourceY, canvas.width, sourceHeight,
+            0, 0, tempCanvas.width, tempCanvas.height
+          );
+          
+          // Add to PDF with JPEG format
+          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+          
+          const yPosition = page === 0 ? headerHeight : margin;
+          pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, printHeight);
+          
+          // Update for next page
+          remainingHeight -= printHeight;
+          sourceY += sourceHeight;
+          
+          console.log(`Added page ${page + 1} of ${totalPages}, remaining height: ${remainingHeight}px`);
+        }
       }
-      
-      // Calculate current page dimensions
-      const currentPageHeight = page === 0 ? firstPageContentHeight : subsequentPageContentHeight;
-      const printHeight = Math.min(remainingHeight, currentPageHeight);
-      const sourceHeight = (printHeight / imgHeight) * canvas.height;
-      
-      // Create a temporary canvas for this page section
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = canvas.width;
-      tempCanvas.height = sourceHeight;
-      
-      // Draw the portion of the original canvas
-      const tempCtx = tempCanvas.getContext('2d');
-      if (tempCtx) {
-        tempCtx.drawImage(
-          canvas, 
-          0, sourceY, canvas.width, sourceHeight,
-          0, 0, tempCanvas.width, tempCanvas.height
-        );
-        
-        // Add to PDF with JPEG format
-        const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
-        
-        const yPosition = page === 0 ? headerHeight : margin;
-        pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, printHeight);
-        
-        // Update for next page
-        remainingHeight -= printHeight;
-        sourceY += sourceHeight;
-      }
+    }
       
       // Add page number in footer area
       pdf.setFontSize(10);
