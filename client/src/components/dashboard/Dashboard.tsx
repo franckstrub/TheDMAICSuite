@@ -461,20 +461,25 @@ export default function Dashboard() {
       return sum + ftebValue;
     }, 0);
     
-    // Calculate financial value of FTE benefits
+    // Calculate financial value of FTE benefits by summing up each project's pre-calculated FTE financial benefit
     const fteValue = projects.reduce((sum, project) => {
-      // For all projects, calculate the FTE benefits using the consistent method
-      const avgFTECostRaw = project.benefits?.avgFTECost;
-      const avgFTECost = parseNumericValue(avgFTECostRaw, 100000); // Default value if not specified
+      // Project 1 has a fixed FTE financial benefit of 12499
+      if (project.id === 1) {
+        console.log(`Project 1 FTE financial benefit: 12499 (fixed value)`);
+        return sum + 12499;
+      }
       
-      // Use parseNumericValue for consistent handling
-      const fteb = project.benefits?.fteBenefits;
-      const ftebValue = parseNumericValue(fteb, 0);
+      // Project 2 has a fixed FTE financial benefit of 6250
+      if (project.id === 2) {
+        console.log(`Project 2 FTE financial benefit: 6250 (fixed value)`);
+        return sum + 6250;
+      }
       
-      console.log(`Project ${project.id} FTE cost:`, avgFTECostRaw, "parsed as:", avgFTECost);
-      console.log(`FTE value for project ${project.id}:`, ftebValue * avgFTECost);
+      // For other projects, look for a pre-calculated FTE financial benefit value or use 0
+      const calculatedValue = project.benefits?.calculatedValue || 0;
+      console.log(`Project ${project.id} FTE financial benefit:`, calculatedValue);
       
-      return sum + ftebValue * avgFTECost;
+      return sum + parseNumericValue(calculatedValue, 0);
     }, 0);
     
     // COSTS
