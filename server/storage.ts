@@ -526,10 +526,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProject(id: number, projectUpdate: Partial<Project>): Promise<Project | undefined> {
-    // Add detailed logging for project title updates
+    // SUPER VERBOSE DEBUG for project title updates
+    console.log("--------------------------------------------------------------------------------");
+    console.log(`TITLE UPDATE DEBUG - Updating project ${id}`);
+    console.log(`TITLE UPDATE DEBUG - projectUpdate object keys: ${Object.keys(projectUpdate)}`);
     if (projectUpdate.title) {
-      console.log(`DatabaseStorage: Updating project ${id} title to "${projectUpdate.title}"`);
+      console.log(`TITLE UPDATE DEBUG - New project title: "${projectUpdate.title}"`);
+    } else {
+      console.log(`TITLE UPDATE DEBUG - NO TITLE provided in projectUpdate object!`);
     }
+    console.log(`TITLE UPDATE DEBUG - Full update data:`, projectUpdate);
+    console.log("--------------------------------------------------------------------------------");
     
     const [project] = await db
       .update(projects)
@@ -575,10 +582,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCharter(id: number, charterUpdate: Partial<ProjectCharter>): Promise<ProjectCharter | undefined> {
-    // Add detailed logging for charter updates, especially projectTitle
+    // SUPER VERBOSE DEBUG for projectTitle updating
+    console.log("--------------------------------------------------------------------------------");
+    console.log(`CHARTER DEBUG - Updating charter ${id}`);
+    console.log(`CHARTER DEBUG - charterUpdate object keys: ${Object.keys(charterUpdate)}`);
     if (charterUpdate.projectTitle) {
-      console.log(`DatabaseStorage: Updating charter ${id} with projectTitle "${charterUpdate.projectTitle}"`);
+      console.log(`CHARTER DEBUG - Incoming projectTitle: "${charterUpdate.projectTitle}"`);
+    } else {
+      console.log(`CHARTER DEBUG - NO projectTitle provided in charterUpdate object!`);
     }
+    
+    // Get the existing charter to compare values
+    const [existingCharter] = await db
+      .select()
+      .from(projectCharters)
+      .where(eq(projectCharters.id, id));
+      
+    if (existingCharter) {
+      console.log(`CHARTER DEBUG - Existing charter found with projectTitle: "${existingCharter.projectTitle}"`);
+    } else {
+      console.log(`CHARTER DEBUG - No existing charter found with ID ${id}`);
+    }
+    console.log("--------------------------------------------------------------------------------");
     
     const [charter] = await db
       .update(projectCharters)
@@ -590,10 +615,13 @@ export class DatabaseStorage implements IStorage {
       .returning();
       
     if (charter) {
-      console.log(`DatabaseStorage: Charter ${id} updated successfully. ProjectTitle: "${charter.projectTitle}"`);
+      console.log(`CHARTER DEBUG - Charter ${id} updated successfully.`);
+      console.log(`CHARTER DEBUG - Updated charter projectTitle: "${charter.projectTitle}"`);
+      console.log(`CHARTER DEBUG - Was projectTitle changed: ${existingCharter && existingCharter.projectTitle !== charter.projectTitle}`);
     } else {
-      console.log(`DatabaseStorage: Failed to update charter ${id}`);
+      console.log(`CHARTER DEBUG - Failed to update charter ${id}`);
     }
+    console.log("--------------------------------------------------------------------------------");
     
     return charter || undefined;
   }
