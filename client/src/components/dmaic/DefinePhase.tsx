@@ -1695,15 +1695,6 @@ export default function DefinePhase() {
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label className="text-xs">FTE Benefits ({currency})</Label>
-                            <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
-                              <div className="flex items-center px-3 text-green-600">
-                                {formatCurrency(fteParams.calculatedValue, currency)}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div>
                             <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
                             <Input
                               id="fteCostPerYear"
@@ -1721,6 +1712,15 @@ export default function DefinePhase() {
                               placeholder="e.g. 100000"
                               className="h-8 text-sm"
                             />
+                          </div>
+                          
+                          <div>
+                            <Label className="text-xs">FTE Benefits ({currency})</Label>
+                            <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
+                              <div className="flex items-center px-3 text-green-600">
+                                {formatCurrency(fteParams.calculatedValue, currency)}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
