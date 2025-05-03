@@ -89,6 +89,11 @@
   display: block !important;
 }
 
+/* Hide FTE summary in PDF exports */
+.html2canvas-container .hide-in-pdf-fte-summary {
+  display: none !important;
+}
+
 /* Fix for title and input field spacing in PDF exports */
 .html2canvas-container label {
   display: block !important;
