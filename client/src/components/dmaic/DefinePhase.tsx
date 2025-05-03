@@ -1357,16 +1357,88 @@ export default function DefinePhase() {
         title.style.marginBottom = '8px';
         directStakeholderList.appendChild(title);
         
-        // Add each stakeholder as a simple line of text
+        // Create a proper table for stakeholders
         if (stakeholders.length > 0) {
+          // Create the table
+          const table = document.createElement('table');
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+          table.style.borderSpacing = '0';
+          
+          // Create table header
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          
+          // Create header cells
+          const nameHeader = document.createElement('th');
+          nameHeader.textContent = 'Name';
+          nameHeader.style.textAlign = 'left';
+          nameHeader.style.fontWeight = '600';
+          nameHeader.style.padding = '6px 10px';
+          nameHeader.style.backgroundColor = '#f9fafb';
+          nameHeader.style.borderBottom = '1px solid #ddd';
+          nameHeader.style.fontSize = '14px';
+          
+          const functionHeader = document.createElement('th');
+          functionHeader.textContent = 'Function';
+          functionHeader.style.textAlign = 'left';
+          functionHeader.style.fontWeight = '600';
+          functionHeader.style.padding = '6px 10px';
+          functionHeader.style.backgroundColor = '#f9fafb';
+          functionHeader.style.borderBottom = '1px solid #ddd';
+          functionHeader.style.fontSize = '14px';
+          
+          // Append header cells to header row
+          headerRow.appendChild(nameHeader);
+          headerRow.appendChild(functionHeader);
+          
+          // Append header row to thead
+          thead.appendChild(headerRow);
+          
+          // Append thead to table
+          table.appendChild(thead);
+          
+          // Create table body
+          const tbody = document.createElement('tbody');
+          
+          // Add each stakeholder as a table row
           stakeholders.forEach((stakeholder, index) => {
-            const item = document.createElement('div');
-            item.style.fontSize = '12px';
-            item.style.marginBottom = '4px';
-            item.style.lineHeight = '1.2';
-            item.textContent = stakeholder.name + (stakeholder.function ? ` (${stakeholder.function})` : '');
-            directStakeholderList.appendChild(item);
+            const row = document.createElement('tr');
+            
+            // Create table cells
+            const nameCell = document.createElement('td');
+            nameCell.textContent = stakeholder.name || 'N/A';
+            nameCell.style.padding = '6px 10px';
+            nameCell.style.textAlign = 'left';
+            nameCell.style.borderBottom = '1px solid #eee';
+            nameCell.style.fontSize = '13px';
+            
+            const functionCell = document.createElement('td');
+            functionCell.textContent = stakeholder.function || 'N/A';
+            functionCell.style.padding = '6px 10px';
+            functionCell.style.textAlign = 'left';
+            functionCell.style.borderBottom = '1px solid #eee';
+            functionCell.style.fontSize = '13px';
+            
+            // Append cells to row
+            row.appendChild(nameCell);
+            row.appendChild(functionCell);
+            
+            // Append row to tbody
+            tbody.appendChild(row);
+            
+            // Remove border from last row
+            if (index === stakeholders.length - 1) {
+              nameCell.style.borderBottom = 'none';
+              functionCell.style.borderBottom = 'none';
+            }
           });
+          
+          // Append tbody to table
+          table.appendChild(tbody);
+          
+          // Append table to container
+          directStakeholderList.appendChild(table);
         } else {
           const emptyMessage = document.createElement('div');
           emptyMessage.textContent = 'No stakeholders added.';
@@ -1407,16 +1479,88 @@ export default function DefinePhase() {
         title.style.marginBottom = '8px';
         directTeamMemberList.appendChild(title);
         
-        // Add each team member as a simple line of text
+        // Create a proper table for team members
         if (teamMembers.length > 0) {
+          // Create the table
+          const table = document.createElement('table');
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+          table.style.borderSpacing = '0';
+          
+          // Create table header
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          
+          // Create header cells
+          const nameHeader = document.createElement('th');
+          nameHeader.textContent = 'Name';
+          nameHeader.style.textAlign = 'left';
+          nameHeader.style.fontWeight = '600';
+          nameHeader.style.padding = '6px 10px';
+          nameHeader.style.backgroundColor = '#f9fafb';
+          nameHeader.style.borderBottom = '1px solid #ddd';
+          nameHeader.style.fontSize = '14px';
+          
+          const functionHeader = document.createElement('th');
+          functionHeader.textContent = 'Function/Expertise';
+          functionHeader.style.textAlign = 'left';
+          functionHeader.style.fontWeight = '600';
+          functionHeader.style.padding = '6px 10px';
+          functionHeader.style.backgroundColor = '#f9fafb';
+          functionHeader.style.borderBottom = '1px solid #ddd';
+          functionHeader.style.fontSize = '14px';
+          
+          // Append header cells to header row
+          headerRow.appendChild(nameHeader);
+          headerRow.appendChild(functionHeader);
+          
+          // Append header row to thead
+          thead.appendChild(headerRow);
+          
+          // Append thead to table
+          table.appendChild(thead);
+          
+          // Create table body
+          const tbody = document.createElement('tbody');
+          
+          // Add each team member as a table row
           teamMembers.forEach((member, index) => {
-            const item = document.createElement('div');
-            item.style.fontSize = '12px';
-            item.style.marginBottom = '4px';
-            item.style.lineHeight = '1.2';
-            item.textContent = member.name + (member.function ? ` (${member.function})` : '');
-            directTeamMemberList.appendChild(item);
+            const row = document.createElement('tr');
+            
+            // Create table cells
+            const nameCell = document.createElement('td');
+            nameCell.textContent = member.name || 'N/A';
+            nameCell.style.padding = '6px 10px';
+            nameCell.style.textAlign = 'left';
+            nameCell.style.borderBottom = '1px solid #eee';
+            nameCell.style.fontSize = '13px';
+            
+            const functionCell = document.createElement('td');
+            functionCell.textContent = member.function || 'N/A';
+            functionCell.style.padding = '6px 10px';
+            functionCell.style.textAlign = 'left';
+            functionCell.style.borderBottom = '1px solid #eee';
+            functionCell.style.fontSize = '13px';
+            
+            // Append cells to row
+            row.appendChild(nameCell);
+            row.appendChild(functionCell);
+            
+            // Append row to tbody
+            tbody.appendChild(row);
+            
+            // Remove border from last row
+            if (index === teamMembers.length - 1) {
+              nameCell.style.borderBottom = 'none';
+              functionCell.style.borderBottom = 'none';
+            }
           });
+          
+          // Append tbody to table
+          table.appendChild(tbody);
+          
+          // Append table to container
+          directTeamMemberList.appendChild(table);
         } else {
           const emptyMessage = document.createElement('div');
           emptyMessage.textContent = 'No team members added.';
