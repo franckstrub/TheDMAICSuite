@@ -1306,62 +1306,15 @@ export default function DefinePhase() {
         return;
       }
       
-          // Use the current project data from context to get actual project type and category
-      // First try to get it from the current project in context
-      const actualProjectInfo = {
-        title: projectTitle,
-        projectType: currentProject?.projectType || "",
-        projectCategory: currentProject?.projectCategory || ""
-      };
+          // Get the current project type and category values
+      const projectTypeValue = currentProject?.projectType || "Green Belt";
+      const projectCategoryValue = currentProject?.projectCategory || "Process Improvement";
       
-      console.log("PDF EXPORT INFO - ACTUAL PROJECT DATA:", { 
+      console.log("PDF EXPORT INFO - Project Type and Category:", { 
         projectId, 
-        title: actualProjectInfo.title,
-        type: actualProjectInfo.projectType, 
-        category: actualProjectInfo.projectCategory 
+        projectType: projectTypeValue, 
+        projectCategory: projectCategoryValue 
       });
-      
-      const projectInfoSection = document.createElement('div');
-      projectInfoSection.style.marginBottom = '20px';
-      projectInfoSection.style.padding = '15px';
-      projectInfoSection.style.border = '1px solid #eee';
-      projectInfoSection.style.borderRadius = '5px';
-      projectInfoSection.style.backgroundColor = '#f9f9f9';
-      
-      const projectTitleElement = document.createElement('h2');
-      projectTitleElement.textContent = actualProjectInfo.title || '';
-      projectTitleElement.style.fontSize = '18px';
-      projectTitleElement.style.marginBottom = '10px';
-      projectTitleElement.style.fontWeight = 'bold';
-      
-      const projectDetails = document.createElement('div');
-      projectDetails.style.display = 'grid';
-      projectDetails.style.gridTemplateColumns = 'repeat(2, 1fr)';
-      projectDetails.style.gap = '8px';
-      
-      const typeLabel = document.createElement('div');
-      typeLabel.textContent = 'Project Type:';
-      typeLabel.style.fontWeight = 'bold';
-      
-      const typeValue = document.createElement('div');
-      typeValue.textContent = actualProjectInfo.projectType || '';
-      
-      const categoryLabel = document.createElement('div');
-      categoryLabel.textContent = 'Project Category:';
-      categoryLabel.style.fontWeight = 'bold';
-      
-      const categoryValue = document.createElement('div');
-      categoryValue.textContent = actualProjectInfo.projectCategory || '';
-      
-      projectDetails.appendChild(typeLabel);
-      projectDetails.appendChild(typeValue);
-      projectDetails.appendChild(categoryLabel);
-      projectDetails.appendChild(categoryValue);
-      
-      projectInfoSection.appendChild(projectTitleElement);
-      projectInfoSection.appendChild(projectDetails);
-      
-      pdfContainer.appendChild(projectInfoSection);
       
       // Clone the charter and modify it for PDF rendering
       const clone = charterElement.cloneNode(true) as HTMLElement;
@@ -1370,11 +1323,19 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide');
       removeElements.forEach(el => el.remove());
       
-      // Make printable elements visible
+      // Make printable elements visible and set the project type/category
       const showElements = clone.querySelectorAll('.html2canvas-show');
       showElements.forEach(el => {
         if (el instanceof HTMLElement) {
           el.style.display = 'block';
+          
+          // Handle special fields that need the current project values
+          const dataField = el.getAttribute('data-field');
+          if (dataField === 'projectType') {
+            el.textContent = projectTypeValue;
+          } else if (dataField === 'projectCategory') {
+            el.textContent = projectCategoryValue;
+          }
         }
       });
       
