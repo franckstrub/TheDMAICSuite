@@ -629,13 +629,7 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
       pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
     }
     
-    // Add footer to all pages
-    for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
-    }
+    // Footer already added in previous step - no need to add it twice
     
     // Save the PDF
     pdf.save(`${filename}.pdf`);
