@@ -1214,8 +1214,6 @@ export default function DefinePhase() {
   // Function to handle PDF export - simpler approach to avoid PNG corruption errors
   const handleExportPdf = async () => {
     try {
-      // Keep track of financial section state for later restoration if needed
-      const wasFinancialSectionExpanded = isFinancialSectionExpanded;
       
       toast({
         title: "Generating PDF Report",
@@ -1455,11 +1453,6 @@ export default function DefinePhase() {
         description: `An error occurred during export: ${error}`,
         variant: "destructive",
       });
-      
-      // Restore the financial section to its previous state if it was expanded
-      if (wasFinancialSectionExpanded) {
-        setIsFinancialSectionExpanded(true);
-      }
     }
   };
 
