@@ -2019,19 +2019,11 @@ export default function DefinePhase() {
                         
                         {/* Summary section for PDF export */}
                         <div className="p-3 mt-2 bg-blue-50 border border-blue-200 rounded-md mb-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="text-sm font-medium">Calculated FTE Value: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)} FTE</span></p>
-                              <p className="text-xs text-gray-600 mt-1">
-                                Based on the calculated time saved across the organization
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium">Financial Benefit: <span className="text-green-600 font-bold">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
-                              <p className="text-xs text-gray-600 mt-1">
-                                Annual savings
-                              </p>
-                            </div>
+                          <div>
+                            <p className="text-sm font-medium">Calculated FTE Value: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)} FTE</span></p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Based on the calculated time saved across the organization
+                            </p>
                           </div>
                         </div>
                         
