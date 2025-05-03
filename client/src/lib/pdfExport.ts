@@ -195,90 +195,134 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const ratio = canvas.height / canvas.width;
     const imgWidth = pdfWidth - 20; // 10mm margin on each side
-    const imgHeight = imgWidth * ratio;
+    let imgHeight = imgWidth * ratio;
     
     console.log("PDF dimensions:", pdfWidth, "x", pdfHeight);
+    console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
     console.log("Image dimensions:", imgWidth, "x", imgHeight);
     
+    // Validate image dimensions to prevent scaling errors
+    if (!isFinite(imgHeight) || isNaN(imgHeight) || imgHeight <= 0) {
+      console.warn("Invalid image height detected:", imgHeight);
+      console.warn("Adjusting to safe default value");
+      imgHeight = pdfHeight - 20; // Use safe default
+    }
+    
     // Check if content fits on a single page or needs multiple pages
-    if (imgHeight <= pdfHeight - 20) {
-      // Content fits on a single page
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-    } else {
-      // Content is too tall for a single page, so we'll use a multi-page approach
-      console.log("Content is too tall for a single page, using multi-page approach");
-      
-      // Calculate the height of content that can fit on the first page
-      const firstPageImgHeight = pdfHeight - 20; // Leave 20mm total margin
-      
-      // Create a temporary canvas for just the first page portion
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      if (!tempCtx) {
-        throw new Error("Failed to get canvas context");
-      }
-      
-      // Set canvas dimensions to match the source image for the first page
-      tempCanvas.width = canvas.width;
-      tempCanvas.height = (firstPageImgHeight / imgHeight) * canvas.height;
-      
-      // Draw the first portion of the original canvas
-      tempCtx.drawImage(
-        canvas, 
-        0, 0, canvas.width, tempCanvas.height,
-        0, 0, tempCanvas.width, tempCanvas.height
-      );
-      
-      // Add this portion to first page
-      const firstPageImgData = tempCanvas.toDataURL('image/png');
-      pdf.addImage(firstPageImgData, 'PNG', 10, 10, imgWidth, firstPageImgHeight);
-      
-      // Calculate how many additional pages we need
-      const remainingHeight = imgHeight - firstPageImgHeight;
-      const additionalPagesCount = Math.ceil(remainingHeight / (pdfHeight - 20));
-      
-      console.log(`Content requires ${additionalPagesCount + 1} pages total`);
-      
-      // Create additional pages for the remaining content
-      let heightRendered = firstPageImgHeight;
-      
-      for (let i = 0; i < additionalPagesCount; i++) {
-        // Add a new page
-        pdf.addPage();
+    try {
+      if (imgHeight <= pdfHeight - 20) {
+        // Content fits on a single page
+        console.log("Single page content - standard approach");
+        pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
+      } else {
+        // Content is too tall for a single page, handle with care
+        console.log("Multi-page content - using segmented approach");
         
-        // Calculate the height for this page
-        const thisPageImgHeight = Math.min(pdfHeight - 20, imgHeight - heightRendered);
+        // Safe approach: Create separate image for each page
+        // First page
+        const firstPageHeight = pdfHeight - 20; // Leave margin
         
-        // Calculate source y position in the original canvas
-        const sourceY = (heightRendered / imgHeight) * canvas.height;
-        const sourceHeight = (thisPageImgHeight / imgHeight) * canvas.height;
+        // Calculate what portion of the canvas to render on first page
+        const firstPagePortionHeight = Math.min(canvas.height, (firstPageHeight / imgHeight) * canvas.height);
         
-        // Create a temporary canvas for this page section
-        const pageCanvas = document.createElement('canvas');
-        const pageCtx = pageCanvas.getContext('2d');
-        if (!pageCtx) {
-          throw new Error("Failed to get page canvas context");
+        // Create a temporary canvas for the first page
+        const firstPageCanvas = document.createElement('canvas');
+        firstPageCanvas.width = canvas.width;
+        firstPageCanvas.height = firstPagePortionHeight;
+        
+        // Get the context and draw the appropriate portion
+        const firstPageCtx = firstPageCanvas.getContext('2d');
+        if (!firstPageCtx) {
+          throw new Error("Could not get canvas context");
         }
         
-        // Set canvas dimensions for this page section
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sourceHeight;
-        
-        // Draw the portion of the original canvas for this page
-        pageCtx.drawImage(
-          canvas, 
-          0, sourceY, canvas.width, sourceHeight,
-          0, 0, pageCanvas.width, pageCanvas.height
+        // Draw the first portion
+        firstPageCtx.drawImage(
+          canvas,
+          0, 0, canvas.width, firstPagePortionHeight,
+          0, 0, firstPageCanvas.width, firstPageCanvas.height
         );
         
-        // Add this portion to the PDF
-        const pageImgData = pageCanvas.toDataURL('image/png');
-        pdf.addImage(pageImgData, 'PNG', 10, 10, imgWidth, thisPageImgHeight);
+        // Convert to image and add to first page
+        const firstPageImage = firstPageCanvas.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(firstPageImage, 'JPEG', 10, 10, imgWidth, firstPageHeight);
         
-        // Update how much height we've rendered
-        heightRendered += thisPageImgHeight;
+        // If we need additional pages
+        if (firstPagePortionHeight < canvas.height) {
+          // Calculate how many additional pages needed
+          const remainingCanvasHeight = canvas.height - firstPagePortionHeight;
+          const heightPerPage = (pdfHeight - 20) / imgHeight * canvas.height;
+          const additionalPagesNeeded = Math.ceil(remainingCanvasHeight / heightPerPage);
+          
+          console.log(`Content requires ${additionalPagesNeeded + 1} pages total`);
+          console.log(`First page shows ${firstPagePortionHeight}px of ${canvas.height}px total`);
+          
+          // Track position in the canvas
+          let canvasYPosition = firstPagePortionHeight;
+          
+          // Create each additional page
+          for (let i = 0; i < additionalPagesNeeded; i++) {
+            // Create a new page
+            pdf.addPage();
+            
+            // Calculate height for this page's portion
+            const remainingHeight = canvas.height - canvasYPosition;
+            const thisPageCanvasHeight = Math.min(heightPerPage, remainingHeight);
+            const thisPagePdfHeight = (thisPageCanvasHeight / canvas.height) * imgHeight;
+            
+            // Create a canvas for this page's portion
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = thisPageCanvasHeight;
+            
+            // Draw this portion
+            const pageCtx = pageCanvas.getContext('2d');
+            if (!pageCtx) {
+              continue; // Skip this page if context fails
+            }
+            
+            pageCtx.drawImage(
+              canvas,
+              0, canvasYPosition, canvas.width, thisPageCanvasHeight,
+              0, 0, pageCanvas.width, pageCanvas.height
+            );
+            
+            // Convert to image and add to PDF
+            const pageImage = pageCanvas.toDataURL('image/jpeg', 0.95);
+            pdf.addImage(pageImage, 'JPEG', 10, 10, imgWidth, thisPagePdfHeight);
+            
+            // Update position for next page
+            canvasYPosition += thisPageCanvasHeight;
+            
+            console.log(`Added page ${i + 2}, rendered up to ${canvasYPosition}px of ${canvas.height}px total`);
+          }
+        }
+      }
+    } catch (pdfError) {
+      // Log the error
+      console.error("Error during PDF generation:", pdfError);
+      
+      // Fall back to simplest approach
+      console.warn("Using fallback approach for PDF generation");
+      
+      try {
+        // Reset PDF
+        pdf.deletePage(1);
+        pdf.addPage();
         
-        console.log(`Added page ${i + 2}, rendered ${heightRendered}px of ${imgHeight}px total`);
+        // Use a simpler method - just scale down content to fit on one page if needed
+        const safeHeight = Math.min(imgHeight, pdfHeight - 20);
+        
+        // Add image with safe dimensions
+        pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, safeHeight);
+        
+        console.log("Used fallback method with height:", safeHeight);
+      } catch (fallbackError) {
+        console.error("Fallback method failed:", fallbackError);
+        
+        // Last resort method
+        pdf.setFontSize(14);
+        pdf.text("Error generating PDF. Try collapsing the financial metrics section.", 20, 20);
       }
     }
     
@@ -443,66 +487,146 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
     const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
     const subsequentPageContentHeight = pdfHeight - (2 * margin) - footerHeight;
     
+    // Validate image dimensions
+    if (!isFinite(imgHeight) || isNaN(imgHeight) || imgHeight <= 0) {
+      console.warn("Invalid image height in multi-page export:", imgHeight);
+      // Use a safe default height
+      const safeHeight = Math.min(canvas.height / 2, pdfHeight - headerHeight - footerHeight);
+      pdf.addImage(imgData, 'JPEG', margin, headerHeight, imgWidth, safeHeight);
+      
+      console.log("Used safe image dimensions for PDF");
+      // Add a note about collapsed view
+      pdf.setFontSize(9);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text("Note: For best results, try collapsing the financial metrics section.", margin, pdfHeight - 5);
+    }
     // Check if the content fits in a single page
-    if (imgHeight <= firstPageContentHeight) {
+    else if (imgHeight <= firstPageContentHeight) {
       // Content fits on a single page, just add it
+      console.log("Single page content - using direct approach");
       pdf.addImage(imgData, 'JPEG', margin, headerHeight, imgWidth, imgHeight);
-    } else {
-      // Content requires multiple pages
-      const totalPages = Math.ceil((imgHeight - firstPageContentHeight) / subsequentPageContentHeight) + 1;
-      console.log(`Multi-page PDF: Content requires ${totalPages} pages`);
-      
-      // Add image data to PDF, splitting across pages if needed
-      let remainingHeight = imgHeight;
-      let sourceY = 0;
-      
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) {
-          pdf.addPage();
+    } 
+    // For multi-page content, use a try-catch to handle potential scaling issues
+    else {
+      try {
+        console.log("Multi-page content - using safe segmented approach");
+        
+        // Break the content into sections with separate canvases to avoid scaling errors
+        
+        // First page - top portion
+        const firstPageCanvasHeight = (firstPageContentHeight / imgHeight) * canvas.height;
+        const firstPageCanvas = document.createElement('canvas');
+        firstPageCanvas.width = canvas.width;
+        firstPageCanvas.height = firstPageCanvasHeight;
+        
+        // Draw first page content
+        const firstPageCtx = firstPageCanvas.getContext('2d');
+        if (!firstPageCtx) {
+          throw new Error("Could not get canvas context");
         }
         
-        // Calculate current page dimensions
-        const currentPageHeight = page === 0 ? firstPageContentHeight : subsequentPageContentHeight;
-        const printHeight = Math.min(remainingHeight, currentPageHeight);
-        const sourceHeight = (printHeight / imgHeight) * canvas.height;
+        // Draw first page portion
+        firstPageCtx.drawImage(
+          canvas,
+          0, 0, canvas.width, firstPageCanvasHeight,
+          0, 0, firstPageCanvas.width, firstPageCanvas.height
+        );
         
-        // Create a temporary canvas for this page section
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = sourceHeight;
+        // Add to PDF
+        const firstPageImage = firstPageCanvas.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(firstPageImage, 'JPEG', margin, headerHeight, imgWidth, firstPageContentHeight);
         
-        // Draw the portion of the original canvas
-        const tempCtx = tempCanvas.getContext('2d');
-        if (tempCtx) {
-          tempCtx.drawImage(
-            canvas, 
-            0, sourceY, canvas.width, sourceHeight,
-            0, 0, tempCanvas.width, tempCanvas.height
-          );
+        // Calculate remaining content
+        const remainingCanvasHeight = canvas.height - firstPageCanvasHeight;
+        
+        // If we have more content to show, add additional pages
+        if (remainingCanvasHeight > 0) {
+          // Calculate how many more pages we need
+          const canvasHeightPerPage = (subsequentPageContentHeight / imgHeight) * canvas.height;
+          const additionalPagesNeeded = Math.ceil(remainingCanvasHeight / canvasHeightPerPage);
           
-          // Add to PDF with JPEG format
-          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+          console.log(`Multi-page PDF: Requires ${additionalPagesNeeded + 1} total pages`);
           
-          const yPosition = page === 0 ? headerHeight : margin;
-          pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, printHeight);
+          // Track our position in the canvas
+          let canvasYPosition = firstPageCanvasHeight;
           
-          // Update for next page
-          remainingHeight -= printHeight;
-          sourceY += sourceHeight;
-          
-          console.log(`Added page ${page + 1} of ${totalPages}, remaining height: ${remainingHeight}px`);
+          // Create each additional page
+          for (let page = 1; page <= additionalPagesNeeded; page++) {
+            // Add a new page
+            pdf.addPage();
+            
+            // Calculate the content for this page
+            const pageRemainingHeight = canvas.height - canvasYPosition;
+            const pageCanvasHeight = Math.min(canvasHeightPerPage, pageRemainingHeight);
+            const pagePdfHeight = Math.min(subsequentPageContentHeight, (pageCanvasHeight / canvas.height) * imgHeight);
+            
+            // Create a canvas for just this page's content
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = pageCanvasHeight;
+            
+            // Draw this page's content
+            const pageCtx = pageCanvas.getContext('2d');
+            if (!pageCtx) {
+              console.warn(`Could not get context for page ${page + 1}`);
+              continue;
+            }
+            
+            // Draw the appropriate portion for this page
+            pageCtx.drawImage(
+              canvas,
+              0, canvasYPosition, canvas.width, pageCanvasHeight,
+              0, 0, pageCanvas.width, pageCanvas.height
+            );
+            
+            // Convert to image and add to PDF
+            const pageImage = pageCanvas.toDataURL('image/jpeg', 0.95);
+            pdf.addImage(pageImage, 'JPEG', margin, margin, imgWidth, pagePdfHeight);
+            
+            // Update for next page
+            canvasYPosition += pageCanvasHeight;
+            
+            console.log(`Added page ${page + 1}, position: ${canvasYPosition}/${canvas.height}`);
+          }
         }
+      } catch (pageError) {
+        console.error("Error in multi-page PDF generation:", pageError);
+        
+        // If we encounter an error, use the simplest approach
+        pdf.deletePage(1);
+        pdf.addPage();
+        
+        // Use simple scaling approach instead
+        const safeHeight = Math.min(imgHeight, pdfHeight - 20);
+        pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, safeHeight);
+        
+        // Add note about error recovery
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text("Note: For best results, try collapsing the financial metrics section.", margin, pdfHeight - 5);
+        
+        console.log("Used fallback approach for PDF generation");
       }
     }
+    
+    // Add page numbers and footer to all pages
+    const pageCount = pdf.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
       
-      // Add page number in footer area
+      // Add page number
       pdf.setFontSize(10);
       pdf.setTextColor(150, 150, 150);
-      pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+      pdf.text(`Page ${i} of ${pageCount}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
       
       // Add a separator line above footer
       pdf.setDrawColor(200, 200, 200);
       pdf.line(margin, pdfHeight - footerHeight, pdfWidth - margin, pdfHeight - footerHeight);
+      
+      // Add footer text
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
     }
     
     // Add footer to all pages
