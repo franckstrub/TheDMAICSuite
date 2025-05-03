@@ -255,14 +255,22 @@ export default function Dashboard() {
       pdf.setTextColor(85, 85, 85);
       pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 22);
       
-      // Add filter information with more spacing
+      // Create a container and background color for filters (for better visibility)
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setFillColor(245, 245, 245);
+      pdf.roundedRect(margin, 24, 60, 7, 2, 2, 'FD'); // First filter background
+      pdf.roundedRect(margin, 32, 60, 7, 2, 2, 'FD'); // Second filter background
+      
+      // Add filter information 
+      pdf.setFontSize(9);
+      pdf.setTextColor(60, 60, 60);
       let filterText = `Timeframe: ${timeframe}`;
       if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
         filterText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
       }
-      pdf.text(filterText, margin, 26);
+      pdf.text(filterText, margin + 3, 28); // Centered vertically in filter box
       
-      // Add status filter info with more spacing 
+      // Add status filter info 
       let statusFilterText = "Status Filter: ";
       switch(implementationStatus) {
         case "all": statusFilterText += "All Projects"; break;
@@ -275,7 +283,7 @@ export default function Dashboard() {
         case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
         default: statusFilterText += "All Projects";
       }
-      pdf.text(statusFilterText, margin, 34);
+      pdf.text(statusFilterText, margin + 3, 36); // Centered vertically in filter box
       
       // Add horizontal line below header
       pdf.setDrawColor(200, 200, 200);

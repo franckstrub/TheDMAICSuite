@@ -278,6 +278,25 @@
   display: block !important;
 }
 
+/* Fix for dashboard filters in PDF export */
+.html2canvas-container [role="combobox"]::after {
+  content: attr(data-pdf-value);
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #333;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  display: inline;
+  box-shadow: none;
+}
+
 /* Normal display (reverse of PDF display) */
 .html2canvas-show {
   display: none !important;
