@@ -1284,9 +1284,43 @@ export default function DefinePhase() {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Using a different approach to avoid PNG corruption
-      // Use html2canvas with different settings
+      // First, let's fix any animation-related elements that might cause rendering issues
+      const motionDivSelectors = [
+        '[data-framer-component-type="motion.div"]',
+        '.motion-div',
+        'div[style*="transform"]',
+        'div[style*="transition"]',
+        // Target the specific container in financial section
+        '.border.border-gray-200.border-t-0.rounded-b-md',
+        // Also target any element with data-state attribute (collapsible sections)
+        '[data-state]'
+      ];
+      
+      // Process each selector to find and fix motion elements
+      motionDivSelectors.forEach(selector => {
+        const motionElements = charterElement.querySelectorAll(selector);
+        motionElements.forEach(div => {
+          (div as HTMLElement).style.height = 'auto';
+          (div as HTMLElement).style.opacity = '1';
+          (div as HTMLElement).style.overflow = 'visible';
+          (div as HTMLElement).style.transform = 'none';
+          (div as HTMLElement).style.transition = 'none';
+        });
+      });
+      
+      // Special handling for financial section to ensure it's properly rendered
+      const financialSection = charterElement.querySelector('.border.border-gray-200.border-t-0.rounded-b-md');
+      if (financialSection) {
+        (financialSection as HTMLElement).style.display = 'block';
+        (financialSection as HTMLElement).style.visibility = 'visible';
+        (financialSection as HTMLElement).style.height = 'auto';
+        (financialSection as HTMLElement).style.opacity = '1';
+        (financialSection as HTMLElement).style.position = 'relative';
+      }
+      
+      // Use html2canvas with different settings - with safety checks for dimensions
       const canvas = await html2canvas(charterElement, {
-        scale: 2.5, // Higher scale for better clarity
+        scale: 2, // Lower scale to prevent issues with very large images
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff", 
@@ -1301,6 +1335,18 @@ export default function DefinePhase() {
             // Make sure all hidden elements that should be visible in PDF are shown
             const hiddenElements = clonedCharter.querySelectorAll('.html2canvas-show');
             hiddenElements.forEach(el => el.classList.add('active'));
+            
+            // Also fix any motion elements in the cloned document
+            motionDivSelectors.forEach(selector => {
+              const motionElements = clonedCharter.querySelectorAll(selector);
+              motionElements.forEach(div => {
+                (div as HTMLElement).style.height = 'auto';
+                (div as HTMLElement).style.opacity = '1';
+                (div as HTMLElement).style.overflow = 'visible';
+                (div as HTMLElement).style.transform = 'none';
+                (div as HTMLElement).style.transition = 'none';
+              });
+            });
             
             // Get form values for all select fields to ensure they display correctly
             const formValues = {
@@ -1369,10 +1415,35 @@ export default function DefinePhase() {
           );
           
           // Add to PDF with JPEG format instead of PNG to avoid corruption
-          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.92);
           
-          const yPosition = page === 0 ? 40 : 10;
-          pdf.addImage(pageImgData, 'JPEG', 10, yPosition, imgWidth, printHeight);
+          try {
+            // Add safety checks to prevent scaling errors
+            const yPosition = page === 0 ? 40 : 10;
+            
+            // Make sure dimensions are valid numbers and not too large
+            const safePrintHeight = Math.min(printHeight, pdfHeight - 20);
+            const safeImgWidth = Math.min(imgWidth, pdfWidth - 20);
+            
+            // Use a try/catch specifically for the addImage call to prevent the "Invalid argument" error
+            pdf.addImage(pageImgData, 'JPEG', 10, yPosition, safeImgWidth, safePrintHeight);
+            
+            console.log(`PDF page ${page+1} added with dimensions: ${safeImgWidth}x${safePrintHeight}`);
+          } catch (imgError) {
+            console.error(`Error adding image to page ${page+1}:`, imgError);
+            // If adding the image fails, try with even smaller dimensions
+            const fallbackWidth = pdfWidth - 30;
+            const fallbackHeight = Math.min(printHeight / 1.5, pdfHeight - 40);
+            try {
+              pdf.addImage(pageImgData, 'JPEG', 15, yPosition, fallbackWidth, fallbackHeight);
+              console.log(`Used fallback dimensions for page ${page+1}: ${fallbackWidth}x${fallbackHeight}`);
+            } catch (fallbackError) {
+              console.error(`Could not add image even with fallback dimensions:`, fallbackError);
+              // Add error message on the PDF page
+              pdf.setTextColor(255, 0, 0);
+              pdf.text('Error rendering this page section', 20, 100);
+            }
+          }
           
           // Update for next page
           remainingHeight -= printHeight;
