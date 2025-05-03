@@ -217,7 +217,7 @@ export default function Dashboard() {
         throw new Error("Dashboard element not found");
       }
       
-      // Create PDF document
+      // Create a new jsPDF instance for our report
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       // Get PDF dimensions
@@ -227,42 +227,65 @@ export default function Dashboard() {
       // Define margins and spacing
       const margin = 14; // mm
       const footerHeight = 15; // mm
+      const headerHeight = 50; // mm - increased for filters
       
-      // Add title to PDF - directly in the PDF, not via HTML
+      // Use html2canvas to capture the dashboard content
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2.5, // Higher scale for better quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        imageTimeout: 15000,
+        logging: false, // Disable logging for production
+        removeContainer: false
+      });
+      
+      // Get canvas dimensions for calculations
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      
+      // Add title to PDF
       pdf.setFontSize(18);
       pdf.setTextColor(33, 37, 41);
       pdf.text("Lean Six Sigma DMAIC Suite™ - Dashboard Report", margin, 15);
       
-      // Add date to PDF
+      // Add generated date
       pdf.setFontSize(10);
       pdf.setTextColor(85, 85, 85);
       pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 22);
       
-      // Create filter box with rounded corners and gray background
+      // Create a larger filter section with rounded corners
       pdf.setFillColor(240, 240, 240);
-      pdf.rect(margin, 25, pdfWidth - (2 * margin), 16, 'F');
-      pdf.setDrawColor(200, 200, 200);
-      pdf.rect(margin, 25, pdfWidth - (2 * margin), 16, 'S');
+      if (pdf.roundedRect) {
+        pdf.roundedRect(margin, 24, pdfWidth - (2 * margin), 20, 2, 2, 'F');
+        pdf.setDrawColor(200, 200, 200);
+        pdf.roundedRect(margin, 24, pdfWidth - (2 * margin), 20, 2, 2, 'S');
+      } else {
+        // Fallback if roundedRect is not available
+        pdf.rect(margin, 24, pdfWidth - (2 * margin), 20, 'F');
+        pdf.setDrawColor(200, 200, 200);
+        pdf.rect(margin, 24, pdfWidth - (2 * margin), 20, 'S');
+      }
       
-      // Add period filter
+      // Add filter information with improved styling
       pdf.setFontSize(10);
       pdf.setTextColor(50, 50, 50);
+      
+      // Period filter - first line
       pdf.setFont('helvetica', 'bold');
       pdf.text("Period:", margin + 3, 30);
       
-      // Timeframe value
       pdf.setFont('helvetica', 'normal');
       let timeframeText = timeframe;
       if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
         timeframeText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
       }
-      pdf.text(timeframeText, margin + 22, 30);
+      pdf.text(timeframeText, margin + 25, 30);
       
-      // Add status filter
+      // Status filter - second line
       pdf.setFont('helvetica', 'bold');
-      pdf.text("Status Filter:", margin + 3, 37);
+      pdf.text("Status Filter:", margin + 3, 38);
       
-      // Status value
       pdf.setFont('helvetica', 'normal');
       let statusText = "";
       switch(implementationStatus) {
@@ -276,25 +299,12 @@ export default function Dashboard() {
         case "not-implemented": statusText = "Not Implemented Projects"; break;
         default: statusText = "All Projects";
       }
-      pdf.text(statusText, margin + 40, 37);
+      pdf.text(statusText, margin + 40, 38);
       
-      // Now capture dashboard content
-      const dashboardCanvas = await html2canvas(dashboardRef.current, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        imageTimeout: 15000,
-        logging: false,
-        removeContainer: false
-      });
-      
-      // Calculate header height based on filter section
-      const headerHeight = 45; // Fixed height for header section with filter info
-      
-      // Calculate dashboard dimensions
-      const dashboardWidth = pdfWidth - (2 * margin);
-      const dashboardHeight = (dashboardCanvas.height / dashboardCanvas.width) * dashboardWidth;
+      // Calculate content dimensions
+      const contentWidth = pdfWidth - (2 * margin);
+      const imgWidth = contentWidth;
+      const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
       
       // Calculate content height available on each page
       const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
@@ -302,71 +312,76 @@ export default function Dashboard() {
       
       // Calculate how many pages we need
       let totalPages = 1;
-      let remainingContent = dashboardHeight;
+      let contentLeft = imgHeight;
       
       // Remove height available on first page
-      remainingContent -= firstPageContentHeight;
+      contentLeft -= firstPageContentHeight;
       
       // Add pages as needed for remaining content
-      while (remainingContent > 0) {
+      while (contentLeft > 0) {
         totalPages++;
-        remainingContent -= regularPageContentHeight;
+        contentLeft -= regularPageContentHeight;
       }
       
-      // Reset for actual content placement
-      let remainingDashboardHeight = dashboardHeight;
+      // Prepare to add image data to PDF pages
+      let remainingImgHeight = imgHeight;
       let sourceY = 0;
       
-      // Add content to PDF pages
+      // Add content to each page
       for (let page = 0; page < totalPages; page++) {
         // Create new pages after the first
         if (page > 0) {
           pdf.addPage();
         }
         
-        // Calculate height for current page content
-        const availableHeight = page === 0 ? firstPageContentHeight : regularPageContentHeight;
-        const printHeight = Math.min(remainingDashboardHeight, availableHeight);
+        // Calculate height for current page
+        const currentPageHeight = page === 0 ? firstPageContentHeight : regularPageContentHeight;
         
-        // Calculate which portion of dashboard to use
-        const sourceHeight = (printHeight / dashboardHeight) * dashboardCanvas.height;
+        // Calculate how much content to include on this page
+        const printHeight = Math.min(remainingImgHeight, currentPageHeight);
         
-        // Create a temporary canvas for this dashboard section
+        // Calculate which portion of source canvas to use
+        const sourceHeight = (printHeight / imgHeight) * canvasHeight;
+        
+        // Create a temporary canvas for this page section
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = dashboardCanvas.width;
+        tempCanvas.width = canvasWidth;
         tempCanvas.height = sourceHeight;
         
-        // Draw the portion of the dashboard canvas to temp canvas
+        // Draw the portion of the original canvas to this temporary canvas
         const tempCtx = tempCanvas.getContext('2d');
         if (tempCtx) {
           tempCtx.drawImage(
-            dashboardCanvas, 
-            0, sourceY, dashboardCanvas.width, sourceHeight,
+            canvas, 
+            0, sourceY, canvasWidth, sourceHeight,
             0, 0, tempCanvas.width, tempCanvas.height
           );
           
-          // Convert to JPEG format
+          // Convert to JPEG format for better reliability
           const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
           
-          // Add the dashboard image to PDF - at the header position on first page, at top margin on subsequent pages
+          // Add the image to PDF at the correct position
           const yPosition = page === 0 ? headerHeight : margin;
-          pdf.addImage(pageImgData, 'JPEG', margin, yPosition, dashboardWidth, printHeight);
+          pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, printHeight);
           
-          // Update tracking variables
-          remainingDashboardHeight -= printHeight;
+          // Update tracking variables for next page
+          remainingImgHeight -= printHeight;
           sourceY += sourceHeight;
         }
         
-        // Add page number in footer
+        // Add page number in footer area
         pdf.setFontSize(9);
         pdf.setTextColor(120, 120, 120);
         pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
         
-        // Add footer separator line
+        // Add a separator line above footer
         pdf.setDrawColor(200, 200, 200);
         pdf.line(margin, pdfHeight - footerHeight, pdfWidth - margin, pdfHeight - footerHeight);
-        
-        // Add footer text
+      }
+      
+      // Add consistent footer to all pages
+      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+        pdf.setPage(i);
         pdf.setFontSize(8);
         pdf.setTextColor(120, 120, 120);
         pdf.text('Lean Six Sigma DMAIC Suite™', margin, pdfHeight - 5);
