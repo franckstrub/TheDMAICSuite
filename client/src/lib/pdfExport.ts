@@ -41,30 +41,6 @@ export const exportToPdf = async (elementId: string, filename: string) => {
     document.body.appendChild(container);
     container.appendChild(clonedElement);
     
-    // Fix animation-related elements that might cause rendering issues
-    // Try different selectors to catch all possible motion elements
-    const motionDivSelectors = [
-      '[data-motion]',
-      '[data-framer-component-type="motion.div"]',
-      '.motion-div',
-      'div[style*="transform"]',
-      'div[style*="transition"]',
-      // Target the specific container in financial section
-      '.border.border-gray-200.border-t-0.rounded-b-md'
-    ];
-    
-    // Process each selector to find and fix motion elements
-    motionDivSelectors.forEach(selector => {
-      const motionElements = clonedElement.querySelectorAll(selector);
-      motionElements.forEach(div => {
-        (div as HTMLElement).style.height = 'auto';
-        (div as HTMLElement).style.opacity = '1';
-        (div as HTMLElement).style.overflow = 'visible';
-        (div as HTMLElement).style.transform = 'none';
-        (div as HTMLElement).style.transition = 'none';
-      });
-    });
-    
     // We'll preserve the exact state of the UI without forcing expansion
     // This ensures the PDF looks exactly like what the user sees on screen
     
@@ -106,16 +82,6 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         if (chartElement) {
           chartElement.classList.add('html2canvas-container');
         }
-        
-        // Fix Framer Motion animation divs for proper PDF rendering
-        const motionDivs = clonedDoc.querySelectorAll('div[data-framer-component-type="motion.div"]');
-        motionDivs.forEach(div => {
-          (div as HTMLElement).style.height = 'auto';
-          (div as HTMLElement).style.opacity = '1';
-          (div as HTMLElement).style.overflow = 'visible';
-          (div as HTMLElement).style.transform = 'none';
-          (div as HTMLElement).style.transition = 'none';
-        });
         
         // Handle select elements
         const selectContainers = clonedDoc.querySelectorAll('.html2canvas-hide');
@@ -293,16 +259,6 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
       onclone: (clonedDoc) => {
         // Mark container for special styling
         clonedElement.classList.add('html2canvas-container');
-        
-        // Fix Framer Motion animation divs for proper PDF rendering
-        const motionDivs = clonedDoc.querySelectorAll('div[data-framer-component-type="motion.div"]');
-        motionDivs.forEach(div => {
-          (div as HTMLElement).style.height = 'auto';
-          (div as HTMLElement).style.opacity = '1';
-          (div as HTMLElement).style.overflow = 'visible';
-          (div as HTMLElement).style.transform = 'none';
-          (div as HTMLElement).style.transition = 'none';
-        });
         
         // Handle select elements
         const selectContainers = clonedDoc.querySelectorAll('.html2canvas-hide');
