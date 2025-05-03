@@ -1230,7 +1230,11 @@ export default function DefinePhase() {
     isPdfGenerating = true;
     
     try {
-      // We don't show a toast at the beginning - just one at the end
+      // Show initial toast notification
+      toast({
+        title: "Generating Project Charter",
+        description: "Please wait while we prepare your PDF...",
+      });
       
       // Get the element to export
       const charterElement = document.getElementById("project-charter");
