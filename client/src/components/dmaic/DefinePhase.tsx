@@ -1214,6 +1214,14 @@ export default function DefinePhase() {
   // Function to handle PDF export - simpler approach to avoid PNG corruption errors
   const handleExportPdf = async () => {
     try {
+      // Temporary close financial section if it's open to avoid PDF scaling issues
+      const wasFinancialSectionExpanded = isFinancialSectionExpanded;
+      if (wasFinancialSectionExpanded) {
+        setIsFinancialSectionExpanded(false);
+        // Add a small delay to let the UI update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       toast({
         title: "Generating PDF Report",
         description: "Please wait while we capture the project charter...",
@@ -1286,7 +1294,7 @@ export default function DefinePhase() {
       // Using a different approach to avoid PNG corruption
       // Use html2canvas with different settings
       const canvas = await html2canvas(charterElement, {
-        scale: 2.5, // Higher scale for better clarity
+        scale: 2, // Reduced scale to avoid errors with large expanded sections
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff", 
@@ -1424,6 +1432,11 @@ export default function DefinePhase() {
         title: "Report Generated Successfully",
         description: `Your project charter has been captured and saved as ${filename}`,
       });
+      
+      // Restore the financial section to its previous state if it was expanded
+      if (wasFinancialSectionExpanded) {
+        setIsFinancialSectionExpanded(true);
+      }
     } catch (error) {
       console.error("Error exporting to PDF:", error);
       
@@ -1452,6 +1465,11 @@ export default function DefinePhase() {
         description: `An error occurred during export: ${error}`,
         variant: "destructive",
       });
+      
+      // Restore the financial section to its previous state if it was expanded
+      if (wasFinancialSectionExpanded) {
+        setIsFinancialSectionExpanded(true);
+      }
     }
   };
 
