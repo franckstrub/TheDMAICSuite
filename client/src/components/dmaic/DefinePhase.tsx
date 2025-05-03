@@ -1211,7 +1211,7 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // Function to handle PDF export - using the same approach as Dashboard
+  // Function to handle PDF export - simpler approach to avoid PNG corruption errors
   const handleExportPdf = async () => {
     try {
       toast({
@@ -1225,29 +1225,12 @@ export default function DefinePhase() {
         throw new Error("Project charter element not found");
       }
       
-      // Use html2canvas to capture the charter as an image
-      const canvas = await html2canvas(element, {
-        scale: 1.5, // Higher quality
-        useCORS: true, // Allow cross-origin images
-        logging: false, // Disable logging
-        allowTaint: true, // Allow tainted canvas
-        backgroundColor: "#ffffff" // White background
-      });
-      
       // Make sure we have a valid project title for the filename
       const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
       const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_');
       
       // Create a new jsPDF instance
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // Calculate dimensions
-      const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasRatio = canvas.height / canvas.width;
-      const imgWidth = pdfWidth;
-      const imgHeight = pdfWidth * canvasRatio;
       
       // Add title
       pdf.setFontSize(18);
@@ -1262,10 +1245,35 @@ export default function DefinePhase() {
       // Add project title information
       pdf.text(`Project: ${projectTitle}`, 14, 26);
       
-      // Calculate page count based on image height
-      const totalPages = Math.ceil(imgHeight / (pdfHeight - 40));
+      // Using a different approach to avoid PNG corruption
+      // Use html2canvas with different settings
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        imageTimeout: 0, // No timeout for images
+        logging: true,
+        removeContainer: true, // Cleanup after rendering
+        foreignObjectRendering: false // Disable foreignObject rendering which can cause issues
+      });
       
-      // Split image across multiple pages if needed
+      // Calculate dimensions
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Get canvas dimensions
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      
+      // Calculate how many pages we need
+      const pageHeight = pdfHeight - 40; // Account for header space on first page
+      const contentWidth = pdfWidth - 20; // 10mm margin on each side
+      const imgWidth = contentWidth;
+      const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
+      const totalPages = Math.ceil(imgHeight / pageHeight);
+      
+      // Add image data to PDF, splitting across pages if needed
       let remainingHeight = imgHeight;
       let sourceY = 0;
       
@@ -1274,38 +1282,37 @@ export default function DefinePhase() {
           pdf.addPage();
         }
         
-        // Calculate how much of the image will fit on this page
-        const pageHeight = pdfHeight - (page === 0 ? 40 : 20); // First page has header
-        const printHeight = Math.min(remainingHeight, pageHeight);
-        const sourceHeight = (printHeight / imgHeight) * canvas.height;
+        // Calculate current page dimensions
+        const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20);
+        const printHeight = Math.min(remainingHeight, currentPageHeight);
+        const sourceHeight = (printHeight / imgHeight) * canvasHeight;
         
-        // Create a temporary canvas to hold just this portion of the image
+        // Create a temporary canvas for this page section
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
+        tempCanvas.width = canvasWidth;
         tempCanvas.height = sourceHeight;
         
-        // Draw the portion of the original canvas onto the temporary canvas
+        // Draw the portion of the original canvas
         const tempCtx = tempCanvas.getContext('2d');
         if (tempCtx) {
           tempCtx.drawImage(
             canvas, 
-            0, sourceY, canvas.width, sourceHeight,
+            0, sourceY, canvasWidth, sourceHeight,
             0, 0, tempCanvas.width, tempCanvas.height
           );
           
-          // Convert the temporary canvas to a data URL
-          const pageImgData = tempCanvas.toDataURL('image/png');
+          // Add to PDF with JPEG format instead of PNG to avoid corruption
+          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
           
-          // Add this portion to the PDF
-          const yPosition = page === 0 ? 40 : 15;
-          pdf.addImage(pageImgData, 'PNG', 14, yPosition, imgWidth - 28, printHeight);
+          const yPosition = page === 0 ? 40 : 10;
+          pdf.addImage(pageImgData, 'JPEG', 10, yPosition, imgWidth, printHeight);
           
           // Update for next page
           remainingHeight -= printHeight;
           sourceY += sourceHeight;
         }
         
-        // Add page number at the bottom
+        // Add page number
         pdf.setFontSize(10);
         pdf.setTextColor(150, 150, 150);
         pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
