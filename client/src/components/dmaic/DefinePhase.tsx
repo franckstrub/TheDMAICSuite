@@ -1212,37 +1212,8 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // Create module-scoped variables to prevent duplicate generations
-  // Use closures to maintain state between function calls
-  const exportPdfLock = (() => {
-    let isPdfGenerating = false;
-    let pdfGenerated = false;
-    let pdfTimestamp = 0;
-    
-    return {
-      isGenerating: () => isPdfGenerating,
-      wasGenerated: () => pdfGenerated,
-      startGeneration: () => {
-        isPdfGenerating = true;
-        pdfGenerated = false;
-        pdfTimestamp = Date.now();
-        return pdfTimestamp;
-      },
-      markAsGenerated: () => {
-        pdfGenerated = true;
-        return pdfTimestamp;
-      },
-      endGeneration: () => {
-        isPdfGenerating = false;
-        return pdfTimestamp;
-      },
-      resetState: () => {
-        isPdfGenerating = false;
-        pdfGenerated = false;
-        pdfTimestamp = 0;
-      }
-    };
-  })();
+  // We're now using the importable exportPdfLock module from lib/exportPdfLock.ts
+  // This provides a centralized way to manage PDF generation state
   
   // Function to handle PDF export with protection against duplicate generation
   const handleExportPdf = async () => {
@@ -1271,7 +1242,7 @@ export default function DefinePhase() {
           description: "Could not find the project charter element",
           variant: "destructive",
         });
-        exportPdfLock.endGeneration();
+        exportPdfLock.reset(); // Using reset() from the imported module
         return;
       }
       
@@ -1774,8 +1745,8 @@ export default function DefinePhase() {
         });
       }
       
-      // Reset the PDF generation flag
-      // No need to reset isPdfGenerating as we're using exportPdfLock now
+      // Mark the PDF generation as complete
+      exportPdfLock.reset();
     }
   };
 
