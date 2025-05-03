@@ -77,6 +77,28 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           clonedBody.style.overflow = 'visible';
         }
         
+        // Mark the container for special CSS styling
+        const chartElement = clonedDoc.querySelector('#' + elementId);
+        if (chartElement) {
+          chartElement.classList.add('html2canvas-container');
+        }
+        
+        // Handle select elements
+        const selectContainers = clonedDoc.querySelectorAll('.html2canvas-hide');
+        selectContainers.forEach(container => {
+          container.classList.add('pdf-hidden');
+          (container as HTMLElement).style.display = 'none';
+        });
+        
+        // Make sure html2canvas-show elements are visible
+        const showElements = clonedDoc.querySelectorAll('.html2canvas-show');
+        showElements.forEach(el => {
+          el.classList.add('pdf-visible');
+          (el as HTMLElement).style.display = 'block';
+          (el as HTMLElement).style.visibility = 'visible';
+          (el as HTMLElement).style.opacity = '1';
+        });
+        
         // Fix for title overlapping with input fields in PDF
         const labels = clonedDoc.querySelectorAll('label');
         labels.forEach(label => {
@@ -87,43 +109,27 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         });
         
         // Add spacing between input fields and their labels
-        const inputs = clonedDoc.querySelectorAll('input, select, textarea');
+        const inputs = clonedDoc.querySelectorAll('input, textarea');
         inputs.forEach(input => {
           input.style.marginTop = '4px';
           input.style.display = 'block';
           input.style.width = '100%';
         });
         
-        // Special handling for select elements to show their values in PDF
-        const selectTriggers = clonedDoc.querySelectorAll('.select-trigger, [data-state="trigger"], button[role="combobox"]');
-        selectTriggers.forEach(trigger => {
-          // Get the actual selected value from the select value element
-          const valueElement = trigger.querySelector('.select-value, [data-state="value"]');
-          if (valueElement && valueElement.textContent) {
-            // Create a visible display of the selected value for PDF
-            const valueDisplay = document.createElement('div');
-            valueDisplay.className = 'pdf-select-value';
-            valueDisplay.textContent = valueElement.textContent;
-            valueDisplay.style.padding = '0.5rem';
-            valueDisplay.style.border = '1px solid #e2e8f0';
-            valueDisplay.style.borderRadius = '0.25rem';
-            valueDisplay.style.backgroundColor = 'white';
-            valueDisplay.style.marginTop = '4px';
-            valueDisplay.style.color = '#1e293b';
-            
-            // Insert the visible value display after the select element
-            if (trigger.parentNode) {
-              trigger.parentNode.insertBefore(valueDisplay, trigger.nextSibling);
-              // Hide the original trigger in PDF export
-              trigger.style.display = 'none';
-            }
-          }
+        // Ensure plain text representations in PDF are styled properly
+        const plainTextElements = clonedDoc.querySelectorAll('.html2canvas-show');
+        plainTextElements.forEach(el => {
+          (el as HTMLElement).style.padding = '0.5rem';
+          (el as HTMLElement).style.border = '1px solid #e2e8f0';
+          (el as HTMLElement).style.borderRadius = '0.25rem';
+          (el as HTMLElement).style.backgroundColor = 'white';
+          (el as HTMLElement).style.marginTop = '4px';
+          (el as HTMLElement).style.color = '#1e293b'; 
+          (el as HTMLElement).style.fontSize = '0.875rem';
+          (el as HTMLElement).style.lineHeight = '1.25rem';
         });
         
-        // Mark the container for special CSS styling
-        clonedDoc.querySelector('#' + elementId)?.classList.add('html2canvas-container');
-        
-        console.log("Document cloned and styled for canvas rendering with fixed label spacing");
+        console.log("Document cloned and styled for canvas rendering with improved select element handling");
       }
     });
     
@@ -244,7 +250,39 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
       imageTimeout: 15000, // Longer timeout for complex pages
       logging: true,
       removeContainer: false,
-      foreignObjectRendering: false
+      foreignObjectRendering: false,
+      onclone: (clonedDoc) => {
+        // Mark container for special styling
+        clonedElement.classList.add('html2canvas-container');
+        
+        // Handle select elements
+        const selectContainers = clonedDoc.querySelectorAll('.html2canvas-hide');
+        selectContainers.forEach(container => {
+          container.classList.add('pdf-hidden');
+          (container as HTMLElement).style.display = 'none';
+        });
+        
+        // Make sure html2canvas-show elements are visible
+        const showElements = clonedDoc.querySelectorAll('.html2canvas-show');
+        showElements.forEach(el => {
+          el.classList.add('pdf-visible');
+          (el as HTMLElement).style.display = 'block';
+          (el as HTMLElement).style.visibility = 'visible';
+          (el as HTMLElement).style.opacity = '1';
+        });
+        
+        // Ensure plain text representations in PDF are styled properly
+        showElements.forEach(el => {
+          (el as HTMLElement).style.padding = '0.5rem';
+          (el as HTMLElement).style.border = '1px solid #e2e8f0';
+          (el as HTMLElement).style.borderRadius = '0.25rem';
+          (el as HTMLElement).style.backgroundColor = 'white';
+          (el as HTMLElement).style.marginTop = '4px';
+          (el as HTMLElement).style.color = '#1e293b'; 
+          (el as HTMLElement).style.fontSize = '0.875rem';
+          (el as HTMLElement).style.lineHeight = '1.25rem';
+        });
+      }
     });
     
     // Remove the temporary container
