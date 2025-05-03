@@ -1686,30 +1686,40 @@ export default function DefinePhase() {
                         </div>
                       </div>
                       
-                      <div>
-                        <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
-                        <Input
-                          id="fteCostPerYear"
-                          type="number"
-                          min="0"
-                          value={fteParams.fteCostPerYear}
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value);
-                            if (value < 0 || isNaN(value)) {
-                              handleFteParamChange('fteCostPerYear', "0");
-                            } else {
-                              handleFteParamChange('fteCostPerYear', e.target.value);
-                            }
-                          }}
-                          placeholder="e.g. 100000"
-                          className="h-8 text-sm"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
+                          <Input
+                            id="fteCostPerYear"
+                            type="number"
+                            min="0"
+                            value={fteParams.fteCostPerYear}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              if (value < 0 || isNaN(value)) {
+                                handleFteParamChange('fteCostPerYear', "0");
+                              } else {
+                                handleFteParamChange('fteCostPerYear', e.target.value);
+                              }
+                            }}
+                            placeholder="e.g. 100000"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">FTE Benefits ({currency})</Label>
+                          <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
+                            <div className="flex items-center px-3 text-green-600">
+                              {formatCurrency(fteParams.calculatedValue, currency)}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                         <div>
                           <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte.toFixed(3)}</span></p>
-                          <p className="text-sm font-medium">FTE Benefits: <span className="text-green-600">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
                         </div>
                         <div className="text-xs text-gray-500">Auto-calculated</div>
                       </div>
