@@ -234,24 +234,24 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
         </table>
       </div>
       
-      {/* Special table just for PDF export */}
-      <div className="border rounded-md html2canvas-show">
+      {/* Special table just for PDF export - with compact styling */}
+      <div className="border rounded-md html2canvas-show" id="team-members-pdf-table">
         <table className="w-full pdf-friendly-table">
           <thead className="bg-muted border-b">
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Function/Expertise</th>
+              <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+              <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider">Function/Expertise</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {teamMembers.length > 0 ? teamMembers.map((teamMember, index) => (
-              <tr key={index}>
-                <td className="px-4 py-2 text-sm">{teamMember.name}</td>
-                <td className="px-4 py-2 text-sm">{teamMember.function || "-"}</td>
+              <tr key={index} className="compact-row">
+                <td className="px-4 py-1 text-sm">{teamMember.name}</td>
+                <td className="px-4 py-1 text-sm">{teamMember.function || "-"}</td>
               </tr>
             )) : (
               <tr>
-                <td colSpan={2} className="px-4 py-4 text-center text-sm">
+                <td colSpan={2} className="px-4 py-2 text-center text-sm">
                   No team members added.
                 </td>
               </tr>
