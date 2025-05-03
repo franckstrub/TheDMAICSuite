@@ -6,7 +6,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X } from "lucide-react";
+import { Image, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -54,6 +55,9 @@ export default function DefinePhase() {
   const [showSoftBenefitDialog, setShowSoftBenefitDialog] = useState(false);
   const [newBenefitText, setNewBenefitText] = useState("");
   const [newBenefitCategory, setNewBenefitCategory] = useState<SoftBenefit['category']>("employee");
+  
+  // State for collapsible sections
+  const [isFinancialSectionExpanded, setIsFinancialSectionExpanded] = useState(true);
   
   // Handler for adding new soft benefit
   const handleAddSoftBenefit = () => {
