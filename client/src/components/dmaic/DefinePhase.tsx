@@ -1259,6 +1259,36 @@ export default function DefinePhase() {
         collapsible.setAttribute('data-state', 'open');
       });
       
+      // CRITICAL FIX: Check for expanded financial metrics section that causes PDF scale errors
+      const financialAccordionItem = charterElement.querySelector('#project-costs-accordion');
+      if (financialAccordionItem) {
+        const isExpanded = financialAccordionItem.getAttribute('data-state') === 'open';
+        
+        if (isExpanded) {
+          console.log("Project costs and financial metrics are expanded - applying special handling for PDF export");
+          
+          // Temporarily collapse the section to avoid scale errors
+          financialAccordionItem.setAttribute('data-pdf-was-expanded', 'true');
+          financialAccordionItem.setAttribute('data-state', 'closed');
+          
+          // Add a note about financial details
+          const financialNote = document.createElement('div');
+          financialNote.className = 'pdf-only-note my-2 p-3 bg-gray-50 border rounded text-sm';
+          financialNote.innerHTML = `
+            <p><strong>Note:</strong> Detailed financial metrics and project costs are available in the application.</p>
+            <p class="text-xs text-gray-500 mt-1">Financial summary: Total Benefits: ${charterForm.watch("totalFinancialSavings") || 0} | 
+            Total Costs: ${charterForm.watch("totalProjectCosts") || 0} | 
+            ROI: ${charterForm.watch("roi") || 0}%</p>
+          `;
+          
+          // Insert the note before the accordion
+          const parentNode = financialAccordionItem.parentNode;
+          if (parentNode) {
+            parentNode.insertBefore(financialNote, financialAccordionItem);
+          }
+        }
+      }
+      
       // Create special data attributes for form values to ensure they appear in the PDF
       const formInputs = charterElement.querySelectorAll('input, textarea');
       formInputs.forEach(input => {
@@ -1413,6 +1443,17 @@ export default function DefinePhase() {
           section.removeAttribute('data-pdf-was-closed');
         });
         
+        // Restore financial section if it was expanded
+        const financialSection = charterElement.querySelector('[data-pdf-was-expanded="true"]');
+        if (financialSection) {
+          financialSection.setAttribute('data-state', 'open');
+          financialSection.removeAttribute('data-pdf-was-expanded');
+          
+          // Remove the temporary note we added
+          const notes = charterElement.querySelectorAll('.pdf-only-note');
+          notes.forEach(note => note.parentNode?.removeChild(note));
+        }
+        
         // Clean up data attributes added for form values
         const formInputs = charterElement.querySelectorAll('input, textarea, select');
         formInputs.forEach(input => {
@@ -1439,6 +1480,17 @@ export default function DefinePhase() {
           section.setAttribute('data-state', 'closed');
           section.removeAttribute('data-pdf-was-closed');
         });
+        
+        // Restore financial section if it was expanded
+        const financialSection = cleanupElement.querySelector('[data-pdf-was-expanded="true"]');
+        if (financialSection) {
+          financialSection.setAttribute('data-state', 'open');
+          financialSection.removeAttribute('data-pdf-was-expanded');
+          
+          // Remove the temporary note we added
+          const notes = cleanupElement.querySelectorAll('.pdf-only-note');
+          notes.forEach(note => note.parentNode?.removeChild(note));
+        }
         
         // Clean up data attributes added for form values
         const formInputs = cleanupElement.querySelectorAll('input, textarea, select');
