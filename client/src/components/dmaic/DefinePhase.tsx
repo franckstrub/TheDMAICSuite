@@ -1211,8 +1211,20 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // Function to handle PDF export - simpler approach to avoid PNG corruption errors
+  // This flag prevents multiple PDF export operations from running simultaneously
+  let isPdfGenerating = false;
+  
+  // Function to handle PDF export with protection against duplicate generation
   const handleExportPdf = async () => {
+    // Prevent multiple clicks from triggering multiple PDF generations
+    if (isPdfGenerating) {
+      console.log("PDF generation already in progress");
+      return;
+    }
+    
+    // Set the flag to indicate PDF generation is in progress
+    isPdfGenerating = true;
+    
     try {
       toast({
         title: "Generating PDF Report",
@@ -1220,36 +1232,23 @@ export default function DefinePhase() {
       });
       
       // Get the element to export
-      const element = document.getElementById("project-charter");
-      if (!element) {
-        throw new Error("Project charter element not found");
+      const charterElement = document.getElementById("project-charter");
+      if (!charterElement) {
+        toast({
+          title: "Export failed",
+          description: "Could not find the project charter element",
+          variant: "destructive",
+        });
+        isPdfGenerating = false;
+        return;
       }
       
       // Make sure we have a valid project title for the filename
       const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
-      const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_');
+      const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 30);
       
-      // Create a new jsPDF instance
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // Add title
-      pdf.setFontSize(18);
-      pdf.setTextColor(33, 37, 41);
-      pdf.text("Lean Six Sigma DMAIC Suite™ - Project Charter", 14, 15);
-      
-      // Add date information
-      pdf.setFontSize(10);
-      pdf.setTextColor(85, 85, 85);
-      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 22);
-      
-      // Add project title information
-      pdf.text(`Project: ${projectTitle}`, 14, 26);
-      
-      // Create a clone of the element to preserve original DOM state
-      const charterElement = document.getElementById('project-charter');
-      if (!charterElement) {
-        throw new Error('Project charter element not found for PDF export');
-      }
+      // Store elements that need to be restored after PDF generation
+      const elementsToRestore = [];
 
       // First make sure all collapsible sections are expanded for PDF export
       // Find all collapsible sections and expand them temporarily
