@@ -1347,41 +1347,104 @@ export default function DefinePhase() {
           return;
         }
         
-        // First, manually ensure all expanded accordion contents are visible for PDF
-        console.log("Preparing accordion sections for PDF capture");
-        // Find any open accordions and mark them for special treatment
+        // CRITICAL FIX: Manually ensure all expanded accordion contents are visible for PDF
+        console.log("Preparing expanded accordion sections for PDF capture");
+        // Find any open accordions and apply special treatment to ensure they remain visible in PDF
         const allAccordions = charterElement.querySelectorAll('[data-state]');
         allAccordions.forEach(accordion => {
           if (accordion.getAttribute('data-state') === 'open') {
+            console.log("Found an expanded section, applying special handling for PDF");
+            // Mark expanded accordions but don't change their state
             accordion.setAttribute('data-pdf-expanded', 'true');
-            // Force the accordion content to be visible for PDF capture
+            
+            // Force the accordion content to be fully visible in PDF
             const content = accordion.querySelector('[data-orientation="vertical"]');
             if (content) {
-              content.style.height = 'auto';
-              content.style.overflow = 'visible';
+              // Apply styles that ensure content remains visible regardless of state changes
+              content.setAttribute('style', 
+                'height: auto !important; ' +
+                'overflow: visible !important; ' + 
+                'opacity: 1 !important; ' + 
+                'visibility: visible !important; ' +
+                'pointer-events: auto !important; ' +
+                'position: static !important; ' +
+                'transform: none !important; ' +
+                'display: block !important;'
+              );
+              
+              // Also ensure any child elements are visible
+              const innerContent = content.querySelectorAll('*');
+              innerContent.forEach(element => {
+                // Ensure display is maintained for all children
+                (element as HTMLElement).style.display = window.getComputedStyle(element).display;
+              });
             }
           }
         });
         
-        // Give the DOM a moment to update with our changes
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Give the DOM more time to update with our changes
+        await new Promise(resolve => setTimeout(resolve, 200));
         
-        // Using simpler settings that are more reliable
-        console.log("Generating canvas with reliable settings");
+        // Using higher quality settings for better PDF output
+        console.log("Generating canvas with high quality settings");
         const pdfCanvas = await html2canvas(charterElement, {
-          scale: 1, // Lower scale factor for reliability
+          scale: 2, // Higher scale factor for better quality
           useCORS: true,
           allowTaint: true,
           backgroundColor: "#ffffff",
-          imageTimeout: 10000,
-          logging: false,
+          imageTimeout: 15000,
+          logging: true, // Enable logging to help debug issues
           onclone: (clonedDoc) => {
+            console.log("Processing cloned document for PDF export");
             // Special handling for this clone to make sure all elements render correctly
             const clonedCharter = clonedDoc.getElementById('project-charter');
             if (clonedCharter) {
+              // First handle any expanded sections in the cloned document
+              const expandedAccordions = clonedCharter.querySelectorAll('[data-pdf-expanded="true"]');
+              console.log(`Found ${expandedAccordions.length} expanded sections in cloned document`);
+              
+              expandedAccordions.forEach(accordion => {
+                // Make sure expanded sections stay expanded in the cloned document
+                accordion.setAttribute('data-state', 'open');
+                
+                // Force all contents to be visible with !important flags
+                const content = accordion.querySelector('[data-orientation="vertical"]');
+                if (content) {
+                  (content as HTMLElement).style.cssText = `
+                    height: auto !important;
+                    overflow: visible !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                    pointer-events: auto !important;
+                    position: static !important;
+                    transform: none !important;
+                    display: block !important;
+                  `;
+                  
+                  // Make sure all children are visible too
+                  const children = content.querySelectorAll('*');
+                  children.forEach(child => {
+                    (child as HTMLElement).style.cssText += `
+                      opacity: 1 !important; 
+                      visibility: visible !important;
+                      display: block !important;
+                    `;
+                  });
+                }
+              });
+              
               // Make sure all hidden elements that should be visible in PDF are shown
               const hiddenElements = clonedCharter.querySelectorAll('.html2canvas-show');
-              hiddenElements.forEach(el => el.classList.add('active'));
+              hiddenElements.forEach(el => {
+                el.classList.add('active');
+                (el as HTMLElement).style.display = 'block';
+              });
+              
+              // Hide elements that should be hidden in PDF
+              const pdfHiddenElements = clonedCharter.querySelectorAll('.html2canvas-hide');
+              pdfHiddenElements.forEach(el => {
+                (el as HTMLElement).style.display = 'none';
+              });
               
               // Get current form values to display correctly in PDF
               const formValues = {
