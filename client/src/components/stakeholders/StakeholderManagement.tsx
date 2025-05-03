@@ -236,18 +236,18 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
         <h4 className="font-semibold text-sm mb-3">Stakeholders</h4>
         
         {stakeholders.length > 0 ? (
-          <table className="two-column-pdf-table" style={{width: '100%'}}>
+          <table className="two-column-pdf-table">
             <thead>
               <tr>
-                <th style={{width: '50%', textAlign: 'left'}}>Name</th>
-                <th style={{width: '50%', textAlign: 'left'}}>Function</th>
+                <th>Name</th>
+                <th>Function</th>
               </tr>
             </thead>
             <tbody>
               {stakeholders.map((stakeholder, index) => (
                 <tr key={index}>
-                  <td style={{width: '50%', textAlign: 'left'}}>{stakeholder.name || 'N/A'}</td>
-                  <td style={{width: '50%', textAlign: 'left'}}>{stakeholder.function || 'N/A'}</td>
+                  <td>{stakeholder.name || 'N/A'}</td>
+                  <td>{stakeholder.function || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
