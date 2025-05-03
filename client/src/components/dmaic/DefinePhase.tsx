@@ -1457,16 +1457,36 @@ export default function DefinePhase() {
             const pageHeight = Math.min(pdfHeight - (2 * margin), remainingHeight);
             const yPos = position;
             
-            // Add image with proper position and dimensions
-            pdf.addImage(
-              canvas.toDataURL('image/jpeg', 0.95),
-              'JPEG',
-              margin, margin,
-              imgWidth, imgHeight,
-              undefined,
-              'SLOW',
-              -position * (canvas.width / imgWidth) // Adjust clipY to show proper portion
-            );
+            // For multipage PDFs, we'll use a different approach
+            // Instead of using the clipY parameter which can cause angled display issues,
+            // we'll create a new canvas with just the portion we need for this page
+            
+            const pageCanvasHeight = Math.min(pageHeight * (canvas.width / imgWidth), canvas.height - position * (canvas.width / imgWidth));
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = pageCanvasHeight;
+            
+            const ctx = tempCanvas.getContext('2d');
+            if (ctx) {
+              // Draw only the portion of the original canvas needed for this page
+              ctx.drawImage(
+                canvas, 
+                0, position * (canvas.width / imgWidth), // Source x, y
+                canvas.width, pageCanvasHeight, // Source width, height
+                0, 0, // Destination x, y
+                canvas.width, pageCanvasHeight // Destination width, height
+              );
+              
+              // Now add this specific portion as a new image
+              pdf.addImage(
+                tempCanvas.toDataURL('image/jpeg', 0.95),
+                'JPEG',
+                margin, margin,
+                imgWidth, pageHeight,
+                undefined,
+                'SLOW'
+              );
+            }
             
             // Add page number
             pdf.setFontSize(10);
