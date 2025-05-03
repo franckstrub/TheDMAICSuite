@@ -1325,7 +1325,66 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide');
       removeElements.forEach(el => el.remove());
       
-      // Make printable elements visible and set the project type/category
+      // DIRECT APPROACH: Find the project type and category fields
+      // First, find all the labels in the document
+      const allLabels = clone.querySelectorAll('label');
+      let projectTypeContainer = null;
+      let projectCategoryContainer = null;
+      
+      // Look for the labels with text "Project Type" and "Project Category"
+      allLabels.forEach(label => {
+        if (label.textContent === 'Project Type') {
+          projectTypeContainer = label.parentElement;
+        } else if (label.textContent === 'Project Category') {
+          projectCategoryContainer = label.parentElement;
+        }
+      });
+      
+      console.log("Found containers:", { 
+        projectTypeContainer: projectTypeContainer ? true : false, 
+        projectCategoryContainer: projectCategoryContainer ? true : false 
+      });
+      
+      // Now create and insert values for these fields
+      if (projectTypeContainer) {
+        // Remove any existing html2canvas-show elements that might be hiding
+        const existingShowElements = projectTypeContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Create a new visible value element
+        const valueDiv = document.createElement('div');
+        valueDiv.style.border = '1px solid #e2e8f0';
+        valueDiv.style.padding = '8px 12px';
+        valueDiv.style.marginTop = '5px';
+        valueDiv.style.borderRadius = '4px';
+        valueDiv.style.backgroundColor = '#f8fafc';
+        valueDiv.textContent = projectTypeValue;
+        valueDiv.className = 'inserted-value'; // Mark as our special insert
+        
+        // Add it to the container
+        projectTypeContainer.appendChild(valueDiv);
+      }
+      
+      if (projectCategoryContainer) {
+        // Remove any existing html2canvas-show elements that might be hiding
+        const existingShowElements = projectCategoryContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Create a new visible value element
+        const valueDiv = document.createElement('div');
+        valueDiv.style.border = '1px solid #e2e8f0';
+        valueDiv.style.padding = '8px 12px';
+        valueDiv.style.marginTop = '5px';
+        valueDiv.style.borderRadius = '4px';
+        valueDiv.style.backgroundColor = '#f8fafc';
+        valueDiv.textContent = projectCategoryValue;
+        valueDiv.className = 'inserted-value'; // Mark as our special insert
+        
+        // Add it to the container
+        projectCategoryContainer.appendChild(valueDiv);
+      }
+      
+      // Still need to handle any other html2canvas-show elements
       const showElements = clone.querySelectorAll('.html2canvas-show');
       showElements.forEach(el => {
         if (el instanceof HTMLElement) {
