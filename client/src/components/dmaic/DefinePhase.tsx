@@ -2137,11 +2137,6 @@ export default function DefinePhase() {
                       className="hidden"
                       {...charterForm.register("fteBenefits")}
                     />
-                    
-                    {/* This is the standalone FTE Benefits summary element that needs to be hidden in PDF exports */}
-                    <div className="mt-2 p-3 border border-gray-200 rounded-md html2canvas-hide">
-                      {charterForm.watch("fteBenefits")}
-                    </div>
                   </div>
                 </div>
               </div>
