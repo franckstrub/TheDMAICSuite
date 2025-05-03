@@ -1981,6 +1981,42 @@ export default function DefinePhase() {
                       <div className="pt-2 border-t border-gray-200 mb-3">
                         <Label className="text-xs font-medium">FTE Benefits</Label>
                         
+                        {/* FTE Assumptions for PDF export only */}
+                        <div className="html2canvas-show p-3 mt-2 border border-gray-200 rounded-md mb-3">
+                          <h4 className="font-medium mb-2">FTE Assumptions</h4>
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <p className="text-sm font-medium mb-1">Working Days/Week</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.workingDaysPerWeek}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-1">Working Hours/Day</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.workingHoursPerDay}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <h4 className="font-medium mb-2">Saved Working Time</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm font-medium mb-1">Time Period</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.timeUnit === 'day' ? 'Per Day' : 
+                                 fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-1">Hours Saved</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.savedHours}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
                         {/* Summary section for PDF export */}
                         <div className="p-3 mt-2 bg-blue-50 border border-blue-200 rounded-md mb-3">
                           <div className="flex justify-between items-center">
