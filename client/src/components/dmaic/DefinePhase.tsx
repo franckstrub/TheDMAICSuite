@@ -1214,7 +1214,6 @@ export default function DefinePhase() {
   // Function to handle PDF export - simpler approach to avoid PNG corruption errors
   const handleExportPdf = async () => {
     try {
-      
       toast({
         title: "Generating PDF Report",
         description: "Please wait while we capture the project charter...",
@@ -1285,16 +1284,16 @@ export default function DefinePhase() {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Using a different approach to avoid PNG corruption
-      // Use html2canvas with bare minimum settings and a much smaller scale
+      // Use html2canvas with different settings
       const canvas = await html2canvas(charterElement, {
-        scale: 0.6, // Use a much lower scale to avoid jsPDF.scale errors
+        scale: 2.5, // Higher scale for better clarity
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff", 
-        imageTimeout: 60000, // Extended timeout for complex pages with expanded financial section
-        logging: false, // Disable logging to reduce console clutter
+        imageTimeout: 30000, // Longer timeout for complex pages
+        logging: true,
         removeContainer: false, // Don't remove container to avoid flickering
-        foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues,
+        foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
         onclone: (clonedDoc) => {
           // Make sure all inputs and form elements render correctly
           const clonedCharter = clonedDoc.getElementById('project-charter');
@@ -1341,51 +1340,53 @@ export default function DefinePhase() {
       const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
       const totalPages = Math.ceil(imgHeight / pageHeight);
       
-      try {
-        // Switch to a completely different approach
-        // Convert to JPEG at the start for better compatibility
-        const fullImageData = canvas.toDataURL('image/jpeg', 0.75);
-        
-        // Calculate dimensions for PDF handling - use minimal scaling
-        let position = 0;  // Initial position for crop
-        let heightLeft = imgHeight;
-        
-        // Add the first page image (starts at y=40)
-        const firstPageHeight = Math.min(heightLeft, pageHeight);
-        pdf.addImage(fullImageData, 'JPEG', 10, 40, imgWidth, imgHeight);
-        
-        // If content extends beyond the first page
-        heightLeft -= firstPageHeight;
-        position += firstPageHeight * canvasHeight / imgHeight;
-        
-        // Add additional pages if needed
-        while (heightLeft > 0) {
-          // Add a new page
+      // Add image data to PDF, splitting across pages if needed
+      let remainingHeight = imgHeight;
+      let sourceY = 0;
+      
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) {
           pdf.addPage();
-          
-          // Use crop to only show the relevant part on new pages (with 10mm top margin)
-          const nextPageHeight = Math.min(heightLeft, pdfHeight - 20 - footerHeight);
-          // Use an alias with a clip option
-          const alias = `page${pdf.getNumberOfPages()}`;
-          pdf.addImage(fullImageData, 'JPEG', 10, 10, imgWidth, imgHeight, alias);
-          
-          // Update tracking variables
-          heightLeft -= nextPageHeight;
-          position += nextPageHeight * canvasHeight / imgHeight;
-          
-          // Add page number in footer area
-          const currentPage = pdf.getNumberOfPages();
-          pdf.setFontSize(10);
-          pdf.setTextColor(150, 150, 150);
-          pdf.text(`Page ${currentPage} of ${Math.ceil(imgHeight / pageHeight)}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
-          
-          // Add a separator line above footer
-          pdf.setDrawColor(200, 200, 200);
-          pdf.line(10, pdfHeight - footerHeight, pdfWidth - 10, pdfHeight - footerHeight);
         }
-      } catch (sectionError) {
-        console.error("Error processing PDF sections:", sectionError);
-        throw sectionError;
+        
+        // Calculate current page dimensions - ensuring space for footer on all pages
+        const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20 - footerHeight);
+        const printHeight = Math.min(remainingHeight, currentPageHeight);
+        const sourceHeight = (printHeight / imgHeight) * canvasHeight;
+        
+        // Create a temporary canvas for this page section
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvasWidth;
+        tempCanvas.height = sourceHeight;
+        
+        // Draw the portion of the original canvas
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(
+            canvas, 
+            0, sourceY, canvasWidth, sourceHeight,
+            0, 0, tempCanvas.width, tempCanvas.height
+          );
+          
+          // Add to PDF with JPEG format instead of PNG to avoid corruption
+          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+          
+          const yPosition = page === 0 ? 40 : 10;
+          pdf.addImage(pageImgData, 'JPEG', 10, yPosition, imgWidth, printHeight);
+          
+          // Update for next page
+          remainingHeight -= printHeight;
+          sourceY += sourceHeight;
+        }
+        
+        // Add page number in footer area
+        pdf.setFontSize(10);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+        
+        // Optional: Add a separator line above footer
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(10, pdfHeight - footerHeight, pdfWidth - 10, pdfHeight - footerHeight);
       }
       
       // Add footer to all pages
@@ -2266,14 +2267,12 @@ export default function DefinePhase() {
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsFinancialSectionExpanded(!isFinancialSectionExpanded)}
-                  className="html2canvas-hide"
                 >
                   {isFinancialSectionExpanded ? "Hide Section" : "Show Section"}
                 </Button>
               </div>
               
-              
-              {/* Collapsible content - visible in UI */}
+              {/* Collapsible content */}
               <AnimatePresence>
                 {isFinancialSectionExpanded && (
                   <motion.div
