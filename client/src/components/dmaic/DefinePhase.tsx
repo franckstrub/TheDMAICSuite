@@ -1550,21 +1550,34 @@ export default function DefinePhase() {
                   <div className="mt-2">
                     {projectImage ? (
                       <div className="relative w-full max-w-md mb-2">
-                        <img
-                          src={projectImage}
-                          alt="Project"
-                          className="w-full h-auto object-contain rounded-md border border-gray-200"
-                          style={{ maxHeight: '200px' }}
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 h-8 w-8"
-                          onClick={handleRemoveImage}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Regular display for screen */}
+                        <div className="html2canvas-hide">
+                          <img
+                            src={projectImage}
+                            alt="Project"
+                            className="w-full h-auto object-contain rounded-md border border-gray-200"
+                            style={{ maxHeight: '200px' }}
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-8 w-8"
+                            onClick={handleRemoveImage}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Special display for PDF export with original size */}
+                        <div className="html2canvas-show">
+                          <img
+                            src={projectImage}
+                            alt="Project"
+                            className="object-contain rounded-md border border-gray-200"
+                            style={{ width: 'auto', maxHeight: '300px', maxWidth: '100%' }}
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div 
