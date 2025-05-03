@@ -239,7 +239,7 @@ export default function Dashboard() {
       // Define margins and spacing
       const margin = 14; // mm
       const footerHeight = 15; // mm
-      const headerHeight = 35; // mm for first page header (title & filter info)
+      const headerHeight = 45; // mm for first page header (title & filter info) - increased to ensure filters are fully printed
       
       // Get canvas dimensions
       const canvasWidth = canvas.width;
@@ -255,14 +255,14 @@ export default function Dashboard() {
       pdf.setTextColor(85, 85, 85);
       pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 22);
       
-      // Add filter information
+      // Add filter information with more spacing
       let filterText = `Timeframe: ${timeframe}`;
       if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
         filterText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
       }
       pdf.text(filterText, margin, 26);
       
-      // Add status filter info
+      // Add status filter info with more spacing 
       let statusFilterText = "Status Filter: ";
       switch(implementationStatus) {
         case "all": statusFilterText += "All Projects"; break;
@@ -275,11 +275,11 @@ export default function Dashboard() {
         case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
         default: statusFilterText += "All Projects";
       }
-      pdf.text(statusFilterText, margin, 30);
+      pdf.text(statusFilterText, margin, 34);
       
       // Add horizontal line below header
       pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, 32, pdfWidth - margin, 32);
+      pdf.line(margin, 38, pdfWidth - margin, 38);
       
       // Calculate how many pages we need - with space for footer and header
       const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
