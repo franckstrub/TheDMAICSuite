@@ -1302,22 +1302,21 @@ export default function DefinePhase() {
             const hiddenElements = clonedCharter.querySelectorAll('.html2canvas-show');
             hiddenElements.forEach(el => el.classList.add('active'));
             
-            // Fix for belt level representation - ensure they display the correct values
-            // Get current form values
-            const beltLevel = charterForm.watch("beltLevel");
-            const coachBeltLevel = charterForm.watch("coachBeltLevel");
+            // Get form values for all select fields to ensure they display correctly
+            const formValues = {
+              projectType: charterForm.watch("projectType") || "Green Belt",
+              projectCategory: charterForm.watch("projectCategory") || "Process Improvement",
+              beltLevel: charterForm.watch("beltLevel") || "",
+              coachBeltLevel: charterForm.watch("coachBeltLevel") || "None"
+            };
             
-            // Use data-field attributes to find and update the specific belt level elements
-            const projectLeaderBeltElement = clonedCharter.querySelector('[data-field="beltLevel"]');
-            if (projectLeaderBeltElement) {
-              console.log('Fixing project leader belt level in PDF:', beltLevel);
-              (projectLeaderBeltElement as HTMLElement).textContent = beltLevel || "";
-            }
-            
-            const coachBeltElement = clonedCharter.querySelector('[data-field="coachBeltLevel"]');
-            if (coachBeltElement) {
-              console.log('Fixing coach belt level in PDF:', coachBeltLevel);
-              (coachBeltElement as HTMLElement).textContent = coachBeltLevel || "None";
+            // Update all select field elements using data-field attributes
+            for (const [field, value] of Object.entries(formValues)) {
+              const element = clonedCharter.querySelector(`[data-field="${field}"]`);
+              if (element) {
+                console.log(`Fixing ${field} in PDF:`, value);
+                (element as HTMLElement).textContent = value;
+              }
             }
           }
         }
@@ -1518,7 +1517,7 @@ export default function DefinePhase() {
                       </div>
                       
                       {/* Plain text representation for PDF export */}
-                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="projectType">
                         {charterForm.watch("projectType") || "Green Belt"}
                       </div>
                     </div>
@@ -1545,7 +1544,7 @@ export default function DefinePhase() {
                       </div>
                       
                       {/* Plain text representation for PDF export */}
-                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="projectCategory">
                         {charterForm.watch("projectCategory") || "Process Improvement"}
                       </div>
                     </div>
