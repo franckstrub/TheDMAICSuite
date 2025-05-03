@@ -1313,11 +1313,20 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide');
       removeElements.forEach(el => el.remove());
       
-      // Make printable elements visible
+      // Make printable elements visible and ensure data shows properly
       const showElements = clone.querySelectorAll('.html2canvas-show');
       showElements.forEach(el => {
         if (el instanceof HTMLElement) {
           el.style.display = 'block';
+          
+          // Special handling for select fields that show project type and category
+          const dataField = el.getAttribute('data-field');
+          if (dataField && (dataField === 'projectType' || dataField === 'projectCategory' || 
+                           dataField === 'beltLevel' || dataField === 'coachBeltLevel')) {
+            // Make sure the text content from the form data is visible
+            const formValue = charterForm.watch(dataField) || '';
+            el.textContent = formValue;
+          }
         }
       });
       
