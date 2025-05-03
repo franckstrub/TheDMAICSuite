@@ -1325,16 +1325,49 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide:not(.stakeholder-table-container .html2canvas-hide)');
       removeElements.forEach(el => el.remove());
       
+      // Helper function to apply table styling to a table element
+      const applyCompactTableStyle = (table: HTMLElement) => {
+        table.style.display = 'block';
+        table.style.visibility = 'visible';
+        table.style.opacity = '1';
+        table.style.position = 'static';
+        table.style.height = 'auto';
+        table.style.marginBottom = '5px';
+        
+        // Ensure the table rows have compact styling
+        const tableRows = table.querySelectorAll('tr');
+        tableRows.forEach(row => {
+          if (row instanceof HTMLElement) {
+            row.classList.add('compact-row');
+            
+            // Ensure each cell is also compact
+            const cells = row.querySelectorAll('td, th');
+            cells.forEach(cell => {
+              if (cell instanceof HTMLElement) {
+                cell.style.padding = '3px 8px';
+                cell.style.lineHeight = '1.2';
+              }
+            });
+          }
+        });
+      };
+      
       // Special handling for stakeholder table - make sure the PDF table is visible
       const stakeholderPdfTable = clone.querySelector('#stakeholders-pdf-table');
       if (stakeholderPdfTable && stakeholderPdfTable instanceof HTMLElement) {
-        stakeholderPdfTable.style.display = 'block';
-        stakeholderPdfTable.style.visibility = 'visible';
-        stakeholderPdfTable.style.opacity = '1';
-        stakeholderPdfTable.style.position = 'static';
-        console.log("Found stakeholder table for PDF export");
+        applyCompactTableStyle(stakeholderPdfTable);
+        console.log("Found stakeholder table for PDF export and applied compact styling");
       } else {
         console.log("Stakeholder PDF table not found in clone");
+      }
+      
+      // Special handling for team members table - make sure the PDF table is visible
+      const teamMembersPdfTable = clone.querySelector('#team-members-pdf-table');
+      if (teamMembersPdfTable && teamMembersPdfTable instanceof HTMLElement) {
+        applyCompactTableStyle(teamMembersPdfTable);
+        console.log("Found team members table for PDF export and applied compact styling");
+      } else {
+        console.log("Team members PDF table not found in clone");
       }
       
       // DIRECT APPROACH: Find the project type, category, and belt level fields
@@ -1869,7 +1902,7 @@ export default function DefinePhase() {
                       </div>
                     </div>
                   </div>
-                  <div>
+                  <div className="team-member-table-container">
                     {/* Team Members Management Component */}
                     <TeamMemberManagement 
                       teamMembers={teamMembers}

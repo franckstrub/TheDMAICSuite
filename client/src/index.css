@@ -287,12 +287,14 @@
   display: block;
 }
 
-/* Make sure our container for stakeholders has correct display */
-.stakeholder-table-container .html2canvas-show {
+/* Make sure our containers for stakeholders and team members have correct display */
+.stakeholder-table-container .html2canvas-show,
+.team-member-table-container .html2canvas-show {
   display: none !important; /* Initially hidden but will be shown in PDF */
 }
 
-.html2canvas-container .stakeholder-table-container .html2canvas-show {
+.html2canvas-container .stakeholder-table-container .html2canvas-show,
+.html2canvas-container .team-member-table-container .html2canvas-show {
   display: block !important; /* Force display during PDF export */
 }
 
@@ -312,6 +314,17 @@
   text-align: left;
   vertical-align: middle;
   position: relative;
+}
+
+/* More compact styling for PDF tables */
+.pdf-friendly-table .compact-row td {
+  padding: 3px 8px;
+  line-height: 1.2;
+}
+
+#stakeholders-pdf-table,
+#team-members-pdf-table {
+  margin-bottom: 5px;
 }
 
 /* Special CSS for expanded sections in PDF exports */
