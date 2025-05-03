@@ -1247,8 +1247,26 @@ export default function DefinePhase() {
       const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
       const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 30);
       
-      // Store elements that need to be restored after PDF generation
-      const elementsToRestore = [];
+      // Create a new jsPDF instance
+      const pdf = new jsPDF({
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait",
+      });
+      
+      // Add title and header
+      pdf.setFontSize(16);
+      pdf.setTextColor(33, 37, 41);
+      pdf.text("Six Sigma Project Charter", 105, 20, { align: 'center' });
+      
+      pdf.setFontSize(10);
+      pdf.setTextColor(85, 85, 85);
+      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 30);
+      pdf.text(`Project: ${projectTitle}`, 14, 35);
+      
+      // Add separator line
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(14, 38, 196, 38);
 
       // First make sure all collapsible sections are expanded for PDF export
       // Find all collapsible sections and expand them temporarily
