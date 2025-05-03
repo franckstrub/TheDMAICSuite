@@ -231,30 +231,18 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
         </table>
       </div>
       
-      {/* Special table just for PDF export - with compact styling */}
-      <div className="border rounded-md html2canvas-show" id="stakeholders-pdf-table">
-        <table className="w-full pdf-friendly-table">
-          <thead className="bg-muted border-b">
-            <tr>
-              <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-              <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider">Function</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {stakeholders.length > 0 ? stakeholders.map((stakeholder, index) => (
-              <tr key={index} className="compact-row">
-                <td className="px-4 py-1 text-sm">{stakeholder.name}</td>
-                <td className="px-4 py-1 text-sm">{stakeholder.function || "-"}</td>
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan={2} className="px-4 py-2 text-center text-sm">
-                  No stakeholders added.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Super simplified table just for PDF export */}
+      <div className="html2canvas-show pdf-text-only-table" id="stakeholders-pdf-table">
+        <p className="font-semibold text-sm mb-1">Stakeholders:</p>
+        <div className="text-sm space-y-0.5">
+          {stakeholders.length > 0 ? stakeholders.map((stakeholder, index) => (
+            <div key={index} className="stakeholder-list-item">
+              {stakeholder.name}{stakeholder.function ? ` (${stakeholder.function})` : ''}
+            </div>
+          )) : (
+            <div className="text-muted-foreground">No stakeholders added.</div>
+          )}
+        </div>
       </div>
       
       <p className="text-xs text-muted-foreground italic">

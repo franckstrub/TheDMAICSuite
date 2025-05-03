@@ -1325,47 +1325,44 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide:not(.stakeholder-table-container .html2canvas-hide)');
       removeElements.forEach(el => el.remove());
       
-      // Helper function to apply table styling to a table element
-      const applyCompactTableStyle = (table: HTMLElement) => {
-        table.style.display = 'block';
-        table.style.visibility = 'visible';
-        table.style.opacity = '1';
-        table.style.position = 'static';
-        table.style.height = 'auto';
-        table.style.marginBottom = '5px';
-        
-        // Ensure the table rows have compact styling
-        const tableRows = table.querySelectorAll('tr');
-        tableRows.forEach(row => {
-          if (row instanceof HTMLElement) {
-            row.classList.add('compact-row');
-            
-            // Ensure each cell is also compact
-            const cells = row.querySelectorAll('td, th');
-            cells.forEach(cell => {
-              if (cell instanceof HTMLElement) {
-                cell.style.padding = '3px 8px';
-                cell.style.lineHeight = '1.2';
-              }
-            });
-          }
-        });
-      };
-      
-      // Special handling for stakeholder table - make sure the PDF table is visible
+      // Special handling for simplified stakeholder and team member lists
       const stakeholderPdfTable = clone.querySelector('#stakeholders-pdf-table');
       if (stakeholderPdfTable && stakeholderPdfTable instanceof HTMLElement) {
-        applyCompactTableStyle(stakeholderPdfTable);
-        console.log("Found stakeholder table for PDF export and applied compact styling");
+        stakeholderPdfTable.style.display = 'block';
+        stakeholderPdfTable.style.visibility = 'visible';
+        stakeholderPdfTable.style.opacity = '1';
+        stakeholderPdfTable.style.position = 'static';
+        console.log("Found stakeholder list for PDF export");
+        
+        // Ensure the list items have compact styling
+        const listItems = stakeholderPdfTable.querySelectorAll('.stakeholder-list-item');
+        listItems.forEach(item => {
+          if (item instanceof HTMLElement) {
+            item.style.padding = '2px 0';
+            item.style.lineHeight = '1.2';
+          }
+        });
       } else {
         console.log("Stakeholder PDF table not found in clone");
       }
       
-      // Special handling for team members table - make sure the PDF table is visible
+      // Special handling for team members list
       const teamMembersPdfTable = clone.querySelector('#team-members-pdf-table');
       if (teamMembersPdfTable && teamMembersPdfTable instanceof HTMLElement) {
-        applyCompactTableStyle(teamMembersPdfTable);
-        console.log("Found team members table for PDF export and applied compact styling");
+        teamMembersPdfTable.style.display = 'block';
+        teamMembersPdfTable.style.visibility = 'visible';
+        teamMembersPdfTable.style.opacity = '1';
+        teamMembersPdfTable.style.position = 'static';
+        console.log("Found team members list for PDF export");
+        
+        // Ensure the list items have compact styling
+        const listItems = teamMembersPdfTable.querySelectorAll('.team-member-list-item');
+        listItems.forEach(item => {
+          if (item instanceof HTMLElement) {
+            item.style.padding = '2px 0';
+            item.style.lineHeight = '1.2';
+          }
+        });
       } else {
         console.log("Team members PDF table not found in clone");
       }
