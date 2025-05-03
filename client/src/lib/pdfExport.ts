@@ -184,6 +184,33 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
         width: auto !important;
         object-fit: contain !important;
       }
+      
+      /* Specific styling for FTE section in PDF export */
+      .html2canvas-show {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      
+      .html2canvas-hide {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
+      
+      /* Enhanced styling for FTE block in PDF */
+      [id^="project-charter"] .html2canvas-show p {
+        margin-bottom: 4px !important;
+      }
+      
+      [id^="project-charter"] .html2canvas-show .rounded-md {
+        border-radius: 6px !important;
+      }
+      
+      [id^="project-charter"] .html2canvas-show .border {
+        border-width: 1px !important;
+        border-style: solid !important;
+      }
     `;
     container.appendChild(styleRules);
     container.appendChild(clonedElement);
