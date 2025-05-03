@@ -739,6 +739,9 @@ export default function DefinePhase() {
   const saveCharterMutation = useMutation({
     mutationFn: async (data: any) => {
       // Make sure all data is properly formatted - all numeric values should be converted to strings for storage
+      // Add debugging for projectTitle
+      console.log("Charter form - Project Title value:", data.projectTitle);
+      
       const payload = {
         projectId,
         projectTitle: data.projectTitle || "", // Add projectTitle to the payload

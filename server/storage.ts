@@ -526,6 +526,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProject(id: number, projectUpdate: Partial<Project>): Promise<Project | undefined> {
+    // Add detailed logging for project title updates
+    if (projectUpdate.title) {
+      console.log(`DatabaseStorage: Updating project ${id} title to "${projectUpdate.title}"`);
+    }
+    
     const [project] = await db
       .update(projects)
       .set({
@@ -534,6 +539,13 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(projects.id, id))
       .returning();
+      
+    if (project) {
+      console.log(`DatabaseStorage: Project ${id} updated successfully. New title: "${project.title}"`);
+    } else {
+      console.log(`DatabaseStorage: Failed to update project ${id}`);
+    }
+    
     return project || undefined;
   }
 
@@ -563,6 +575,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCharter(id: number, charterUpdate: Partial<ProjectCharter>): Promise<ProjectCharter | undefined> {
+    // Add detailed logging for charter updates, especially projectTitle
+    if (charterUpdate.projectTitle) {
+      console.log(`DatabaseStorage: Updating charter ${id} with projectTitle "${charterUpdate.projectTitle}"`);
+    }
+    
     const [charter] = await db
       .update(projectCharters)
       .set({
@@ -571,6 +588,13 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(projectCharters.id, id))
       .returning();
+      
+    if (charter) {
+      console.log(`DatabaseStorage: Charter ${id} updated successfully. ProjectTitle: "${charter.projectTitle}"`);
+    } else {
+      console.log(`DatabaseStorage: Failed to update charter ${id}`);
+    }
+    
     return charter || undefined;
   }
 
