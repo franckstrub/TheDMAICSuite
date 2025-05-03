@@ -1258,14 +1258,10 @@ export default function DefinePhase() {
       subtitle.style.fontSize = '14px';
       subtitle.style.color = '#666';
       
-      const projectTitleText = document.createElement('div');
-      projectTitleText.textContent = `Project: ${projectTitle}`;
-      projectTitleText.style.fontSize = '14px';
-      projectTitleText.style.marginTop = '8px';
+      // Project title removed from header as requested
       
       header.appendChild(title);
       header.appendChild(subtitle);
-      header.appendChild(projectTitleText);
       
       // Add a separator line
       const separator = document.createElement('hr');
