@@ -76,7 +76,28 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         if (clonedBody) {
           clonedBody.style.overflow = 'visible';
         }
-        console.log("Document cloned for canvas rendering");
+        
+        // Fix for title overlapping with input fields in PDF
+        const labels = clonedDoc.querySelectorAll('label');
+        labels.forEach(label => {
+          label.style.display = 'block';
+          label.style.marginBottom = '8px';
+          label.style.fontWeight = '500';
+          label.style.clear = 'both';
+        });
+        
+        // Add spacing between input fields and their labels
+        const inputs = clonedDoc.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+          input.style.marginTop = '4px';
+          input.style.display = 'block';
+          input.style.width = '100%';
+        });
+        
+        // Mark the container for special CSS styling
+        clonedDoc.querySelector('#' + elementId)?.classList.add('html2canvas-container');
+        
+        console.log("Document cloned and styled for canvas rendering with fixed label spacing");
       }
     });
     
