@@ -1283,37 +1283,23 @@ export default function DefinePhase() {
         // collapsible.setAttribute('data-state', 'open');
       });
       
-      // CRITICAL FIX: Check for expanded financial metrics section that causes PDF errors
+      // Check expanded financial metrics section but DO NOT collapse it
       const financialAccordionItem = charterElement.querySelector('#project-costs-accordion');
       if (financialAccordionItem) {
         const isExpanded = financialAccordionItem.getAttribute('data-state') === 'open';
         
         if (isExpanded) {
-          console.log("Project costs and financial metrics are expanded - applying special handling for PDF export");
+          console.log("Project costs and financial metrics are expanded - leaving as-is for PDF export");
           
-          // IMPORTANT: We need to collapse this section to avoid duplicate PDFs
-          // Temporarily collapse the section to avoid errors
-          financialAccordionItem.setAttribute('data-pdf-was-expanded', 'true');
-          financialAccordionItem.setAttribute('data-state', 'closed');
+          // Mark this for special handling but DO NOT change the state
+          financialAccordionItem.setAttribute('data-pdf-keep-expanded', 'true');
           
-          // Add a note about financial details
-          const financialNote = document.createElement('div');
-          financialNote.className = 'pdf-only-note my-2 p-3 bg-gray-50 border rounded text-sm';
-          financialNote.innerHTML = `
-            <p><strong>Note:</strong> Detailed financial metrics and project costs are available in the application.</p>
-            <p class="text-xs text-gray-500 mt-1">Financial summary: Total Benefits: ${charterForm.watch("totalFinancialSavings") || 0} | 
-            Total Costs: ${charterForm.watch("totalProjectCosts") || 0} | 
-            ROI: ${charterForm.watch("roi") || 0}%</p>
-          `;
-          
-          // Insert the note before the accordion
-          const parentNode = financialAccordionItem.parentNode;
-          if (parentNode) {
-            parentNode.insertBefore(financialNote, financialAccordionItem);
+          // Force any nested content to remain visible in PDF
+          const content = financialAccordionItem.querySelector('[data-orientation="vertical"]');
+          if (content) {
+            content.style.height = 'auto';
+            content.style.overflow = 'visible';
           }
-          
-          // Allow the DOM to update before continuing
-          await new Promise(resolve => setTimeout(resolve, 300));
         }
       }
       
@@ -1344,18 +1330,12 @@ export default function DefinePhase() {
       // Only generate one PDF output
       let pdfOutput = '';
       
-      // Check and report on expanded sections, but continue with the export
+      // Check for expanded sections but don't notify the user
       console.log("Checking for expanded sections");
       const expandedSections = charterElement.querySelectorAll('[data-state="open"]');
       
       if (expandedSections.length > 0) {
         console.log(`Found ${expandedSections.length} expanded sections, will capture them as-is`);
-        
-        // Just inform the user that expanded sections might affect layout
-        toast({
-          title: "Capturing Expanded Sections",
-          description: "Expanded sections will be included in the PDF as they appear on screen.",
-        });
       }
       
       try {
@@ -1367,17 +1347,33 @@ export default function DefinePhase() {
           return;
         }
         
-        // Using settings optimized for capturing expanded accordion sections
-        console.log("Generating canvas with optimized settings for expanded sections");
+        // First, manually ensure all expanded accordion contents are visible for PDF
+        console.log("Preparing accordion sections for PDF capture");
+        // Find any open accordions and mark them for special treatment
+        const allAccordions = charterElement.querySelectorAll('[data-state]');
+        allAccordions.forEach(accordion => {
+          if (accordion.getAttribute('data-state') === 'open') {
+            accordion.setAttribute('data-pdf-expanded', 'true');
+            // Force the accordion content to be visible for PDF capture
+            const content = accordion.querySelector('[data-orientation="vertical"]');
+            if (content) {
+              content.style.height = 'auto';
+              content.style.overflow = 'visible';
+            }
+          }
+        });
+        
+        // Give the DOM a moment to update with our changes
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Using simpler settings that are more reliable
+        console.log("Generating canvas with reliable settings");
         const pdfCanvas = await html2canvas(charterElement, {
-          scale: 1.5, // Higher scale factor for better quality and expanded section rendering
+          scale: 1, // Lower scale factor for reliability
           useCORS: true,
           allowTaint: true,
           backgroundColor: "#ffffff",
-          imageTimeout: 30000,
-          scrollY: -window.scrollY, // Compensate for page scroll to avoid cutoffs
-          windowWidth: document.documentElement.offsetWidth,
-          windowHeight: document.documentElement.offsetHeight,
+          imageTimeout: 10000,
           logging: false,
           onclone: (clonedDoc) => {
             // Special handling for this clone to make sure all elements render correctly
