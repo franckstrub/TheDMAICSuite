@@ -1245,11 +1245,43 @@ export default function DefinePhase() {
       // Add project title information
       pdf.text(`Project: ${projectTitle}`, 14, 26);
       
-      // Add an extra class to the element during PDF generation
+      // Create a clone of the element to preserve original DOM state
       const charterElement = document.getElementById('project-charter');
-      if (charterElement) {
-        charterElement.classList.add('html2canvas-container');
+      if (!charterElement) {
+        throw new Error('Project charter element not found for PDF export');
       }
+
+      // First make sure all collapsible sections are expanded for PDF export
+      // Find all collapsible sections and expand them temporarily
+      const collapsibles = charterElement.querySelectorAll('[data-state="closed"]');
+      collapsibles.forEach(collapsible => {
+        collapsible.setAttribute('data-pdf-was-closed', 'true');
+        collapsible.setAttribute('data-state', 'open');
+      });
+      
+      // Create special data attributes for form values to ensure they appear in the PDF
+      const formInputs = charterElement.querySelectorAll('input, textarea');
+      formInputs.forEach(input => {
+        const inputElement = input as HTMLInputElement;
+        if (inputElement.value) {
+          inputElement.setAttribute('data-pdf-value', inputElement.value);
+        }
+      });
+      
+      // Handle select elements separately
+      const selectElements = charterElement.querySelectorAll('select');
+      selectElements.forEach(select => {
+        const selectElement = select as HTMLSelectElement;
+        if (selectElement.selectedOptions[0]) {
+          selectElement.setAttribute('data-pdf-value', selectElement.selectedOptions[0].text);
+        }
+      });
+      
+      // Add the container class for special PDF rendering
+      charterElement.classList.add('html2canvas-container');
+      
+      // Wait a brief moment for DOM changes to take effect
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Using a different approach to avoid PNG corruption
       // Use html2canvas with different settings
@@ -1258,10 +1290,19 @@ export default function DefinePhase() {
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff", 
-        imageTimeout: 15000, // Longer timeout for complex pages
+        imageTimeout: 30000, // Longer timeout for complex pages
         logging: true,
         removeContainer: false, // Don't remove container to avoid flickering
-        foreignObjectRendering: false // Disable foreignObject rendering which can cause issues
+        foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
+        onclone: (clonedDoc) => {
+          // Make sure all inputs and form elements render correctly
+          const clonedCharter = clonedDoc.getElementById('project-charter');
+          if (clonedCharter) {
+            // Make sure all hidden elements that should be visible in PDF are shown
+            const hiddenElements = clonedCharter.querySelectorAll('.html2canvas-show');
+            hiddenElements.forEach(el => el.classList.add('active'));
+          }
+        }
       });
       
       // Calculate dimensions
@@ -1343,9 +1384,23 @@ export default function DefinePhase() {
       const filename = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       pdf.save(filename);
       
-      // Remove the html2canvas class to clean up
+      // Restore the DOM to its original state
       if (charterElement) {
+        // Remove special class
         charterElement.classList.remove('html2canvas-container');
+        
+        // Restore collapsible sections to their original state
+        const expandedForPdf = charterElement.querySelectorAll('[data-pdf-was-closed="true"]');
+        expandedForPdf.forEach(section => {
+          section.setAttribute('data-state', 'closed');
+          section.removeAttribute('data-pdf-was-closed');
+        });
+        
+        // Clean up data attributes added for form values
+        const formInputs = charterElement.querySelectorAll('input, textarea, select');
+        formInputs.forEach(input => {
+          input.removeAttribute('data-pdf-value');
+        });
       }
       
       toast({
@@ -1355,10 +1410,24 @@ export default function DefinePhase() {
     } catch (error) {
       console.error("Error exporting to PDF:", error);
       
-      // Ensure we clean up the class even if there's an error
+      // Ensure we restore the DOM to its original state even if there's an error
       const cleanupElement = document.getElementById('project-charter');
       if (cleanupElement) {
+        // Remove special class
         cleanupElement.classList.remove('html2canvas-container');
+        
+        // Restore collapsible sections to their original state
+        const expandedForPdf = cleanupElement.querySelectorAll('[data-pdf-was-closed="true"]');
+        expandedForPdf.forEach(section => {
+          section.setAttribute('data-state', 'closed');
+          section.removeAttribute('data-pdf-was-closed');
+        });
+        
+        // Clean up data attributes added for form values
+        const formInputs = cleanupElement.querySelectorAll('input, textarea, select');
+        formInputs.forEach(input => {
+          input.removeAttribute('data-pdf-value');
+        });
       }
       
       toast({

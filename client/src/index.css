@@ -98,11 +98,63 @@
   object-fit: contain !important;
 }
 
+/* Special styling for form inputs when generating PDF */
 .html2canvas-container input,
-.html2canvas-container button {
+.html2canvas-container select,
+.html2canvas-container textarea {
+  border: 1px solid #e2e8f0 !important;
+  background-color: white !important;
+  color: #1e293b !important;
+  font-family: inherit !important;
+  opacity: 1 !important;
+  
+  /* Capture the value as text for better PDF rendering */
+  position: relative !important;
+}
+
+/* Hide interactive elements in PDF */
+.html2canvas-container button,
+.html2canvas-container [role="button"] {
   opacity: 0 !important;
   position: absolute !important;
   pointer-events: none !important;
+}
+
+/* Special styling for enhanced input display in PDF */
+.html2canvas-container input::before,
+.html2canvas-container textarea::before {
+  content: attr(data-pdf-value);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  color: #1e293b;
+  z-index: 1;
+}
+
+/* Styling for select elements in PDF */
+.html2canvas-container select::before {
+  content: attr(data-pdf-value);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem;
+  background: white;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  color: #1e293b;
+  z-index: 1;
 }
 
 .html2canvas-container .print-hide {
