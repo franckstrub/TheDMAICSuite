@@ -2015,23 +2015,6 @@ export default function DefinePhase() {
                               </div>
                             </div>
                           </div>
-                          
-                          <div className="pt-3 border-t border-gray-200">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-sm font-medium mb-1">FTE Cost per Year ({currency})</p>
-                                <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
-                                  {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
-                                </div>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium mb-1">FTE Benefits ({currency})</p>
-                                <div className="p-2 border border-gray-200 rounded-md bg-white text-sm text-green-600">
-                                  {formatCurrency(fteParams.calculatedValue, currency)}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
                         </div>
                         
                         {/* Summary section for PDF export */}
@@ -2048,6 +2031,24 @@ export default function DefinePhase() {
                               <p className="text-xs text-gray-600 mt-1">
                                 Annual savings
                               </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* FTE Cost and Benefits display for PDF export only */}
+                        <div className="html2canvas-show p-3 mt-2 border border-gray-200 rounded-md mb-3">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm font-medium mb-1">FTE Cost per Year ({currency})</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-1">FTE Benefits ({currency})</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm text-green-600">
+                                {formatCurrency(fteParams.calculatedValue, currency)}
+                              </div>
                             </div>
                           </div>
                         </div>
