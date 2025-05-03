@@ -6,10 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X, ChevronUp, ChevronDown, Download } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import { format } from "date-fns";
+import { Image, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
@@ -1211,175 +1208,12 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // Function to handle PDF export - simpler approach to avoid PNG corruption errors
-  const handleExportPdf = async () => {
-    try {
-      toast({
-        title: "Generating PDF Report",
-        description: "Please wait while we capture the project charter...",
-      });
-      
-      // Get the element to export
-      const element = document.getElementById("project-charter");
-      if (!element) {
-        throw new Error("Project charter element not found");
-      }
-      
-      // Make sure we have a valid project title for the filename
-      const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
-      const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_');
-      
-      // Create a new jsPDF instance
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // Add title
-      pdf.setFontSize(18);
-      pdf.setTextColor(33, 37, 41);
-      pdf.text("Lean Six Sigma DMAIC Suite™ - Project Charter", 14, 15);
-      
-      // Add date information
-      pdf.setFontSize(10);
-      pdf.setTextColor(85, 85, 85);
-      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 22);
-      
-      // Add project title information
-      pdf.text(`Project: ${projectTitle}`, 14, 26);
-      
-      // Add an extra class to the element during PDF generation
-      const charterElement = document.getElementById('project-charter');
-      if (charterElement) {
-        charterElement.classList.add('html2canvas-container');
-      }
-      
-      // Using a different approach to avoid PNG corruption
-      // Use html2canvas with different settings
-      const canvas = await html2canvas(charterElement, {
-        scale: 2.5, // Higher scale for better clarity
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff", 
-        imageTimeout: 15000, // Longer timeout for complex pages
-        logging: true,
-        removeContainer: false, // Don't remove container to avoid flickering
-        foreignObjectRendering: false // Disable foreignObject rendering which can cause issues
-      });
-      
-      // Calculate dimensions
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Get canvas dimensions
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      
-      // Calculate how many pages we need
-      const pageHeight = pdfHeight - 40; // Account for header space on first page
-      const contentWidth = pdfWidth - 20; // 10mm margin on each side
-      const imgWidth = contentWidth;
-      const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
-      const totalPages = Math.ceil(imgHeight / pageHeight);
-      
-      // Add image data to PDF, splitting across pages if needed
-      let remainingHeight = imgHeight;
-      let sourceY = 0;
-      
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) {
-          pdf.addPage();
-        }
-        
-        // Calculate current page dimensions
-        const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20);
-        const printHeight = Math.min(remainingHeight, currentPageHeight);
-        const sourceHeight = (printHeight / imgHeight) * canvasHeight;
-        
-        // Create a temporary canvas for this page section
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvasWidth;
-        tempCanvas.height = sourceHeight;
-        
-        // Draw the portion of the original canvas
-        const tempCtx = tempCanvas.getContext('2d');
-        if (tempCtx) {
-          tempCtx.drawImage(
-            canvas, 
-            0, sourceY, canvasWidth, sourceHeight,
-            0, 0, tempCanvas.width, tempCanvas.height
-          );
-          
-          // Add to PDF with JPEG format instead of PNG to avoid corruption
-          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
-          
-          const yPosition = page === 0 ? 40 : 10;
-          pdf.addImage(pageImgData, 'JPEG', 10, yPosition, imgWidth, printHeight);
-          
-          // Update for next page
-          remainingHeight -= printHeight;
-          sourceY += sourceHeight;
-        }
-        
-        // Add page number
-        pdf.setFontSize(10);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
-      }
-      
-      // Add footer to all pages
-      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
-      }
-      
-      // Save the PDF
-      const filename = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      pdf.save(filename);
-      
-      // Remove the html2canvas class to clean up
-      if (charterElement) {
-        charterElement.classList.remove('html2canvas-container');
-      }
-      
-      toast({
-        title: "Report Generated Successfully",
-        description: `Your project charter has been captured and saved as ${filename}`,
-      });
-    } catch (error) {
-      console.error("Error exporting to PDF:", error);
-      
-      // Ensure we clean up the class even if there's an error
-      const cleanupElement = document.getElementById('project-charter');
-      if (cleanupElement) {
-        cleanupElement.classList.remove('html2canvas-container');
-      }
-      
-      toast({
-        title: "Export failed",
-        description: `An error occurred during export: ${error}`,
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Project Charter */}
-      <Card id="project-charter">
+      <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Project Charter</CardTitle>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={handleExportPdf}
-              className="flex items-center gap-2"
-            >
-              <Download size={16} />
-              Export PDF
-            </Button>
-          </div>
+          <CardTitle>Project Charter</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4">
@@ -1550,34 +1384,21 @@ export default function DefinePhase() {
                   <div className="mt-2">
                     {projectImage ? (
                       <div className="relative w-full max-w-md mb-2">
-                        {/* Regular display for screen */}
-                        <div className="html2canvas-hide">
-                          <img
-                            src={projectImage}
-                            alt="Project"
-                            className="w-full h-auto object-contain rounded-md border border-gray-200"
-                            style={{ maxHeight: '200px' }}
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 h-8 w-8"
-                            onClick={handleRemoveImage}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        
-                        {/* Special display for PDF export with original size */}
-                        <div className="html2canvas-show">
-                          <img
-                            src={projectImage}
-                            alt="Project"
-                            className="object-contain rounded-md border border-gray-200"
-                            style={{ width: 'auto', maxHeight: '300px', maxWidth: '100%' }}
-                          />
-                        </div>
+                        <img
+                          src={projectImage}
+                          alt="Project"
+                          className="w-full h-auto object-contain rounded-md border border-gray-200"
+                          style={{ maxHeight: '200px' }}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8"
+                          onClick={handleRemoveImage}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ) : (
                       <div 
