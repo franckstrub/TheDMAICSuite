@@ -1325,25 +1325,51 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide');
       removeElements.forEach(el => el.remove());
       
-      // DIRECT APPROACH: Find the project type and category fields
+      // DIRECT APPROACH: Find the project type, category, and belt level fields
       // First, find all the labels in the document
       const allLabels = clone.querySelectorAll('label');
       let projectTypeContainer = null;
       let projectCategoryContainer = null;
+      let beltLevelContainer = null;
       
-      // Look for the labels with text "Project Type" and "Project Category"
+      // Get the belt level value from the form or from the project data
+      const beltLevelValue = charterForm.watch("beltLevel") || "";
+      
+      console.log("PDF Form Values:", {
+        projectType: projectTypeValue,
+        projectCategory: projectCategoryValue,
+        beltLevel: beltLevelValue
+      });
+      
+      // Look for the labels with relevant text
       allLabels.forEach(label => {
         if (label.textContent === 'Project Type') {
           projectTypeContainer = label.parentElement;
         } else if (label.textContent === 'Project Category') {
           projectCategoryContainer = label.parentElement;
+        } else if (label.textContent === 'Belt Level') {
+          beltLevelContainer = label.parentElement;
         }
       });
       
       console.log("Found containers:", { 
         projectTypeContainer: projectTypeContainer ? true : false, 
-        projectCategoryContainer: projectCategoryContainer ? true : false 
+        projectCategoryContainer: projectCategoryContainer ? true : false,
+        beltLevelContainer: beltLevelContainer ? true : false
       });
+      
+      // Helper function to create value div
+      const createValueDiv = (value: string) => {
+        const div = document.createElement('div');
+        div.style.border = '1px solid #e2e8f0';
+        div.style.padding = '8px 12px';
+        div.style.marginTop = '5px';
+        div.style.borderRadius = '4px';
+        div.style.backgroundColor = '#f8fafc';
+        div.textContent = value;
+        div.className = 'inserted-value'; // Mark as our special insert
+        return div;
+      };
       
       // Now create and insert values for these fields
       if (projectTypeContainer) {
@@ -1351,18 +1377,8 @@ export default function DefinePhase() {
         const existingShowElements = projectTypeContainer.querySelectorAll('.html2canvas-show');
         existingShowElements.forEach(el => el.remove());
         
-        // Create a new visible value element
-        const valueDiv = document.createElement('div');
-        valueDiv.style.border = '1px solid #e2e8f0';
-        valueDiv.style.padding = '8px 12px';
-        valueDiv.style.marginTop = '5px';
-        valueDiv.style.borderRadius = '4px';
-        valueDiv.style.backgroundColor = '#f8fafc';
-        valueDiv.textContent = projectTypeValue;
-        valueDiv.className = 'inserted-value'; // Mark as our special insert
-        
         // Add it to the container
-        projectTypeContainer.appendChild(valueDiv);
+        projectTypeContainer.appendChild(createValueDiv(projectTypeValue));
       }
       
       if (projectCategoryContainer) {
@@ -1370,18 +1386,18 @@ export default function DefinePhase() {
         const existingShowElements = projectCategoryContainer.querySelectorAll('.html2canvas-show');
         existingShowElements.forEach(el => el.remove());
         
-        // Create a new visible value element
-        const valueDiv = document.createElement('div');
-        valueDiv.style.border = '1px solid #e2e8f0';
-        valueDiv.style.padding = '8px 12px';
-        valueDiv.style.marginTop = '5px';
-        valueDiv.style.borderRadius = '4px';
-        valueDiv.style.backgroundColor = '#f8fafc';
-        valueDiv.textContent = projectCategoryValue;
-        valueDiv.className = 'inserted-value'; // Mark as our special insert
-        
         // Add it to the container
-        projectCategoryContainer.appendChild(valueDiv);
+        projectCategoryContainer.appendChild(createValueDiv(projectCategoryValue));
+      }
+      
+      // Handle belt level field
+      if (beltLevelContainer) {
+        // Remove any existing html2canvas-show elements
+        const existingShowElements = beltLevelContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Add the value to the container
+        beltLevelContainer.appendChild(createValueDiv(beltLevelValue));
       }
       
       // Still need to handle any other html2canvas-show elements
@@ -1396,6 +1412,9 @@ export default function DefinePhase() {
             el.textContent = projectTypeValue;
           } else if (dataField === 'projectCategory') {
             el.textContent = projectCategoryValue;
+          } else if (dataField === 'beltLevel') {
+            el.textContent = beltLevelValue;
+            console.log("Setting belt level value in PDF:", beltLevelValue);
           }
         }
       });
