@@ -234,26 +234,23 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
         </table>
       </div>
       
-      {/* Proper HTML table for PDF export */}
+      {/* Simple two-column HTML table for PDF export */}
       <div className="html2canvas-show pdf-direct-list" id="team-members-pdf-table">
         <h4 className="font-semibold text-sm mb-3">Team Members</h4>
         
         {teamMembers.length > 0 ? (
-          <table className="pdf-real-table w-full border-collapse">
-            {/* Table Header */}
+          <table className="two-column-pdf-table" width="100%" cellPadding="0" cellSpacing="0" border="0">
             <thead>
-              <tr className="pdf-table-header">
-                <th className="pdf-table-th text-left border-b-2 border-gray-300 pb-2 w-1/2">Name</th>
-                <th className="pdf-table-th text-left border-b-2 border-gray-300 pb-2 w-1/2">Function/Expertise</th>
+              <tr>
+                <th width="50%" align="left">Name</th>
+                <th width="50%" align="left">Function</th>
               </tr>
             </thead>
-            
-            {/* Table Content */}
-            <tbody className="pdf-table-body">
+            <tbody>
               {teamMembers.map((teamMember, index) => (
-                <tr key={index} className="team-member-list-item border-b border-gray-100">
-                  <td className="pdf-table-td py-2 font-medium">{teamMember.name || 'N/A'}</td>
-                  <td className="pdf-table-td py-2">{teamMember.function || 'N/A'}</td>
+                <tr key={index}>
+                  <td width="50%" align="left">{teamMember.name || 'N/A'}</td>
+                  <td width="50%" align="left">{teamMember.function || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

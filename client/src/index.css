@@ -347,35 +347,34 @@
   background-color: #f8f9fa;
 }
 
-/* Table structure for PDF export */
-.pdf-real-table {
+/* Two-column table for PDF export - exactly matching requested format */
+.two-column-pdf-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 15px;
+  font-size: 14px;
+  background-color: #fff;
 }
 
-.pdf-table-th {
-  color: #374151;
+.two-column-pdf-table th {
+  color: #000;
   font-weight: 600;
   text-align: left;
-  padding: 8px 16px 8px 8px;
-  border-bottom: 2px solid #d1d5db;
-  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
 }
 
-.pdf-table-td {
-  padding: 8px 16px 8px 8px;
-  border-bottom: 1px solid #e5e7eb;
+.two-column-pdf-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f0f0f0;
   vertical-align: middle;
+  text-align: left;
 }
 
-.pdf-table-body tr:last-child td {
+/* Remove border from last row for cleaner look */
+.two-column-pdf-table tr:last-child td {
   border-bottom: none;
-}
-
-/* Add alternating row colors for better readability */
-.pdf-table-body tr:nth-child(even) {
-  background-color: #f9fafb;
 }
 
 /* Special CSS for expanded sections in PDF exports */
