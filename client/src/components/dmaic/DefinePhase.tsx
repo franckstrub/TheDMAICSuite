@@ -1316,6 +1316,8 @@ export default function DefinePhase() {
         projectCategory: projectCategoryValue 
       });
       
+      // We'll directly modify the form fields inside the clone element instead of adding a new section
+      
       // Clone the charter and modify it for PDF rendering
       const clone = charterElement.cloneNode(true) as HTMLElement;
       
