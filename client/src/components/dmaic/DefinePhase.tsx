@@ -1214,13 +1214,6 @@ export default function DefinePhase() {
   // Function to handle PDF export - simpler approach to avoid PNG corruption errors
   const handleExportPdf = async () => {
     try {
-      // Temporary close financial section if it's open to avoid PDF scaling issues
-      const wasFinancialSectionExpanded = isFinancialSectionExpanded;
-      if (wasFinancialSectionExpanded) {
-        setIsFinancialSectionExpanded(false);
-        // Add a small delay to let the UI update
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
       
       toast({
         title: "Generating PDF Report",
@@ -1294,11 +1287,11 @@ export default function DefinePhase() {
       // Using a different approach to avoid PNG corruption
       // Use html2canvas with different settings
       const canvas = await html2canvas(charterElement, {
-        scale: 2, // Reduced scale to avoid errors with large expanded sections
+        scale: isFinancialSectionExpanded ? 1.5 : 2, // Use lower scale when financial section is expanded to avoid errors
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff", 
-        imageTimeout: 30000, // Longer timeout for complex pages
+        imageTimeout: 60000, // Extended timeout for complex pages with expanded financial section
         logging: true,
         removeContainer: false, // Don't remove container to avoid flickering
         foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
@@ -1432,11 +1425,6 @@ export default function DefinePhase() {
         title: "Report Generated Successfully",
         description: `Your project charter has been captured and saved as ${filename}`,
       });
-      
-      // Restore the financial section to its previous state if it was expanded
-      if (wasFinancialSectionExpanded) {
-        setIsFinancialSectionExpanded(true);
-      }
     } catch (error) {
       console.error("Error exporting to PDF:", error);
       
@@ -1465,11 +1453,6 @@ export default function DefinePhase() {
         description: `An error occurred during export: ${error}`,
         variant: "destructive",
       });
-      
-      // Restore the financial section to its previous state if it was expanded
-      if (wasFinancialSectionExpanded) {
-        setIsFinancialSectionExpanded(true);
-      }
     }
   };
 
