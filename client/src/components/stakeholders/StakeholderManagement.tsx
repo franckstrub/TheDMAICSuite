@@ -139,9 +139,9 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
         </Button>
       </div>
 
-      {/* Stakeholders Table */}
-      <div className="border rounded-md">
-        <table className="w-full pdf-friendly-table">
+      {/* Regular table for screen display */}
+      <div className="border rounded-md html2canvas-hide">
+        <table className="w-full">
           <thead className="bg-muted border-b">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
@@ -153,7 +153,6 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
             {stakeholders.map((stakeholder, index) => (
               <tr key={index}>
                 <td className="px-4 py-2">
-                  <div className="pdf-text">{stakeholder.name}</div>
                   <Input
                     placeholder="Enter stakeholder name"
                     value={stakeholder.name}
@@ -162,7 +161,6 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
                   />
                 </td>
                 <td className="px-4 py-2">
-                  <div className="pdf-text">{stakeholder.function || "-"}</div>
                   <Input
                     placeholder="Enter function/department (optional)"
                     value={stakeholder.function}
@@ -226,6 +224,32 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
               <tr>
                 <td colSpan={3} className="px-4 py-4 text-center text-sm text-muted-foreground">
                   No stakeholders added yet. Click "Add Stakeholder" to add one.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Special table just for PDF export */}
+      <div className="border rounded-md html2canvas-show">
+        <table className="w-full pdf-friendly-table">
+          <thead className="bg-muted border-b">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Function</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {stakeholders.length > 0 ? stakeholders.map((stakeholder, index) => (
+              <tr key={index}>
+                <td className="px-4 py-2 text-sm">{stakeholder.name}</td>
+                <td className="px-4 py-2 text-sm">{stakeholder.function || "-"}</td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={2} className="px-4 py-4 text-center text-sm">
+                  No stakeholders added.
                 </td>
               </tr>
             )}

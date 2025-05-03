@@ -142,9 +142,9 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
         </Button>
       </div>
 
-      {/* Team Members Table */}
-      <div className="border rounded-md">
-        <table className="w-full pdf-friendly-table">
+      {/* Regular table for screen display */}
+      <div className="border rounded-md html2canvas-hide">
+        <table className="w-full">
           <thead className="bg-muted border-b">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
@@ -156,7 +156,6 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
             {teamMembers.map((teamMember, index) => (
               <tr key={index}>
                 <td className="px-4 py-2">
-                  <div className="pdf-text">{teamMember.name}</div>
                   <Input
                     placeholder="Enter team member name"
                     value={teamMember.name}
@@ -165,7 +164,6 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
                   />
                 </td>
                 <td className="px-4 py-2">
-                  <div className="pdf-text">{teamMember.function || "-"}</div>
                   <Input
                     placeholder="Enter function/expertise (optional)"
                     value={teamMember.function}
@@ -229,6 +227,32 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
               <tr>
                 <td colSpan={3} className="px-4 py-4 text-center text-sm text-muted-foreground">
                   No team members added yet. Click "Add Team Member" to add one.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Special table just for PDF export */}
+      <div className="border rounded-md html2canvas-show">
+        <table className="w-full pdf-friendly-table">
+          <thead className="bg-muted border-b">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Function/Expertise</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {teamMembers.length > 0 ? teamMembers.map((teamMember, index) => (
+              <tr key={index}>
+                <td className="px-4 py-2 text-sm">{teamMember.name}</td>
+                <td className="px-4 py-2 text-sm">{teamMember.function || "-"}</td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={2} className="px-4 py-4 text-center text-sm">
+                  No team members added.
                 </td>
               </tr>
             )}
