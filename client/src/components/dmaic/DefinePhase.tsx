@@ -1285,16 +1285,16 @@ export default function DefinePhase() {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Using a different approach to avoid PNG corruption
-      // Use html2canvas with different settings
+      // Use html2canvas with bare minimum settings and a much smaller scale
       const canvas = await html2canvas(charterElement, {
-        scale: 1.0, // Use a lower scale to avoid jsPDF.scale errors
+        scale: 0.6, // Use a much lower scale to avoid jsPDF.scale errors
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff", 
         imageTimeout: 60000, // Extended timeout for complex pages with expanded financial section
-        logging: true,
+        logging: false, // Disable logging to reduce console clutter
         removeContainer: false, // Don't remove container to avoid flickering
-        foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
+        foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues,
         onclone: (clonedDoc) => {
           // Make sure all inputs and form elements render correctly
           const clonedCharter = clonedDoc.getElementById('project-charter');
@@ -1342,57 +1342,42 @@ export default function DefinePhase() {
       const totalPages = Math.ceil(imgHeight / pageHeight);
       
       try {
-        // Use a simpler approach with lower quality but more reliable rendering
-        // Process one page at a time
-        let remainingHeight = imgHeight;
-        let sourceY = 0;
+        // Switch to a completely different approach
+        // Convert to JPEG at the start for better compatibility
+        const fullImageData = canvas.toDataURL('image/jpeg', 0.75);
         
-        for (let pageNum = 0; pageNum < totalPages; pageNum++) {
-          if (pageNum > 0) {
-            pdf.addPage();
-          }
+        // Calculate dimensions for PDF handling - use minimal scaling
+        let position = 0;  // Initial position for crop
+        let heightLeft = imgHeight;
+        
+        // Add the first page image (starts at y=40)
+        const firstPageHeight = Math.min(heightLeft, pageHeight);
+        pdf.addImage(fullImageData, 'JPEG', 10, 40, imgWidth, imgHeight);
+        
+        // If content extends beyond the first page
+        heightLeft -= firstPageHeight;
+        position += firstPageHeight * canvasHeight / imgHeight;
+        
+        // Add additional pages if needed
+        while (heightLeft > 0) {
+          // Add a new page
+          pdf.addPage();
           
-          // Calculate section dimensions
-          const currentPageHeight = pageNum === 0 ? pageHeight : (pdfHeight - 20 - footerHeight);
-          const printHeight = Math.min(remainingHeight, currentPageHeight);
+          // Use crop to only show the relevant part on new pages (with 10mm top margin)
+          const nextPageHeight = Math.min(heightLeft, pdfHeight - 20 - footerHeight);
+          // Use an alias with a clip option
+          const alias = `page${pdf.getNumberOfPages()}`;
+          pdf.addImage(fullImageData, 'JPEG', 10, 10, imgWidth, imgHeight, alias);
           
-          // Calculate source height in the original canvas
-          const sourceHeight = (printHeight / imgHeight) * canvasHeight;
-          
-          // Create a temporary canvas for just this section
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          
-          // Set temp canvas dimensions
-          tempCanvas.width = canvasWidth;
-          tempCanvas.height = sourceHeight;
-          
-          if (tempCtx) {
-            // Draw just this section to the temp canvas
-            tempCtx.drawImage(
-              canvas, 
-              0, sourceY, canvasWidth, sourceHeight,
-              0, 0, tempCanvas.width, tempCanvas.height
-            );
-            
-            // Convert to JPEG for better compatibility
-            const sectionImage = tempCanvas.toDataURL('image/jpeg', 0.85);
-            
-            // Position on the PDF
-            const yPosition = pageNum === 0 ? 40 : 10;
-            
-            // Add the image section - using simpler approach
-            pdf.addImage(sectionImage, 'JPEG', 10, yPosition, imgWidth, printHeight);
-            
-            // Update tracking variables
-            remainingHeight -= printHeight;
-            sourceY += sourceHeight;
-          }
+          // Update tracking variables
+          heightLeft -= nextPageHeight;
+          position += nextPageHeight * canvasHeight / imgHeight;
           
           // Add page number in footer area
+          const currentPage = pdf.getNumberOfPages();
           pdf.setFontSize(10);
           pdf.setTextColor(150, 150, 150);
-          pdf.text(`Page ${pageNum + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+          pdf.text(`Page ${currentPage} of ${Math.ceil(imgHeight / pageHeight)}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
           
           // Add a separator line above footer
           pdf.setDrawColor(200, 200, 200);
