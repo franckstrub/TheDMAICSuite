@@ -463,23 +463,25 @@ export default function Dashboard() {
     
     // Calculate financial value of FTE benefits by summing up each project's pre-calculated FTE financial benefit
     const fteValue = projects.reduce((sum, project) => {
-      // Project 1 has a fixed FTE financial benefit of 12499
-      if (project.id === 1) {
-        console.log(`Project 1 FTE financial benefit: 12499 (fixed value)`);
-        return sum + 12499;
+      // Look for pre-calculated FTE value in the project charter data
+      let fteFinancialBenefit = 0;
+      
+      // Try to find the FTE calculated value in different possible locations
+      if (project.benefits?.calculatedValue) {
+        fteFinancialBenefit = parseNumericValue(project.benefits.calculatedValue, 0);
+      } else if (project.charter?.fteCalculatedValue) {
+        fteFinancialBenefit = parseNumericValue(project.charter.fteCalculatedValue, 0);
+      } else if (project.fteCalculatedValue) {
+        fteFinancialBenefit = parseNumericValue(project.fteCalculatedValue, 0);
+      } else {
+        // If we can't find the pre-calculated value, try to calculate it from fteBenefits and avgFTECost
+        const fteBenefits = parseNumericValue(project.benefits?.fteBenefits, 0);
+        const avgFTECost = parseNumericValue(project.benefits?.avgFTECost || project.fteCostPerYear, 100000);
+        fteFinancialBenefit = fteBenefits * avgFTECost;
       }
       
-      // Project 2 has a fixed FTE financial benefit of 6250
-      if (project.id === 2) {
-        console.log(`Project 2 FTE financial benefit: 6250 (fixed value)`);
-        return sum + 6250;
-      }
-      
-      // For other projects, look for a pre-calculated FTE financial benefit value or use 0
-      const calculatedValue = project.benefits?.calculatedValue || 0;
-      console.log(`Project ${project.id} FTE financial benefit:`, calculatedValue);
-      
-      return sum + parseNumericValue(calculatedValue, 0);
+      console.log(`Project ${project.id} FTE financial benefit:`, fteFinancialBenefit);
+      return sum + fteFinancialBenefit;
     }, 0);
     
     // COSTS
