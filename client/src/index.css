@@ -144,6 +144,26 @@
   color: #4b5563;
 }
 
+/* Style for page breaks in PDF exports */
+@media print {
+  .page-break {
+    display: block;
+    page-break-after: always;
+    break-after: page;
+  }
+}
+
+.html2canvas-container [style*="pageBreakAfter"] {
+  display: block;
+  page-break-after: always;
+  break-after: page;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  height: 1px;
+  width: 100%;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
 @media print {
   input, button, select, textarea {
     display: none !important;
