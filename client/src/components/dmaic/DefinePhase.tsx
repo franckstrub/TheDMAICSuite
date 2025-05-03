@@ -2137,6 +2137,13 @@ export default function DefinePhase() {
                       className="hidden"
                       {...charterForm.register("fteBenefits")}
                     />
+                    
+                    {/* Add FTE Summary (hidden in PDF) */}
+                    <div className="hide-in-pdf-fte-summary mt-2 mb-3 text-center">
+                      <span className="text-lg font-semibold">
+                        {fteParams.calculatedFte.toFixed(3)} FTE ({formatCurrency(fteParams.calculatedValue, currency)})
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
