@@ -89,6 +89,22 @@
   display: block !important;
 }
 
+/* Fix for title and input field spacing in PDF exports */
+.html2canvas-container label {
+  display: block !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+  clear: both !important;
+}
+
+.html2canvas-container input, 
+.html2canvas-container select, 
+.html2canvas-container textarea {
+  margin-top: 4px !important;
+  display: block !important;
+  width: 100% !important;
+}
+
 /* Project image specific styling to preserve original image size in PDF */
 .html2canvas-container img {
   max-width: 100% !important;
