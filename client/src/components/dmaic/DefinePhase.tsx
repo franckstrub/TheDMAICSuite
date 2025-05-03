@@ -1283,38 +1283,51 @@ export default function DefinePhase() {
         // collapsible.setAttribute('data-state', 'open');
       });
       
-      // CRITICAL FIX: Check for expanded financial metrics section that causes PDF errors
-      const financialAccordionItem = charterElement.querySelector('#project-costs-accordion');
-      if (financialAccordionItem) {
-        const isExpanded = financialAccordionItem.getAttribute('data-state') === 'open';
-        
-        if (isExpanded) {
-          console.log("Project costs and financial metrics are expanded - applying special handling for PDF export");
+      // CRITICAL FIX: Identify and handle all financial sections that might cause PDF errors
+      // This is a unified approach to handle all financial sections at once
+      
+      // Collect all financial-related sections that might cause duplicate PDFs
+      const financialSections = [
+        charterElement.querySelector('#project-costs-accordion'), 
+        charterElement.querySelector('#costs-accordion'),
+        charterElement.querySelector('#financial-metrics-content')
+      ].filter(Boolean);
+      
+      // Track if we've made any changes to the DOM
+      let financialSectionModified = false;
+      
+      // Check if any financial section is expanded
+      for (const section of financialSections) {
+        if (section?.getAttribute('data-state') === 'open') {
+          console.log(`Found expanded financial section: ${section.id || 'unnamed'} - collapsing for PDF export`);
           
-          // IMPORTANT: We need to collapse this section to avoid duplicate PDFs
-          // Temporarily collapse the section to avoid errors
-          financialAccordionItem.setAttribute('data-pdf-was-expanded', 'true');
-          financialAccordionItem.setAttribute('data-state', 'closed');
-          
-          // Add a note about financial details
-          const financialNote = document.createElement('div');
-          financialNote.className = 'pdf-only-note my-2 p-3 bg-gray-50 border rounded text-sm';
-          financialNote.innerHTML = `
-            <p><strong>Note:</strong> Detailed financial metrics and project costs are available in the application.</p>
-            <p class="text-xs text-gray-500 mt-1">Financial summary: Total Benefits: ${charterForm.watch("totalFinancialSavings") || 0} | 
-            Total Costs: ${charterForm.watch("totalProjectCosts") || 0} | 
-            ROI: ${charterForm.watch("roi") || 0}%</p>
-          `;
-          
-          // Insert the note before the accordion
-          const parentNode = financialAccordionItem.parentNode;
-          if (parentNode) {
-            parentNode.insertBefore(financialNote, financialAccordionItem);
-          }
-          
-          // Allow the DOM to update before continuing
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Tag this section so we can restore it later
+          section.setAttribute('data-pdf-was-expanded', 'true');
+          section.setAttribute('data-state', 'closed');
+          financialSectionModified = true;
         }
+      }
+      
+      // If we had to modify any financial sections, add a summary note and wait for DOM to update
+      if (financialSectionModified) {
+        // Add a note about financial details
+        const financialNote = document.createElement('div');
+        financialNote.className = 'pdf-only-note my-2 p-3 bg-gray-50 border border-blue-100 rounded-md';
+        financialNote.innerHTML = `
+          <p><strong>Financial Summary:</strong> The full financial details are available in the application.</p>
+          <p class="text-xs text-gray-600 mt-1">Total Benefits: ${charterForm.watch("totalFinancialSavings") || 0} | 
+          Total Costs: ${charterForm.watch("totalProjectCosts") || 0} | 
+          ROI: ${charterForm.watch("roi") || 0}%</p>
+        `;
+        
+        // Insert the note at a consistent location
+        const headerEl = charterElement.querySelector('.card-header');
+        if (headerEl && headerEl.parentNode) {
+          headerEl.parentNode.insertBefore(financialNote, headerEl.nextSibling);
+        }
+        
+        // Give DOM time to update before continuing with PDF generation
+        await new Promise(resolve => setTimeout(resolve, 600));
       }
       
       // Create special data attributes for form values to ensure they appear in the PDF
@@ -1344,31 +1357,8 @@ export default function DefinePhase() {
       // Only generate one PDF output
       let pdfOutput = '';
       
-      // First, check if financial metrics section is expanded
-      const financialSection = charterElement.querySelector('#financial-metrics-content');
-      let financialSectionWasExpanded = false;
-      if (financialSection && financialSection.getAttribute('data-state') === 'open') {
-        console.log("Financial metrics section is expanded - temporarily collapsing for PDF export");
-        financialSectionWasExpanded = true;
-        financialSection.setAttribute('data-pdf-was-expanded', 'true');
-        financialSection.setAttribute('data-state', 'closed');
-        
-        // Add a note about the financial section
-        const financeNote = document.createElement('div');
-        financeNote.className = 'pdf-only-note my-2 p-2 bg-blue-50 border border-blue-200 rounded-md';
-        financeNote.innerHTML = `
-          <p class="text-xs text-blue-800">Financial metrics details are available in the application</p>
-        `;
-        
-        // Find where to insert the note
-        const financeHeader = charterElement.querySelector('#financial-metrics-trigger');
-        if (financeHeader && financeHeader.parentNode) {
-          financeHeader.parentNode.insertBefore(financeNote, financeHeader.nextSibling);
-        }
-        
-        // Give DOM time to update
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      // We already handled all financial sections in the unified approach above
+      // No need for additional financial section handling here
       
       try {
         console.log("Attempting to generate PDF with safer settings");
