@@ -469,3 +469,30 @@
   padding: 4px 0;
 }
 
+/* Fixed PDF Tables with headers */
+.fixed-pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.fixed-pdf-table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 6px 10px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #ddd;
+  font-size: 15px;
+}
+
+.fixed-pdf-table td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.fixed-pdf-table tr:last-child td {
+  border-bottom: none;
+}
+
