@@ -1685,8 +1685,16 @@ export default function DefinePhase() {
                           <img
                             src={projectImage}
                             alt="Project"
-                            className="object-contain rounded-md border border-gray-200"
-                            style={{ width: 'auto', maxHeight: '300px', maxWidth: '100%' }}
+                            className="object-contain rounded-md border border-gray-200 pdf-project-image"
+                            style={{ 
+                              width: 'auto', 
+                              height: 'auto',
+                              maxHeight: '300px', 
+                              maxWidth: '100%',
+                              display: 'block',
+                              margin: '0 auto'
+                            }}
+                            crossOrigin="anonymous"
                           />
                         </div>
                       </div>
