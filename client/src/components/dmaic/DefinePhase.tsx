@@ -36,6 +36,7 @@ import StakeholderManagement from "@/components/stakeholders/StakeholderManageme
 import TeamMemberManagement from "@/components/stakeholders/TeamMemberManagement";
 import CharterSoftBenefitsQuadrant from "./CharterSoftBenefitsQuadrant";
 import { Stakeholder } from "@shared/schema";
+import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
 
 export default function DefinePhase() {
   const { user, currentProject, currency } = useAppContext();
