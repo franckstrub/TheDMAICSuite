@@ -239,7 +239,7 @@ export default function Dashboard() {
       // Define margins and spacing
       const margin = 14; // mm
       const footerHeight = 15; // mm
-      const headerHeight = 35; // mm for first page header (title & filter info)
+      const headerHeight = 42; // mm for first page header (title & filter info)
       
       // Get canvas dimensions
       const canvasWidth = canvas.width;
@@ -255,31 +255,47 @@ export default function Dashboard() {
       pdf.setTextColor(85, 85, 85);
       pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 22);
       
-      // Add filter information
-      let filterText = `Timeframe: ${timeframe}`;
-      if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
-        filterText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
-      }
-      pdf.text(filterText, margin, 26);
-      
-      // Add status filter info
-      let statusFilterText = "Status Filter: ";
-      switch(implementationStatus) {
-        case "all": statusFilterText += "All Projects"; break;
-        case "active": statusFilterText += "Active Projects"; break;
-        case "completed": statusFilterText += "Completed Projects"; break;
-        case "on-hold": statusFilterText += "On-Hold Projects"; break;
-        case "abandoned": statusFilterText += "Abandoned Projects"; break;
-        case "active-completed": statusFilterText += "Active + Completed Projects"; break;
-        case "implemented": statusFilterText += "Implemented Projects"; break;
-        case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
-        default: statusFilterText += "All Projects";
-      }
-      pdf.text(statusFilterText, margin, 30);
-      
-      // Add horizontal line below header
+      // Create a distinct filters section
+      pdf.setFillColor(240, 240, 240); // Light gray background
+      pdf.rect(margin, 24, pdfWidth - (2 * margin), 14, 'F');
       pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, 32, pdfWidth - margin, 32);
+      pdf.rect(margin, 24, pdfWidth - (2 * margin), 14, 'S'); // Draw border
+      
+      // Add filter information with better styling
+      pdf.setFontSize(10);
+      pdf.setTextColor(50, 50, 50); // Darker text
+      pdf.setFont('helvetica', 'bold');
+      pdf.text("Period:", margin + 2, 28);
+      
+      // Add the timeframe value in regular font
+      pdf.setFont('helvetica', 'normal');
+      let timeframeText = timeframe;
+      if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
+        timeframeText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
+      }
+      pdf.text(timeframeText, margin + 22, 28);
+      
+      // Add status filter info with better styling
+      pdf.setFont('helvetica', 'bold');
+      pdf.text("Status Filter:", margin + 2, 34);
+      
+      // Show the status in regular font with clear formatting
+      pdf.setFont('helvetica', 'normal');
+      let statusText = "";
+      switch(implementationStatus) {
+        case "all": statusText = "All Projects"; break;
+        case "active": statusText = "Active Projects"; break;
+        case "completed": statusText = "Completed Projects"; break;
+        case "on-hold": statusText = "On-Hold Projects"; break;
+        case "abandoned": statusText = "Abandoned Projects"; break;
+        case "active-completed": statusText = "Active + Completed Projects"; break;
+        case "implemented": statusText = "Implemented Projects"; break;
+        case "not-implemented": statusText = "Not Implemented Projects"; break;
+        default: statusText = "All Projects";
+      }
+      pdf.text(statusText, margin + 40, 34);
+      
+      // We've replaced this with the border around the filter box
       
       // Calculate how many pages we need - with space for footer and header
       const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
