@@ -89,6 +89,15 @@
   display: block !important;
 }
 
+/* Project image specific styling to preserve original image size in PDF */
+.html2canvas-container img {
+  max-width: 100% !important;
+  max-height: 300px !important;
+  height: auto !important;
+  width: auto !important;
+  object-fit: contain !important;
+}
+
 .html2canvas-container input,
 .html2canvas-container button {
   opacity: 0 !important;
