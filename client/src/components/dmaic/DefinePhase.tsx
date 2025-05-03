@@ -2066,8 +2066,8 @@ export default function DefinePhase() {
                           </div>
                         </div>
                         
-                        {/* Summary section for PDF export */}
-                        <div className="p-3 mt-2 bg-blue-50 border border-blue-200 rounded-md mb-3">
+                        {/* Summary section for UI only - hide from PDF export */}
+                        <div className="p-3 mt-2 bg-blue-50 border border-blue-200 rounded-md mb-3 html2canvas-hide">
                           <div>
                             <p className="text-sm font-medium">Calculated FTE Value: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)} FTE</span></p>
                             <p className="text-xs text-gray-600 mt-1">
