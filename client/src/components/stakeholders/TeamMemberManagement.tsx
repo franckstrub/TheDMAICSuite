@@ -234,18 +234,31 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
         </table>
       </div>
       
-      {/* Super simplified table just for PDF export */}
-      <div className="html2canvas-show pdf-text-only-table" id="team-members-pdf-table">
-        <p className="font-semibold text-sm mb-1">Team Members:</p>
-        <div className="text-sm space-y-0.5">
-          {teamMembers.length > 0 ? teamMembers.map((teamMember, index) => (
-            <div key={index} className="team-member-list-item">
-              {teamMember.name}{teamMember.function ? ` (${teamMember.function})` : ''}
+      {/* Table-like layout for PDF export */}
+      <div className="html2canvas-show pdf-direct-list" id="team-members-pdf-table">
+        <h4 className="font-semibold text-sm mb-3">Team Members</h4>
+        
+        {teamMembers.length > 0 ? (
+          <div className="pdf-table-layout">
+            {/* Table Header */}
+            <div className="pdf-table-header grid grid-cols-12 gap-2 mb-2 text-xs font-medium text-muted-foreground uppercase pb-1 border-b">
+              <div className="col-span-5">NAME</div>
+              <div className="col-span-7">FUNCTION/EXPERTISE</div>
             </div>
-          )) : (
-            <div className="text-muted-foreground">No team members added.</div>
-          )}
-        </div>
+            
+            {/* Table Content */}
+            <div className="pdf-table-body space-y-1">
+              {teamMembers.map((teamMember, index) => (
+                <div key={index} className="team-member-list-item grid grid-cols-12 gap-2 text-sm py-1">
+                  <div className="col-span-5 font-medium">{teamMember.name || 'N/A'}</div>
+                  <div className="col-span-7">{teamMember.function || 'N/A'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-muted-foreground text-sm">No team members added.</div>
+        )}
       </div>
       
       <p className="text-xs text-muted-foreground italic">

@@ -341,10 +341,31 @@
 /* Styling for direct PDF lists generated during export */
 .pdf-direct-list {
   margin: 10px 0;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   background-color: #f8f9fa;
+}
+
+/* Table-like structure for PDF export */
+.pdf-table-header {
+  color: #6c7280;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.pdf-table-body .stakeholder-list-item,
+.pdf-table-body .team-member-list-item {
+  padding: 5px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Ensure the last item doesn't have a border */
+.pdf-table-body .stakeholder-list-item:last-child,
+.pdf-table-body .team-member-list-item:last-child {
+  border-bottom: none;
 }
 
 /* Special CSS for expanded sections in PDF exports */

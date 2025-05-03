@@ -231,18 +231,31 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
         </table>
       </div>
       
-      {/* Super simplified table just for PDF export */}
-      <div className="html2canvas-show pdf-text-only-table" id="stakeholders-pdf-table">
-        <p className="font-semibold text-sm mb-1">Stakeholders:</p>
-        <div className="text-sm space-y-0.5">
-          {stakeholders.length > 0 ? stakeholders.map((stakeholder, index) => (
-            <div key={index} className="stakeholder-list-item">
-              {stakeholder.name}{stakeholder.function ? ` (${stakeholder.function})` : ''}
+      {/* Table-like layout for PDF export */}
+      <div className="html2canvas-show pdf-direct-list" id="stakeholders-pdf-table">
+        <h4 className="font-semibold text-sm mb-3">Stakeholders</h4>
+        
+        {stakeholders.length > 0 ? (
+          <div className="pdf-table-layout">
+            {/* Table Header */}
+            <div className="pdf-table-header grid grid-cols-12 gap-2 mb-2 text-xs font-medium text-muted-foreground uppercase pb-1 border-b">
+              <div className="col-span-5">NAME</div>
+              <div className="col-span-7">FUNCTION</div>
             </div>
-          )) : (
-            <div className="text-muted-foreground">No stakeholders added.</div>
-          )}
-        </div>
+            
+            {/* Table Content */}
+            <div className="pdf-table-body space-y-1">
+              {stakeholders.map((stakeholder, index) => (
+                <div key={index} className="stakeholder-list-item grid grid-cols-12 gap-2 text-sm py-1">
+                  <div className="col-span-5 font-medium">{stakeholder.name || 'N/A'}</div>
+                  <div className="col-span-7">{stakeholder.function || 'N/A'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-muted-foreground text-sm">No stakeholders added.</div>
+        )}
       </div>
       
       <p className="text-xs text-muted-foreground italic">
