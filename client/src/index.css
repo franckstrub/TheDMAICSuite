@@ -263,8 +263,11 @@
   display: block;
 }
 
-.html2canvas-container .print-hide {
+.html2canvas-container .print-hide,
+.html2canvas-container .html2canvas-hide,
+.html2canvas-container input#fteBenefits {
   display: none !important;
+  visibility: hidden !important;
 }
 
 .pdf-friendly-table {
