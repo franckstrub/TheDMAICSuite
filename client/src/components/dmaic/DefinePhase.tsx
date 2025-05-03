@@ -1307,49 +1307,53 @@ export default function DefinePhase() {
       }
       
       // Add project type and category directly to the PDF container
-      if (projectId && project) {
-        const projectInfoSection = document.createElement('div');
-        projectInfoSection.style.marginBottom = '20px';
-        projectInfoSection.style.padding = '15px';
-        projectInfoSection.style.border = '1px solid #eee';
-        projectInfoSection.style.borderRadius = '5px';
-        projectInfoSection.style.backgroundColor = '#f9f9f9';
-        
-        const projectTitle = document.createElement('h2');
-        projectTitle.textContent = project.title || '';
-        projectTitle.style.fontSize = '18px';
-        projectTitle.style.marginBottom = '10px';
-        projectTitle.style.fontWeight = 'bold';
-        
-        const projectDetails = document.createElement('div');
-        projectDetails.style.display = 'grid';
-        projectDetails.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        projectDetails.style.gap = '8px';
-        
-        const typeLabel = document.createElement('div');
-        typeLabel.textContent = 'Project Type:';
-        typeLabel.style.fontWeight = 'bold';
-        
-        const typeValue = document.createElement('div');
-        typeValue.textContent = project.projectType || '';
-        
-        const categoryLabel = document.createElement('div');
-        categoryLabel.textContent = 'Project Category:';
-        categoryLabel.style.fontWeight = 'bold';
-        
-        const categoryValue = document.createElement('div');
-        categoryValue.textContent = project.projectCategory || '';
-        
-        projectDetails.appendChild(typeLabel);
-        projectDetails.appendChild(typeValue);
-        projectDetails.appendChild(categoryLabel);
-        projectDetails.appendChild(categoryValue);
-        
-        projectInfoSection.appendChild(projectTitle);
-        projectInfoSection.appendChild(projectDetails);
-        
-        pdfContainer.appendChild(projectInfoSection);
-      }
+      const projectInfo = {
+        title: projectTitle,
+        projectType: charterForm.watch("projectType") || "Green Belt",
+        projectCategory: charterForm.watch("projectCategory") || "Process Improvement"
+      };
+      
+      const projectInfoSection = document.createElement('div');
+      projectInfoSection.style.marginBottom = '20px';
+      projectInfoSection.style.padding = '15px';
+      projectInfoSection.style.border = '1px solid #eee';
+      projectInfoSection.style.borderRadius = '5px';
+      projectInfoSection.style.backgroundColor = '#f9f9f9';
+      
+      const projectTitleElement = document.createElement('h2');
+      projectTitleElement.textContent = projectInfo.title || '';
+      projectTitleElement.style.fontSize = '18px';
+      projectTitleElement.style.marginBottom = '10px';
+      projectTitleElement.style.fontWeight = 'bold';
+      
+      const projectDetails = document.createElement('div');
+      projectDetails.style.display = 'grid';
+      projectDetails.style.gridTemplateColumns = 'repeat(2, 1fr)';
+      projectDetails.style.gap = '8px';
+      
+      const typeLabel = document.createElement('div');
+      typeLabel.textContent = 'Project Type:';
+      typeLabel.style.fontWeight = 'bold';
+      
+      const typeValue = document.createElement('div');
+      typeValue.textContent = projectInfo.projectType || '';
+      
+      const categoryLabel = document.createElement('div');
+      categoryLabel.textContent = 'Project Category:';
+      categoryLabel.style.fontWeight = 'bold';
+      
+      const categoryValue = document.createElement('div');
+      categoryValue.textContent = projectInfo.projectCategory || '';
+      
+      projectDetails.appendChild(typeLabel);
+      projectDetails.appendChild(typeValue);
+      projectDetails.appendChild(categoryLabel);
+      projectDetails.appendChild(categoryValue);
+      
+      projectInfoSection.appendChild(projectTitleElement);
+      projectInfoSection.appendChild(projectDetails);
+      
+      pdfContainer.appendChild(projectInfoSection);
       
       // Clone the charter and modify it for PDF rendering
       const clone = charterElement.cloneNode(true) as HTMLElement;
