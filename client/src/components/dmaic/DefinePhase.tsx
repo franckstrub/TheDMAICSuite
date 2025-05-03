@@ -1496,8 +1496,9 @@ export default function DefinePhase() {
                         </SelectContent>
                       </Select>
                       {/* Hidden span for PDF export */}
-                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                        Project Type: {charterForm.watch("projectType") || "Green Belt"}
+                      <span className="html2canvas-show print-hide hidden">
+                        <div className="text-sm font-medium mt-2">Project Type:</div>
+                        <div className="text-sm">{charterForm.watch("projectType") || "Green Belt"}</div>
                       </span>
                     </div>
                     <div>
@@ -1519,8 +1520,9 @@ export default function DefinePhase() {
                         </SelectContent>
                       </Select>
                       {/* Hidden span for PDF export */}
-                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                        Project Category: {charterForm.watch("projectCategory") || "Process Improvement"}
+                      <span className="html2canvas-show print-hide hidden">
+                        <div className="text-sm font-medium mt-2">Project Category:</div>
+                        <div className="text-sm">{charterForm.watch("projectCategory") || "Process Improvement"}</div>
                       </span>
                     </div>
                   </div>
@@ -1555,8 +1557,9 @@ export default function DefinePhase() {
                         </SelectContent>
                       </Select>
                       {/* Hidden span for PDF export */}
-                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                        Belt Level: {charterForm.watch("beltLevel") || "Green Belt"}
+                      <span className="html2canvas-show print-hide hidden">
+                        <div className="text-sm font-medium mt-2">Belt Level:</div>
+                        <div className="text-sm">{charterForm.watch("beltLevel") || "Green Belt"}</div>
                       </span>
                     </div>
                   </div>
@@ -1622,8 +1625,9 @@ export default function DefinePhase() {
                         </SelectContent>
                       </Select>
                       {/* Hidden span for PDF export */}
-                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                        Coach Belt Level: {charterForm.watch("coachBeltLevel") || "Master Black Belt"}
+                      <span className="html2canvas-show print-hide hidden">
+                        <div className="text-sm font-medium mt-2">Coach Belt Level:</div>
+                        <div className="text-sm">{charterForm.watch("coachBeltLevel") || "Master Black Belt"}</div>
                       </span>
                     </div>
                   </div>
