@@ -1212,22 +1212,19 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // We're now using the importable exportPdfLock module from lib/exportPdfLock.ts
-  // This provides a centralized way to manage PDF generation state
-  
-  // Function to handle PDF export with protection against duplicate generation
+  // PDF Export function with duplicate generation protection
   const handleExportPdf = async () => {
-    // Check if already generating
+    // Prevent duplicate generation
     if (exportPdfLock.isGenerating()) {
       console.log("PDF generation already in progress");
       return;
     }
     
-    // Reset state and start generation process
-    exportPdfLock.startGeneration();
-    console.log("Starting PDF generation with timestamp:", Date.now());
-    
     try {
+      // Start the generation process
+      exportPdfLock.startGeneration();
+      console.log("Starting PDF generation at:", Date.now());
+      
       // Show initial toast notification
       toast({
         title: "Generating Project Charter",
@@ -1364,14 +1361,13 @@ export default function DefinePhase() {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
       
-      try {
-        console.log("Attempting to generate PDF with safer settings");
-        
-        // First check if we already generated a PDF - if so, skip all processing
-        if (exportPdfLock.wasGenerated()) {
-          console.log("PDF was already generated, skipping primary generation method");
-          return;
-        }
+      console.log("Attempting to generate PDF with safer settings");
+      
+      // First check if we already generated a PDF - if so, skip all processing
+      if (exportPdfLock.wasGenerated()) {
+        console.log("PDF was already generated, skipping primary generation method");
+        return;
+      }
         
         // Using a completely different approach specifically for handling complex charts and financial metrics
         // Use html2canvas with much safer settings to avoid scale errors
@@ -1745,7 +1741,21 @@ export default function DefinePhase() {
         });
       }
       
-      // Mark the PDF generation as complete
+      // Success toast
+      toast({
+        title: "PDF Generated Successfully",
+        description: "Your Project Charter has been exported to PDF."
+      });
+      
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      // Always reset the lock
       exportPdfLock.reset();
     }
   };
