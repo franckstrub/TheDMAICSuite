@@ -6,7 +6,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
+import { Image, Trash2, X, ChevronUp, ChevronDown, FileDown, Save, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
@@ -1212,8 +1215,19 @@ export default function DefinePhase() {
     <div className="space-y-6">
       {/* Project Charter */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Project Charter</CardTitle>
+          {charter?.charter && (
+            <Button 
+              onClick={handleExportCharterToPDF} 
+              variant="outline" 
+              className="border-dashed border-gray-400"
+              size="sm"
+            >
+              <FileDown className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4">
