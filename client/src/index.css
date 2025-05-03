@@ -287,6 +287,15 @@
   display: block;
 }
 
+/* Make sure our container for stakeholders has correct display */
+.stakeholder-table-container .html2canvas-show {
+  display: none !important; /* Initially hidden but will be shown in PDF */
+}
+
+.html2canvas-container .stakeholder-table-container .html2canvas-show {
+  display: block !important; /* Force display during PDF export */
+}
+
 .html2canvas-container .print-hide {
   display: none !important;
 }

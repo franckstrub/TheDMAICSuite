@@ -232,7 +232,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
       </div>
       
       {/* Special table just for PDF export */}
-      <div className="border rounded-md html2canvas-show">
+      <div className="border rounded-md html2canvas-show" id="stakeholders-pdf-table">
         <table className="w-full pdf-friendly-table">
           <thead className="bg-muted border-b">
             <tr>

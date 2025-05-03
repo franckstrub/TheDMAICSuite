@@ -1321,9 +1321,21 @@ export default function DefinePhase() {
       // Clone the charter and modify it for PDF rendering
       const clone = charterElement.cloneNode(true) as HTMLElement;
       
-      // Remove unnecessary parts
-      const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide');
+      // Remove unnecessary parts - IMPORTANT: DON'T remove html2canvas-show elements
+      const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide:not(.stakeholder-table-container .html2canvas-hide)');
       removeElements.forEach(el => el.remove());
+      
+      // Special handling for stakeholder table - make sure the PDF table is visible
+      const stakeholderPdfTable = clone.querySelector('#stakeholders-pdf-table');
+      if (stakeholderPdfTable && stakeholderPdfTable instanceof HTMLElement) {
+        stakeholderPdfTable.style.display = 'block';
+        stakeholderPdfTable.style.visibility = 'visible';
+        stakeholderPdfTable.style.opacity = '1';
+        stakeholderPdfTable.style.position = 'static';
+        console.log("Found stakeholder table for PDF export");
+      } else {
+        console.log("Stakeholder PDF table not found in clone");
+      }
       
       // DIRECT APPROACH: Find the project type, category, and belt level fields
       // First, find all the labels in the document
@@ -1804,7 +1816,7 @@ export default function DefinePhase() {
                       />
                     </div>
                   </div>
-                  <div>
+                  <div className="stakeholder-table-container">
                     {/* Stakeholder Management Component */}
                     <StakeholderManagement 
                       stakeholders={stakeholders}
