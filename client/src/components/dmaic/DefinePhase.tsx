@@ -1231,36 +1231,74 @@ export default function DefinePhase() {
       const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
       const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 30);
       
-      // Create the PDF
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
+      // ************************
+      // SIMPLER APPROACH - DIRECT CANVAS CAPTURE WITH PROJECT IMAGE EMBEDDED
+      // ************************
       
-      // PDF dimensions
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const headerOffset = 45; // Space for header
-      const footerHeight = 15;
-
-      // Add header
-      pdf.setFontSize(16);
-      pdf.setTextColor(33, 37, 41);
-      pdf.text("Six Sigma Project Charter", 105, 20, { align: 'center' });
+      // First, let's create a temporary element that will include the project image directly
+      const pdfContainer = document.createElement('div');
+      pdfContainer.id = 'pdf-container';
+      pdfContainer.style.position = 'absolute';
+      pdfContainer.style.left = '-9999px';
+      pdfContainer.style.width = '1000px'; // Fixed width for better layout control
       
-      pdf.setFontSize(10);
-      pdf.setTextColor(85, 85, 85);
-      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 30);
-      pdf.text(`Project: ${projectTitle}`, margin, 35);
+      // Add the title and subtitle (date)
+      const header = document.createElement('div');
+      header.style.textAlign = 'center';
+      header.style.marginBottom = '20px';
       
-      // Add separator line
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, 38, pdfWidth - margin, 38);
+      const title = document.createElement('h1');
+      title.textContent = 'Six Sigma Project Charter';
+      title.style.fontSize = '24px';
+      title.style.fontWeight = 'bold';
+      title.style.marginBottom = '8px';
       
-      // Create a temporary clone so we can modify it without affecting the UI
+      const subtitle = document.createElement('div');
+      subtitle.textContent = `Generated on ${format(new Date(), "MMMM d, yyyy")}`;
+      subtitle.style.fontSize = '14px';
+      subtitle.style.color = '#666';
+      
+      const projectTitleText = document.createElement('div');
+      projectTitleText.textContent = `Project: ${projectTitle}`;
+      projectTitleText.style.fontSize = '14px';
+      projectTitleText.style.marginTop = '8px';
+      
+      header.appendChild(title);
+      header.appendChild(subtitle);
+      header.appendChild(projectTitleText);
+      
+      // Add a separator line
+      const separator = document.createElement('hr');
+      separator.style.border = 'none';
+      separator.style.borderTop = '1px solid #ddd';
+      separator.style.margin = '10px 0 20px 0';
+      
+      pdfContainer.appendChild(header);
+      pdfContainer.appendChild(separator);
+      
+      // If we have a project image, add it in a floating container at the top right
+      if (projectImage) {
+        console.log("Adding project image to PDF container");
+        const imageContainer = document.createElement('div');
+        imageContainer.style.float = 'right';
+        imageContainer.style.width = '200px';
+        imageContainer.style.marginLeft = '20px';
+        imageContainer.style.marginBottom = '20px';
+        
+        const img = document.createElement('img');
+        img.src = projectImage;
+        img.alt = 'Project Image';
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.maxHeight = '150px';
+        img.style.objectFit = 'contain';
+        img.crossOrigin = 'anonymous';
+        
+        imageContainer.appendChild(img);
+        pdfContainer.appendChild(imageContainer);
+      }
+      
+      // Now clone the project charter and append it to our container
       const charterElement = document.getElementById("project-charter");
       if (!charterElement) {
         toast({
@@ -1268,72 +1306,98 @@ export default function DefinePhase() {
           description: "Could not find the project charter element",
           variant: "destructive",
         });
+        isPdfGenerating = false;
         return;
       }
       
-      // Create a clone of the project charter
+      // Clone the charter and modify it for PDF rendering
       const clone = charterElement.cloneNode(true) as HTMLElement;
-      clone.id = "project-charter-clone";
-      clone.style.position = "absolute";
-      clone.style.left = "-9999px";
-      clone.style.top = "-9999px";
-      clone.style.width = `${charterElement.offsetWidth}px`;
-      document.body.appendChild(clone);
       
-      try {
-        // Specifically look for the financial metrics section in the clone
-        const costsSection = clone.querySelector('#project-costs-accordion');
-        if (costsSection) {
-          // Get the state from the original element to ensure accuracy
-          const originalCostsSection = charterElement.querySelector('#project-costs-accordion');
-          const isExpanded = originalCostsSection?.getAttribute('data-state') === 'open';
+      // Remove unnecessary parts
+      const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide');
+      removeElements.forEach(el => el.remove());
+      
+      // Make printable elements visible
+      const showElements = clone.querySelectorAll('.html2canvas-show');
+      showElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.display = 'block';
+        }
+      });
+      
+      // Specifically handle the costs accordion section if expanded
+      const costsSection = clone.querySelector('#project-costs-accordion');
+      if (costsSection) {
+        // Get the state from the original element to ensure accuracy
+        const originalCostsSection = charterElement.querySelector('#project-costs-accordion');
+        const isExpanded = originalCostsSection?.getAttribute('data-state') === 'open';
+        
+        if (isExpanded) {
+          console.log("Project costs section is expanded - applying special handling");
           
-          if (isExpanded) {
-            console.log("Project costs section is expanded - applying special handling");
+          // Force the content to be visible
+          const content = costsSection.querySelector('[data-orientation="vertical"]');
+          if (content) {
+            (content as HTMLElement).style.cssText = `
+              height: auto !important;
+              overflow: visible !important;
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+              position: static !important;
+              transform: none !important;
+              display: block !important;
+            `;
             
-            // Force the content to be visible
-            const content = costsSection.querySelector('[data-orientation="vertical"]');
-            if (content) {
-              (content as HTMLElement).style.cssText = `
-                height: auto !important;
-                overflow: visible !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-                pointer-events: auto !important;
-                position: static !important;
-                transform: none !important;
-                display: block !important;
-              `;
-              
-              // Also make child elements visible
-              content.querySelectorAll('*').forEach(child => {
-                if (child instanceof HTMLElement) {
-                  const displayValue = window.getComputedStyle(child).display;
-                  child.style.cssText += `
-                    display: ${displayValue === 'none' ? 'block' : displayValue} !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                  `;
-                }
-              });
-            }
+            // Also make child elements visible
+            content.querySelectorAll('*').forEach(child => {
+              if (child instanceof HTMLElement) {
+                const displayValue = window.getComputedStyle(child).display;
+                child.style.cssText += `
+                  display: ${displayValue === 'none' ? 'block' : displayValue} !important;
+                  visibility: visible !important;
+                  opacity: 1 !important;
+                `;
+              }
+            });
           }
         }
-        
-        // Process form fields for PDF display
-        clone.querySelectorAll('.html2canvas-show').forEach(el => {
-          (el as HTMLElement).style.display = 'block';
-        });
-        
-        clone.querySelectorAll('.html2canvas-hide').forEach(el => {
-          (el as HTMLElement).style.display = 'none';
-        });
-        
-        // Wait a moment for DOM changes to take effect
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Capture the clone to canvas
-        const canvas = await html2canvas(clone, {
+      }
+      
+      // Clean up the styling for PDF output
+      clone.querySelectorAll('*').forEach(el => {
+        if (el instanceof HTMLElement) {
+          // Remove hover effects, transitions, etc.
+          el.style.transition = 'none';
+          el.style.animation = 'none';
+        }
+      });
+      
+      // Create a footer element
+      const footer = document.createElement('div');
+      footer.style.marginTop = '30px';
+      footer.style.borderTop = '1px solid #ddd';
+      footer.style.paddingTop = '10px';
+      footer.style.textAlign = 'center';
+      footer.style.fontSize = '10px';
+      footer.style.color = '#666';
+      footer.textContent = 'Lean Six Sigma DMAIC Suite™';
+      
+      // Add the cloned charter to our container
+      pdfContainer.appendChild(clone);
+      pdfContainer.appendChild(footer);
+      
+      // Add the container to the document
+      document.body.appendChild(pdfContainer);
+      
+      console.log("PDF container prepared, rendering to canvas");
+      
+      // Wait a bit for all elements to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        // Use html2canvas to capture the entire container
+        const canvas = await html2canvas(pdfContainer, {
           scale: 2,
           useCORS: true,
           allowTaint: true,
@@ -1341,174 +1405,78 @@ export default function DefinePhase() {
           logging: false
         });
         
-        // Calculate image dimensions for the clone capture
+        console.log("Canvas created, size:", canvas.width, "x", canvas.height);
+        
+        // Create PDF with proper dimensions
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+        
+        // PDF dimensions
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        
+        // Calculate size ratio to fit on page
         const imgWidth = pdfWidth - (2 * margin);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Calculate if it fits on one page
-        const firstPageContentHeight = pdfHeight - headerOffset - footerHeight;
-        
-        // Add the project image separately after generation but before saving
-        if (projectImage) {
-          console.log("Adding project image to PDF");
-          
-          try {
-            // Add a page at the beginning to show the image
-            if (pdf.getNumberOfPages() > 0) {
-              pdf.setPage(1);
-            }
-            
-            // Add the image in the top right corner of the first page
-            const maxImageWidth = 50; // mm
-            const imageX = pdfWidth - maxImageWidth - margin;
-            const imageY = 45; // Below the header
-            
-            // Check if the image is already a data URL
-            let imageSource = projectImage;
-            if (!projectImage.startsWith('data:image/')) {
-              console.log("Project image is not a data URL, converting...");
-              
-              // Create a temporary image element to convert to data URL
-              const tempImg = new Image();
-              tempImg.crossOrigin = "anonymous"; // Ensure CORS is handled properly
-              
-              // Set up a promise to wait for the image to load
-              await new Promise<void>((resolve) => {
-                tempImg.onload = () => {
-                  console.log("Temp image loaded successfully, dimensions:", tempImg.width, "x", tempImg.height);
-                  const tempCanvas = document.createElement('canvas');
-                  tempCanvas.width = tempImg.width || 300;
-                  tempCanvas.height = tempImg.height || 200;
-                  const tempCtx = tempCanvas.getContext('2d');
-                  if (tempCtx) {
-                    tempCtx.drawImage(tempImg, 0, 0);
-                    imageSource = tempCanvas.toDataURL('image/jpeg');
-                    console.log("Image converted to data URL successfully");
-                  }
-                  resolve();
-                };
-                
-                tempImg.onerror = (err) => {
-                  console.error("Error loading temp image:", err);
-                  resolve(); // Continue even if image fails
-                };
-                
-                // Set a timeout to prevent hanging
-                setTimeout(resolve, 3000);
-                
-                // Set the source last to trigger loading
-                tempImg.src = projectImage;
-              });
-            }
-            
-            console.log("Adding image to PDF, source type:", typeof imageSource);
-            console.log("Image source starts with:", imageSource.substring(0, 30));
-            
-            // Use the image data for the PDF
-            pdf.addImage(
-              imageSource,
-              'JPEG', 
-              imageX, 
-              imageY, 
-              maxImageWidth, 
-              25, // Fixed height to avoid distortion issues
-              undefined, 
-              'FAST',
-              0 // No rotation
-            );
-            
-            console.log("Project image added to PDF directly");
-          } catch (err) {
-            console.error("Failed to add project image directly:", err);
-          }
-        }
-        
-        if (imgHeight <= firstPageContentHeight) {
-          // One page is enough for content
+        // Check if multiple pages are needed
+        if (imgHeight <= pdfHeight - (2 * margin)) {
+          // One page is enough
           pdf.addImage(
             canvas.toDataURL('image/jpeg', 0.95),
             'JPEG',
-            margin, headerOffset,
+            margin, margin,
             imgWidth, imgHeight
           );
           
           // Add page number
           pdf.setFontSize(10);
           pdf.setTextColor(150, 150, 150);
-          pdf.text('Page 1 of 1', pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+          pdf.text('Page 1 of 1', pdfWidth / 2, pdfHeight - 5, { align: 'center' });
         } else {
           // Multiple pages needed
           let remainingHeight = imgHeight;
-          let totalPages = 1;
+          let totalPages = Math.ceil(imgHeight / (pdfHeight - (2 * margin)));
           
-          // First page has less space due to header
-          remainingHeight -= firstPageContentHeight;
-          totalPages += Math.ceil(remainingHeight / (pdfHeight - (2 * margin) - footerHeight));
-          
-          // Add first page with header space taken into account
-          pdf.addImage(
-            canvas.toDataURL('image/jpeg', 0.95),
-            'JPEG',
-            margin, headerOffset,
-            imgWidth, imgHeight,
-            '', // No alias
-            'SLOW' // Better quality
-          );
-          
-          // Add page number
-          pdf.setFontSize(10);
-          pdf.setTextColor(150, 150, 150);
-          pdf.text(`Page 1 of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
-          
-          // Add remaining pages
-          let currentPage = 1;
-          let position = headerOffset - firstPageContentHeight;
+          let currentPage = 0;
+          let position = 0;
           
           while (currentPage < totalPages) {
-            pdf.addPage();
+            if (currentPage > 0) {
+              pdf.addPage();
+            }
+            
             currentPage++;
             
-            // Continue from previous page
+            // Calculate the portion of the image to show on this page
+            const pageHeight = Math.min(pdfHeight - (2 * margin), remainingHeight);
+            const yPos = position;
+            
+            // Add image with proper position and dimensions
             pdf.addImage(
               canvas.toDataURL('image/jpeg', 0.95),
               'JPEG',
-              margin, position,
+              margin, margin,
               imgWidth, imgHeight,
-              '',
-              'SLOW'
+              undefined,
+              'SLOW',
+              -position * (canvas.width / imgWidth) // Adjust clipY to show proper portion
             );
-            
-            // Move position for next page
-            position -= (pdfHeight - (2 * margin) - footerHeight);
             
             // Add page number
             pdf.setFontSize(10);
             pdf.setTextColor(150, 150, 150);
-            pdf.text(`Page ${currentPage} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+            pdf.text(`Page ${currentPage} of ${totalPages}`, pdfWidth / 2, pdfHeight - 5, { align: 'center' });
+            
+            // Update position and remaining height
+            position += pageHeight;
+            remainingHeight -= pageHeight;
           }
-        }
-        
-        // Add footer to all pages
-        for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
-          pdf.setPage(i);
-          
-          // Add separator line at footer
-          pdf.setDrawColor(200, 200, 200);
-          pdf.line(margin, pdfHeight - footerHeight, pdfWidth - margin, pdfHeight - footerHeight);
-          
-          // Add footer text
-          pdf.setFontSize(8);
-          pdf.setTextColor(150, 150, 150);
-          pdf.text("Lean Six Sigma DMAIC Suite™", margin + 4, pdfHeight - 5);
-        }
-        
-        // Log information about images in the PDF
-        if (projectImage) {
-          console.log("Project image info:", {
-            type: typeof projectImage,
-            length: projectImage.length,
-            firstChars: projectImage.substring(0, 40) + "..."
-          });
         }
         
         // Save the PDF
@@ -1528,9 +1496,9 @@ export default function DefinePhase() {
           variant: "destructive",
         });
       } finally {
-        // Always clean up the clone
-        if (clone.parentNode) {
-          clone.parentNode.removeChild(clone);
+        // Clean up the temporary container
+        if (pdfContainer && pdfContainer.parentNode) {
+          pdfContainer.parentNode.removeChild(pdfContainer);
         }
       }
     } finally {
