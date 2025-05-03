@@ -6,8 +6,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { exportToPdf } from "@/lib/pdfExport";
 import { Image, Trash2, X, ChevronUp, ChevronDown, Download } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
@@ -1209,37 +1211,126 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // Function to handle PDF export
+  // Function to handle PDF export - using the same approach as Dashboard
   const handleExportPdf = async () => {
     try {
       toast({
-        title: "Preparing export...",
-        description: "Generating PDF of the project charter",
+        title: "Generating PDF Report",
+        description: "Please wait while we capture the project charter...",
+      });
+      
+      // Get the element to export
+      const element = document.getElementById("project-charter");
+      if (!element) {
+        throw new Error("Project charter element not found");
+      }
+      
+      // Use html2canvas to capture the charter as an image
+      const canvas = await html2canvas(element, {
+        scale: 1.5, // Higher quality
+        useCORS: true, // Allow cross-origin images
+        logging: false, // Disable logging
+        allowTaint: true, // Allow tainted canvas
+        backgroundColor: "#ffffff" // White background
       });
       
       // Make sure we have a valid project title for the filename
       const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
       const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_');
       
-      // Export the charter to PDF
-      const success = await exportToPdf("project-charter", safeFilename);
+      // Create a new jsPDF instance
+      const pdf = new jsPDF('p', 'mm', 'a4');
       
-      if (success) {
-        toast({
-          title: "Export successful",
-          description: "Project charter has been exported to PDF",
-        });
-      } else {
-        toast({
-          title: "Export failed",
-          description: "Could not export the project charter to PDF",
-          variant: "destructive",
-        });
+      // Calculate dimensions
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasRatio = canvas.height / canvas.width;
+      const imgWidth = pdfWidth;
+      const imgHeight = pdfWidth * canvasRatio;
+      
+      // Add title
+      pdf.setFontSize(18);
+      pdf.setTextColor(33, 37, 41);
+      pdf.text("Lean Six Sigma DMAIC Suite™ - Project Charter", 14, 15);
+      
+      // Add date information
+      pdf.setFontSize(10);
+      pdf.setTextColor(85, 85, 85);
+      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 22);
+      
+      // Add project title information
+      pdf.text(`Project: ${projectTitle}`, 14, 26);
+      
+      // Calculate page count based on image height
+      const totalPages = Math.ceil(imgHeight / (pdfHeight - 40));
+      
+      // Split image across multiple pages if needed
+      let remainingHeight = imgHeight;
+      let sourceY = 0;
+      
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate how much of the image will fit on this page
+        const pageHeight = pdfHeight - (page === 0 ? 40 : 20); // First page has header
+        const printHeight = Math.min(remainingHeight, pageHeight);
+        const sourceHeight = (printHeight / imgHeight) * canvas.height;
+        
+        // Create a temporary canvas to hold just this portion of the image
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = sourceHeight;
+        
+        // Draw the portion of the original canvas onto the temporary canvas
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(
+            canvas, 
+            0, sourceY, canvas.width, sourceHeight,
+            0, 0, tempCanvas.width, tempCanvas.height
+          );
+          
+          // Convert the temporary canvas to a data URL
+          const pageImgData = tempCanvas.toDataURL('image/png');
+          
+          // Add this portion to the PDF
+          const yPosition = page === 0 ? 40 : 15;
+          pdf.addImage(pageImgData, 'PNG', 14, yPosition, imgWidth - 28, printHeight);
+          
+          // Update for next page
+          remainingHeight -= printHeight;
+          sourceY += sourceHeight;
+        }
+        
+        // Add page number at the bottom
+        pdf.setFontSize(10);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
       }
+      
+      // Add footer to all pages
+      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
+      }
+      
+      // Save the PDF
+      const filename = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      pdf.save(filename);
+      
+      toast({
+        title: "Report Generated Successfully",
+        description: `Your project charter has been captured and saved as ${filename}`,
+      });
     } catch (error) {
       console.error("Error exporting to PDF:", error);
       toast({
-        title: "Export error",
+        title: "Export failed",
         description: `An error occurred during export: ${error}`,
         variant: "destructive",
       });
