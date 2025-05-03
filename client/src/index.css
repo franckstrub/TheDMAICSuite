@@ -98,6 +98,22 @@
   object-fit: contain !important;
 }
 
+/* FTE section specific styling for PDF export */
+.html2canvas-container .html2canvas-show.print-hide {
+  position: static !important;
+  opacity: 1 !important;
+  display: block !important;
+  visibility: visible !important;
+  left: auto !important;
+  margin: 5px 0 !important;
+  padding: 2px 5px !important;
+  border-radius: 4px !important;
+  background-color: #f5f5f5 !important;
+  color: #333 !important;
+  font-size: 12px !important;
+  font-weight: normal !important;
+}
+
 /* Special styling for form inputs when generating PDF */
 .html2canvas-container input,
 .html2canvas-container select,
