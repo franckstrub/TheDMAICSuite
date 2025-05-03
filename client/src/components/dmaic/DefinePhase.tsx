@@ -1211,8 +1211,9 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // This flag prevents multiple PDF export operations from running simultaneously
+  // These flags prevent multiple PDF export operations from running simultaneously
   let isPdfGenerating = false;
+  let pdfGenerated = false;
   
   // Function to handle PDF export with protection against duplicate generation
   const handleExportPdf = async () => {
@@ -1222,14 +1223,14 @@ export default function DefinePhase() {
       return;
     }
     
+    // Reset generated flag at the start of a new export
+    pdfGenerated = false;
+    
     // Set the flag to indicate PDF generation is in progress
     isPdfGenerating = true;
     
     try {
-      toast({
-        title: "Generating PDF Report",
-        description: "Please wait while we capture the project charter...",
-      });
+      // We don't show a toast at the beginning - just one at the end
       
       // Get the element to export
       const charterElement = document.getElementById("project-charter");
@@ -1334,7 +1335,6 @@ export default function DefinePhase() {
       
       // Only generate one PDF output
       let pdfOutput = '';
-      let pdfGenerated = false;
       
       // First, check if financial metrics section is expanded
       const financialSection = charterElement.querySelector('#financial-metrics-content');
@@ -1494,11 +1494,11 @@ export default function DefinePhase() {
       } catch (e) {
         console.error("Error during canvas generation:", e);
         
-        // If we already generated a PDF successfully, don't show error messages
+        // If we already generated a PDF successfully, don't show error messages and don't try fallback method
         if (pdfGenerated) {
           // PDF was already saved, so we can just silently exit
           console.log("PDF was already generated successfully, ignoring additional error");
-          return;
+          return; // Return immediately to avoid trying fallback method
         }
         
         // If no PDF was generated yet, try the alternative method silently without error messages
