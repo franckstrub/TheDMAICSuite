@@ -1,34 +1,22 @@
 /**
- * PDF Export Lock Module
- * 
- * A module to prevent duplicate PDF generation when sections are expanded
- * Uses timestamps to track when PDFs were generated and ensure only one generation
- * completes per user action.
+ * This utility module provides thread-safe PDF export locking mechanisms
+ * to prevent duplicate PDF generations when a user clicks the export button multiple times
  */
 
-// Track the timestamp of when PDF was last generated
+// Private state variables
+let isGeneratingPdf = false;
 let lastGeneratedTimestamp: number | null = null;
-
-// Track if PDF generation is currently in progress
-let generationInProgress: boolean = false;
-
-// Default cooldown period in milliseconds (500ms is usually sufficient)
-const GENERATION_COOLDOWN = 500;
+const COOLDOWN_PERIOD = 3000; // 3 seconds cooldown between PDF generations
 
 /**
  * Check if a PDF was recently generated based on timestamp
  * @returns boolean indicating if PDF was generated within cooldown period
  */
 export function wasGenerated(): boolean {
-  if (!lastGeneratedTimestamp) {
-    return false;
-  }
+  if (!lastGeneratedTimestamp) return false;
   
   const now = Date.now();
-  const timeSinceGeneration = now - lastGeneratedTimestamp;
-  
-  // Consider generation still active if within cooldown period
-  return timeSinceGeneration < GENERATION_COOLDOWN;
+  return (now - lastGeneratedTimestamp) < COOLDOWN_PERIOD;
 }
 
 /**
@@ -36,8 +24,6 @@ export function wasGenerated(): boolean {
  */
 export function markAsGenerated(): void {
   lastGeneratedTimestamp = Date.now();
-  generationInProgress = false;
-  console.log("PDF generation marked at timestamp:", lastGeneratedTimestamp);
 }
 
 /**
@@ -45,24 +31,21 @@ export function markAsGenerated(): void {
  * @returns boolean indicating if generation is in progress
  */
 export function isGenerating(): boolean {
-  return generationInProgress;
+  return isGeneratingPdf;
 }
 
 /**
  * Start PDF generation process
  */
 export function startGeneration(): void {
-  generationInProgress = true;
-  console.log("PDF generation started at:", Date.now());
+  isGeneratingPdf = true;
 }
 
 /**
  * Reset the generation state (can be used when changing pages or explicitly canceling)
  */
 export function reset(): void {
-  lastGeneratedTimestamp = null;
-  generationInProgress = false;
-  console.log("PDF generation lock reset");
+  isGeneratingPdf = false;
 }
 
 export default {
