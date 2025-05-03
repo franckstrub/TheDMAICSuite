@@ -90,6 +90,15 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           (container as HTMLElement).style.display = 'none';
         });
         
+        // Specifically hide the standalone FTE Benefits summary (0.13 FTE (€12,500))
+        const fteBenefitSummaryElements = Array.from(clonedDoc.querySelectorAll('div > p, div > div'));
+        fteBenefitSummaryElements.forEach(element => {
+          if (element.textContent && element.textContent.includes('FTE (€') && element.textContent.includes(')')) {
+            (element.parentNode as HTMLElement).style.display = 'none';
+            console.log("Hiding FTE summary element in PDF:", element.textContent);
+          }
+        });
+        
         // Make sure html2canvas-show elements are visible
         const showElements = clonedDoc.querySelectorAll('.html2canvas-show');
         showElements.forEach(el => {
@@ -265,6 +274,15 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
         selectContainers.forEach(container => {
           container.classList.add('pdf-hidden');
           (container as HTMLElement).style.display = 'none';
+        });
+        
+        // Specifically hide the standalone FTE Benefits summary (0.13 FTE (€12,500))
+        const fteBenefitSummaryElements = Array.from(clonedDoc.querySelectorAll('div > p, div > div'));
+        fteBenefitSummaryElements.forEach(element => {
+          if (element.textContent && element.textContent.includes('FTE (€') && element.textContent.includes(')')) {
+            (element.parentNode as HTMLElement).style.display = 'none';
+            console.log("Hiding FTE summary element in PDF:", element.textContent);
+          }
         });
         
         // Make sure html2canvas-show elements are visible
