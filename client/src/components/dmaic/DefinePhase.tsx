@@ -824,7 +824,11 @@ export default function DefinePhase() {
         title: "Success",
         description: "Project charter saved successfully",
       });
+      // Invalidate the charter query
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
+      // IMPORTANT: Also invalidate the projects list to update the title in UI
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      console.log("Project list queries invalidated to refresh updated title");
     },
     onError: (error) => {
       console.error("Error saving charter:", error);
