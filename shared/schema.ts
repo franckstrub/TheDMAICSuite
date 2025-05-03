@@ -64,6 +64,7 @@ export type Stakeholder = z.infer<typeof stakeholderSchema>;
 export const projectCharters = pgTable("project_charters", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
+  projectTitle: text("project_title"), // Add projectTitle field to store the title
   projectReferenceNumber: text("project_reference_number"),
   projectLeader: text("project_leader"),
   sponsor: text("sponsor"),
@@ -140,6 +141,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   })
   .pick({
   projectId: true,
+  projectTitle: true, // Add projectTitle to the schema
   projectReferenceNumber: true,
   projectLeader: true,
   sponsor: true,
