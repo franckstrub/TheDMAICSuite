@@ -1495,6 +1495,10 @@ export default function DefinePhase() {
                           <SelectItem value="White Belt">White Belt</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Project Type: {charterForm.watch("projectType") || "Green Belt"}
+                      </span>
                     </div>
                     <div>
                       <Label htmlFor="projectCategory">Project Category</Label>
@@ -1514,6 +1518,10 @@ export default function DefinePhase() {
                           <SelectItem value="Quick Action">Quick Action</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Project Category: {charterForm.watch("projectCategory") || "Process Improvement"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1546,6 +1554,10 @@ export default function DefinePhase() {
                           <SelectItem value="none">None</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Belt Level: {charterForm.watch("beltLevel") || "Green Belt"}
+                      </span>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1609,6 +1621,10 @@ export default function DefinePhase() {
                           <SelectItem value="None">None</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Coach Belt Level: {charterForm.watch("coachBeltLevel") || "Master Black Belt"}
+                      </span>
                     </div>
                   </div>
                   <div>
@@ -1891,9 +1907,6 @@ export default function DefinePhase() {
                         <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
-                            <div className="mb-1">
-                              <p className="text-xs font-medium">Working Days/Week: {fteParams.workingDaysPerWeek}</p>
-                            </div>
                             <Label htmlFor="workingDaysPerWeek" className="text-xs">Working Days/Week</Label>
                             <Input
                               id="workingDaysPerWeek"
@@ -1914,14 +1927,11 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.workingDaysPerWeek}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
-                              {fteParams.workingDaysPerWeek}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                              Working Days/Week: {fteParams.workingDaysPerWeek}
                             </span>
                           </div>
                           <div>
-                            <div className="mb-1">
-                              <p className="text-xs font-medium">Working Hours/Day: {fteParams.workingHoursPerDay}</p>
-                            </div>
                             <Label htmlFor="workingHoursPerDay" className="text-xs">Working Hours/Day</Label>
                             <Input
                               id="workingHoursPerDay"
@@ -1942,8 +1952,8 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.workingHoursPerDay}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
-                              {fteParams.workingHoursPerDay}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                              Working Hours/Day: {fteParams.workingHoursPerDay}
                             </span>
                           </div>
                         </div>
@@ -1953,10 +1963,6 @@ export default function DefinePhase() {
                         <Label htmlFor="savedTime" className="text-xs font-medium">Saved Working Time</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
-                            <div className="mb-1">
-                              <p className="text-xs font-medium">Time Period: {fteParams.timeUnit === 'day' ? 'Per Day' : 
-                                fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}</p>
-                            </div>
                             <Label htmlFor="timeUnit" className="text-xs">Time Period</Label>
                             <select 
                               id="timeUnit"
@@ -1971,15 +1977,12 @@ export default function DefinePhase() {
                               <option value="month">Per Month</option>
                             </select>
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
-                              {fteParams.timeUnit === 'day' ? 'Per Day' : 
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                              Time Period: {fteParams.timeUnit === 'day' ? 'Per Day' : 
                                 fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}
                             </span>
                           </div>
                           <div>
-                            <div className="mb-1">
-                              <p className="text-xs font-medium">Hours Saved: {fteParams.savedHours}</p>
-                            </div>
                             <Label htmlFor="savedHours" className="text-xs">Hours Saved</Label>
                             <Input
                               id="savedHours"
@@ -1999,8 +2002,8 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.savedHours}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
-                              {fteParams.savedHours}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                              Hours Saved: {fteParams.savedHours}
                             </span>
                           </div>
                         </div>
@@ -2019,11 +2022,11 @@ export default function DefinePhase() {
                             <p className="text-sm font-medium">
                               Calculated FTE: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)}</span>
                             </p>
-                            <p className="text-xs text-gray-600 pdf-value-only">
+                            <p className="text-xs text-gray-600">
                               Based on {fteParams.savedHours} hours saved {fteParams.timeUnit === 'day' ? 'per day' : 
                               fteParams.timeUnit === 'week' ? 'per week' : 'per month'}, 
-                              working {fteParams.workingDaysPerWeek} days per week, and 
-                              {fteParams.workingHoursPerDay} hours per day
+                              {fteParams.workingDaysPerWeek} working days per week, and 
+                              {fteParams.workingHoursPerDay} working hours per day
                             </p>
                           </div>
                         </div>
@@ -2049,8 +2052,8 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.fteCostPerYear}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
-                              {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                              FTE Cost per Year: {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
                             </span>
                           </div>
                           
@@ -2062,8 +2065,8 @@ export default function DefinePhase() {
                               </div>
                             </div>
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
-                              {formatCurrency(fteParams.calculatedValue, currency)}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                              FTE Benefits: {formatCurrency(fteParams.calculatedValue, currency)}
                             </span>
                           </div>
                         </div>
