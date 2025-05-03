@@ -1688,7 +1688,7 @@ export default function DefinePhase() {
                       
                       <div className="pt-2 border-t border-gray-200 mb-3">
                         <Label className="text-xs font-medium">FTE Results</Label>
-                        <div className="flex justify-between items-center mb-3">
+                        <div className="flex justify-between items-center mb-3 p-2 border border-gray-200 rounded-md bg-gray-50">
                           <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte.toFixed(3)}</span></p>
                           <div className="text-xs text-gray-500">Auto-calculated</div>
                         </div>
