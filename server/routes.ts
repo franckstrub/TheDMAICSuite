@@ -118,7 +118,14 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
       softBenefits
     };
     
-    // Also sync important dates from charter to project
+    // Also sync important fields from charter to project
+    // Sync project title if provided in charter
+    if (charter.projectTitle) {
+      projectUpdate.title = charter.projectTitle;
+      console.log("Synchronizing project title from charter to project:", charter.projectTitle);
+    }
+    
+    // Sync dates
     if (charter.startDate) {
       projectUpdate.startDate = charter.startDate;
       console.log("Synchronizing start date from charter to project:", charter.startDate);
