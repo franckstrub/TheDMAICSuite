@@ -254,35 +254,6 @@
   display: block !important;
 }
 
-/* Special handling for animated elements and motion divs in PDF exports */
-.html2canvas-container [data-framer-component-type="motion.div"],
-.html2canvas-container .motion-div,
-.html2canvas-container div[style*="transform"],
-.html2canvas-container div[style*="transition"],
-.html2canvas-container [data-state] > div,
-.html2canvas-container .border.border-gray-200.border-t-0.rounded-b-md {
-  height: auto !important;
-  max-height: none !important;
-  opacity: 1 !important;
-  overflow: visible !important;
-  transform: none !important;
-  transition: none !important;
-  display: block !important;
-  visibility: visible !important;
-  position: relative !important;
-}
-
-/* Fix the financial section specifically for PDF exports */
-.html2canvas-container .collapsible-financial-content,
-.html2canvas-container [data-state="open"] > div {
-  display: block !important;
-  visibility: visible !important;
-  height: auto !important;
-  opacity: 1 !important;
-  overflow: visible !important;
-  max-height: none !important;
-}
-
 /* Normal display (reverse of PDF display) */
 .html2canvas-show {
   display: none !important;
