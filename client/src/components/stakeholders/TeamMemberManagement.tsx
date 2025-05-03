@@ -234,30 +234,18 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
         </table>
       </div>
       
-      {/* Special table just for PDF export - with compact styling */}
-      <div className="border rounded-md html2canvas-show" id="team-members-pdf-table">
-        <table className="w-full pdf-friendly-table">
-          <thead className="bg-muted border-b">
-            <tr>
-              <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-              <th className="px-4 py-1 text-left text-xs font-medium uppercase tracking-wider">Function/Expertise</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {teamMembers.length > 0 ? teamMembers.map((teamMember, index) => (
-              <tr key={index} className="compact-row">
-                <td className="px-4 py-1 text-sm">{teamMember.name}</td>
-                <td className="px-4 py-1 text-sm">{teamMember.function || "-"}</td>
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan={2} className="px-4 py-2 text-center text-sm">
-                  No team members added.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Super simplified table just for PDF export */}
+      <div className="html2canvas-show pdf-text-only-table" id="team-members-pdf-table">
+        <p className="font-semibold text-sm mb-1">Team Members:</p>
+        <div className="text-sm space-y-0.5">
+          {teamMembers.length > 0 ? teamMembers.map((teamMember, index) => (
+            <div key={index} className="team-member-list-item">
+              {teamMember.name}{teamMember.function ? ` (${teamMember.function})` : ''}
+            </div>
+          )) : (
+            <div className="text-muted-foreground">No team members added.</div>
+          )}
+        </div>
       </div>
       
       <p className="text-xs text-muted-foreground italic">

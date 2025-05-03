@@ -322,6 +322,17 @@
   line-height: 1.2;
 }
 
+/* Styling for the simplified PDF stakeholder and team member lists */
+.pdf-text-only-table {
+  margin-bottom: 10px;
+}
+
+.stakeholder-list-item,
+.team-member-list-item {
+  padding: 2px 0;
+  line-height: 1.2;
+}
+
 #stakeholders-pdf-table,
 #team-members-pdf-table {
   margin-bottom: 5px;
