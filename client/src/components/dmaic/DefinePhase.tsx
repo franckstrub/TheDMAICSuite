@@ -2267,12 +2267,14 @@ export default function DefinePhase() {
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsFinancialSectionExpanded(!isFinancialSectionExpanded)}
+                  className="html2canvas-hide"
                 >
                   {isFinancialSectionExpanded ? "Hide Section" : "Show Section"}
                 </Button>
               </div>
               
-              {/* Collapsible content */}
+              
+              {/* Collapsible content - visible in UI */}
               <AnimatePresence>
                 {isFinancialSectionExpanded && (
                   <motion.div
