@@ -305,6 +305,49 @@
   position: relative;
 }
 
+/* Special CSS for expanded sections in PDF exports */
+.pdf-capture-target [data-state="open"],
+.pdf-capture-target [data-pdf-expanded="true"] {
+  /* Force expanded sections to show in PDFs */
+  height: auto !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+/* Make sure all content inside expanded sections is visible */
+.pdf-capture-target [data-state="open"] [data-orientation="vertical"],
+.pdf-capture-target [data-pdf-expanded="true"] [data-orientation="vertical"] {
+  height: auto !important;
+  max-height: none !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  position: static !important;
+  transform: none !important;
+  clip-path: none !important;
+  display: block !important;
+}
+
+/* Make sure all the content is visible */
+.pdf-capture-target [data-state="open"] [data-orientation="vertical"] > *,
+.pdf-capture-target [data-pdf-expanded="true"] [data-orientation="vertical"] > * {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+/* Special handling for Radix UI accordions */
+.pdf-capture-target [data-radix-accordion-content] {
+  height: auto !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  display: block !important;
+}
+
 @media print {
   input, button, select, textarea {
     display: none !important;
@@ -319,6 +362,18 @@
   
   .print-hide {
     display: none !important;
+  }
+  
+  /* Force expanded sections to be visible when printing */
+  [data-state="open"] [data-orientation="vertical"] {
+    height: auto !important;
+    max-height: none !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    transform: none !important;
+    display: block !important;
   }
 }
 

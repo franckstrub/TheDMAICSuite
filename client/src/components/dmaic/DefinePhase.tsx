@@ -1321,8 +1321,8 @@ export default function DefinePhase() {
         }
       });
       
-      // Add the container class for special PDF rendering
-      charterElement.classList.add('html2canvas-container');
+      // Add the container classes for special PDF rendering
+      charterElement.classList.add('html2canvas-container', 'pdf-capture-target');
       
       // Wait a brief moment for DOM changes to take effect
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -1582,8 +1582,8 @@ export default function DefinePhase() {
       // Always clean up the DOM regardless of success or failure
       const cleanupElement = document.getElementById('project-charter');
       if (cleanupElement) {
-        // Remove special class
-        cleanupElement.classList.remove('html2canvas-container');
+        // Remove special classes
+        cleanupElement.classList.remove('html2canvas-container', 'pdf-capture-target');
         
         console.log("Cleaning up after PDF generation");
         
@@ -1595,9 +1595,26 @@ export default function DefinePhase() {
           }
         });
         
-        // Clean up any other data attributes
+        // Clean up any data attributes
         cleanupElement.querySelectorAll('[data-pdf-value]').forEach(el => {
           el.removeAttribute('data-pdf-value');
+        });
+        
+        // Clean up any special PDF export attributes
+        cleanupElement.querySelectorAll('[data-pdf-expanded]').forEach(el => {
+          el.removeAttribute('data-pdf-expanded');
+        });
+        
+        // Clean up any inline styles added for PDF export
+        cleanupElement.querySelectorAll('[data-orientation="vertical"]').forEach(el => {
+          // Reset any inline styles that were added for PDF export
+          (el as HTMLElement).style.height = '';
+          (el as HTMLElement).style.overflow = '';
+          (el as HTMLElement).style.opacity = '';
+          (el as HTMLElement).style.visibility = '';
+          (el as HTMLElement).style.position = '';
+          (el as HTMLElement).style.transform = '';
+          (el as HTMLElement).style.display = '';
         });
       }
       
