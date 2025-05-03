@@ -16,7 +16,8 @@ export const exportElementToPdf = async (
   title: string,
   filename: string,
   onSuccess: (filename: string) => void,
-  onError: (error: Error) => void
+  onError: (error: Error) => void,
+  projectImage?: string // Optional project image URL
 ) => {
   try {
     // Get the original element
@@ -136,6 +137,13 @@ export const exportElementToPdf = async (
         compress: true
       });
       
+      // Get PDF page dimensions early
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10; // Margin on each side
+      const headerOffset = 40; // Space for the header
+      const footerHeight = 15; // Space for the footer
+      
       // Add title and header
       pdf.setFontSize(16);
       pdf.setTextColor(33, 37, 41);
@@ -148,6 +156,57 @@ export const exportElementToPdf = async (
       // Add separator line
       pdf.setDrawColor(200, 200, 200);
       pdf.line(14, 38, 196, 38);
+      
+      // If a project image was provided, add it directly to the PDF
+      if (projectImage) {
+        try {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = projectImage;
+          
+          // Create temporary canvas to convert image to data URL
+          const tempCanvas = document.createElement('canvas');
+          const ctx = tempCanvas.getContext('2d');
+          
+          // Wait for the image to load
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              // Set canvas dimensions to match image
+              tempCanvas.width = img.width;
+              tempCanvas.height = img.height;
+              
+              // Draw image to canvas
+              ctx?.drawImage(img, 0, 0);
+              resolve();
+            };
+            img.onerror = () => reject(new Error('Failed to load project image'));
+            
+            // Set a timeout to prevent hanging if the image never loads
+            setTimeout(() => resolve(), 3000);
+          });
+          
+          // Calculate dimensions for the image in the PDF
+          const maxWidth = 80; // mm
+          const imgRatio = img.height / img.width;
+          const imgWidth = Math.min(maxWidth, pdfWidth - (2 * margin));
+          const imgHeight = imgWidth * imgRatio;
+          
+          // Add image to PDF
+          pdf.addImage(
+            tempCanvas.toDataURL('image/jpeg', 0.95),
+            'JPEG',
+            pdfWidth - imgWidth - margin, // Right-aligned
+            headerOffset, // Below header
+            imgWidth,
+            imgHeight
+          );
+          
+          console.log('Project image added to PDF successfully');
+        } catch (error) {
+          console.error('Failed to add project image to PDF:', error);
+          // Continue with PDF generation even if image fails
+        }
+      }
       
       // Give the browser a moment to properly render images
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -172,14 +231,7 @@ export const exportElementToPdf = async (
         }
       });
       
-      // Calculate dimensions
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Constants for positioning
-      const headerOffset = 40; // Space for the header
-      const footerHeight = 15; // Space for the footer
-      const margin = 10; // Margin on each side
+      // Calculate dimensions (already defined earlier)
       
       // Calculate image dimensions
       const imgWidth = pdfWidth - (2 * margin);
