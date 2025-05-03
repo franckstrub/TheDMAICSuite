@@ -1253,7 +1253,7 @@ export default function DefinePhase() {
       
       // Using a different approach to avoid PNG corruption
       // Use html2canvas with different settings
-      const canvas = await html2canvas(element, {
+      const canvas = await html2canvas(charterElement, {
         scale: 2.5, // Higher scale for better clarity
         useCORS: true,
         allowTaint: true,
@@ -1337,7 +1337,9 @@ export default function DefinePhase() {
       pdf.save(filename);
       
       // Remove the html2canvas class to clean up
-      element.classList.remove('html2canvas-container');
+      if (charterElement) {
+        charterElement.classList.remove('html2canvas-container');
+      }
       
       toast({
         title: "Report Generated Successfully",
@@ -1347,8 +1349,9 @@ export default function DefinePhase() {
       console.error("Error exporting to PDF:", error);
       
       // Ensure we clean up the class even if there's an error
-      if (element) {
-        element.classList.remove('html2canvas-container');
+      const cleanupElement = document.getElementById('project-charter');
+      if (cleanupElement) {
+        cleanupElement.classList.remove('html2canvas-container');
       }
       
       toast({
