@@ -1670,10 +1670,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("kick_off_date")}
                       />
-                      {/* Add PDF-friendly text display for milestone date */}
-                      <div className="pdf-text">
-                        <strong>Kick-Off with team:</strong> {charterForm.watch("kick_off_date") ? format(new Date(charterForm.watch("kick_off_date")), 'MMM d, yyyy') : 'Not set'}
-                      </div>
                     </div>
                     <div>
                       <Label htmlFor="define_phase_date">Define Phase</Label>
@@ -1682,10 +1678,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("define_phase_date")}
                       />
-                      {/* Add PDF-friendly text display for milestone date */}
-                      <div className="pdf-text">
-                        <strong>Define Phase:</strong> {charterForm.watch("define_phase_date") ? format(new Date(charterForm.watch("define_phase_date")), 'MMM d, yyyy') : 'Not set'}
-                      </div>
                     </div>
                     <div>
                       <Label htmlFor="measure_phase_date">Measure Phase</Label>
@@ -1694,10 +1686,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("measure_phase_date")}
                       />
-                      {/* Add PDF-friendly text display for milestone date */}
-                      <div className="pdf-text">
-                        <strong>Measure Phase:</strong> {charterForm.watch("measure_phase_date") ? format(new Date(charterForm.watch("measure_phase_date")), 'MMM d, yyyy') : 'Not set'}
-                      </div>
                     </div>
                     <div>
                       <Label htmlFor="analyze_phase_date">Analyze Phase</Label>
@@ -1706,10 +1694,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("analyze_phase_date")}
                       />
-                      {/* Add PDF-friendly text display for milestone date */}
-                      <div className="pdf-text">
-                        <strong>Analyze Phase:</strong> {charterForm.watch("analyze_phase_date") ? format(new Date(charterForm.watch("analyze_phase_date")), 'MMM d, yyyy') : 'Not set'}
-                      </div>
                     </div>
                     <div>
                       <Label htmlFor="improve_phase_date">Improve Phase</Label>
@@ -1718,10 +1702,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("improve_phase_date")}
                       />
-                      {/* Add PDF-friendly text display for milestone date */}
-                      <div className="pdf-text">
-                        <strong>Improve Phase:</strong> {charterForm.watch("improve_phase_date") ? format(new Date(charterForm.watch("improve_phase_date")), 'MMM d, yyyy') : 'Not set'}
-                      </div>
                     </div>
                     <div>
                       <Label htmlFor="control_phase_date">Control Phase</Label>
@@ -1731,50 +1711,7 @@ export default function DefinePhase() {
                         value={charterForm.watch("control_phase_date") || (currentProject?.targetEndDate ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] : "")}
                         onChange={(e) => charterForm.setValue("control_phase_date", e.target.value)}
                       />
-                      {/* Add PDF-friendly text display for milestone date */}
-                      <div className="pdf-text">
-                        <strong>Control Phase:</strong> {charterForm.watch("control_phase_date") ? format(new Date(charterForm.watch("control_phase_date")), 'MMM d, yyyy') : 'Not set'}
-                      </div>
                     </div>
-                  </div>
-                  
-                  {/* PDF-only table of milestone dates for better layout in exported PDF */}
-                  <div className="html2canvas-show">
-                    <h4 className="text-md font-medium mt-4 mb-2">Milestone Dates (Timeline)</h4>
-                    <table className="w-full pdf-friendly-table">
-                      <thead>
-                        <tr>
-                          <th>Milestone</th>
-                          <th>Planned Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>Kick-Off with team</td>
-                          <td>{charterForm.watch("kick_off_date") ? format(new Date(charterForm.watch("kick_off_date")), 'MMMM d, yyyy') : 'Not set'}</td>
-                        </tr>
-                        <tr>
-                          <td>Define Phase</td>
-                          <td>{charterForm.watch("define_phase_date") ? format(new Date(charterForm.watch("define_phase_date")), 'MMMM d, yyyy') : 'Not set'}</td>
-                        </tr>
-                        <tr>
-                          <td>Measure Phase</td>
-                          <td>{charterForm.watch("measure_phase_date") ? format(new Date(charterForm.watch("measure_phase_date")), 'MMMM d, yyyy') : 'Not set'}</td>
-                        </tr>
-                        <tr>
-                          <td>Analyze Phase</td>
-                          <td>{charterForm.watch("analyze_phase_date") ? format(new Date(charterForm.watch("analyze_phase_date")), 'MMMM d, yyyy') : 'Not set'}</td>
-                        </tr>
-                        <tr>
-                          <td>Improve Phase</td>
-                          <td>{charterForm.watch("improve_phase_date") ? format(new Date(charterForm.watch("improve_phase_date")), 'MMMM d, yyyy') : 'Not set'}</td>
-                        </tr>
-                        <tr>
-                          <td>Control Phase</td>
-                          <td>{charterForm.watch("control_phase_date") ? format(new Date(charterForm.watch("control_phase_date")), 'MMMM d, yyyy') : 'Not set'}</td>
-                        </tr>
-                      </tbody>
-                    </table>
                   </div>
                 </div>
               </div>

@@ -79,7 +79,6 @@
   font-size: 14px;
   font-weight: normal;
   color: #000;
-  margin-top: 5px;
 }
 
 .html2canvas-container .html2canvas-hide {
@@ -110,58 +109,18 @@
   display: none !important;
 }
 
-/* PDF-friendly table styling for milestone dates */
 .pdf-friendly-table {
+  table-layout: fixed;
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
-  margin-bottom: 20px;
-  table-layout: fixed;
 }
 
 .pdf-friendly-table th,
 .pdf-friendly-table td {
-  padding: 8px 12px;
+  padding: 8px;
   text-align: left;
   vertical-align: middle;
   position: relative;
-  border: 1px solid #e2e8f0;
-}
-
-.pdf-friendly-table th {
-  background-color: #f8fafc;
-  font-weight: 600;
-}
-
-.pdf-friendly-table tr:nth-child(even) {
-  background-color: #f1f5f9;
-}
-
-/* Special styling for PDF-only date displays */
-.html2canvas-container .milestone-date-display {
-  margin-top: 5px;
-  font-size: 13px;
-  color: #4b5563;
-}
-
-/* Style for page breaks in PDF exports */
-@media print {
-  .page-break {
-    display: block;
-    page-break-after: always;
-    break-after: page;
-  }
-}
-
-.html2canvas-container [style*="pageBreakAfter"] {
-  display: block;
-  page-break-after: always;
-  break-after: page;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  height: 1px;
-  width: 100%;
-  border-bottom: 1px dashed #e5e7eb;
 }
 
 @media print {
