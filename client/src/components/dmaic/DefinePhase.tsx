@@ -1248,7 +1248,7 @@ export default function DefinePhase() {
       header.style.marginBottom = '20px';
       
       const title = document.createElement('h1');
-      title.textContent = 'Six Sigma Project Charter';
+      title.textContent = 'Lean Six Sigma DMAIC Suite™';
       title.style.fontSize = '24px';
       title.style.fontWeight = 'bold';
       title.style.marginBottom = '8px';
