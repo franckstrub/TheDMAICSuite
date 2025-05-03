@@ -239,18 +239,22 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
         <h4 className="font-semibold text-sm mb-3">Team Members</h4>
         
         {teamMembers.length > 0 ? (
-          <div className="team-member-pdf-table">
-            <div className="team-member-pdf-header flex w-full mb-2">
-              <div className="w-1/2 font-medium text-base">Name</div>
-              <div className="w-1/2 font-medium text-base">Function</div>
-            </div>
-            {teamMembers.map((teamMember, index) => (
-              <div key={index} className="team-member-pdf-row flex w-full mb-1">
-                <div className="w-1/2">{teamMember.name || 'N/A'}</div>
-                <div className="w-1/2">{teamMember.function || 'N/A'}</div>
-              </div>
-            ))}
-          </div>
+          <table className="two-column-pdf-table">
+            <thead>
+              <tr>
+                <th className="text-left text-base font-medium">Name</th>
+                <th className="text-left text-base font-medium">Function/Expertise</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teamMembers.map((teamMember, index) => (
+                <tr key={index}>
+                  <td>{teamMember.name || 'N/A'}</td>
+                  <td>{teamMember.function || 'N/A'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : (
           <div className="text-muted-foreground text-sm">No team members added.</div>
         )}
