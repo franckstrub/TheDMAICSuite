@@ -1344,25 +1344,24 @@ export default function DefinePhase() {
       // Only generate one PDF output
       let pdfOutput = '';
       
-      // We need to actually close expanded sections temporarily for reliability
-      console.log("Looking for expanded sections to temporarily close");
-      
-      // Find ALL opened accordions and temporarily close them
+      // SIMPLE SOLUTION: Just tell the user to collapse expanded sections manually
+      console.log("Checking for expanded sections");
       const expandedSections = charterElement.querySelectorAll('[data-state="open"]');
-      let anyExpanded = false;
       
-      expandedSections.forEach(section => {
-        const sectionId = section.id || 'unknown-section';
-        console.log(`Temporarily closing section: ${sectionId}`);
-        section.setAttribute('data-pdf-was-expanded', 'true');
-        section.setAttribute('data-state', 'closed');
-        anyExpanded = true;
-      });
-      
-      if (anyExpanded) {
-        console.log("Found expanded sections - waiting for DOM to update");
-        // Wait for DOM to update after closing sections
-        await new Promise(resolve => setTimeout(resolve, 500));
+      if (expandedSections.length > 0) {
+        console.log("Found expanded sections, asking user to close them manually");
+        
+        // Reset the flag before showing toast
+        isPdfGenerating = false;
+        charterElement.classList.remove('html2canvas-container');
+        
+        toast({
+          title: "Please Collapse All Sections",
+          description: "Please collapse all expanded sections before exporting to PDF.",
+          variant: "destructive",
+        });
+        
+        return; // Exit early
       }
       
       try {
@@ -1531,16 +1530,7 @@ export default function DefinePhase() {
         // Remove special class
         cleanupElement.classList.remove('html2canvas-container');
         
-        console.log("Cleaning up and restoring expanded sections");
-        
-        // Restore ALL sections that were expanded and we collapsed for PDF generation
-        const expandedSections = cleanupElement.querySelectorAll('[data-pdf-was-expanded="true"]');
-        expandedSections.forEach(section => {
-          const sectionId = section.id || 'unknown-section';
-          console.log(`Restoring expanded section: ${sectionId}`);
-          section.setAttribute('data-state', 'open');
-          section.removeAttribute('data-pdf-was-expanded');
-        });
+        console.log("Cleaning up after PDF generation");
         
         // Just in case any temporary notes were added in the past
         const tempNotes = cleanupElement.querySelectorAll('.pdf-only-note');
