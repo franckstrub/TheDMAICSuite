@@ -141,34 +141,36 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
 
       {/* Stakeholders Table */}
       <div className="border rounded-md">
-        <table className="w-full">
+        <table className="w-full pdf-friendly-table">
           <thead className="bg-muted border-b">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Function</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-16">Actions</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-16 print-hide">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {stakeholders.map((stakeholder, index) => (
               <tr key={index}>
                 <td className="px-4 py-2">
+                  <div className="pdf-export-content">{stakeholder.name}</div>
                   <Input
                     placeholder="Enter stakeholder name"
                     value={stakeholder.name}
                     onChange={(e) => updateStakeholder(index, 'name', e.target.value)}
-                    className="h-8"
+                    className="h-8 pdf-hide-input"
                   />
                 </td>
                 <td className="px-4 py-2">
+                  <div className="pdf-export-content">{stakeholder.function || "-"}</div>
                   <Input
                     placeholder="Enter function/department (optional)"
                     value={stakeholder.function}
                     onChange={(e) => updateStakeholder(index, 'function', e.target.value)}
-                    className="h-8"
+                    className="h-8 pdf-hide-input"
                   />
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-2 print-hide">
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -184,7 +186,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
             
             {/* Form for adding a new stakeholder */}
             {isAddingNew && (
-              <tr className="bg-accent/50 stakeholder-form">
+              <tr className="bg-accent/50 stakeholder-form print-hide">
                 <td className="px-4 py-2">
                   <Input 
                     placeholder="Stakeholder Name"
