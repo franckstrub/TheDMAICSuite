@@ -1911,7 +1911,7 @@ export default function DefinePhase() {
                       />
                     </div>
                   </div>
-                  <div className="stakeholder-table-container">
+                  <div className="stakeholder-table-container stakeholder-section">
                     {/* Stakeholder Management Component */}
                     <StakeholderManagement 
                       stakeholders={stakeholders}
