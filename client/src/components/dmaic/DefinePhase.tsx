@@ -1184,6 +1184,131 @@ export default function DefinePhase() {
       breakEvenFormatted
     });
   };
+  
+  // Reference to the charter container for PDF export
+  const charterRef = useRef<HTMLDivElement>(null);
+  
+  // Function to generate and download PDF of project charter
+  const handleExportCharterToPDF = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    toast({
+      title: "Generating PDF Report",
+      description: "Please wait while we prepare your Project Charter PDF...",
+    });
+    
+    try {
+      if (!charterRef.current) {
+        throw new Error("Charter element not found");
+      }
+      
+      // Use html2canvas to capture the charter as an image
+      const canvas = await html2canvas(charterRef.current, {
+        scale: 1.5, // Higher quality
+        useCORS: true, // Allow cross-origin images
+        logging: false, // Disable logging
+        allowTaint: true, // Allow tainted canvas
+        backgroundColor: "#ffffff" // White background
+      });
+      
+      // Create a new jsPDF instance
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Calculate dimensions
+      const imgData = canvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasRatio = canvas.height / canvas.width;
+      const imgWidth = pdfWidth;
+      const imgHeight = pdfWidth * canvasRatio;
+      
+      // Add title
+      pdf.setFontSize(18);
+      pdf.setTextColor(33, 37, 41);
+      pdf.text("Lean Six Sigma DMAIC Suite™ - Project Charter", 14, 15);
+      
+      // Add date and project info
+      pdf.setFontSize(10);
+      pdf.setTextColor(85, 85, 85);
+      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 22);
+      pdf.text(`Project: ${charter?.charter?.projectTitle || "Untitled Project"}`, 14, 26);
+      
+      // Split canvas into manageable chunks for multi-page PDF if needed
+      const maxHeight = pdfHeight - 40; // Leave space for headers/footers
+      const totalPages = Math.ceil(imgHeight / maxHeight);
+      
+      // For each page
+      let sourceY = 0;
+      let remainingHeight = imgHeight;
+      
+      for (let page = 0; page < totalPages; page++) {
+        // Add a new page if not the first page
+        if (page > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate how much of the image to put on this page
+        const sourceHeight = Math.min(remainingHeight, maxHeight * canvas.width / imgWidth);
+        const printHeight = Math.min(maxHeight, remainingHeight * imgWidth / canvas.width);
+        
+        // Create a temporary canvas for this page section
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = sourceHeight;
+        
+        // Draw just this section to the temporary canvas
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(
+            canvas, 
+            0, sourceY, canvas.width, sourceHeight,
+            0, 0, tempCanvas.width, tempCanvas.height
+          );
+          
+          // Convert the temporary canvas to a data URL
+          const pageImgData = tempCanvas.toDataURL('image/png');
+          
+          // Add this portion to the PDF
+          const yPosition = page === 0 ? 40 : 15;
+          pdf.addImage(pageImgData, 'PNG', 14, yPosition, imgWidth - 28, printHeight);
+          
+          // Update for next page
+          remainingHeight -= printHeight;
+          sourceY += sourceHeight;
+        }
+        
+        // Add page number at the bottom
+        pdf.setFontSize(10);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+      }
+      
+      // Add footer to all pages
+      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
+      }
+      
+      // Save the PDF
+      const projectName = charter?.charter?.projectTitle?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'project_charter';
+      const filename = `DMAIC_Project_Charter_${projectName}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      pdf.save(filename);
+      
+      toast({
+        title: "Charter PDF Generated Successfully",
+        description: `Your project charter has been exported as ${filename}`,
+      });
+    } catch (error) {
+      console.error("Error generating PDF report:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem creating the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSaveRequirements = () => {
     saveRequirementsMutation.mutate(requirements);
@@ -1230,7 +1355,7 @@ export default function DefinePhase() {
           )}
         </CardHeader>
         <CardContent>
-          <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4">
+          <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4" ref={charterRef}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-4">
