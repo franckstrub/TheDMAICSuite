@@ -1279,20 +1279,63 @@ export default function DefinePhase() {
       // If we have a project image, add it in a floating container at the top right
       if (projectImage) {
         console.log("Adding project image to PDF container");
+        
+        // First, get the original image dimensions to maintain aspect ratio
+        const originalImg = document.querySelector('.pdf-project-image') as HTMLImageElement;
+        let originalWidth = 300; // Default if we can't get actual dimensions
+        let originalHeight = 200;
+        
+        if (originalImg) {
+          // Try to get the actual dimensions from the DOM
+          const imgComputedStyle = window.getComputedStyle(originalImg);
+          originalWidth = originalImg.naturalWidth || parseInt(imgComputedStyle.width, 10) || 300;
+          originalHeight = originalImg.naturalHeight || parseInt(imgComputedStyle.height, 10) || 200;
+          console.log("Original image dimensions:", originalWidth, "x", originalHeight);
+        }
+        
+        // Calculate appropriate dimensions with the same aspect ratio
+        let maxWidth = 400; // Maximum width for the image in the PDF (increased)
+        let maxHeight = 350; // Maximum height for the image in the PDF (increased)
+        
+        // Calculate dimensions that preserve aspect ratio
+        let width = originalWidth;
+        let height = originalHeight;
+        
+        // Scale down if necessary while preserving aspect ratio
+        if (width > maxWidth) {
+          const ratio = maxWidth / width;
+          width = maxWidth;
+          height = height * ratio;
+        }
+        
+        if (height > maxHeight) {
+          const ratio = maxHeight / height;
+          height = maxHeight;
+          width = width * ratio;
+        }
+        
+        // Create container with precise dimensions
         const imageContainer = document.createElement('div');
         imageContainer.style.float = 'right';
-        imageContainer.style.width = '200px';
+        imageContainer.style.width = `${width}px`;
+        imageContainer.style.height = `${height}px`;
         imageContainer.style.marginLeft = '20px';
         imageContainer.style.marginBottom = '20px';
+        imageContainer.style.padding = '0';
+        imageContainer.style.overflow = 'hidden';
         
+        // Create image element with precise sizing
         const img = document.createElement('img');
         img.src = projectImage;
         img.alt = 'Project Image';
-        img.style.width = '100%';
-        img.style.height = 'auto';
-        img.style.maxHeight = '150px';
+        img.width = width;
+        img.height = height;
+        img.style.display = 'block';
         img.style.objectFit = 'contain';
         img.crossOrigin = 'anonymous';
+        
+        // Add some debug information
+        console.log("Setting PDF image dimensions to:", width, "x", height);
         
         imageContainer.appendChild(img);
         pdfContainer.appendChild(imageContainer);
