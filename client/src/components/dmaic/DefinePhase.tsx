@@ -1272,8 +1272,11 @@ export default function DefinePhase() {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
       
-      // Calculate how many pages we need
-      const pageHeight = pdfHeight - 40; // Account for header space on first page
+      // Define footer height and adjust page dimensions to account for footer
+      const footerHeight = 15; // mm
+      
+      // Calculate how many pages we need - with more space for footer
+      const pageHeight = pdfHeight - 40 - footerHeight; // Account for header space on first page and footer on all pages
       const contentWidth = pdfWidth - 20; // 10mm margin on each side
       const imgWidth = contentWidth;
       const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
@@ -1288,8 +1291,8 @@ export default function DefinePhase() {
           pdf.addPage();
         }
         
-        // Calculate current page dimensions
-        const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20);
+        // Calculate current page dimensions - ensuring space for footer on all pages
+        const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20 - footerHeight);
         const printHeight = Math.min(remainingHeight, currentPageHeight);
         const sourceHeight = (printHeight / imgHeight) * canvasHeight;
         
@@ -1318,10 +1321,14 @@ export default function DefinePhase() {
           sourceY += sourceHeight;
         }
         
-        // Add page number
+        // Add page number in footer area
         pdf.setFontSize(10);
         pdf.setTextColor(150, 150, 150);
-        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+        
+        // Optional: Add a separator line above footer
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(10, pdfHeight - footerHeight, pdfWidth - 10, pdfHeight - footerHeight);
       }
       
       // Add footer to all pages
