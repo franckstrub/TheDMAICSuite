@@ -1330,32 +1330,49 @@ export default function DefinePhase() {
       const allLabels = clone.querySelectorAll('label');
       let projectTypeContainer = null;
       let projectCategoryContainer = null;
-      let beltLevelContainer = null;
+      let projectLeaderBeltContainer = null;
+      let coachBeltContainer = null;
       
-      // Get the belt level value from the form or from the project data
-      const beltLevelValue = charterForm.watch("beltLevel") || "";
+      // Get both belt level values from the form
+      const projectLeaderBeltLevel = charterForm.watch("beltLevel") || "";
+      const projectCoachBeltLevel = charterForm.watch("coachBeltLevel") || "";
       
       console.log("PDF Form Values:", {
         projectType: projectTypeValue,
         projectCategory: projectCategoryValue,
-        beltLevel: beltLevelValue
+        beltLevel: projectLeaderBeltLevel,
+        coachBeltLevel: projectCoachBeltLevel
       });
       
       // Look for the labels with relevant text
+      let currentSection = "project_leader";
+      
       allLabels.forEach(label => {
         if (label.textContent === 'Project Type') {
           projectTypeContainer = label.parentElement;
         } else if (label.textContent === 'Project Category') {
           projectCategoryContainer = label.parentElement;
+        } else if (label.textContent === 'Project Leader') {
+          // Now we're in the project leader section
+          currentSection = "project_leader";
+        } else if (label.textContent === 'Project Coach') {
+          // Now we're in the project coach section
+          currentSection = "project_coach";
         } else if (label.textContent === 'Belt Level') {
-          beltLevelContainer = label.parentElement;
+          // This could be either for Project Leader or Coach - check which section we're in
+          if (currentSection === "project_leader") {
+            projectLeaderBeltContainer = label.parentElement;
+          } else if (currentSection === "project_coach") {
+            coachBeltContainer = label.parentElement;
+          }
         }
       });
       
       console.log("Found containers:", { 
         projectTypeContainer: projectTypeContainer ? true : false, 
         projectCategoryContainer: projectCategoryContainer ? true : false,
-        beltLevelContainer: beltLevelContainer ? true : false
+        projectLeaderBeltContainer: projectLeaderBeltContainer ? true : false,
+        coachBeltContainer: coachBeltContainer ? true : false
       });
       
       // Helper function to create value div
@@ -1390,14 +1407,26 @@ export default function DefinePhase() {
         projectCategoryContainer.appendChild(createValueDiv(projectCategoryValue));
       }
       
-      // Handle belt level field
-      if (beltLevelContainer) {
+      // Handle project leader belt level field
+      if (projectLeaderBeltContainer) {
         // Remove any existing html2canvas-show elements
-        const existingShowElements = beltLevelContainer.querySelectorAll('.html2canvas-show');
+        const existingShowElements = projectLeaderBeltContainer.querySelectorAll('.html2canvas-show');
         existingShowElements.forEach(el => el.remove());
         
         // Add the value to the container
-        beltLevelContainer.appendChild(createValueDiv(beltLevelValue));
+        projectLeaderBeltContainer.appendChild(createValueDiv(projectLeaderBeltLevel));
+        console.log("Setting project leader belt level value:", projectLeaderBeltLevel);
+      }
+      
+      // Handle coach belt level field
+      if (coachBeltContainer) {
+        // Remove any existing html2canvas-show elements
+        const existingShowElements = coachBeltContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Add the value to the container
+        coachBeltContainer.appendChild(createValueDiv(projectCoachBeltLevel));
+        console.log("Setting coach belt level value:", projectCoachBeltLevel);
       }
       
       // Still need to handle any other html2canvas-show elements
@@ -1413,8 +1442,11 @@ export default function DefinePhase() {
           } else if (dataField === 'projectCategory') {
             el.textContent = projectCategoryValue;
           } else if (dataField === 'beltLevel') {
-            el.textContent = beltLevelValue;
-            console.log("Setting belt level value in PDF:", beltLevelValue);
+            el.textContent = projectLeaderBeltLevel;
+            console.log("Setting project leader belt level value in PDF:", projectLeaderBeltLevel);
+          } else if (dataField === 'coachBeltLevel') {
+            el.textContent = projectCoachBeltLevel;
+            console.log("Setting coach belt level value in PDF:", projectCoachBeltLevel);
           }
         }
       });
