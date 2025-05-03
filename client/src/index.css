@@ -58,25 +58,29 @@
 }
 
 /* PDF Export Styling */
-.pdf-export-content {
-  display: none;
+.pdf-text {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
 }
 
-.pdf-hide-input {
-  display: block;
-}
-
-/* When PDF is being generated, hide inputs and show text content */
-html2canvas-container .pdf-hide-input {
-  display: none !important;
-}
-
-html2canvas-container .pdf-export-content {
-  display: block !important;
+/* When PDF is being generated, adjust display properties */
+html2canvas-container .pdf-text {
+  position: static;
+  opacity: 1 !important;
+  z-index: auto;
+  pointer-events: auto;
   font-size: 14px;
-  padding: 4px 0;
-  white-space: normal;
-  word-break: break-word;
+  font-weight: normal;
+  color: #000;
+}
+
+html2canvas-container input,
+html2canvas-container button {
+  opacity: 0 !important;
+  position: absolute !important;
+  pointer-events: none !important;
 }
 
 html2canvas-container .print-hide {
@@ -94,15 +98,19 @@ html2canvas-container .print-hide {
   padding: 8px;
   text-align: left;
   vertical-align: middle;
+  position: relative;
 }
 
 @media print {
-  .pdf-hide-input {
+  input, button, select, textarea {
     display: none !important;
   }
   
-  .pdf-export-content {
-    display: block !important;
+  .pdf-text {
+    position: static;
+    opacity: 1;
+    z-index: auto;
+    pointer-events: auto;
   }
   
   .print-hide {

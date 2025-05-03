@@ -1245,16 +1245,19 @@ export default function DefinePhase() {
       // Add project title information
       pdf.text(`Project: ${projectTitle}`, 14, 26);
       
+      // Add an extra class to the element during PDF generation
+      element.classList.add('html2canvas-container');
+      
       // Using a different approach to avoid PNG corruption
       // Use html2canvas with different settings
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2.5, // Higher scale for better clarity
         useCORS: true,
         allowTaint: true,
-        backgroundColor: "#ffffff",
-        imageTimeout: 0, // No timeout for images
+        backgroundColor: "#ffffff", 
+        imageTimeout: 15000, // Longer timeout for complex pages
         logging: true,
-        removeContainer: true, // Cleanup after rendering
+        removeContainer: false, // Don't remove container to avoid flickering
         foreignObjectRendering: false // Disable foreignObject rendering which can cause issues
       });
       
@@ -1330,12 +1333,21 @@ export default function DefinePhase() {
       const filename = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       pdf.save(filename);
       
+      // Remove the html2canvas class to clean up
+      element.classList.remove('html2canvas-container');
+      
       toast({
         title: "Report Generated Successfully",
         description: `Your project charter has been captured and saved as ${filename}`,
       });
     } catch (error) {
       console.error("Error exporting to PDF:", error);
+      
+      // Ensure we clean up the class even if there's an error
+      if (element) {
+        element.classList.remove('html2canvas-container');
+      }
+      
       toast({
         title: "Export failed",
         description: `An error occurred during export: ${error}`,
