@@ -1887,45 +1887,8 @@ export default function DefinePhase() {
                   <div>
                     <Label htmlFor="fteBenefits">FTE Benefits (Full Time Employee)</Label>
                     <div className="space-y-4 mt-2 p-3 border border-gray-200 rounded-md">
-                      {/* FTE Assumptions - for both UI and PDF */}
-                      <div>
-                        <div className="mb-3">
-                          <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 mt-1">
-                            <div>
-                              <Label htmlFor="workingDaysPerWeek" className="text-xs">Working Days/Week</Label>
-                              <div className="flex h-8 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background">
-                                <div className="flex items-center">{fteParams.workingDaysPerWeek}</div>
-                              </div>
-                            </div>
-                            <div>
-                              <Label htmlFor="workingHoursPerDay" className="text-xs">Working Hours/Day</Label>
-                              <div className="flex h-8 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background">
-                                <div className="flex items-center">{fteParams.workingHoursPerDay}</div>
-                              </div>
-                            </div>
-                            <div>
-                              <Label htmlFor="timeUnit" className="text-xs">Time Period</Label>
-                              <div className="flex h-8 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background">
-                                <div className="flex items-center">
-                                  {fteParams.timeUnit === 'day' ? 'Per Day' : 
-                                    fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}
-                                </div>
-                              </div>
-                            </div>
-                            <div>
-                              <Label htmlFor="savedHours" className="text-xs">Hours Saved ({fteParams.timeUnit === 'day' ? '/day' : 
-                                fteParams.timeUnit === 'week' ? '/week' : '/month'})</Label>
-                              <div className="flex h-8 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background">
-                                <div className="flex items-center">{fteParams.savedHours}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Form controls - only visible in UI, not in PDF */}
-                      <div className="html2canvas-hide mt-3">
+                      {/* Only show this part in the UI, not in the PDF */}
+                      <div className="html2canvas-hide">
                         <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
@@ -1973,7 +1936,7 @@ export default function DefinePhase() {
                         </div>
                       </div>
                       
-                      <div className="html2canvas-hide mt-3">
+                      <div className="html2canvas-hide">
                         <Label htmlFor="savedTime" className="text-xs font-medium">Saved Working Time</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
@@ -2016,29 +1979,22 @@ export default function DefinePhase() {
                       
                       {/* Show this in both UI and PDF */}
                       <div className="pt-2 border-t border-gray-200 mb-3">
-                        <Label className="text-xs font-medium">FTE Results</Label>
+                        <Label className="text-xs font-medium">FTE Benefits</Label>
                         
-                        {/* FTE calculation summary for PDF export */}
-                        <div className="flex justify-between items-center mb-3 p-2 border border-gray-200 rounded-md bg-gray-50 mt-2">
-                          <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte.toFixed(3)}</span></p>
-                          <div className="text-xs text-gray-500">Auto-calculated</div>
-                        </div>
-                        
-                        {/* FTE Benefits display for PDF export */}
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          <div>
-                            <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
-                            <div className="flex h-8 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background">
-                              <div className="flex items-center">{formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}</div>
+                        {/* Summary section for PDF export */}
+                        <div className="p-3 mt-2 bg-blue-50 border border-blue-200 rounded-md mb-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="text-sm font-medium">Calculated FTE Value: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)} FTE</span></p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                Based on the calculated time saved across the organization
+                              </p>
                             </div>
-                          </div>
-                          
-                          <div>
-                            <Label className="text-xs">FTE Benefits ({currency})</Label>
-                            <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
-                              <div className="flex items-center px-3 text-green-600">
-                                {formatCurrency(fteParams.calculatedValue, currency)}
-                              </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium">Financial Benefit: <span className="text-green-600 font-bold">{formatCurrency(fteParams.calculatedValue, currency)}</span></p>
+                              <p className="text-xs text-gray-600 mt-1">
+                                Annual savings
+                              </p>
                             </div>
                           </div>
                         </div>
