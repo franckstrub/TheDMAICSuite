@@ -1964,7 +1964,7 @@ export default function DefinePhase() {
                       </div>
                     </div>
                   </div>
-                  <div className="team-member-table-container">
+                  <div className="team-member-table-container team-member-section">
                     {/* Team Members Management Component */}
                     <TeamMemberManagement 
                       teamMembers={teamMembers}
