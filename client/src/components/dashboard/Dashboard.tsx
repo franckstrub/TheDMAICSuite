@@ -217,19 +217,7 @@ export default function Dashboard() {
         throw new Error("Dashboard element not found");
       }
       
-      // Use html2canvas to capture the dashboard as an image with improved settings
-      const canvas = await html2canvas(dashboardRef.current, {
-        scale: 2.5, // Higher scale for better quality
-        useCORS: true, // Allow cross-origin images
-        allowTaint: true, // Allow tainted canvas for better image quality
-        backgroundColor: "#ffffff", // White background
-        imageTimeout: 15000, // Longer timeout for complex pages
-        logging: true, // Enable logging for debugging
-        removeContainer: false, // Don't remove container to avoid flickering
-        foreignObjectRendering: false // Disable foreignObject rendering which can cause issues
-      });
-      
-      // Create a new jsPDF instance
+      // Create a new jsPDF instance for our report
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       // Get PDF dimensions
@@ -239,47 +227,65 @@ export default function Dashboard() {
       // Define margins and spacing
       const margin = 14; // mm
       const footerHeight = 15; // mm
-      const headerHeight = 42; // mm for first page header (title & filter info)
+      const headerHeight = 50; // mm - increased for filters
       
-      // Get canvas dimensions
+      // Use html2canvas to capture the dashboard content
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2.5, // Higher scale for better quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        imageTimeout: 15000,
+        logging: false, // Disable logging for production
+        removeContainer: false
+      });
+      
+      // Get canvas dimensions for calculations
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
       
-      // Add title
+      // Add title to PDF
       pdf.setFontSize(18);
       pdf.setTextColor(33, 37, 41);
       pdf.text("Lean Six Sigma DMAIC Suite™ - Dashboard Report", margin, 15);
       
-      // Add date and filter information
+      // Add generated date
       pdf.setFontSize(10);
       pdf.setTextColor(85, 85, 85);
       pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 22);
       
-      // Create a distinct filters section
-      pdf.setFillColor(240, 240, 240); // Light gray background
-      pdf.rect(margin, 24, pdfWidth - (2 * margin), 14, 'F');
-      pdf.setDrawColor(200, 200, 200);
-      pdf.rect(margin, 24, pdfWidth - (2 * margin), 14, 'S'); // Draw border
+      // Create a larger filter section with rounded corners
+      pdf.setFillColor(240, 240, 240);
+      if (pdf.roundedRect) {
+        pdf.roundedRect(margin, 24, pdfWidth - (2 * margin), 20, 2, 2, 'F');
+        pdf.setDrawColor(200, 200, 200);
+        pdf.roundedRect(margin, 24, pdfWidth - (2 * margin), 20, 2, 2, 'S');
+      } else {
+        // Fallback if roundedRect is not available
+        pdf.rect(margin, 24, pdfWidth - (2 * margin), 20, 'F');
+        pdf.setDrawColor(200, 200, 200);
+        pdf.rect(margin, 24, pdfWidth - (2 * margin), 20, 'S');
+      }
       
-      // Add filter information with better styling
+      // Add filter information with improved styling
       pdf.setFontSize(10);
-      pdf.setTextColor(50, 50, 50); // Darker text
-      pdf.setFont('helvetica', 'bold');
-      pdf.text("Period:", margin + 2, 28);
+      pdf.setTextColor(50, 50, 50);
       
-      // Add the timeframe value in regular font
+      // Period filter - first line
+      pdf.setFont('helvetica', 'bold');
+      pdf.text("Period:", margin + 3, 30);
+      
       pdf.setFont('helvetica', 'normal');
       let timeframeText = timeframe;
       if (timeframe === "Custom Range" && customDateRange.start && customDateRange.end) {
         timeframeText += ` (${format(customDateRange.start, 'MMM d, yyyy')} - ${format(customDateRange.end, 'MMM d, yyyy')})`;
       }
-      pdf.text(timeframeText, margin + 22, 28);
+      pdf.text(timeframeText, margin + 25, 30);
       
-      // Add status filter info with better styling
+      // Status filter - second line
       pdf.setFont('helvetica', 'bold');
-      pdf.text("Status Filter:", margin + 2, 34);
+      pdf.text("Status Filter:", margin + 3, 38);
       
-      // Show the status in regular font with clear formatting
       pdf.setFont('helvetica', 'normal');
       let statusText = "";
       switch(implementationStatus) {
@@ -293,30 +299,48 @@ export default function Dashboard() {
         case "not-implemented": statusText = "Not Implemented Projects"; break;
         default: statusText = "All Projects";
       }
-      pdf.text(statusText, margin + 40, 34);
+      pdf.text(statusText, margin + 40, 38);
       
-      // We've replaced this with the border around the filter box
-      
-      // Calculate how many pages we need - with space for footer and header
-      const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
-      const subsequentPageContentHeight = pdfHeight - (2 * margin) - footerHeight;
+      // Calculate content dimensions
       const contentWidth = pdfWidth - (2 * margin);
       const imgWidth = contentWidth;
       const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
-      const totalPages = Math.ceil((imgHeight - firstPageContentHeight) / subsequentPageContentHeight) + 1;
       
-      // Add image data to PDF, splitting across pages if needed
-      let remainingHeight = imgHeight;
+      // Calculate content height available on each page
+      const firstPageContentHeight = pdfHeight - headerHeight - footerHeight;
+      const regularPageContentHeight = pdfHeight - (2 * margin) - footerHeight;
+      
+      // Calculate how many pages we need
+      let totalPages = 1;
+      let contentLeft = imgHeight;
+      
+      // Remove height available on first page
+      contentLeft -= firstPageContentHeight;
+      
+      // Add pages as needed for remaining content
+      while (contentLeft > 0) {
+        totalPages++;
+        contentLeft -= regularPageContentHeight;
+      }
+      
+      // Prepare to add image data to PDF pages
+      let remainingImgHeight = imgHeight;
       let sourceY = 0;
       
+      // Add content to each page
       for (let page = 0; page < totalPages; page++) {
+        // Create new pages after the first
         if (page > 0) {
           pdf.addPage();
         }
         
-        // Calculate current page dimensions - ensuring space for footer on all pages
-        const currentPageHeight = page === 0 ? firstPageContentHeight : subsequentPageContentHeight;
-        const printHeight = Math.min(remainingHeight, currentPageHeight);
+        // Calculate height for current page
+        const currentPageHeight = page === 0 ? firstPageContentHeight : regularPageContentHeight;
+        
+        // Calculate how much content to include on this page
+        const printHeight = Math.min(remainingImgHeight, currentPageHeight);
+        
+        // Calculate which portion of source canvas to use
         const sourceHeight = (printHeight / imgHeight) * canvasHeight;
         
         // Create a temporary canvas for this page section
@@ -324,7 +348,7 @@ export default function Dashboard() {
         tempCanvas.width = canvasWidth;
         tempCanvas.height = sourceHeight;
         
-        // Draw the portion of the original canvas
+        // Draw the portion of the original canvas to this temporary canvas
         const tempCtx = tempCanvas.getContext('2d');
         if (tempCtx) {
           tempCtx.drawImage(
@@ -333,20 +357,21 @@ export default function Dashboard() {
             0, 0, tempCanvas.width, tempCanvas.height
           );
           
-          // Add to PDF with JPEG format instead of PNG to avoid corruption
+          // Convert to JPEG format for better reliability
           const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
           
+          // Add the image to PDF at the correct position
           const yPosition = page === 0 ? headerHeight : margin;
           pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, printHeight);
           
-          // Update for next page
-          remainingHeight -= printHeight;
+          // Update tracking variables for next page
+          remainingImgHeight -= printHeight;
           sourceY += sourceHeight;
         }
         
         // Add page number in footer area
-        pdf.setFontSize(10);
-        pdf.setTextColor(150, 150, 150);
+        pdf.setFontSize(9);
+        pdf.setTextColor(120, 120, 120);
         pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
         
         // Add a separator line above footer
@@ -354,11 +379,11 @@ export default function Dashboard() {
         pdf.line(margin, pdfHeight - footerHeight, pdfWidth - margin, pdfHeight - footerHeight);
       }
       
-      // Add footer to all pages
+      // Add consistent footer to all pages
       for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
         pdf.setPage(i);
         pdf.setFontSize(8);
-        pdf.setTextColor(150, 150, 150);
+        pdf.setTextColor(120, 120, 120);
         pdf.text('Lean Six Sigma DMAIC Suite™', margin, pdfHeight - 5);
       }
       
