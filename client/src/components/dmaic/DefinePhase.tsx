@@ -1306,12 +1306,20 @@ export default function DefinePhase() {
         return;
       }
       
-      // Add project type and category directly to the PDF container
-      const projectInfo = {
+          // Use the current project data from context to get actual project type and category
+      // First try to get it from the current project in context
+      const actualProjectInfo = {
         title: projectTitle,
-        projectType: charterForm.watch("projectType") || "Green Belt",
-        projectCategory: charterForm.watch("projectCategory") || "Process Improvement"
+        projectType: currentProject?.projectType || "",
+        projectCategory: currentProject?.projectCategory || ""
       };
+      
+      console.log("PDF EXPORT INFO - ACTUAL PROJECT DATA:", { 
+        projectId, 
+        title: actualProjectInfo.title,
+        type: actualProjectInfo.projectType, 
+        category: actualProjectInfo.projectCategory 
+      });
       
       const projectInfoSection = document.createElement('div');
       projectInfoSection.style.marginBottom = '20px';
@@ -1321,7 +1329,7 @@ export default function DefinePhase() {
       projectInfoSection.style.backgroundColor = '#f9f9f9';
       
       const projectTitleElement = document.createElement('h2');
-      projectTitleElement.textContent = projectInfo.title || '';
+      projectTitleElement.textContent = actualProjectInfo.title || '';
       projectTitleElement.style.fontSize = '18px';
       projectTitleElement.style.marginBottom = '10px';
       projectTitleElement.style.fontWeight = 'bold';
@@ -1336,14 +1344,14 @@ export default function DefinePhase() {
       typeLabel.style.fontWeight = 'bold';
       
       const typeValue = document.createElement('div');
-      typeValue.textContent = projectInfo.projectType || '';
+      typeValue.textContent = actualProjectInfo.projectType || '';
       
       const categoryLabel = document.createElement('div');
       categoryLabel.textContent = 'Project Category:';
       categoryLabel.style.fontWeight = 'bold';
       
       const categoryValue = document.createElement('div');
-      categoryValue.textContent = projectInfo.projectCategory || '';
+      categoryValue.textContent = actualProjectInfo.projectCategory || '';
       
       projectDetails.appendChild(typeLabel);
       projectDetails.appendChild(typeValue);
