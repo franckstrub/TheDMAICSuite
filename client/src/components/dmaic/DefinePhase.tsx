@@ -741,6 +741,7 @@ export default function DefinePhase() {
       // Make sure all data is properly formatted - all numeric values should be converted to strings for storage
       const payload = {
         projectId,
+        projectTitle: data.projectTitle || "", // Add projectTitle to the payload
         projectReferenceNumber: data.projectReferenceNumber || "",
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
