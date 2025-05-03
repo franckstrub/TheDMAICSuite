@@ -18,12 +18,16 @@ import { ZodError } from "zod";
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
   try {
-    // Add extensive debugging for title synchronization
-    console.log("Charter data being synced:", {
-      projectId: charter.projectId,
-      projectTitle: charter.projectTitle,
-      currentProjectTitle: project.title
-    });
+    // SUPER VERBOSE debugging for title synchronization issue
+    console.log("--------------------------------------------------------------------------------");
+    console.log("TITLE SYNC DEBUG - Charter data being processed for title sync:");
+    console.log(`TITLE SYNC DEBUG - Charter ID: ${charter.id}`);
+    console.log(`TITLE SYNC DEBUG - Charter projectId: ${charter.projectId}`);
+    console.log(`TITLE SYNC DEBUG - Charter projectTitle: "${charter.projectTitle}"`);
+    console.log(`TITLE SYNC DEBUG - Current project title: "${project.title}"`);
+    console.log(`TITLE SYNC DEBUG - Charter object type: ${typeof charter}`);
+    console.log(`TITLE SYNC DEBUG - Charter keys: ${Object.keys(charter)}`);
+    console.log("--------------------------------------------------------------------------------");
     
     // Create or update the benefits object with the charter values
     const benefits: ProjectBenefits = project.benefits || {
@@ -407,8 +411,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Updating charter with ID:", id);
       console.log("Charter update request body:", req.body);
       
-      // Debug project title specifically
-      console.log("Project Title in update request:", req.body.projectTitle);
+      // DEBUG: Verbose logging for project title synchronization
+      console.log("DEBUG: Project Title in update request:", req.body.projectTitle);
+      console.log("DEBUG: Full request body keys:", Object.keys(req.body));
+      console.log("DEBUG: Request body projectId:", req.body.projectId);
       
       // Fix cashBenefits to workingCapitalGains migration
       const requestBody = {...req.body};
@@ -426,18 +432,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Calculated financialSavings:", requestBody.financialSavings);
       }
       
+      // DEBUG: Ensure projectTitle is present in the request body before updating
+      console.log("DEBUG: projectTitle before update:", requestBody.projectTitle);
+      
       console.log("Calling storage.updateCharter...");
       const charter = await storage.updateCharter(id, requestBody);
       if (!charter) {
         console.log("Charter not found with ID:", id);
         return res.status(404).json({ message: "Charter not found" });
       }
-      console.log("Charter updated successfully:", charter);
+      console.log("Charter updated successfully. Charter projectTitle:", charter.projectTitle);
       
       // Sync project benefits and costs from charter data
       const project = await storage.getProject(charter.projectId);
       if (project) {
+        console.log("DEBUG: Retrieved project for sync. Current title:", project.title);
         await syncProjectBenefitsFromCharter(charter, project);
+        
+        // DEBUG: Verify title was updated in the project
+        const updatedProject = await storage.getProject(charter.projectId);
+        console.log("DEBUG: Project title after sync:", updatedProject?.title);
       }
       
       // Log activity
