@@ -1283,7 +1283,7 @@ export default function DefinePhase() {
         // collapsible.setAttribute('data-state', 'open');
       });
       
-      // CRITICAL FIX: Check for expanded financial metrics section that causes PDF scale errors
+      // CRITICAL FIX: Check for expanded financial metrics section that causes PDF errors
       const financialAccordionItem = charterElement.querySelector('#project-costs-accordion');
       if (financialAccordionItem) {
         const isExpanded = financialAccordionItem.getAttribute('data-state') === 'open';
@@ -1291,7 +1291,8 @@ export default function DefinePhase() {
         if (isExpanded) {
           console.log("Project costs and financial metrics are expanded - applying special handling for PDF export");
           
-          // Temporarily collapse the section to avoid scale errors
+          // IMPORTANT: We need to collapse this section to avoid duplicate PDFs
+          // Temporarily collapse the section to avoid errors
           financialAccordionItem.setAttribute('data-pdf-was-expanded', 'true');
           financialAccordionItem.setAttribute('data-state', 'closed');
           
@@ -1310,6 +1311,9 @@ export default function DefinePhase() {
           if (parentNode) {
             parentNode.insertBefore(financialNote, financialAccordionItem);
           }
+          
+          // Allow the DOM to update before continuing
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
       }
       
