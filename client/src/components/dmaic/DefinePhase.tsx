@@ -1008,6 +1008,7 @@ export default function DefinePhase() {
         // This will include the FTE parameters from the FTE state
         projectId,
         userId: user?.id || 1,
+        projectTitle: data.projectTitle || "", // IMPORTANT: Include the project title for synchronization
         projectReferenceNumber: data.projectReferenceNumber || "",
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
