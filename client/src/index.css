@@ -450,3 +450,22 @@
   }
 }
 
+/* PDF Stakeholder and Team Member Flex Tables */
+.stakeholder-pdf-header, .team-member-pdf-header {
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+.stakeholder-pdf-table, .team-member-pdf-table {
+  width: 100%;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: white;
+}
+
+.stakeholder-pdf-row, .team-member-pdf-row {
+  padding: 4px 0;
+}
+
