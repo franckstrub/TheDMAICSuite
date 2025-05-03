@@ -90,12 +90,39 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           (container as HTMLElement).style.display = 'none';
         });
         
-        // Specifically hide the standalone FTE Benefits summary (0.13 FTE (€12,500))
-        const fteBenefitSummaryElements = Array.from(clonedDoc.querySelectorAll('div > p, div > div'));
+        // Enhanced approach to hide the standalone FTE Benefits summary (0.13 FTE (€12,500))
+        // First, find the hidden input with the FTE summary value
+        const fteBenefitsInput = clonedDoc.getElementById('fteBenefits');
+        if (fteBenefitsInput) {
+          (fteBenefitsInput as HTMLElement).style.display = 'none';
+          console.log("Hiding fteBenefits input field");
+        }
+        
+        // Find elements that have the hide-in-pdf-fte-summary class or data-no-pdf attribute
+        const elementsToHide = clonedDoc.querySelectorAll('.hide-in-pdf-fte-summary, [data-no-pdf="true"]');
+        elementsToHide.forEach(el => {
+          (el as HTMLElement).style.display = 'none';
+          console.log("Hiding PDF-excluded element");
+        });
+        
+        // Next, find any elements that directly display the FTE summary text
+        const fteBenefitSummaryRegex = /^\s*\d+\.\d+\s+FTE\s+\(\s*[€$£¥][\d,\.]+\s*\)\s*$/;
+        const fteBenefitSummaryElements = Array.from(clonedDoc.querySelectorAll('div, p, span'));
+        
         fteBenefitSummaryElements.forEach(element => {
-          if (element.textContent && element.textContent.includes('FTE (€') && element.textContent.includes(')')) {
-            (element.parentNode as HTMLElement).style.display = 'none';
+          // If the element contains just the FTE pattern and nothing else substantial
+          if (element.textContent && 
+              fteBenefitSummaryRegex.test(element.textContent.trim()) && 
+              element.textContent.trim().length < 30) {
+              
+            (element as HTMLElement).style.display = 'none';
             console.log("Hiding FTE summary element in PDF:", element.textContent);
+            
+            // Also hide parent if it's a simple container
+            if (element.parentNode && 
+                (element.parentNode as HTMLElement).children.length <= 2) {
+              (element.parentNode as HTMLElement).style.display = 'none';
+            }
           }
         });
         
@@ -276,12 +303,39 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
           (container as HTMLElement).style.display = 'none';
         });
         
-        // Specifically hide the standalone FTE Benefits summary (0.13 FTE (€12,500))
-        const fteBenefitSummaryElements = Array.from(clonedDoc.querySelectorAll('div > p, div > div'));
+        // Enhanced approach to hide the standalone FTE Benefits summary (0.13 FTE (€12,500))
+        // First, find the hidden input with the FTE summary value
+        const fteBenefitsInput = clonedDoc.getElementById('fteBenefits');
+        if (fteBenefitsInput) {
+          (fteBenefitsInput as HTMLElement).style.display = 'none';
+          console.log("Hiding fteBenefits input field");
+        }
+        
+        // Find elements that have the hide-in-pdf-fte-summary class or data-no-pdf attribute
+        const elementsToHide = clonedDoc.querySelectorAll('.hide-in-pdf-fte-summary, [data-no-pdf="true"]');
+        elementsToHide.forEach(el => {
+          (el as HTMLElement).style.display = 'none';
+          console.log("Hiding PDF-excluded element");
+        });
+        
+        // Next, find any elements that directly display the FTE summary text
+        const fteBenefitSummaryRegex = /^\s*\d+\.\d+\s+FTE\s+\(\s*[€$£¥][\d,\.]+\s*\)\s*$/;
+        const fteBenefitSummaryElements = Array.from(clonedDoc.querySelectorAll('div, p, span'));
+        
         fteBenefitSummaryElements.forEach(element => {
-          if (element.textContent && element.textContent.includes('FTE (€') && element.textContent.includes(')')) {
-            (element.parentNode as HTMLElement).style.display = 'none';
+          // If the element contains just the FTE pattern and nothing else substantial
+          if (element.textContent && 
+              fteBenefitSummaryRegex.test(element.textContent.trim()) && 
+              element.textContent.trim().length < 30) {
+              
+            (element as HTMLElement).style.display = 'none';
             console.log("Hiding FTE summary element in PDF:", element.textContent);
+            
+            // Also hide parent if it's a simple container
+            if (element.parentNode && 
+                (element.parentNode as HTMLElement).children.length <= 2) {
+              (element.parentNode as HTMLElement).style.display = 'none';
+            }
           }
         });
         
