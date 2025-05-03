@@ -2134,7 +2134,8 @@ export default function DefinePhase() {
                     {/* Hidden input field for form submission */}
                     <Input
                       id="fteBenefits"
-                      className="hidden"
+                      className="hidden hide-in-pdf-fte-summary"
+                      data-no-pdf="true"
                       {...charterForm.register("fteBenefits")}
                     />
                   </div>

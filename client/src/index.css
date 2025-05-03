@@ -94,6 +94,25 @@
   display: none !important;
 }
 
+/* Hide standalone FTE summary text in PDF exports */
+.html2canvas-container div span.fte-summary,
+.html2canvas-container p.fte-summary {
+  display: none !important;
+}
+
+/* Hide any <p> with just FTE text between FTE Benefits and Total Financial Savings */
+.html2canvas-container #fteBenefits,
+.html2canvas-container input[name="fteBenefits"],
+.html2canvas-container *[value*="FTE (€"] {
+  visibility: hidden !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  display: none !important;
+}
+
 /* Fix for title and input field spacing in PDF exports */
 .html2canvas-container label {
   display: block !important;
