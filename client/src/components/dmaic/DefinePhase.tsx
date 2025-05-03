@@ -1326,46 +1326,110 @@ export default function DefinePhase() {
       const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide:not(.stakeholder-table-container .html2canvas-hide)');
       removeElements.forEach(el => el.remove());
       
-      // Special handling for simplified stakeholder and team member lists
-      const stakeholderPdfTable = clone.querySelector('#stakeholders-pdf-table');
-      if (stakeholderPdfTable && stakeholderPdfTable instanceof HTMLElement) {
-        stakeholderPdfTable.style.display = 'block';
-        stakeholderPdfTable.style.visibility = 'visible';
-        stakeholderPdfTable.style.opacity = '1';
-        stakeholderPdfTable.style.position = 'static';
-        console.log("Found stakeholder list for PDF export");
+      // Find the stakeholder and team member containers and replace them with direct markup
+      const stakeholderSection = clone.querySelector('.stakeholder-section');
+      const teamMemberSection = clone.querySelector('.team-member-section');
+      
+      console.log("Creating direct markup for stakeholders and team members");
+      
+      // Create a direct markup for stakeholders
+      if (stakeholderSection && stakeholderSection instanceof HTMLElement) {
+        // Get the label element from the section
+        const labelElement = stakeholderSection.querySelector('h3, .section-title');
+        let sectionTitle = "Stakeholders";
+        if (labelElement) {
+          sectionTitle = labelElement.textContent || "Stakeholders";
+        }
         
-        // Ensure the list items have compact styling
-        const listItems = stakeholderPdfTable.querySelectorAll('.stakeholder-list-item');
-        listItems.forEach(item => {
-          if (item instanceof HTMLElement) {
-            item.style.padding = '2px 0';
+        // Create a new container for stakeholders
+        const directStakeholderList = document.createElement('div');
+        directStakeholderList.className = 'pdf-direct-list';
+        directStakeholderList.style.margin = '10px 0';
+        directStakeholderList.style.padding = '10px';
+        directStakeholderList.style.border = '1px solid #e2e8f0';
+        directStakeholderList.style.borderRadius = '4px';
+        
+        // Add the title
+        const title = document.createElement('h3');
+        title.textContent = sectionTitle;
+        title.style.fontSize = '14px';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '8px';
+        directStakeholderList.appendChild(title);
+        
+        // Add each stakeholder as a simple line of text
+        if (stakeholders.length > 0) {
+          stakeholders.forEach((stakeholder, index) => {
+            const item = document.createElement('div');
+            item.style.fontSize = '12px';
+            item.style.marginBottom = '4px';
             item.style.lineHeight = '1.2';
-          }
-        });
-      } else {
-        console.log("Stakeholder PDF table not found in clone");
+            item.textContent = stakeholder.name + (stakeholder.function ? ` (${stakeholder.function})` : '');
+            directStakeholderList.appendChild(item);
+          });
+        } else {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.textContent = 'No stakeholders added.';
+          emptyMessage.style.fontSize = '12px';
+          emptyMessage.style.color = '#64748b';
+          emptyMessage.style.fontStyle = 'italic';
+          directStakeholderList.appendChild(emptyMessage);
+        }
+        
+        // Replace the original section with our direct markup
+        stakeholderSection.innerHTML = '';
+        stakeholderSection.appendChild(directStakeholderList);
+        console.log("Added direct stakeholder markup");
       }
       
-      // Special handling for team members list
-      const teamMembersPdfTable = clone.querySelector('#team-members-pdf-table');
-      if (teamMembersPdfTable && teamMembersPdfTable instanceof HTMLElement) {
-        teamMembersPdfTable.style.display = 'block';
-        teamMembersPdfTable.style.visibility = 'visible';
-        teamMembersPdfTable.style.opacity = '1';
-        teamMembersPdfTable.style.position = 'static';
-        console.log("Found team members list for PDF export");
+      // Create a direct markup for team members
+      if (teamMemberSection && teamMemberSection instanceof HTMLElement) {
+        // Get the label element from the section
+        const labelElement = teamMemberSection.querySelector('h3, .section-title');
+        let sectionTitle = "Team Members";
+        if (labelElement) {
+          sectionTitle = labelElement.textContent || "Team Members";
+        }
         
-        // Ensure the list items have compact styling
-        const listItems = teamMembersPdfTable.querySelectorAll('.team-member-list-item');
-        listItems.forEach(item => {
-          if (item instanceof HTMLElement) {
-            item.style.padding = '2px 0';
+        // Create a new container for team members
+        const directTeamMemberList = document.createElement('div');
+        directTeamMemberList.className = 'pdf-direct-list';
+        directTeamMemberList.style.margin = '10px 0';
+        directTeamMemberList.style.padding = '10px';
+        directTeamMemberList.style.border = '1px solid #e2e8f0';
+        directTeamMemberList.style.borderRadius = '4px';
+        
+        // Add the title
+        const title = document.createElement('h3');
+        title.textContent = sectionTitle;
+        title.style.fontSize = '14px';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '8px';
+        directTeamMemberList.appendChild(title);
+        
+        // Add each team member as a simple line of text
+        if (teamMembers.length > 0) {
+          teamMembers.forEach((member, index) => {
+            const item = document.createElement('div');
+            item.style.fontSize = '12px';
+            item.style.marginBottom = '4px';
             item.style.lineHeight = '1.2';
-          }
-        });
-      } else {
-        console.log("Team members PDF table not found in clone");
+            item.textContent = member.name + (member.function ? ` (${member.function})` : '');
+            directTeamMemberList.appendChild(item);
+          });
+        } else {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.textContent = 'No team members added.';
+          emptyMessage.style.fontSize = '12px';
+          emptyMessage.style.color = '#64748b';
+          emptyMessage.style.fontStyle = 'italic';
+          directTeamMemberList.appendChild(emptyMessage);
+        }
+        
+        // Replace the original section with our direct markup
+        teamMemberSection.innerHTML = '';
+        teamMemberSection.appendChild(directTeamMemberList);
+        console.log("Added direct team member markup");
       }
       
       // DIRECT APPROACH: Find the project type, category, and belt level fields
