@@ -231,28 +231,30 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
         </table>
       </div>
       
-      {/* Table-like layout for PDF export */}
+      {/* Proper HTML table for PDF export */}
       <div className="html2canvas-show pdf-direct-list" id="stakeholders-pdf-table">
         <h4 className="font-semibold text-sm mb-3">Stakeholders</h4>
         
         {stakeholders.length > 0 ? (
-          <div className="pdf-table-layout">
+          <table className="pdf-real-table w-full border-collapse">
             {/* Table Header */}
-            <div className="pdf-table-header grid grid-cols-12 gap-2 mb-2 text-xs font-medium text-muted-foreground uppercase pb-1 border-b">
-              <div className="col-span-5">NAME</div>
-              <div className="col-span-7">FUNCTION</div>
-            </div>
+            <thead>
+              <tr className="pdf-table-header">
+                <th className="pdf-table-th text-left border-b-2 border-gray-300 pb-2 w-1/2">Name</th>
+                <th className="pdf-table-th text-left border-b-2 border-gray-300 pb-2 w-1/2">Function</th>
+              </tr>
+            </thead>
             
             {/* Table Content */}
-            <div className="pdf-table-body space-y-1">
+            <tbody className="pdf-table-body">
               {stakeholders.map((stakeholder, index) => (
-                <div key={index} className="stakeholder-list-item grid grid-cols-12 gap-2 text-sm py-1">
-                  <div className="col-span-5 font-medium">{stakeholder.name || 'N/A'}</div>
-                  <div className="col-span-7">{stakeholder.function || 'N/A'}</div>
-                </div>
+                <tr key={index} className="stakeholder-list-item border-b border-gray-100">
+                  <td className="pdf-table-td py-2 font-medium">{stakeholder.name || 'N/A'}</td>
+                  <td className="pdf-table-td py-2">{stakeholder.function || 'N/A'}</td>
+                </tr>
               ))}
-            </div>
-          </div>
+            </tbody>
+          </table>
         ) : (
           <div className="text-muted-foreground text-sm">No stakeholders added.</div>
         )}
