@@ -139,14 +139,14 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
         </Button>
       </div>
 
-      {/* Stakeholders Table */}
-      <div className="border rounded-md">
+      {/* Regular table for screen display */}
+      <div className="border rounded-md html2canvas-hide">
         <table className="w-full">
           <thead className="bg-muted border-b">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Function</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-16">Actions</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-16 print-hide">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -168,7 +168,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
                     className="h-8"
                   />
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-2 print-hide">
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -184,7 +184,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
             
             {/* Form for adding a new stakeholder */}
             {isAddingNew && (
-              <tr className="bg-accent/50 stakeholder-form">
+              <tr className="bg-accent/50 stakeholder-form print-hide">
                 <td className="px-4 py-2">
                   <Input 
                     placeholder="Stakeholder Name"
@@ -224,6 +224,32 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
               <tr>
                 <td colSpan={3} className="px-4 py-4 text-center text-sm text-muted-foreground">
                   No stakeholders added yet. Click "Add Stakeholder" to add one.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Special table just for PDF export */}
+      <div className="border rounded-md html2canvas-show">
+        <table className="w-full pdf-friendly-table">
+          <thead className="bg-muted border-b">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Function</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {stakeholders.length > 0 ? stakeholders.map((stakeholder, index) => (
+              <tr key={index}>
+                <td className="px-4 py-2 text-sm">{stakeholder.name}</td>
+                <td className="px-4 py-2 text-sm">{stakeholder.function || "-"}</td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={2} className="px-4 py-4 text-center text-sm">
+                  No stakeholders added.
                 </td>
               </tr>
             )}
