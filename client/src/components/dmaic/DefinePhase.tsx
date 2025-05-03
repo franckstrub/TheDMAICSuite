@@ -6,7 +6,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
+import { exportToPdf } from "@/lib/pdfExport";
+import { Image, Trash2, X, ChevronUp, ChevronDown, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
@@ -1208,12 +1209,61 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
+  // Function to handle PDF export
+  const handleExportPdf = async () => {
+    try {
+      toast({
+        title: "Preparing export...",
+        description: "Generating PDF of the project charter",
+      });
+      
+      // Make sure we have a valid project title for the filename
+      const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
+      const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_');
+      
+      // Export the charter to PDF
+      const success = await exportToPdf("project-charter", safeFilename);
+      
+      if (success) {
+        toast({
+          title: "Export successful",
+          description: "Project charter has been exported to PDF",
+        });
+      } else {
+        toast({
+          title: "Export failed",
+          description: "Could not export the project charter to PDF",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error exporting to PDF:", error);
+      toast({
+        title: "Export error",
+        description: `An error occurred during export: ${error}`,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Project Charter */}
-      <Card>
+      <Card id="project-charter">
         <CardHeader>
-          <CardTitle>Project Charter</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Project Charter</CardTitle>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportPdf}
+              className="flex items-center gap-2"
+            >
+              <Download size={16} />
+              Export PDF
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4">
