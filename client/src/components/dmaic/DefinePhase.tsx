@@ -1287,7 +1287,7 @@ export default function DefinePhase() {
       // Using a different approach to avoid PNG corruption
       // Use html2canvas with different settings
       const canvas = await html2canvas(charterElement, {
-        scale: isFinancialSectionExpanded ? 1.5 : 2, // Use lower scale when financial section is expanded to avoid errors
+        scale: 1.5, // Use fixed lower scale to avoid jsPDF.scale errors with larger content
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff", 
