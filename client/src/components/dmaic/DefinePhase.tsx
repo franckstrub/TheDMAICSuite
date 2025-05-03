@@ -1243,7 +1243,7 @@ export default function DefinePhase() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
-      const headerOffset = 50; // Increased to make room for project image
+      const headerOffset = 45; // Space for header
       const footerHeight = 15;
 
       // Add header
@@ -1259,72 +1259,6 @@ export default function DefinePhase() {
       // Add separator line
       pdf.setDrawColor(200, 200, 200);
       pdf.line(margin, 38, pdfWidth - margin, 38);
-      
-      // Handle project image if exists - add it directly to the PDF
-      if (projectImage) {
-        try {
-          console.log("Adding project image to PDF");
-          
-          // Create a temporary image element
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.src = projectImage;
-          
-          // Wait for image to load
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => {
-              console.error("Failed to load project image");
-              resolve(); // Continue even if image fails
-            };
-            
-            // Set a timeout to prevent hanging
-            setTimeout(resolve, 5000);
-          });
-          
-          // Create a canvas to draw the image
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          
-          // Draw image to canvas
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            
-            try {
-              // Add image to PDF in a fixed position at the top-right
-              const imageDataURL = canvas.toDataURL('image/jpeg');
-              
-              // Calculate image dimensions to fit in PDF while maintaining aspect ratio
-              const maxWidth = 50; // mm
-              const imageRatio = img.height / img.width;
-              const imageWidth = Math.min(maxWidth, pdfWidth / 3);
-              const imageHeight = imageWidth * imageRatio;
-              
-              // Position image in the top right
-              const imageX = pdfWidth - imageWidth - margin;
-              const imageY = 45; // Below the header
-              
-              pdf.addImage(
-                imageDataURL,
-                'JPEG',
-                imageX,
-                imageY,
-                imageWidth,
-                imageHeight
-              );
-              
-              console.log("Project image added to PDF successfully");
-            } catch (e) {
-              console.error("Error adding image to PDF:", e);
-            }
-          }
-        } catch (error) {
-          console.error("Error processing project image:", error);
-          // Continue with PDF generation even if image fails
-        }
-      }
       
       // Create a temporary clone so we can modify it without affecting the UI
       const charterElement = document.getElementById("project-charter");
@@ -1386,12 +1320,6 @@ export default function DefinePhase() {
           }
         }
         
-        // Remove the project image section completely as we'll handle it separately
-        const projectImageSection = clone.querySelector('#project-image-section');
-        if (projectImageSection) {
-          projectImageSection.remove();
-        }
-        
         // Process form fields for PDF display
         clone.querySelectorAll('.html2canvas-show').forEach(el => {
           (el as HTMLElement).style.display = 'block';
@@ -1413,15 +1341,90 @@ export default function DefinePhase() {
           logging: false
         });
         
-        // Calculate image dimensions
+        // Calculate image dimensions for the clone capture
         const imgWidth = pdfWidth - (2 * margin);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
         // Calculate if it fits on one page
         const firstPageContentHeight = pdfHeight - headerOffset - footerHeight;
         
+        // Add the project image separately after generation but before saving
+        if (projectImage) {
+          console.log("Adding project image to PDF");
+          
+          try {
+            // Add a page at the beginning to show the image
+            if (pdf.getNumberOfPages() > 0) {
+              pdf.setPage(1);
+            }
+            
+            // Add the image in the top right corner of the first page
+            const maxImageWidth = 50; // mm
+            const imageX = pdfWidth - maxImageWidth - margin;
+            const imageY = 45; // Below the header
+            
+            // Check if the image is already a data URL
+            let imageSource = projectImage;
+            if (!projectImage.startsWith('data:image/')) {
+              console.log("Project image is not a data URL, converting...");
+              
+              // Create a temporary image element to convert to data URL
+              const tempImg = new Image();
+              tempImg.crossOrigin = "anonymous"; // Ensure CORS is handled properly
+              
+              // Set up a promise to wait for the image to load
+              await new Promise<void>((resolve) => {
+                tempImg.onload = () => {
+                  console.log("Temp image loaded successfully, dimensions:", tempImg.width, "x", tempImg.height);
+                  const tempCanvas = document.createElement('canvas');
+                  tempCanvas.width = tempImg.width || 300;
+                  tempCanvas.height = tempImg.height || 200;
+                  const tempCtx = tempCanvas.getContext('2d');
+                  if (tempCtx) {
+                    tempCtx.drawImage(tempImg, 0, 0);
+                    imageSource = tempCanvas.toDataURL('image/jpeg');
+                    console.log("Image converted to data URL successfully");
+                  }
+                  resolve();
+                };
+                
+                tempImg.onerror = (err) => {
+                  console.error("Error loading temp image:", err);
+                  resolve(); // Continue even if image fails
+                };
+                
+                // Set a timeout to prevent hanging
+                setTimeout(resolve, 3000);
+                
+                // Set the source last to trigger loading
+                tempImg.src = projectImage;
+              });
+            }
+            
+            console.log("Adding image to PDF, source type:", typeof imageSource);
+            console.log("Image source starts with:", imageSource.substring(0, 30));
+            
+            // Use the image data for the PDF
+            pdf.addImage(
+              imageSource,
+              'JPEG', 
+              imageX, 
+              imageY, 
+              maxImageWidth, 
+              25, // Fixed height to avoid distortion issues
+              undefined, 
+              'FAST',
+              0 // No rotation
+            );
+            
+            console.log("Project image added to PDF directly");
+          } catch (err) {
+            console.error("Failed to add project image directly:", err);
+          }
+        }
+        
         if (imgHeight <= firstPageContentHeight) {
-          // One page is enough
+          // One page is enough for content
           pdf.addImage(
             canvas.toDataURL('image/jpeg', 0.95),
             'JPEG',
@@ -1497,6 +1500,15 @@ export default function DefinePhase() {
           pdf.setFontSize(8);
           pdf.setTextColor(150, 150, 150);
           pdf.text("Lean Six Sigma DMAIC Suite™", margin + 4, pdfHeight - 5);
+        }
+        
+        // Log information about images in the PDF
+        if (projectImage) {
+          console.log("Project image info:", {
+            type: typeof projectImage,
+            length: projectImage.length,
+            firstChars: projectImage.substring(0, 40) + "..."
+          });
         }
         
         // Save the PDF
