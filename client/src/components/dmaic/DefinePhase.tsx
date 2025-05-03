@@ -2006,11 +2006,11 @@ export default function DefinePhase() {
                             <p className="text-sm font-medium">
                               Calculated FTE: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)}</span>
                             </p>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-xs text-gray-600 pdf-value-only">
                               Based on {fteParams.savedHours} hours saved {fteParams.timeUnit === 'day' ? 'per day' : 
                               fteParams.timeUnit === 'week' ? 'per week' : 'per month'}, 
-                              {fteParams.workingDaysPerWeek} working days per week, and 
-                              {fteParams.workingHoursPerDay} working hours per day
+                              working {fteParams.workingDaysPerWeek} days per week, and 
+                              {fteParams.workingHoursPerDay} hours per day
                             </p>
                           </div>
                         </div>
@@ -2036,8 +2036,8 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.fteCostPerYear}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                              FTE Cost per Year: {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
+                              {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
                             </span>
                           </div>
                           
@@ -2049,8 +2049,8 @@ export default function DefinePhase() {
                               </div>
                             </div>
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                              FTE Benefits: {formatCurrency(fteParams.calculatedValue, currency)}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
+                              {formatCurrency(fteParams.calculatedValue, currency)}
                             </span>
                           </div>
                         </div>
