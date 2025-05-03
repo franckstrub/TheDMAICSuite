@@ -1211,9 +1211,9 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
-  // Use component state to prevent multiple PDF export operations from running simultaneously
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-  const [pdfGenerated, setPdfGenerated] = useState(false);
+  // These flags prevent multiple PDF export operations from running simultaneously
+  let isPdfGenerating = false;
+  let pdfGenerated = false;
   
   // Function to handle PDF export with protection against duplicate generation
   const handleExportPdf = async () => {
@@ -1224,10 +1224,10 @@ export default function DefinePhase() {
     }
     
     // Reset generated flag at the start of a new export
-    setPdfGenerated(false);
+    pdfGenerated = false;
     
     // Set the flag to indicate PDF generation is in progress
-    setIsPdfGenerating(true);
+    isPdfGenerating = true;
     
     try {
       // Show initial toast notification
@@ -1244,7 +1244,7 @@ export default function DefinePhase() {
           description: "Could not find the project charter element",
           variant: "destructive",
         });
-        setIsPdfGenerating(false);
+        isPdfGenerating = false;
         return;
       }
       
@@ -1283,51 +1283,38 @@ export default function DefinePhase() {
         // collapsible.setAttribute('data-state', 'open');
       });
       
-      // CRITICAL FIX: Identify and handle all financial sections that might cause PDF errors
-      // This is a unified approach to handle all financial sections at once
-      
-      // Collect all financial-related sections that might cause duplicate PDFs
-      const financialSections = [
-        charterElement.querySelector('#project-costs-accordion'), 
-        charterElement.querySelector('#costs-accordion'),
-        charterElement.querySelector('#financial-metrics-content')
-      ].filter(Boolean);
-      
-      // Track if we've made any changes to the DOM
-      let financialSectionModified = false;
-      
-      // Check if any financial section is expanded
-      for (const section of financialSections) {
-        if (section?.getAttribute('data-state') === 'open') {
-          console.log(`Found expanded financial section: ${section.id || 'unnamed'} - collapsing for PDF export`);
+      // CRITICAL FIX: Check for expanded financial metrics section that causes PDF errors
+      const financialAccordionItem = charterElement.querySelector('#project-costs-accordion');
+      if (financialAccordionItem) {
+        const isExpanded = financialAccordionItem.getAttribute('data-state') === 'open';
+        
+        if (isExpanded) {
+          console.log("Project costs and financial metrics are expanded - applying special handling for PDF export");
           
-          // Tag this section so we can restore it later
-          section.setAttribute('data-pdf-was-expanded', 'true');
-          section.setAttribute('data-state', 'closed');
-          financialSectionModified = true;
+          // IMPORTANT: We need to collapse this section to avoid duplicate PDFs
+          // Temporarily collapse the section to avoid errors
+          financialAccordionItem.setAttribute('data-pdf-was-expanded', 'true');
+          financialAccordionItem.setAttribute('data-state', 'closed');
+          
+          // Add a note about financial details
+          const financialNote = document.createElement('div');
+          financialNote.className = 'pdf-only-note my-2 p-3 bg-gray-50 border rounded text-sm';
+          financialNote.innerHTML = `
+            <p><strong>Note:</strong> Detailed financial metrics and project costs are available in the application.</p>
+            <p class="text-xs text-gray-500 mt-1">Financial summary: Total Benefits: ${charterForm.watch("totalFinancialSavings") || 0} | 
+            Total Costs: ${charterForm.watch("totalProjectCosts") || 0} | 
+            ROI: ${charterForm.watch("roi") || 0}%</p>
+          `;
+          
+          // Insert the note before the accordion
+          const parentNode = financialAccordionItem.parentNode;
+          if (parentNode) {
+            parentNode.insertBefore(financialNote, financialAccordionItem);
+          }
+          
+          // Allow the DOM to update before continuing
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
-      }
-      
-      // If we had to modify any financial sections, add a summary note and wait for DOM to update
-      if (financialSectionModified) {
-        // Add a note about financial details
-        const financialNote = document.createElement('div');
-        financialNote.className = 'pdf-only-note my-2 p-3 bg-gray-50 border border-blue-100 rounded-md';
-        financialNote.innerHTML = `
-          <p><strong>Financial Summary:</strong> The full financial details are available in the application.</p>
-          <p class="text-xs text-gray-600 mt-1">Total Benefits: ${charterForm.watch("totalFinancialSavings") || 0} | 
-          Total Costs: ${charterForm.watch("totalProjectCosts") || 0} | 
-          ROI: ${charterForm.watch("roi") || 0}%</p>
-        `;
-        
-        // Insert the note at a consistent location
-        const headerEl = charterElement.querySelector('.card-header');
-        if (headerEl && headerEl.parentNode) {
-          headerEl.parentNode.insertBefore(financialNote, headerEl.nextSibling);
-        }
-        
-        // Give DOM time to update before continuing with PDF generation
-        await new Promise(resolve => setTimeout(resolve, 600));
       }
       
       // Create special data attributes for form values to ensure they appear in the PDF
@@ -1357,28 +1344,51 @@ export default function DefinePhase() {
       // Only generate one PDF output
       let pdfOutput = '';
       
-      // We already handled all financial sections in the unified approach above
-      // No need for additional financial section handling here
+      // First, check if financial metrics section is expanded
+      const financialSection = charterElement.querySelector('#financial-metrics-content');
+      let financialSectionWasExpanded = false;
+      if (financialSection && financialSection.getAttribute('data-state') === 'open') {
+        console.log("Financial metrics section is expanded - temporarily collapsing for PDF export");
+        financialSectionWasExpanded = true;
+        financialSection.setAttribute('data-pdf-was-expanded', 'true');
+        financialSection.setAttribute('data-state', 'closed');
+        
+        // Add a note about the financial section
+        const financeNote = document.createElement('div');
+        financeNote.className = 'pdf-only-note my-2 p-2 bg-blue-50 border border-blue-200 rounded-md';
+        financeNote.innerHTML = `
+          <p class="text-xs text-blue-800">Financial metrics details are available in the application</p>
+        `;
+        
+        // Find where to insert the note
+        const financeHeader = charterElement.querySelector('#financial-metrics-trigger');
+        if (financeHeader && financeHeader.parentNode) {
+          financeHeader.parentNode.insertBefore(financeNote, financeHeader.nextSibling);
+        }
+        
+        // Give DOM time to update
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
       
       try {
         console.log("Attempting to generate PDF with safer settings");
         
         // First check if we already generated a PDF - if so, skip all processing
-        if (pdfGenerated === true) {
+        if (pdfGenerated) {
           console.log("PDF was already generated, skipping primary generation method");
           return;
         }
         
-        // Use ultrasafe settings for html2canvas to prevent errors
-        console.log("Using ultrasafe configuration for PDF generation...");
+        // Using a completely different approach specifically for handling complex charts and financial metrics
+        // Use html2canvas with much safer settings to avoid scale errors
         const pdfCanvas = await html2canvas(charterElement, {
-          scale: 1.0, // Reduced scale to prevent memory/processing issues
+          scale: 1.5, // CRITICAL: Using a lower scale to prevent jsPDF scaling errors
           useCORS: true,
           allowTaint: true,
           backgroundColor: "#ffffff", 
-          imageTimeout: 30000, // Shorter timeout to fail faster if there's an issue
-          logging: true, // Enable logging to debug issues
-          removeContainer: false,
+          imageTimeout: 60000, // Longer timeout for complex pages with expanded financial metrics
+          logging: false, // Set to false to reduce console noise
+          removeContainer: false, // Don't remove container to avoid flickering
           foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
           onclone: (clonedDoc) => {
             // Special handling for this clone to make sure all elements render correctly
@@ -1409,7 +1419,7 @@ export default function DefinePhase() {
         });
         
         // Check again if a PDF was generated by a parallel process (this should never happen but just in case)
-        if (pdfGenerated === true) {
+        if (pdfGenerated) {
           console.log("PDF was generated by another process, skipping further processing");
           return;
         }
@@ -1425,52 +1435,60 @@ export default function DefinePhase() {
         // Define footer height and adjust page dimensions to account for footer
         const footerHeight = 15; // mm
         
-        // Simplify by just adding a single image to the PDF without slicing
-        // This approach is more reliable for PDF generation
-        console.log("Using simplified PDF generation approach (single image)");
-        
-        // Convert the entire canvas to a JPEG at once
-        const imgData = pdfCanvas.toDataURL('image/jpeg', 0.8);
-        
-        // Calculate the dimensions to fit in the PDF
-        const margin = 10; // 10mm margins
-        const imgWidth = pdfWidth - (margin * 2);
+        // Calculate how many pages we need - with more space for footer
+        const pageHeight = pdfHeight - 40 - footerHeight; // Account for header space on first page and footer on all pages
+        const contentWidth = pdfWidth - 20; // 10mm margin on each side
+        const imgWidth = contentWidth;
         const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
+        const totalPages = Math.ceil(imgHeight / pageHeight);
         
-        // If the height is too large for a single page, we'll need to split it
-        const maxSinglePageHeight = pdfHeight - 50; // Leave space for header/footer
+        // Add image data to PDF, splitting across pages if needed
+        let remainingHeight = imgHeight;
+        let sourceY = 0;
         
-        if (imgHeight <= maxSinglePageHeight) {
-          // Simple case - fits on one page
-          console.log("Image fits on a single page, using simple approach");
-          pdf.addImage(imgData, 'JPEG', margin, 40, imgWidth, imgHeight);
+        for (let page = 0; page < totalPages; page++) {
+          if (page > 0) {
+            pdf.addPage();
+          }
           
-          // Add footer
+          // Calculate current page dimensions - ensuring space for footer on all pages
+          const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20 - footerHeight);
+          const printHeight = Math.min(remainingHeight, currentPageHeight);
+          const sourceHeight = (printHeight / imgHeight) * canvasHeight;
+          
+          // Create a temporary canvas for this page section
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvasWidth;
+          tempCanvas.height = sourceHeight;
+          
+          // Draw the portion of the original canvas
+          const tempCtx = tempCanvas.getContext('2d');
+          if (tempCtx) {
+            tempCtx.drawImage(
+              pdfCanvas, 
+              0, sourceY, canvasWidth, sourceHeight,
+              0, 0, tempCanvas.width, tempCanvas.height
+            );
+            
+            // Add to PDF with JPEG format instead of PNG to avoid corruption
+            const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+            
+            const yPosition = page === 0 ? 40 : 10;
+            pdf.addImage(pageImgData, 'JPEG', 10, yPosition, imgWidth, printHeight);
+            
+            // Update for next page
+            remainingHeight -= printHeight;
+            sourceY += sourceHeight;
+          }
+          
+          // Add page number in footer area
           pdf.setFontSize(10);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text('Lean Six Sigma DMAIC Suite™', margin, pdfHeight - 10);
-          pdf.text('Page 1 of 1', pdfWidth - margin, pdfHeight - 10, { align: 'right' });
-        } else {
-          // Need to create a simpler multi-page approach
-          console.log("Content requires multiple pages, splitting content");
+          pdf.setTextColor(150, 150, 150);
+          pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
           
-          // Create a very basic multi-page PDF approach
-          // This doesn't try to slice the image, just adds multiple pages with full image
-          // Not ideal, but more reliable in error cases
-          
-          pdf.addImage(imgData, 'JPEG', margin, 40, imgWidth, Math.min(imgHeight, maxSinglePageHeight - 40));
-          
-          // Add page number
-          pdf.setFontSize(10);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text('Page 1', pdfWidth / 2, pdfHeight - 10, { align: 'center' });
-          
-          // Add a note about downloading full content
-          pdf.setPage(1);
-          pdf.setFontSize(8);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text('NOTE: For best results with expanded financial sections, try collapsing them before export.', 
-                   pdfWidth / 2, pdfHeight - 20, { align: 'center' });
+          // Optional: Add a separator line above footer
+          pdf.setDrawColor(200, 200, 200);
+          pdf.line(10, pdfHeight - footerHeight, pdfWidth - 10, pdfHeight - footerHeight);
         }
         
         // Add footer to all pages
@@ -1482,7 +1500,7 @@ export default function DefinePhase() {
         }
         
         // Check again if a PDF was generated (paranoid check)
-        if (pdfGenerated === true) {
+        if (pdfGenerated) {
           console.log("PDF was already generated, skipping file save");
           return;
         }
@@ -1492,7 +1510,7 @@ export default function DefinePhase() {
         pdf.save(pdfOutput);
         
         // Mark as generated - THIS IS CRITICAL - set before showing toast to avoid race conditions
-        setPdfGenerated(true);
+        pdfGenerated = true;
         console.log("PDF generation complete, marked as generated");
         
         // Show a single toast with success message at the end
@@ -1504,7 +1522,7 @@ export default function DefinePhase() {
         console.error("Error during PDF generation:", e);
         
         // Only show error if no PDF was already generated
-        if (pdfGenerated !== true) {
+        if (!pdfGenerated) {
           toast({
             title: "Export Failed",
             description: "Unable to generate PDF. Please try again or collapse sections before exporting.",
@@ -1563,7 +1581,7 @@ export default function DefinePhase() {
       }
       
       // Reset the flag
-      setIsPdfGenerating(false);
+      isPdfGenerating = false;
     }
   };
 
