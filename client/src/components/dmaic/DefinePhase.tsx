@@ -1760,23 +1760,30 @@ export default function DefinePhase() {
           financialSection.removeAttribute('data-pdf-was-expanded');
         }
         
-        // Restore any accordions that were open before
-        const openAccordions = cleanupElement.querySelectorAll('[data-pdf-was-open="true"]');
-        openAccordions.forEach(section => {
+        // Remove special class
+        cleanupElement.classList.remove('html2canvas-container');
+        
+        // Restore expanded sections
+        cleanupElement.querySelectorAll('[data-pdf-was-expanded="true"]').forEach(section => {
           section.setAttribute('data-state', 'open');
-          section.removeAttribute('data-pdf-was-open');
+          section.removeAttribute('data-pdf-was-expanded');
         });
         
-        // Remove all temporary notes we added
-        const notes = cleanupElement.querySelectorAll('.pdf-only-note');
-        notes.forEach(note => note.parentNode?.removeChild(note));
+        // Remove any notes we added
+        cleanupElement.querySelectorAll('.pdf-only-note').forEach(note => {
+          if (note.parentNode) {
+            note.parentNode.removeChild(note);
+          }
+        });
         
-        // Clean up data attributes added for form values
-        const formInputs = cleanupElement.querySelectorAll('input, textarea, select');
-        formInputs.forEach(input => {
-          input.removeAttribute('data-pdf-value');
+        // Clean up data attributes
+        cleanupElement.querySelectorAll('[data-pdf-value]').forEach(el => {
+          el.removeAttribute('data-pdf-value');
         });
       }
+      
+      // Reset the flag
+      isPdfGenerating = false;
     }
   };
 
