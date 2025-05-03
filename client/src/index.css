@@ -57,3 +57,56 @@
   }
 }
 
+/* PDF Export Styling */
+.pdf-export-content {
+  display: none;
+}
+
+.pdf-hide-input {
+  display: block;
+}
+
+/* When PDF is being generated, hide inputs and show text content */
+html2canvas-container .pdf-hide-input {
+  display: none !important;
+}
+
+html2canvas-container .pdf-export-content {
+  display: block !important;
+  font-size: 14px;
+  padding: 4px 0;
+  white-space: normal;
+  word-break: break-word;
+}
+
+html2canvas-container .print-hide {
+  display: none !important;
+}
+
+.pdf-friendly-table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pdf-friendly-table th,
+.pdf-friendly-table td {
+  padding: 8px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+@media print {
+  .pdf-hide-input {
+    display: none !important;
+  }
+  
+  .pdf-export-content {
+    display: block !important;
+  }
+  
+  .print-hide {
+    display: none !important;
+  }
+}
+
