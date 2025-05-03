@@ -239,8 +239,8 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
           <table className="two-column-pdf-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Function</th>
+                <th className="text-left text-base font-medium">Name</th>
+                <th className="text-left text-base font-medium">Function/Expertise</th>
               </tr>
             </thead>
             <tbody>
