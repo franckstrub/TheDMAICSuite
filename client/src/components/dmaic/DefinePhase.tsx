@@ -1891,7 +1891,7 @@ export default function DefinePhase() {
                         <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
-                            <div className="mb-1 p-1.5 border border-blue-100 bg-blue-50 rounded-md">
+                            <div className="mb-1">
                               <p className="text-xs font-medium">Working Days/Week: {fteParams.workingDaysPerWeek}</p>
                             </div>
                             <Label htmlFor="workingDaysPerWeek" className="text-xs">Working Days/Week</Label>
@@ -1919,7 +1919,7 @@ export default function DefinePhase() {
                             </span>
                           </div>
                           <div>
-                            <div className="mb-1 p-1.5 border border-blue-100 bg-blue-50 rounded-md">
+                            <div className="mb-1">
                               <p className="text-xs font-medium">Working Hours/Day: {fteParams.workingHoursPerDay}</p>
                             </div>
                             <Label htmlFor="workingHoursPerDay" className="text-xs">Working Hours/Day</Label>
@@ -1953,7 +1953,7 @@ export default function DefinePhase() {
                         <Label htmlFor="savedTime" className="text-xs font-medium">Saved Working Time</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
-                            <div className="mb-1 p-1.5 border border-blue-100 bg-blue-50 rounded-md">
+                            <div className="mb-1">
                               <p className="text-xs font-medium">Time Period: {fteParams.timeUnit === 'day' ? 'Per Day' : 
                                 fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}</p>
                             </div>
@@ -1977,7 +1977,7 @@ export default function DefinePhase() {
                             </span>
                           </div>
                           <div>
-                            <div className="mb-1 p-1.5 border border-blue-100 bg-blue-50 rounded-md">
+                            <div className="mb-1">
                               <p className="text-xs font-medium">Hours Saved: {fteParams.savedHours}</p>
                             </div>
                             <Label htmlFor="savedHours" className="text-xs">Hours Saved</Label>
@@ -2015,7 +2015,7 @@ export default function DefinePhase() {
                         
                         {/* Hidden div to ensure FTE calculation shows in PDF */}
                         <div className="html2canvas-show print-hide hidden">
-                          <div className="p-3 border border-blue-200 bg-blue-50 rounded-lg mb-3">
+                          <div className="p-2 border border-blue-200 bg-blue-50 rounded-md mb-3">
                             <p className="text-sm font-medium">
                               Calculated FTE: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)}</span>
                             </p>
