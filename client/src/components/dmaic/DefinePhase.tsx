@@ -1392,7 +1392,7 @@ export default function DefinePhase() {
                   <Label htmlFor="businessCase">Business Case</Label>
                   <Textarea
                     id="businessCase"
-                    placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not this project"
+                    placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not do this project"
                     rows={3}
                     {...charterForm.register("businessCase")}
                   />
