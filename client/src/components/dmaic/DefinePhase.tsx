@@ -1344,31 +1344,9 @@ export default function DefinePhase() {
       // Only generate one PDF output
       let pdfOutput = '';
       
-      // First, check if financial metrics section is expanded
-      const financialSection = charterElement.querySelector('#financial-metrics-content');
-      let financialSectionWasExpanded = false;
-      if (financialSection && financialSection.getAttribute('data-state') === 'open') {
-        console.log("Financial metrics section is expanded - temporarily collapsing for PDF export");
-        financialSectionWasExpanded = true;
-        financialSection.setAttribute('data-pdf-was-expanded', 'true');
-        financialSection.setAttribute('data-state', 'closed');
-        
-        // Add a note about the financial section
-        const financeNote = document.createElement('div');
-        financeNote.className = 'pdf-only-note my-2 p-2 bg-blue-50 border border-blue-200 rounded-md';
-        financeNote.innerHTML = `
-          <p class="text-xs text-blue-800">Financial metrics details are available in the application</p>
-        `;
-        
-        // Find where to insert the note
-        const financeHeader = charterElement.querySelector('#financial-metrics-trigger');
-        if (financeHeader && financeHeader.parentNode) {
-          financeHeader.parentNode.insertBefore(financeNote, financeHeader.nextSibling);
-        }
-        
-        // Give DOM time to update
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      // NOTE: We're not going to force close any sections anymore
+      // Instead, we'll optimize the PDF settings to handle expanded sections properly
+      console.log("Beginning PDF generation with expanded sections support");
       
       try {
         console.log("Attempting to generate PDF with safer settings");
@@ -1381,15 +1359,14 @@ export default function DefinePhase() {
         
         // Using a completely different approach specifically for handling complex charts and financial metrics
         // Use html2canvas with much safer settings to avoid scale errors
+        console.log("Generating canvas with simple settings - expanded sections are fine as-is");
         const pdfCanvas = await html2canvas(charterElement, {
-          scale: 1.5, // CRITICAL: Using a lower scale to prevent jsPDF scaling errors
+          scale: 1.2, // Moderate scale factor
           useCORS: true,
           allowTaint: true,
-          backgroundColor: "#ffffff", 
-          imageTimeout: 60000, // Longer timeout for complex pages with expanded financial metrics
-          logging: false, // Set to false to reduce console noise
-          removeContainer: false, // Don't remove container to avoid flickering
-          foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
+          backgroundColor: "#ffffff",
+          imageTimeout: 30000,
+          logging: false,
           onclone: (clonedDoc) => {
             // Special handling for this clone to make sure all elements render correctly
             const clonedCharter = clonedDoc.getElementById('project-charter');
@@ -1410,7 +1387,6 @@ export default function DefinePhase() {
               for (const [field, value] of Object.entries(formValues)) {
                 const element = clonedCharter.querySelector(`[data-field="${field}"]`);
                 if (element) {
-                  console.log(`Setting field ${field} in PDF to:`, value);
                   (element as HTMLElement).textContent = value;
                 }
               }
@@ -1538,43 +1514,19 @@ export default function DefinePhase() {
         // Remove special class
         cleanupElement.classList.remove('html2canvas-container');
         
-        // Restore collapsible sections to their original state
-        const expandedForPdf = cleanupElement.querySelectorAll('[data-pdf-was-closed="true"]');
-        expandedForPdf.forEach(section => {
-          section.setAttribute('data-state', 'closed');
-          section.removeAttribute('data-pdf-was-closed');
-        });
+        console.log("Cleaning up after PDF generation");
         
-        // Restore financial section if it was expanded
-        const financialSection = cleanupElement.querySelector('[data-pdf-was-expanded="true"]');
-        if (financialSection) {
-          financialSection.setAttribute('data-state', 'open');
-          financialSection.removeAttribute('data-pdf-was-expanded');
-        }
+        // We no longer need to restore section states since we're not modifying them
         
-        // Remove special class
-        cleanupElement.classList.remove('html2canvas-container');
-        
-        // Restore expanded sections
-        cleanupElement.querySelectorAll('[data-pdf-was-expanded="true"]').forEach(section => {
-          section.setAttribute('data-state', 'open');
-          section.removeAttribute('data-pdf-was-expanded');
-        });
-        
-        // Restore collapsed sections to their original state
-        cleanupElement.querySelectorAll('[data-pdf-was-closed="true"]').forEach(section => {
-          section.setAttribute('data-state', 'closed');
-          section.removeAttribute('data-pdf-was-closed');
-        });
-        
-        // Remove any notes we added
-        cleanupElement.querySelectorAll('.pdf-only-note').forEach(note => {
+        // Just in case any temporary notes were added in the past
+        const tempNotes = cleanupElement.querySelectorAll('.pdf-only-note');
+        tempNotes.forEach(note => {
           if (note.parentNode) {
             note.parentNode.removeChild(note);
           }
         });
         
-        // Clean up data attributes
+        // Clean up any other data attributes
         cleanupElement.querySelectorAll('[data-pdf-value]').forEach(el => {
           el.removeAttribute('data-pdf-value');
         });
