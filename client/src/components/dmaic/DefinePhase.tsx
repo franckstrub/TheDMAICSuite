@@ -1185,10 +1185,12 @@ export default function DefinePhase() {
     });
   };
   
-  // Reference to the charter container for PDF export
-  const charterRef = useRef<HTMLDivElement>(null);
+  // PDF export helper functions
+  const formatCurrency = (value: number, currencySymbol: string): string => {
+    return `${currencySymbol}${value.toLocaleString('en-US', {maximumFractionDigits: 0})}`;
+  };
   
-  // Function to generate and download PDF of project charter
+  // Function to generate and download PDF of project charter with professional formatting
   const handleExportCharterToPDF = async (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -1198,101 +1200,260 @@ export default function DefinePhase() {
     });
     
     try {
-      if (!charterRef.current) {
-        throw new Error("Charter element not found");
-      }
-      
-      // Use html2canvas to capture the charter as an image
-      const canvas = await html2canvas(charterRef.current, {
-        scale: 1.5, // Higher quality
-        useCORS: true, // Allow cross-origin images
-        logging: false, // Disable logging
-        allowTaint: true, // Allow tainted canvas
-        backgroundColor: "#ffffff" // White background
-      });
-      
       // Create a new jsPDF instance
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // Calculate dimensions
-      const imgData = canvas.toDataURL('image/png');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasRatio = canvas.height / canvas.width;
-      const imgWidth = pdfWidth;
-      const imgHeight = pdfWidth * canvasRatio;
       
-      // Add title
-      pdf.setFontSize(18);
-      pdf.setTextColor(33, 37, 41);
-      pdf.text("Lean Six Sigma DMAIC Suite™ - Project Charter", 14, 15);
+      // Get form values for the PDF
+      const formValues = charterForm.getValues();
       
-      // Add date and project info
-      pdf.setFontSize(10);
-      pdf.setTextColor(85, 85, 85);
-      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 22);
-      pdf.text(`Project: ${charter?.charter?.projectTitle || "Untitled Project"}`, 14, 26);
+      // Colors
+      const titleColor = [33, 37, 41]; // Dark gray for titles
+      const textColor = [68, 68, 68];  // Medium gray for text
+      const highlightColor = [0, 112, 240]; // Blue for highlights
+      const lightGray = [242, 242, 242]; // Light gray for section backgrounds
+      const borderColor = [224, 224, 224]; // Border gray
       
-      // Split canvas into manageable chunks for multi-page PDF if needed
-      const maxHeight = pdfHeight - 40; // Leave space for headers/footers
-      const totalPages = Math.ceil(imgHeight / maxHeight);
+      // Set page margins
+      const marginLeft = 15;
+      const marginRight = 15;
+      const contentWidth = pdfWidth - marginLeft - marginRight;
       
-      // For each page
-      let sourceY = 0;
-      let remainingHeight = imgHeight;
+      // Add header
+      pdf.setFillColor(...highlightColor);
+      pdf.rect(0, 0, pdfWidth, 16, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text("Lean Six Sigma DMAIC Suite™ - Project Charter", marginLeft, 10);
       
-      for (let page = 0; page < totalPages; page++) {
-        // Add a new page if not the first page
-        if (page > 0) {
-          pdf.addPage();
+      // Add metadata line
+      pdf.setFillColor(...lightGray);
+      pdf.rect(0, 16, pdfWidth, 10, 'F');
+      pdf.setTextColor(...textColor);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")} | Project: ${formValues.projectTitle || "Untitled Project"} | Reference: ${formValues.projectReferenceNumber || "N/A"}`, marginLeft, 22);
+      
+      // Start position for content
+      let yPos = 35;
+      
+      // Function to add a section title
+      const addSectionTitle = (title: string, y: number): number => {
+        pdf.setFillColor(...lightGray);
+        pdf.rect(marginLeft - 2, y - 5, contentWidth + 4, 10, 'F');
+        pdf.setTextColor(...highlightColor);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(title, marginLeft, y);
+        return y + 10;
+      };
+      
+      // Function to add a field with label and value
+      const addField = (label: string, value: string, y: number, width: number = contentWidth): number => {
+        pdf.setTextColor(...titleColor);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(label, marginLeft, y);
+        
+        pdf.setTextColor(...textColor);
+        pdf.setFont('helvetica', 'normal');
+        
+        // Handle multiline text
+        if (value && value.length > 0) {
+          const splitValue = pdf.splitTextToSize(value, width - 5);
+          pdf.text(splitValue, marginLeft, y + 5);
+          return y + 5 + (splitValue.length * 5);
+        } else {
+          pdf.text("N/A", marginLeft, y + 5);
+          return y + 10;
         }
+      };
+      
+      // Function to add a two-column field
+      const addTwoColumnField = (label1: string, value1: string, label2: string, value2: string, y: number): number => {
+        const colWidth = contentWidth / 2 - 5;
         
-        // Calculate how much of the image to put on this page
-        const sourceHeight = Math.min(remainingHeight, maxHeight * canvas.width / imgWidth);
-        const printHeight = Math.min(maxHeight, remainingHeight * imgWidth / canvas.width);
+        // First column
+        pdf.setTextColor(...titleColor);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(label1, marginLeft, y);
         
-        // Create a temporary canvas for this page section
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = sourceHeight;
+        pdf.setTextColor(...textColor);
+        pdf.setFont('helvetica', 'normal');
         
-        // Draw just this section to the temporary canvas
-        const tempCtx = tempCanvas.getContext('2d');
-        if (tempCtx) {
-          tempCtx.drawImage(
-            canvas, 
-            0, sourceY, canvas.width, sourceHeight,
-            0, 0, tempCanvas.width, tempCanvas.height
-          );
-          
-          // Convert the temporary canvas to a data URL
-          const pageImgData = tempCanvas.toDataURL('image/png');
-          
-          // Add this portion to the PDF
-          const yPosition = page === 0 ? 40 : 15;
-          pdf.addImage(pageImgData, 'PNG', 14, yPosition, imgWidth - 28, printHeight);
-          
-          // Update for next page
-          remainingHeight -= printHeight;
-          sourceY += sourceHeight;
+        const value1Lines = value1 ? pdf.splitTextToSize(value1, colWidth - 5) : ["N/A"];
+        pdf.text(value1Lines, marginLeft, y + 5);
+        
+        // Second column
+        pdf.setTextColor(...titleColor);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(label2, marginLeft + colWidth + 10, y);
+        
+        pdf.setTextColor(...textColor);
+        pdf.setFont('helvetica', 'normal');
+        
+        const value2Lines = value2 ? pdf.splitTextToSize(value2, colWidth - 5) : ["N/A"];
+        pdf.text(value2Lines, marginLeft + colWidth + 10, y + 5);
+        
+        // Return the maximum y position from both columns
+        const height1 = value1Lines.length * 5;
+        const height2 = value2Lines.length * 5;
+        return y + 5 + Math.max(height1, height2) + 3;
+      };
+      
+      // Project Basic Information
+      yPos = addSectionTitle("Project Information", yPos);
+      yPos = addTwoColumnField("Project Title", formValues.projectTitle || "", "Project Type", formValues.projectType || "", yPos);
+      yPos = addTwoColumnField("Project Category", formValues.projectCategory || "", "Reference Number", formValues.projectReferenceNumber || "", yPos);
+      
+      // Team Information
+      yPos = addSectionTitle("Team Information", yPos + 3);
+      yPos = addTwoColumnField("Project Leader", formValues.projectLeader || "", "Belt Level", formValues.beltLevel || "", yPos);
+      yPos = addTwoColumnField("Sponsor", formValues.sponsor || "", "Function", formValues.sponsorFunction || "", yPos);
+      yPos = addTwoColumnField("Financial Controller", formValues.financialController || "", "Project Coach", formValues.projectCoach || "", yPos);
+      
+      // Stakeholders and Team Members
+      yPos = addSectionTitle("Stakeholders", yPos + 3);
+      if (stakeholders && stakeholders.length > 0) {
+        for (let i = 0; i < stakeholders.length; i++) {
+          yPos = addTwoColumnField(`Stakeholder ${i+1}`, stakeholders[i].name || "", "Function", stakeholders[i].function || "", yPos);
         }
-        
-        // Add page number at the bottom
-        pdf.setFontSize(10);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+      } else {
+        yPos = addField("Stakeholders", "No stakeholders defined", yPos);
       }
       
-      // Add footer to all pages
-      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+      yPos = addSectionTitle("Team Members", yPos + 3);
+      if (teamMembers && teamMembers.length > 0) {
+        for (let i = 0; i < teamMembers.length; i++) {
+          yPos = addTwoColumnField(`Team Member ${i+1}`, teamMembers[i].name || "", "Function", teamMembers[i].function || "", yPos);
+        }
+      } else {
+        yPos = addField("Team Members", "No team members defined", yPos);
+      }
+      
+      // Check if we need a new page for project description
+      if (yPos > pdfHeight - 80) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      
+      // Project Description
+      yPos = addSectionTitle("Project Description", yPos + 3);
+      yPos = addField("Business Case", formValues.businessCase || "", yPos);
+      yPos = addField("Problem Statement", formValues.problemStatement || "", yPos);
+      yPos = addField("Goals & Objectives", formValues.goals || "", yPos);
+      yPos = addField("Project Scope", formValues.scope || "", yPos);
+      
+      // Check if we need a new page for timelines
+      if (yPos > pdfHeight - 80) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      
+      // Project Timelines
+      yPos = addSectionTitle("Project Timeline", yPos + 3);
+      yPos = addTwoColumnField("Start Date", formValues.startDate || "", "Target End Date", formValues.targetEndDate || "", yPos);
+      yPos = addTwoColumnField("Kick-off Date", formValues.kick_off_date || "", "Define Phase", formValues.define_phase_date || "", yPos);
+      yPos = addTwoColumnField("Measure Phase", formValues.measure_phase_date || "", "Analyze Phase", formValues.analyze_phase_date || "", yPos);
+      yPos = addTwoColumnField("Improve Phase", formValues.improve_phase_date || "", "Control Phase", formValues.control_phase_date || "", yPos);
+      
+      // Check if we need a new page for financial information
+      if (yPos > pdfHeight - 100) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      
+      // Currency symbol
+      const currencySymbol = "€";
+      
+      // Financial Information - Benefits
+      yPos = addSectionTitle("Financial Benefits", yPos + 3);
+      yPos = addTwoColumnField("Quality Cost Savings (p.a.)", formatCurrency(parseFloat(formValues.savingsPerYear) || 0, currencySymbol), 
+                             "Working Capital Gains", formatCurrency(parseFloat(formValues.workingCapitalGains) || 0, currencySymbol), yPos);
+      yPos = addTwoColumnField("WACC Percentage", `${formValues.waccPercentage || 0}%`, 
+                             "Financial Savings", formatCurrency(parseFloat(formValues.financialSavings) || 0, currencySymbol), yPos);
+      yPos = addField("FTE Benefits", formValues.fteBenefits || "0", yPos);
+      
+      // Project Costs
+      yPos = addSectionTitle("Project Costs", yPos + 3);
+      yPos = addTwoColumnField("One-off People Cost", formatCurrency(parseFloat(formValues.oneOffPeopleCost) || 0, currencySymbol), 
+                             "One-off Technology Cost", formatCurrency(parseFloat(formValues.oneOffTechnologyCost) || 0, currencySymbol), yPos);
+      yPos = addTwoColumnField("One-off Other Cost", formatCurrency(parseFloat(formValues.oneOffOtherCost) || 0, currencySymbol), 
+                             "CAPEX Cost", formatCurrency(parseFloat(formValues.capexCost) || 0, currencySymbol), yPos);
+      
+      // Summary Financials
+      yPos = addSectionTitle("Financial Summary", yPos + 3);
+      yPos = addTwoColumnField("Total Financial Savings", formatCurrency(parseFloat(formValues.totalFinancialSavings) || 0, currencySymbol), 
+                             "Total Project Costs", formatCurrency(parseFloat(formValues.totalProjectCosts) || 0, currencySymbol), yPos);
+      yPos = addTwoColumnField("Project Net Value", formatCurrency(parseFloat(formValues.projectNetValue) || 0, currencySymbol), 
+                             "ROI", `${formValues.roi || 0}%`, yPos);
+      yPos = addField("Breakeven", formValues.breakeven || "N/A", yPos);
+      
+      // Check if we need a new page for soft benefits
+      if (yPos > pdfHeight - 80) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      
+      // Function to get icon for benefit category
+      const getCategoryIcon = (category: string): string => {
+        switch (category) {
+          case 'employee':
+            return '👥';
+          case 'customer':
+            return '🤝';
+          case 'process':
+            return '⚙️';
+          case 'growth':
+            return '📈';
+          default:
+            return '✓';
+        }
+      };
+      
+      // Function to get label for benefit category
+      const getCategoryLabel = (category: string): string => {
+        switch (category) {
+          case 'employee':
+            return 'Employee Benefit';
+          case 'customer':
+            return 'Customer Benefit';
+          case 'process':
+            return 'Process Benefit';
+          case 'growth':
+            return 'Growth Benefit';
+          default:
+            return 'Other Benefit';
+        }
+      };
+      
+      // Soft Benefits
+      yPos = addSectionTitle("Soft Benefits", yPos + 3);
+      if (softBenefits && softBenefits.length > 0) {
+        for (let i = 0; i < softBenefits.length; i++) {
+          const categoryIcon = getCategoryIcon(softBenefits[i].category);
+          const categoryLabel = getCategoryLabel(softBenefits[i].category);
+          yPos = addField(`${categoryIcon} ${categoryLabel}`, softBenefits[i].text || "", yPos);
+        }
+      } else {
+        yPos = addField("Soft Benefits", "No soft benefits defined", yPos);
+      }
+      
+      // Add page numbers to all pages
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         pdf.setFontSize(8);
         pdf.setTextColor(150, 150, 150);
+        pdf.text(`Page ${i} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
         pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
       }
       
       // Save the PDF
-      const projectName = charter?.charter?.projectTitle?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'project_charter';
+      const projectName = formValues.projectTitle?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'project_charter';
       const filename = `DMAIC_Project_Charter_${projectName}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       pdf.save(filename);
       
@@ -1355,7 +1516,7 @@ export default function DefinePhase() {
           )}
         </CardHeader>
         <CardContent>
-          <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4" ref={charterRef}>
+          <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-4">
