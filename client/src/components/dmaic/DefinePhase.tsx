@@ -1313,44 +1313,268 @@ export default function DefinePhase() {
       // Wait a brief moment for DOM changes to take effect
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Using a different approach to avoid PNG corruption
-      // Use html2canvas with different settings
-      const canvas = await html2canvas(charterElement, {
-        scale: 2.5, // Higher scale for better clarity
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff", 
-        imageTimeout: 30000, // Longer timeout for complex pages
-        logging: true,
-        removeContainer: false, // Don't remove container to avoid flickering
-        foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
-        onclone: (clonedDoc) => {
-          // Make sure all inputs and form elements render correctly
-          const clonedCharter = clonedDoc.getElementById('project-charter');
-          if (clonedCharter) {
-            // Make sure all hidden elements that should be visible in PDF are shown
-            const hiddenElements = clonedCharter.querySelectorAll('.html2canvas-show');
-            hiddenElements.forEach(el => el.classList.add('active'));
-            
-            // Get form values for all select fields to ensure they display correctly
-            const formValues = {
-              projectType: charterForm.watch("projectType") || "Green Belt",
-              projectCategory: charterForm.watch("projectCategory") || "Process Improvement",
-              beltLevel: charterForm.watch("beltLevel") || "",
-              coachBeltLevel: charterForm.watch("coachBeltLevel") || "None"
-            };
-            
-            // Update all select field elements using data-field attributes
-            for (const [field, value] of Object.entries(formValues)) {
-              const element = clonedCharter.querySelector(`[data-field="${field}"]`);
-              if (element) {
-                console.log(`Fixing ${field} in PDF:`, value);
-                (element as HTMLElement).textContent = value;
+      let pdfOutput;
+      
+      try {
+        console.log("Attempting to generate PDF with safer settings");
+        // Using a completely different approach specifically for handling complex charts and financial metrics
+        // Use html2canvas with much safer settings to avoid scale errors
+        const pdfCanvas = await html2canvas(charterElement, {
+          scale: 1.5, // CRITICAL: Using a lower scale to prevent jsPDF scaling errors
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff", 
+          imageTimeout: 60000, // Longer timeout for complex pages with expanded financial metrics
+          logging: true,
+          removeContainer: false, // Don't remove container to avoid flickering
+          foreignObjectRendering: false, // Disable foreignObject rendering which can cause issues
+          onclone: (clonedDoc) => {
+            // Special handling for this clone to make sure all elements render correctly
+            const clonedCharter = clonedDoc.getElementById('project-charter');
+            if (clonedCharter) {
+              // Make sure all hidden elements that should be visible in PDF are shown
+              const hiddenElements = clonedCharter.querySelectorAll('.html2canvas-show');
+              hiddenElements.forEach(el => el.classList.add('active'));
+              
+              // Get current form values to display correctly in PDF
+              const formValues = {
+                projectType: charterForm.watch("projectType") || "Green Belt",
+                projectCategory: charterForm.watch("projectCategory") || "Process Improvement",
+                beltLevel: charterForm.watch("beltLevel") || "",
+                coachBeltLevel: charterForm.watch("coachBeltLevel") || "None"
+              };
+              
+              // Update all form elements using data-field attributes
+              for (const [field, value] of Object.entries(formValues)) {
+                const element = clonedCharter.querySelector(`[data-field="${field}"]`);
+                if (element) {
+                  console.log(`Setting field ${field} in PDF to:`, value);
+                  (element as HTMLElement).textContent = value;
+                }
               }
             }
           }
+        });
+        
+        // Calculate dimensions
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        // Get canvas dimensions
+        const canvasWidth = pdfCanvas.width;
+        const canvasHeight = pdfCanvas.height;
+        
+        // Define footer height and adjust page dimensions to account for footer
+        const footerHeight = 15; // mm
+        
+        // Calculate how many pages we need - with more space for footer
+        const pageHeight = pdfHeight - 40 - footerHeight; // Account for header space on first page and footer on all pages
+        const contentWidth = pdfWidth - 20; // 10mm margin on each side
+        const imgWidth = contentWidth;
+        const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
+        const totalPages = Math.ceil(imgHeight / pageHeight);
+        
+        // Add image data to PDF, splitting across pages if needed
+        let remainingHeight = imgHeight;
+        let sourceY = 0;
+        
+        for (let page = 0; page < totalPages; page++) {
+          if (page > 0) {
+            pdf.addPage();
+          }
+          
+          // Calculate current page dimensions - ensuring space for footer on all pages
+          const currentPageHeight = page === 0 ? pageHeight : (pdfHeight - 20 - footerHeight);
+          const printHeight = Math.min(remainingHeight, currentPageHeight);
+          const sourceHeight = (printHeight / imgHeight) * canvasHeight;
+          
+          // Create a temporary canvas for this page section
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvasWidth;
+          tempCanvas.height = sourceHeight;
+          
+          // Draw the portion of the original canvas
+          const tempCtx = tempCanvas.getContext('2d');
+          if (tempCtx) {
+            tempCtx.drawImage(
+              pdfCanvas, 
+              0, sourceY, canvasWidth, sourceHeight,
+              0, 0, tempCanvas.width, tempCanvas.height
+            );
+            
+            // Add to PDF with JPEG format instead of PNG to avoid corruption
+            const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+            
+            const yPosition = page === 0 ? 40 : 10;
+            pdf.addImage(pageImgData, 'JPEG', 10, yPosition, imgWidth, printHeight);
+            
+            // Update for next page
+            remainingHeight -= printHeight;
+            sourceY += sourceHeight;
+          }
+          
+          // Add page number in footer area
+          pdf.setFontSize(10);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - (footerHeight / 2), { align: 'center' });
+          
+          // Optional: Add a separator line above footer
+          pdf.setDrawColor(200, 200, 200);
+          pdf.line(10, pdfHeight - footerHeight, pdfWidth - 10, pdfHeight - footerHeight);
         }
-      });
+        
+        // Add footer to all pages
+        for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+          pdf.setPage(i);
+          pdf.setFontSize(8);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
+        }
+        
+        // Save the PDF
+        pdfOutput = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        pdf.save(pdfOutput);
+        
+        toast({
+          title: "Report Generated Successfully",
+          description: `Your project charter has been captured and saved as ${pdfOutput}`,
+        });
+      } catch (e) {
+        console.error("Error during canvas generation:", e);
+        // If we still have an error, we'll use an even simpler approach with smaller segments
+        toast({
+          title: "Trying alternative method",
+          description: "First attempt failed, trying with simpler settings...",
+        });
+        
+        try {
+          // Force collapse ALL accordions to simplify the structure for backup method
+          const allAccordions = charterElement.querySelectorAll('[data-state]');
+          allAccordions.forEach(accordion => {
+            if (accordion.getAttribute('data-state') === 'open') {
+              accordion.setAttribute('data-pdf-was-open', 'true');
+              accordion.setAttribute('data-state', 'closed');
+            }
+          });
+          
+          // Add a note about all sections being available in app
+          const appNote = document.createElement('div');
+          appNote.className = 'pdf-only-note my-2 p-4 bg-blue-50 border border-blue-200 rounded-md';
+          appNote.innerHTML = `
+            <p class="text-sm font-semibold text-blue-800">Full project details available in the application</p>
+            <p class="text-xs text-blue-600 mt-1">Some sections are collapsed in this PDF for compatibility.</p>
+          `;
+          const headerEl = charterElement.querySelector('.card-header');
+          if (headerEl && headerEl.parentNode) {
+            headerEl.parentNode.insertBefore(appNote, headerEl.nextSibling);
+          }
+          
+          // Wait a moment for DOM updates
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          // Use extremely basic settings
+          const fallbackCanvas = await html2canvas(charterElement, {
+            scale: 1.0, // Absolute minimum scale to prevent errors
+            useCORS: true,
+            allowTaint: true, 
+            backgroundColor: "#ffffff",
+            imageTimeout: 60000,
+            logging: false, // Minimal logging
+            removeContainer: false,
+            onclone: (clonedDoc) => {
+              // Ultra-simplified clone handling
+              const clonedCharter = clonedDoc.getElementById('project-charter');
+              if (clonedCharter) {
+                clonedCharter.querySelectorAll('.html2canvas-show').forEach(el => {
+                  el.classList.add('active');
+                });
+              }
+            }
+          });
+          
+          // Calculate dimensions
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          
+          // Add just a single image without trying to split into pages
+          const pageImgData = fallbackCanvas.toDataURL('image/jpeg', 0.9);
+          
+          const aspectRatio = fallbackCanvas.height / fallbackCanvas.width;
+          const pdfImgWidth = pdfWidth - 20; // 10mm margin on each side
+          const pdfImgHeight = pdfImgWidth * aspectRatio;
+          
+          // Handle pagination for failback method too
+          const maxHeight = pdfHeight - 50; // Leave space for header/footer
+          const totalPages = Math.ceil(pdfImgHeight / maxHeight);
+          
+          if (totalPages <= 1) {
+            // Simple case - fits on one page
+            pdf.addImage(pageImgData, 'JPEG', 10, 40, pdfImgWidth, pdfImgHeight);
+          } else {
+            // Slice image across pages
+            const pageHeight = pdfHeight - 20 - 15; // margins and footer
+            for (let page = 0; page < totalPages; page++) {
+              if (page > 0) pdf.addPage();
+              
+              const posY = page === 0 ? 40 : 10;
+              const srcY = (page * pageHeight / pdfImgHeight) * fallbackCanvas.height;
+              const srcHeight = Math.min(fallbackCanvas.height - srcY, (pageHeight / pdfImgHeight) * fallbackCanvas.height);
+              const printHeight = (srcHeight / fallbackCanvas.height) * pdfImgHeight;
+              
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = fallbackCanvas.width;
+              tempCanvas.height = srcHeight;
+              
+              const tempCtx = tempCanvas.getContext('2d');
+              if (tempCtx) {
+                tempCtx.drawImage(
+                  fallbackCanvas, 
+                  0, srcY, fallbackCanvas.width, srcHeight,
+                  0, 0, tempCanvas.width, tempCanvas.height
+                );
+                
+                const sectionImgData = tempCanvas.toDataURL('image/jpeg', 0.9);
+                pdf.addImage(sectionImgData, 'JPEG', 10, posY, pdfImgWidth, printHeight);
+              }
+              
+              // Add page number
+              pdf.setFontSize(10);
+              pdf.setTextColor(150, 150, 150);
+              pdf.text(`Page ${page + 1} of ${totalPages}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+            }
+          }
+          
+          // Save the PDF
+          pdfOutput = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+          pdf.save(pdfOutput);
+          
+          toast({
+            title: "Report Generated (Simplified Format)",
+            description: `Your project charter has been saved as ${pdfOutput} with simplified formatting`,
+          });
+        } catch (error) {
+          console.error("Final backup method failed:", error);
+          toast({
+            title: "Export Failed",
+            description: "Unable to generate PDF. Try collapsing all sections manually before exporting.",
+            variant: "destructive",
+          });
+        } finally {
+          // Always restore open accordion states
+          const allOpenAccordions = charterElement.querySelectorAll('[data-pdf-was-open="true"]');
+          allOpenAccordions.forEach(section => {
+            section.setAttribute('data-state', 'open');
+            section.removeAttribute('data-pdf-was-open');
+          });
+          
+          // Clean up other PDF-specific elements
+          const notes = charterElement.querySelectorAll('.pdf-only-note');
+          notes.forEach(note => note.parentNode?.removeChild(note));
+          
+          // Remove container class
+          charterElement.classList.remove('html2canvas-container');
+        }
+      }
       
       // Calculate dimensions
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -1430,45 +1654,16 @@ export default function DefinePhase() {
       // Save the PDF
       const filename = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       pdf.save(filename);
-      
-      // Restore the DOM to its original state
-      if (charterElement) {
-        // Remove special class
-        charterElement.classList.remove('html2canvas-container');
-        
-        // Restore collapsible sections to their original state
-        const expandedForPdf = charterElement.querySelectorAll('[data-pdf-was-closed="true"]');
-        expandedForPdf.forEach(section => {
-          section.setAttribute('data-state', 'closed');
-          section.removeAttribute('data-pdf-was-closed');
-        });
-        
-        // Restore financial section if it was expanded
-        const financialSection = charterElement.querySelector('[data-pdf-was-expanded="true"]');
-        if (financialSection) {
-          financialSection.setAttribute('data-state', 'open');
-          financialSection.removeAttribute('data-pdf-was-expanded');
-          
-          // Remove the temporary note we added
-          const notes = charterElement.querySelectorAll('.pdf-only-note');
-          notes.forEach(note => note.parentNode?.removeChild(note));
-        }
-        
-        // Clean up data attributes added for form values
-        const formInputs = charterElement.querySelectorAll('input, textarea, select');
-        formInputs.forEach(input => {
-          input.removeAttribute('data-pdf-value');
-        });
-      }
-      
-      toast({
-        title: "Report Generated Successfully",
-        description: `Your project charter has been captured and saved as ${filename}`,
-      });
     } catch (error) {
       console.error("Error exporting to PDF:", error);
       
-      // Ensure we restore the DOM to its original state even if there's an error
+      toast({
+        title: "Export failed",
+        description: `An error occurred during export: ${error}`,
+        variant: "destructive",
+      });
+    } finally {
+      // Always clean up the DOM regardless of success or failure
       const cleanupElement = document.getElementById('project-charter');
       if (cleanupElement) {
         // Remove special class
@@ -1486,11 +1681,18 @@ export default function DefinePhase() {
         if (financialSection) {
           financialSection.setAttribute('data-state', 'open');
           financialSection.removeAttribute('data-pdf-was-expanded');
-          
-          // Remove the temporary note we added
-          const notes = cleanupElement.querySelectorAll('.pdf-only-note');
-          notes.forEach(note => note.parentNode?.removeChild(note));
         }
+        
+        // Restore any accordions that were open before
+        const openAccordions = cleanupElement.querySelectorAll('[data-pdf-was-open="true"]');
+        openAccordions.forEach(section => {
+          section.setAttribute('data-state', 'open');
+          section.removeAttribute('data-pdf-was-open');
+        });
+        
+        // Remove all temporary notes we added
+        const notes = cleanupElement.querySelectorAll('.pdf-only-note');
+        notes.forEach(note => note.parentNode?.removeChild(note));
         
         // Clean up data attributes added for form values
         const formInputs = cleanupElement.querySelectorAll('input, textarea, select');
@@ -1498,12 +1700,6 @@ export default function DefinePhase() {
           input.removeAttribute('data-pdf-value');
         });
       }
-      
-      toast({
-        title: "Export failed",
-        description: `An error occurred during export: ${error}`,
-        variant: "destructive",
-      });
     }
   };
 
