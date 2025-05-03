@@ -2000,7 +2000,7 @@ export default function DefinePhase() {
                           </div>
                           
                           <h4 className="font-medium mb-2">Saved Working Time</h4>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
                               <p className="text-sm font-medium mb-1">Time Period</p>
                               <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
@@ -2012,6 +2012,23 @@ export default function DefinePhase() {
                               <p className="text-sm font-medium mb-1">Hours Saved</p>
                               <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
                                 {fteParams.savedHours}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="pt-3 border-t border-gray-200">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-sm font-medium mb-1">FTE Cost per Year ({currency})</p>
+                                <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                  {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium mb-1">FTE Benefits ({currency})</p>
+                                <div className="p-2 border border-gray-200 rounded-md bg-white text-sm text-green-600">
+                                  {formatCurrency(fteParams.calculatedValue, currency)}
+                                </div>
                               </div>
                             </div>
                           </div>
