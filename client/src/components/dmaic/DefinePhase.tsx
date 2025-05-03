@@ -1495,6 +1495,10 @@ export default function DefinePhase() {
                           <SelectItem value="White Belt">White Belt</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Project Type: {charterForm.watch("projectType") || "Green Belt"}
+                      </span>
                     </div>
                     <div>
                       <Label htmlFor="projectCategory">Project Category</Label>
@@ -1514,6 +1518,10 @@ export default function DefinePhase() {
                           <SelectItem value="Quick Action">Quick Action</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Project Category: {charterForm.watch("projectCategory") || "Process Improvement"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1546,6 +1554,10 @@ export default function DefinePhase() {
                           <SelectItem value="none">None</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Belt Level: {charterForm.watch("beltLevel") || "Green Belt"}
+                      </span>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1609,6 +1621,10 @@ export default function DefinePhase() {
                           <SelectItem value="None">None</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Hidden span for PDF export */}
+                      <span className="html2canvas-show print-hide absolute left-0 opacity-0">
+                        Coach Belt Level: {charterForm.watch("coachBeltLevel") || "Master Black Belt"}
+                      </span>
                     </div>
                   </div>
                   <div>
