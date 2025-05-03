@@ -236,6 +236,24 @@
   width: 100%;
 }
 
+/* Display only elements needed for PDF in html2canvas-container */
+.html2canvas-container .html2canvas-hide {
+  display: none !important;
+}
+
+.html2canvas-container .html2canvas-show {
+  display: block !important;
+}
+
+/* Normal display (reverse of PDF display) */
+.html2canvas-show {
+  display: none !important;
+}
+
+.html2canvas-hide {
+  display: block;
+}
+
 .html2canvas-container .print-hide {
   display: none !important;
 }

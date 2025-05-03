@@ -1481,39 +1481,55 @@ export default function DefinePhase() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="projectType">Project Type</Label>
-                      <Select 
-                        onValueChange={(value) => charterForm.setValue("projectType", value)}
-                        value={charterForm.watch("projectType") || "Green Belt"}
-                      >
-                        <SelectTrigger className="w-full" data-pdf-value={charterForm.watch("projectType") || "Green Belt"}>
-                          <SelectValue placeholder="Select project type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Black Belt">Black Belt</SelectItem>
-                          <SelectItem value="Green Belt">Green Belt</SelectItem>
-                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                          <SelectItem value="White Belt">White Belt</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select 
+                          onValueChange={(value) => charterForm.setValue("projectType", value)}
+                          value={charterForm.watch("projectType") || "Green Belt"}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select project type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Black Belt">Black Belt</SelectItem>
+                            <SelectItem value="Green Belt">Green Belt</SelectItem>
+                            <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                            <SelectItem value="White Belt">White Belt</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
+                        {charterForm.watch("projectType") || "Green Belt"}
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="projectCategory">Project Category</Label>
-                      <Select 
-                        onValueChange={(value) => charterForm.setValue("projectCategory", value)}
-                        value={charterForm.watch("projectCategory") || "Process Improvement"}
-                      >
-                        <SelectTrigger className="w-full" data-pdf-value={charterForm.watch("projectCategory") || "Process Improvement"}>
-                          <SelectValue placeholder="Select project category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Process Improvement">Process Improvement</SelectItem>
-                          <SelectItem value="Process Redesign">Process Redesign</SelectItem>
-                          <SelectItem value="Process Design">Process Design</SelectItem>
-                          <SelectItem value="Project Scoping">Project Scoping</SelectItem>
-                          <SelectItem value="Kaizen">Kaizen</SelectItem>
-                          <SelectItem value="Quick Action">Quick Action</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select 
+                          onValueChange={(value) => charterForm.setValue("projectCategory", value)}
+                          value={charterForm.watch("projectCategory") || "Process Improvement"}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select project category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Process Improvement">Process Improvement</SelectItem>
+                            <SelectItem value="Process Redesign">Process Redesign</SelectItem>
+                            <SelectItem value="Process Design">Process Design</SelectItem>
+                            <SelectItem value="Project Scoping">Project Scoping</SelectItem>
+                            <SelectItem value="Kaizen">Kaizen</SelectItem>
+                            <SelectItem value="Quick Action">Quick Action</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
+                        {charterForm.watch("projectCategory") || "Process Improvement"}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1529,23 +1545,31 @@ export default function DefinePhase() {
                     </div>
                     <div>
                       <Label htmlFor="beltLevel">Belt Level</Label>
-                      <Select 
-                        onValueChange={(value) => charterForm.setValue("beltLevel", value)}
-                        defaultValue={charterForm.getValues("beltLevel")}
-                      >
-                        <SelectTrigger className="w-full" data-pdf-value={charterForm.getValues("beltLevel") || ""}>
-                          <SelectValue placeholder="Select belt level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Black Belt">Black Belt</SelectItem>
-                          <SelectItem value="Green Belt">Green Belt</SelectItem>
-                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                          <SelectItem value="White Belt">White Belt</SelectItem>
-                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
-                          <SelectItem value="Champion">Champion</SelectItem>
-                          <SelectItem value="none">None</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select 
+                          onValueChange={(value) => charterForm.setValue("beltLevel", value)}
+                          defaultValue={charterForm.getValues("beltLevel")}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select belt level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Black Belt">Black Belt</SelectItem>
+                            <SelectItem value="Green Belt">Green Belt</SelectItem>
+                            <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                            <SelectItem value="White Belt">White Belt</SelectItem>
+                            <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
+                            <SelectItem value="Champion">Champion</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
+                        {charterForm.getValues("beltLevel") || ""}
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1592,23 +1616,31 @@ export default function DefinePhase() {
                     </div>
                     <div>
                       <Label htmlFor="coachBeltLevel">Belt Level</Label>
-                      <Select
-                        onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
-                        defaultValue={charterForm.getValues("coachBeltLevel") || "None"}
-                      >
-                        <SelectTrigger data-pdf-value={charterForm.getValues("coachBeltLevel") || "None"}>
-                          <SelectValue placeholder="Select belt level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
-                          <SelectItem value="Black Belt">Black Belt</SelectItem>
-                          <SelectItem value="Green Belt">Green Belt</SelectItem>
-                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                          <SelectItem value="White Belt">White Belt</SelectItem>
-                          <SelectItem value="Champion">Champion</SelectItem>
-                          <SelectItem value="None">None</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select
+                          onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
+                          defaultValue={charterForm.getValues("coachBeltLevel") || "None"}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select belt level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
+                            <SelectItem value="Black Belt">Black Belt</SelectItem>
+                            <SelectItem value="Green Belt">Green Belt</SelectItem>
+                            <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                            <SelectItem value="White Belt">White Belt</SelectItem>
+                            <SelectItem value="Champion">Champion</SelectItem>
+                            <SelectItem value="None">None</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1">
+                        {charterForm.getValues("coachBeltLevel") || "None"}
+                      </div>
                     </div>
                   </div>
                   <div>
