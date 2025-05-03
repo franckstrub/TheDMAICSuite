@@ -1774,8 +1774,8 @@ export default function DefinePhase() {
         });
       }
       
-      // Reset the flag
-      isPdfGenerating = false;
+      // Reset the PDF generation flag
+      // No need to reset isPdfGenerating as we're using exportPdfLock now
     }
   };
 
