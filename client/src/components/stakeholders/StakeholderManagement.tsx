@@ -153,21 +153,21 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
             {stakeholders.map((stakeholder, index) => (
               <tr key={index}>
                 <td className="px-4 py-2">
-                  <div className="pdf-export-content">{stakeholder.name}</div>
+                  <div className="pdf-text">{stakeholder.name}</div>
                   <Input
                     placeholder="Enter stakeholder name"
                     value={stakeholder.name}
                     onChange={(e) => updateStakeholder(index, 'name', e.target.value)}
-                    className="h-8 pdf-hide-input"
+                    className="h-8"
                   />
                 </td>
                 <td className="px-4 py-2">
-                  <div className="pdf-export-content">{stakeholder.function || "-"}</div>
+                  <div className="pdf-text">{stakeholder.function || "-"}</div>
                   <Input
                     placeholder="Enter function/department (optional)"
                     value={stakeholder.function}
                     onChange={(e) => updateStakeholder(index, 'function', e.target.value)}
-                    className="h-8 pdf-hide-input"
+                    className="h-8"
                   />
                 </td>
                 <td className="px-4 py-2 print-hide">

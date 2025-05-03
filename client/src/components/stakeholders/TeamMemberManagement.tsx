@@ -156,21 +156,21 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
             {teamMembers.map((teamMember, index) => (
               <tr key={index}>
                 <td className="px-4 py-2">
-                  <div className="pdf-export-content">{teamMember.name}</div>
+                  <div className="pdf-text">{teamMember.name}</div>
                   <Input
                     placeholder="Enter team member name"
                     value={teamMember.name}
                     onChange={(e) => updateTeamMember(index, 'name', e.target.value)}
-                    className="h-8 pdf-hide-input"
+                    className="h-8"
                   />
                 </td>
                 <td className="px-4 py-2">
-                  <div className="pdf-export-content">{teamMember.function || "-"}</div>
+                  <div className="pdf-text">{teamMember.function || "-"}</div>
                   <Input
                     placeholder="Enter function/expertise (optional)"
                     value={teamMember.function}
                     onChange={(e) => updateTeamMember(index, 'function', e.target.value)}
-                    className="h-8 pdf-hide-input"
+                    className="h-8"
                   />
                 </td>
                 <td className="px-4 py-2 print-hide">
