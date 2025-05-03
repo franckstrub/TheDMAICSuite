@@ -119,14 +119,19 @@ export const exportToPdf = async (elementId: string, filename: string) => {
         // Ensure plain text representations in PDF are styled properly
         const plainTextElements = clonedDoc.querySelectorAll('.html2canvas-show');
         plainTextElements.forEach(el => {
-          (el as HTMLElement).style.padding = '0.5rem';
+          // Apply more compact padding and styling for text boxes
+          (el as HTMLElement).style.padding = '0.25rem 0.5rem';
           (el as HTMLElement).style.border = '1px solid #e2e8f0';
           (el as HTMLElement).style.borderRadius = '0.25rem';
           (el as HTMLElement).style.backgroundColor = 'white';
-          (el as HTMLElement).style.marginTop = '4px';
+          (el as HTMLElement).style.marginTop = '2px';
+          (el as HTMLElement).style.marginBottom = '2px';
           (el as HTMLElement).style.color = '#1e293b'; 
           (el as HTMLElement).style.fontSize = '0.875rem';
-          (el as HTMLElement).style.lineHeight = '1.25rem';
+          (el as HTMLElement).style.lineHeight = '1rem'; // Reduced line height
+          (el as HTMLElement).style.minHeight = '1.4rem'; // Ensure minimum height
+          (el as HTMLElement).style.height = 'auto'; // Let height adjust to content
+          (el as HTMLElement).style.overflow = 'visible'; // Ensure text isn't cut off
         });
         
         console.log("Document cloned and styled for canvas rendering with improved select element handling");
@@ -273,14 +278,19 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
         
         // Ensure plain text representations in PDF are styled properly
         showElements.forEach(el => {
-          (el as HTMLElement).style.padding = '0.5rem';
+          // Apply more compact padding and styling for text boxes
+          (el as HTMLElement).style.padding = '0.25rem 0.5rem';
           (el as HTMLElement).style.border = '1px solid #e2e8f0';
           (el as HTMLElement).style.borderRadius = '0.25rem';
           (el as HTMLElement).style.backgroundColor = 'white';
-          (el as HTMLElement).style.marginTop = '4px';
+          (el as HTMLElement).style.marginTop = '2px';
+          (el as HTMLElement).style.marginBottom = '2px';
           (el as HTMLElement).style.color = '#1e293b'; 
           (el as HTMLElement).style.fontSize = '0.875rem';
-          (el as HTMLElement).style.lineHeight = '1.25rem';
+          (el as HTMLElement).style.lineHeight = '1rem'; // Reduced line height
+          (el as HTMLElement).style.minHeight = '1.4rem'; // Ensure minimum height
+          (el as HTMLElement).style.height = 'auto'; // Let height adjust to content
+          (el as HTMLElement).style.overflow = 'visible'; // Ensure text isn't cut off
         });
       }
     });
