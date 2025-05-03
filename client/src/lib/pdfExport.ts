@@ -91,6 +91,9 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           (container as HTMLElement).style.display = 'none';
         });
         
+        // Fix the FTE benefits display
+        fixFteBenefitsInPdf(clonedDoc);
+        
         // Make sure html2canvas-show elements are visible
         const showElements = clonedDoc.querySelectorAll('.html2canvas-show');
         showElements.forEach(el => {
@@ -267,6 +270,9 @@ export const exportToPdfMultiPage = async (elementId: string, filename: string) 
           container.classList.add('pdf-hidden');
           (container as HTMLElement).style.display = 'none';
         });
+        
+        // Fix the FTE benefits display
+        fixFteBenefitsInPdf(clonedDoc);
         
         // Make sure html2canvas-show elements are visible
         const showElements = clonedDoc.querySelectorAll('.html2canvas-show');
