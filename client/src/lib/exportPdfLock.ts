@@ -9,6 +9,9 @@
 // Track the timestamp of when PDF was last generated
 let lastGeneratedTimestamp: number | null = null;
 
+// Track if PDF generation is currently in progress
+let generationInProgress: boolean = false;
+
 // Default cooldown period in milliseconds (500ms is usually sufficient)
 const GENERATION_COOLDOWN = 500;
 
@@ -33,7 +36,24 @@ export function wasGenerated(): boolean {
  */
 export function markAsGenerated(): void {
   lastGeneratedTimestamp = Date.now();
+  generationInProgress = false;
   console.log("PDF generation marked at timestamp:", lastGeneratedTimestamp);
+}
+
+/**
+ * Check if PDF generation is currently in progress
+ * @returns boolean indicating if generation is in progress
+ */
+export function isGenerating(): boolean {
+  return generationInProgress;
+}
+
+/**
+ * Start PDF generation process
+ */
+export function startGeneration(): void {
+  generationInProgress = true;
+  console.log("PDF generation started at:", Date.now());
 }
 
 /**
@@ -41,11 +61,14 @@ export function markAsGenerated(): void {
  */
 export function reset(): void {
   lastGeneratedTimestamp = null;
+  generationInProgress = false;
   console.log("PDF generation lock reset");
 }
 
 export default {
   wasGenerated,
   markAsGenerated,
+  isGenerating,
+  startGeneration,
   reset
 };
