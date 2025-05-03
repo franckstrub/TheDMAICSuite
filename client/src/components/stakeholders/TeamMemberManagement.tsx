@@ -239,18 +239,18 @@ const TeamMemberManagement: React.FC<TeamMemberManagementProps> = ({
         <h4 className="font-semibold text-sm mb-3">Team Members</h4>
         
         {teamMembers.length > 0 ? (
-          <table className="two-column-pdf-table" width="100%" cellPadding="0" cellSpacing="0" border="0">
+          <table className="two-column-pdf-table">
             <thead>
               <tr>
-                <th width="50%" align="left">Name</th>
-                <th width="50%" align="left">Function</th>
+                <th>Name</th>
+                <th>Function</th>
               </tr>
             </thead>
             <tbody>
               {teamMembers.map((teamMember, index) => (
                 <tr key={index}>
-                  <td width="50%" align="left">{teamMember.name || 'N/A'}</td>
-                  <td width="50%" align="left">{teamMember.function || 'N/A'}</td>
+                  <td>{teamMember.name || 'N/A'}</td>
+                  <td>{teamMember.function || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
