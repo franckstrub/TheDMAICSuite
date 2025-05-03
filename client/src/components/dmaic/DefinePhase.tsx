@@ -1891,6 +1891,9 @@ export default function DefinePhase() {
                         <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
+                            <div className="mb-1">
+                              <p className="text-xs font-medium">Working Days/Week: {fteParams.workingDaysPerWeek}</p>
+                            </div>
                             <Label htmlFor="workingDaysPerWeek" className="text-xs">Working Days/Week</Label>
                             <Input
                               id="workingDaysPerWeek"
@@ -1911,11 +1914,14 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.workingDaysPerWeek}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                              Working Days/Week: {fteParams.workingDaysPerWeek}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
+                              {fteParams.workingDaysPerWeek}
                             </span>
                           </div>
                           <div>
+                            <div className="mb-1">
+                              <p className="text-xs font-medium">Working Hours/Day: {fteParams.workingHoursPerDay}</p>
+                            </div>
                             <Label htmlFor="workingHoursPerDay" className="text-xs">Working Hours/Day</Label>
                             <Input
                               id="workingHoursPerDay"
@@ -1936,8 +1942,8 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.workingHoursPerDay}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                              Working Hours/Day: {fteParams.workingHoursPerDay}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
+                              {fteParams.workingHoursPerDay}
                             </span>
                           </div>
                         </div>
@@ -1947,6 +1953,10 @@ export default function DefinePhase() {
                         <Label htmlFor="savedTime" className="text-xs font-medium">Saved Working Time</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
+                            <div className="mb-1">
+                              <p className="text-xs font-medium">Time Period: {fteParams.timeUnit === 'day' ? 'Per Day' : 
+                                fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}</p>
+                            </div>
                             <Label htmlFor="timeUnit" className="text-xs">Time Period</Label>
                             <select 
                               id="timeUnit"
@@ -1961,12 +1971,15 @@ export default function DefinePhase() {
                               <option value="month">Per Month</option>
                             </select>
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                              Time Period: {fteParams.timeUnit === 'day' ? 'Per Day' : 
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
+                              {fteParams.timeUnit === 'day' ? 'Per Day' : 
                                 fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}
                             </span>
                           </div>
                           <div>
+                            <div className="mb-1">
+                              <p className="text-xs font-medium">Hours Saved: {fteParams.savedHours}</p>
+                            </div>
                             <Label htmlFor="savedHours" className="text-xs">Hours Saved</Label>
                             <Input
                               id="savedHours"
@@ -1986,8 +1999,8 @@ export default function DefinePhase() {
                               data-pdf-value={fteParams.savedHours}
                             />
                             {/* Hidden span for PDF export */}
-                            <span className="html2canvas-show print-hide absolute left-0 opacity-0">
-                              Hours Saved: {fteParams.savedHours}
+                            <span className="html2canvas-show print-hide absolute left-0 opacity-0 pdf-value-only">
+                              {fteParams.savedHours}
                             </span>
                           </div>
                         </div>
