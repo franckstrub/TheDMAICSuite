@@ -1227,6 +1227,105 @@ export default function DefinePhase() {
     isPdfGenerating = true;
     
     try {
+      // Project title for filename
+      const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
+      const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 30);
+      
+      // Create the PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+      
+      // PDF dimensions
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const headerOffset = 50; // Increased to make room for project image
+      const footerHeight = 15;
+
+      // Add header
+      pdf.setFontSize(16);
+      pdf.setTextColor(33, 37, 41);
+      pdf.text("Six Sigma Project Charter", 105, 20, { align: 'center' });
+      
+      pdf.setFontSize(10);
+      pdf.setTextColor(85, 85, 85);
+      pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, margin, 30);
+      pdf.text(`Project: ${projectTitle}`, margin, 35);
+      
+      // Add separator line
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, 38, pdfWidth - margin, 38);
+      
+      // Handle project image if exists - add it directly to the PDF
+      if (projectImage) {
+        try {
+          console.log("Adding project image to PDF");
+          
+          // Create a temporary image element
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = projectImage;
+          
+          // Wait for image to load
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => {
+              console.error("Failed to load project image");
+              resolve(); // Continue even if image fails
+            };
+            
+            // Set a timeout to prevent hanging
+            setTimeout(resolve, 5000);
+          });
+          
+          // Create a canvas to draw the image
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          // Draw image to canvas
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            
+            try {
+              // Add image to PDF in a fixed position at the top-right
+              const imageDataURL = canvas.toDataURL('image/jpeg');
+              
+              // Calculate image dimensions to fit in PDF while maintaining aspect ratio
+              const maxWidth = 50; // mm
+              const imageRatio = img.height / img.width;
+              const imageWidth = Math.min(maxWidth, pdfWidth / 3);
+              const imageHeight = imageWidth * imageRatio;
+              
+              // Position image in the top right
+              const imageX = pdfWidth - imageWidth - margin;
+              const imageY = 45; // Below the header
+              
+              pdf.addImage(
+                imageDataURL,
+                'JPEG',
+                imageX,
+                imageY,
+                imageWidth,
+                imageHeight
+              );
+              
+              console.log("Project image added to PDF successfully");
+            } catch (e) {
+              console.error("Error adding image to PDF:", e);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing project image:", error);
+          // Continue with PDF generation even if image fails
+        }
+      }
+      
       // Create a temporary clone so we can modify it without affecting the UI
       const charterElement = document.getElementById("project-charter");
       if (!charterElement) {
@@ -1235,7 +1334,6 @@ export default function DefinePhase() {
           description: "Could not find the project charter element",
           variant: "destructive",
         });
-        isPdfGenerating = false;
         return;
       }
       
@@ -1249,10 +1347,6 @@ export default function DefinePhase() {
       document.body.appendChild(clone);
       
       try {
-        // Project title for filename
-        const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
-        const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 30);
-        
         // Specifically look for the financial metrics section in the clone
         const costsSection = clone.querySelector('#project-costs-accordion');
         if (costsSection) {
@@ -1292,6 +1386,12 @@ export default function DefinePhase() {
           }
         }
         
+        // Remove the project image section completely as we'll handle it separately
+        const projectImageSection = clone.querySelector('#project-image-section');
+        if (projectImageSection) {
+          projectImageSection.remove();
+        }
+        
         // Process form fields for PDF display
         clone.querySelectorAll('.html2canvas-show').forEach(el => {
           (el as HTMLElement).style.display = 'block';
@@ -1301,27 +1401,8 @@ export default function DefinePhase() {
           (el as HTMLElement).style.display = 'none';
         });
         
-        // Create the PDF
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-          compress: true
-        });
-        
-        // Add header
-        pdf.setFontSize(16);
-        pdf.setTextColor(33, 37, 41);
-        pdf.text("Six Sigma Project Charter", 105, 20, { align: 'center' });
-        
-        pdf.setFontSize(10);
-        pdf.setTextColor(85, 85, 85);
-        pdf.text(`Generated on ${format(new Date(), "MMMM d, yyyy")}`, 14, 30);
-        pdf.text(`Project: ${projectTitle}`, 14, 35);
-        
-        // Add separator line
-        pdf.setDrawColor(200, 200, 200);
-        pdf.line(14, 38, 196, 38);
+        // Wait a moment for DOM changes to take effect
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Capture the clone to canvas
         const canvas = await html2canvas(clone, {
@@ -1329,17 +1410,11 @@ export default function DefinePhase() {
           useCORS: true,
           allowTaint: true,
           backgroundColor: "#ffffff",
-          logging: true
+          logging: false
         });
         
-        // Calculate dimensions
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const headerOffset = 40;
-        const footerHeight = 15;
-        
         // Calculate image dimensions
-        const imgWidth = pdfWidth - 20;
+        const imgWidth = pdfWidth - (2 * margin);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
         // Calculate if it fits on one page
@@ -1350,7 +1425,7 @@ export default function DefinePhase() {
           pdf.addImage(
             canvas.toDataURL('image/jpeg', 0.95),
             'JPEG',
-            10, headerOffset,
+            margin, headerOffset,
             imgWidth, imgHeight
           );
           
@@ -1365,14 +1440,16 @@ export default function DefinePhase() {
           
           // First page has less space due to header
           remainingHeight -= firstPageContentHeight;
-          totalPages += Math.ceil(remainingHeight / (pdfHeight - 20 - footerHeight));
+          totalPages += Math.ceil(remainingHeight / (pdfHeight - (2 * margin) - footerHeight));
           
           // Add first page with header space taken into account
           pdf.addImage(
             canvas.toDataURL('image/jpeg', 0.95),
             'JPEG',
-            10, headerOffset,
-            imgWidth, imgHeight
+            margin, headerOffset,
+            imgWidth, imgHeight,
+            '', // No alias
+            'SLOW' // Better quality
           );
           
           // Add page number
@@ -1392,12 +1469,14 @@ export default function DefinePhase() {
             pdf.addImage(
               canvas.toDataURL('image/jpeg', 0.95),
               'JPEG',
-              10, position,
-              imgWidth, imgHeight
+              margin, position,
+              imgWidth, imgHeight,
+              '',
+              'SLOW'
             );
             
             // Move position for next page
-            position -= (pdfHeight - 20 - footerHeight);
+            position -= (pdfHeight - (2 * margin) - footerHeight);
             
             // Add page number
             pdf.setFontSize(10);
@@ -1409,9 +1488,15 @@ export default function DefinePhase() {
         // Add footer to all pages
         for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
           pdf.setPage(i);
+          
+          // Add separator line at footer
+          pdf.setDrawColor(200, 200, 200);
+          pdf.line(margin, pdfHeight - footerHeight, pdfWidth - margin, pdfHeight - footerHeight);
+          
+          // Add footer text
           pdf.setFontSize(8);
           pdf.setTextColor(150, 150, 150);
-          pdf.text('Lean Six Sigma DMAIC Suite™', 14, pdfHeight - 5);
+          pdf.text("Lean Six Sigma DMAIC Suite™", margin + 4, pdfHeight - 5);
         }
         
         // Save the PDF
@@ -1658,7 +1743,7 @@ export default function DefinePhase() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="projectImage">Project Image</Label>
-                  <div className="mt-2">
+                  <div id="project-image-section" className="mt-2">
                     {projectImage ? (
                       <div className="relative w-full max-w-md mb-2">
                         {/* Regular display for screen */}
@@ -1668,6 +1753,7 @@ export default function DefinePhase() {
                             alt="Project"
                             className="w-full h-auto object-contain rounded-md border border-gray-200"
                             style={{ maxHeight: '200px' }}
+                            crossOrigin="anonymous"
                           />
                           <Button
                             type="button"
