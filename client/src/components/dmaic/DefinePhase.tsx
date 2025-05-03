@@ -1344,24 +1344,18 @@ export default function DefinePhase() {
       // Only generate one PDF output
       let pdfOutput = '';
       
-      // SIMPLE SOLUTION: Just tell the user to collapse expanded sections manually
+      // Check and report on expanded sections, but continue with the export
       console.log("Checking for expanded sections");
       const expandedSections = charterElement.querySelectorAll('[data-state="open"]');
       
       if (expandedSections.length > 0) {
-        console.log("Found expanded sections, asking user to close them manually");
+        console.log(`Found ${expandedSections.length} expanded sections, will capture them as-is`);
         
-        // Reset the flag before showing toast
-        isPdfGenerating = false;
-        charterElement.classList.remove('html2canvas-container');
-        
+        // Just inform the user that expanded sections might affect layout
         toast({
-          title: "Please Collapse All Sections",
-          description: "Please collapse all expanded sections before exporting to PDF.",
-          variant: "destructive",
+          title: "Capturing Expanded Sections",
+          description: "Expanded sections will be included in the PDF as they appear on screen.",
         });
-        
-        return; // Exit early
       }
       
       try {
@@ -1373,15 +1367,17 @@ export default function DefinePhase() {
           return;
         }
         
-        // Using a completely different approach specifically for handling complex charts and financial metrics
-        // Use html2canvas with much safer settings to avoid scale errors
-        console.log("Generating canvas with simple settings - expanded sections are fine as-is");
+        // Using settings optimized for capturing expanded accordion sections
+        console.log("Generating canvas with optimized settings for expanded sections");
         const pdfCanvas = await html2canvas(charterElement, {
-          scale: 1.2, // Moderate scale factor
+          scale: 1.5, // Higher scale factor for better quality and expanded section rendering
           useCORS: true,
           allowTaint: true,
           backgroundColor: "#ffffff",
           imageTimeout: 30000,
+          scrollY: -window.scrollY, // Compensate for page scroll to avoid cutoffs
+          windowWidth: document.documentElement.offsetWidth,
+          windowHeight: document.documentElement.offsetHeight,
           logging: false,
           onclone: (clonedDoc) => {
             // Special handling for this clone to make sure all elements render correctly
