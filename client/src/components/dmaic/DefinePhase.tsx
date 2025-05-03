@@ -1365,8 +1365,8 @@ export default function DefinePhase() {
       try {
         console.log("Attempting to generate PDF with safer settings");
         
-        // Show a toast notification to inform user that PDF generation is in progress
-        toast({
+        // Show a single toast notification that we'll update when complete
+        const toastId = toast({
           title: "Generating PDF",
           description: "Creating PDF with current view state...",
         });
@@ -1491,7 +1491,8 @@ export default function DefinePhase() {
           pdf.save(pdfOutput);
           pdfGenerated = true;
           
-          toast({
+          // Update the existing toast with success message
+          toast.update(toastId, {
             title: "Report Generated Successfully",
             description: `Your project charter has been captured and saved as ${pdfOutput}`,
           });
@@ -1636,15 +1637,17 @@ export default function DefinePhase() {
             pdf.save(pdfOutput);
             pdfGenerated = true;
             
-            toast({
-              title: "Report Generated (Simplified Format)",
-              description: `Your project charter has been saved as ${pdfOutput} with simplified formatting`,
+            // Update the single toast with fallback success message
+            toast.update(toastId, {
+              title: "Report Generated Successfully",
+              description: `Your project charter has been saved as ${pdfOutput}`,
             });
           }
         } catch (error) {
           console.error("Final backup method failed:", error);
           if (!pdfGenerated) {
-            toast({
+            // Update with error message using the same toast ID
+            toast.update(toastId, {
               title: "Export Failed",
               description: "Unable to generate PDF. Try collapsing all sections manually before exporting.",
               variant: "destructive",
