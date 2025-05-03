@@ -1316,69 +1316,7 @@ export default function DefinePhase() {
         projectCategory: projectCategoryValue 
       });
       
-      // Create direct text elements to display project type and category in the PDF
-      // This ensures the values appear regardless of form field states
-      
-      // Find the first or second label in the charter to insert after
-      const insertionPoint = charterElement.querySelector('label[for="projectTitle"]')?.parentElement?.parentElement;
-      if (insertionPoint) {
-        // Create wrapper for type and category (horizontal layout)
-        const typeCategoryWrapper = document.createElement('div');
-        typeCategoryWrapper.style.display = 'flex';
-        typeCategoryWrapper.style.margin = '10px 0';
-        typeCategoryWrapper.style.gap = '20px';
-        
-        // Project Type display
-        const typeWrapper = document.createElement('div');
-        typeWrapper.style.flex = '1';
-        
-        const typeLabel = document.createElement('div');
-        typeLabel.textContent = 'Project Type';
-        typeLabel.style.fontWeight = 'bold';
-        typeLabel.style.marginBottom = '5px';
-        typeLabel.style.fontSize = '14px';
-        
-        const typeValue = document.createElement('div');
-        typeValue.textContent = projectTypeValue;
-        typeValue.style.border = '1px solid #e2e8f0';
-        typeValue.style.padding = '8px 12px';
-        typeValue.style.borderRadius = '4px';
-        typeValue.style.backgroundColor = '#f8fafc';
-        
-        typeWrapper.appendChild(typeLabel);
-        typeWrapper.appendChild(typeValue);
-        
-        // Project Category display
-        const categoryWrapper = document.createElement('div');
-        categoryWrapper.style.flex = '1';
-        
-        const categoryLabel = document.createElement('div');
-        categoryLabel.textContent = 'Project Category';
-        categoryLabel.style.fontWeight = 'bold';
-        categoryLabel.style.marginBottom = '5px';
-        categoryLabel.style.fontSize = '14px';
-        
-        const categoryValue = document.createElement('div');
-        categoryValue.textContent = projectCategoryValue;
-        categoryValue.style.border = '1px solid #e2e8f0';
-        categoryValue.style.padding = '8px 12px';
-        categoryValue.style.borderRadius = '4px';
-        categoryValue.style.backgroundColor = '#f8fafc';
-        
-        categoryWrapper.appendChild(categoryLabel);
-        categoryWrapper.appendChild(categoryValue);
-        
-        // Add both to the wrapper
-        typeCategoryWrapper.appendChild(typeWrapper);
-        typeCategoryWrapper.appendChild(categoryWrapper);
-        
-        // Insert after the project title
-        insertionPoint.appendChild(typeCategoryWrapper);
-        
-        console.log("Added custom project type/category fields to the PDF");
-      } else {
-        console.warn("Could not find insertion point for project type/category");
-      }
+      // We'll directly modify the form fields inside the clone element instead of adding a new section
       
       // Clone the charter and modify it for PDF rendering
       const clone = charterElement.cloneNode(true) as HTMLElement;
