@@ -354,21 +354,22 @@
   margin-bottom: 15px;
   font-size: 14px;
   background-color: #fff;
+  border-spacing: 0;
 }
 
 .two-column-pdf-table th {
   color: #000;
   font-weight: 600;
   text-align: left;
-  padding: 6px 10px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ddd;
   font-size: 14px;
 }
 
 .two-column-pdf-table td {
-  padding: 6px 10px;
-  border-bottom: 1px solid #f0f0f0;
-  vertical-align: middle;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
   text-align: left;
 }
 
