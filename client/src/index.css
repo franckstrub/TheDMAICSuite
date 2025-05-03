@@ -189,6 +189,53 @@
   z-index: 1;
 }
 
+/* Special styling for PDF exports */
+.html2canvas-container .pdf-select-value {
+  margin-top: 4px;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  background-color: white;
+  color: #1e293b;
+}
+
+.html2canvas-container [role="combobox"] {
+  position: relative;
+}
+
+.html2canvas-container [role="combobox"]::after {
+  content: attr(data-pdf-value);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  color: #1e293b;
+  z-index: 1;
+}
+
+/* Add spacing for labels in PDF exports */
+.html2canvas-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+/* Make inputs display properly in PDF exports */
+.html2canvas-container input,
+.html2canvas-container textarea {
+  margin-top: 4px;
+  margin-bottom: 16px;
+  display: block;
+  width: 100%;
+}
+
 .html2canvas-container .print-hide {
   display: none !important;
 }

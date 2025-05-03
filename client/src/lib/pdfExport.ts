@@ -94,6 +94,32 @@ export const exportToPdf = async (elementId: string, filename: string) => {
           input.style.width = '100%';
         });
         
+        // Special handling for select elements to show their values in PDF
+        const selectTriggers = clonedDoc.querySelectorAll('.select-trigger, [data-state="trigger"], button[role="combobox"]');
+        selectTriggers.forEach(trigger => {
+          // Get the actual selected value from the select value element
+          const valueElement = trigger.querySelector('.select-value, [data-state="value"]');
+          if (valueElement && valueElement.textContent) {
+            // Create a visible display of the selected value for PDF
+            const valueDisplay = document.createElement('div');
+            valueDisplay.className = 'pdf-select-value';
+            valueDisplay.textContent = valueElement.textContent;
+            valueDisplay.style.padding = '0.5rem';
+            valueDisplay.style.border = '1px solid #e2e8f0';
+            valueDisplay.style.borderRadius = '0.25rem';
+            valueDisplay.style.backgroundColor = 'white';
+            valueDisplay.style.marginTop = '4px';
+            valueDisplay.style.color = '#1e293b';
+            
+            // Insert the visible value display after the select element
+            if (trigger.parentNode) {
+              trigger.parentNode.insertBefore(valueDisplay, trigger.nextSibling);
+              // Hide the original trigger in PDF export
+              trigger.style.display = 'none';
+            }
+          }
+        });
+        
         // Mark the container for special CSS styling
         clonedDoc.querySelector('#' + elementId)?.classList.add('html2canvas-container');
         
