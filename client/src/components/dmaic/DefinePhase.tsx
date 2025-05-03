@@ -2095,33 +2095,35 @@ export default function DefinePhase() {
                         </div>
                         
                         {/* Only in UI controls */}
-                        <div className="grid grid-cols-2 gap-4 html2canvas-hide">
-                          <div>
-                            <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
-                            <Input
-                              id="fteCostPerYear"
-                              type="number"
-                              min="0"
-                              value={fteParams.fteCostPerYear}
-                              onChange={(e) => {
-                                const value = parseFloat(e.target.value);
-                                if (value < 0 || isNaN(value)) {
-                                  handleFteParamChange('fteCostPerYear', "0");
-                                } else {
-                                  handleFteParamChange('fteCostPerYear', e.target.value);
-                                }
-                              }}
-                              placeholder="e.g. 100000"
-                              className="h-8 text-sm"
-                              data-pdf-value={fteParams.fteCostPerYear}
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label className="text-xs">FTE Benefits ({currency})</Label>
-                            <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
-                              <div className="flex items-center px-3 text-green-600">
-                                {formatCurrency(fteParams.calculatedValue, currency)}
+                        <div className="html2canvas-hide">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
+                              <Input
+                                id="fteCostPerYear"
+                                type="number"
+                                min="0"
+                                value={fteParams.fteCostPerYear}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value);
+                                  if (value < 0 || isNaN(value)) {
+                                    handleFteParamChange('fteCostPerYear', "0");
+                                  } else {
+                                    handleFteParamChange('fteCostPerYear', e.target.value);
+                                  }
+                                }}
+                                placeholder="e.g. 100000"
+                                className="h-8 text-sm"
+                                data-pdf-value={fteParams.fteCostPerYear}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">FTE Benefits ({currency})</Label>
+                              <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
+                                <div className="flex items-center px-3 text-green-600">
+                                  {formatCurrency(fteParams.calculatedValue, currency)}
+                                </div>
                               </div>
                             </div>
                           </div>
