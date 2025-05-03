@@ -1485,7 +1485,7 @@ export default function DefinePhase() {
                         onValueChange={(value) => charterForm.setValue("projectType", value)}
                         value={charterForm.watch("projectType") || "Green Belt"}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full" data-pdf-value={charterForm.watch("projectType") || "Green Belt"}>
                           <SelectValue placeholder="Select project type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1502,7 +1502,7 @@ export default function DefinePhase() {
                         onValueChange={(value) => charterForm.setValue("projectCategory", value)}
                         value={charterForm.watch("projectCategory") || "Process Improvement"}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full" data-pdf-value={charterForm.watch("projectCategory") || "Process Improvement"}>
                           <SelectValue placeholder="Select project category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1533,7 +1533,7 @@ export default function DefinePhase() {
                         onValueChange={(value) => charterForm.setValue("beltLevel", value)}
                         defaultValue={charterForm.getValues("beltLevel")}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full" data-pdf-value={charterForm.getValues("beltLevel") || ""}>
                           <SelectValue placeholder="Select belt level" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1596,7 +1596,7 @@ export default function DefinePhase() {
                         onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
                         defaultValue={charterForm.getValues("coachBeltLevel") || "None"}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger data-pdf-value={charterForm.getValues("coachBeltLevel") || "None"}>
                           <SelectValue placeholder="Select belt level" />
                         </SelectTrigger>
                         <SelectContent>
