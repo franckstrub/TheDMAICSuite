@@ -53,6 +53,20 @@ export function getStatusColor(status: string): string {
   }
 }
 
+export function getProjectTypeColor(type: string): string {
+  if (!type) return 'bg-gray-100 text-gray-800';
+  
+  const typeLower = type.toLowerCase();
+  if (typeLower.includes('white belt')) return 'bg-gray-100 text-gray-800';
+  if (typeLower.includes('yellow belt')) return 'bg-yellow-100 text-yellow-800';
+  if (typeLower.includes('green belt')) return 'bg-green-100 text-green-800';
+  if (typeLower.includes('black belt')) return 'bg-black bg-opacity-80 text-white';
+  if (typeLower.includes('master black belt')) return 'bg-purple-900 text-white';
+  if (typeLower.includes('champion')) return 'bg-blue-700 text-white';
+  
+  return 'bg-blue-100 text-blue-800'; // Default for other types
+}
+
 export function getPhaseLabel(phase: string): string {
   switch (phase.toLowerCase()) {
     case 'define':
