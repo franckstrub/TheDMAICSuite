@@ -10,8 +10,11 @@ import {
   CustomerRequirement, DataCollectionPlan, Dataset, InsertCharter, 
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
   InsertProject, InsertRequirement, InsertSipoc, InsertUser, 
-  Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter
+  Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter,
+  projects, projectCharters
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { ZodError } from "zod";
 
@@ -1075,6 +1078,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (err) {
       console.error("Error syncing project benefits:", err);
+      return handleErrors(err, res);
+    }
+  });
+
+  // Add a new route to sync project type from charter
+  app.post("/api/sync-project-type/:projectId", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      console.log(`Syncing project type for project ${projectId}`);
+      
+      // Get the project directly from the database
+      const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      console.log(`Current project type: ${project.projectType}`);
+      
+      // Get the charter directly from the database
+      const [charter] = await db
+        .select()
+        .from(projectCharters)
+        .where(eq(projectCharters.projectId, projectId))
+        .orderBy(desc(projectCharters.id))
+        .limit(1);
+        
+      if (!charter) {
+        return res.status(404).json({ message: "Project charter not found" });
+      }
+      
+      console.log(`Charter project type: ${charter.projectType}`);
+      
+      // Update project type in the database
+      if (charter.projectType) {
+        const [updatedProject] = await db
+          .update(projects)
+          .set({
+            projectType: charter.projectType,
+            lastUpdated: new Date()
+          })
+          .where(eq(projects.id, projectId))
+          .returning();
+          
+        console.log(`Project type updated to ${updatedProject.projectType}`);
+        
+        return res.status(200).json({
+          message: "Project type synchronized successfully",
+          project: updatedProject
+        });
+      } else {
+        return res.status(400).json({
+          message: "No project type found in charter"
+        });
+      }
+    } catch (err) {
+      console.error("Error syncing project type:", err);
       return handleErrors(err, res);
     }
   });
