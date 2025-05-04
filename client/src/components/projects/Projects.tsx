@@ -534,14 +534,14 @@ export default function Projects() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[30%]">Project</TableHead>
-                    <TableHead>Project Type</TableHead>
-                    <TableHead>Phase</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>Timeline</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="w-[25%]">Project</TableHead>
+                    <TableHead className="w-[12%]">Type</TableHead>
+                    <TableHead className="w-[12%]">Phase</TableHead>
+                    <TableHead className="w-[12%]">Status</TableHead>
+                    <TableHead className="w-[10%]">Progress</TableHead>
+                    <TableHead className="w-[10%]">Timeline</TableHead>
+                    <TableHead className="w-[10%]">Last Updated</TableHead>
+                    <TableHead className="w-[9%] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -581,13 +581,13 @@ export default function Projects() {
                         <div className="text-xs text-gray-500 mt-1">{project.progress}% Complete</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
+                        <div className="text-xs">
                           <div>{formatDate(project.startDate)}</div>
                           <div className="text-gray-500">to {formatDate(project.targetEndDate) || "TBD"}</div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs text-gray-500">
                           {formatDate(project.lastUpdated)}
                         </div>
                       </TableCell>
