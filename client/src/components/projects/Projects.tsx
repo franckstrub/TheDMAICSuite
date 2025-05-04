@@ -535,6 +535,7 @@ export default function Projects() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[30%]">Project</TableHead>
+                    <TableHead>Project Type</TableHead>
                     <TableHead>Phase</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Progress</TableHead>
@@ -556,6 +557,11 @@ export default function Projects() {
                           <div className="text-sm text-gray-500 truncate max-w-xs">
                             {project.description || "No description provided"}
                           </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {project.projectType || "Not Specified"}
                         </div>
                       </TableCell>
                       <TableCell>

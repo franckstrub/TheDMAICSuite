@@ -112,6 +112,7 @@ export default function ProjectsTable() {
         <thead>
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Type</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phase</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
@@ -136,6 +137,11 @@ export default function ProjectsTable() {
                 </div>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
+                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  {project.projectType || "Not Specified"}
+                </span>
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap">
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBgColor(project.status)}`}>
                   {project.status}
                 </span>
@@ -157,7 +163,7 @@ export default function ProjectsTable() {
           
           {recentProjects.length === 0 && (
             <tr>
-              <td colSpan={4} className="px-4 py-5 text-center text-gray-500">
+              <td colSpan={5} className="px-4 py-5 text-center text-gray-500">
                 No projects available.
               </td>
             </tr>
