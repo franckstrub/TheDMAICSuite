@@ -48,6 +48,7 @@ import {
   Pause, 
   Play, 
   CheckCircle,
+  RefreshCw,
   Trash2
 } from "lucide-react";
 import {
@@ -82,8 +83,30 @@ export default function Projects() {
     targetEndDate: "",
   });
 
+  // Define the type for project data
+  interface ProjectsResponse {
+    projects: {
+      id: number;
+      title: string;
+      description?: string;
+      projectType: string;
+      projectCategory: string;
+      currentPhase: string;
+      status: string;
+      progress: number;
+      startDate?: string;
+      targetEndDate?: string;
+      actualEndDate?: string;
+      createdBy: number;
+      lastUpdated: string;
+      benefits?: any;
+      costs?: any;
+      softBenefits?: any[];
+    }[];
+  }
+
   // Fetch projects - focus on ones created by current user if applicable
-  const { data: projectsData, isLoading, isError } = useQuery({
+  const { data: projectsData, isLoading, isError } = useQuery<ProjectsResponse>({
     queryKey: ["/api/projects", user?.id],
     enabled: !!user?.id,
   });
