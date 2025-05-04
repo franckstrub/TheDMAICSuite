@@ -57,7 +57,7 @@ export function getProjectTypeColor(type: string): string {
   if (!type) return 'bg-gray-100 text-gray-800';
   
   const typeLower = type.toLowerCase();
-  if (typeLower.includes('white belt')) return 'bg-gray-100 text-gray-800';
+  if (typeLower.includes('white belt')) return 'bg-white text-gray-600 border border-gray-800';
   if (typeLower.includes('yellow belt')) return 'bg-yellow-100 text-yellow-800';
   if (typeLower.includes('green belt')) return 'bg-green-100 text-green-800';
   if (typeLower.includes('black belt')) return 'bg-black bg-opacity-80 text-white';
