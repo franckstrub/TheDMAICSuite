@@ -136,6 +136,12 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
       console.log("Synchronizing project title from charter to project:", charter.projectTitle);
     }
     
+    // Sync project type if provided in charter
+    if (charter.projectType) {
+      projectUpdate.projectType = charter.projectType;
+      console.log("Synchronizing project type from charter to project:", charter.projectType);
+    }
+    
     // Sync dates
     if (charter.startDate) {
       projectUpdate.startDate = charter.startDate;
