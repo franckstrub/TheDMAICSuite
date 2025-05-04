@@ -1233,12 +1233,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               const updatedProject = await storage.updateProject(project.id, projectUpdate);
               
-              results.push({
-                id: project.id,
-                title: updatedProject.title,
-                phase: currentPhase,
-                progress: calculatedProgress
-              });
+              if (updatedProject) {
+                results.push({
+                  id: project.id,
+                  title: updatedProject.title,
+                  phase: currentPhase,
+                  progress: calculatedProgress
+                });
+              }
             } else {
               console.log(`Project ${project.id} - no charter found, skipping`);
             }
