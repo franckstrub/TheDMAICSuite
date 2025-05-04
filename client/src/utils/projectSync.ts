@@ -11,7 +11,7 @@ import { queryClient } from "@/lib/queryClient";
  * @param projectId The ID of the project to synchronize
  * @returns Promise that resolves when sync is complete
  */
-export async function syncProjectProgress(projectId: number): Promise<void> {
+export async function syncProjectProgress(projectId: number): Promise<any> {
   try {
     const response = await apiRequest(
       "POST", 
@@ -46,7 +46,7 @@ export async function syncProjectProgress(projectId: number): Promise<void> {
  * Sync all projects' progress with their current phases
  * @returns Promise that resolves when sync is complete
  */
-export async function syncAllProjectsProgress(): Promise<void> {
+export async function syncAllProjectsProgress(): Promise<any> {
   try {
     const response = await apiRequest("POST", "/api/sync-project-progress", {});
     
@@ -54,7 +54,10 @@ export async function syncAllProjectsProgress(): Promise<void> {
     queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     
     // Show success message with count of updated projects
-    const message = response?.message || "Projects synchronized successfully";
+    const message = response && typeof response === 'object' && 'message' in response
+      ? response.message 
+      : "Projects synchronized successfully";
+      
     toast({
       title: "Success",
       description: message,

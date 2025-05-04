@@ -347,14 +347,30 @@ export default function Projects() {
           <h1 className="text-2xl font-semibold text-gray-900">Projects</h1>
           <p className="mt-1 text-sm text-gray-500">Manage your Lean Six Sigma process improvement projects</p>
         </div>
-        <Dialog open={showNewProjectDialog} onOpenChange={setShowNewProjectDialog}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            className="flex items-center"
+            onClick={(e) => {
+              e.preventDefault();
+              import('@/utils/projectSync').then(({ syncAllProjectsProgress }) => {
+                syncAllProjectsProgress();
+              });
+            }}
+            title="Update all projects' progress based on their DMAIC phases"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Sync Progress
+          </Button>
+          
+          <Dialog open={showNewProjectDialog} onOpenChange={setShowNewProjectDialog}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
               <DialogDescription>
