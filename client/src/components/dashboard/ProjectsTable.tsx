@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
-import { getProgressColor, getStatusColor, getPhaseLabel } from "@/lib/utils";
+import { getProgressColor, getStatusColor, getPhaseLabel, getProjectTypeColor } from "@/lib/utils";
 
 // Define the Project type for TypeScript
 interface Project {
@@ -137,7 +137,7 @@ export default function ProjectsTable() {
                 </div>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getProjectTypeColor(project.projectType)}`}>
                   {project.projectType || "Not Specified"}
                 </span>
               </td>

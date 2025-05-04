@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate, getProgressColor, getStatusColor, getPhaseLabel } from "@/lib/utils";
+import { formatDate, getProgressColor, getStatusColor, getPhaseLabel, getProjectTypeColor } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -560,7 +560,7 @@ export default function Projects() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getProjectTypeColor(project.projectType)}`}>
                           {project.projectType || "Not Specified"}
                         </div>
                       </TableCell>
