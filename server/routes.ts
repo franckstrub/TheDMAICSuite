@@ -19,8 +19,6 @@ import { z } from "zod";
 import { ZodError } from "zod";
 
 // Utility function to sync project benefits and costs from charter data
-import { calculateProgressFromPhase, determinePhaseFromMilestoneDates, hasAllMilestoneDates } from '@shared/progressUtils';
-
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
   try {
     // SUPER VERBOSE debugging for title synchronization issue
@@ -158,29 +156,12 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
       console.log("Synchronizing target end date from charter to project:", charter.targetEndDate);
     }
     
-    // PHASE SYNCHRONIZATION - Determine phase from milestone dates
-    const currentPhaseFromDates = determinePhaseFromMilestoneDates(charter);
-    console.log(`Current phase determined from milestone dates: ${currentPhaseFromDates}`);
-    
-    // Set the current phase in project
-    projectUpdate.currentPhase = currentPhaseFromDates;
-    console.log(`Setting project current phase to: ${currentPhaseFromDates}`);
-    
-    // Calculate progress based on phase and milestone completeness
-    const hasAllDates = hasAllMilestoneDates(charter);
-    const calculatedProgress = calculateProgressFromPhase(currentPhaseFromDates, hasAllDates);
-    
-    // Set the progress
-    projectUpdate.progress = calculatedProgress;
-    console.log(`Setting project progress to ${calculatedProgress}% based on phase ${currentPhaseFromDates}`);
-    
     // Update the project with all synchronized data
     await storage.updateProject(charter.projectId, projectUpdate);
     
     console.log("Synchronized project benefits:", benefits);
     console.log("Synchronized project costs:", costs);
     console.log("Synchronized project dates - startDate:", charter.startDate, "targetEndDate:", charter.targetEndDate);
-    console.log("Synchronized project phase and progress - phase:", currentPhaseFromDates, "progress:", calculatedProgress);
   } catch (error) {
     console.error("Error synchronizing project benefits from charter:", error);
   }
@@ -1153,109 +1134,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (err) {
       console.error("Error syncing project type:", err);
-      return handleErrors(err, res);
-    }
-  });
-  
-  // Endpoint to sync project phase and progress from milestone dates
-  app.post("/api/sync-project-progress/:projectId?", async (req: Request, res: Response) => {
-    try {
-      // If project ID is provided, sync just that project
-      // Otherwise, sync all projects
-      const projectId = req.params.projectId ? parseInt(req.params.projectId) : undefined;
-      
-      if (projectId) {
-        // Sync a specific project
-        console.log(`Syncing phase and progress for project ${projectId}`);
-        
-        // Get the project
-        const project = await storage.getProject(projectId);
-        if (!project) {
-          return res.status(404).json({ message: "Project not found" });
-        }
-        
-        // Get the charter
-        const charter = await storage.getCharter(projectId);
-        if (!charter) {
-          return res.status(404).json({ message: "Project charter not found" });
-        }
-        
-        // Determine phase from milestone dates
-        const currentPhase = determinePhaseFromMilestoneDates(charter);
-        
-        // Calculate progress based on phase
-        const hasAllDates = hasAllMilestoneDates(charter);
-        const calculatedProgress = calculateProgressFromPhase(currentPhase, hasAllDates);
-        
-        console.log(`Project ${projectId} - determined phase: ${currentPhase}, progress: ${calculatedProgress}%`);
-        
-        // Update the project
-        const projectUpdate: Partial<Project> = {
-          currentPhase,
-          progress: calculatedProgress
-        };
-        
-        const updatedProject = await storage.updateProject(projectId, projectUpdate);
-        
-        return res.status(200).json({
-          message: "Project phase and progress synchronized successfully",
-          project: updatedProject
-        });
-      } else {
-        // Sync all projects
-        console.log("Syncing phase and progress for all projects");
-        
-        // Get all projects
-        const allProjects = await storage.getProjects();
-        const results = [];
-        
-        // Process each project
-        for (const project of allProjects) {
-          try {
-            // Get charter for this project
-            const charter = await storage.getCharter(project.id);
-            
-            if (charter) {
-              // Determine phase from milestone dates
-              const currentPhase = determinePhaseFromMilestoneDates(charter);
-              
-              // Calculate progress based on phase
-              const hasAllDates = hasAllMilestoneDates(charter);
-              const calculatedProgress = calculateProgressFromPhase(currentPhase, hasAllDates);
-              
-              console.log(`Project ${project.id} - determined phase: ${currentPhase}, progress: ${calculatedProgress}%`);
-              
-              // Update the project
-              const projectUpdate: Partial<Project> = {
-                currentPhase,
-                progress: calculatedProgress
-              };
-              
-              const updatedProject = await storage.updateProject(project.id, projectUpdate);
-              
-              if (updatedProject) {
-                results.push({
-                  id: project.id,
-                  title: updatedProject.title,
-                  phase: currentPhase,
-                  progress: calculatedProgress
-                });
-              }
-            } else {
-              console.log(`Project ${project.id} - no charter found, skipping`);
-            }
-          } catch (err) {
-            console.error(`Error processing project ${project.id}:`, err);
-          }
-        }
-        
-        return res.status(200).json({
-          message: `${results.length} projects synchronized successfully`,
-          results
-        });
-      }
-    } catch (err) {
-      console.error("Error syncing project phase and progress:", err);
       return handleErrors(err, res);
     }
   });
