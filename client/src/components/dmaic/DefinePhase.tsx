@@ -2972,211 +2972,82 @@ export default function DefinePhase() {
 
       {/* SIPOC Diagram */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="space-y-0.5">
-            <CardTitle>SIPOC Diagram</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Identify the Suppliers, Inputs, Process, Outputs, and Customers involved in the project.
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto h-8"
-              onClick={() => {
-                if (window.confirm("Are you sure you want to clear all SIPOC data?")) {
-                  sipocForm.reset({
-                    suppliers: "",
-                    inputs: "",
-                    process: "",
-                    outputs: "",
-                    customers: ""
-                  });
-                }
-              }}
-            >
-              Clear
-            </Button>
-          </div>
+        <CardHeader>
+          <CardTitle>SIPOC Diagram</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* SIPOC Process Flow Visualization */}
-          <div className="border rounded-md mb-6 p-4 bg-gradient-to-r from-blue-50 via-white to-yellow-50">
-            <h3 className="text-sm font-medium mb-3 text-center">SIPOC Process Flow</h3>
-            
-            <div className="flex items-center justify-center space-x-2 text-xs font-medium text-center">
-              <div className="bg-blue-100 border border-blue-200 shadow-sm rounded-md p-2 flex-1 max-w-[110px]">
-                <div className="mb-1 text-blue-700">S</div>
-                <div className="text-gray-700">Who provides?</div>
+          <p className="text-sm text-gray-500 mb-4">
+            Identify the Suppliers, Inputs, Process, Outputs, and Customers involved in the project.
+          </p>
+          
+          <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
+            <div className="grid grid-cols-5 gap-2 mb-4">
+              <div className="p-3 bg-blue-50 rounded-md text-center">
+                <h4 className="font-medium text-primary text-sm">Suppliers</h4>
               </div>
-              <div className="text-gray-400">→</div>
-              <div className="bg-indigo-100 border border-indigo-200 shadow-sm rounded-md p-2 flex-1 max-w-[110px]">
-                <div className="mb-1 text-indigo-700">I</div>
-                <div className="text-gray-700">What input?</div>
+              <div className="p-3 bg-indigo-50 rounded-md text-center">
+                <h4 className="font-medium text-indigo-600 text-sm">Inputs</h4>
               </div>
-              <div className="text-gray-400">→</div>
-              <div className="bg-purple-100 border border-purple-200 shadow-sm rounded-md p-2 flex-1 max-w-[110px]">
-                <div className="mb-1 text-purple-700">P</div>
-                <div className="text-gray-700">3-7 steps</div>
+              <div className="p-3 bg-purple-50 rounded-md text-center">
+                <h4 className="font-medium text-purple-600 text-sm">Process</h4>
               </div>
-              <div className="text-gray-400">→</div>
-              <div className="bg-green-100 border border-green-200 shadow-sm rounded-md p-2 flex-1 max-w-[110px]">
-                <div className="mb-1 text-green-700">O</div>
-                <div className="text-gray-700">What output?</div>
+              <div className="p-3 bg-green-50 rounded-md text-center">
+                <h4 className="font-medium text-green-600 text-sm">Outputs</h4>
               </div>
-              <div className="text-gray-400">→</div>
-              <div className="bg-yellow-100 border border-yellow-200 shadow-sm rounded-md p-2 flex-1 max-w-[110px]">
-                <div className="mb-1 text-yellow-700">C</div>
-                <div className="text-gray-700">Who receives?</div>
+              <div className="p-3 bg-yellow-50 rounded-md text-center">
+                <h4 className="font-medium text-yellow-600 text-sm">Customers</h4>
               </div>
             </div>
-          </div>
-          
-          <div className="p-4 border rounded-md bg-gray-50">
-            <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
-              <div className="grid grid-cols-5 gap-3 mb-4">
-                <div className="p-3 bg-gradient-to-b from-blue-50 to-blue-100 border border-blue-200 rounded-md text-center shadow-sm">
-                  <h4 className="font-medium text-primary text-sm flex items-center justify-center gap-1">
-                    <span className="inline-block rounded-full bg-blue-100 p-1 w-6 h-6 flex items-center justify-center text-blue-600">S</span>
-                    <span>Suppliers</span>
-                  </h4>
-                </div>
-                <div className="p-3 bg-gradient-to-b from-indigo-50 to-indigo-100 border border-indigo-200 rounded-md text-center shadow-sm">
-                  <h4 className="font-medium text-indigo-600 text-sm flex items-center justify-center gap-1">
-                    <span className="inline-block rounded-full bg-indigo-100 p-1 w-6 h-6 flex items-center justify-center text-indigo-600">I</span>
-                    <span>Inputs</span>
-                  </h4>
-                </div>
-                <div className="p-3 bg-gradient-to-b from-purple-50 to-purple-100 border border-purple-200 rounded-md text-center shadow-sm">
-                  <h4 className="font-medium text-purple-600 text-sm flex items-center justify-center gap-1">
-                    <span className="inline-block rounded-full bg-purple-100 p-1 w-6 h-6 flex items-center justify-center text-purple-600">P</span>
-                    <span>Process (3-7 steps)</span>
-                  </h4>
-                </div>
-                <div className="p-3 bg-gradient-to-b from-green-50 to-green-100 border border-green-200 rounded-md text-center shadow-sm">
-                  <h4 className="font-medium text-green-600 text-sm flex items-center justify-center gap-1">
-                    <span className="inline-block rounded-full bg-green-100 p-1 w-6 h-6 flex items-center justify-center text-green-600">O</span>
-                    <span>Outputs</span>
-                  </h4>
-                </div>
-                <div className="p-3 bg-gradient-to-b from-yellow-50 to-yellow-100 border border-yellow-200 rounded-md text-center shadow-sm">
-                  <h4 className="font-medium text-yellow-600 text-sm flex items-center justify-center gap-1">
-                    <span className="inline-block rounded-full bg-yellow-100 p-1 w-6 h-6 flex items-center justify-center text-yellow-600">C</span>
-                    <span>Customers</span>
-                  </h4>
-                </div>
+            
+            <div className="grid grid-cols-5 gap-2">
+              <div className="border border-blue-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="Who provides inputs to the process?"
+                  {...sipocForm.register("suppliers")}
+                />
               </div>
-              
-              {/* Suppliers Column */}
-              <div className="grid grid-cols-5 gap-3">
-                <div className="border border-blue-200 rounded-md p-2 bg-white shadow-sm">
-                  <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm min-h-[150px]"
-                    placeholder="Who provides inputs to the process?
-- Supplier 1
-- Supplier 2
-- Supplier 3"
-                    {...sipocForm.register("suppliers")}
-                  />
-                </div>
-                
-                {/* Inputs Column */}
-                <div className="border border-indigo-200 rounded-md p-2 bg-white shadow-sm">
-                  <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm min-h-[150px]"
-                    placeholder="What inputs are required?
-- Input 1
-- Input 2
-- Input 3"
-                    {...sipocForm.register("inputs")}
-                  />
-                </div>
-                
-                {/* Process Column (Highlighted) */}
-                <div className="border-2 border-purple-300 rounded-md p-2 bg-white shadow-md">
-                  <div className="bg-purple-50 p-2 rounded-t-md mb-2 flex items-center justify-center">
-                    <span className="text-xs text-purple-700">High-level steps (3-7 recommended)</span>
-                  </div>
-                  
-                  <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm min-h-[150px]"
-                    placeholder="List 3-7 high-level steps:
-1. First step
-2. Second step
-3. Third step
-4. Fourth step
-5. Fifth step"
-                    {...sipocForm.register("process")}
-                  />
-                </div>
-                
-                {/* Outputs Column */}
-                <div className="border border-green-200 rounded-md p-2 bg-white shadow-sm">
-                  <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm min-h-[150px]"
-                    placeholder="What are the outputs?
-- Output 1
-- Output 2
-- Output 3"
-                    {...sipocForm.register("outputs")}
-                  />
-                </div>
-                
-                {/* Customers Column */}
-                <div className="border border-yellow-200 rounded-md p-2 bg-white shadow-sm">
-                  <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm min-h-[150px]"
-                    placeholder="Who receives the outputs?
-- Customer 1
-- Customer 2
-- Customer 3"
-                    {...sipocForm.register("customers")}
-                  />
-                </div>
+              <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What inputs are required for the process?"
+                  {...sipocForm.register("inputs")}
+                />
               </div>
-              
-              <div className="mt-6 flex justify-end">
-                <Button 
-                  type="submit" 
-                  disabled={saveSipocMutation.isPending}
-                  className="px-6"
-                >
-                  {saveSipocMutation.isPending ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Saving...
-                    </>
-                  ) : (
-                    "Save SIPOC Diagram"
-                  )}
-                </Button>
+              <div className="border border-purple-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What are the steps in the process?"
+                  {...sipocForm.register("process")}
+                />
               </div>
-            </form>
-          </div>
-          
-          <div className="mt-4">
-            <details className="text-sm">
-              <summary className="font-medium cursor-pointer text-primary">SIPOC Diagram Best Practices</summary>
-              <div className="mt-2 p-4 bg-gray-50 rounded-md">
-                <h4 className="font-semibold mb-2">Key recommendations for effective SIPOC:</h4>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Suppliers:</strong> List the people, departments, or organizations that provide inputs to your process.</li>
-                  <li><strong>Inputs:</strong> List all materials, information, or resources needed to execute the process.</li>
-                  <li><strong>Process:</strong> <span className="text-purple-700 font-medium">Include between 3-7 high-level steps</span> that transform inputs into outputs. Too many steps will make the SIPOC too detailed.</li>
-                  <li><strong>Outputs:</strong> List all products, services, or information produced by the process.</li>
-                  <li><strong>Customers:</strong> List the people, departments, or organizations that receive the outputs.</li>
-                </ul>
-                <div className="mt-3 bg-purple-50 p-3 rounded-md border border-purple-200">
-                  <p className="font-medium text-purple-700">Process Steps Best Practice:</p>
-                  <p className="text-sm mt-1 text-gray-700">Keep your process steps at a high level - these are not detailed work instructions but major phases of the process. For example, "Receive order" rather than "Open email, read order details, check inventory..."</p>
-                </div>
+              <div className="border border-green-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What are the outputs of the process?"
+                  {...sipocForm.register("outputs")}
+                />
               </div>
-            </details>
-          </div>
+              <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="Who receives the outputs?"
+                  {...sipocForm.register("customers")}
+                />
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <Button type="submit" disabled={saveSipocMutation.isPending}>
+                {saveSipocMutation.isPending ? "Saving..." : "Save SIPOC Diagram"}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 
