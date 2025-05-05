@@ -113,7 +113,7 @@ export default function DmaicTools() {
               {currentProject?.title ? (
                 <>
                   <span className="text-primary">{currentProject.title}</span> 
-                  <span className="text-gray-500 text-sm font-normal ml-1">- DMAIC</span>
+                  <span className="text-[#0a2463] text-sm font-normal ml-1">- DMAIC</span>
                 </>
               ) : (
                 "DMAIC Methodology"
@@ -125,7 +125,7 @@ export default function DmaicTools() {
               <div className="flex flex-col md:ml-4">
                 <div className="flex items-start gap-2">
                   <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-between">
-                    <h3 className="text-xs font-medium text-gray-700 mb-2">Project Timeline</h3>
+                    <h3 className="text-xs font-medium text-[#0a2463] mb-2">Project Timeline</h3>
                     <div className="flex-grow flex flex-col justify-center mb-2">
                       <div className="flex items-center">
                         <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
@@ -152,7 +152,7 @@ export default function DmaicTools() {
             {currentProject && (
               <div className="md:ml-4" style={{ width: "40%" }}>
                 <div className="p-2 border border-gray-200 rounded-md shadow-sm h-full flex flex-col">
-                  <h3 className="text-xs font-medium text-gray-700 mb-2">DMAIC Progress</h3>
+                  <h3 className="text-xs font-medium text-[#0a2463] mb-2">DMAIC Progress</h3>
                   <div className="flex-grow flex items-center justify-center">
                     <DmaicProgressSteps 
                       project={currentProject}
