@@ -38,7 +38,6 @@ import TeamMemberManagement from "@/components/stakeholders/TeamMemberManagement
 import CharterSoftBenefitsQuadrant from "./CharterSoftBenefitsQuadrant";
 import { Stakeholder } from "@shared/schema";
 import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
-import SimpleSipocDisplay from "./SimpleSipocDisplay";
 
 export default function DefinePhase() {
   const { user, currentProject, currency } = useAppContext();
@@ -896,275 +895,78 @@ export default function DefinePhase() {
       if (data?.sipoc) {
         console.log("Loaded SIPOC data:", data.sipoc);
         
-        // Add detailed logging for debugging
-        console.log("SIPOC data to load - Row 1:", {
-          suppliers: data.sipoc.suppliers,
-          inputs: data.sipoc.inputs,
-          process: data.sipoc.process,
-          outputs: data.sipoc.outputs,
-          customers: data.sipoc.customers
+        // Set form values
+        sipocForm.reset({
+          processName: data.sipoc.processName || "",
+          suppliers: data.sipoc.suppliers || "",
+          inputs: data.sipoc.inputs || "",
+          process: data.sipoc.process || "",
+          outputs: data.sipoc.outputs || "",
+          customers: data.sipoc.customers || "",
+          // Additional rows
+          suppliers2: data.sipoc.suppliers2 || "",
+          inputs2: data.sipoc.inputs2 || "",
+          process2: data.sipoc.process2 || "",
+          outputs2: data.sipoc.outputs2 || "",
+          customers2: data.sipoc.customers2 || "",
+          suppliers3: data.sipoc.suppliers3 || "",
+          inputs3: data.sipoc.inputs3 || "",
+          process3: data.sipoc.process3 || "",
+          outputs3: data.sipoc.outputs3 || "",
+          customers3: data.sipoc.customers3 || "",
+          // Rows 4-5
+          suppliers4: data.sipoc.suppliers4 || "",
+          inputs4: data.sipoc.inputs4 || "",
+          process4: data.sipoc.process4 || "",
+          outputs4: data.sipoc.outputs4 || "",
+          customers4: data.sipoc.customers4 || "",
+          suppliers5: data.sipoc.suppliers5 || "",
+          inputs5: data.sipoc.inputs5 || "",
+          process5: data.sipoc.process5 || "",
+          outputs5: data.sipoc.outputs5 || "",
+          customers5: data.sipoc.customers5 || "",
+          // Rows 6-7
+          suppliers6: data.sipoc.suppliers6 || "",
+          inputs6: data.sipoc.inputs6 || "",
+          process6: data.sipoc.process6 || "",
+          outputs6: data.sipoc.outputs6 || "",
+          customers6: data.sipoc.customers6 || "",
+          suppliers7: data.sipoc.suppliers7 || "",
+          inputs7: data.sipoc.inputs7 || "",
+          process7: data.sipoc.process7 || "",
+          outputs7: data.sipoc.outputs7 || "",
+          customers7: data.sipoc.customers7 || "",
         });
-        console.log("SIPOC data to load - Row 2:", {
-          suppliers2: data.sipoc.suppliers2,
-          inputs2: data.sipoc.inputs2,
-          process2: data.sipoc.process2,
-          outputs2: data.sipoc.outputs2,
-          customers2: data.sipoc.customers2
-        });
         
-        console.log("SIPOC data to load - Row 3:", {
-          suppliers3: data.sipoc.suppliers3,
-          inputs3: data.sipoc.inputs3,
-          process3: data.sipoc.process3,
-          outputs3: data.sipoc.outputs3,
-          customers3: data.sipoc.customers3
-        });
+        // Determine how many rows to show based on the data
+        let rowsToShow = 3; // Default is 3 rows
         
-        console.log("SIPOC data to load - Row 4:", {
-          suppliers4: data.sipoc.suppliers4,
-          inputs4: data.sipoc.inputs4,
-          process4: data.sipoc.process4,
-          outputs4: data.sipoc.outputs4,
-          customers4: data.sipoc.customers4
-        });
-        
-        // Check if data appears to be scrambled (process containing 'S' values)
-        let correctedData = {...data.sipoc};
-        const isPotentiallyScrambled = 
-          (data.sipoc.process && data.sipoc.process.startsWith('S')) || 
-          (data.sipoc.process2 && data.sipoc.process2.startsWith('S'));
-          
-        // If we detect scrambled data, attempt to fix it
-        if (isPotentiallyScrambled) {
-          console.log("Detected potential data mix-up in SIPOC fields, applying correction");
-          
-          // If we have a pattern that suggests fields were shifted, correct them
-          // This assumes process contains suppliers data, outputs contains process data, etc.
-          try {
-            // For row 1, correct the field order if it looks wrong
-            if (data.sipoc.process && data.sipoc.process.startsWith('S')) {
-              correctedData = {
-                ...data.sipoc,
-                // Fix row 1 - move each value to its proper field
-                suppliers: data.sipoc.suppliers || "",
-                inputs: data.sipoc.inputs || "",
-                process: data.sipoc.outputs || "", // Process is stored in outputs
-                outputs: data.sipoc.customers || "", // Outputs is stored in customers
-                customers: data.sipoc.process || "", // Customers might be missing or in suppliers
-              };
-            }
-            
-            // For row 2, correct if needed
-            if (data.sipoc.process2 && data.sipoc.process2.startsWith('S')) {
-              correctedData = {
-                ...correctedData,
-                // Fix row 2 - move each value to its proper field
-                suppliers2: data.sipoc.suppliers2 || "",
-                inputs2: data.sipoc.inputs2 || "",
-                process2: data.sipoc.outputs2 || "", // Process is stored in outputs
-                outputs2: data.sipoc.customers2 || "", // Outputs is stored in customers
-                customers2: data.sipoc.process2 || "", // Customers might be missing or in suppliers
-              };
-            }
-            
-            console.log("Corrected SIPOC data:", correctedData);
-          } catch (error) {
-            console.error("Error correcting SIPOC data:", error);
-          }
-        }
-
-        console.log("Setting SIPOC data on form fields");
-        
-        // Add debug logging for textarea DOM elements
-        const checkTextareaValue = (fieldName: string) => {
-          try {
-            const element = document.querySelector(`textarea[name="${fieldName}"]`) as HTMLTextAreaElement;
-            if (element) {
-              console.log(`DOM element for ${fieldName}: exists, value:`, element.value);
-              
-              // Try to manually set the value directly on the DOM
-              setTimeout(() => {
-                if (element && correctedData[fieldName]) {
-                  element.value = correctedData[fieldName];
-                  console.log(`Manually set value for ${fieldName} to:`, correctedData[fieldName]);
-                  
-                  // Trigger an input event to notify React of the change
-                  const event = new Event('input', { bubbles: true });
-                  element.dispatchEvent(event);
-                }
-              }, 500);
-            } else {
-              console.log(`DOM element for ${fieldName}: NOT FOUND`);
-            }
-          } catch (err) {
-            console.error(`Error checking textarea for ${fieldName}:`, err);
-          }
-        };
-        
-        // Create a simple object to hold all the form values for direct assignment
-        const sipocValues = {
-          processName: correctedData.processName || "",
-          suppliers: correctedData.suppliers || "",
-          inputs: correctedData.inputs || "",
-          process: correctedData.process || "",
-          outputs: correctedData.outputs || "",
-          customers: correctedData.customers || "",
-          suppliers2: correctedData.suppliers2 || "",
-          inputs2: correctedData.inputs2 || "",
-          process2: correctedData.process2 || "",
-          outputs2: correctedData.outputs2 || "",
-          customers2: correctedData.customers2 || "",
-          suppliers3: correctedData.suppliers3 || "",
-          inputs3: correctedData.inputs3 || "",
-          process3: correctedData.process3 || "",
-          outputs3: correctedData.outputs3 || "",
-          customers3: correctedData.customers3 || "",
-          suppliers4: correctedData.suppliers4 || "",
-          inputs4: correctedData.inputs4 || "",
-          process4: correctedData.process4 || "",
-          outputs4: correctedData.outputs4 || "",
-          customers4: correctedData.customers4 || "",
-          suppliers5: correctedData.suppliers5 || "",
-          inputs5: correctedData.inputs5 || "",
-          process5: correctedData.process5 || "",
-          outputs5: correctedData.outputs5 || "",
-          customers5: correctedData.customers5 || "",
-          suppliers6: correctedData.suppliers6 || "",
-          inputs6: correctedData.inputs6 || "",
-          process6: correctedData.process6 || "",
-          outputs6: correctedData.outputs6 || "",
-          customers6: correctedData.customers6 || "",
-          suppliers7: correctedData.suppliers7 || "",
-          inputs7: correctedData.inputs7 || "",
-          process7: correctedData.process7 || "",
-          outputs7: correctedData.outputs7 || "",
-          customers7: correctedData.customers7 || "",
-        };
-        
-        // First try reset (which might work better for all fields at once)
-        sipocForm.reset(sipocValues);
-        
-        // Then also try setting values directly after a short delay
-        setTimeout(() => {
-          // Check the DOM elements just to debug
-          checkTextareaValue("suppliers");
-          checkTextareaValue("inputs"); 
-          checkTextareaValue("process");
-          checkTextareaValue("outputs");
-          checkTextareaValue("customers");
-          
-          // Process name
-          sipocForm.setValue("processName", correctedData.processName || "");
-          
-          // Row 1
-          sipocForm.setValue("suppliers", correctedData.suppliers || "");
-          sipocForm.setValue("inputs", correctedData.inputs || "");
-          sipocForm.setValue("process", correctedData.process || "");
-          sipocForm.setValue("outputs", correctedData.outputs || "");
-          sipocForm.setValue("customers", correctedData.customers || "");
-          
-          // Row 2
-          sipocForm.setValue("suppliers2", correctedData.suppliers2 || "");
-          sipocForm.setValue("inputs2", correctedData.inputs2 || "");
-          sipocForm.setValue("process2", correctedData.process2 || "");
-          sipocForm.setValue("outputs2", correctedData.outputs2 || "");
-          sipocForm.setValue("customers2", correctedData.customers2 || "");
-          
-          // Row 3
-          sipocForm.setValue("suppliers3", correctedData.suppliers3 || "");
-          sipocForm.setValue("inputs3", correctedData.inputs3 || "");
-          sipocForm.setValue("process3", correctedData.process3 || "");
-          sipocForm.setValue("outputs3", correctedData.outputs3 || "");
-          sipocForm.setValue("customers3", correctedData.customers3 || "");
-          
-          // Row 4
-          sipocForm.setValue("suppliers4", correctedData.suppliers4 || "");
-          sipocForm.setValue("inputs4", correctedData.inputs4 || "");
-          sipocForm.setValue("process4", correctedData.process4 || "");
-          sipocForm.setValue("outputs4", correctedData.outputs4 || "");
-          sipocForm.setValue("customers4", correctedData.customers4 || "");
-          
-          // Row 5-7 (same as before)
-          sipocForm.setValue("suppliers5", correctedData.suppliers5 || "");
-          sipocForm.setValue("inputs5", correctedData.inputs5 || "");
-          sipocForm.setValue("process5", correctedData.process5 || "");
-          sipocForm.setValue("outputs5", correctedData.outputs5 || "");
-          sipocForm.setValue("customers5", correctedData.customers5 || "");
-          sipocForm.setValue("suppliers6", correctedData.suppliers6 || "");
-          sipocForm.setValue("inputs6", correctedData.inputs6 || "");
-          sipocForm.setValue("process6", correctedData.process6 || "");
-          sipocForm.setValue("outputs6", correctedData.outputs6 || "");
-          sipocForm.setValue("customers6", correctedData.customers6 || "");
-          sipocForm.setValue("suppliers7", correctedData.suppliers7 || "");
-          sipocForm.setValue("inputs7", correctedData.inputs7 || "");
-          sipocForm.setValue("process7", correctedData.process7 || "");
-          sipocForm.setValue("outputs7", correctedData.outputs7 || "");
-          sipocForm.setValue("customers7", correctedData.customers7 || "");
-          
-          // Force re-render by updating the state
-          setVisibleSipocRows(prev => prev);
-        }, 500);
-        
-        
-        // Calculate how many rows should be visible based on data
-        let maxVisibleRows = 3; // Always show at least 3 rows
-        
-        // Check if row 4 has data in any field
-        if (correctedData.suppliers4?.trim() || correctedData.inputs4?.trim() || correctedData.process4?.trim() || 
-            correctedData.outputs4?.trim() || correctedData.customers4?.trim()) {
-          maxVisibleRows = Math.max(maxVisibleRows, 4);
-          console.log("Row 4 has data, setting visible rows to at least 4");
+        // Check if there's data in row 4
+        if (data.sipoc.suppliers4 || data.sipoc.inputs4 || data.sipoc.process4 || 
+            data.sipoc.outputs4 || data.sipoc.customers4) {
+          rowsToShow = 4;
         }
         
-        // Check rows 5-7 for data
-        if (correctedData.suppliers5?.trim() || correctedData.inputs5?.trim() || correctedData.process5?.trim() || 
-            correctedData.outputs5?.trim() || correctedData.customers5?.trim()) {
-          maxVisibleRows = Math.max(maxVisibleRows, 5);
-        }
-        if (correctedData.suppliers6?.trim() || correctedData.inputs6?.trim() || correctedData.process6?.trim() || 
-            correctedData.outputs6?.trim() || correctedData.customers6?.trim()) {
-          maxVisibleRows = Math.max(maxVisibleRows, 6);
-        }
-        if (correctedData.suppliers7?.trim() || correctedData.inputs7?.trim() || correctedData.process7?.trim() || 
-            correctedData.outputs7?.trim() || correctedData.customers7?.trim()) {
-          maxVisibleRows = Math.max(maxVisibleRows, 7);
+        // Check if there's data in row 5
+        if (data.sipoc.suppliers5 || data.sipoc.inputs5 || data.sipoc.process5 || 
+            data.sipoc.outputs5 || data.sipoc.customers5) {
+          rowsToShow = 5;
         }
         
-        // Set the visible rows state to match the data
-        console.log(`Setting visible SIPOC rows to ${maxVisibleRows} based on data`);
-        setVisibleSipocRows(maxVisibleRows);
+        // Check if there's data in row 6
+        if (data.sipoc.suppliers6 || data.sipoc.inputs6 || data.sipoc.process6 || 
+            data.sipoc.outputs6 || data.sipoc.customers6) {
+          rowsToShow = 6;
+        }
         
-        // Log field values to ensure they were set correctly
-        setTimeout(() => {
-          console.log("SIPOC field values AFTER setting - Row 1:", {
-            suppliers: sipocForm.getValues().suppliers,
-            inputs: sipocForm.getValues().inputs,
-            process: sipocForm.getValues().process,
-            outputs: sipocForm.getValues().outputs,
-            customers: sipocForm.getValues().customers
-          });
-          console.log("SIPOC field values AFTER setting - Row 2:", {
-            suppliers2: sipocForm.getValues().suppliers2,
-            inputs2: sipocForm.getValues().inputs2,
-            process2: sipocForm.getValues().process2,
-            outputs2: sipocForm.getValues().outputs2,
-            customers2: sipocForm.getValues().customers2
-          });
-          console.log("SIPOC field values AFTER setting - Row 3:", {
-            suppliers3: sipocForm.getValues().suppliers3,
-            inputs3: sipocForm.getValues().inputs3,
-            process3: sipocForm.getValues().process3,
-            outputs3: sipocForm.getValues().outputs3,
-            customers3: sipocForm.getValues().customers3
-          });
-          console.log("SIPOC field values AFTER setting - Row 4:", {
-            suppliers4: sipocForm.getValues().suppliers4,
-            inputs4: sipocForm.getValues().inputs4,
-            process4: sipocForm.getValues().process4,
-            outputs4: sipocForm.getValues().outputs4,
-            customers4: sipocForm.getValues().customers4
-          });
-        }, 1000);
+        // Check if there's data in row 7
+        if (data.sipoc.suppliers7 || data.sipoc.inputs7 || data.sipoc.process7 || 
+            data.sipoc.outputs7 || data.sipoc.customers7) {
+          rowsToShow = 7;
+        }
+        
+        // Update the visible rows state
+        setVisibleSipocRows(rowsToShow);
       }
     },
   });
@@ -1295,69 +1097,11 @@ export default function DefinePhase() {
   // Save SIPOC diagram mutation
   const saveSipocMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Debug the data being saved
-      console.log("Saving SIPOC data:", data);
-      
-      // Double check the data structure to ensure fields are correctly positioned
-      // This validates that process fields actually contain process data
-      const validateField = (field: string, expectedType: string) => {
-        // Extremely simple validation to just catch obvious issues
-        // Process steps typically shouldn't start with S (Suppliers identifier)
-        if (expectedType === 'process' && field && field.trim().startsWith('S')) {
-          console.warn(`Possible data mix-up: ${expectedType} field contains '${field}' which may be incorrect`);
-          return false;
-        }
-        return true;
-      };
-      
-      // Quick checks for potential data issues
-      if (data.process) validateField(data.process, 'process');
-      if (data.process2) validateField(data.process2, 'process');
-      
       const payload = {
         projectId,
         ...data,
-        // Ensure we explicitly map each field to avoid any mix-ups
-        processName: data.processName || "",
-        suppliers: data.suppliers || "",
-        inputs: data.inputs || "",
-        process: data.process || "",
-        outputs: data.outputs || "",
-        customers: data.customers || "", 
-        suppliers2: data.suppliers2 || "",
-        inputs2: data.inputs2 || "",
-        process2: data.process2 || "", 
-        outputs2: data.outputs2 || "",
-        customers2: data.customers2 || "",
-        suppliers3: data.suppliers3 || "",
-        inputs3: data.inputs3 || "",
-        process3: data.process3 || "",
-        outputs3: data.outputs3 || "", 
-        customers3: data.customers3 || "",
-        suppliers4: data.suppliers4 || "",
-        inputs4: data.inputs4 || "",
-        process4: data.process4 || "",
-        outputs4: data.outputs4 || "",
-        customers4: data.customers4 || "",
-        suppliers5: data.suppliers5 || "",
-        inputs5: data.inputs5 || "",
-        process5: data.process5 || "",
-        outputs5: data.outputs5 || "",
-        customers5: data.customers5 || "",
-        suppliers6: data.suppliers6 || "",
-        inputs6: data.inputs6 || "",
-        process6: data.process6 || "",
-        outputs6: data.outputs6 || "",
-        customers6: data.customers6 || "",
-        suppliers7: data.suppliers7 || "",
-        inputs7: data.inputs7 || "",
-        process7: data.process7 || "",
-        outputs7: data.outputs7 || "",
-        customers7: data.customers7 || "",
         userId: user?.id,
       };
-
-      console.log("Sending validated SIPOC payload:", payload);
 
       // Check if SIPOC exists
       if (sipoc?.sipoc?.id) {
@@ -1371,29 +1115,7 @@ export default function DefinePhase() {
         title: "Success",
         description: "SIPOC diagram saved successfully",
       });
-      
-      // Force a refetch of the SIPOC data to ensure it's up to date
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/sipoc`] });
-      
-      // Log after the save to confirm the data is correct
-      setTimeout(() => {
-        console.log("Current SIPOC form values after save:", {
-          row1: {
-            suppliers: sipocForm.getValues().suppliers,
-            inputs: sipocForm.getValues().inputs,
-            process: sipocForm.getValues().process, 
-            outputs: sipocForm.getValues().outputs,
-            customers: sipocForm.getValues().customers
-          },
-          row2: {
-            suppliers2: sipocForm.getValues().suppliers2,
-            inputs2: sipocForm.getValues().inputs2,
-            process2: sipocForm.getValues().process2,
-            outputs2: sipocForm.getValues().outputs2,
-            customers2: sipocForm.getValues().customers2
-          }
-        });
-      }, 500);
     },
     onError: (error) => {
       toast({
@@ -3482,7 +3204,43 @@ export default function DefinePhase() {
       </Card>
 
       {/* SIPOC Diagram */}
-      <SimpleSipocDisplay />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>SIPOC Diagram</CardTitle>
+          <div className="flex items-center space-x-2">
+            <label htmlFor="processName" className="text-sm font-medium">Process Name:</label>
+            <input
+              type="text"
+              id="processName"
+              className="px-3 py-1 border rounded-md text-sm w-80"
+              placeholder="Enter process name"
+              {...sipocForm.register("processName")}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            A SIPOC is a high-level process map (helicopter view). It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
+          </p>
+          
+          <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
+            <div className="grid grid-cols-5 gap-2 mb-4">
+              <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
+                <h4 className="font-medium text-primary text-sm">Suppliers</h4>
+              </div>
+              <div className="p-3 bg-indigo-50 rounded-md text-center w-[95%]">
+                <h4 className="font-medium text-indigo-600 text-sm">Inputs</h4>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-md text-center w-[95%]">
+                <h4 className="font-medium text-purple-600 text-sm">Process</h4>
+              </div>
+              <div className="p-3 bg-green-50 rounded-md text-center w-[95%]">
+                <h4 className="font-medium text-green-600 text-sm">Outputs</h4>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-md text-center w-[95%]">
+                <h4 className="font-medium text-yellow-600 text-sm">Customers</h4>
+              </div>
+            </div>
             
             {/* First row of SIPOC cards */}
             <div className="grid grid-cols-5 gap-2 mb-2 relative">
@@ -3666,7 +3424,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(4)}
                   title="Delete Row 4"
                 >
@@ -3722,7 +3480,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(5)}
                   title="Delete Row 5"
                 >
@@ -3778,7 +3536,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(6)}
                   title="Delete Row 6"
                 >
@@ -3834,7 +3592,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(7)}
                   title="Delete Row 7"
                 >
