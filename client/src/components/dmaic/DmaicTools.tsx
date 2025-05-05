@@ -47,6 +47,12 @@ export default function DmaicTools() {
   }, [projectsData, params.projectId, currentProject, setCurrentProject]);
 
   // Set active phase from URL parameter if available
+  // Fetch project charter for milestone dates
+  const { data: charterData } = useQuery({
+    queryKey: ["/api/projects", currentProject?.id, "charter"],
+    enabled: !!currentProject?.id
+  });
+
   useEffect(() => {
     if (params.phase && 
         ['define', 'measure', 'analyze', 'improve', 'control'].includes(params.phase)) {
@@ -109,16 +115,23 @@ export default function DmaicTools() {
             
             {/* Project Timeline */}
             {currentProject?.startDate && currentProject?.targetEndDate && (
-              <div className="flex items-center gap-2 md:ml-4">
-                <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
-                  <div 
-                    className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
-                    style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
-                  ></div>
+              <div className="flex flex-col gap-1 md:ml-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                    <div 
+                      className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
+                      style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
+                  </span>
                 </div>
-                <span className="text-xs text-gray-500 whitespace-nowrap">
-                  {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
-                </span>
+                {/* Project Timeline Dates */}
+                <div className="flex justify-between text-xs text-gray-500 w-24 md:w-36">
+                  <span>{formatMilestoneDate(currentProject.startDate)}</span>
+                  <span>{formatMilestoneDate(currentProject.targetEndDate)}</span>
+                </div>
               </div>
             )}
             

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, formatMilestoneDate } from "@/lib/utils";
 
 interface DmaicProgressStepsProps {
   project: any;
