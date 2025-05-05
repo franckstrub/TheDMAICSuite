@@ -3,17 +3,6 @@ import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-
-// Helper function for formatting dates
-const formatDate = (dateString: string | null): string => {
-  if (!dateString) return "Not set";
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  });
-};
 import {
   Card,
   CardContent,
@@ -319,45 +308,15 @@ export default function ControlPhase() {
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
-      <div className="mb-4 flex gap-4">
-        <Card className="w-1/2">
-          <CardContent className="pt-6">
-            <MilestoneTimeline 
-              startDate={milestoneDates.improvePhaseDate}
-              endDate={milestoneDates.controlPhaseDate}
-              label="Control Phase Milestone"
-            />
-          </CardContent>
-        </Card>
-        <Card className="w-1/2">
-          <CardHeader>
-            <CardTitle>Control Phase Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Start Date:</span>
-                <span className="text-sm">{formatDate(milestoneDates.improvePhaseDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Target Completion:</span>
-                <span className="text-sm">{formatDate(milestoneDates.controlPhaseDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Key Documents:</span>
-                <span className="text-sm">Control Plan, SPC Charts, Training Plan</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Status:</span>
-                <span className="text-sm flex items-center">
-                  <span className="h-2 w-2 rounded-full bg-gray-400 mr-2"></span>
-                  Not Started
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="mb-4 max-w-2xl ml-0">
+        <CardContent className="pt-6">
+          <MilestoneTimeline 
+            startDate={milestoneDates.improvePhaseDate}
+            endDate={milestoneDates.controlPhaseDate}
+            label="Control Phase Milestone"
+          />
+        </CardContent>
+      </Card>
       
       {/* Control Plan */}
       <Card>
