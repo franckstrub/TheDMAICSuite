@@ -15,6 +15,7 @@ import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import MilestoneTimeline from "./MilestoneTimeline";
 import {
   Card,
   CardContent,
