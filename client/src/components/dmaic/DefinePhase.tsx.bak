@@ -6,11 +6,16 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
+import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle, MinusCircle } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
+import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import MilestoneTimeline from "./MilestoneTimeline";
 import {
   Card,
   CardContent,
@@ -32,6 +37,7 @@ import StakeholderManagement from "@/components/stakeholders/StakeholderManageme
 import TeamMemberManagement from "@/components/stakeholders/TeamMemberManagement";
 import CharterSoftBenefitsQuadrant from "./CharterSoftBenefitsQuadrant";
 import { Stakeholder } from "@shared/schema";
+import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
 
 export default function DefinePhase() {
   const { user, currentProject, currency } = useAppContext();
@@ -39,10 +45,17 @@ export default function DefinePhase() {
   const params = useParams<{ projectId?: string }>();
   const urlProjectId = params.projectId;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sipocFormInitialized = useRef<boolean>(false);
   
   // State for project image handling
   const [projectImage, setProjectImage] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  
+  // State for milestone dates
+  const [milestoneDates, setMilestoneDates] = useState({
+    kickOffDate: null as string | null,
+    definePhaseDate: null as string | null,
+  });
   
   // State for stakeholders management
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
@@ -148,9 +161,6 @@ export default function DefinePhase() {
       default: return "✓";
     }
   };
-  
-  // Use URL project ID if available, otherwise fall back to current project
-  const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
 
   // Project Charter form
   const charterForm = useForm({
@@ -199,13 +209,263 @@ export default function DefinePhase() {
   // SIPOC form
   const sipocForm = useForm({
     defaultValues: {
+      processName: "",
       suppliers: "",
       inputs: "",
       process: "",
       outputs: "",
       customers: "",
+      // Additional rows
+      suppliers2: "",
+      inputs2: "",
+      process2: "",
+      outputs2: "",
+      customers2: "",
+      suppliers3: "",
+      inputs3: "",
+      process3: "",
+      outputs3: "",
+      customers3: "",
+      // Allow for additional rows 4-7
+      suppliers4: "",
+      inputs4: "",
+      process4: "",
+      outputs4: "",
+      customers4: "",
+      suppliers5: "",
+      inputs5: "",
+      process5: "",
+      outputs5: "",
+      customers5: "",
+      suppliers6: "",
+      inputs6: "",
+      process6: "",
+      outputs6: "",
+      customers6: "",
+      suppliers7: "",
+      inputs7: "",
+      process7: "",
+      outputs7: "",
+      customers7: "",
     },
   });
+  
+  // State to track the number of visible SIPOC rows (start with 3)
+  const [visibleSipocRows, setVisibleSipocRows] = useState(3);
+  
+  // Effect to initialize SIPOC form with data from API
+  useEffect(() => {
+    if (sipoc?.sipoc && !sipocFormInitialized.current) {
+      console.log("Initializing SIPOC form with data:", sipoc.sipoc);
+      console.log("Process name to set:", sipoc.sipoc.processName);
+      
+      try {
+        // Set all fields with a single reset call to ensure consistent state
+        const formData = {
+          processName: sipoc.sipoc.processName || "",
+          suppliers: sipoc.sipoc.suppliers || "",
+          inputs: sipoc.sipoc.inputs || "",
+          process: sipoc.sipoc.process || "",
+          outputs: sipoc.sipoc.outputs || "",
+          customers: sipoc.sipoc.customers || "",
+          
+          suppliers2: sipoc.sipoc.suppliers2 || "",
+          inputs2: sipoc.sipoc.inputs2 || "",
+          process2: sipoc.sipoc.process2 || "",
+          outputs2: sipoc.sipoc.outputs2 || "",
+          customers2: sipoc.sipoc.customers2 || "",
+          
+          suppliers3: sipoc.sipoc.suppliers3 || "",
+          inputs3: sipoc.sipoc.inputs3 || "",
+          process3: sipoc.sipoc.process3 || "",
+          outputs3: sipoc.sipoc.outputs3 || "",
+          customers3: sipoc.sipoc.customers3 || "",
+          
+          suppliers4: sipoc.sipoc.suppliers4 || "",
+          inputs4: sipoc.sipoc.inputs4 || "",
+          process4: sipoc.sipoc.process4 || "",
+          outputs4: sipoc.sipoc.outputs4 || "",
+          customers4: sipoc.sipoc.customers4 || "",
+          
+          suppliers5: sipoc.sipoc.suppliers5 || "",
+          inputs5: sipoc.sipoc.inputs5 || "",
+          process5: sipoc.sipoc.process5 || "",
+          outputs5: sipoc.sipoc.outputs5 || "",
+          customers5: sipoc.sipoc.customers5 || "",
+          
+          suppliers6: sipoc.sipoc.suppliers6 || "",
+          inputs6: sipoc.sipoc.inputs6 || "",
+          process6: sipoc.sipoc.process6 || "",
+          outputs6: sipoc.sipoc.outputs6 || "",
+          customers6: sipoc.sipoc.customers6 || "",
+          
+          suppliers7: sipoc.sipoc.suppliers7 || "",
+          inputs7: sipoc.sipoc.inputs7 || "",
+          process7: sipoc.sipoc.process7 || "",
+          outputs7: sipoc.sipoc.outputs7 || "",
+          customers7: sipoc.sipoc.customers7 || "",
+        };
+        
+        // Reset the form with all values at once
+        sipocForm.reset(formData);
+        
+        // Double-check processName was set correctly
+        const currentProcessName = sipocForm.getValues("processName");
+        console.log("Process name after form reset:", currentProcessName);
+        
+        // If process name didn't get set properly, set it again directly
+        if (!currentProcessName && sipoc.sipoc.processName) {
+          console.log("Process name not set correctly, setting directly:", sipoc.sipoc.processName);
+          sipocForm.setValue("processName", sipoc.sipoc.processName);
+        }
+        
+        // Update row visibility
+        let maxRow = 3; // Default to 3 rows
+        if (sipoc.sipoc.suppliers7) maxRow = 7;
+        else if (sipoc.sipoc.suppliers6) maxRow = 6;
+        else if (sipoc.sipoc.suppliers5) maxRow = 5;
+        else if (sipoc.sipoc.suppliers4) maxRow = 4;
+        
+        console.log(`Setting SIPOC rows to ${maxRow}`);
+        setVisibleSipocRows(maxRow);
+      } catch (error) {
+        console.error("Error initializing SIPOC form:", error);
+      }
+      
+      // Set form as initialized
+      sipocFormInitialized.current = true;
+    }
+  }, [sipoc?.sipoc, sipocForm]);
+  
+  // Function to add a new SIPOC row
+  const addSipocRow = () => {
+    if (visibleSipocRows < 7) { // Maximum 7 rows
+      setVisibleSipocRows(prevRows => prevRows + 1);
+    } else {
+      toast({
+        title: "Maximum rows reached",
+        description: "You can add a maximum of 7 rows to the SIPOC diagram.",
+      });
+    }
+  };
+  
+  // Function to delete a specific SIPOC row
+  const deleteSipocRow = (rowNumber: number) => {
+    // Make sure we don't delete row 1 (first row is always required)
+    if (rowNumber === 1) {
+      return;
+    }
+    
+    // Make sure we always have at least 1 row
+    if (visibleSipocRows <= 1) {
+      return;
+    }
+    
+    // Make sure the row is valid
+    if (rowNumber > visibleSipocRows) {
+      return;
+    }
+    
+    // We need to shift all data from higher rows down by one position
+    for (let i = rowNumber; i < visibleSipocRows; i++) {
+      // Get data from the next row
+      let nextSupplier = "";
+      let nextInput = "";
+      let nextProcess = "";
+      let nextOutput = "";
+      let nextCustomer = "";
+      
+      // Handle different row numbers explicitly to avoid TypeScript errors
+      if (i+1 === 4) {
+        nextSupplier = sipocForm.getValues().suppliers4 || "";
+        nextInput = sipocForm.getValues().inputs4 || "";
+        nextProcess = sipocForm.getValues().process4 || "";
+        nextOutput = sipocForm.getValues().outputs4 || "";
+        nextCustomer = sipocForm.getValues().customers4 || "";
+      } else if (i+1 === 5) {
+        nextSupplier = sipocForm.getValues().suppliers5 || "";
+        nextInput = sipocForm.getValues().inputs5 || "";
+        nextProcess = sipocForm.getValues().process5 || "";
+        nextOutput = sipocForm.getValues().outputs5 || "";
+        nextCustomer = sipocForm.getValues().customers5 || "";
+      } else if (i+1 === 6) {
+        nextSupplier = sipocForm.getValues().suppliers6 || "";
+        nextInput = sipocForm.getValues().inputs6 || "";
+        nextProcess = sipocForm.getValues().process6 || "";
+        nextOutput = sipocForm.getValues().outputs6 || "";
+        nextCustomer = sipocForm.getValues().customers6 || "";
+      } else if (i+1 === 7) {
+        nextSupplier = sipocForm.getValues().suppliers7 || "";
+        nextInput = sipocForm.getValues().inputs7 || "";
+        nextProcess = sipocForm.getValues().process7 || "";
+        nextOutput = sipocForm.getValues().outputs7 || "";
+        nextCustomer = sipocForm.getValues().customers7 || "";
+      }
+      
+      // Set data to the current row based on row number
+      if (i === 3) {
+        sipocForm.setValue("suppliers4", nextSupplier);
+        sipocForm.setValue("inputs4", nextInput);
+        sipocForm.setValue("process4", nextProcess);
+        sipocForm.setValue("outputs4", nextOutput);
+        sipocForm.setValue("customers4", nextCustomer);
+      } else if (i === 4) {
+        sipocForm.setValue("suppliers5", nextSupplier);
+        sipocForm.setValue("inputs5", nextInput);
+        sipocForm.setValue("process5", nextProcess);
+        sipocForm.setValue("outputs5", nextOutput);
+        sipocForm.setValue("customers5", nextCustomer);
+      } else if (i === 5) {
+        sipocForm.setValue("suppliers6", nextSupplier);
+        sipocForm.setValue("inputs6", nextInput);
+        sipocForm.setValue("process6", nextProcess);
+        sipocForm.setValue("outputs6", nextOutput);
+        sipocForm.setValue("customers6", nextCustomer);
+      } else if (i === 6) {
+        sipocForm.setValue("suppliers7", nextSupplier);
+        sipocForm.setValue("inputs7", nextInput);
+        sipocForm.setValue("process7", nextProcess);
+        sipocForm.setValue("outputs7", nextOutput);
+        sipocForm.setValue("customers7", nextCustomer);
+      }
+    }
+    
+    // Clear the last row based on which row is visible
+    if (visibleSipocRows === 4) {
+      sipocForm.setValue("suppliers4", "");
+      sipocForm.setValue("inputs4", "");
+      sipocForm.setValue("process4", "");
+      sipocForm.setValue("outputs4", "");
+      sipocForm.setValue("customers4", "");
+    } else if (visibleSipocRows === 5) {
+      sipocForm.setValue("suppliers5", "");
+      sipocForm.setValue("inputs5", "");
+      sipocForm.setValue("process5", "");
+      sipocForm.setValue("outputs5", "");
+      sipocForm.setValue("customers5", "");
+    } else if (visibleSipocRows === 6) {
+      sipocForm.setValue("suppliers6", "");
+      sipocForm.setValue("inputs6", "");
+      sipocForm.setValue("process6", "");
+      sipocForm.setValue("outputs6", "");
+      sipocForm.setValue("customers6", "");
+    } else if (visibleSipocRows === 7) {
+      sipocForm.setValue("suppliers7", "");
+      sipocForm.setValue("inputs7", "");
+      sipocForm.setValue("process7", "");
+      sipocForm.setValue("outputs7", "");
+      sipocForm.setValue("customers7", "");
+    }
+    
+    // Decrease the visible row count
+    setVisibleSipocRows(prevRows => prevRows - 1);
+    
+    toast({
+      title: "Row deleted",
+      description: `Row ${rowNumber} has been deleted.`,
+      variant: "default",
+    });
+  };
 
   // Customer Requirements state
   const [requirements, setRequirements] = useState([
@@ -383,6 +643,12 @@ export default function DefinePhase() {
       if (charter.charter.projectImage) {
         setProjectImage(charter.charter.projectImage);
       }
+      
+      // Set milestone dates for the timeline
+      setMilestoneDates({
+        kickOffDate: charter.charter.startDate || null,
+        definePhaseDate: charter.charter.define_phase_date || null,
+      });
       
       // Load stakeholders if available
       if (charter.charter.stakeholders) {
@@ -712,15 +978,10 @@ export default function DefinePhase() {
     enabled: !!user?.id && !!projectId,
     onSuccess: (data) => {
       if (data?.sipoc) {
-        sipocForm.reset({
-          suppliers: data.sipoc.suppliers || "",
-          inputs: data.sipoc.inputs || "",
-          process: data.sipoc.process || "",
-          outputs: data.sipoc.outputs || "",
-          customers: data.sipoc.customers || "",
-        });
+        console.log("Loaded SIPOC data:", data.sipoc);
+        console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
       }
-    },
+    }
   });
 
   // Fetch customer requirements
@@ -741,9 +1002,13 @@ export default function DefinePhase() {
   // Save project charter mutation
   const saveCharterMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Make sure all data is properly formatted - all numeric values should be converted to strings for storage
+      // VERBOSE LOGGING: Important debug for projectTitle and all request details
+      console.log("MUTATION DEBUG - Charter form - Project Title value:", data.projectTitle);
+      console.log(`MUTATION DEBUG - Project ID: ${projectId}, currentCharterId: ${charter?.charter?.id}`);
+      
       const payload = {
         projectId,
+        projectTitle: data.projectTitle || "", // Add projectTitle to the payload
         projectReferenceNumber: data.projectReferenceNumber || "",
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
@@ -823,7 +1088,11 @@ export default function DefinePhase() {
         title: "Success",
         description: "Project charter saved successfully",
       });
+      // Invalidate the charter query
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
+      // IMPORTANT: Also invalidate the projects list to update the title in UI
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      console.log("Project list queries invalidated to refresh updated title");
     },
     onError: (error) => {
       console.error("Error saving charter:", error);
@@ -846,6 +1115,10 @@ export default function DefinePhase() {
         ...data,
         userId: user?.id,
       };
+      
+      // Log what's being sent to the API
+      console.log("SIPOC save payload:", payload);
+      console.log("Process name being saved:", payload.processName);
 
       // Check if SIPOC exists
       if (sipoc?.sipoc?.id) {
@@ -1007,6 +1280,7 @@ export default function DefinePhase() {
         // This will include the FTE parameters from the FTE state
         projectId,
         userId: user?.id || 1,
+        projectTitle: data.projectTitle || "", // IMPORTANT: Include the project title for synchronization
         projectReferenceNumber: data.projectReferenceNumber || "",
         projectLeader: data.projectLeader || "",
         sponsor: data.sponsor || "",
@@ -1096,6 +1370,30 @@ export default function DefinePhase() {
   };
 
   const handleSaveSipoc = (data: any) => {
+    console.log("handleSaveSipoc called with data:", data);
+    console.log("Process name in form submit:", data.processName);
+    console.log("Current value in form:", sipocForm.getValues("processName"));
+    
+    // Ensure processName is included in the data
+    if (data.processName === undefined || data.processName === null || data.processName === "") {
+      // Try to get it directly from the form
+      const processNameValue = sipocForm.getValues("processName");
+      console.log("Trying to recover processName from form:", processNameValue);
+      
+      if (processNameValue) {
+        data.processName = processNameValue;
+      } else {
+        // As a fallback, use the default process name from the sipoc data
+        const defaultName = sipoc?.sipoc?.processName || "Untitled Process";
+        console.log("Using fallback processName:", defaultName);
+        data.processName = defaultName;
+      }
+    }
+    
+    // Final log before submission
+    console.log("Final SIPOC data being submitted:", data);
+    console.log("Final process name being submitted:", data.processName);
+    
     saveSipocMutation.mutate(data);
   };
 
@@ -1202,12 +1500,730 @@ export default function DefinePhase() {
     return importance - satisfaction;
   };
 
+  // These flags prevent multiple PDF export operations from running simultaneously
+  let isPdfGenerating = false;
+  let pdfGenerated = false;
+  
+  // Function to handle PDF export with protection against duplicate generation
+  const handleExportPdf = async () => {
+    // Prevent duplicate generation
+    if (isPdfGenerating) {
+      return;
+    }
+    
+    // Set the flag to indicate PDF generation is in progress
+    isPdfGenerating = true;
+    
+    try {
+      // Project title for filename
+      const projectTitle = charterForm.watch("projectTitle") || "Project Charter";
+      const safeFilename = projectTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 30);
+      
+      // ************************
+      // SIMPLER APPROACH - DIRECT CANVAS CAPTURE WITH PROJECT IMAGE EMBEDDED
+      // ************************
+      
+      // First, let's create a temporary element that will include the project image directly
+      const pdfContainer = document.createElement('div');
+      pdfContainer.id = 'pdf-container';
+      pdfContainer.style.position = 'absolute';
+      pdfContainer.style.left = '-9999px';
+      pdfContainer.style.width = '1000px'; // Fixed width for better layout control
+      
+      // Add the title and subtitle (date)
+      const header = document.createElement('div');
+      header.style.textAlign = 'center';
+      header.style.marginBottom = '20px';
+      
+      const title = document.createElement('h1');
+      title.textContent = 'Lean Six Sigma DMAIC Suite™';
+      title.style.fontSize = '24px';
+      title.style.fontWeight = 'bold';
+      title.style.marginBottom = '8px';
+      
+      const subtitle = document.createElement('div');
+      subtitle.textContent = `Generated on ${format(new Date(), "MMMM d, yyyy")}`;
+      subtitle.style.fontSize = '14px';
+      subtitle.style.color = '#666';
+      
+      // Project title removed from header as requested
+      
+      header.appendChild(title);
+      header.appendChild(subtitle);
+      
+      // Add a separator line
+      const separator = document.createElement('hr');
+      separator.style.border = 'none';
+      separator.style.borderTop = '1px solid #ddd';
+      separator.style.margin = '10px 0 20px 0';
+      
+      pdfContainer.appendChild(header);
+      pdfContainer.appendChild(separator);
+      
+      // If we have a project image, add it in a floating container at the top right
+      if (projectImage) {
+        console.log("Adding project image to PDF container");
+        const imageContainer = document.createElement('div');
+        imageContainer.style.float = 'right';
+        imageContainer.style.width = '200px';
+        imageContainer.style.marginLeft = '20px';
+        imageContainer.style.marginBottom = '20px';
+        
+        const img = document.createElement('img');
+        img.src = projectImage;
+        img.alt = 'Project Image';
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.maxHeight = '150px';
+        img.style.objectFit = 'contain';
+        img.crossOrigin = 'anonymous';
+        
+        imageContainer.appendChild(img);
+        pdfContainer.appendChild(imageContainer);
+      }
+      
+      // Now clone the project charter and append it to our container
+      const charterElement = document.getElementById("project-charter");
+      if (!charterElement) {
+        toast({
+          title: "Export Failed",
+          description: "Could not find the project charter element",
+          variant: "destructive",
+        });
+        isPdfGenerating = false;
+        return;
+      }
+      
+          // Get the current project type and category values
+      const projectTypeValue = currentProject?.projectType || "Green Belt";
+      const projectCategoryValue = currentProject?.projectCategory || "Process Improvement";
+      
+      console.log("PDF EXPORT INFO - Project Type and Category:", { 
+        projectId, 
+        projectType: projectTypeValue, 
+        projectCategory: projectCategoryValue 
+      });
+      
+      // We'll directly modify the form fields inside the clone element instead of adding a new section
+      
+      // Clone the charter and modify it for PDF rendering
+      const clone = charterElement.cloneNode(true) as HTMLElement;
+      
+      // Remove unnecessary parts - IMPORTANT: DON'T remove html2canvas-show elements
+      const removeElements = clone.querySelectorAll('#project-image-section, button, .html2canvas-hide:not(.stakeholder-table-container .html2canvas-hide)');
+      removeElements.forEach(el => el.remove());
+      
+      // Find the stakeholder and team member containers and replace them with direct markup
+      const stakeholderSection = clone.querySelector('.stakeholder-section');
+      const teamMemberSection = clone.querySelector('.team-member-section');
+      
+      console.log("Creating direct markup for stakeholders and team members");
+      
+      // Create a direct markup for stakeholders
+      if (stakeholderSection && stakeholderSection instanceof HTMLElement) {
+        // Get the label element from the section
+        const labelElement = stakeholderSection.querySelector('h3, .section-title');
+        let sectionTitle = "Stakeholders";
+        if (labelElement) {
+          sectionTitle = labelElement.textContent || "Stakeholders";
+        }
+        
+        // Create a new container for stakeholders
+        const directStakeholderList = document.createElement('div');
+        directStakeholderList.className = 'pdf-direct-list';
+        directStakeholderList.style.margin = '10px 0';
+        directStakeholderList.style.padding = '10px';
+        directStakeholderList.style.border = '1px solid #e2e8f0';
+        directStakeholderList.style.borderRadius = '4px';
+        
+        // Add the title
+        const title = document.createElement('h3');
+        title.textContent = sectionTitle;
+        title.style.fontSize = '14px';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '8px';
+        directStakeholderList.appendChild(title);
+        
+        // Create a proper table for stakeholders
+        if (stakeholders.length > 0) {
+          // Create the table
+          const table = document.createElement('table');
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+          table.style.borderSpacing = '0';
+          
+          // Create table header
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          
+          // Create header cells
+          const nameHeader = document.createElement('th');
+          nameHeader.textContent = 'Name';
+          nameHeader.style.textAlign = 'left';
+          nameHeader.style.fontWeight = '600';
+          nameHeader.style.padding = '6px 10px';
+          nameHeader.style.backgroundColor = '#f9fafb';
+          nameHeader.style.borderBottom = '1px solid #ddd';
+          nameHeader.style.fontSize = '14px';
+          
+          const functionHeader = document.createElement('th');
+          functionHeader.textContent = 'Function';
+          functionHeader.style.textAlign = 'left';
+          functionHeader.style.fontWeight = '600';
+          functionHeader.style.padding = '6px 10px';
+          functionHeader.style.backgroundColor = '#f9fafb';
+          functionHeader.style.borderBottom = '1px solid #ddd';
+          functionHeader.style.fontSize = '14px';
+          
+          // Append header cells to header row
+          headerRow.appendChild(nameHeader);
+          headerRow.appendChild(functionHeader);
+          
+          // Append header row to thead
+          thead.appendChild(headerRow);
+          
+          // Append thead to table
+          table.appendChild(thead);
+          
+          // Create table body
+          const tbody = document.createElement('tbody');
+          
+          // Add each stakeholder as a table row
+          stakeholders.forEach((stakeholder, index) => {
+            const row = document.createElement('tr');
+            
+            // Create table cells
+            const nameCell = document.createElement('td');
+            nameCell.textContent = stakeholder.name || 'N/A';
+            nameCell.style.padding = '6px 10px';
+            nameCell.style.textAlign = 'left';
+            nameCell.style.borderBottom = '1px solid #eee';
+            nameCell.style.fontSize = '13px';
+            
+            const functionCell = document.createElement('td');
+            functionCell.textContent = stakeholder.function || 'N/A';
+            functionCell.style.padding = '6px 10px';
+            functionCell.style.textAlign = 'left';
+            functionCell.style.borderBottom = '1px solid #eee';
+            functionCell.style.fontSize = '13px';
+            
+            // Append cells to row
+            row.appendChild(nameCell);
+            row.appendChild(functionCell);
+            
+            // Append row to tbody
+            tbody.appendChild(row);
+            
+            // Remove border from last row
+            if (index === stakeholders.length - 1) {
+              nameCell.style.borderBottom = 'none';
+              functionCell.style.borderBottom = 'none';
+            }
+          });
+          
+          // Append tbody to table
+          table.appendChild(tbody);
+          
+          // Append table to container
+          directStakeholderList.appendChild(table);
+        } else {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.textContent = 'No stakeholders added.';
+          emptyMessage.style.fontSize = '12px';
+          emptyMessage.style.color = '#64748b';
+          emptyMessage.style.fontStyle = 'italic';
+          directStakeholderList.appendChild(emptyMessage);
+        }
+        
+        // Replace the original section with our direct markup
+        stakeholderSection.innerHTML = '';
+        stakeholderSection.appendChild(directStakeholderList);
+        console.log("Added direct stakeholder markup");
+      }
+      
+      // Create a direct markup for team members
+      if (teamMemberSection && teamMemberSection instanceof HTMLElement) {
+        // Get the label element from the section
+        const labelElement = teamMemberSection.querySelector('h3, .section-title');
+        let sectionTitle = "Team Members";
+        if (labelElement) {
+          sectionTitle = labelElement.textContent || "Team Members";
+        }
+        
+        // Create a new container for team members
+        const directTeamMemberList = document.createElement('div');
+        directTeamMemberList.className = 'pdf-direct-list';
+        directTeamMemberList.style.margin = '10px 0';
+        directTeamMemberList.style.padding = '10px';
+        directTeamMemberList.style.border = '1px solid #e2e8f0';
+        directTeamMemberList.style.borderRadius = '4px';
+        
+        // Add the title
+        const title = document.createElement('h3');
+        title.textContent = sectionTitle;
+        title.style.fontSize = '14px';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '8px';
+        directTeamMemberList.appendChild(title);
+        
+        // Create a proper table for team members
+        if (teamMembers.length > 0) {
+          // Create the table
+          const table = document.createElement('table');
+          table.style.width = '100%';
+          table.style.borderCollapse = 'collapse';
+          table.style.borderSpacing = '0';
+          
+          // Create table header
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          
+          // Create header cells
+          const nameHeader = document.createElement('th');
+          nameHeader.textContent = 'Name';
+          nameHeader.style.textAlign = 'left';
+          nameHeader.style.fontWeight = '600';
+          nameHeader.style.padding = '6px 10px';
+          nameHeader.style.backgroundColor = '#f9fafb';
+          nameHeader.style.borderBottom = '1px solid #ddd';
+          nameHeader.style.fontSize = '14px';
+          
+          const functionHeader = document.createElement('th');
+          functionHeader.textContent = 'Function/Expertise';
+          functionHeader.style.textAlign = 'left';
+          functionHeader.style.fontWeight = '600';
+          functionHeader.style.padding = '6px 10px';
+          functionHeader.style.backgroundColor = '#f9fafb';
+          functionHeader.style.borderBottom = '1px solid #ddd';
+          functionHeader.style.fontSize = '14px';
+          
+          // Append header cells to header row
+          headerRow.appendChild(nameHeader);
+          headerRow.appendChild(functionHeader);
+          
+          // Append header row to thead
+          thead.appendChild(headerRow);
+          
+          // Append thead to table
+          table.appendChild(thead);
+          
+          // Create table body
+          const tbody = document.createElement('tbody');
+          
+          // Add each team member as a table row
+          teamMembers.forEach((member, index) => {
+            const row = document.createElement('tr');
+            
+            // Create table cells
+            const nameCell = document.createElement('td');
+            nameCell.textContent = member.name || 'N/A';
+            nameCell.style.padding = '6px 10px';
+            nameCell.style.textAlign = 'left';
+            nameCell.style.borderBottom = '1px solid #eee';
+            nameCell.style.fontSize = '13px';
+            
+            const functionCell = document.createElement('td');
+            functionCell.textContent = member.function || 'N/A';
+            functionCell.style.padding = '6px 10px';
+            functionCell.style.textAlign = 'left';
+            functionCell.style.borderBottom = '1px solid #eee';
+            functionCell.style.fontSize = '13px';
+            
+            // Append cells to row
+            row.appendChild(nameCell);
+            row.appendChild(functionCell);
+            
+            // Append row to tbody
+            tbody.appendChild(row);
+            
+            // Remove border from last row
+            if (index === teamMembers.length - 1) {
+              nameCell.style.borderBottom = 'none';
+              functionCell.style.borderBottom = 'none';
+            }
+          });
+          
+          // Append tbody to table
+          table.appendChild(tbody);
+          
+          // Append table to container
+          directTeamMemberList.appendChild(table);
+        } else {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.textContent = 'No team members added.';
+          emptyMessage.style.fontSize = '12px';
+          emptyMessage.style.color = '#64748b';
+          emptyMessage.style.fontStyle = 'italic';
+          directTeamMemberList.appendChild(emptyMessage);
+        }
+        
+        // Replace the original section with our direct markup
+        teamMemberSection.innerHTML = '';
+        teamMemberSection.appendChild(directTeamMemberList);
+        console.log("Added direct team member markup");
+      }
+      
+      // DIRECT APPROACH: Find the project type, category, and belt level fields
+      // First, find all the labels in the document
+      const allLabels = clone.querySelectorAll('label');
+      let projectTypeContainer = null;
+      let projectCategoryContainer = null;
+      let projectLeaderBeltContainer = null;
+      let coachBeltContainer = null;
+      
+      // Get both belt level values from the form
+      const projectLeaderBeltLevel = charterForm.watch("beltLevel") || "";
+      const projectCoachBeltLevel = charterForm.watch("coachBeltLevel") || "";
+      
+      console.log("PDF Form Values:", {
+        projectType: projectTypeValue,
+        projectCategory: projectCategoryValue,
+        beltLevel: projectLeaderBeltLevel,
+        coachBeltLevel: projectCoachBeltLevel
+      });
+      
+      // Look for the labels with relevant text
+      let currentSection = "project_leader";
+      
+      allLabels.forEach(label => {
+        if (label.textContent === 'Project Type') {
+          projectTypeContainer = label.parentElement;
+        } else if (label.textContent === 'Project Category') {
+          projectCategoryContainer = label.parentElement;
+        } else if (label.textContent === 'Project Leader') {
+          // Now we're in the project leader section
+          currentSection = "project_leader";
+        } else if (label.textContent === 'Project Coach') {
+          // Now we're in the project coach section
+          currentSection = "project_coach";
+        } else if (label.textContent === 'Belt Level') {
+          // This could be either for Project Leader or Coach - check which section we're in
+          if (currentSection === "project_leader") {
+            projectLeaderBeltContainer = label.parentElement;
+          } else if (currentSection === "project_coach") {
+            coachBeltContainer = label.parentElement;
+          }
+        }
+      });
+      
+      console.log("Found containers:", { 
+        projectTypeContainer: projectTypeContainer ? true : false, 
+        projectCategoryContainer: projectCategoryContainer ? true : false,
+        projectLeaderBeltContainer: projectLeaderBeltContainer ? true : false,
+        coachBeltContainer: coachBeltContainer ? true : false
+      });
+      
+      // Helper function to create value div
+      const createValueDiv = (value: string) => {
+        const div = document.createElement('div');
+        div.style.border = '1px solid #e2e8f0';
+        div.style.padding = '8px 12px';
+        div.style.marginTop = '5px';
+        div.style.borderRadius = '4px';
+        div.style.backgroundColor = '#f8fafc';
+        div.textContent = value;
+        div.className = 'inserted-value'; // Mark as our special insert
+        return div;
+      };
+      
+      // Now create and insert values for these fields
+      if (projectTypeContainer) {
+        // Remove any existing html2canvas-show elements that might be hiding
+        const existingShowElements = projectTypeContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Add it to the container
+        projectTypeContainer.appendChild(createValueDiv(projectTypeValue));
+      }
+      
+      if (projectCategoryContainer) {
+        // Remove any existing html2canvas-show elements that might be hiding
+        const existingShowElements = projectCategoryContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Add it to the container
+        projectCategoryContainer.appendChild(createValueDiv(projectCategoryValue));
+      }
+      
+      // Handle project leader belt level field
+      if (projectLeaderBeltContainer) {
+        // Remove any existing html2canvas-show elements
+        const existingShowElements = projectLeaderBeltContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Add the value to the container
+        projectLeaderBeltContainer.appendChild(createValueDiv(projectLeaderBeltLevel));
+        console.log("Setting project leader belt level value:", projectLeaderBeltLevel);
+      }
+      
+      // Handle coach belt level field
+      if (coachBeltContainer) {
+        // Remove any existing html2canvas-show elements
+        const existingShowElements = coachBeltContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Add the value to the container
+        coachBeltContainer.appendChild(createValueDiv(projectCoachBeltLevel));
+        console.log("Setting coach belt level value:", projectCoachBeltLevel);
+      }
+      
+      // Still need to handle any other html2canvas-show elements
+      const showElements = clone.querySelectorAll('.html2canvas-show');
+      showElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.display = 'block';
+          
+          // Handle special fields that need the current project values
+          const dataField = el.getAttribute('data-field');
+          if (dataField === 'projectType') {
+            el.textContent = projectTypeValue;
+          } else if (dataField === 'projectCategory') {
+            el.textContent = projectCategoryValue;
+          } else if (dataField === 'beltLevel') {
+            el.textContent = projectLeaderBeltLevel;
+            console.log("Setting project leader belt level value in PDF:", projectLeaderBeltLevel);
+          } else if (dataField === 'coachBeltLevel') {
+            el.textContent = projectCoachBeltLevel;
+            console.log("Setting coach belt level value in PDF:", projectCoachBeltLevel);
+          }
+        }
+      });
+      
+      // Specifically handle the costs accordion section if expanded
+      const costsSection = clone.querySelector('#project-costs-accordion');
+      if (costsSection) {
+        // Get the state from the original element to ensure accuracy
+        const originalCostsSection = charterElement.querySelector('#project-costs-accordion');
+        const isExpanded = originalCostsSection?.getAttribute('data-state') === 'open';
+        
+        if (isExpanded) {
+          console.log("Project costs section is expanded - applying special handling");
+          
+          // Force the content to be visible
+          const content = costsSection.querySelector('[data-orientation="vertical"]');
+          if (content) {
+            (content as HTMLElement).style.cssText = `
+              height: auto !important;
+              overflow: visible !important;
+              opacity: 1 !important;
+              visibility: visible !important;
+              pointer-events: auto !important;
+              position: static !important;
+              transform: none !important;
+              display: block !important;
+            `;
+            
+            // Also make child elements visible
+            content.querySelectorAll('*').forEach(child => {
+              if (child instanceof HTMLElement) {
+                const displayValue = window.getComputedStyle(child).display;
+                child.style.cssText += `
+                  display: ${displayValue === 'none' ? 'block' : displayValue} !important;
+                  visibility: visible !important;
+                  opacity: 1 !important;
+                `;
+              }
+            });
+          }
+        }
+      }
+      
+      // Clean up the styling for PDF output
+      clone.querySelectorAll('*').forEach(el => {
+        if (el instanceof HTMLElement) {
+          // Remove hover effects, transitions, etc.
+          el.style.transition = 'none';
+          el.style.animation = 'none';
+        }
+      });
+      
+      // Create a footer element
+      const footer = document.createElement('div');
+      footer.style.marginTop = '30px';
+      footer.style.borderTop = '1px solid #ddd';
+      footer.style.paddingTop = '10px';
+      footer.style.textAlign = 'center';
+      footer.style.fontSize = '10px';
+      footer.style.color = '#666';
+      footer.textContent = 'Lean Six Sigma DMAIC Suite™';
+      
+      // Add the cloned charter to our container
+      pdfContainer.appendChild(clone);
+      pdfContainer.appendChild(footer);
+      
+      // Add the container to the document
+      document.body.appendChild(pdfContainer);
+      
+      console.log("PDF container prepared, rendering to canvas");
+      
+      // Wait a bit for all elements to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        // Use html2canvas to capture the entire container
+        const canvas = await html2canvas(pdfContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          logging: false
+        });
+        
+        console.log("Canvas created, size:", canvas.width, "x", canvas.height);
+        
+        // Create PDF with proper dimensions
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+        
+        // PDF dimensions
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        
+        // Calculate size ratio to fit on page
+        const imgWidth = pdfWidth - (2 * margin);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Check if multiple pages are needed
+        if (imgHeight <= pdfHeight - (2 * margin)) {
+          // One page is enough
+          pdf.addImage(
+            canvas.toDataURL('image/jpeg', 0.95),
+            'JPEG',
+            margin, margin,
+            imgWidth, imgHeight
+          );
+          
+          // Add page number
+          pdf.setFontSize(10);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text('Page 1 of 1', pdfWidth / 2, pdfHeight - 5, { align: 'center' });
+        } else {
+          // Multiple pages needed
+          let remainingHeight = imgHeight;
+          let totalPages = Math.ceil(imgHeight / (pdfHeight - (2 * margin)));
+          
+          let currentPage = 0;
+          let position = 0;
+          
+          while (currentPage < totalPages) {
+            if (currentPage > 0) {
+              pdf.addPage();
+            }
+            
+            currentPage++;
+            
+            // Calculate the portion of the image to show on this page
+            const pageHeight = Math.min(pdfHeight - (2 * margin), remainingHeight);
+            const yPos = position;
+            
+            // For multipage PDFs, we'll use a different approach
+            // Instead of using the clipY parameter which can cause angled display issues,
+            // we'll create a new canvas with just the portion we need for this page
+            
+            const pageCanvasHeight = Math.min(pageHeight * (canvas.width / imgWidth), canvas.height - position * (canvas.width / imgWidth));
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = pageCanvasHeight;
+            
+            const ctx = tempCanvas.getContext('2d');
+            if (ctx) {
+              // Draw only the portion of the original canvas needed for this page
+              ctx.drawImage(
+                canvas, 
+                0, position * (canvas.width / imgWidth), // Source x, y
+                canvas.width, pageCanvasHeight, // Source width, height
+                0, 0, // Destination x, y
+                canvas.width, pageCanvasHeight // Destination width, height
+              );
+              
+              // Now add this specific portion as a new image
+              pdf.addImage(
+                tempCanvas.toDataURL('image/jpeg', 0.95),
+                'JPEG',
+                margin, margin,
+                imgWidth, pageHeight,
+                undefined,
+                'SLOW'
+              );
+            }
+            
+            // Add page number
+            pdf.setFontSize(10);
+            pdf.setTextColor(150, 150, 150);
+            pdf.text(`Page ${currentPage} of ${totalPages}`, pdfWidth / 2, pdfHeight - 5, { align: 'center' });
+            
+            // Update position and remaining height
+            position += pageHeight;
+            remainingHeight -= pageHeight;
+          }
+        }
+        
+        // Save the PDF
+        const filename = `${safeFilename}_Project_Charter_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        pdf.save(filename);
+        
+        // Show success message
+        toast({
+          title: "Charter Exported Successfully",
+          description: `Your PDF has been downloaded as ${filename}`,
+        });
+      } catch (error) {
+        console.error("PDF export error:", error);
+        toast({
+          title: "Export Failed",
+          description: "Unable to generate PDF. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        // Clean up the temporary container
+        if (pdfContainer && pdfContainer.parentNode) {
+          pdfContainer.parentNode.removeChild(pdfContainer);
+        }
+      }
+    } finally {
+      isPdfGenerating = false;
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* Phase Milestone Timeline */}
+      <div className="mb-4 flex flex-row gap-4">
+        <Card className="w-1/2">
+          <CardContent className="pt-6">
+            <MilestoneTimeline 
+              startDate={milestoneDates.kickOffDate}
+              endDate={milestoneDates.definePhaseDate}
+              label="Define Phase Timeline"
+            />
+          </CardContent>
+        </Card>
+        
+        {/* Space for milestone progress card */}
+        <div className="w-1/2"></div>
+      </div>
+      
       {/* Project Charter */}
-      <Card>
+      <Card id="project-charter">
         <CardHeader>
-          <CardTitle>Project Charter</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Project Charter</CardTitle>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportPdf}
+              className="flex items-center gap-2"
+            >
+              <Download size={16} />
+              Export PDF
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={charterForm.handleSubmit(handleSaveCharter)} className="space-y-4">
@@ -1233,39 +2249,55 @@ export default function DefinePhase() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="projectType">Project Type</Label>
-                      <Select 
-                        onValueChange={(value) => charterForm.setValue("projectType", value)}
-                        value={charterForm.watch("projectType") || "Green Belt"}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select project type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Black Belt">Black Belt</SelectItem>
-                          <SelectItem value="Green Belt">Green Belt</SelectItem>
-                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                          <SelectItem value="White Belt">White Belt</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select 
+                          onValueChange={(value) => charterForm.setValue("projectType", value)}
+                          value={charterForm.watch("projectType") || "Green Belt"}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select project type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Black Belt">Black Belt</SelectItem>
+                            <SelectItem value="Green Belt">Green Belt</SelectItem>
+                            <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                            <SelectItem value="White Belt">White Belt</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="projectType">
+                        {charterForm.watch("projectType") || "Green Belt"}
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="projectCategory">Project Category</Label>
-                      <Select 
-                        onValueChange={(value) => charterForm.setValue("projectCategory", value)}
-                        value={charterForm.watch("projectCategory") || "Process Improvement"}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select project category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Process Improvement">Process Improvement</SelectItem>
-                          <SelectItem value="Process Redesign">Process Redesign</SelectItem>
-                          <SelectItem value="Process Design">Process Design</SelectItem>
-                          <SelectItem value="Project Scoping">Project Scoping</SelectItem>
-                          <SelectItem value="Kaizen">Kaizen</SelectItem>
-                          <SelectItem value="Quick Action">Quick Action</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select 
+                          onValueChange={(value) => charterForm.setValue("projectCategory", value)}
+                          value={charterForm.watch("projectCategory") || "Process Improvement"}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select project category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Process Improvement">Process Improvement</SelectItem>
+                            <SelectItem value="Process Redesign">Process Redesign</SelectItem>
+                            <SelectItem value="Process Design">Process Design</SelectItem>
+                            <SelectItem value="Project Scoping">Project Scoping</SelectItem>
+                            <SelectItem value="Kaizen">Kaizen</SelectItem>
+                            <SelectItem value="Quick Action">Quick Action</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="projectCategory">
+                        {charterForm.watch("projectCategory") || "Process Improvement"}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1281,23 +2313,31 @@ export default function DefinePhase() {
                     </div>
                     <div>
                       <Label htmlFor="beltLevel">Belt Level</Label>
-                      <Select 
-                        onValueChange={(value) => charterForm.setValue("beltLevel", value)}
-                        defaultValue={charterForm.getValues("beltLevel")}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select belt level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Black Belt">Black Belt</SelectItem>
-                          <SelectItem value="Green Belt">Green Belt</SelectItem>
-                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                          <SelectItem value="White Belt">White Belt</SelectItem>
-                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
-                          <SelectItem value="Champion">Champion</SelectItem>
-                          <SelectItem value="none">None</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select 
+                          onValueChange={(value) => charterForm.setValue("beltLevel", value)}
+                          value={charterForm.watch("beltLevel") || ""}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select belt level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Black Belt">Black Belt</SelectItem>
+                            <SelectItem value="Green Belt">Green Belt</SelectItem>
+                            <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                            <SelectItem value="White Belt">White Belt</SelectItem>
+                            <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
+                            <SelectItem value="Champion">Champion</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="beltLevel">
+                        {charterForm.watch("beltLevel") || ""}
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1318,7 +2358,7 @@ export default function DefinePhase() {
                       />
                     </div>
                   </div>
-                  <div>
+                  <div className="stakeholder-table-container stakeholder-section">
                     {/* Stakeholder Management Component */}
                     <StakeholderManagement 
                       stakeholders={stakeholders}
@@ -1344,26 +2384,34 @@ export default function DefinePhase() {
                     </div>
                     <div>
                       <Label htmlFor="coachBeltLevel">Belt Level</Label>
-                      <Select
-                        onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
-                        defaultValue={charterForm.getValues("coachBeltLevel") || "None"}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select belt level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
-                          <SelectItem value="Black Belt">Black Belt</SelectItem>
-                          <SelectItem value="Green Belt">Green Belt</SelectItem>
-                          <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
-                          <SelectItem value="White Belt">White Belt</SelectItem>
-                          <SelectItem value="Champion">Champion</SelectItem>
-                          <SelectItem value="None">None</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select
+                          onValueChange={(value) => charterForm.setValue("coachBeltLevel", value)}
+                          value={charterForm.watch("coachBeltLevel") || "None"}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select belt level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Master Black Belt">Master Black Belt</SelectItem>
+                            <SelectItem value="Black Belt">Black Belt</SelectItem>
+                            <SelectItem value="Green Belt">Green Belt</SelectItem>
+                            <SelectItem value="Yellow Belt">Yellow Belt</SelectItem>
+                            <SelectItem value="White Belt">White Belt</SelectItem>
+                            <SelectItem value="Champion">Champion</SelectItem>
+                            <SelectItem value="None">None</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="coachBeltLevel">
+                        {charterForm.watch("coachBeltLevel") || "None"}
+                      </div>
                     </div>
                   </div>
-                  <div>
+                  <div className="team-member-table-container team-member-section">
                     {/* Team Members Management Component */}
                     <TeamMemberManagement 
                       teamMembers={teamMembers}
@@ -1375,24 +2423,46 @@ export default function DefinePhase() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="projectImage">Project Image</Label>
-                  <div className="mt-2">
+                  <div id="project-image-section" className="mt-2">
                     {projectImage ? (
                       <div className="relative w-full max-w-md mb-2">
-                        <img
-                          src={projectImage}
-                          alt="Project"
-                          className="w-full h-auto object-contain rounded-md border border-gray-200"
-                          style={{ maxHeight: '200px' }}
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 h-8 w-8"
-                          onClick={handleRemoveImage}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Regular display for screen */}
+                        <div className="html2canvas-hide">
+                          <img
+                            src={projectImage}
+                            alt="Project"
+                            className="w-full h-auto object-contain rounded-md border border-gray-200"
+                            style={{ maxHeight: '200px' }}
+                            crossOrigin="anonymous"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-8 w-8"
+                            onClick={handleRemoveImage}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Special display for PDF export with original size */}
+                        <div className="html2canvas-show">
+                          <img
+                            src={projectImage}
+                            alt="Project"
+                            className="object-contain rounded-md border border-gray-200 pdf-project-image"
+                            style={{ 
+                              width: 'auto', 
+                              height: 'auto',
+                              maxHeight: '300px', 
+                              maxWidth: '100%',
+                              display: 'block',
+                              margin: '0 auto'
+                            }}
+                            crossOrigin="anonymous"
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div 
@@ -1626,7 +2696,8 @@ export default function DefinePhase() {
                   <div>
                     <Label htmlFor="fteBenefits">FTE Benefits (Full Time Employee)</Label>
                     <div className="space-y-4 mt-2 p-3 border border-gray-200 rounded-md">
-                      <div>
+                      {/* Only show this part in the UI, not in the PDF */}
+                      <div className="html2canvas-hide">
                         <Label htmlFor="fteAssumptions" className="text-xs font-medium">FTE Assumptions</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
@@ -1647,6 +2718,7 @@ export default function DefinePhase() {
                               placeholder="e.g. 5"
                               className="h-8 text-sm"
                               step="0.01"
+                              data-pdf-value={fteParams.workingDaysPerWeek}
                             />
                           </div>
                           <div>
@@ -1667,12 +2739,13 @@ export default function DefinePhase() {
                               placeholder="e.g. 8"
                               className="h-8 text-sm"
                               step="0.01"
+                              data-pdf-value={fteParams.workingHoursPerDay}
                             />
                           </div>
                         </div>
                       </div>
                       
-                      <div>
+                      <div className="html2canvas-hide">
                         <Label htmlFor="savedTime" className="text-xs font-medium">Saved Working Time</Label>
                         <div className="grid grid-cols-2 gap-4 mt-1">
                           <div>
@@ -1682,6 +2755,8 @@ export default function DefinePhase() {
                               className="w-full h-8 text-sm border border-gray-300 rounded-md" 
                               value={fteParams.timeUnit}
                               onChange={(e) => handleFteParamChange('timeUnit', e.target.value)}
+                              data-pdf-value={fteParams.timeUnit === 'day' ? 'Per Day' : 
+                                fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}
                             >
                               <option value="day">Per Day</option>
                               <option value="week">Per Week</option>
@@ -1705,44 +2780,110 @@ export default function DefinePhase() {
                               }}
                               placeholder="Hours saved"
                               className="h-8 text-sm"
+                              data-pdf-value={fteParams.savedHours}
                             />
                           </div>
                         </div>
                       </div>
                       
+                      {/* Show this in both UI and PDF */}
                       <div className="pt-2 border-t border-gray-200 mb-3">
-                        <Label className="text-xs font-medium">FTE Results</Label>
-                        <div className="flex justify-between items-center mb-3 p-2 border border-gray-200 rounded-md bg-gray-50">
-                          <p className="text-sm font-medium">Calculated FTE: <span className="text-blue-600">{fteParams.calculatedFte.toFixed(3)}</span></p>
-                          <div className="text-xs text-gray-500">Auto-calculated</div>
-                        </div>
+                        <Label className="text-xs font-medium">FTE Benefits</Label>
                         
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
-                            <Input
-                              id="fteCostPerYear"
-                              type="number"
-                              min="0"
-                              value={fteParams.fteCostPerYear}
-                              onChange={(e) => {
-                                const value = parseFloat(e.target.value);
-                                if (value < 0 || isNaN(value)) {
-                                  handleFteParamChange('fteCostPerYear', "0");
-                                } else {
-                                  handleFteParamChange('fteCostPerYear', e.target.value);
-                                }
-                              }}
-                              placeholder="e.g. 100000"
-                              className="h-8 text-sm"
-                            />
+                        {/* FTE Assumptions for PDF export only */}
+                        <div className="html2canvas-show p-3 mt-2 border border-gray-200 rounded-md mb-3">
+                          <h4 className="font-medium mb-2">FTE Assumptions</h4>
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <p className="text-sm font-medium mb-1">Working Days/Week</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.workingDaysPerWeek}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-1">Working Hours/Day</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.workingHoursPerDay}
+                              </div>
+                            </div>
                           </div>
                           
+                          <h4 className="font-medium mb-2">Saved Working Time</h4>
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <p className="text-sm font-medium mb-1">Time Period</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.timeUnit === 'day' ? 'Per Day' : 
+                                 fteParams.timeUnit === 'week' ? 'Per Week' : 'Per Month'}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-1">Hours Saved</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {fteParams.savedHours}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Summary section for PDF export */}
+                        <div className="p-3 mt-2 bg-blue-50 border border-blue-200 rounded-md mb-3">
                           <div>
-                            <Label className="text-xs">FTE Benefits ({currency})</Label>
-                            <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
-                              <div className="flex items-center px-3 text-green-600">
+                            <p className="text-sm font-medium">Calculated FTE Value: <span className="text-blue-600 font-bold">{fteParams.calculatedFte.toFixed(3)} FTE</span></p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Based on the calculated time saved across the organization
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* FTE Cost and Benefits display for PDF export only */}
+                        <div className="html2canvas-show p-3 mt-2 border border-gray-200 rounded-md mb-3">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm font-medium mb-1">FTE Cost per Year ({currency})</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm">
+                                {formatCurrency(parseFloat(fteParams.fteCostPerYear.toString()), currency)}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-1">FTE Benefits ({currency})</p>
+                              <div className="p-2 border border-gray-200 rounded-md bg-white text-sm text-green-600">
                                 {formatCurrency(fteParams.calculatedValue, currency)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Only in UI controls */}
+                        <div className="html2canvas-hide">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="fteCostPerYear" className="text-xs">FTE Cost per Year ({currency})</Label>
+                              <Input
+                                id="fteCostPerYear"
+                                type="number"
+                                min="0"
+                                value={fteParams.fteCostPerYear}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value);
+                                  if (value < 0 || isNaN(value)) {
+                                    handleFteParamChange('fteCostPerYear', "0");
+                                  } else {
+                                    handleFteParamChange('fteCostPerYear', e.target.value);
+                                  }
+                                }}
+                                placeholder="e.g. 100000"
+                                className="h-8 text-sm"
+                                data-pdf-value={fteParams.fteCostPerYear}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">FTE Benefits ({currency})</Label>
+                              <div className="flex h-8 rounded-md border border-input bg-gray-50 text-sm ring-offset-background">
+                                <div className="flex items-center px-3 text-green-600">
+                                  {formatCurrency(fteParams.calculatedValue, currency)}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1750,9 +2891,11 @@ export default function DefinePhase() {
                       </div>
                     </div>
                     
+                    {/* Hidden input field for form submission */}
                     <Input
                       id="fteBenefits"
-                      className="hidden"
+                      className="hidden hide-in-pdf-fte-summary"
+                      data-no-pdf="true"
                       {...charterForm.register("fteBenefits")}
                     />
                   </div>
@@ -2103,74 +3246,417 @@ export default function DefinePhase() {
 
       {/* SIPOC Diagram */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>SIPOC Diagram</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Identify the Suppliers, Inputs, Process, Outputs, and Customers involved in the project.
-          </p>
-          
           <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
+            <div className="flex items-center space-x-2 mb-4">
+              <label htmlFor="processName" className="text-sm font-medium">Process Name:</label>
+              <input
+                type="text"
+                id="processName"
+                className="px-3 py-1 border rounded-md text-sm w-80"
+                placeholder="Enter process name"
+                {...sipocForm.register("processName")}
+                defaultValue={sipoc?.sipoc?.processName || ""}
+              />
+            </div>
+          
+            <p className="text-sm text-gray-500 mb-4">
+              A SIPOC is a high-level process map (helicopter view). It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
+            </p>
+            
             <div className="grid grid-cols-5 gap-2 mb-4">
-              <div className="p-3 bg-blue-50 rounded-md text-center">
+              <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-primary text-sm">Suppliers</h4>
               </div>
-              <div className="p-3 bg-indigo-50 rounded-md text-center">
+              <div className="p-3 bg-indigo-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-indigo-600 text-sm">Inputs</h4>
               </div>
-              <div className="p-3 bg-purple-50 rounded-md text-center">
+              <div className="p-3 bg-purple-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-purple-600 text-sm">Process</h4>
               </div>
-              <div className="p-3 bg-green-50 rounded-md text-center">
+              <div className="p-3 bg-green-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-green-600 text-sm">Outputs</h4>
               </div>
-              <div className="p-3 bg-yellow-50 rounded-md text-center">
+              <div className="p-3 bg-yellow-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-yellow-600 text-sm">Customers</h4>
               </div>
             </div>
             
-            <div className="grid grid-cols-5 gap-2">
-              <div className="border border-blue-100 rounded-md p-2 bg-white">
+            {/* First row of SIPOC cards */}
+            <div className="grid grid-cols-5 gap-2 mb-2 relative">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who provides inputs to the process?"
                   {...sipocForm.register("suppliers")}
                 />
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white">
+              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What inputs are required for the process?"
                   {...sipocForm.register("inputs")}
                 />
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white">
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the steps in the process?"
                   {...sipocForm.register("process")}
                 />
               </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white">
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the outputs of the process?"
                   {...sipocForm.register("outputs")}
                 />
               </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white">
+              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who receives the outputs?"
                   {...sipocForm.register("customers")}
                 />
               </div>
+              {/* No delete button for first row */}
+            </div>
+            
+            {/* Second row of SIPOC cards */}
+            <div className="grid grid-cols-5 gap-2 mb-2 relative">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="Who provides inputs to the process?"
+                  {...sipocForm.register("suppliers2")}
+                />
+              </div>
+              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="What inputs are required for the process?"
+                  {...sipocForm.register("inputs2")}
+                />
+              </div>
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="What are the steps in the process?"
+                  {...sipocForm.register("process2")}
+                />
+              </div>
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="What are the outputs of the process?"
+                  {...sipocForm.register("outputs2")}
+                />
+              </div>
+              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="Who receives the outputs?"
+                  {...sipocForm.register("customers2")}
+                />
+              </div>
+
+            </div>
+            
+            {/* Third row of SIPOC cards */}
+            <div className="grid grid-cols-5 gap-2 mb-2 relative">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="Who provides inputs to the process?"
+                  {...sipocForm.register("suppliers3")}
+                />
+              </div>
+              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="What inputs are required for the process?"
+                  {...sipocForm.register("inputs3")}
+                />
+              </div>
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="What are the steps in the process?"
+                  {...sipocForm.register("process3")}
+                />
+              </div>
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="What are the outputs of the process?"
+                  {...sipocForm.register("outputs3")}
+                />
+              </div>
+              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={3}
+                  placeholder="Who receives the outputs?"
+                  {...sipocForm.register("customers3")}
+                />
+              </div>
+
+            </div>
+            
+            {/* Fourth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 4 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers4")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs4")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process4")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs4")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers4")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(4)}
+                  title="Delete Row 4"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Fifth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 5 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers5")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs5")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process5")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs5")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers5")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(5)}
+                  title="Delete Row 5"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Sixth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 6 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers6")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs6")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process6")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs6")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers6")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(6)}
+                  title="Delete Row 6"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Seventh row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 7 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers7")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs7")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process7")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs7")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers7")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(7)}
+                  title="Delete Row 7"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Add Row Button */}
+            <div className="flex justify-start mt-2 mb-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                className="flex items-center"
+                onClick={addSipocRow}
+                disabled={visibleSipocRows >= 7}
+              >
+                <PlusCircle className="mr-1 h-4 w-4" />
+                Add Row
+              </Button>
             </div>
             
             <div className="mt-4">
