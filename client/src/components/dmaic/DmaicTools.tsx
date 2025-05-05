@@ -113,7 +113,7 @@ export default function DmaicTools() {
               {currentProject?.title ? (
                 <>
                   <span className="text-primary">{currentProject.title}</span> 
-                  <span className="text-[#0a2463] text-sm font-normal ml-1">- DMAIC</span>
+                  <span className="text-gray-500 text-sm font-normal ml-1">- DMAIC</span>
                 </>
               ) : (
                 "DMAIC Methodology"
@@ -124,22 +124,19 @@ export default function DmaicTools() {
             {currentProject?.startDate && currentProject?.targetEndDate && (
               <div className="flex flex-col md:ml-4">
                 <div className="flex items-start gap-2">
-                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-between">
-                    <h3 className="text-xs font-medium text-[#0a2463] mb-2">Project Timeline</h3>
-                    <div className="flex-grow flex flex-col justify-center mb-2">
-                      <div className="flex items-center">
-                        <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
-                          <div 
-                            className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
-                            style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                          {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
-                        </span>
+                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm">
+                    <div className="flex items-center">
+                      <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                        <div 
+                          className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
+                          style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
+                        ></div>
                       </div>
+                      <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                        {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
+                      </span>
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 w-24 md:w-36">
+                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-36">
                       <span>{formatDate(currentProject.startDate)}</span>
                       <span>{formatDate(currentProject.targetEndDate)}</span>
                     </div>
@@ -151,15 +148,12 @@ export default function DmaicTools() {
             {/* DMAIC Progress Visualization - Moved here from below */}
             {currentProject && (
               <div className="md:ml-4" style={{ width: "40%" }}>
-                <div className="p-2 border border-gray-200 rounded-md shadow-sm h-full flex flex-col">
-                  <h3 className="text-xs font-medium text-[#0a2463] mb-2">DMAIC Progress</h3>
-                  <div className="flex-grow flex items-center justify-center">
-                    <DmaicProgressSteps 
-                      project={currentProject}
-                      overallProgress={currentProject.progress || 0}
-                      className="scale-90 transform origin-center"
-                    />
-                  </div>
+                <div className="p-2 border border-gray-200 rounded-md shadow-sm">
+                  <DmaicProgressSteps 
+                    project={currentProject}
+                    overallProgress={currentProject.progress || 0}
+                    className="scale-90 transform origin-center"
+                  />
                 </div>
               </div>
             )}
