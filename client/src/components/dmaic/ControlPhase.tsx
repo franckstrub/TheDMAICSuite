@@ -308,7 +308,7 @@ export default function ControlPhase() {
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
-      <Card className="mb-4">
+      <Card className="mb-4 max-w-2xl mx-auto">
         <CardContent className="pt-6">
           <MilestoneTimeline 
             startDate={milestoneDates.improvePhaseDate}
