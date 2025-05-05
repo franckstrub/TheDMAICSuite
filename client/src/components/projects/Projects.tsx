@@ -4,7 +4,15 @@ import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate, getProgressColor, getStatusColor, getPhaseLabel, getProjectTypeColor } from "@/lib/utils";
+import { 
+  formatDate, 
+  getProgressColor, 
+  getStatusColor, 
+  getPhaseLabel, 
+  getProjectTypeColor,
+  calculateTimelineProgress,
+  getTimelineColor 
+} from "@/lib/utils";
 import {
   Card,
   CardContent,

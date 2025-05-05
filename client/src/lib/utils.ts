@@ -141,3 +141,41 @@ export function formatBreakeven(years: number): string {
     return `${wholeYears} year${wholeYears !== 1 ? 's' : ''}, ${months} month${months !== 1 ? 's' : ''}`;
   }
 }
+
+/**
+ * Calculates the timeline progress percentage based on start and target dates
+ * @param startDate The project start date
+ * @param targetEndDate The project target end date
+ * @returns A number between 0-100 representing the timeline progress
+ */
+export function calculateTimelineProgress(startDate: string | Date | null, targetEndDate: string | Date | null): number {
+  if (!startDate || !targetEndDate) return 0;
+  
+  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+  const end = typeof targetEndDate === 'string' ? new Date(targetEndDate) : targetEndDate;
+  const now = new Date();
+  
+  // If the project hasn't started yet
+  if (now < start) return 0;
+  
+  // If the project is already past the target date
+  if (now > end) return 100;
+  
+  // Calculate percentage between start and end dates
+  const totalDuration = end.getTime() - start.getTime();
+  const elapsedDuration = now.getTime() - start.getTime();
+  
+  return Math.round((elapsedDuration / totalDuration) * 100);
+}
+
+/**
+ * Returns a color class for the timeline progress bar
+ * @param progress The timeline progress percentage (0-100)
+ * @returns A Tailwind CSS color class
+ */
+export function getTimelineColor(progress: number): string {
+  if (progress < 30) return 'bg-green-500';  // Early in timeline - green
+  if (progress < 70) return 'bg-blue-500';   // Middle of timeline - blue
+  if (progress < 90) return 'bg-yellow-500'; // Nearing completion - yellow
+  return 'bg-red-500';                       // At or past deadline - red
+}
