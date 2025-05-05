@@ -12,7 +12,8 @@ import {
   cn, 
   getProjectTypeColor, 
   calculateTimelineProgress, 
-  getTimelineColor 
+  getTimelineColor,
+  getProgressColor
 } from "@/lib/utils";
 
 type PhaseParams = {
