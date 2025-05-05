@@ -3686,14 +3686,14 @@ export default function DefinePhase() {
           </p>
           
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="w-[95%] mx-auto divide-y divide-gray-200">
               <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-2 border-white">Customer Requirement</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-2 border-white">Customer Need</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-2 border-white">Importance (1-5)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-2 border-white">Critical to Quality (CTQ)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800">Actions</th>
+                <tr className="w-full">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-2 border-white w-1/5">Customer Requirement</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-2 border-white w-1/5">Customer Need</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-2 border-white w-1/5">Importance (1-5)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-2 border-white w-1/5">Critical to Quality (CTQ)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-1/5">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
