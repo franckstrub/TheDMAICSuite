@@ -215,7 +215,7 @@ export default function MeasurePhase() {
             <MilestoneTimeline 
               startDate={milestoneDates.definePhaseDate}
               endDate={milestoneDates.measurePhaseDate}
-              label="Measure Phase Milestone"
+              label="Measure Phase Timeline"
             />
           </CardContent>
         </Card>

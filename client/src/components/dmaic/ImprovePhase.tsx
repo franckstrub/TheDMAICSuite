@@ -235,7 +235,7 @@ export default function ImprovePhase() {
             <MilestoneTimeline 
               startDate={milestoneDates.analyzePhaseDate}
               endDate={milestoneDates.improvePhaseDate}
-              label="Improve Phase Milestone"
+              label="Improve Phase Timeline"
             />
           </CardContent>
         </Card>

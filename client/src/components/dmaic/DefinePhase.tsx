@@ -1925,7 +1925,7 @@ export default function DefinePhase() {
             <MilestoneTimeline 
               startDate={milestoneDates.kickOffDate}
               endDate={milestoneDates.definePhaseDate}
-              label="Define Phase Milestone"
+              label="Define Phase Timeline"
             />
           </CardContent>
         </Card>

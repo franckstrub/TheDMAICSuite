@@ -314,7 +314,7 @@ export default function ControlPhase() {
             <MilestoneTimeline 
               startDate={milestoneDates.improvePhaseDate}
               endDate={milestoneDates.controlPhaseDate}
-              label="Control Phase Milestone"
+              label="Control Phase Timeline"
             />
           </CardContent>
         </Card>
