@@ -122,53 +122,38 @@ export default function DmaicTools() {
             {/* Project Timeline */}
             {currentProject?.startDate && currentProject?.targetEndDate && (
               <div className="flex flex-col md:ml-4">
-                <div className="flex flex-col">
-                  <div className="relative w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0 mb-1">
-                    <div 
-                      className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
-                      style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
-                    ></div>
-                    <div 
-                      className="absolute -top-5 text-xs text-gray-500 whitespace-nowrap"
-                      style={{ 
-                        left: `calc(${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% - 10px)`,
-                        minWidth: '40px'
-                      }}
-                    >
-                      {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col">
+                    <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                      <div 
+                        className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
+                        style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>{formatDate(currentProject.startDate)}</span>
+                      <span>{formatDate(currentProject.targetEndDate)}</span>
                     </div>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>{formatDate(currentProject.startDate)}</span>
-                    <span>{formatDate(currentProject.targetEndDate)}</span>
-                  </div>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
+                  </span>
                 </div>
               </div>
             )}
             
             {/* Project Progress */}
             {currentProject?.progress !== undefined && (
-              <div className="flex md:ml-4 mt-3">
-                <div className="flex flex-col">
-                  <div className="relative w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0 mb-1">
-                    <div 
-                      className={`${getProgressColor(currentProject.progress)} h-2 rounded-full`} 
-                      style={{ width: `${currentProject.progress}%` }}
-                    ></div>
-                    <div 
-                      className="absolute -top-5 text-xs text-gray-500 whitespace-nowrap"
-                      style={{ 
-                        left: `calc(${currentProject.progress}% - 10px)`,
-                        minWidth: '40px'
-                      }}
-                    >
-                      {currentProject.progress}%
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500 whitespace-nowrap text-center">
-                    Complete
-                  </div>
+              <div className="flex items-center gap-2 md:ml-4">
+                <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                  <div 
+                    className={`${getProgressColor(currentProject.progress)} h-2 rounded-full`} 
+                    style={{ width: `${currentProject.progress}%` }}
+                  ></div>
                 </div>
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {currentProject.progress}% Complete
+                </span>
               </div>
             )}
           </div>
