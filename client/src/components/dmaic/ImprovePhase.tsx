@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -27,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import MilestoneTimeline from "./MilestoneTimeline";
 
 export default function ImprovePhase() {
   const { user, currentProject } = useAppContext();
@@ -36,6 +38,29 @@ export default function ImprovePhase() {
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
+  
+  // State for milestone dates
+  const [milestoneDates, setMilestoneDates] = useState({
+    analyzePhaseDate: null as string | null,
+    improvePhaseDate: null as string | null,
+  });
+
+  // Fetch project charter to get milestone dates
+  const { data: charter } = useQuery({
+    queryKey: [`/api/projects/${projectId}/charter`],
+    enabled: !!user?.id && !!projectId,
+    refetchOnWindowFocus: false
+  });
+  
+  // Set milestone dates when charter data is fetched
+  useEffect(() => {
+    if (charter?.charter) {
+      setMilestoneDates({
+        analyzePhaseDate: charter.charter.analyze_phase_date || null,
+        improvePhaseDate: charter.charter.improve_phase_date || null,
+      });
+    }
+  }, [charter]);
 
   // Solution Generation state
   const [solutions, setSolutions] = useState([
@@ -203,6 +228,17 @@ export default function ImprovePhase() {
 
   return (
     <div className="space-y-6">
+      {/* Phase Milestone Timeline */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <MilestoneTimeline 
+            startDate={milestoneDates.analyzePhaseDate}
+            endDate={milestoneDates.improvePhaseDate}
+            label="Improve Phase Milestone"
+          />
+        </CardContent>
+      </Card>
+      
       {/* Solution Generation */}
       <Card>
         <CardHeader>
