@@ -21,22 +21,23 @@ export default function MilestoneTimeline({
   const colorClass = getTimelineColor(progress);
   
   return (
-    <div className={`flex flex-col ${className}`}>
-      <div className="flex items-center space-x-2">
-        <span className="text-xs font-semibold text-gray-600 w-40">{label}</span>
-        <div className="relative flex-1">
-          <div className="w-full bg-gray-200 rounded-full h-1">
+    <div className={`flex flex-col space-y-1 ${className}`}>
+      <div className="flex justify-between text-xs text-gray-500">
+        <span>{formatMilestoneDate(startDate)}</span>
+        <span>{formatMilestoneDate(endDate)}</span>
+      </div>
+      <div className="relative pt-1">
+        <div className="flex items-center justify-between">
+          <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
-              className={`${colorClass} h-1 rounded-full`} 
+              className={`${colorClass} h-2 rounded-full`} 
               style={{ width: `${progress}%` }}
             ></div>
           </div>
         </div>
-        <div className="flex justify-between text-xs text-gray-500 space-x-2">
-          <span className="text-xs">{formatMilestoneDate(startDate)}</span>
-          <span className="text-xs mx-1">→</span>
-          <span className="text-xs">{formatMilestoneDate(endDate)}</span>
-          <span className="text-xs font-medium text-gray-500 ml-2">{progress}%</span>
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs font-semibold text-gray-600">{label}</span>
+          <span className="text-xs font-medium text-gray-500">{progress}% complete</span>
         </div>
       </div>
     </div>
