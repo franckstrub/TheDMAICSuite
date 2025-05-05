@@ -38,7 +38,7 @@ import TeamMemberManagement from "@/components/stakeholders/TeamMemberManagement
 import CharterSoftBenefitsQuadrant from "./CharterSoftBenefitsQuadrant";
 import { Stakeholder } from "@shared/schema";
 import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
-import FixedSipoc from "./FixedSipoc";
+import SimpleSipocDisplay from "./SimpleSipocDisplay";
 
 export default function DefinePhase() {
   const { user, currentProject, currency } = useAppContext();
@@ -3491,11 +3491,8 @@ export default function DefinePhase() {
             A SIPOC is a high-level process map (helicopter view). It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
           </p>
           
-          {/* Add the FixedSipoc component to display SIPOC data from database */}
-          <div className="border p-4 rounded-md mb-6 bg-slate-50">
-            <h3 className="text-lg font-medium text-primary mb-4">SIPOC Data Viewer</h3>
-            <FixedSipoc />
-          </div>
+          {/* Add simplified SIPOC display that directly fetches and shows database values */}
+          <SimpleSipocDisplay />
           
           <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
             <div className="grid grid-cols-5 gap-2 mb-4">
