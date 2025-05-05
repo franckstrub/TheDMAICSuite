@@ -1494,8 +1494,9 @@ export default function DefinePhase() {
     setRequirements(newRequirements);
   };
 
-  const calculateGap = (importance: number, satisfaction: number) => {
-    return importance - satisfaction;
+  const calculateGap = (importance: number, ctqValue: number) => {
+    // Calculate gap between importance and CTQ (previously "satisfaction")
+    return importance - ctqValue;
   };
 
   // These flags prevent multiple PDF export operations from running simultaneously
@@ -3683,7 +3684,7 @@ export default function DefinePhase() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Requirement</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Need</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importance (1-5)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Satisfaction (1-5)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Critical to Quality (CTQ)</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gap</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -3723,6 +3724,7 @@ export default function DefinePhase() {
                         className="w-full p-2 border border-gray-300 rounded-md"
                         value={req.satisfaction}
                         onChange={(e) => updateRequirement(index, "satisfaction", parseInt(e.target.value))}
+                        title="Critical to Quality (CTQ) rating (1-5)"
                       >
                         {[1, 2, 3, 4, 5].map((val) => (
                           <option key={val} value={val}>{val}</option>
