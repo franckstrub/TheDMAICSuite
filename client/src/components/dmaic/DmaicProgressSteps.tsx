@@ -76,22 +76,22 @@ export default function DmaicProgressSteps({ project, overallProgress, className
   
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex justify-between w-full mb-2">
+      <div className="flex justify-between w-full mb-1">
         {/* Define Phase */}
         <div className="flex flex-col items-center">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center font-bold",
+            "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
             getPhaseTextColor(defineStatus),
             getPhaseColor(defineStatus)
           )}>
             D
           </div>
-          <span className="text-xs mt-1">Define</span>
+          <span className="text-xs mt-0.5">Define</span>
         </div>
         
         {/* Connection between Define and Measure */}
-        <div className="flex-grow mx-1 flex items-center">
-          <div className="h-1 w-full bg-gray-200 relative">
+        <div className="flex-grow mx-0.5 flex items-center">
+          <div className="h-0.5 w-full bg-gray-200 relative">
             {defineStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
@@ -104,18 +104,18 @@ export default function DmaicProgressSteps({ project, overallProgress, className
         {/* Measure Phase */}
         <div className="flex flex-col items-center">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center font-bold",
+            "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
             getPhaseTextColor(measureStatus),
             getPhaseColor(measureStatus)
           )}>
             M
           </div>
-          <span className="text-xs mt-1">Measure</span>
+          <span className="text-xs mt-0.5">Measure</span>
         </div>
         
         {/* Connection between Measure and Analyze */}
-        <div className="flex-grow mx-1 flex items-center">
-          <div className="h-1 w-full bg-gray-200 relative">
+        <div className="flex-grow mx-0.5 flex items-center">
+          <div className="h-0.5 w-full bg-gray-200 relative">
             {measureStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
@@ -128,18 +128,18 @@ export default function DmaicProgressSteps({ project, overallProgress, className
         {/* Analyze Phase */}
         <div className="flex flex-col items-center">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center font-bold",
+            "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
             getPhaseTextColor(analyzeStatus),
             getPhaseColor(analyzeStatus)
           )}>
             A
           </div>
-          <span className="text-xs mt-1">Analyze</span>
+          <span className="text-xs mt-0.5">Analyze</span>
         </div>
         
         {/* Connection between Analyze and Improve */}
-        <div className="flex-grow mx-1 flex items-center">
-          <div className="h-1 w-full bg-gray-200 relative">
+        <div className="flex-grow mx-0.5 flex items-center">
+          <div className="h-0.5 w-full bg-gray-200 relative">
             {analyzeStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
@@ -152,18 +152,18 @@ export default function DmaicProgressSteps({ project, overallProgress, className
         {/* Improve Phase */}
         <div className="flex flex-col items-center">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center font-bold",
+            "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
             getPhaseTextColor(improveStatus),
             getPhaseColor(improveStatus)
           )}>
             I
           </div>
-          <span className="text-xs mt-1">Improve</span>
+          <span className="text-xs mt-0.5">Improve</span>
         </div>
         
         {/* Connection between Improve and Control */}
-        <div className="flex-grow mx-1 flex items-center">
-          <div className="h-1 w-full bg-gray-200 relative">
+        <div className="flex-grow mx-0.5 flex items-center">
+          <div className="h-0.5 w-full bg-gray-200 relative">
             {improveStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
@@ -176,33 +176,33 @@ export default function DmaicProgressSteps({ project, overallProgress, className
         {/* Control Phase */}
         <div className="flex flex-col items-center">
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center font-bold",
+            "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
             getPhaseTextColor(controlStatus),
             getPhaseColor(controlStatus)
           )}>
             C
           </div>
-          <span className="text-xs mt-1">Control</span>
+          <span className="text-xs mt-0.5">Control</span>
         </div>
       </div>
       
-      <div className="flex justify-between mt-2">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+      <div className="flex justify-between mt-1.5">
+        <div className="flex items-center space-x-1">
+          <div className="w-2 h-2 rounded-full bg-green-500"></div>
           <span className="text-xs text-gray-600">Completed</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+        <div className="flex items-center space-x-1">
+          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
           <span className="text-xs text-gray-600">In Progress</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+        <div className="flex items-center space-x-1">
+          <div className="w-2 h-2 rounded-full bg-gray-300"></div>
           <span className="text-xs text-gray-600">Not Started</span>
         </div>
       </div>
       
-      <div className="text-right mt-1">
-        <span className="text-sm font-medium text-gray-700">
+      <div className="text-right mt-0.5">
+        <span className="text-xs font-medium text-gray-700">
           Overall DMAIC Progress: {overallProgress}%
         </span>
       </div>
