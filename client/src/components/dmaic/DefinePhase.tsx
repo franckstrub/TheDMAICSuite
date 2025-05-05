@@ -3689,17 +3689,17 @@ export default function DefinePhase() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800">Customer Requirement</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800">Customer Need</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800">Importance (1-5)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800">Critical to Quality (CTQ)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-2 border-white">Customer Requirement</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-2 border-white">Customer Need</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-2 border-white">Importance (1-5)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-2 border-white">Critical to Quality (CTQ)</th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {requirements.map((req, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 border-r-2 border-white">
                       <Input
                         type="text"
                         value={req.customerRequirement}
@@ -3708,7 +3708,7 @@ export default function DefinePhase() {
                         className="border-blue-200 focus:border-blue-500 bg-blue-50/50"
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 border-r-2 border-white">
                       <Input
                         type="text"
                         value={req.requirement}
@@ -3717,7 +3717,7 @@ export default function DefinePhase() {
                         className="border-emerald-200 focus:border-emerald-500 bg-emerald-50/50"
                       />
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 border-r-2 border-white">
                       <select
                         className="w-full p-2 border border-amber-200 rounded-md bg-amber-50/50 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50"
                         value={req.importance}
@@ -3728,7 +3728,7 @@ export default function DefinePhase() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 border-r-2 border-white">
                       <Input
                         type="text"
                         value={req.satisfaction ? req.satisfaction.toString() : ""}
