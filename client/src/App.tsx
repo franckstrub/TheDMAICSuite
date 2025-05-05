@@ -8,6 +8,7 @@ import { AppContext, CurrencyType, ImplementationStatusType } from "@/store/AppC
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
+import MockupPage from "@/pages/MockupPage";
 
 function Router() {
   return (
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/app/:tab" component={HomePage}/>
       <Route path="/app/:tab/:phase" component={HomePage}/>
       <Route path="/app/:tab/:phase/:projectId" component={HomePage}/>
+      <Route path="/mockup" component={MockupPage} />
       <Route component={NotFound} />
     </Switch>
   );
