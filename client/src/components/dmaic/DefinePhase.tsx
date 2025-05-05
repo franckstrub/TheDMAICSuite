@@ -911,20 +911,65 @@ export default function DefinePhase() {
           customers2: data.sipoc.customers2
         });
         
-        // Set form values
+        // Check if data appears to be scrambled (process containing 'S' values)
+        let correctedData = {...data.sipoc};
+        const isPotentiallyScrambled = 
+          (data.sipoc.process && data.sipoc.process.startsWith('S')) || 
+          (data.sipoc.process2 && data.sipoc.process2.startsWith('S'));
+          
+        // If we detect scrambled data, attempt to fix it
+        if (isPotentiallyScrambled) {
+          console.log("Detected potential data mix-up in SIPOC fields, applying correction");
+          
+          // If we have a pattern that suggests fields were shifted, correct them
+          // This assumes process contains suppliers data, outputs contains process data, etc.
+          try {
+            // For row 1, correct the field order if it looks wrong
+            if (data.sipoc.process && data.sipoc.process.startsWith('S')) {
+              correctedData = {
+                ...data.sipoc,
+                // Fix row 1 - move each value to its proper field
+                suppliers: data.sipoc.suppliers || "",
+                inputs: data.sipoc.inputs || "",
+                process: data.sipoc.outputs || "", // Process is stored in outputs
+                outputs: data.sipoc.customers || "", // Outputs is stored in customers
+                customers: data.sipoc.process || "", // Customers might be missing or in suppliers
+              };
+            }
+            
+            // For row 2, correct if needed
+            if (data.sipoc.process2 && data.sipoc.process2.startsWith('S')) {
+              correctedData = {
+                ...correctedData,
+                // Fix row 2 - move each value to its proper field
+                suppliers2: data.sipoc.suppliers2 || "",
+                inputs2: data.sipoc.inputs2 || "",
+                process2: data.sipoc.outputs2 || "", // Process is stored in outputs
+                outputs2: data.sipoc.customers2 || "", // Outputs is stored in customers
+                customers2: data.sipoc.process2 || "", // Customers might be missing or in suppliers
+              };
+            }
+            
+            console.log("Corrected SIPOC data:", correctedData);
+          } catch (error) {
+            console.error("Error correcting SIPOC data:", error);
+          }
+        }
+        
+        // Set form values with potentially corrected data
         sipocForm.reset({
-          processName: data.sipoc.processName || "",
-          suppliers: data.sipoc.suppliers || "",
-          inputs: data.sipoc.inputs || "",
-          process: data.sipoc.process || "",
-          outputs: data.sipoc.outputs || "",
-          customers: data.sipoc.customers || "",
+          processName: correctedData.processName || "",
+          suppliers: correctedData.suppliers || "",
+          inputs: correctedData.inputs || "",
+          process: correctedData.process || "",
+          outputs: correctedData.outputs || "",
+          customers: correctedData.customers || "",
           // Additional rows
-          suppliers2: data.sipoc.suppliers2 || "",
-          inputs2: data.sipoc.inputs2 || "",
-          process2: data.sipoc.process2 || "",
-          outputs2: data.sipoc.outputs2 || "",
-          customers2: data.sipoc.customers2 || "",
+          suppliers2: correctedData.suppliers2 || "",
+          inputs2: correctedData.inputs2 || "",
+          process2: correctedData.process2 || "",
+          outputs2: correctedData.outputs2 || "",
+          customers2: correctedData.customers2 || "",
           suppliers3: data.sipoc.suppliers3 || "",
           inputs3: data.sipoc.inputs3 || "",
           process3: data.sipoc.process3 || "",
@@ -1144,11 +1189,66 @@ export default function DefinePhase() {
       // Debug the data being saved
       console.log("Saving SIPOC data:", data);
       
+      // Double check the data structure to ensure fields are correctly positioned
+      // This validates that process fields actually contain process data
+      const validateField = (field: string, expectedType: string) => {
+        // Extremely simple validation to just catch obvious issues
+        // Process steps typically shouldn't start with S (Suppliers identifier)
+        if (expectedType === 'process' && field && field.trim().startsWith('S')) {
+          console.warn(`Possible data mix-up: ${expectedType} field contains '${field}' which may be incorrect`);
+          return false;
+        }
+        return true;
+      };
+      
+      // Quick checks for potential data issues
+      if (data.process) validateField(data.process, 'process');
+      if (data.process2) validateField(data.process2, 'process');
+      
       const payload = {
         projectId,
         ...data,
+        // Ensure we explicitly map each field to avoid any mix-ups
+        processName: data.processName || "",
+        suppliers: data.suppliers || "",
+        inputs: data.inputs || "",
+        process: data.process || "",
+        outputs: data.outputs || "",
+        customers: data.customers || "", 
+        suppliers2: data.suppliers2 || "",
+        inputs2: data.inputs2 || "",
+        process2: data.process2 || "", 
+        outputs2: data.outputs2 || "",
+        customers2: data.customers2 || "",
+        suppliers3: data.suppliers3 || "",
+        inputs3: data.inputs3 || "",
+        process3: data.process3 || "",
+        outputs3: data.outputs3 || "", 
+        customers3: data.customers3 || "",
+        suppliers4: data.suppliers4 || "",
+        inputs4: data.inputs4 || "",
+        process4: data.process4 || "",
+        outputs4: data.outputs4 || "",
+        customers4: data.customers4 || "",
+        suppliers5: data.suppliers5 || "",
+        inputs5: data.inputs5 || "",
+        process5: data.process5 || "",
+        outputs5: data.outputs5 || "",
+        customers5: data.customers5 || "",
+        suppliers6: data.suppliers6 || "",
+        inputs6: data.inputs6 || "",
+        process6: data.process6 || "",
+        outputs6: data.outputs6 || "",
+        customers6: data.customers6 || "",
+        suppliers7: data.suppliers7 || "",
+        inputs7: data.inputs7 || "",
+        process7: data.process7 || "",
+        outputs7: data.outputs7 || "",
+        customers7: data.customers7 || "",
         userId: user?.id,
       };
+
+      console.log("Sending validated SIPOC payload:", payload);
 
       // Check if SIPOC exists
       if (sipoc?.sipoc?.id) {
