@@ -122,10 +122,10 @@ export default function DmaicTools() {
             
             {/* Project Timeline */}
             {currentProject?.startDate && currentProject?.targetEndDate && (
-              <div className="flex flex-col md:ml-4">
-                <div className="flex items-start gap-2">
-                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center" style={{ minHeight: "70px" }}>
-                    <div className="flex items-center">
+              <div className="flex flex-col md:ml-4 flex-shrink-0">
+                <div className="h-full flex items-start">
+                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center" style={{ minHeight: "85px", display: "flex", alignItems: "center" }}>
+                    <div className="flex items-center mb-2">
                       <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
                         <div 
                           className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
