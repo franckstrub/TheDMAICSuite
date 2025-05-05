@@ -899,7 +899,7 @@ export default function DefinePhase() {
         // Set form values and log for debugging
         console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
         
-        // Set the form values directly
+        // Set the form values directly with all fields
         sipocForm.reset({
           processName: data.sipoc.processName || "",
           suppliers: data.sipoc.suppliers || "",
