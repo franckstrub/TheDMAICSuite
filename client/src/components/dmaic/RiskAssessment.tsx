@@ -628,7 +628,7 @@ export default function RiskAssessment() {
       <CardContent>
         <form onSubmit={riskForm.handleSubmit(handleSaveRisk)}>
           <p className="text-sm text-gray-500 mb-4">
-            Identify, assess, and plan for potential project risks. Add rows as needed for additional risks. Row 1 is mandatory.
+            Identify, assess, and plan for potential project risks. Add rows as needed for additional risks.
           </p>
           
           {/* Headers */}
