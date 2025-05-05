@@ -970,34 +970,59 @@ export default function DefinePhase() {
           process2: correctedData.process2 || "",
           outputs2: correctedData.outputs2 || "",
           customers2: correctedData.customers2 || "",
-          suppliers3: data.sipoc.suppliers3 || "",
-          inputs3: data.sipoc.inputs3 || "",
-          process3: data.sipoc.process3 || "",
-          outputs3: data.sipoc.outputs3 || "",
-          customers3: data.sipoc.customers3 || "",
+          suppliers3: correctedData.suppliers3 || "",
+          inputs3: correctedData.inputs3 || "",
+          process3: correctedData.process3 || "",
+          outputs3: correctedData.outputs3 || "",
+          customers3: correctedData.customers3 || "",
           // Rows 4-5
-          suppliers4: data.sipoc.suppliers4 || "",
-          inputs4: data.sipoc.inputs4 || "",
-          process4: data.sipoc.process4 || "",
-          outputs4: data.sipoc.outputs4 || "",
-          customers4: data.sipoc.customers4 || "",
-          suppliers5: data.sipoc.suppliers5 || "",
-          inputs5: data.sipoc.inputs5 || "",
-          process5: data.sipoc.process5 || "",
-          outputs5: data.sipoc.outputs5 || "",
-          customers5: data.sipoc.customers5 || "",
+          suppliers4: correctedData.suppliers4 || "",
+          inputs4: correctedData.inputs4 || "",
+          process4: correctedData.process4 || "",
+          outputs4: correctedData.outputs4 || "",
+          customers4: correctedData.customers4 || "",
+          suppliers5: correctedData.suppliers5 || "",
+          inputs5: correctedData.inputs5 || "",
+          process5: correctedData.process5 || "",
+          outputs5: correctedData.outputs5 || "",
+          customers5: correctedData.customers5 || "",
           // Rows 6-7
-          suppliers6: data.sipoc.suppliers6 || "",
-          inputs6: data.sipoc.inputs6 || "",
-          process6: data.sipoc.process6 || "",
-          outputs6: data.sipoc.outputs6 || "",
-          customers6: data.sipoc.customers6 || "",
-          suppliers7: data.sipoc.suppliers7 || "",
-          inputs7: data.sipoc.inputs7 || "",
-          process7: data.sipoc.process7 || "",
-          outputs7: data.sipoc.outputs7 || "",
-          customers7: data.sipoc.customers7 || "",
+          suppliers6: correctedData.suppliers6 || "",
+          inputs6: correctedData.inputs6 || "",
+          process6: correctedData.process6 || "",
+          outputs6: correctedData.outputs6 || "",
+          customers6: correctedData.customers6 || "",
+          suppliers7: correctedData.suppliers7 || "",
+          inputs7: correctedData.inputs7 || "",
+          process7: correctedData.process7 || "",
+          outputs7: correctedData.outputs7 || "",
+          customers7: correctedData.customers7 || "",
         });
+        
+        // Always show at least 3 rows, then show any additional rows that have data
+        let maxVisibleRows = 3; // Start with exactly 3 rows minimum
+        
+        // Check rows 4-7 to see if any have data
+        if (correctedData.suppliers4 || correctedData.inputs4 || correctedData.process4 || 
+            correctedData.outputs4 || correctedData.customers4) {
+          maxVisibleRows = Math.max(maxVisibleRows, 4);
+        }
+        if (correctedData.suppliers5 || correctedData.inputs5 || correctedData.process5 || 
+            correctedData.outputs5 || correctedData.customers5) {
+          maxVisibleRows = Math.max(maxVisibleRows, 5);
+        }
+        if (correctedData.suppliers6 || correctedData.inputs6 || correctedData.process6 || 
+            correctedData.outputs6 || correctedData.customers6) {
+          maxVisibleRows = Math.max(maxVisibleRows, 6);
+        }
+        if (correctedData.suppliers7 || correctedData.inputs7 || correctedData.process7 || 
+            correctedData.outputs7 || correctedData.customers7) {
+          maxVisibleRows = Math.max(maxVisibleRows, 7);
+        }
+        
+        // Set the visible rows state to match the data
+        setVisibleSipocRows(maxVisibleRows);
+        console.log(`Setting visible SIPOC rows to ${maxVisibleRows} based on data`);
         
         // Check form values after reset
         setTimeout(() => {
@@ -1015,47 +1040,21 @@ export default function DefinePhase() {
             outputs2: sipocForm.getValues().outputs2,
             customers2: sipocForm.getValues().customers2
           });
+          console.log("SIPOC form values after reset - Row 3:", {
+            suppliers3: sipocForm.getValues().suppliers3,
+            inputs3: sipocForm.getValues().inputs3,
+            process3: sipocForm.getValues().process3,
+            outputs3: sipocForm.getValues().outputs3,
+            customers3: sipocForm.getValues().customers3
+          });
+          console.log("SIPOC form values after reset - Row 4:", {
+            suppliers4: sipocForm.getValues().suppliers4,
+            inputs4: sipocForm.getValues().inputs4,
+            process4: sipocForm.getValues().process4,
+            outputs4: sipocForm.getValues().outputs4,
+            customers4: sipocForm.getValues().customers4
+          });
         }, 300);
-
-        // Determine how many rows to show based on the data
-        let rowsToShow = 3; // Default is 3 rows
-        
-        // Check if there's data in row 4
-        if (data.sipoc.suppliers4 || data.sipoc.inputs4 || data.sipoc.process4 || 
-            data.sipoc.outputs4 || data.sipoc.customers4) {
-          rowsToShow = 4;
-        }
-        
-        // Check if there's data in row 5
-        if (data.sipoc.suppliers5 || data.sipoc.inputs5 || data.sipoc.process5 || 
-            data.sipoc.outputs5 || data.sipoc.customers5) {
-          rowsToShow = 5;
-        }
-        
-        // Check if there's data in row 6
-        if (data.sipoc.suppliers6 || data.sipoc.inputs6 || data.sipoc.process6 || 
-            data.sipoc.outputs6 || data.sipoc.customers6) {
-          rowsToShow = 6;
-        }
-        
-        // Check if there's data in row 7
-        if (data.sipoc.suppliers7 || data.sipoc.inputs7 || data.sipoc.process7 || 
-            data.sipoc.outputs7 || data.sipoc.customers7) {
-          rowsToShow = 7;
-        }
-        
-        // Check if there's data in rows 1-2 as well and ensure we show at least those
-        if (data.sipoc.suppliers || data.sipoc.inputs || data.sipoc.process ||
-            data.sipoc.outputs || data.sipoc.customers ||
-            data.sipoc.suppliers2 || data.sipoc.inputs2 || data.sipoc.process2 ||
-            data.sipoc.outputs2 || data.sipoc.customers2 ||
-            data.sipoc.suppliers3 || data.sipoc.inputs3 || data.sipoc.process3 ||
-            data.sipoc.outputs3 || data.sipoc.customers3) {
-          rowsToShow = Math.max(rowsToShow, 3);
-        }
-        
-        // Update the visible rows state
-        setVisibleSipocRows(rowsToShow);
       }
     },
   });
