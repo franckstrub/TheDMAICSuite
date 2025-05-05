@@ -177,11 +177,14 @@ export default function DmaicTools() {
       
       {/* DMAIC Milestone Progress */}
       {currentProject && (
-        <div className="mb-6 mt-2 border-t border-b py-4">
-          <DmaicProgressSteps 
-            project={currentProject}
-            overallProgress={currentProject.progress || 0}
-          />
+        <div className="mb-6 mt-2 border-t border-b py-2">
+          <div className="w-2/5 mx-auto">
+            <DmaicProgressSteps 
+              project={currentProject}
+              overallProgress={currentProject.progress || 0}
+              className="scale-90 transform origin-center"
+            />
+          </div>
         </div>
       )}
       
