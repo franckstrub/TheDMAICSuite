@@ -3207,23 +3207,24 @@ export default function DefinePhase() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>SIPOC Diagram</CardTitle>
-          <div className="flex items-center space-x-2">
-            <label htmlFor="processName" className="text-sm font-medium">Process Name:</label>
-            <input
-              type="text"
-              id="processName"
-              className="px-3 py-1 border rounded-md text-sm w-80"
-              placeholder="Enter process name"
-              {...sipocForm.register("processName")}
-            />
-          </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            A SIPOC is a high-level process map (helicopter view). It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
-          </p>
-          
           <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
+            <div className="flex items-center space-x-2 mb-4">
+              <label htmlFor="processName" className="text-sm font-medium">Process Name:</label>
+              <input
+                type="text"
+                id="processName"
+                className="px-3 py-1 border rounded-md text-sm w-80"
+                placeholder="Enter process name"
+                {...sipocForm.register("processName")}
+              />
+            </div>
+          
+            <p className="text-sm text-gray-500 mb-4">
+              A SIPOC is a high-level process map (helicopter view). It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
+            </p>
+            
             <div className="grid grid-cols-5 gap-2 mb-4">
               <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-primary text-sm">Suppliers</h4>
