@@ -3693,7 +3693,6 @@ export default function DefinePhase() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Need</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importance (1-5)</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Critical to Quality (CTQ)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gap</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -3739,19 +3738,6 @@ export default function DefinePhase() {
                         placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
                         title="Critical to Quality (CTQ) specification"
                       />
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        typeof req.satisfaction === 'string' && isNaN(Number(req.satisfaction)) 
-                          ? "bg-gray-100 text-gray-400" 
-                          : calculateGap(req.importance, req.satisfaction) > 0 
-                            ? "bg-red-100 text-red-800" 
-                            : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {typeof req.satisfaction === 'string' && isNaN(Number(req.satisfaction)) 
-                          ? "N/A" 
-                          : calculateGap(req.importance, req.satisfaction)}
-                      </span>
                     </td>
                     <td className="px-4 py-2">
                       {index === requirements.length - 1 && (req.requirement || req.customerRequirement) ? (
