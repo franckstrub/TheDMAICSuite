@@ -974,58 +974,136 @@ export default function DefinePhase() {
 
         console.log("Setting SIPOC data on form fields");
         
-        // Process name
-        sipocForm.setValue("processName", correctedData.processName || "");
-
-        // Direct set each field value individually to ensure it updates correctly
-        // Row 1
-        sipocForm.setValue("suppliers", correctedData.suppliers || "");
-        sipocForm.setValue("inputs", correctedData.inputs || "");
-        sipocForm.setValue("process", correctedData.process || "");
-        sipocForm.setValue("outputs", correctedData.outputs || "");
-        sipocForm.setValue("customers", correctedData.customers || "");
+        // Add debug logging for textarea DOM elements
+        const checkTextareaValue = (fieldName: string) => {
+          try {
+            const element = document.querySelector(`textarea[name="${fieldName}"]`) as HTMLTextAreaElement;
+            if (element) {
+              console.log(`DOM element for ${fieldName}: exists, value:`, element.value);
+              
+              // Try to manually set the value directly on the DOM
+              setTimeout(() => {
+                if (element && correctedData[fieldName]) {
+                  element.value = correctedData[fieldName];
+                  console.log(`Manually set value for ${fieldName} to:`, correctedData[fieldName]);
+                  
+                  // Trigger an input event to notify React of the change
+                  const event = new Event('input', { bubbles: true });
+                  element.dispatchEvent(event);
+                }
+              }, 500);
+            } else {
+              console.log(`DOM element for ${fieldName}: NOT FOUND`);
+            }
+          } catch (err) {
+            console.error(`Error checking textarea for ${fieldName}:`, err);
+          }
+        };
         
-        // Row 2
-        sipocForm.setValue("suppliers2", correctedData.suppliers2 || "");
-        sipocForm.setValue("inputs2", correctedData.inputs2 || "");
-        sipocForm.setValue("process2", correctedData.process2 || "");
-        sipocForm.setValue("outputs2", correctedData.outputs2 || "");
-        sipocForm.setValue("customers2", correctedData.customers2 || "");
+        // Create a simple object to hold all the form values for direct assignment
+        const sipocValues = {
+          processName: correctedData.processName || "",
+          suppliers: correctedData.suppliers || "",
+          inputs: correctedData.inputs || "",
+          process: correctedData.process || "",
+          outputs: correctedData.outputs || "",
+          customers: correctedData.customers || "",
+          suppliers2: correctedData.suppliers2 || "",
+          inputs2: correctedData.inputs2 || "",
+          process2: correctedData.process2 || "",
+          outputs2: correctedData.outputs2 || "",
+          customers2: correctedData.customers2 || "",
+          suppliers3: correctedData.suppliers3 || "",
+          inputs3: correctedData.inputs3 || "",
+          process3: correctedData.process3 || "",
+          outputs3: correctedData.outputs3 || "",
+          customers3: correctedData.customers3 || "",
+          suppliers4: correctedData.suppliers4 || "",
+          inputs4: correctedData.inputs4 || "",
+          process4: correctedData.process4 || "",
+          outputs4: correctedData.outputs4 || "",
+          customers4: correctedData.customers4 || "",
+          suppliers5: correctedData.suppliers5 || "",
+          inputs5: correctedData.inputs5 || "",
+          process5: correctedData.process5 || "",
+          outputs5: correctedData.outputs5 || "",
+          customers5: correctedData.customers5 || "",
+          suppliers6: correctedData.suppliers6 || "",
+          inputs6: correctedData.inputs6 || "",
+          process6: correctedData.process6 || "",
+          outputs6: correctedData.outputs6 || "",
+          customers6: correctedData.customers6 || "",
+          suppliers7: correctedData.suppliers7 || "",
+          inputs7: correctedData.inputs7 || "",
+          process7: correctedData.process7 || "",
+          outputs7: correctedData.outputs7 || "",
+          customers7: correctedData.customers7 || "",
+        };
         
-        // Row 3
-        sipocForm.setValue("suppliers3", correctedData.suppliers3 || "");
-        sipocForm.setValue("inputs3", correctedData.inputs3 || "");
-        sipocForm.setValue("process3", correctedData.process3 || "");
-        sipocForm.setValue("outputs3", correctedData.outputs3 || "");
-        sipocForm.setValue("customers3", correctedData.customers3 || "");
+        // First try reset (which might work better for all fields at once)
+        sipocForm.reset(sipocValues);
         
-        // Row 4
-        sipocForm.setValue("suppliers4", correctedData.suppliers4 || "");
-        sipocForm.setValue("inputs4", correctedData.inputs4 || "");
-        sipocForm.setValue("process4", correctedData.process4 || "");
-        sipocForm.setValue("outputs4", correctedData.outputs4 || "");
-        sipocForm.setValue("customers4", correctedData.customers4 || "");
+        // Then also try setting values directly after a short delay
+        setTimeout(() => {
+          // Check the DOM elements just to debug
+          checkTextareaValue("suppliers");
+          checkTextareaValue("inputs"); 
+          checkTextareaValue("process");
+          checkTextareaValue("outputs");
+          checkTextareaValue("customers");
+          
+          // Process name
+          sipocForm.setValue("processName", correctedData.processName || "");
+          
+          // Row 1
+          sipocForm.setValue("suppliers", correctedData.suppliers || "");
+          sipocForm.setValue("inputs", correctedData.inputs || "");
+          sipocForm.setValue("process", correctedData.process || "");
+          sipocForm.setValue("outputs", correctedData.outputs || "");
+          sipocForm.setValue("customers", correctedData.customers || "");
+          
+          // Row 2
+          sipocForm.setValue("suppliers2", correctedData.suppliers2 || "");
+          sipocForm.setValue("inputs2", correctedData.inputs2 || "");
+          sipocForm.setValue("process2", correctedData.process2 || "");
+          sipocForm.setValue("outputs2", correctedData.outputs2 || "");
+          sipocForm.setValue("customers2", correctedData.customers2 || "");
+          
+          // Row 3
+          sipocForm.setValue("suppliers3", correctedData.suppliers3 || "");
+          sipocForm.setValue("inputs3", correctedData.inputs3 || "");
+          sipocForm.setValue("process3", correctedData.process3 || "");
+          sipocForm.setValue("outputs3", correctedData.outputs3 || "");
+          sipocForm.setValue("customers3", correctedData.customers3 || "");
+          
+          // Row 4
+          sipocForm.setValue("suppliers4", correctedData.suppliers4 || "");
+          sipocForm.setValue("inputs4", correctedData.inputs4 || "");
+          sipocForm.setValue("process4", correctedData.process4 || "");
+          sipocForm.setValue("outputs4", correctedData.outputs4 || "");
+          sipocForm.setValue("customers4", correctedData.customers4 || "");
+          
+          // Row 5-7 (same as before)
+          sipocForm.setValue("suppliers5", correctedData.suppliers5 || "");
+          sipocForm.setValue("inputs5", correctedData.inputs5 || "");
+          sipocForm.setValue("process5", correctedData.process5 || "");
+          sipocForm.setValue("outputs5", correctedData.outputs5 || "");
+          sipocForm.setValue("customers5", correctedData.customers5 || "");
+          sipocForm.setValue("suppliers6", correctedData.suppliers6 || "");
+          sipocForm.setValue("inputs6", correctedData.inputs6 || "");
+          sipocForm.setValue("process6", correctedData.process6 || "");
+          sipocForm.setValue("outputs6", correctedData.outputs6 || "");
+          sipocForm.setValue("customers6", correctedData.customers6 || "");
+          sipocForm.setValue("suppliers7", correctedData.suppliers7 || "");
+          sipocForm.setValue("inputs7", correctedData.inputs7 || "");
+          sipocForm.setValue("process7", correctedData.process7 || "");
+          sipocForm.setValue("outputs7", correctedData.outputs7 || "");
+          sipocForm.setValue("customers7", correctedData.customers7 || "");
+          
+          // Force re-render by updating the state
+          setVisibleSipocRows(prev => prev);
+        }, 500);
         
-        // Row 5
-        sipocForm.setValue("suppliers5", correctedData.suppliers5 || "");
-        sipocForm.setValue("inputs5", correctedData.inputs5 || "");
-        sipocForm.setValue("process5", correctedData.process5 || "");
-        sipocForm.setValue("outputs5", correctedData.outputs5 || "");
-        sipocForm.setValue("customers5", correctedData.customers5 || "");
-        
-        // Row 6
-        sipocForm.setValue("suppliers6", correctedData.suppliers6 || "");
-        sipocForm.setValue("inputs6", correctedData.inputs6 || "");
-        sipocForm.setValue("process6", correctedData.process6 || "");
-        sipocForm.setValue("outputs6", correctedData.outputs6 || "");
-        sipocForm.setValue("customers6", correctedData.customers6 || "");
-        
-        // Row 7
-        sipocForm.setValue("suppliers7", correctedData.suppliers7 || "");
-        sipocForm.setValue("inputs7", correctedData.inputs7 || "");
-        sipocForm.setValue("process7", correctedData.process7 || "");
-        sipocForm.setValue("outputs7", correctedData.outputs7 || "");
-        sipocForm.setValue("customers7", correctedData.customers7 || "");
         
         // Calculate how many rows should be visible based on data
         let maxVisibleRows = 3; // Always show at least 3 rows
@@ -1085,7 +1163,7 @@ export default function DefinePhase() {
             outputs4: sipocForm.getValues().outputs4,
             customers4: sipocForm.getValues().customers4
           });
-        }, 300);
+        }, 1000);
       }
     },
   });
