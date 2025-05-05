@@ -263,6 +263,119 @@ export default function DefinePhase() {
       });
     }
   };
+  
+  // Function to delete a specific SIPOC row
+  const deleteSipocRow = (rowNumber: number) => {
+    // Make sure we don't delete rows 1-3 (which are required)
+    if (rowNumber <= 3) {
+      return;
+    }
+    
+    // Make sure the row is valid
+    if (rowNumber > visibleSipocRows) {
+      return;
+    }
+    
+    // We need to shift all data from higher rows down by one position
+    for (let i = rowNumber; i < visibleSipocRows; i++) {
+      // Get data from the next row
+      let nextSupplier = "";
+      let nextInput = "";
+      let nextProcess = "";
+      let nextOutput = "";
+      let nextCustomer = "";
+      
+      // Handle different row numbers explicitly to avoid TypeScript errors
+      if (i+1 === 4) {
+        nextSupplier = sipocForm.getValues().suppliers4 || "";
+        nextInput = sipocForm.getValues().inputs4 || "";
+        nextProcess = sipocForm.getValues().process4 || "";
+        nextOutput = sipocForm.getValues().outputs4 || "";
+        nextCustomer = sipocForm.getValues().customers4 || "";
+      } else if (i+1 === 5) {
+        nextSupplier = sipocForm.getValues().suppliers5 || "";
+        nextInput = sipocForm.getValues().inputs5 || "";
+        nextProcess = sipocForm.getValues().process5 || "";
+        nextOutput = sipocForm.getValues().outputs5 || "";
+        nextCustomer = sipocForm.getValues().customers5 || "";
+      } else if (i+1 === 6) {
+        nextSupplier = sipocForm.getValues().suppliers6 || "";
+        nextInput = sipocForm.getValues().inputs6 || "";
+        nextProcess = sipocForm.getValues().process6 || "";
+        nextOutput = sipocForm.getValues().outputs6 || "";
+        nextCustomer = sipocForm.getValues().customers6 || "";
+      } else if (i+1 === 7) {
+        nextSupplier = sipocForm.getValues().suppliers7 || "";
+        nextInput = sipocForm.getValues().inputs7 || "";
+        nextProcess = sipocForm.getValues().process7 || "";
+        nextOutput = sipocForm.getValues().outputs7 || "";
+        nextCustomer = sipocForm.getValues().customers7 || "";
+      }
+      
+      // Set data to the current row based on row number
+      if (i === 3) {
+        sipocForm.setValue("suppliers4", nextSupplier);
+        sipocForm.setValue("inputs4", nextInput);
+        sipocForm.setValue("process4", nextProcess);
+        sipocForm.setValue("outputs4", nextOutput);
+        sipocForm.setValue("customers4", nextCustomer);
+      } else if (i === 4) {
+        sipocForm.setValue("suppliers5", nextSupplier);
+        sipocForm.setValue("inputs5", nextInput);
+        sipocForm.setValue("process5", nextProcess);
+        sipocForm.setValue("outputs5", nextOutput);
+        sipocForm.setValue("customers5", nextCustomer);
+      } else if (i === 5) {
+        sipocForm.setValue("suppliers6", nextSupplier);
+        sipocForm.setValue("inputs6", nextInput);
+        sipocForm.setValue("process6", nextProcess);
+        sipocForm.setValue("outputs6", nextOutput);
+        sipocForm.setValue("customers6", nextCustomer);
+      } else if (i === 6) {
+        sipocForm.setValue("suppliers7", nextSupplier);
+        sipocForm.setValue("inputs7", nextInput);
+        sipocForm.setValue("process7", nextProcess);
+        sipocForm.setValue("outputs7", nextOutput);
+        sipocForm.setValue("customers7", nextCustomer);
+      }
+    }
+    
+    // Clear the last row based on which row is visible
+    if (visibleSipocRows === 4) {
+      sipocForm.setValue("suppliers4", "");
+      sipocForm.setValue("inputs4", "");
+      sipocForm.setValue("process4", "");
+      sipocForm.setValue("outputs4", "");
+      sipocForm.setValue("customers4", "");
+    } else if (visibleSipocRows === 5) {
+      sipocForm.setValue("suppliers5", "");
+      sipocForm.setValue("inputs5", "");
+      sipocForm.setValue("process5", "");
+      sipocForm.setValue("outputs5", "");
+      sipocForm.setValue("customers5", "");
+    } else if (visibleSipocRows === 6) {
+      sipocForm.setValue("suppliers6", "");
+      sipocForm.setValue("inputs6", "");
+      sipocForm.setValue("process6", "");
+      sipocForm.setValue("outputs6", "");
+      sipocForm.setValue("customers6", "");
+    } else if (visibleSipocRows === 7) {
+      sipocForm.setValue("suppliers7", "");
+      sipocForm.setValue("inputs7", "");
+      sipocForm.setValue("process7", "");
+      sipocForm.setValue("outputs7", "");
+      sipocForm.setValue("customers7", "");
+    }
+    
+    // Decrease the visible row count
+    setVisibleSipocRows(prevRows => prevRows - 1);
+    
+    toast({
+      title: "Row deleted",
+      description: `Row ${rowNumber} has been deleted.`,
+      variant: "default",
+    });
+  };
 
   // Customer Requirements state
   const [requirements, setRequirements] = useState([
@@ -3258,7 +3371,7 @@ export default function DefinePhase() {
             
             {/* Fourth row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 4 && (
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
                 <div className="border border-blue-100 rounded-md p-2 bg-white">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3299,12 +3412,22 @@ export default function DefinePhase() {
                     {...sipocForm.register("customers4")}
                   />
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(4)}
+                  title="Delete Row 4"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             )}
             
             {/* Fifth row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 5 && (
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
                 <div className="border border-blue-100 rounded-md p-2 bg-white">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3345,12 +3468,22 @@ export default function DefinePhase() {
                     {...sipocForm.register("customers5")}
                   />
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(5)}
+                  title="Delete Row 5"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             )}
             
             {/* Sixth row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 6 && (
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
                 <div className="border border-blue-100 rounded-md p-2 bg-white">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3391,12 +3524,22 @@ export default function DefinePhase() {
                     {...sipocForm.register("customers6")}
                   />
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(6)}
+                  title="Delete Row 6"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             )}
             
             {/* Seventh row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 7 && (
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
                 <div className="border border-blue-100 rounded-md p-2 bg-white">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3437,6 +3580,16 @@ export default function DefinePhase() {
                     {...sipocForm.register("customers7")}
                   />
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(7)}
+                  title="Delete Row 7"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             )}
             
