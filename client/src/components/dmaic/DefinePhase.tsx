@@ -45,6 +45,7 @@ export default function DefinePhase() {
   const params = useParams<{ projectId?: string }>();
   const urlProjectId = params.projectId;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sipocFormInitialized = useRef<boolean>(false);
   
   // State for project image handling
   const [projectImage, setProjectImage] = useState<string | null>(null);
@@ -251,6 +252,90 @@ export default function DefinePhase() {
   
   // State to track the number of visible SIPOC rows (start with 3)
   const [visibleSipocRows, setVisibleSipocRows] = useState(3);
+  
+  // Effect to initialize SIPOC form with data from API
+  useEffect(() => {
+    if (sipoc?.sipoc && !sipocFormInitialized.current) {
+      console.log("Initializing SIPOC form with data:", sipoc.sipoc);
+      console.log("Process name to set:", sipoc.sipoc.processName);
+      
+      try {
+        // Set all fields with a single reset call to ensure consistent state
+        const formData = {
+          processName: sipoc.sipoc.processName || "",
+          suppliers: sipoc.sipoc.suppliers || "",
+          inputs: sipoc.sipoc.inputs || "",
+          process: sipoc.sipoc.process || "",
+          outputs: sipoc.sipoc.outputs || "",
+          customers: sipoc.sipoc.customers || "",
+          
+          suppliers2: sipoc.sipoc.suppliers2 || "",
+          inputs2: sipoc.sipoc.inputs2 || "",
+          process2: sipoc.sipoc.process2 || "",
+          outputs2: sipoc.sipoc.outputs2 || "",
+          customers2: sipoc.sipoc.customers2 || "",
+          
+          suppliers3: sipoc.sipoc.suppliers3 || "",
+          inputs3: sipoc.sipoc.inputs3 || "",
+          process3: sipoc.sipoc.process3 || "",
+          outputs3: sipoc.sipoc.outputs3 || "",
+          customers3: sipoc.sipoc.customers3 || "",
+          
+          suppliers4: sipoc.sipoc.suppliers4 || "",
+          inputs4: sipoc.sipoc.inputs4 || "",
+          process4: sipoc.sipoc.process4 || "",
+          outputs4: sipoc.sipoc.outputs4 || "",
+          customers4: sipoc.sipoc.customers4 || "",
+          
+          suppliers5: sipoc.sipoc.suppliers5 || "",
+          inputs5: sipoc.sipoc.inputs5 || "",
+          process5: sipoc.sipoc.process5 || "",
+          outputs5: sipoc.sipoc.outputs5 || "",
+          customers5: sipoc.sipoc.customers5 || "",
+          
+          suppliers6: sipoc.sipoc.suppliers6 || "",
+          inputs6: sipoc.sipoc.inputs6 || "",
+          process6: sipoc.sipoc.process6 || "",
+          outputs6: sipoc.sipoc.outputs6 || "",
+          customers6: sipoc.sipoc.customers6 || "",
+          
+          suppliers7: sipoc.sipoc.suppliers7 || "",
+          inputs7: sipoc.sipoc.inputs7 || "",
+          process7: sipoc.sipoc.process7 || "",
+          outputs7: sipoc.sipoc.outputs7 || "",
+          customers7: sipoc.sipoc.customers7 || "",
+        };
+        
+        // Reset the form with all values at once
+        sipocForm.reset(formData);
+        
+        // Double-check processName was set correctly
+        const currentProcessName = sipocForm.getValues("processName");
+        console.log("Process name after form reset:", currentProcessName);
+        
+        // If process name didn't get set properly, set it again directly
+        if (!currentProcessName && sipoc.sipoc.processName) {
+          console.log("Process name not set correctly, setting directly:", sipoc.sipoc.processName);
+          sipocForm.setValue("processName", sipoc.sipoc.processName);
+        }
+        
+        // Update row visibility
+        let maxRow = 3; // Default to 3 rows
+        if (sipoc.sipoc.suppliers7) maxRow = 7;
+        else if (sipoc.sipoc.suppliers6) maxRow = 6;
+        else if (sipoc.sipoc.suppliers5) maxRow = 5;
+        else if (sipoc.sipoc.suppliers4) maxRow = 4;
+        
+        console.log(`Setting SIPOC rows to ${maxRow}`);
+        setVisibleSipocRows(maxRow);
+      } catch (error) {
+        console.error("Error initializing SIPOC form:", error);
+      }
+      
+      // Set form as initialized
+      sipocFormInitialized.current = true;
+    }
+  }, [sipoc?.sipoc, sipocForm]);
   
   // Function to add a new SIPOC row
   const addSipocRow = () => {
