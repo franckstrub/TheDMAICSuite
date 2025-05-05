@@ -320,13 +320,9 @@ export default function Projects() {
   
   // Use API data - NEVER use sample data for this feature
   // Sort projects by ID to maintain a stable order regardless of status changes
-  const projectsArray = projectsData && 
-                       typeof projectsData === 'object' && 
-                       projectsData !== null && 
-                       'projects' in projectsData ? 
-                       (projectsData as {projects: any[]}).projects : [];
-  
-  const sortedProjects = [...projectsArray].sort((a, b) => a.id - b.id);
+  const sortedProjects = projectsData && 'projects' in projectsData 
+    ? [...(projectsData.projects as any[])].sort((a, b) => a.id - b.id) 
+    : [];
   const projects = filterProjects(sortedProjects);
 
   return (
@@ -551,7 +547,7 @@ export default function Projects() {
                     <TableHead className="w-[12%]">Phase</TableHead>
                     <TableHead className="w-[12%]">Status</TableHead>
                     <TableHead className="w-[10%]">Progress</TableHead>
-                    <TableHead className="w-[10%]">Project Timeline</TableHead>
+                    <TableHead className="w-[10%]">Timeline</TableHead>
                     <TableHead className="w-[10%]">Last Updated</TableHead>
                     <TableHead className="w-[9%] text-right">Actions</TableHead>
                   </TableRow>
@@ -609,7 +605,7 @@ export default function Projects() {
                               ></div>
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
-                              {calculateTimelineProgress(project.startDate, project.targetEndDate)}% Project Timeline
+                              {calculateTimelineProgress(project.startDate, project.targetEndDate)}% Timeline
                             </div>
                           </>
                         )}
