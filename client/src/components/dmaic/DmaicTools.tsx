@@ -16,7 +16,7 @@ import {
   getProgressColor,
   calculateDmaicProgress
 } from "@/lib/utils";
-import DmaicProgressSteps, { DmaicPhases } from "./DmaicProgressSteps";
+import DmaicProgressSteps from "./DmaicProgressSteps";
 
 type PhaseParams = {
   phase?: string;
@@ -148,11 +148,11 @@ export default function DmaicTools() {
       </div>
       
       {/* DMAIC Milestone Progress */}
-      {currentProject?.phases && (
+      {currentProject && (
         <div className="mb-6 mt-2 border-t border-b py-4">
           <DmaicProgressSteps 
-            phases={currentProject.phases as DmaicPhases} 
-            overallProgress={calculateDmaicProgress(currentProject.phases)} 
+            project={currentProject}
+            overallProgress={currentProject.progress || 0}
           />
         </div>
       )}
