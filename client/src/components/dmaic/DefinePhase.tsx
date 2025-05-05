@@ -987,6 +987,7 @@ export default function DefinePhase() {
       if (data?.requirements && data.requirements.length > 0) {
         setRequirements(data.requirements.map((r: any) => ({
           requirement: r.requirement,
+          customerRequirement: r.customerRequirement || "",
           importance: r.importance,
           satisfaction: r.satisfaction,
         })));
@@ -1482,7 +1483,7 @@ export default function DefinePhase() {
 
   const addRequirement = () => {
     if (requirements[requirements.length - 1].requirement.trim() !== "") {
-      setRequirements([...requirements, { requirement: "", importance: 3, satisfaction: 3 }]);
+      setRequirements([...requirements, { requirement: "", customerRequirement: "", importance: 3, satisfaction: 3 }]);
     }
   };
 

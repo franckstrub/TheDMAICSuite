@@ -295,6 +295,7 @@ export const customerRequirements = pgTable("customer_requirements", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
   requirement: text("requirement").notNull(),
+  customerRequirement: text("customer_requirement"),
   importance: integer("importance").notNull(),
   satisfaction: integer("satisfaction").notNull(),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
@@ -303,6 +304,7 @@ export const customerRequirements = pgTable("customer_requirements", {
 export const insertRequirementSchema = createInsertSchema(customerRequirements).pick({
   projectId: true,
   requirement: true,
+  customerRequirement: true,
   importance: true,
   satisfaction: true,
 });
