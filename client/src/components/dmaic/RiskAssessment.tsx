@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusCircle, MinusCircle } from "lucide-react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAppContext } from "@/store/AppContext";
 
 type RiskFormData = {
   riskName: string;
@@ -55,11 +56,14 @@ type RiskFormData = {
 
 export default function RiskAssessment() {
   const { id: projectIdParam } = useParams();
-  const projectId = projectIdParam ? parseInt(projectIdParam) : undefined;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [visibleRiskRows, setVisibleRiskRows] = useState(1); // Start with 1 row (mandatory)
   const riskFormInitialized = useRef<boolean>(false);
+  const { user, currentProject } = useAppContext();
+
+  // Use URL project ID if available, otherwise fall back to current project
+  const projectId = projectIdParam ? parseInt(projectIdParam) : (currentProject?.id || 1);
   
   // Risk criticality calculation matrix (probability x impact)
   const riskCriticalityMatrix = {
@@ -175,6 +179,16 @@ export default function RiskAssessment() {
         // Reset the form with all values at once
         riskForm.reset(formData);
         
+        // Double-check a field was set correctly
+        const currentRiskName = riskForm.getValues("riskName");
+        console.log("Risk name after form reset:", currentRiskName);
+        
+        // If risk name didn't get set properly, set it again directly
+        if (!currentRiskName && riskData.risk.riskName) {
+          console.log("Risk name not set correctly, setting directly:", riskData.risk.riskName);
+          riskForm.setValue("riskName", riskData.risk.riskName);
+        }
+        
         // Update row visibility
         let maxRow = 1; // Default to 1 row (mandatory)
         
@@ -184,6 +198,7 @@ export default function RiskAssessment() {
         else if (riskData.risk.riskName3) maxRow = 3;
         else if (riskData.risk.riskName2) maxRow = 2;
         
+        console.log(`Setting risk rows to ${maxRow}`);
         setVisibleRiskRows(maxRow);
       } catch (error) {
         console.error("Error initializing risk form:", error);
@@ -199,7 +214,8 @@ export default function RiskAssessment() {
     mutationFn: async (data: RiskFormData) => {
       const payload = {
         ...data,
-        userId: 1, // Replace with actual user ID
+        userId: user?.id || 1,
+        projectId: projectId
       };
       
       // Check if risk assessment exists
