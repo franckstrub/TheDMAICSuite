@@ -1918,6 +1918,17 @@ export default function DefinePhase() {
 
   return (
     <div className="space-y-6">
+      {/* Phase Milestone Timeline */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <MilestoneTimeline 
+            startDate={milestoneDates.kickOffDate}
+            endDate={milestoneDates.definePhaseDate}
+            label="Define Phase Milestone"
+          />
+        </CardContent>
+      </Card>
+      
       {/* Project Charter */}
       <Card id="project-charter">
         <CardHeader>
