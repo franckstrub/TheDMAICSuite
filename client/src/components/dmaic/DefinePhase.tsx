@@ -253,6 +253,12 @@ export default function DefinePhase() {
   // State to track the number of visible SIPOC rows (start with 3)
   const [visibleSipocRows, setVisibleSipocRows] = useState(3);
   
+  // Fetch SIPOC diagram if exists
+  const { data: sipoc } = useQuery({
+    queryKey: [`/api/projects/${projectId}/sipoc`],
+    enabled: !!user?.id && !!projectId
+  });
+  
   // Effect to initialize SIPOC form with data from API
   useEffect(() => {
     if (sipoc?.sipoc && !sipocFormInitialized.current) {
@@ -971,18 +977,6 @@ export default function DefinePhase() {
       });
     }
   }, [charterError, charter, currentProject]);
-
-  // Fetch SIPOC diagram if exists
-  const { data: sipoc } = useQuery({
-    queryKey: [`/api/projects/${projectId}/sipoc`],
-    enabled: !!user?.id && !!projectId,
-    onSuccess: (data) => {
-      if (data?.sipoc) {
-        console.log("Loaded SIPOC data:", data.sipoc);
-        console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
-      }
-    }
-  });
 
   // Fetch customer requirements
   const { data: requirementsData } = useQuery({
