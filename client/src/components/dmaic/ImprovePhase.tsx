@@ -230,7 +230,7 @@ export default function ImprovePhase() {
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
       <Card className="mb-4">
-        <CardContent className="py-3">
+        <CardContent className="pt-6">
           <MilestoneTimeline 
             startDate={milestoneDates.analyzePhaseDate}
             endDate={milestoneDates.improvePhaseDate}
