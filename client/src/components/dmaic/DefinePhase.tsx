@@ -3548,7 +3548,7 @@ export default function DefinePhase() {
             {/* Seventh row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 7 && (
               <div className="grid grid-cols-5 gap-2 mb-2 relative">
-                <div className="border border-blue-100 rounded-md p-2 bg-white">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3556,7 +3556,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("suppliers7")}
                   />
                 </div>
-                <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3564,7 +3564,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("inputs7")}
                   />
                 </div>
-                <div className="border border-purple-100 rounded-md p-2 bg-white">
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3572,7 +3572,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("process7")}
                   />
                 </div>
-                <div className="border border-green-100 rounded-md p-2 bg-white">
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3580,7 +3580,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("outputs7")}
                   />
                 </div>
-                <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
