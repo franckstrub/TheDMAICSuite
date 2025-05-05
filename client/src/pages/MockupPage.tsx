@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import ProjectTitleWithProgressMockup from "@/components/dmaic/ProjectTitleWithProgressMockup";
+import DmaicMilestoneProgressMockup from "@/components/dmaic/DmaicMilestoneProgressMockup";
 
 export default function MockupPage() {
   const [_, navigate] = useLocation();
@@ -16,7 +17,10 @@ export default function MockupPage() {
         </Button>
       </div>
       
-      <ProjectTitleWithProgressMockup />
+      <div className="space-y-8">
+        <ProjectTitleWithProgressMockup />
+        <DmaicMilestoneProgressMockup />
+      </div>
     </div>
   );
 }
