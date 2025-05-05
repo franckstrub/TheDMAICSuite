@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import MilestoneTimeline from "./MilestoneTimeline";
+import { ProgressCursor } from "./ProgressCursor";
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -307,6 +308,12 @@ export default function ControlPhase() {
 
   return (
     <div className="space-y-6">
+      {/* Phase Title with Progress Cursor */}
+      <div className="flex items-center mb-2">
+        <h2 className="text-2xl font-bold">Control Phase</h2>
+        <ProgressCursor status={currentProject?.phases?.control?.status || 'not-started'} />
+      </div>
+      
       {/* Phase Milestone Timeline */}
       <div className="mb-4 flex flex-row gap-4">
         <Card className="w-1/2">
