@@ -122,7 +122,15 @@ export default function RiskAssessment() {
   // Fetch existing risk data
   const { data: riskData, isLoading: isRiskLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/risks`],
-    enabled: !!projectId
+    enabled: !!projectId,
+    onSuccess: (data) => {
+      // Log the data returned from the server to debug probability/impact issues
+      console.log("Risk data loaded from server:", data?.risk);
+      if (data?.risk) {
+        console.log("Loaded probability:", data.risk.probability);
+        console.log("Loaded impact:", data.risk.impact);
+      }
+    }
   });
   
   // Initialize form with data from API
@@ -277,6 +285,14 @@ export default function RiskAssessment() {
   // Save risk assessment mutation
   const saveRiskMutation = useMutation({
     mutationFn: async (data: RiskFormData) => {
+      // Log data before saving to ensure probability and impact values are correct
+      console.log("Saving risk data with the following values:", {
+        probability: data.probability,
+        impact: data.impact,
+        probability2: data.probability2,
+        impact2: data.impact2
+      });
+      
       const payload = {
         ...data,
         userId: user?.id || 1,
