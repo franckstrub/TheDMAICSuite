@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getParetoData } from "@/lib/statisticsUtils";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterPlot, ScatterChart, Scatter, ZAxis } from "recharts";
 import MilestoneTimeline from "./MilestoneTimeline";
+import { ProgressCursor } from "./ProgressCursor";
 
 export default function AnalyzePhase() {
   const { user, currentProject } = useAppContext();
@@ -119,6 +120,12 @@ export default function AnalyzePhase() {
 
   return (
     <div className="space-y-6">
+      {/* Phase Title with Progress Cursor */}
+      <div className="flex items-center mb-2">
+        <h2 className="text-2xl font-bold">Analyze Phase</h2>
+        <ProgressCursor status={currentProject?.phases?.analyze?.status || 'not-started'} />
+      </div>
+      
       {/* Phase Milestone Timeline */}
       <div className="mb-4 flex flex-row gap-4">
         <Card className="w-1/2">
