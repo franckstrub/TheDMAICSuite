@@ -133,12 +133,91 @@ export default function RiskAssessment() {
     }
   });
   
+  // Function to clear risk form initialization state
+  const resetRiskFormInitialization = () => {
+    riskFormInitialized.current = false;
+  };
+
+  // Re-initialize the form when navigating between projects
+  useEffect(() => {
+    resetRiskFormInitialization();
+  }, [projectId]);
+  
   // Initialize form with data from API
   useEffect(() => {
     if (riskData?.risk && !riskFormInitialized.current) {
       console.log("Initializing risk form with data:", riskData.risk);
       
       try {
+        // Force reset of probability and impact values directly
+        setTimeout(() => {
+          // Directly set probability and impact values for all rows
+          if (riskData.risk.probability) {
+            console.log("Setting probability explicitly:", riskData.risk.probability);
+            riskForm.setValue("probability", riskData.risk.probability);
+          }
+          
+          if (riskData.risk.impact) {
+            console.log("Setting impact explicitly:", riskData.risk.impact);
+            riskForm.setValue("impact", riskData.risk.impact);
+          }
+          
+          // Row 2
+          if (riskData.risk.probability2) {
+            console.log("Setting probability2 explicitly:", riskData.risk.probability2);
+            riskForm.setValue("probability2", riskData.risk.probability2);
+          }
+          
+          if (riskData.risk.impact2) {
+            console.log("Setting impact2 explicitly:", riskData.risk.impact2);
+            riskForm.setValue("impact2", riskData.risk.impact2);
+          }
+          
+          // Row 3
+          if (riskData.risk.probability3) {
+            console.log("Setting probability3 explicitly:", riskData.risk.probability3);
+            riskForm.setValue("probability3", riskData.risk.probability3);
+          }
+          
+          if (riskData.risk.impact3) {
+            console.log("Setting impact3 explicitly:", riskData.risk.impact3);
+            riskForm.setValue("impact3", riskData.risk.impact3);
+          }
+          
+          // Row 4
+          if (riskData.risk.probability4) {
+            console.log("Setting probability4 explicitly:", riskData.risk.probability4);
+            riskForm.setValue("probability4", riskData.risk.probability4);
+          }
+          
+          if (riskData.risk.impact4) {
+            console.log("Setting impact4 explicitly:", riskData.risk.impact4);
+            riskForm.setValue("impact4", riskData.risk.impact4);
+          }
+          
+          // Row 5
+          if (riskData.risk.probability5) {
+            console.log("Setting probability5 explicitly:", riskData.risk.probability5);
+            riskForm.setValue("probability5", riskData.risk.probability5);
+          }
+          
+          if (riskData.risk.impact5) {
+            console.log("Setting impact5 explicitly:", riskData.risk.impact5);
+            riskForm.setValue("impact5", riskData.risk.impact5);
+          }
+          
+          // Row 6
+          if (riskData.risk.probability6) {
+            console.log("Setting probability6 explicitly:", riskData.risk.probability6);
+            riskForm.setValue("probability6", riskData.risk.probability6);
+          }
+          
+          if (riskData.risk.impact6) {
+            console.log("Setting impact6 explicitly:", riskData.risk.impact6);
+            riskForm.setValue("impact6", riskData.risk.impact6);
+          }
+        }, 100);
+        
         // Set all fields with a single reset call
         const formData = {
           riskName: riskData.risk.riskName || "",
@@ -187,81 +266,6 @@ export default function RiskAssessment() {
         // Reset the form with all values at once
         riskForm.reset(formData);
         
-        // Double-check fields were set correctly and set them directly if not
-        const currentRiskName = riskForm.getValues("riskName");
-        console.log("Risk name after form reset:", currentRiskName);
-        
-        if (!currentRiskName && riskData.risk.riskName) {
-          console.log("Risk name not set correctly, setting directly:", riskData.risk.riskName);
-          riskForm.setValue("riskName", riskData.risk.riskName);
-        }
-        
-        // Directly set probability and impact values for all rows
-        if (riskData.risk.probability) {
-          console.log("Setting probability directly:", riskData.risk.probability);
-          riskForm.setValue("probability", riskData.risk.probability);
-        }
-        
-        if (riskData.risk.impact) {
-          console.log("Setting impact directly:", riskData.risk.impact);
-          riskForm.setValue("impact", riskData.risk.impact);
-        }
-        
-        // Row 2
-        if (riskData.risk.probability2) {
-          console.log("Setting probability2 directly:", riskData.risk.probability2);
-          riskForm.setValue("probability2", riskData.risk.probability2);
-        }
-        
-        if (riskData.risk.impact2) {
-          console.log("Setting impact2 directly:", riskData.risk.impact2);
-          riskForm.setValue("impact2", riskData.risk.impact2);
-        }
-        
-        // Row 3
-        if (riskData.risk.probability3) {
-          console.log("Setting probability3 directly:", riskData.risk.probability3);
-          riskForm.setValue("probability3", riskData.risk.probability3);
-        }
-        
-        if (riskData.risk.impact3) {
-          console.log("Setting impact3 directly:", riskData.risk.impact3);
-          riskForm.setValue("impact3", riskData.risk.impact3);
-        }
-        
-        // Row 4
-        if (riskData.risk.probability4) {
-          console.log("Setting probability4 directly:", riskData.risk.probability4);
-          riskForm.setValue("probability4", riskData.risk.probability4);
-        }
-        
-        if (riskData.risk.impact4) {
-          console.log("Setting impact4 directly:", riskData.risk.impact4);
-          riskForm.setValue("impact4", riskData.risk.impact4);
-        }
-        
-        // Row 5
-        if (riskData.risk.probability5) {
-          console.log("Setting probability5 directly:", riskData.risk.probability5);
-          riskForm.setValue("probability5", riskData.risk.probability5);
-        }
-        
-        if (riskData.risk.impact5) {
-          console.log("Setting impact5 directly:", riskData.risk.impact5);
-          riskForm.setValue("impact5", riskData.risk.impact5);
-        }
-        
-        // Row 6
-        if (riskData.risk.probability6) {
-          console.log("Setting probability6 directly:", riskData.risk.probability6);
-          riskForm.setValue("probability6", riskData.risk.probability6);
-        }
-        
-        if (riskData.risk.impact6) {
-          console.log("Setting impact6 directly:", riskData.risk.impact6);
-          riskForm.setValue("impact6", riskData.risk.impact6);
-        }
-        
         // Update row visibility
         let maxRow = 1; // Default to 1 row (mandatory)
         
@@ -280,7 +284,7 @@ export default function RiskAssessment() {
       // Set form as initialized
       riskFormInitialized.current = true;
     }
-  }, [riskData?.risk, riskForm]);
+  }, [riskData?.risk, riskForm, projectId]);
   
   // Save risk assessment mutation
   const saveRiskMutation = useMutation({
@@ -433,7 +437,44 @@ export default function RiskAssessment() {
   
   const handleSaveRisk = (data: RiskFormData) => {
     console.log("Saving risk assessment data:", data);
-    saveRiskMutation.mutate(data);
+    
+    // Make sure to capture current values before mutation
+    const currentValues = {
+      probability: data.probability,
+      impact: data.impact, 
+      probability2: data.probability2,
+      impact2: data.impact2,
+      probability3: data.probability3,
+      impact3: data.impact3,
+      probability4: data.probability4,
+      impact4: data.impact4,
+      probability5: data.probability5,
+      impact5: data.impact5,
+      probability6: data.probability6,
+      impact6: data.impact6,
+    };
+    
+    saveRiskMutation.mutate(data, {
+      onSuccess: () => {
+        // After successful save, force reset the dropdown values explicitly
+        console.log("After save, explicitly setting dropdown values again");
+        
+        setTimeout(() => {
+          if (currentValues.probability) riskForm.setValue("probability", currentValues.probability);
+          if (currentValues.impact) riskForm.setValue("impact", currentValues.impact);
+          if (currentValues.probability2) riskForm.setValue("probability2", currentValues.probability2);
+          if (currentValues.impact2) riskForm.setValue("impact2", currentValues.impact2);
+          if (currentValues.probability3) riskForm.setValue("probability3", currentValues.probability3);
+          if (currentValues.impact3) riskForm.setValue("impact3", currentValues.impact3);
+          if (currentValues.probability4) riskForm.setValue("probability4", currentValues.probability4);
+          if (currentValues.impact4) riskForm.setValue("impact4", currentValues.impact4);
+          if (currentValues.probability5) riskForm.setValue("probability5", currentValues.probability5);
+          if (currentValues.impact5) riskForm.setValue("impact5", currentValues.impact5);
+          if (currentValues.probability6) riskForm.setValue("probability6", currentValues.probability6);
+          if (currentValues.impact6) riskForm.setValue("impact6", currentValues.impact6);
+        }, 200);
+      }
+    });
   };
   
   if (isRiskLoading) {
@@ -485,8 +526,10 @@ export default function RiskAssessment() {
             </div>
             <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
               <Select
-                value={riskForm.watch("probability") || "Low"}
+                defaultValue="Low"
+                value={riskForm.watch("probability")}
                 onValueChange={(value) => {
+                  console.log("Probability changed to:", value);
                   riskForm.setValue("probability", value);
                   updateRiskCriticality(1, 'probability', value);
                 }}
@@ -503,8 +546,10 @@ export default function RiskAssessment() {
             </div>
             <div className="border border-orange-100 rounded-md p-2 bg-white w-[95%]">
               <Select
-                value={riskForm.watch("impact") || "Low"}
+                defaultValue="Low"
+                value={riskForm.watch("impact")}
                 onValueChange={(value) => {
+                  console.log("Impact changed to:", value);
                   riskForm.setValue("impact", value);
                   updateRiskCriticality(1, 'impact', value);
                 }}
@@ -557,8 +602,10 @@ export default function RiskAssessment() {
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
                 <Select
-                  value={riskForm.watch("probability2") || "Low"}
+                  defaultValue="Low"
+                  value={riskForm.watch("probability2")}
                   onValueChange={(value) => {
+                    console.log("Probability2 changed to:", value);
                     riskForm.setValue("probability2", value);
                     updateRiskCriticality(2, 'probability', value);
                   }}
@@ -575,8 +622,10 @@ export default function RiskAssessment() {
               </div>
               <div className="border border-orange-100 rounded-md p-2 bg-white w-[95%]">
                 <Select
-                  value={riskForm.watch("impact2") || "Low"}
+                  defaultValue="Low"
+                  value={riskForm.watch("impact2")}
                   onValueChange={(value) => {
+                    console.log("Impact2 changed to:", value);
                     riskForm.setValue("impact2", value);
                     updateRiskCriticality(2, 'impact', value);
                   }}
