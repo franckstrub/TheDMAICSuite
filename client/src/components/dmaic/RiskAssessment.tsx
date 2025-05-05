@@ -628,7 +628,7 @@ export default function RiskAssessment() {
       <CardContent>
         <form onSubmit={riskForm.handleSubmit(handleSaveRisk)}>
           <p className="text-sm text-gray-500 mb-4">
-            Identify, assess, and plan for potential project risks. Add rows as needed for additional risks.
+            Identify, assess, and plan for potential project risks. Add rows as needed for additional risks. Risk criticality = Probability × Impact
           </p>
           
           {/* Headers */}
