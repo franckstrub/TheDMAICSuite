@@ -3329,17 +3329,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("customers2")}
                 />
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => deleteSipocRow(2)}
-                title="Delete Row 2"
-                disabled={visibleSipocRows <= 1}
-              >
-                <MinusCircle className="h-4 w-4" />
-              </Button>
+
             </div>
             
             {/* Third row of SIPOC cards */}
@@ -3384,17 +3374,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("customers3")}
                 />
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => deleteSipocRow(3)}
-                title="Delete Row 3"
-                disabled={visibleSipocRows <= 2}
-              >
-                <MinusCircle className="h-4 w-4" />
-              </Button>
+
             </div>
             
             {/* Fourth row of SIPOC cards (conditionally rendered) */}
