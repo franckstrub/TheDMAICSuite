@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import MilestoneTimeline from "./MilestoneTimeline";
+import { ProgressCursor } from "./ProgressCursor";
 import {
   Card,
   CardContent,
