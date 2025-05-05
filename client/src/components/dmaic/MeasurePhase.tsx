@@ -210,7 +210,7 @@ export default function MeasurePhase() {
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
       <Card className="mb-4">
-        <CardContent className="pt-6">
+        <CardContent className="py-3">
           <MilestoneTimeline 
             startDate={milestoneDates.definePhaseDate}
             endDate={milestoneDates.measurePhaseDate}
