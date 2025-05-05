@@ -179,14 +179,79 @@ export default function RiskAssessment() {
         // Reset the form with all values at once
         riskForm.reset(formData);
         
-        // Double-check a field was set correctly
+        // Double-check fields were set correctly and set them directly if not
         const currentRiskName = riskForm.getValues("riskName");
         console.log("Risk name after form reset:", currentRiskName);
         
-        // If risk name didn't get set properly, set it again directly
         if (!currentRiskName && riskData.risk.riskName) {
           console.log("Risk name not set correctly, setting directly:", riskData.risk.riskName);
           riskForm.setValue("riskName", riskData.risk.riskName);
+        }
+        
+        // Directly set probability and impact values for all rows
+        if (riskData.risk.probability) {
+          console.log("Setting probability directly:", riskData.risk.probability);
+          riskForm.setValue("probability", riskData.risk.probability);
+        }
+        
+        if (riskData.risk.impact) {
+          console.log("Setting impact directly:", riskData.risk.impact);
+          riskForm.setValue("impact", riskData.risk.impact);
+        }
+        
+        // Row 2
+        if (riskData.risk.probability2) {
+          console.log("Setting probability2 directly:", riskData.risk.probability2);
+          riskForm.setValue("probability2", riskData.risk.probability2);
+        }
+        
+        if (riskData.risk.impact2) {
+          console.log("Setting impact2 directly:", riskData.risk.impact2);
+          riskForm.setValue("impact2", riskData.risk.impact2);
+        }
+        
+        // Row 3
+        if (riskData.risk.probability3) {
+          console.log("Setting probability3 directly:", riskData.risk.probability3);
+          riskForm.setValue("probability3", riskData.risk.probability3);
+        }
+        
+        if (riskData.risk.impact3) {
+          console.log("Setting impact3 directly:", riskData.risk.impact3);
+          riskForm.setValue("impact3", riskData.risk.impact3);
+        }
+        
+        // Row 4
+        if (riskData.risk.probability4) {
+          console.log("Setting probability4 directly:", riskData.risk.probability4);
+          riskForm.setValue("probability4", riskData.risk.probability4);
+        }
+        
+        if (riskData.risk.impact4) {
+          console.log("Setting impact4 directly:", riskData.risk.impact4);
+          riskForm.setValue("impact4", riskData.risk.impact4);
+        }
+        
+        // Row 5
+        if (riskData.risk.probability5) {
+          console.log("Setting probability5 directly:", riskData.risk.probability5);
+          riskForm.setValue("probability5", riskData.risk.probability5);
+        }
+        
+        if (riskData.risk.impact5) {
+          console.log("Setting impact5 directly:", riskData.risk.impact5);
+          riskForm.setValue("impact5", riskData.risk.impact5);
+        }
+        
+        // Row 6
+        if (riskData.risk.probability6) {
+          console.log("Setting probability6 directly:", riskData.risk.probability6);
+          riskForm.setValue("probability6", riskData.risk.probability6);
+        }
+        
+        if (riskData.risk.impact6) {
+          console.log("Setting impact6 directly:", riskData.risk.impact6);
+          riskForm.setValue("impact6", riskData.risk.impact6);
         }
         
         // Update row visibility
