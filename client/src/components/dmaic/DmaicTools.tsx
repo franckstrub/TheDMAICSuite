@@ -112,7 +112,8 @@ export default function DmaicTools() {
             <h1 className="text-2xl font-semibold text-gray-900">
               {currentProject?.title ? (
                 <>
-                  <span className="text-primary">{currentProject.title}</span> - DMAIC
+                  <span className="text-primary">{currentProject.title}</span> 
+                  <span className="text-gray-500 text-sm font-normal ml-1">- DMAIC</span>
                 </>
               ) : (
                 "DMAIC Methodology"
