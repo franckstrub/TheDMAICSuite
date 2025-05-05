@@ -8,7 +8,7 @@ import MeasurePhase from "./MeasurePhase";
 import AnalyzePhase from "./AnalyzePhase";
 import ImprovePhase from "./ImprovePhase";
 import ControlPhase from "./ControlPhase";
-import { cn, getProjectTypeColor } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type PhaseParams = {
   phase?: string;
@@ -26,10 +26,10 @@ export default function DmaicTools() {
 
   // Ensure we have the correct project loaded
   useEffect(() => {
-    if (projectsData && typeof projectsData === 'object' && projectsData !== null && 'projects' in projectsData && Array.isArray(projectsData.projects) && params.projectId) {
+    if (projectsData?.projects && params.projectId) {
       const projectId = parseInt(params.projectId);
       // Find the project with the matching ID
-      const project = projectsData.projects.find((p: any) => p.id === projectId);
+      const project = projectsData.projects.find(p => p.id === projectId);
       if (project && (!currentProject || currentProject.id !== projectId)) {
         console.log(`Setting current project to ID ${projectId} (${project.title})`);
         setCurrentProject(project);
@@ -85,7 +85,7 @@ export default function DmaicTools() {
           <p className="mt-1 text-sm text-gray-500">
             {activePhase.charAt(0).toUpperCase() + activePhase.slice(1)} Phase Tools & Techniques
             {currentProject?.projectType && (
-              <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getProjectTypeColor(currentProject.projectType)}`}>
+              <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
                 {currentProject.projectType}
               </span>
             )}
