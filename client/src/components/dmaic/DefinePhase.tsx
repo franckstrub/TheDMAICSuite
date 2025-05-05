@@ -971,102 +971,114 @@ export default function DefinePhase() {
             console.error("Error correcting SIPOC data:", error);
           }
         }
+
+        console.log("Setting SIPOC data on form fields");
         
-        // Debug form values before setting
-        console.log("Form values BEFORE reset:", sipocForm.getValues());
+        // Process name
+        sipocForm.setValue("processName", correctedData.processName || "");
+
+        // Direct set each field value individually to ensure it updates correctly
+        // Row 1
+        sipocForm.setValue("suppliers", correctedData.suppliers || "");
+        sipocForm.setValue("inputs", correctedData.inputs || "");
+        sipocForm.setValue("process", correctedData.process || "");
+        sipocForm.setValue("outputs", correctedData.outputs || "");
+        sipocForm.setValue("customers", correctedData.customers || "");
         
-        // Set form values with potentially corrected data
-        sipocForm.reset({
-          processName: correctedData.processName || "",
-          suppliers: correctedData.suppliers || "",
-          inputs: correctedData.inputs || "",
-          process: correctedData.process || "",
-          outputs: correctedData.outputs || "",
-          customers: correctedData.customers || "",
-          // Additional rows
-          suppliers2: correctedData.suppliers2 || "",
-          inputs2: correctedData.inputs2 || "",
-          process2: correctedData.process2 || "",
-          outputs2: correctedData.outputs2 || "",
-          customers2: correctedData.customers2 || "",
-          suppliers3: correctedData.suppliers3 || "",
-          inputs3: correctedData.inputs3 || "",
-          process3: correctedData.process3 || "",
-          outputs3: correctedData.outputs3 || "",
-          customers3: correctedData.customers3 || "",
-          // Rows 4-5
-          suppliers4: correctedData.suppliers4 || "",
-          inputs4: correctedData.inputs4 || "",
-          process4: correctedData.process4 || "",
-          outputs4: correctedData.outputs4 || "",
-          customers4: correctedData.customers4 || "",
-          suppliers5: correctedData.suppliers5 || "",
-          inputs5: correctedData.inputs5 || "",
-          process5: correctedData.process5 || "",
-          outputs5: correctedData.outputs5 || "",
-          customers5: correctedData.customers5 || "",
-          // Rows 6-7
-          suppliers6: correctedData.suppliers6 || "",
-          inputs6: correctedData.inputs6 || "",
-          process6: correctedData.process6 || "",
-          outputs6: correctedData.outputs6 || "",
-          customers6: correctedData.customers6 || "",
-          suppliers7: correctedData.suppliers7 || "",
-          inputs7: correctedData.inputs7 || "",
-          process7: correctedData.process7 || "",
-          outputs7: correctedData.outputs7 || "",
-          customers7: correctedData.customers7 || "",
-        });
+        // Row 2
+        sipocForm.setValue("suppliers2", correctedData.suppliers2 || "");
+        sipocForm.setValue("inputs2", correctedData.inputs2 || "");
+        sipocForm.setValue("process2", correctedData.process2 || "");
+        sipocForm.setValue("outputs2", correctedData.outputs2 || "");
+        sipocForm.setValue("customers2", correctedData.customers2 || "");
         
-        // Always show at least 3 rows, then show any additional rows that have data
-        let maxVisibleRows = 3; // Start with exactly 3 rows minimum
+        // Row 3
+        sipocForm.setValue("suppliers3", correctedData.suppliers3 || "");
+        sipocForm.setValue("inputs3", correctedData.inputs3 || "");
+        sipocForm.setValue("process3", correctedData.process3 || "");
+        sipocForm.setValue("outputs3", correctedData.outputs3 || "");
+        sipocForm.setValue("customers3", correctedData.customers3 || "");
         
-        // Check rows 4-7 to see if any have data
-        if (correctedData.suppliers4 || correctedData.inputs4 || correctedData.process4 || 
-            correctedData.outputs4 || correctedData.customers4) {
+        // Row 4
+        sipocForm.setValue("suppliers4", correctedData.suppliers4 || "");
+        sipocForm.setValue("inputs4", correctedData.inputs4 || "");
+        sipocForm.setValue("process4", correctedData.process4 || "");
+        sipocForm.setValue("outputs4", correctedData.outputs4 || "");
+        sipocForm.setValue("customers4", correctedData.customers4 || "");
+        
+        // Row 5
+        sipocForm.setValue("suppliers5", correctedData.suppliers5 || "");
+        sipocForm.setValue("inputs5", correctedData.inputs5 || "");
+        sipocForm.setValue("process5", correctedData.process5 || "");
+        sipocForm.setValue("outputs5", correctedData.outputs5 || "");
+        sipocForm.setValue("customers5", correctedData.customers5 || "");
+        
+        // Row 6
+        sipocForm.setValue("suppliers6", correctedData.suppliers6 || "");
+        sipocForm.setValue("inputs6", correctedData.inputs6 || "");
+        sipocForm.setValue("process6", correctedData.process6 || "");
+        sipocForm.setValue("outputs6", correctedData.outputs6 || "");
+        sipocForm.setValue("customers6", correctedData.customers6 || "");
+        
+        // Row 7
+        sipocForm.setValue("suppliers7", correctedData.suppliers7 || "");
+        sipocForm.setValue("inputs7", correctedData.inputs7 || "");
+        sipocForm.setValue("process7", correctedData.process7 || "");
+        sipocForm.setValue("outputs7", correctedData.outputs7 || "");
+        sipocForm.setValue("customers7", correctedData.customers7 || "");
+        
+        // Calculate how many rows should be visible based on data
+        let maxVisibleRows = 3; // Always show at least 3 rows
+        
+        // Check if row 4 has data in any field
+        if (correctedData.suppliers4?.trim() || correctedData.inputs4?.trim() || correctedData.process4?.trim() || 
+            correctedData.outputs4?.trim() || correctedData.customers4?.trim()) {
           maxVisibleRows = Math.max(maxVisibleRows, 4);
+          console.log("Row 4 has data, setting visible rows to at least 4");
         }
-        if (correctedData.suppliers5 || correctedData.inputs5 || correctedData.process5 || 
-            correctedData.outputs5 || correctedData.customers5) {
+        
+        // Check rows 5-7 for data
+        if (correctedData.suppliers5?.trim() || correctedData.inputs5?.trim() || correctedData.process5?.trim() || 
+            correctedData.outputs5?.trim() || correctedData.customers5?.trim()) {
           maxVisibleRows = Math.max(maxVisibleRows, 5);
         }
-        if (correctedData.suppliers6 || correctedData.inputs6 || correctedData.process6 || 
-            correctedData.outputs6 || correctedData.customers6) {
+        if (correctedData.suppliers6?.trim() || correctedData.inputs6?.trim() || correctedData.process6?.trim() || 
+            correctedData.outputs6?.trim() || correctedData.customers6?.trim()) {
           maxVisibleRows = Math.max(maxVisibleRows, 6);
         }
-        if (correctedData.suppliers7 || correctedData.inputs7 || correctedData.process7 || 
-            correctedData.outputs7 || correctedData.customers7) {
+        if (correctedData.suppliers7?.trim() || correctedData.inputs7?.trim() || correctedData.process7?.trim() || 
+            correctedData.outputs7?.trim() || correctedData.customers7?.trim()) {
           maxVisibleRows = Math.max(maxVisibleRows, 7);
         }
         
         // Set the visible rows state to match the data
-        setVisibleSipocRows(maxVisibleRows);
         console.log(`Setting visible SIPOC rows to ${maxVisibleRows} based on data`);
+        setVisibleSipocRows(maxVisibleRows);
         
-        // Check form values after reset
+        // Log field values to ensure they were set correctly
         setTimeout(() => {
-          console.log("SIPOC form values after reset - Row 1:", {
+          console.log("SIPOC field values AFTER setting - Row 1:", {
             suppliers: sipocForm.getValues().suppliers,
             inputs: sipocForm.getValues().inputs,
             process: sipocForm.getValues().process,
             outputs: sipocForm.getValues().outputs,
             customers: sipocForm.getValues().customers
           });
-          console.log("SIPOC form values after reset - Row 2:", {
+          console.log("SIPOC field values AFTER setting - Row 2:", {
             suppliers2: sipocForm.getValues().suppliers2,
             inputs2: sipocForm.getValues().inputs2,
             process2: sipocForm.getValues().process2,
             outputs2: sipocForm.getValues().outputs2,
             customers2: sipocForm.getValues().customers2
           });
-          console.log("SIPOC form values after reset - Row 3:", {
+          console.log("SIPOC field values AFTER setting - Row 3:", {
             suppliers3: sipocForm.getValues().suppliers3,
             inputs3: sipocForm.getValues().inputs3,
             process3: sipocForm.getValues().process3,
             outputs3: sipocForm.getValues().outputs3,
             customers3: sipocForm.getValues().customers3
           });
-          console.log("SIPOC form values after reset - Row 4:", {
+          console.log("SIPOC field values AFTER setting - Row 4:", {
             suppliers4: sipocForm.getValues().suppliers4,
             inputs4: sipocForm.getValues().inputs4,
             process4: sipocForm.getValues().process4,
