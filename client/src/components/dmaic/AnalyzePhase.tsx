@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -21,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getParetoData } from "@/lib/statisticsUtils";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterPlot, ScatterChart, Scatter, ZAxis } from "recharts";
+import MilestoneTimeline from "./MilestoneTimeline";
 
 export default function AnalyzePhase() {
   const { user, currentProject } = useAppContext();
@@ -30,6 +32,29 @@ export default function AnalyzePhase() {
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
+  
+  // State for milestone dates
+  const [milestoneDates, setMilestoneDates] = useState({
+    measurePhaseDate: null as string | null,
+    analyzePhaseDate: null as string | null,
+  });
+
+  // Fetch project charter to get milestone dates
+  const { data: charter } = useQuery({
+    queryKey: [`/api/projects/${projectId}/charter`],
+    enabled: !!user?.id && !!projectId,
+    refetchOnWindowFocus: false
+  });
+  
+  // Set milestone dates when charter data is fetched
+  useEffect(() => {
+    if (charter?.charter) {
+      setMilestoneDates({
+        measurePhaseDate: charter.charter.measure_phase_date || null,
+        analyzePhaseDate: charter.charter.analyze_phase_date || null,
+      });
+    }
+  }, [charter]);
 
   // Pareto Analysis state
   const [selectedData, setSelectedData] = useState("Delay Causes");
@@ -94,6 +119,17 @@ export default function AnalyzePhase() {
 
   return (
     <div className="space-y-6">
+      {/* Phase Milestone Timeline */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <MilestoneTimeline 
+            startDate={milestoneDates.measurePhaseDate}
+            endDate={milestoneDates.analyzePhaseDate}
+            label="Analyze Phase Milestone"
+          />
+        </CardContent>
+      </Card>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pareto Analysis */}
         <Card>
