@@ -31,11 +31,19 @@ export default function DmaicTools() {
 
   // Ensure we have the correct project loaded
   useEffect(() => {
-    if (projectsData && 'projects' in projectsData && params.projectId) {
+    if (projectsData && params.projectId) {
       const projectId = parseInt(params.projectId);
+      
+      // Safely check and access projects array
+      const projectsArray = projectsData && 
+                            typeof projectsData === 'object' && 
+                            projectsData !== null && 
+                            'projects' in projectsData ? 
+                            (projectsData as {projects: any[]}).projects : [];
+      
       // Find the project with the matching ID
-      const projects = projectsData.projects as any[];
-      const project = projects.find((p: any) => p.id === projectId);
+      const project = projectsArray.find((p: any) => p.id === projectId);
+      
       if (project && (!currentProject || currentProject.id !== projectId)) {
         console.log(`Setting current project to ID ${projectId} (${project.title})`);
         setCurrentProject(project);
@@ -100,7 +108,7 @@ export default function DmaicTools() {
                   ></div>
                 </div>
                 <span className="text-xs text-gray-500 whitespace-nowrap">
-                  {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
+                  {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Project Timeline
                 </span>
               </div>
             )}
