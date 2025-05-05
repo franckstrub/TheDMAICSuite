@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateCp, calculateCpk } from "@/lib/statisticsUtils";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
+import MilestoneTimeline from "./MilestoneTimeline";
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
@@ -27,6 +28,29 @@ export default function MeasurePhase() {
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
+  
+  // State for milestone dates
+  const [milestoneDates, setMilestoneDates] = useState({
+    definePhaseDate: null as string | null,
+    measurePhaseDate: null as string | null,
+  });
+
+  // Fetch project charter to get milestone dates
+  const { data: charter } = useQuery({
+    queryKey: [`/api/projects/${projectId}/charter`],
+    enabled: !!user?.id && !!projectId,
+    refetchOnWindowFocus: false
+  });
+  
+  // Set milestone dates when charter data is fetched
+  useEffect(() => {
+    if (charter?.charter) {
+      setMilestoneDates({
+        definePhaseDate: charter.charter.define_phase_date || null,
+        measurePhaseDate: charter.charter.measure_phase_date || null,
+      });
+    }
+  }, [charter]);
 
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState([
@@ -184,6 +208,17 @@ export default function MeasurePhase() {
 
   return (
     <div className="space-y-6">
+      {/* Phase Milestone Timeline */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <MilestoneTimeline 
+            startDate={milestoneDates.definePhaseDate}
+            endDate={milestoneDates.measurePhaseDate}
+            label="Measure Phase Milestone"
+          />
+        </CardContent>
+      </Card>
+      
       {/* Data Collection Plan */}
       <Card>
         <CardHeader>
