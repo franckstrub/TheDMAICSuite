@@ -3026,7 +3026,7 @@ export default function DefinePhase() {
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who provides inputs to the process?"
                   {...sipocForm.register("suppliers")}
                 />
@@ -3034,7 +3034,7 @@ export default function DefinePhase() {
               <div className="border border-indigo-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What inputs are required for the process?"
                   {...sipocForm.register("inputs")}
                 />
@@ -3042,7 +3042,7 @@ export default function DefinePhase() {
               <div className="border border-purple-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the steps in the process?"
                   {...sipocForm.register("process")}
                 />
@@ -3050,7 +3050,7 @@ export default function DefinePhase() {
               <div className="border border-green-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the outputs of the process?"
                   {...sipocForm.register("outputs")}
                 />
@@ -3058,7 +3058,7 @@ export default function DefinePhase() {
               <div className="border border-yellow-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who receives the outputs?"
                   {...sipocForm.register("customers")}
                 />
@@ -3070,7 +3070,7 @@ export default function DefinePhase() {
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who provides inputs to the process?"
                   {...sipocForm.register("suppliers2")}
                 />
@@ -3078,7 +3078,7 @@ export default function DefinePhase() {
               <div className="border border-indigo-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What inputs are required for the process?"
                   {...sipocForm.register("inputs2")}
                 />
@@ -3086,7 +3086,7 @@ export default function DefinePhase() {
               <div className="border border-purple-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the steps in the process?"
                   {...sipocForm.register("process2")}
                 />
@@ -3094,7 +3094,7 @@ export default function DefinePhase() {
               <div className="border border-green-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the outputs of the process?"
                   {...sipocForm.register("outputs2")}
                 />
@@ -3102,7 +3102,7 @@ export default function DefinePhase() {
               <div className="border border-yellow-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who receives the outputs?"
                   {...sipocForm.register("customers2")}
                 />
@@ -3114,7 +3114,7 @@ export default function DefinePhase() {
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who provides inputs to the process?"
                   {...sipocForm.register("suppliers3")}
                 />
@@ -3122,7 +3122,7 @@ export default function DefinePhase() {
               <div className="border border-indigo-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What inputs are required for the process?"
                   {...sipocForm.register("inputs3")}
                 />
@@ -3130,7 +3130,7 @@ export default function DefinePhase() {
               <div className="border border-purple-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the steps in the process?"
                   {...sipocForm.register("process3")}
                 />
@@ -3138,7 +3138,7 @@ export default function DefinePhase() {
               <div className="border border-green-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="What are the outputs of the process?"
                   {...sipocForm.register("outputs3")}
                 />
@@ -3146,7 +3146,7 @@ export default function DefinePhase() {
               <div className="border border-yellow-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={6}
+                  rows={3}
                   placeholder="Who receives the outputs?"
                   {...sipocForm.register("customers3")}
                 />
