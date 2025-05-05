@@ -120,15 +120,20 @@ export default function AnalyzePhase() {
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
-      <Card className="mb-4 max-w-2xl ml-0">
-        <CardContent className="pt-6">
-          <MilestoneTimeline 
-            startDate={milestoneDates.measurePhaseDate}
-            endDate={milestoneDates.analyzePhaseDate}
-            label="Analyze Phase Milestone"
-          />
-        </CardContent>
-      </Card>
+      <div className="mb-4 flex flex-row gap-4">
+        <Card className="w-1/2">
+          <CardContent className="pt-6">
+            <MilestoneTimeline 
+              startDate={milestoneDates.measurePhaseDate}
+              endDate={milestoneDates.analyzePhaseDate}
+              label="Analyze Phase Milestone"
+            />
+          </CardContent>
+        </Card>
+        
+        {/* Space for milestone progress card */}
+        <div className="w-1/2"></div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pareto Analysis */}
