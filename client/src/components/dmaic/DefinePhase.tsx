@@ -3230,6 +3230,7 @@ export default function DefinePhase() {
                 className="px-3 py-1 border rounded-md text-sm w-80"
                 placeholder="Enter process name"
                 {...sipocForm.register("processName")}
+                defaultValue={sipoc?.sipoc?.processName || ""}
               />
             </div>
           
