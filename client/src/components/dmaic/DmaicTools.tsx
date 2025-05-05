@@ -126,7 +126,7 @@ export default function DmaicTools() {
                 <div className="flex items-start gap-2">
                   <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center">
                     {/* Additional top space for vertical alignment */}
-                    <div className="my-3"></div>
+                    <div className="mb-1"></div>
                     <div className="flex items-center">
                       <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
                         <div 
@@ -143,7 +143,7 @@ export default function DmaicTools() {
                       <span>{formatDate(currentProject.targetEndDate)}</span>
                     </div>
                     {/* Additional bottom space for vertical alignment */}
-                    <div className="my-3"></div>
+                    <div className="mb-1"></div>
                   </div>
                 </div>
               </div>
