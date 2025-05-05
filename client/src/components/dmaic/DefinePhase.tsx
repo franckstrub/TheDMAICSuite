@@ -1930,67 +1930,8 @@ export default function DefinePhase() {
           </CardContent>
         </Card>
         
-        {/* Milestone Progress Card */}
-        <Card className="w-1/2 bg-blue-50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-md">Define Phase Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-1 text-sm">
-                  <span>Overall Completion</span>
-                  <span className="font-medium">75%</span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '75%' }}></div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div className="border rounded-md p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Project Charter</div>
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm font-medium">Completed</span>
-                  </div>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">SIPOC</div>
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm font-medium">Completed</span>
-                  </div>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Requirements</div>
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-500 mr-2"></div>
-                    <span className="text-sm font-medium">In Progress</span>
-                  </div>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Project Planning</div>
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-500 mr-2"></div>
-                    <span className="text-sm font-medium">In Progress</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="text-sm font-medium mt-2">
-                Next Steps:
-                <ul className="text-sm font-normal mt-1 pl-5 list-disc">
-                  <li>Complete customer requirements validation</li>
-                  <li>Finalize project scope statement</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Space for milestone progress card */}
+        <div className="w-1/2"></div>
       </div>
       
       {/* Project Charter */}
