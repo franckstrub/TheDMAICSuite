@@ -895,8 +895,18 @@ export default function DefinePhase() {
       if (data?.sipoc) {
         console.log("Loaded SIPOC data:", data.sipoc);
         
-        // Set form values
-        sipocForm.reset({
+        // Log form data loaded from API
+        console.log("Loading SIPOC data from API:", {
+          processName: data.sipoc.processName,
+          suppliers4: data.sipoc.suppliers4,
+          inputs4: data.sipoc.inputs4,
+          process4: data.sipoc.process4,
+          outputs4: data.sipoc.outputs4,
+          customers4: data.sipoc.customers4,
+        });
+        
+        // Set default visible rows to match data
+        const formValues = {
           processName: data.sipoc.processName || "",
           suppliers: data.sipoc.suppliers || "",
           inputs: data.sipoc.inputs || "",
@@ -936,6 +946,14 @@ export default function DefinePhase() {
           process7: data.sipoc.process7 || "",
           outputs7: data.sipoc.outputs7 || "",
           customers7: data.sipoc.customers7 || "",
+        };
+        
+        // Reset form with values
+        sipocForm.reset(formValues);
+        
+        // Force update the form values as a backup method
+        Object.keys(formValues).forEach(field => {
+          sipocForm.setValue(field as any, formValues[field as keyof typeof formValues]);
         });
         
         // Determine how many rows to show based on the data
@@ -3394,6 +3412,7 @@ export default function DefinePhase() {
                   placeholder="Who provides inputs to the process?"
                   {...sipocForm.register("suppliers4")}
                 />
+                <div className="text-xs text-blue-500 mt-1">Current value: {sipocForm.getValues().suppliers4}</div>
               </div>
               <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -3402,6 +3421,7 @@ export default function DefinePhase() {
                   placeholder="What inputs are required for the process?"
                   {...sipocForm.register("inputs4")}
                 />
+                <div className="text-xs text-indigo-500 mt-1">Current value: {sipocForm.getValues().inputs4}</div>
               </div>
               <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -3410,6 +3430,7 @@ export default function DefinePhase() {
                   placeholder="What are the steps in the process?"
                   {...sipocForm.register("process4")}
                 />
+                <div className="text-xs text-purple-500 mt-1">Current value: {sipocForm.getValues().process4}</div>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -3418,6 +3439,7 @@ export default function DefinePhase() {
                   placeholder="What are the outputs of the process?"
                   {...sipocForm.register("outputs4")}
                 />
+                <div className="text-xs text-green-500 mt-1">Current value: {sipocForm.getValues().outputs4}</div>
               </div>
               <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -3426,6 +3448,7 @@ export default function DefinePhase() {
                   placeholder="Who receives the outputs?"
                   {...sipocForm.register("customers4")}
                 />
+                <div className="text-xs text-yellow-500 mt-1">Current value: {sipocForm.getValues().customers4}</div>
               </div>
               <Button
                 type="button"
