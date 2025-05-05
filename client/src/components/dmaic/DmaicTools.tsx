@@ -144,22 +144,14 @@ export default function DmaicTools() {
               </div>
             )}
             
-            {/* Project Progress */}
-            {currentProject?.progress !== undefined && (
-              <div className="flex items-start gap-2 md:ml-4">
-                <div className="flex flex-col">
-                  <div className="flex items-center">
-                    <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
-                      <div 
-                        className={`${getProgressColor(currentProject.progress)} h-2 rounded-full`} 
-                        style={{ width: `${currentProject.progress}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                      {currentProject.progress}% Complete
-                    </span>
-                  </div>
-                </div>
+            {/* DMAIC Progress Visualization - Moved here from below */}
+            {currentProject && (
+              <div className="md:ml-4" style={{ width: "40%" }}>
+                <DmaicProgressSteps 
+                  project={currentProject}
+                  overallProgress={currentProject.progress || 0}
+                  className="scale-90 transform origin-center"
+                />
               </div>
             )}
           </div>
@@ -175,18 +167,8 @@ export default function DmaicTools() {
         </div>
       </div>
       
-      {/* DMAIC Milestone Progress */}
-      {currentProject && (
-        <div className="mb-6 mt-2 border-t border-b py-2">
-          <div className="w-2/5 mx-auto">
-            <DmaicProgressSteps 
-              project={currentProject}
-              overallProgress={currentProject.progress || 0}
-              className="scale-90 transform origin-center"
-            />
-          </div>
-        </div>
-      )}
+      {/* Spacer for DMAIC tool navigation */}
+      <div className="mb-2 mt-2 border-t"></div>
       
       {/* DMAIC Phase Navigation */}
       <div className="flex overflow-x-auto mb-6">
