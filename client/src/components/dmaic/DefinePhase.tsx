@@ -3166,7 +3166,7 @@ export default function DefinePhase() {
             </div>
             
             {/* Add Row Button */}
-            <div className="flex justify-center mt-2 mb-4">
+            <div className="flex justify-start mt-2 mb-4">
               <Button 
                 type="button" 
                 variant="outline" 
