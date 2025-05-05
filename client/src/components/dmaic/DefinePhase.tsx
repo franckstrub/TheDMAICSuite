@@ -1930,8 +1930,15 @@ export default function DefinePhase() {
           </CardContent>
         </Card>
         
-        {/* Space for milestone progress card */}
-        <div className="w-1/2"></div>
+        {/* Project Progress Cursor */}
+        <Card className="w-1/2">
+          <CardContent className="pt-6">
+            <ProgressCursor 
+              progress={75}
+              label="Define Phase Progress"
+            />
+          </CardContent>
+        </Card>
       </div>
       
       {/* Project Charter */}
