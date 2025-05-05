@@ -3225,19 +3225,19 @@ export default function DefinePhase() {
           
           <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
             <div className="grid grid-cols-5 gap-2 mb-4">
-              <div className="p-3 bg-blue-50 rounded-md text-center">
+              <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-primary text-sm">Suppliers</h4>
               </div>
-              <div className="p-3 bg-indigo-50 rounded-md text-center">
+              <div className="p-3 bg-indigo-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-indigo-600 text-sm">Inputs</h4>
               </div>
-              <div className="p-3 bg-purple-50 rounded-md text-center">
+              <div className="p-3 bg-purple-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-purple-600 text-sm">Process</h4>
               </div>
-              <div className="p-3 bg-green-50 rounded-md text-center">
+              <div className="p-3 bg-green-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-green-600 text-sm">Outputs</h4>
               </div>
-              <div className="p-3 bg-yellow-50 rounded-md text-center">
+              <div className="p-3 bg-yellow-50 rounded-md text-center w-[95%]">
                 <h4 className="font-medium text-yellow-600 text-sm">Customers</h4>
               </div>
             </div>
