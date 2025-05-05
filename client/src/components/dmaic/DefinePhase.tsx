@@ -896,51 +896,58 @@ export default function DefinePhase() {
         console.log("Loaded SIPOC data:", data.sipoc);
         console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
         
-        // Set form values and log for debugging
-        console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
+        // Set form values
+        sipocForm.setValue("processName", data.sipoc.processName || "");
+        sipocForm.setValue("suppliers", data.sipoc.suppliers || "");
+        sipocForm.setValue("inputs", data.sipoc.inputs || "");
+        sipocForm.setValue("process", data.sipoc.process || "");
+        sipocForm.setValue("outputs", data.sipoc.outputs || "");
+        sipocForm.setValue("customers", data.sipoc.customers || "");
         
-        // Set the form values directly with all fields
-        sipocForm.reset({
-          processName: data.sipoc.processName || "",
-          suppliers: data.sipoc.suppliers || "",
-          inputs: data.sipoc.inputs || "",
-          process: data.sipoc.process || "",
-          outputs: data.sipoc.outputs || "",
-          customers: data.sipoc.customers || "",
-          // Additional rows
-          suppliers2: data.sipoc.suppliers2 || "",
-          inputs2: data.sipoc.inputs2 || "",
-          process2: data.sipoc.process2 || "",
-          outputs2: data.sipoc.outputs2 || "",
-          customers2: data.sipoc.customers2 || "",
-          suppliers3: data.sipoc.suppliers3 || "",
-          inputs3: data.sipoc.inputs3 || "",
-          process3: data.sipoc.process3 || "",
-          outputs3: data.sipoc.outputs3 || "",
-          customers3: data.sipoc.customers3 || "",
-          // Rows 4-5
-          suppliers4: data.sipoc.suppliers4 || "",
-          inputs4: data.sipoc.inputs4 || "",
-          process4: data.sipoc.process4 || "",
-          outputs4: data.sipoc.outputs4 || "",
-          customers4: data.sipoc.customers4 || "",
-          suppliers5: data.sipoc.suppliers5 || "",
-          inputs5: data.sipoc.inputs5 || "",
-          process5: data.sipoc.process5 || "",
-          outputs5: data.sipoc.outputs5 || "",
-          customers5: data.sipoc.customers5 || "",
-          // Rows 6-7
-          suppliers6: data.sipoc.suppliers6 || "",
-          inputs6: data.sipoc.inputs6 || "",
-          process6: data.sipoc.process6 || "",
-          outputs6: data.sipoc.outputs6 || "",
-          customers6: data.sipoc.customers6 || "",
-          suppliers7: data.sipoc.suppliers7 || "",
-          inputs7: data.sipoc.inputs7 || "",
-          process7: data.sipoc.process7 || "",
-          outputs7: data.sipoc.outputs7 || "",
-          customers7: data.sipoc.customers7 || "",
-        });
+        // Set row 2 values
+        sipocForm.setValue("suppliers2", data.sipoc.suppliers2 || "");
+        sipocForm.setValue("inputs2", data.sipoc.inputs2 || "");
+        sipocForm.setValue("process2", data.sipoc.process2 || "");
+        sipocForm.setValue("outputs2", data.sipoc.outputs2 || "");
+        sipocForm.setValue("customers2", data.sipoc.customers2 || "");
+        
+        // Set row 3 values
+        sipocForm.setValue("suppliers3", data.sipoc.suppliers3 || "");
+        sipocForm.setValue("inputs3", data.sipoc.inputs3 || "");
+        sipocForm.setValue("process3", data.sipoc.process3 || "");
+        sipocForm.setValue("outputs3", data.sipoc.outputs3 || "");
+        sipocForm.setValue("customers3", data.sipoc.customers3 || "");
+        
+        // Set row 4 values if they exist
+        sipocForm.setValue("suppliers4", data.sipoc.suppliers4 || "");
+        sipocForm.setValue("inputs4", data.sipoc.inputs4 || "");
+        sipocForm.setValue("process4", data.sipoc.process4 || "");
+        sipocForm.setValue("outputs4", data.sipoc.outputs4 || "");
+        sipocForm.setValue("customers4", data.sipoc.customers4 || "");
+        
+        // Set row 5 values if they exist
+        sipocForm.setValue("suppliers5", data.sipoc.suppliers5 || "");
+        sipocForm.setValue("inputs5", data.sipoc.inputs5 || "");
+        sipocForm.setValue("process5", data.sipoc.process5 || "");
+        sipocForm.setValue("outputs5", data.sipoc.outputs5 || "");
+        sipocForm.setValue("customers5", data.sipoc.customers5 || "");
+        
+        // Set row 6 values if they exist
+        sipocForm.setValue("suppliers6", data.sipoc.suppliers6 || "");
+        sipocForm.setValue("inputs6", data.sipoc.inputs6 || "");
+        sipocForm.setValue("process6", data.sipoc.process6 || "");
+        sipocForm.setValue("outputs6", data.sipoc.outputs6 || "");
+        sipocForm.setValue("customers6", data.sipoc.customers6 || "");
+        
+        // Set row 7 values if they exist
+        sipocForm.setValue("suppliers7", data.sipoc.suppliers7 || "");
+        sipocForm.setValue("inputs7", data.sipoc.inputs7 || "");
+        sipocForm.setValue("process7", data.sipoc.process7 || "");
+        sipocForm.setValue("outputs7", data.sipoc.outputs7 || "");
+        sipocForm.setValue("customers7", data.sipoc.customers7 || "");
+        
+        // Log the process name after setting
+        console.log("Process name after setValue:", sipocForm.getValues("processName"));
         
         // Determine how many rows to show based on the data
         let rowsToShow = 3; // Default is 3 rows
