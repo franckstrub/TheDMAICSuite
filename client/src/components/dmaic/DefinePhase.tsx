@@ -225,8 +225,34 @@ export default function DefinePhase() {
       process3: "",
       outputs3: "",
       customers3: "",
+      // Allow for additional rows
+      suppliers4: "",
+      inputs4: "",
+      process4: "",
+      outputs4: "",
+      customers4: "",
+      suppliers5: "",
+      inputs5: "",
+      process5: "",
+      outputs5: "",
+      customers5: "",
     },
   });
+  
+  // State to track the number of visible SIPOC rows (start with 3)
+  const [visibleSipocRows, setVisibleSipocRows] = useState(3);
+  
+  // Function to add a new SIPOC row
+  const addSipocRow = () => {
+    if (visibleSipocRows < 5) { // Maximum 5 rows
+      setVisibleSipocRows(prevRows => prevRows + 1);
+    } else {
+      toast({
+        title: "Maximum rows reached",
+        description: "You can add a maximum of 5 rows to the SIPOC diagram.",
+      });
+    }
+  };
 
   // Customer Requirements state
   const [requirements, setRequirements] = useState([
@@ -739,6 +765,9 @@ export default function DefinePhase() {
     enabled: !!user?.id && !!projectId,
     onSuccess: (data) => {
       if (data?.sipoc) {
+        console.log("Loaded SIPOC data:", data.sipoc);
+        
+        // Set form values
         sipocForm.reset({
           processName: data.sipoc.processName || "",
           suppliers: data.sipoc.suppliers || "",
@@ -757,7 +786,36 @@ export default function DefinePhase() {
           process3: data.sipoc.process3 || "",
           outputs3: data.sipoc.outputs3 || "",
           customers3: data.sipoc.customers3 || "",
+          // New rows
+          suppliers4: data.sipoc.suppliers4 || "",
+          inputs4: data.sipoc.inputs4 || "",
+          process4: data.sipoc.process4 || "",
+          outputs4: data.sipoc.outputs4 || "",
+          customers4: data.sipoc.customers4 || "",
+          suppliers5: data.sipoc.suppliers5 || "",
+          inputs5: data.sipoc.inputs5 || "",
+          process5: data.sipoc.process5 || "",
+          outputs5: data.sipoc.outputs5 || "",
+          customers5: data.sipoc.customers5 || "",
         });
+        
+        // Determine how many rows to show based on the data
+        let rowsToShow = 3; // Default is 3 rows
+        
+        // Check if there's data in row 4
+        if (data.sipoc.suppliers4 || data.sipoc.inputs4 || data.sipoc.process4 || 
+            data.sipoc.outputs4 || data.sipoc.customers4) {
+          rowsToShow = 4;
+        }
+        
+        // Check if there's data in row 5
+        if (data.sipoc.suppliers5 || data.sipoc.inputs5 || data.sipoc.process5 || 
+            data.sipoc.outputs5 || data.sipoc.customers5) {
+          rowsToShow = 5;
+        }
+        
+        // Update the visible rows state
+        setVisibleSipocRows(rowsToShow);
       }
     },
   });
@@ -3165,6 +3223,98 @@ export default function DefinePhase() {
               </div>
             </div>
             
+            {/* Fourth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 4 && (
+              <div className="grid grid-cols-5 gap-2 mb-2">
+                <div className="border border-blue-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers4")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs4")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process4")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs4")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers4")}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Fifth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 5 && (
+              <div className="grid grid-cols-5 gap-2 mb-2">
+                <div className="border border-blue-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers5")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs5")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process5")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs5")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers5")}
+                  />
+                </div>
+              </div>
+            )}
+            
             {/* Add Row Button */}
             <div className="flex justify-start mt-2 mb-4">
               <Button 
@@ -3172,13 +3322,8 @@ export default function DefinePhase() {
                 variant="outline" 
                 size="sm"
                 className="flex items-center"
-                onClick={() => {
-                  // This would be implemented to add additional rows
-                  toast({
-                    title: "Feature coming soon",
-                    description: "Adding more rows will be available in the next update",
-                  });
-                }}
+                onClick={addSipocRow}
+                disabled={visibleSipocRows >= 5}
               >
                 <PlusCircle className="mr-1 h-4 w-4" />
                 Add Row
