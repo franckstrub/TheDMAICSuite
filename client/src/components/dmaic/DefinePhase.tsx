@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import MilestoneTimeline from "./MilestoneTimeline";
+import RiskAssessment from "./RiskAssessment";
 import {
   Card,
   CardContent,
@@ -3752,6 +3753,9 @@ export default function DefinePhase() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Project Risk Assessment Section */}
+      <RiskAssessment />
     </div>
   );
 }

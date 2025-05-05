@@ -932,6 +932,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Project Risk Assessment routes
+  app.get("/api/projects/:projectId/risks", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const [risk] = await db.select().from(projectRisks).where(eq(projectRisks.projectId, projectId));
+      
+      return res.status(200).json({ risk });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/risks", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const riskData = {
+        ...req.body,
+        projectId,
+      };
+      
+      // Validate the risk data
+      const validatedData = insertRiskSchema.parse(riskData);
+      
+      // Insert risk data
+      const [risk] = await db.insert(projectRisks).values(validatedData).returning();
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_risk_assessment",
+          details: "Created project risk assessment"
+        });
+      }
+      
+      return res.status(201).json({ risk });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/risks/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const riskUpdate = req.body;
+      
+      // Update risk data
+      const [risk] = await db
+        .update(projectRisks)
+        .set(riskUpdate)
+        .where(eq(projectRisks.id, id))
+        .returning();
+      
+      if (!risk) {
+        return res.status(404).json({ message: "Risk assessment not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: risk.projectId,
+          action: "update_risk_assessment",
+          details: "Updated project risk assessment"
+        });
+      }
+      
+      return res.status(200).json({ risk });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   // Process Data routes
   app.get("/api/datasets/:datasetId/process-data", async (req: Request, res: Response) => {
     try {
