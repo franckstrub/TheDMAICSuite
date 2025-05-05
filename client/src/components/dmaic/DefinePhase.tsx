@@ -1919,45 +1919,15 @@ export default function DefinePhase() {
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
-      <div className="mb-4 flex gap-4">
-        <Card className="w-1/2">
-          <CardContent className="pt-6">
-            <MilestoneTimeline 
-              startDate={milestoneDates.kickOffDate}
-              endDate={milestoneDates.definePhaseDate}
-              label="Define Phase Milestone"
-            />
-          </CardContent>
-        </Card>
-        <Card className="w-1/2">
-          <CardHeader>
-            <CardTitle>Define Phase Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Start Date:</span>
-                <span className="text-sm">{formatDate(milestoneDates.kickOffDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Target Completion:</span>
-                <span className="text-sm">{formatDate(milestoneDates.definePhaseDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Key Documents:</span>
-                <span className="text-sm">Project Charter, SIPOC</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Status:</span>
-                <span className="text-sm flex items-center">
-                  <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                  In Progress
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="mb-4 max-w-2xl ml-0">
+        <CardContent className="pt-6">
+          <MilestoneTimeline 
+            startDate={milestoneDates.kickOffDate}
+            endDate={milestoneDates.definePhaseDate}
+            label="Define Phase Milestone"
+          />
+        </CardContent>
+      </Card>
       
       {/* Project Charter */}
       <Card id="project-charter">

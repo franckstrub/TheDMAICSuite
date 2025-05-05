@@ -3,17 +3,6 @@ import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-
-// Helper function for formatting dates
-const formatDate = (dateString: string | null): string => {
-  if (!dateString) return "Not set";
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  });
-};
 import {
   Card,
   CardContent,
@@ -131,45 +120,15 @@ export default function AnalyzePhase() {
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
-      <div className="mb-4 flex gap-4">
-        <Card className="w-1/2">
-          <CardContent className="pt-6">
-            <MilestoneTimeline 
-              startDate={milestoneDates.measurePhaseDate}
-              endDate={milestoneDates.analyzePhaseDate}
-              label="Analyze Phase Milestone"
-            />
-          </CardContent>
-        </Card>
-        <Card className="w-1/2">
-          <CardHeader>
-            <CardTitle>Analyze Phase Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Start Date:</span>
-                <span className="text-sm">{formatDate(milestoneDates.measurePhaseDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Target Completion:</span>
-                <span className="text-sm">{formatDate(milestoneDates.analyzePhaseDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Key Documents:</span>
-                <span className="text-sm">Pareto Analysis, Hypothesis Testing</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Status:</span>
-                <span className="text-sm flex items-center">
-                  <span className="h-2 w-2 rounded-full bg-gray-400 mr-2"></span>
-                  Not Started
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="mb-4 max-w-2xl ml-0">
+        <CardContent className="pt-6">
+          <MilestoneTimeline 
+            startDate={milestoneDates.measurePhaseDate}
+            endDate={milestoneDates.analyzePhaseDate}
+            label="Analyze Phase Milestone"
+          />
+        </CardContent>
+      </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pareto Analysis */}
