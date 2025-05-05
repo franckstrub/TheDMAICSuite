@@ -80,8 +80,22 @@ export default function DmaicTools() {
 
   return (
     <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+      {/* Back to projects button - moved to top */}
+      <div className="flex justify-end mb-2">
+        <Button 
+          variant="ghost" 
+          className="text-primary hover:text-primary-dark flex items-center"
+          onClick={() => {
+            setCurrentTab("projects");
+            navigate("/app/projects");
+          }}
+        >
+          <i className="fas fa-arrow-left mr-1"></i> Back to Projects
+        </Button>
+      </div>
+      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <div>
+        <div className="w-full">
           <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
             <h1 className="text-2xl font-semibold text-gray-900">
               {currentProject?.title ? (
@@ -132,18 +146,6 @@ export default function DmaicTools() {
               </span>
             )}
           </p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <Button 
-            variant="ghost" 
-            className="text-primary hover:text-primary-dark flex items-center"
-            onClick={() => {
-              setCurrentTab("projects");
-              navigate("/app/projects");
-            }}
-          >
-            <i className="fas fa-arrow-left mr-1"></i> Back to Projects
-          </Button>
         </div>
       </div>
       
