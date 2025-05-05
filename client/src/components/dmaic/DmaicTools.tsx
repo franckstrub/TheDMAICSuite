@@ -108,7 +108,7 @@ export default function DmaicTools() {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="w-full">
-          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+          <div className="flex flex-col md:flex-row md:items-start gap-2 md:gap-4">
             <h1 className="text-2xl font-semibold text-gray-900">
               {currentProject?.title ? (
                 <>
@@ -120,43 +120,44 @@ export default function DmaicTools() {
               )}
             </h1>
             
-            {/* Project Timeline */}
-            {currentProject?.startDate && currentProject?.targetEndDate && (
-              <div className="flex flex-col md:ml-4 flex-shrink-0">
-                <div className="h-full flex items-start">
-                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center" style={{ minHeight: "85px", display: "flex", alignItems: "center" }}>
+            {/* Create layout matching the reference screenshot */}
+            <div className="flex flex-col md:flex-row md:items-center md:ml-4 md:gap-6">
+              {/* Project Timeline */}
+              {currentProject?.startDate && currentProject?.targetEndDate && (
+                <div className="mb-2 md:mb-0 w-full md:w-auto">
+                  <div className="border border-gray-200 rounded-lg shadow-sm p-4 bg-white">
                     <div className="flex items-center mb-2">
-                      <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                      <div className="w-full md:w-56 bg-gray-200 rounded-full h-2">
                         <div 
                           className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
                           style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
                         ></div>
                       </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                      <span className="text-sm text-gray-600 whitespace-nowrap ml-2">
                         {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
                       </span>
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-36">
+                    <div className="flex justify-between text-sm text-gray-500 mt-2 w-full md:w-56">
                       <span>{formatDate(currentProject.startDate)}</span>
                       <span>{formatDate(currentProject.targetEndDate)}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {/* DMAIC Progress Visualization - Moved here from below */}
-            {currentProject && (
-              <div className="md:ml-4" style={{ width: "40%" }}>
-                <div className="p-2 border border-gray-200 rounded-md shadow-sm">
-                  <DmaicProgressSteps 
-                    project={currentProject}
-                    overallProgress={currentProject.progress || 0}
-                    className="scale-90 transform origin-center"
-                  />
+              )}
+              
+              {/* DMAIC Progress Visualization */}
+              {currentProject && (
+                <div className="w-full md:w-auto">
+                  <div className="border border-gray-200 rounded-lg shadow-sm p-4 bg-white">
+                    <DmaicProgressSteps 
+                      project={currentProject}
+                      overallProgress={currentProject.progress || 0}
+                      className="transform origin-left"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           
           <p className="mt-1 text-sm text-gray-500">
