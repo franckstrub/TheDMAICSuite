@@ -266,8 +266,13 @@ export default function DefinePhase() {
   
   // Function to delete a specific SIPOC row
   const deleteSipocRow = (rowNumber: number) => {
-    // Make sure we don't delete rows 1-3 (which are required)
-    if (rowNumber <= 3) {
+    // Make sure we don't delete row 1 (first row is always required)
+    if (rowNumber === 1) {
+      return;
+    }
+    
+    // Make sure we always have at least 1 row
+    if (visibleSipocRows <= 1) {
       return;
     }
     
@@ -3238,7 +3243,7 @@ export default function DefinePhase() {
             </div>
             
             {/* First row of SIPOC cards */}
-            <div className="grid grid-cols-5 gap-2 mb-2">
+            <div className="grid grid-cols-5 gap-2 mb-2 relative">
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3279,10 +3284,11 @@ export default function DefinePhase() {
                   {...sipocForm.register("customers")}
                 />
               </div>
+              {/* No delete button for first row */}
             </div>
             
             {/* Second row of SIPOC cards */}
-            <div className="grid grid-cols-5 gap-2 mb-2">
+            <div className="grid grid-cols-5 gap-2 mb-2 relative">
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3323,10 +3329,21 @@ export default function DefinePhase() {
                   {...sipocForm.register("customers2")}
                 />
               </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                onClick={() => deleteSipocRow(2)}
+                title="Delete Row 2"
+                disabled={visibleSipocRows <= 1}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
             
             {/* Third row of SIPOC cards */}
-            <div className="grid grid-cols-5 gap-2 mb-2">
+            <div className="grid grid-cols-5 gap-2 mb-2 relative">
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3367,6 +3384,17 @@ export default function DefinePhase() {
                   {...sipocForm.register("customers3")}
                 />
               </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                onClick={() => deleteSipocRow(3)}
+                title="Delete Row 3"
+                disabled={visibleSipocRows <= 2}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
             
             {/* Fourth row of SIPOC cards (conditionally rendered) */}
