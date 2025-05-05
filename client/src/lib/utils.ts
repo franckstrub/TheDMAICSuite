@@ -179,3 +179,45 @@ export function getTimelineColor(progress: number): string {
   if (progress < 90) return 'bg-yellow-500'; // Nearing completion - yellow
   return 'bg-red-500';                       // At or past deadline - red
 }
+
+/**
+ * Calculate milestone progress between two dates
+ * @param startDate Start date for milestone
+ * @param endDate End date for milestone
+ * @returns Progress percentage (0-100)
+ */
+export function calculateMilestoneProgress(startDate: string | Date | null, endDate: string | Date | null): number {
+  if (!startDate || !endDate) return 0;
+  
+  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+  const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  const now = new Date();
+  
+  // If the milestone hasn't started yet
+  if (now < start) return 0;
+  
+  // If the milestone is already past the end date
+  if (now > end) return 100;
+  
+  // Calculate percentage between start and end dates
+  const totalDuration = end.getTime() - start.getTime();
+  const elapsedDuration = now.getTime() - start.getTime();
+  
+  return Math.round((elapsedDuration / totalDuration) * 100);
+}
+
+/**
+ * Format date for display in milestone timelines
+ * @param dateString Date string
+ * @returns Formatted date string (e.g. "May 15, 2025")
+ */
+export function formatMilestoneDate(dateString: string | null): string {
+  if (!dateString) return 'N/A';
+  
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short',
+    day: 'numeric', 
+    year: 'numeric'
+  });
+}
