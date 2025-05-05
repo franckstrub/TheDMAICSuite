@@ -529,10 +529,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const sipocData = req.body;
       
+      // Log SIPOC update payload
+      console.log("SIPOC Update API - ID:", id);
+      console.log("SIPOC Update API - Process Name:", sipocData.processName);
+      console.log("SIPOC Update API - Payload:", sipocData);
+      
       const sipoc = await storage.updateSipoc(id, sipocData);
       if (!sipoc) {
         return res.status(404).json({ message: "SIPOC diagram not found" });
       }
+      
+      // Log the updated SIPOC data
+      console.log("SIPOC Update API - Updated sipoc:", sipoc);
+      console.log("SIPOC Update API - Updated process name:", sipoc.processName);
       
       // Log activity
       if (req.body.userId) {

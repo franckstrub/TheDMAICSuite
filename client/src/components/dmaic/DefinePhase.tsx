@@ -1102,6 +1102,10 @@ export default function DefinePhase() {
         ...data,
         userId: user?.id,
       };
+      
+      // Log what's being sent to the API
+      console.log("SIPOC save payload:", payload);
+      console.log("Process name being saved:", payload.processName);
 
       // Check if SIPOC exists
       if (sipoc?.sipoc?.id) {
