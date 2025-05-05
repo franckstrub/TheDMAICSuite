@@ -3244,7 +3244,7 @@ export default function DefinePhase() {
             
             {/* First row of SIPOC cards */}
             <div className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3252,7 +3252,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("suppliers")}
                 />
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white">
+              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3260,7 +3260,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("inputs")}
                 />
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white">
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3268,7 +3268,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("process")}
                 />
               </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white">
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3276,7 +3276,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("outputs")}
                 />
               </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white">
+              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3289,7 +3289,7 @@ export default function DefinePhase() {
             
             {/* Second row of SIPOC cards */}
             <div className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3297,7 +3297,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("suppliers2")}
                 />
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white">
+              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3305,7 +3305,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("inputs2")}
                 />
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white">
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3313,7 +3313,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("process2")}
                 />
               </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white">
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3321,7 +3321,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("outputs2")}
                 />
               </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white">
+              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3334,7 +3334,7 @@ export default function DefinePhase() {
             
             {/* Third row of SIPOC cards */}
             <div className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3342,7 +3342,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("suppliers3")}
                 />
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white">
+              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3350,7 +3350,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("inputs3")}
                 />
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white">
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3358,7 +3358,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("process3")}
                 />
               </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white">
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3366,7 +3366,7 @@ export default function DefinePhase() {
                   {...sipocForm.register("outputs3")}
                 />
               </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white">
+              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
@@ -3380,7 +3380,7 @@ export default function DefinePhase() {
             {/* Fourth row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 4 && (
               <div className="grid grid-cols-5 gap-2 mb-2 relative">
-                <div className="border border-blue-100 rounded-md p-2 bg-white">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3388,7 +3388,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("suppliers4")}
                   />
                 </div>
-                <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3396,7 +3396,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("inputs4")}
                   />
                 </div>
-                <div className="border border-purple-100 rounded-md p-2 bg-white">
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3404,7 +3404,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("process4")}
                   />
                 </div>
-                <div className="border border-green-100 rounded-md p-2 bg-white">
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3412,7 +3412,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("outputs4")}
                   />
                 </div>
-                <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3436,7 +3436,7 @@ export default function DefinePhase() {
             {/* Fifth row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 5 && (
               <div className="grid grid-cols-5 gap-2 mb-2 relative">
-                <div className="border border-blue-100 rounded-md p-2 bg-white">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3444,7 +3444,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("suppliers5")}
                   />
                 </div>
-                <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3452,7 +3452,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("inputs5")}
                   />
                 </div>
-                <div className="border border-purple-100 rounded-md p-2 bg-white">
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3460,7 +3460,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("process5")}
                   />
                 </div>
-                <div className="border border-green-100 rounded-md p-2 bg-white">
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3468,7 +3468,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("outputs5")}
                   />
                 </div>
-                <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3492,7 +3492,7 @@ export default function DefinePhase() {
             {/* Sixth row of SIPOC cards (conditionally rendered) */}
             {visibleSipocRows >= 6 && (
               <div className="grid grid-cols-5 gap-2 mb-2 relative">
-                <div className="border border-blue-100 rounded-md p-2 bg-white">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3500,7 +3500,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("suppliers6")}
                   />
                 </div>
-                <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3508,7 +3508,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("inputs6")}
                   />
                 </div>
-                <div className="border border-purple-100 rounded-md p-2 bg-white">
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3516,7 +3516,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("process6")}
                   />
                 </div>
-                <div className="border border-green-100 rounded-md p-2 bg-white">
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
@@ -3524,7 +3524,7 @@ export default function DefinePhase() {
                     {...sipocForm.register("outputs6")}
                   />
                 </div>
-                <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
                     rows={3}
