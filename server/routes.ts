@@ -529,10 +529,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const sipocData = req.body;
       
-      // Log SIPOC update payload
+      // Log SIPOC update payload with explicit process name check
       console.log("SIPOC Update API - ID:", id);
       console.log("SIPOC Update API - Process Name:", sipocData.processName);
-      console.log("SIPOC Update API - Payload:", sipocData);
+      console.log("SIPOC Update API - Has processName property:", Object.prototype.hasOwnProperty.call(sipocData, 'processName'));
+      console.log("SIPOC Update API - processName type:", typeof sipocData.processName);
+      console.log("SIPOC Update API - Full Payload:", JSON.stringify(sipocData, null, 2));
+      
+      // Ensure processName is included
+      if (sipocData.processName === undefined || sipocData.processName === null) {
+        console.log("⚠️ WARNING: processName is missing in SIPOC update request");
+      }
       
       const sipoc = await storage.updateSipoc(id, sipocData);
       if (!sipoc) {
@@ -542,6 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log the updated SIPOC data
       console.log("SIPOC Update API - Updated sipoc:", sipoc);
       console.log("SIPOC Update API - Updated process name:", sipoc.processName);
+      console.log("SIPOC Update API - Updated has processName property:", Object.prototype.hasOwnProperty.call(sipoc, 'processName'));
       
       // Log activity
       if (req.body.userId) {
