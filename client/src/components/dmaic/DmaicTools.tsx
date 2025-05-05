@@ -13,8 +13,10 @@ import {
   getProjectTypeColor, 
   calculateTimelineProgress, 
   getTimelineColor,
-  getProgressColor
+  getProgressColor,
+  calculateDmaicProgress
 } from "@/lib/utils";
+import DmaicProgressSteps, { DmaicPhases } from "./DmaicProgressSteps";
 
 type PhaseParams = {
   phase?: string;
@@ -144,6 +146,16 @@ export default function DmaicTools() {
           </Button>
         </div>
       </div>
+      
+      {/* DMAIC Milestone Progress */}
+      {currentProject?.phases && (
+        <div className="mb-6 mt-2 border-t border-b py-4">
+          <DmaicProgressSteps 
+            phases={currentProject.phases as DmaicPhases} 
+            overallProgress={calculateDmaicProgress(currentProject.phases)} 
+          />
+        </div>
+      )}
       
       {/* DMAIC Phase Navigation */}
       <div className="flex overflow-x-auto mb-6">

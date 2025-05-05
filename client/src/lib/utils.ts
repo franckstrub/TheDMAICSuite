@@ -221,3 +221,35 @@ export function formatMilestoneDate(dateString: string | null): string {
     year: 'numeric'
   });
 }
+
+/**
+ * Calculates the overall DMAIC progress based on the phases status
+ * @param phases The project phases with their status and progress
+ * @returns Number between 0-100 representing overall progress
+ */
+export function calculateDmaicProgress(phases: any): number {
+  if (!phases) return 0;
+  
+  // Weight for each phase (adjust if needed)
+  const weights = {
+    define: 0.2,  // 20%
+    measure: 0.2, // 20%
+    analyze: 0.2, // 20%
+    improve: 0.2, // 20%
+    control: 0.2  // 20%
+  };
+  
+  let totalProgress = 0;
+  
+  // Calculate weighted progress for each phase
+  Object.entries(phases).forEach(([phase, data]: [string, any]) => {
+    if (data.status === "completed") {
+      totalProgress += weights[phase as keyof typeof weights] * 100;
+    } else if (data.status === "in-progress") {
+      totalProgress += weights[phase as keyof typeof weights] * data.progress;
+    }
+    // "not-started" phases contribute 0 to the progress
+  });
+  
+  return Math.round(totalProgress);
+}
