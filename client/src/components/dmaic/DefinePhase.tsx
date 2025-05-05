@@ -50,6 +50,12 @@ export default function DefinePhase() {
   const [projectImage, setProjectImage] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
   
+  // State for milestone dates
+  const [milestoneDates, setMilestoneDates] = useState({
+    kickOffDate: null as string | null,
+    definePhaseDate: null as string | null,
+  });
+  
   // State for stakeholders management
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   
@@ -386,6 +392,12 @@ export default function DefinePhase() {
       if (charter.charter.projectImage) {
         setProjectImage(charter.charter.projectImage);
       }
+      
+      // Set milestone dates for the timeline
+      setMilestoneDates({
+        kickOffDate: charter.charter.startDate || null,
+        definePhaseDate: charter.charter.define_phase_date || null,
+      });
       
       // Load stakeholders if available
       if (charter.charter.stakeholders) {
