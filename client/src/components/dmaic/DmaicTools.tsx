@@ -120,24 +120,23 @@ export default function DmaicTools() {
               )}
             </h1>
             
-            {/* Create layout matching the reference screenshot */}
-            <div className="flex flex-col md:flex-row md:items-center md:ml-4 md:gap-6">
+            <div className="flex flex-col md:flex-row md:items-center md:ml-4 md:gap-4">
               {/* Project Timeline */}
               {currentProject?.startDate && currentProject?.targetEndDate && (
-                <div className="mb-2 md:mb-0 w-full md:w-auto">
-                  <div className="border border-gray-200 rounded-lg shadow-sm p-4 bg-white">
-                    <div className="flex items-center mb-2">
-                      <div className="w-full md:w-56 bg-gray-200 rounded-full h-2">
+                <div className="mb-2 md:mb-0">
+                  <div className="border border-gray-200 rounded-md shadow-sm h-full" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "10px" }}>
+                    <div className="flex items-center">
+                      <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
                         <div 
                           className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
                           style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
                         ></div>
                       </div>
-                      <span className="text-sm text-gray-600 whitespace-nowrap ml-2">
+                      <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
                         {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm text-gray-500 mt-2 w-full md:w-56">
+                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-36">
                       <span>{formatDate(currentProject.startDate)}</span>
                       <span>{formatDate(currentProject.targetEndDate)}</span>
                     </div>
@@ -147,12 +146,12 @@ export default function DmaicTools() {
               
               {/* DMAIC Progress Visualization */}
               {currentProject && (
-                <div className="w-full md:w-auto">
-                  <div className="border border-gray-200 rounded-lg shadow-sm p-4 bg-white">
+                <div className="md:ml-0" style={{ width: "40%" }}>
+                  <div className="border border-gray-200 rounded-md shadow-sm p-2">
                     <DmaicProgressSteps 
                       project={currentProject}
                       overallProgress={currentProject.progress || 0}
-                      className="transform origin-left"
+                      className="scale-90 transform origin-center"
                     />
                   </div>
                 </div>
