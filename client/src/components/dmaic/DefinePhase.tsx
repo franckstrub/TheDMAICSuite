@@ -939,34 +939,29 @@ export default function DefinePhase() {
         });
         
         // Determine how many rows to show based on the data
-        let rowsToShow = 3; // Default is 3 rows
+        let maxRow = 3; // Default is 3 rows
         
-        // Check if there's data in row 4
-        if (data.sipoc.suppliers4 || data.sipoc.inputs4 || data.sipoc.process4 || 
-            data.sipoc.outputs4 || data.sipoc.customers4) {
-          rowsToShow = 4;
+        // Function to check if any field in a row has content
+        const hasContent = (rowNum: number) => {
+          const rowFields = [
+            data.sipoc[`suppliers${rowNum}`], 
+            data.sipoc[`inputs${rowNum}`], 
+            data.sipoc[`process${rowNum}`],
+            data.sipoc[`outputs${rowNum}`], 
+            data.sipoc[`customers${rowNum}`]
+          ];
+          return rowFields.some(field => field && field.trim() !== "");
+        };
+        
+        // Check rows 4-7 for content
+        for (let i = 4; i <= 7; i++) {
+          if (hasContent(i)) {
+            maxRow = i;
+          }
         }
         
-        // Check if there's data in row 5
-        if (data.sipoc.suppliers5 || data.sipoc.inputs5 || data.sipoc.process5 || 
-            data.sipoc.outputs5 || data.sipoc.customers5) {
-          rowsToShow = 5;
-        }
-        
-        // Check if there's data in row 6
-        if (data.sipoc.suppliers6 || data.sipoc.inputs6 || data.sipoc.process6 || 
-            data.sipoc.outputs6 || data.sipoc.customers6) {
-          rowsToShow = 6;
-        }
-        
-        // Check if there's data in row 7
-        if (data.sipoc.suppliers7 || data.sipoc.inputs7 || data.sipoc.process7 || 
-            data.sipoc.outputs7 || data.sipoc.customers7) {
-          rowsToShow = 7;
-        }
-        
-        // Update the visible rows state
-        setVisibleSipocRows(rowsToShow);
+        console.log(`Setting visible SIPOC rows to ${maxRow}`);
+        setVisibleSipocRows(maxRow);
       }
     },
   });
