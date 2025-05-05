@@ -1372,6 +1372,26 @@ export default function DefinePhase() {
     console.log("Process name in form submit:", data.processName);
     console.log("Current value in form:", sipocForm.getValues("processName"));
     
+    // Ensure processName is included in the data
+    if (data.processName === undefined || data.processName === null || data.processName === "") {
+      // Try to get it directly from the form
+      const processNameValue = sipocForm.getValues("processName");
+      console.log("Trying to recover processName from form:", processNameValue);
+      
+      if (processNameValue) {
+        data.processName = processNameValue;
+      } else {
+        // As a fallback, use the default process name from the sipoc data
+        const defaultName = sipoc?.sipoc?.processName || "Untitled Process";
+        console.log("Using fallback processName:", defaultName);
+        data.processName = defaultName;
+      }
+    }
+    
+    // Final log before submission
+    console.log("Final SIPOC data being submitted:", data);
+    console.log("Final process name being submitted:", data.processName);
+    
     saveSipocMutation.mutate(data);
   };
 
