@@ -209,15 +209,45 @@ export default function MeasurePhase() {
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
-      <Card className="mb-4 max-w-2xl ml-0">
-        <CardContent className="pt-6">
-          <MilestoneTimeline 
-            startDate={milestoneDates.definePhaseDate}
-            endDate={milestoneDates.measurePhaseDate}
-            label="Measure Phase Milestone"
-          />
-        </CardContent>
-      </Card>
+      <div className="mb-4 flex gap-4">
+        <Card className="w-1/2">
+          <CardContent className="pt-6">
+            <MilestoneTimeline 
+              startDate={milestoneDates.definePhaseDate}
+              endDate={milestoneDates.measurePhaseDate}
+              label="Measure Phase Milestone"
+            />
+          </CardContent>
+        </Card>
+        <Card className="w-1/2">
+          <CardHeader>
+            <CardTitle>Measure Phase Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Start Date:</span>
+                <span className="text-sm">{formatDate(milestoneDates.definePhaseDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Target Completion:</span>
+                <span className="text-sm">{formatDate(milestoneDates.measurePhaseDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Key Documents:</span>
+                <span className="text-sm">Data Collection Plans, Process Capability</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Status:</span>
+                <span className="text-sm flex items-center">
+                  <span className="h-2 w-2 rounded-full bg-yellow-500 mr-2"></span>
+                  Planned
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       
       {/* Data Collection Plan */}
       <Card>
