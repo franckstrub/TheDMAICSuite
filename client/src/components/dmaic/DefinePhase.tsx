@@ -1484,7 +1484,7 @@ export default function DefinePhase() {
   const addRequirement = () => {
     const lastReq = requirements[requirements.length - 1];
     if (lastReq.requirement.trim() !== "" || lastReq.customerRequirement.trim() !== "") {
-      setRequirements([...requirements, { requirement: "", customerRequirement: "", importance: 3, satisfaction: 3 }]);
+      setRequirements([...requirements, { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }]);
     }
   };
 
@@ -1494,9 +1494,17 @@ export default function DefinePhase() {
     setRequirements(newRequirements);
   };
 
-  const calculateGap = (importance: number, ctqValue: number) => {
+  const calculateGap = (importance: number, ctqValue: string | number) => {
+    // If ctqValue is a string and not a number, return 0 as gap can't be calculated
+    if (typeof ctqValue === 'string' && isNaN(Number(ctqValue))) {
+      return 0;
+    }
+    
+    // Convert ctqValue to number if it's a numeric string
+    const ctqNumber = typeof ctqValue === 'string' ? Number(ctqValue) : ctqValue;
+    
     // Calculate gap between importance and CTQ (previously "satisfaction")
-    return importance - ctqValue;
+    return importance - ctqNumber;
   };
 
   // These flags prevent multiple PDF export operations from running simultaneously
@@ -3720,20 +3728,29 @@ export default function DefinePhase() {
                       </select>
                     </td>
                     <td className="px-4 py-2">
-                      <select
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        value={req.satisfaction}
-                        onChange={(e) => updateRequirement(index, "satisfaction", parseInt(e.target.value))}
-                        title="Critical to Quality (CTQ) rating (1-5)"
-                      >
-                        {[1, 2, 3, 4, 5].map((val) => (
-                          <option key={val} value={val}>{val}</option>
-                        ))}
-                      </select>
+                      <Input
+                        type="text"
+                        value={req.satisfaction ? req.satisfaction.toString() : ""}
+                        onChange={(e) => {
+                          // Allow empty string or convert to number for backward compatibility
+                          const value = e.target.value === "" ? 0 : e.target.value;
+                          updateRequirement(index, "satisfaction", value);
+                        }}
+                        placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
+                        title="Critical to Quality (CTQ) specification"
+                      />
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${calculateGap(req.importance, req.satisfaction) > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}`}>
-                        {calculateGap(req.importance, req.satisfaction)}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        typeof req.satisfaction === 'string' && isNaN(Number(req.satisfaction)) 
+                          ? "bg-gray-100 text-gray-400" 
+                          : calculateGap(req.importance, req.satisfaction) > 0 
+                            ? "bg-red-100 text-red-800" 
+                            : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {typeof req.satisfaction === 'string' && isNaN(Number(req.satisfaction)) 
+                          ? "N/A" 
+                          : calculateGap(req.importance, req.satisfaction)}
                       </span>
                     </td>
                     <td className="px-4 py-2">
