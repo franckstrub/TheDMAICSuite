@@ -476,9 +476,9 @@ export default function DefinePhase() {
 
   // Customer Requirements state
   const [requirements, setRequirements] = useState([
-    { requirement: "Fast delivery", importance: 4, satisfaction: 2 },
-    { requirement: "Order accuracy", importance: 5, satisfaction: 3 },
-    { requirement: "", importance: 3, satisfaction: 3 },
+    { requirement: "Fast delivery", customerRequirement: "Delivery within 24 hours", importance: 4, satisfaction: 2 },
+    { requirement: "Order accuracy", customerRequirement: "100% accurate order fulfillment", importance: 5, satisfaction: 3 },
+    { requirement: "", customerRequirement: "", importance: 3, satisfaction: 3 },
   ]);
   
   // FTE calculation state
@@ -1148,6 +1148,7 @@ export default function DefinePhase() {
         const payload = {
           projectId,
           requirement: r.requirement,
+          customerRequirement: r.customerRequirement || "",
           importance: r.importance,
           satisfaction: r.satisfaction,
           userId: user?.id,
@@ -3678,6 +3679,7 @@ export default function DefinePhase() {
               <thead>
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Need</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Requirement</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importance (1-5)</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Satisfaction (1-5)</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gap</th>
@@ -3693,6 +3695,14 @@ export default function DefinePhase() {
                         value={req.requirement}
                         onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
                         placeholder={index === requirements.length - 1 ? "Add new requirement..." : ""}
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <Input
+                        type="text"
+                        value={req.customerRequirement}
+                        onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
+                        placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
                       />
                     </td>
                     <td className="px-4 py-2">
