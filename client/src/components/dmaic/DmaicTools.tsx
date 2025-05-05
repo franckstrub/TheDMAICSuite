@@ -124,7 +124,7 @@ export default function DmaicTools() {
             {currentProject?.startDate && currentProject?.targetEndDate && (
               <div className="flex flex-col md:ml-4">
                 <div className="flex items-start gap-2">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm">
                     <div className="flex items-center">
                       <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
                         <div 
@@ -148,11 +148,13 @@ export default function DmaicTools() {
             {/* DMAIC Progress Visualization - Moved here from below */}
             {currentProject && (
               <div className="md:ml-4" style={{ width: "40%" }}>
-                <DmaicProgressSteps 
-                  project={currentProject}
-                  overallProgress={currentProject.progress || 0}
-                  className="scale-90 transform origin-center"
-                />
+                <div className="p-2 border border-gray-200 rounded-md shadow-sm">
+                  <DmaicProgressSteps 
+                    project={currentProject}
+                    overallProgress={currentProject.progress || 0}
+                    className="scale-90 transform origin-center"
+                  />
+                </div>
               </div>
             )}
           </div>
