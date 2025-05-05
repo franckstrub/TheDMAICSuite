@@ -3333,7 +3333,7 @@ export default function DefinePhase() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                 onClick={() => deleteSipocRow(2)}
                 title="Delete Row 2"
                 disabled={visibleSipocRows <= 1}
@@ -3388,7 +3388,7 @@ export default function DefinePhase() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                 onClick={() => deleteSipocRow(3)}
                 title="Delete Row 3"
                 disabled={visibleSipocRows <= 2}
@@ -3444,7 +3444,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(4)}
                   title="Delete Row 4"
                 >
@@ -3500,7 +3500,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(5)}
                   title="Delete Row 5"
                 >
@@ -3556,7 +3556,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(6)}
                   title="Delete Row 6"
                 >
@@ -3612,7 +3612,7 @@ export default function DefinePhase() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute -right-10 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                   onClick={() => deleteSipocRow(7)}
                   title="Delete Row 7"
                 >
