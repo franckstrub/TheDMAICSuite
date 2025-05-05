@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle } from "lucide-react";
+import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle, MinusCircle } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
@@ -3338,7 +3338,7 @@ export default function DefinePhase() {
                 title="Delete Row 2"
                 disabled={visibleSipocRows <= 1}
               >
-                <Trash2 className="h-4 w-4" />
+                <MinusCircle className="h-4 w-4" />
               </Button>
             </div>
             
@@ -3393,7 +3393,7 @@ export default function DefinePhase() {
                 title="Delete Row 3"
                 disabled={visibleSipocRows <= 2}
               >
-                <Trash2 className="h-4 w-4" />
+                <MinusCircle className="h-4 w-4" />
               </Button>
             </div>
             
@@ -3448,7 +3448,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(4)}
                   title="Delete Row 4"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <MinusCircle className="h-4 w-4" />
                 </Button>
               </div>
             )}
@@ -3504,7 +3504,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(5)}
                   title="Delete Row 5"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <MinusCircle className="h-4 w-4" />
                 </Button>
               </div>
             )}
@@ -3560,7 +3560,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(6)}
                   title="Delete Row 6"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <MinusCircle className="h-4 w-4" />
                 </Button>
               </div>
             )}
@@ -3616,7 +3616,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(7)}
                   title="Delete Row 7"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <MinusCircle className="h-4 w-4" />
                 </Button>
               </div>
             )}
