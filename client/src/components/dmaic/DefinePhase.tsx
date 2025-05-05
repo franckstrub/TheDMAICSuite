@@ -1482,7 +1482,8 @@ export default function DefinePhase() {
   };
 
   const addRequirement = () => {
-    if (requirements[requirements.length - 1].requirement.trim() !== "") {
+    const lastReq = requirements[requirements.length - 1];
+    if (lastReq.requirement.trim() !== "" || lastReq.customerRequirement.trim() !== "") {
       setRequirements([...requirements, { requirement: "", customerRequirement: "", importance: 3, satisfaction: 3 }]);
     }
   };
@@ -3679,8 +3680,8 @@ export default function DefinePhase() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Need</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Requirement</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Need</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importance (1-5)</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Satisfaction (1-5)</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gap</th>
@@ -3693,17 +3694,17 @@ export default function DefinePhase() {
                     <td className="px-4 py-2">
                       <Input
                         type="text"
-                        value={req.requirement}
-                        onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
-                        placeholder={index === requirements.length - 1 ? "Add new requirement..." : ""}
+                        value={req.customerRequirement}
+                        onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
+                        placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
                       />
                     </td>
                     <td className="px-4 py-2">
                       <Input
                         type="text"
-                        value={req.customerRequirement}
-                        onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
-                        placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
+                        value={req.requirement}
+                        onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
+                        placeholder={index === requirements.length - 1 ? "Add new need..." : ""}
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -3734,7 +3735,7 @@ export default function DefinePhase() {
                       </span>
                     </td>
                     <td className="px-4 py-2">
-                      {index === requirements.length - 1 && req.requirement ? (
+                      {index === requirements.length - 1 && (req.requirement || req.customerRequirement) ? (
                         <Button variant="ghost" size="sm" onClick={addRequirement}>
                           <i className="fas fa-plus"></i>
                         </Button>
@@ -3757,7 +3758,7 @@ export default function DefinePhase() {
           <div className="mt-4">
             <Button 
               onClick={handleSaveRequirements}
-              disabled={saveRequirementsMutation.isPending || requirements.every(r => !r.requirement)}
+              disabled={saveRequirementsMutation.isPending || requirements.every(r => !r.requirement && !r.customerRequirement)}
             >
               {saveRequirementsMutation.isPending ? "Saving..." : "Save Customer Requirements"}
             </Button>
