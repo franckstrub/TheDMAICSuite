@@ -209,6 +209,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
 export const sipocDiagrams = pgTable("sipoc_diagrams", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
+  processName: text("process_name"),
   suppliers: text("suppliers"),
   inputs: text("inputs"),
   process: text("process"),
@@ -230,6 +231,7 @@ export const sipocDiagrams = pgTable("sipoc_diagrams", {
 
 export const insertSipocSchema = createInsertSchema(sipocDiagrams).pick({
   projectId: true,
+  processName: true,
   suppliers: true,
   inputs: true,
   process: true,
