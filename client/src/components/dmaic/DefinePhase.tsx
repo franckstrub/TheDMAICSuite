@@ -213,6 +213,17 @@ export default function DefinePhase() {
       process: "",
       outputs: "",
       customers: "",
+      // Additional rows
+      suppliers2: "",
+      inputs2: "",
+      process2: "",
+      outputs2: "",
+      customers2: "",
+      suppliers3: "",
+      inputs3: "",
+      process3: "",
+      outputs3: "",
+      customers3: "",
     },
   });
 
@@ -733,6 +744,17 @@ export default function DefinePhase() {
           process: data.sipoc.process || "",
           outputs: data.sipoc.outputs || "",
           customers: data.sipoc.customers || "",
+          // Additional rows
+          suppliers2: data.sipoc.suppliers2 || "",
+          inputs2: data.sipoc.inputs2 || "",
+          process2: data.sipoc.process2 || "",
+          outputs2: data.sipoc.outputs2 || "",
+          customers2: data.sipoc.customers2 || "",
+          suppliers3: data.sipoc.suppliers3 || "",
+          inputs3: data.sipoc.inputs3 || "",
+          process3: data.sipoc.process3 || "",
+          outputs3: data.sipoc.outputs3 || "",
+          customers3: data.sipoc.customers3 || "",
         });
       }
     },
@@ -2999,7 +3021,8 @@ export default function DefinePhase() {
               </div>
             </div>
             
-            <div className="grid grid-cols-5 gap-2">
+            {/* First row of SIPOC cards */}
+            <div className="grid grid-cols-5 gap-2 mb-2">
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3038,6 +3061,94 @@ export default function DefinePhase() {
                   rows={6}
                   placeholder="Who receives the outputs?"
                   {...sipocForm.register("customers")}
+                />
+              </div>
+            </div>
+            
+            {/* Second row of SIPOC cards */}
+            <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="border border-blue-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="Who provides inputs to the process?"
+                  {...sipocForm.register("suppliers2")}
+                />
+              </div>
+              <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What inputs are required for the process?"
+                  {...sipocForm.register("inputs2")}
+                />
+              </div>
+              <div className="border border-purple-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What are the steps in the process?"
+                  {...sipocForm.register("process2")}
+                />
+              </div>
+              <div className="border border-green-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What are the outputs of the process?"
+                  {...sipocForm.register("outputs2")}
+                />
+              </div>
+              <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="Who receives the outputs?"
+                  {...sipocForm.register("customers2")}
+                />
+              </div>
+            </div>
+            
+            {/* Third row of SIPOC cards */}
+            <div className="grid grid-cols-5 gap-2">
+              <div className="border border-blue-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="Who provides inputs to the process?"
+                  {...sipocForm.register("suppliers3")}
+                />
+              </div>
+              <div className="border border-indigo-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What inputs are required for the process?"
+                  {...sipocForm.register("inputs3")}
+                />
+              </div>
+              <div className="border border-purple-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What are the steps in the process?"
+                  {...sipocForm.register("process3")}
+                />
+              </div>
+              <div className="border border-green-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="What are the outputs of the process?"
+                  {...sipocForm.register("outputs3")}
+                />
+              </div>
+              <div className="border border-yellow-100 rounded-md p-2 bg-white">
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={6}
+                  placeholder="Who receives the outputs?"
+                  {...sipocForm.register("customers3")}
                 />
               </div>
             </div>

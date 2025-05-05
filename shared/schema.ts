@@ -214,6 +214,17 @@ export const sipocDiagrams = pgTable("sipoc_diagrams", {
   process: text("process"),
   outputs: text("outputs"),
   customers: text("customers"),
+  // Additional rows for SIPOC
+  suppliers2: text("suppliers2"),
+  inputs2: text("inputs2"),
+  process2: text("process2"),
+  outputs2: text("outputs2"),
+  customers2: text("customers2"),
+  suppliers3: text("suppliers3"),
+  inputs3: text("inputs3"),
+  process3: text("process3"),
+  outputs3: text("outputs3"),
+  customers3: text("customers3"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -224,6 +235,16 @@ export const insertSipocSchema = createInsertSchema(sipocDiagrams).pick({
   process: true,
   outputs: true,
   customers: true,
+  suppliers2: true,
+  inputs2: true,
+  process2: true,
+  outputs2: true,
+  customers2: true,
+  suppliers3: true,
+  inputs3: true,
+  process3: true,
+  outputs3: true,
+  customers3: true,
 });
 
 // Customer Requirements
