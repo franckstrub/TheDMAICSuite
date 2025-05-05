@@ -5,6 +5,17 @@ import { useAppContext } from "@/store/AppContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+// Helper function for formatting dates
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return "Not set";
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+};
 import {
   Card,
   CardContent,
