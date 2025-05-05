@@ -895,18 +895,8 @@ export default function DefinePhase() {
       if (data?.sipoc) {
         console.log("Loaded SIPOC data:", data.sipoc);
         
-        // Log form data loaded from API
-        console.log("Loading SIPOC data from API:", {
-          processName: data.sipoc.processName,
-          suppliers4: data.sipoc.suppliers4,
-          inputs4: data.sipoc.inputs4,
-          process4: data.sipoc.process4,
-          outputs4: data.sipoc.outputs4,
-          customers4: data.sipoc.customers4,
-        });
-        
-        // Set default visible rows to match data
-        const formValues = {
+        // Set form values
+        sipocForm.reset({
           processName: data.sipoc.processName || "",
           suppliers: data.sipoc.suppliers || "",
           inputs: data.sipoc.inputs || "",
@@ -946,53 +936,37 @@ export default function DefinePhase() {
           process7: data.sipoc.process7 || "",
           outputs7: data.sipoc.outputs7 || "",
           customers7: data.sipoc.customers7 || "",
-        };
-        
-        // Reset form with values
-        sipocForm.reset(formValues);
-        
-        // Force update the form values as a backup method
-        Object.keys(formValues).forEach(field => {
-          sipocForm.setValue(field as any, formValues[field as keyof typeof formValues]);
         });
         
         // Determine how many rows to show based on the data
-        let maxRow = 3; // Default is 3 rows
+        let rowsToShow = 3; // Default is 3 rows
         
-        // Function to check if any field in a row has content
-        const hasContent = (rowNum: number) => {
-          console.log(`Checking content in row ${rowNum}:`, {
-            suppliers: data.sipoc[`suppliers${rowNum}`],
-            inputs: data.sipoc[`inputs${rowNum}`],
-            process: data.sipoc[`process${rowNum}`],
-            outputs: data.sipoc[`outputs${rowNum}`],
-            customers: data.sipoc[`customers${rowNum}`]
-          });
-          
-          const rowFields = [
-            data.sipoc[`suppliers${rowNum}`], 
-            data.sipoc[`inputs${rowNum}`], 
-            data.sipoc[`process${rowNum}`],
-            data.sipoc[`outputs${rowNum}`], 
-            data.sipoc[`customers${rowNum}`]
-          ];
-          const hasValue = rowFields.some(field => field && field.trim() !== "");
-          console.log(`Row ${rowNum} has content: ${hasValue}`);
-          return hasValue;
-        };
-        
-        // Check rows 4-7 for content
-        for (let i = 4; i <= 7; i++) {
-          if (hasContent(i)) {
-            maxRow = i;
-          }
+        // Check if there's data in row 4
+        if (data.sipoc.suppliers4 || data.sipoc.inputs4 || data.sipoc.process4 || 
+            data.sipoc.outputs4 || data.sipoc.customers4) {
+          rowsToShow = 4;
         }
         
-        console.log(`Setting visible SIPOC rows to ${maxRow}`);
-        // Force at least 4 rows for debugging
-        maxRow = Math.max(maxRow, 4);
-        console.log(`Final number of rows: ${maxRow}`);
-        setVisibleSipocRows(maxRow);
+        // Check if there's data in row 5
+        if (data.sipoc.suppliers5 || data.sipoc.inputs5 || data.sipoc.process5 || 
+            data.sipoc.outputs5 || data.sipoc.customers5) {
+          rowsToShow = 5;
+        }
+        
+        // Check if there's data in row 6
+        if (data.sipoc.suppliers6 || data.sipoc.inputs6 || data.sipoc.process6 || 
+            data.sipoc.outputs6 || data.sipoc.customers6) {
+          rowsToShow = 6;
+        }
+        
+        // Check if there's data in row 7
+        if (data.sipoc.suppliers7 || data.sipoc.inputs7 || data.sipoc.process7 || 
+            data.sipoc.outputs7 || data.sipoc.customers7) {
+          rowsToShow = 7;
+        }
+        
+        // Update the visible rows state
+        setVisibleSipocRows(rowsToShow);
       }
     },
   });
@@ -3403,226 +3377,229 @@ export default function DefinePhase() {
 
             </div>
             
-            {/* Fourth row of SIPOC cards (always rendered now for testing) */}
-            <div className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who provides inputs to the process?"
-                  {...sipocForm.register("suppliers4")}
-                />
-                <div className="text-xs text-blue-500 mt-1">Current value: {sipocForm.getValues().suppliers4}</div>
+            {/* Fourth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 4 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers4")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs4")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process4")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs4")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers4")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(4)}
+                  title="Delete Row 4"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What inputs are required for the process?"
-                  {...sipocForm.register("inputs4")}
-                />
-                <div className="text-xs text-indigo-500 mt-1">Current value: {sipocForm.getValues().inputs4}</div>
-              </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the steps in the process?"
-                  {...sipocForm.register("process4")}
-                />
-                <div className="text-xs text-purple-500 mt-1">Current value: {sipocForm.getValues().process4}</div>
-              </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the outputs of the process?"
-                  {...sipocForm.register("outputs4")}
-                />
-                <div className="text-xs text-green-500 mt-1">Current value: {sipocForm.getValues().outputs4}</div>
-              </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who receives the outputs?"
-                  {...sipocForm.register("customers4")}
-                />
-                <div className="text-xs text-yellow-500 mt-1">Current value: {sipocForm.getValues().customers4}</div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => deleteSipocRow(4)}
-                title="Delete Row 4"
-              >
-                <MinusCircle className="h-4 w-4" />
-              </Button>
-            </div>
+            )}
             
-            {/* Fifth row of SIPOC cards (always rendered now for testing) */}
-            <div className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who provides inputs to the process?"
-                  {...sipocForm.register("suppliers5")}
-                />
+            {/* Fifth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 5 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers5")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs5")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process5")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs5")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers5")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(5)}
+                  title="Delete Row 5"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What inputs are required for the process?"
-                  {...sipocForm.register("inputs5")}
-                />
-              </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the steps in the process?"
-                  {...sipocForm.register("process5")}
-                />
-              </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the outputs of the process?"
-                  {...sipocForm.register("outputs5")}
-                />
-              </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who receives the outputs?"
-                  {...sipocForm.register("customers5")}
-                />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => deleteSipocRow(5)}
-                title="Delete Row 5"
-              >
-                <MinusCircle className="h-4 w-4" />
-              </Button>
-            </div>
+            )}
             
-            {/* Sixth row of SIPOC cards (always rendered now for testing) */}
-            <div className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who provides inputs to the process?"
-                  {...sipocForm.register("suppliers6")}
-                />
+            {/* Sixth row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 6 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers6")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs6")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process6")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs6")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers6")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(6)}
+                  title="Delete Row 6"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What inputs are required for the process?"
-                  {...sipocForm.register("inputs6")}
-                />
-              </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the steps in the process?"
-                  {...sipocForm.register("process6")}
-                />
-              </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the outputs of the process?"
-                  {...sipocForm.register("outputs6")}
-                />
-              </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who receives the outputs?"
-                  {...sipocForm.register("customers6")}
-                />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => deleteSipocRow(6)}
-                title="Delete Row 6"
-              >
-                <MinusCircle className="h-4 w-4" />
-              </Button>
-            </div>
+            )}
             
-            {/* Seventh row of SIPOC cards (always rendered now for testing) */}
-            <div className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who provides inputs to the process?"
-                  {...sipocForm.register("suppliers7")}
-                />
+            {/* Seventh row of SIPOC cards (conditionally rendered) */}
+            {visibleSipocRows >= 7 && (
+              <div className="grid grid-cols-5 gap-2 mb-2 relative">
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who provides inputs to the process?"
+                    {...sipocForm.register("suppliers7")}
+                  />
+                </div>
+                <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What inputs are required for the process?"
+                    {...sipocForm.register("inputs7")}
+                  />
+                </div>
+                <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the steps in the process?"
+                    {...sipocForm.register("process7")}
+                  />
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="What are the outputs of the process?"
+                    {...sipocForm.register("outputs7")}
+                  />
+                </div>
+                <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={3}
+                    placeholder="Who receives the outputs?"
+                    {...sipocForm.register("customers7")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteSipocRow(7)}
+                  title="Delete Row 7"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What inputs are required for the process?"
-                  {...sipocForm.register("inputs7")}
-                />
-              </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the steps in the process?"
-                  {...sipocForm.register("process7")}
-                />
-              </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="What are the outputs of the process?"
-                  {...sipocForm.register("outputs7")}
-                />
-              </div>
-              <div className="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="Who receives the outputs?"
-                  {...sipocForm.register("customers7")}
-                />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => deleteSipocRow(7)}
-                title="Delete Row 7"
-              >
-                <MinusCircle className="h-4 w-4" />
-              </Button>
-            </div>
+            )}
             
             {/* Add Row Button */}
             <div className="flex justify-start mt-2 mb-4">
