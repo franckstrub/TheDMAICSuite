@@ -1,20 +1,7 @@
 import { cn } from "@/lib/utils";
 
-export interface PhaseStatus {
-  status: "completed" | "in-progress" | "not-started";
-  progress: number;
-}
-
-export interface DmaicPhases {
-  define: PhaseStatus;
-  measure: PhaseStatus;
-  analyze: PhaseStatus;
-  improve: PhaseStatus;
-  control: PhaseStatus;
-}
-
 interface DmaicProgressStepsProps {
-  phases: DmaicPhases;
+  project: any;
   overallProgress: number;
   className?: string;
 }
@@ -22,7 +9,38 @@ interface DmaicProgressStepsProps {
 /**
  * A component that displays DMAIC progress as a series of connected steps
  */
-export default function DmaicProgressSteps({ phases, overallProgress, className }: DmaicProgressStepsProps) {
+export default function DmaicProgressSteps({ project, overallProgress, className }: DmaicProgressStepsProps) {
+  // Get the current phase (handle case sensitivity and null values)
+  const currentPhase = project?.currentPhase ? project.currentPhase.toLowerCase() : 'define';
+  
+  // Helper function to determine if a phase is complete, in progress, or not started
+  const getPhaseStatus = (phaseName: string): 'completed' | 'in-progress' | 'not-started' => {
+    const phaseOrder = ['define', 'measure', 'analyze', 'improve', 'control'];
+    const currentPhaseIndex = phaseOrder.indexOf(currentPhase);
+    const phaseIndex = phaseOrder.indexOf(phaseName.toLowerCase());
+    
+    if (phaseIndex < currentPhaseIndex) {
+      return 'completed';
+    } else if (phaseIndex === currentPhaseIndex) {
+      return 'in-progress';
+    } else {
+      return 'not-started';
+    }
+  };
+  
+  // Calculate phase progress percentage
+  const calculatePhaseProgress = (phaseName: string): number => {
+    if (getPhaseStatus(phaseName) === 'completed') {
+      return 100;
+    } else if (getPhaseStatus(phaseName) === 'in-progress') {
+      // For the current phase, we'll use the overall progress
+      // Assuming that overall progress is from 0-100 and reflects the completion of the current phase
+      return Math.min(100, Math.max(0, overallProgress * 5));  // x5 to scale from overall to phase-specific
+    } else {
+      return 0;
+    }
+  };
+  
   // Helper function to determine the color for each phase based on its status
   const getPhaseColor = (status: string): string => {
     switch (status) {
@@ -43,6 +61,19 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
     }
   };
   
+  // Get status for each phase
+  const defineStatus = getPhaseStatus('define');
+  const measureStatus = getPhaseStatus('measure');
+  const analyzeStatus = getPhaseStatus('analyze');
+  const improveStatus = getPhaseStatus('improve');
+  const controlStatus = getPhaseStatus('control');
+  
+  // Calculate progress for each phase
+  const defineProgress = calculatePhaseProgress('define');
+  const measureProgress = calculatePhaseProgress('measure');
+  const analyzeProgress = calculatePhaseProgress('analyze');
+  const improveProgress = calculatePhaseProgress('improve');
+  
   return (
     <div className={cn("w-full", className)}>
       <div className="flex justify-between w-full mb-2">
@@ -50,8 +81,8 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center font-bold",
-            getPhaseTextColor(phases.define.status),
-            getPhaseColor(phases.define.status)
+            getPhaseTextColor(defineStatus),
+            getPhaseColor(defineStatus)
           )}>
             D
           </div>
@@ -61,11 +92,11 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         {/* Connection between Define and Measure */}
         <div className="flex-grow mx-1 flex items-center">
           <div className="h-1 w-full bg-gray-200 relative">
-            {phases.define.status === "completed" && (
+            {defineStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
-            {phases.define.status === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${phases.define.progress}%` }}></div>
+            {defineStatus === "in-progress" && (
+              <div className="absolute inset-0 bg-blue-500" style={{ width: `${defineProgress}%` }}></div>
             )}
           </div>
         </div>
@@ -74,8 +105,8 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center font-bold",
-            getPhaseTextColor(phases.measure.status),
-            getPhaseColor(phases.measure.status)
+            getPhaseTextColor(measureStatus),
+            getPhaseColor(measureStatus)
           )}>
             M
           </div>
@@ -85,11 +116,11 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         {/* Connection between Measure and Analyze */}
         <div className="flex-grow mx-1 flex items-center">
           <div className="h-1 w-full bg-gray-200 relative">
-            {phases.measure.status === "completed" && (
+            {measureStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
-            {phases.measure.status === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${phases.measure.progress}%` }}></div>
+            {measureStatus === "in-progress" && (
+              <div className="absolute inset-0 bg-blue-500" style={{ width: `${measureProgress}%` }}></div>
             )}
           </div>
         </div>
@@ -98,8 +129,8 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center font-bold",
-            getPhaseTextColor(phases.analyze.status),
-            getPhaseColor(phases.analyze.status)
+            getPhaseTextColor(analyzeStatus),
+            getPhaseColor(analyzeStatus)
           )}>
             A
           </div>
@@ -109,11 +140,11 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         {/* Connection between Analyze and Improve */}
         <div className="flex-grow mx-1 flex items-center">
           <div className="h-1 w-full bg-gray-200 relative">
-            {phases.analyze.status === "completed" && (
+            {analyzeStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
-            {phases.analyze.status === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${phases.analyze.progress}%` }}></div>
+            {analyzeStatus === "in-progress" && (
+              <div className="absolute inset-0 bg-blue-500" style={{ width: `${analyzeProgress}%` }}></div>
             )}
           </div>
         </div>
@@ -122,8 +153,8 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center font-bold",
-            getPhaseTextColor(phases.improve.status),
-            getPhaseColor(phases.improve.status)
+            getPhaseTextColor(improveStatus),
+            getPhaseColor(improveStatus)
           )}>
             I
           </div>
@@ -133,11 +164,11 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         {/* Connection between Improve and Control */}
         <div className="flex-grow mx-1 flex items-center">
           <div className="h-1 w-full bg-gray-200 relative">
-            {phases.improve.status === "completed" && (
+            {improveStatus === "completed" && (
               <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
             )}
-            {phases.improve.status === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${phases.improve.progress}%` }}></div>
+            {improveStatus === "in-progress" && (
+              <div className="absolute inset-0 bg-blue-500" style={{ width: `${improveProgress}%` }}></div>
             )}
           </div>
         </div>
@@ -146,8 +177,8 @@ export default function DmaicProgressSteps({ phases, overallProgress, className 
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center font-bold",
-            getPhaseTextColor(phases.control.status),
-            getPhaseColor(phases.control.status)
+            getPhaseTextColor(controlStatus),
+            getPhaseColor(controlStatus)
           )}>
             C
           </div>
