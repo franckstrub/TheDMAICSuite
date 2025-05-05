@@ -2999,7 +2999,7 @@ export default function DefinePhase() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            Identify the Suppliers, Inputs, Process, Outputs, and Customers involved in the project.
+            A SIPOC is a high-level (helicopter view) process map. It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
           </p>
           
           <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
