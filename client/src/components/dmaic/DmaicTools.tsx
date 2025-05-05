@@ -8,7 +8,12 @@ import MeasurePhase from "./MeasurePhase";
 import AnalyzePhase from "./AnalyzePhase";
 import ImprovePhase from "./ImprovePhase";
 import ControlPhase from "./ControlPhase";
-import { cn, getProjectTypeColor } from "@/lib/utils";
+import { 
+  cn, 
+  getProjectTypeColor, 
+  calculateTimelineProgress, 
+  getTimelineColor 
+} from "@/lib/utils";
 
 type PhaseParams = {
   phase?: string;
@@ -26,10 +31,11 @@ export default function DmaicTools() {
 
   // Ensure we have the correct project loaded
   useEffect(() => {
-    if (projectsData?.projects && params.projectId) {
+    if (projectsData && 'projects' in projectsData && params.projectId) {
       const projectId = parseInt(params.projectId);
       // Find the project with the matching ID
-      const project = projectsData.projects.find(p => p.id === projectId);
+      const projects = projectsData.projects as any[];
+      const project = projects.find((p: any) => p.id === projectId);
       if (project && (!currentProject || currentProject.id !== projectId)) {
         console.log(`Setting current project to ID ${projectId} (${project.title})`);
         setCurrentProject(project);
@@ -73,15 +79,33 @@ export default function DmaicTools() {
     <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            {currentProject?.title ? (
-              <>
-                <span className="text-primary">{currentProject.title}</span> - DMAIC
-              </>
-            ) : (
-              "DMAIC Methodology"
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {currentProject?.title ? (
+                <>
+                  <span className="text-primary">{currentProject.title}</span> - DMAIC
+                </>
+              ) : (
+                "DMAIC Methodology"
+              )}
+            </h1>
+            
+            {/* Project Timeline */}
+            {currentProject?.startDate && currentProject?.targetEndDate && (
+              <div className="flex items-center gap-2 md:ml-4">
+                <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                  <div 
+                    className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
+                    style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
+                </span>
+              </div>
             )}
-          </h1>
+          </div>
+          
           <p className="mt-1 text-sm text-gray-500">
             {activePhase.charAt(0).toUpperCase() + activePhase.slice(1)} Phase Tools & Techniques
             {currentProject?.projectType && (
