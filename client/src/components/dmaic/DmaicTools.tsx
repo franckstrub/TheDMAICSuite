@@ -80,59 +80,76 @@ export default function DmaicTools() {
 
   return (
     <div className="py-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-      <div className="flex justify-between items-center mb-2">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          {currentProject?.title ? (
-            <>
-              <span className="text-primary">{currentProject.title}</span> - DMAIC
-            </>
-          ) : (
-            "DMAIC Methodology"
-          )}
-        </h1>
-        
-        <Button 
-          variant="ghost" 
-          className="text-primary hover:text-primary-dark flex items-center text-sm"
-          onClick={() => {
-            setCurrentTab("projects");
-            navigate("/app/projects");
-          }}
-        >
-          <i className="fas fa-arrow-left mr-1"></i> Back to Projects
-        </Button>
-      </div>
-      
-      {/* Project Type Badge and Phase Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-        <p className="text-sm text-gray-500">
-          {activePhase.charAt(0).toUpperCase() + activePhase.slice(1)} Phase Tools & Techniques
-          {currentProject?.projectType && (
-            <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getProjectTypeColor(currentProject.projectType)}`}>
-              {currentProject.projectType}
-            </span>
-          )}
-        </p>
-        
-        {/* Project Timeline */}
-        {currentProject?.startDate && currentProject?.targetEndDate && (
-          <div className="flex items-center gap-2 mt-2 sm:mt-0">
-            <div className="w-20 md:w-28 bg-gray-200 rounded-full h-1.5 flex-shrink-0">
-              <div 
-                className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-1.5 rounded-full`} 
-                style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
-              ></div>
-            </div>
-            <span className="text-xs text-gray-500 whitespace-nowrap">
-              {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
-            </span>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <div>
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {currentProject?.title ? (
+                <>
+                  <span className="text-primary">{currentProject.title}</span> - DMAIC
+                </>
+              ) : (
+                "DMAIC Methodology"
+              )}
+            </h1>
+            
+            {/* Project Timeline */}
+            {currentProject?.startDate && currentProject?.targetEndDate && (
+              <div className="flex items-center gap-2 md:ml-4">
+                <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                  <div 
+                    className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
+                    style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
+                </span>
+              </div>
+            )}
+            
+            {/* Project Progress */}
+            {currentProject?.progress !== undefined && (
+              <div className="flex items-center gap-2 md:ml-4">
+                <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                  <div 
+                    className={`${getProgressColor(currentProject.progress)} h-2 rounded-full`} 
+                    style={{ width: `${currentProject.progress}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {currentProject.progress}% Complete
+                </span>
+              </div>
+            )}
           </div>
-        )}
+          
+          <p className="mt-1 text-sm text-gray-500">
+            {activePhase.charAt(0).toUpperCase() + activePhase.slice(1)} Phase Tools & Techniques
+            {currentProject?.projectType && (
+              <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getProjectTypeColor(currentProject.projectType)}`}>
+                {currentProject.projectType}
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0">
+          <Button 
+            variant="ghost" 
+            className="text-primary hover:text-primary-dark flex items-center"
+            onClick={() => {
+              setCurrentTab("projects");
+              navigate("/app/projects");
+            }}
+          >
+            <i className="fas fa-arrow-left mr-1"></i> Back to Projects
+          </Button>
+        </div>
       </div>
       
       {/* DMAIC Milestone Progress */}
       {currentProject && (
-        <div className="mb-6 border-t border-b py-3">
+        <div className="mb-6 mt-2 border-t border-b py-4">
           <DmaicProgressSteps 
             project={currentProject}
             overallProgress={currentProject.progress || 0}
