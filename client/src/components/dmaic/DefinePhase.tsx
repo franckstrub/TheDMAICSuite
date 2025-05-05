@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X, ChevronUp, ChevronDown, Download } from "lucide-react";
+import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
@@ -3122,7 +3122,7 @@ export default function DefinePhase() {
             </div>
             
             {/* Third row of SIPOC cards */}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-2 mb-2">
               <div className="border border-blue-100 rounded-md p-2 bg-white">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
@@ -3163,6 +3163,26 @@ export default function DefinePhase() {
                   {...sipocForm.register("customers3")}
                 />
               </div>
+            </div>
+            
+            {/* Add Row Button */}
+            <div className="flex justify-center mt-2 mb-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                className="flex items-center"
+                onClick={() => {
+                  // This would be implemented to add additional rows
+                  toast({
+                    title: "Feature coming soon",
+                    description: "Adding more rows will be available in the next update",
+                  });
+                }}
+              >
+                <PlusCircle className="mr-1 h-4 w-4" />
+                Add Row
+              </Button>
             </div>
             
             <div className="mt-4">
