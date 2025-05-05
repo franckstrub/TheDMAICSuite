@@ -297,7 +297,7 @@ export const customerRequirements = pgTable("customer_requirements", {
   requirement: text("requirement").notNull(),
   customerRequirement: text("customer_requirement"),
   importance: integer("importance").notNull(),
-  satisfaction: integer("satisfaction").notNull(),
+  satisfaction: text("satisfaction").notNull().default(""), // Changed from integer to text for CTQ
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
