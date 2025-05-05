@@ -894,8 +894,12 @@ export default function DefinePhase() {
     onSuccess: (data) => {
       if (data?.sipoc) {
         console.log("Loaded SIPOC data:", data.sipoc);
+        console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
         
-        // Set form values
+        // Set form values and log for debugging
+        console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
+        
+        // Set the form values directly
         sipocForm.reset({
           processName: data.sipoc.processName || "",
           suppliers: data.sipoc.suppliers || "",
@@ -1357,6 +1361,10 @@ export default function DefinePhase() {
   };
 
   const handleSaveSipoc = (data: any) => {
+    console.log("handleSaveSipoc called with data:", data);
+    console.log("Process name in form submit:", data.processName);
+    console.log("Current value in form:", sipocForm.getValues("processName"));
+    
     saveSipocMutation.mutate(data);
   };
 
