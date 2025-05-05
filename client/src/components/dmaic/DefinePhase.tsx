@@ -3482,36 +3482,7 @@ export default function DefinePhase() {
       </Card>
 
       {/* SIPOC Diagram */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>SIPOC Diagram</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            A SIPOC is a high-level process map (helicopter view). It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
-          </p>
-          
-          {/* Add simplified SIPOC display that directly fetches and shows database values */}
-          <SimpleSipocDisplay />
-          
-          <form onSubmit={sipocForm.handleSubmit(handleSaveSipoc)}>
-            <div className="grid grid-cols-5 gap-2 mb-4">
-              <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
-                <h4 className="font-medium text-primary text-sm">Suppliers</h4>
-              </div>
-              <div className="p-3 bg-indigo-50 rounded-md text-center w-[95%]">
-                <h4 className="font-medium text-indigo-600 text-sm">Inputs</h4>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-md text-center w-[95%]">
-                <h4 className="font-medium text-purple-600 text-sm">Process</h4>
-              </div>
-              <div className="p-3 bg-green-50 rounded-md text-center w-[95%]">
-                <h4 className="font-medium text-green-600 text-sm">Outputs</h4>
-              </div>
-              <div className="p-3 bg-yellow-50 rounded-md text-center w-[95%]">
-                <h4 className="font-medium text-yellow-600 text-sm">Customers</h4>
-              </div>
-            </div>
+      <SimpleSipocDisplay />
             
             {/* First row of SIPOC cards */}
             <div className="grid grid-cols-5 gap-2 mb-2 relative">

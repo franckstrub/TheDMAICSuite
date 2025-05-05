@@ -1,41 +1,41 @@
 import React, { useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useParams } from 'wouter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 /**
  * A simplified SIPOC display component that uses direct DOM methods to display SIPOC data
  * This bypasses React state management issues for debugging
  */
-const SimpleSipocDisplay: React.FC = () => {
-  const params = useParams();
-  const projectId = params.id || "1";
+const SimpleSipocDisplay = () => {
+  const { projectId } = useParams<{ projectId: string }>();
   
   useEffect(() => {
-    // We'll use a direct fetch and DOM manipulation to display the data
-    // This helps debug issues with React state and rendering
     const fetchAndDisplaySipoc = async () => {
       try {
-        // Get the DOM container
-        const container = document.getElementById('simple-sipoc-container');
-        if (!container) return;
-        
-        // Clear any previous content
-        container.innerHTML = '<div class="text-center p-4">Loading SIPOC data...</div>';
-        
-        // Fetch the data directly
+        // Fetch the SIPOC data directly 
         const response = await fetch(`/api/projects/${projectId}/sipoc`);
-        const data = await response.json();
         
-        if (!data?.sipoc) {
-          container.innerHTML = '<div class="text-center p-4 text-red-500">No SIPOC data found</div>';
+        if (!response.ok) {
+          throw new Error(`Failed to fetch SIPOC data: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const sipoc = data.sipoc;
+        
+        if (!sipoc) {
+          throw new Error('No SIPOC data found');
+        }
+        
+        // Get the display container
+        const container = document.getElementById('simple-sipoc-container');
+        if (!container) {
+          console.error('Could not find the SIPOC display container');
           return;
         }
         
-        // Use the API response directly rather than React state
-        const sipoc = data.sipoc;
-        console.log("Direct SIPOC data from API:", sipoc);
-        
-        // Generate HTML for the SIPOC data
+        // Build HTML manually
         let html = `
           <div class="mb-4">
             <h3 class="text-lg font-medium mb-2">Process Name: <span class="text-blue-600">${sipoc.processName || "Not specified"}</span></h3>
@@ -183,7 +183,78 @@ const SimpleSipocDisplay: React.FC = () => {
           `;
         }
         
-        // Debug info removed as requested
+        // Row 6 (if it has data)
+        if (sipoc.suppliers6 || sipoc.inputs6 || sipoc.process6 || sipoc.outputs6 || sipoc.customers6) {
+          html += `
+            <div class="grid grid-cols-5 gap-2 mb-2 relative">
+              <div class="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.suppliers6 || ""}</div>
+              </div>
+              <div class="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.inputs6 || ""}</div>
+              </div>
+              <div class="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.process6 || ""}</div>
+              </div>
+              <div class="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.outputs6 || ""}</div>
+              </div>
+              <div class="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.customers6 || ""}</div>
+              </div>
+              <button 
+                type="button"
+                class="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full w-6 h-6 flex items-center justify-center"
+                title="Delete Row 6"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minus-circle"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+              </button>
+            </div>
+          `;
+        }
+        
+        // Row 7 (if it has data)
+        if (sipoc.suppliers7 || sipoc.inputs7 || sipoc.process7 || sipoc.outputs7 || sipoc.customers7) {
+          html += `
+            <div class="grid grid-cols-5 gap-2 mb-2 relative">
+              <div class="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.suppliers7 || ""}</div>
+              </div>
+              <div class="border border-indigo-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.inputs7 || ""}</div>
+              </div>
+              <div class="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.process7 || ""}</div>
+              </div>
+              <div class="border border-green-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.outputs7 || ""}</div>
+              </div>
+              <div class="border border-yellow-100 rounded-md p-2 bg-white w-[95%]">
+                <div class="p-2 min-h-[72px] whitespace-pre-wrap">${sipoc.customers7 || ""}</div>
+              </div>
+              <button 
+                type="button"
+                class="absolute right-[-15px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full w-6 h-6 flex items-center justify-center"
+                title="Delete Row 7"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minus-circle"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+              </button>
+            </div>
+          `;
+        }
+        
+        // Add Row button
+        html += `
+          <div class="mt-4">
+            <button
+              type="button"
+              class="flex items-center gap-1 px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-circle"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+              <span>Add Row</span>
+            </button>
+          </div>
+        `;
         
         // Update the container with our HTML
         container.innerHTML = html;
@@ -203,11 +274,11 @@ const SimpleSipocDisplay: React.FC = () => {
   return (
     <Card className="mt-4">
       <CardHeader>
-        <CardTitle>Current SIPOC Data</CardTitle>
+        <CardTitle>SIPOC Diagram</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
-          This view shows your saved SIPOC data. Any changes you make in the form below will update this display after saving.
+          A SIPOC is a high-level process map (helicopter view). It identifies a process's suppliers, inputs, outputs, and customers. The process described in a SIPOC is the one within the project scope. It is recommended to describe your SIPOC in a minimum of 3 and a maximum of 7 steps.
         </p>
         <div id="simple-sipoc-container" className="border p-4 rounded-md">
           <div className="text-center p-4">Loading SIPOC data...</div>
