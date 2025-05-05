@@ -424,6 +424,104 @@ export const insertProcessDataSchema = createInsertSchema(processData).pick({
   data: true,
 });
 
+// Project Risk Assessment
+export const projectRisks = pgTable("project_risks", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  
+  // First risk row (mandatory)
+  riskName: text("risk_name").notNull(),
+  probability: text("probability").notNull(),
+  impact: text("impact").notNull(),
+  riskCriticality: integer("risk_criticality").notNull(),
+  mitigationPlan: text("mitigation_plan"),
+  riskOwner: text("risk_owner"),
+  
+  // Optional additional risks (rows 2-6)
+  riskName2: text("risk_name2"),
+  probability2: text("probability2"),
+  impact2: text("impact2"),
+  riskCriticality2: integer("risk_criticality2"),
+  mitigationPlan2: text("mitigation_plan2"),
+  riskOwner2: text("risk_owner2"),
+  
+  riskName3: text("risk_name3"),
+  probability3: text("probability3"),
+  impact3: text("impact3"),
+  riskCriticality3: integer("risk_criticality3"),
+  mitigationPlan3: text("mitigation_plan3"),
+  riskOwner3: text("risk_owner3"),
+  
+  riskName4: text("risk_name4"),
+  probability4: text("probability4"),
+  impact4: text("impact4"),
+  riskCriticality4: integer("risk_criticality4"),
+  mitigationPlan4: text("mitigation_plan4"),
+  riskOwner4: text("risk_owner4"),
+  
+  riskName5: text("risk_name5"),
+  probability5: text("probability5"),
+  impact5: text("impact5"),
+  riskCriticality5: integer("risk_criticality5"),
+  mitigationPlan5: text("mitigation_plan5"),
+  riskOwner5: text("risk_owner5"),
+  
+  riskName6: text("risk_name6"),
+  probability6: text("probability6"),
+  impact6: text("impact6"),
+  riskCriticality6: integer("risk_criticality6"),
+  mitigationPlan6: text("mitigation_plan6"),
+  riskOwner6: text("risk_owner6"),
+  
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertRiskSchema = createInsertSchema(projectRisks).pick({
+  projectId: true,
+  
+  riskName: true,
+  probability: true,
+  impact: true,
+  riskCriticality: true,
+  mitigationPlan: true,
+  riskOwner: true,
+  
+  riskName2: true,
+  probability2: true,
+  impact2: true,
+  riskCriticality2: true,
+  mitigationPlan2: true,
+  riskOwner2: true,
+  
+  riskName3: true,
+  probability3: true,
+  impact3: true,
+  riskCriticality3: true,
+  mitigationPlan3: true,
+  riskOwner3: true,
+  
+  riskName4: true,
+  probability4: true,
+  impact4: true,
+  riskCriticality4: true,
+  mitigationPlan4: true,
+  riskOwner4: true,
+  
+  riskName5: true,
+  probability5: true,
+  impact5: true,
+  riskCriticality5: true,
+  mitigationPlan5: true,
+  riskOwner5: true,
+  
+  riskName6: true,
+  probability6: true,
+  impact6: true,
+  riskCriticality6: true,
+  mitigationPlan6: true,
+  riskOwner6: true,
+});
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -466,6 +564,9 @@ export type InsertLog = z.infer<typeof insertLogSchema>;
 
 export type ProcessData = typeof processData.$inferSelect;
 export type InsertProcessData = z.infer<typeof insertProcessDataSchema>;
+
+export type ProjectRisk = typeof projectRisks.$inferSelect;
+export type InsertRisk = z.infer<typeof insertRiskSchema>;
 
 // Define a SoftBenefit type for TypeScript usage
 export type SoftBenefit = {

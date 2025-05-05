@@ -4,14 +4,15 @@ import { storage } from "./storage";
 import { 
   insertUserSchema, insertProjectSchema, insertCharterSchema, 
   insertSipocSchema, insertRequirementSchema, insertDatasetSchema,
-  insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema
+  insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
+  insertRiskSchema
 } from "@shared/schema";
 import { 
   CustomerRequirement, DataCollectionPlan, Dataset, InsertCharter, 
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
-  InsertProject, InsertRequirement, InsertSipoc, InsertUser, 
-  Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter,
-  projects, projectCharters
+  InsertProject, InsertRequirement, InsertSipoc, InsertUser, InsertRisk,
+  Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
+  projects, projectCharters, projectRisks
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
