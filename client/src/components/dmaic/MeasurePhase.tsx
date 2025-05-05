@@ -19,7 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateCp, calculateCpk } from "@/lib/statisticsUtils";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import MilestoneTimeline from "./MilestoneTimeline";
-import { ProgressCursor } from "./ProgressCursor";
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
