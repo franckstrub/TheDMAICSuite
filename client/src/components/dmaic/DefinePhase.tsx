@@ -3689,11 +3689,11 @@ export default function DefinePhase() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Requirement</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Need</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importance (1-5)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Critical to Quality (CTQ)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800">Customer Requirement</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800">Customer Need</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800">Importance (1-5)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800">Critical to Quality (CTQ)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -3705,6 +3705,7 @@ export default function DefinePhase() {
                         value={req.customerRequirement}
                         onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
                         placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
+                        className="border-blue-200 focus:border-blue-500 bg-blue-50/50"
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -3713,11 +3714,12 @@ export default function DefinePhase() {
                         value={req.requirement}
                         onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
                         placeholder={index === requirements.length - 1 ? "Add new need..." : ""}
+                        className="border-emerald-200 focus:border-emerald-500 bg-emerald-50/50"
                       />
                     </td>
                     <td className="px-4 py-2">
                       <select
-                        className="w-full p-2 border border-gray-300 rounded-md"
+                        className="w-full p-2 border border-amber-200 rounded-md bg-amber-50/50 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50"
                         value={req.importance}
                         onChange={(e) => updateRequirement(index, "importance", parseInt(e.target.value))}
                       >
@@ -3737,6 +3739,7 @@ export default function DefinePhase() {
                         }}
                         placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
                         title="Critical to Quality (CTQ) specification"
+                        className="border-purple-200 focus:border-purple-500 bg-purple-50/50"
                       />
                     </td>
                     <td className="px-4 py-2">
