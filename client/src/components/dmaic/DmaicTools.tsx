@@ -108,7 +108,7 @@ export default function DmaicTools() {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="w-full">
-          <div className="flex flex-col md:flex-row md:items-start gap-2 md:gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
             <h1 className="text-2xl font-semibold text-gray-900">
               {currentProject?.title ? (
                 <>
@@ -120,11 +120,11 @@ export default function DmaicTools() {
               )}
             </h1>
             
-            <div className="flex flex-col md:flex-row md:items-center md:ml-4 md:gap-4">
-              {/* Project Timeline */}
-              {currentProject?.startDate && currentProject?.targetEndDate && (
-                <div className="mb-2 md:mb-0">
-                  <div className="border border-gray-200 rounded-md shadow-sm h-full" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "10px" }}>
+            {/* Project Timeline */}
+            {currentProject?.startDate && currentProject?.targetEndDate && (
+              <div className="flex flex-col md:ml-4">
+                <div className="flex items-start gap-2">
+                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm">
                     <div className="flex items-center">
                       <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
                         <div 
@@ -142,21 +142,21 @@ export default function DmaicTools() {
                     </div>
                   </div>
                 </div>
-              )}
-              
-              {/* DMAIC Progress Visualization */}
-              {currentProject && (
-                <div className="md:ml-0" style={{ width: "40%" }}>
-                  <div className="border border-gray-200 rounded-md shadow-sm p-2">
-                    <DmaicProgressSteps 
-                      project={currentProject}
-                      overallProgress={currentProject.progress || 0}
-                      className="scale-90 transform origin-center"
-                    />
-                  </div>
+              </div>
+            )}
+            
+            {/* DMAIC Progress Visualization - Moved here from below */}
+            {currentProject && (
+              <div className="md:ml-4" style={{ width: "40%" }}>
+                <div className="p-2 border border-gray-200 rounded-md shadow-sm">
+                  <DmaicProgressSteps 
+                    project={currentProject}
+                    overallProgress={currentProject.progress || 0}
+                    className="scale-90 transform origin-center"
+                  />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
           
           <p className="mt-1 text-sm text-gray-500">
