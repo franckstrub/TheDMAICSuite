@@ -149,23 +149,40 @@ export default function RiskAssessment() {
       console.log("Initializing risk form with data:", riskData.risk);
       
       try {
-        // Force reset of probability and impact values directly
+        // Force reset of probability, impact, and criticality values directly
         setTimeout(() => {
           // Directly set probability and impact values for all rows
           if (riskData.risk.probability) {
             console.log("Setting probability explicitly:", riskData.risk.probability);
             riskForm.setValue("probability", riskData.risk.probability);
+            
+            // Ensure criticality is also set properly
+            if (riskData.risk.impact) {
+              console.log("Recalculating criticality based on probability and impact");
+              const criticality = calculateRiskCriticality(riskData.risk.probability, riskData.risk.impact);
+              riskForm.setValue("riskCriticality", criticality);
+              console.log("Set criticality to:", criticality);
+            }
           }
           
           if (riskData.risk.impact) {
             console.log("Setting impact explicitly:", riskData.risk.impact);
             riskForm.setValue("impact", riskData.risk.impact);
+            
+            // We already handled criticality in the probability section above
           }
           
           // Row 2
           if (riskData.risk.probability2) {
             console.log("Setting probability2 explicitly:", riskData.risk.probability2);
             riskForm.setValue("probability2", riskData.risk.probability2);
+            
+            // Ensure criticality is also set properly
+            if (riskData.risk.impact2) {
+              const criticality = calculateRiskCriticality(riskData.risk.probability2, riskData.risk.impact2);
+              riskForm.setValue("riskCriticality2", criticality);
+              console.log("Set criticality2 to:", criticality);
+            }
           }
           
           if (riskData.risk.impact2) {
@@ -177,6 +194,12 @@ export default function RiskAssessment() {
           if (riskData.risk.probability3) {
             console.log("Setting probability3 explicitly:", riskData.risk.probability3);
             riskForm.setValue("probability3", riskData.risk.probability3);
+            
+            // Ensure criticality is also set properly
+            if (riskData.risk.impact3) {
+              const criticality = calculateRiskCriticality(riskData.risk.probability3, riskData.risk.impact3);
+              riskForm.setValue("riskCriticality3", criticality);
+            }
           }
           
           if (riskData.risk.impact3) {
@@ -188,6 +211,12 @@ export default function RiskAssessment() {
           if (riskData.risk.probability4) {
             console.log("Setting probability4 explicitly:", riskData.risk.probability4);
             riskForm.setValue("probability4", riskData.risk.probability4);
+            
+            // Ensure criticality is also set properly
+            if (riskData.risk.impact4) {
+              const criticality = calculateRiskCriticality(riskData.risk.probability4, riskData.risk.impact4);
+              riskForm.setValue("riskCriticality4", criticality);
+            }
           }
           
           if (riskData.risk.impact4) {
@@ -199,6 +228,12 @@ export default function RiskAssessment() {
           if (riskData.risk.probability5) {
             console.log("Setting probability5 explicitly:", riskData.risk.probability5);
             riskForm.setValue("probability5", riskData.risk.probability5);
+            
+            // Ensure criticality is also set properly
+            if (riskData.risk.impact5) {
+              const criticality = calculateRiskCriticality(riskData.risk.probability5, riskData.risk.impact5);
+              riskForm.setValue("riskCriticality5", criticality);
+            }
           }
           
           if (riskData.risk.impact5) {
@@ -210,6 +245,12 @@ export default function RiskAssessment() {
           if (riskData.risk.probability6) {
             console.log("Setting probability6 explicitly:", riskData.risk.probability6);
             riskForm.setValue("probability6", riskData.risk.probability6);
+            
+            // Ensure criticality is also set properly
+            if (riskData.risk.impact6) {
+              const criticality = calculateRiskCriticality(riskData.risk.probability6, riskData.risk.impact6);
+              riskForm.setValue("riskCriticality6", criticality);
+            }
           }
           
           if (riskData.risk.impact6) {
@@ -454,23 +495,121 @@ export default function RiskAssessment() {
       impact6: data.impact6,
     };
     
-    saveRiskMutation.mutate(data, {
+    // Ensure all criticality values are correctly calculated before saving
+    const processedData = { ...data };
+    
+    // Row 1
+    if (data.probability && data.impact) {
+      const criticality = calculateRiskCriticality(data.probability, data.impact);
+      processedData.riskCriticality = criticality;
+      console.log("Recalculated criticality for row 1:", criticality);
+    }
+    
+    // Row 2
+    if (data.probability2 && data.impact2) {
+      const criticality = calculateRiskCriticality(data.probability2, data.impact2);
+      processedData.riskCriticality2 = criticality;
+      console.log("Recalculated criticality for row 2:", criticality);
+    }
+    
+    // Row 3
+    if (data.probability3 && data.impact3) {
+      const criticality = calculateRiskCriticality(data.probability3, data.impact3);
+      processedData.riskCriticality3 = criticality;
+      console.log("Recalculated criticality for row 3:", criticality);
+    }
+    
+    // Row 4
+    if (data.probability4 && data.impact4) {
+      const criticality = calculateRiskCriticality(data.probability4, data.impact4);
+      processedData.riskCriticality4 = criticality;
+      console.log("Recalculated criticality for row 4:", criticality);
+    }
+    
+    // Row 5
+    if (data.probability5 && data.impact5) {
+      const criticality = calculateRiskCriticality(data.probability5, data.impact5);
+      processedData.riskCriticality5 = criticality;
+      console.log("Recalculated criticality for row 5:", criticality);
+    }
+    
+    // Row 6
+    if (data.probability6 && data.impact6) {
+      const criticality = calculateRiskCriticality(data.probability6, data.impact6);
+      processedData.riskCriticality6 = criticality;
+      console.log("Recalculated criticality for row 6:", criticality);
+    }
+    
+    saveRiskMutation.mutate(processedData, {
       onSuccess: () => {
         // After successful save, force reset the dropdown values explicitly
         console.log("After save, explicitly setting dropdown values again");
         
         setTimeout(() => {
-          if (currentValues.probability) riskForm.setValue("probability", currentValues.probability);
+          if (currentValues.probability) {
+            riskForm.setValue("probability", currentValues.probability);
+            // Also update criticality
+            if (currentValues.impact) {
+              const criticality = calculateRiskCriticality(currentValues.probability, currentValues.impact);
+              riskForm.setValue("riskCriticality", criticality);
+            }
+          }
+          
           if (currentValues.impact) riskForm.setValue("impact", currentValues.impact);
-          if (currentValues.probability2) riskForm.setValue("probability2", currentValues.probability2);
+          
+          if (currentValues.probability2) {
+            riskForm.setValue("probability2", currentValues.probability2);
+            // Also update criticality
+            if (currentValues.impact2) {
+              const criticality = calculateRiskCriticality(currentValues.probability2, currentValues.impact2);
+              riskForm.setValue("riskCriticality2", criticality);
+            }
+          }
+          
           if (currentValues.impact2) riskForm.setValue("impact2", currentValues.impact2);
-          if (currentValues.probability3) riskForm.setValue("probability3", currentValues.probability3);
+          
+          if (currentValues.probability3) {
+            riskForm.setValue("probability3", currentValues.probability3);
+            // Also update criticality
+            if (currentValues.impact3) {
+              const criticality = calculateRiskCriticality(currentValues.probability3, currentValues.impact3);
+              riskForm.setValue("riskCriticality3", criticality);
+            }
+          }
+          
           if (currentValues.impact3) riskForm.setValue("impact3", currentValues.impact3);
-          if (currentValues.probability4) riskForm.setValue("probability4", currentValues.probability4);
+          
+          if (currentValues.probability4) {
+            riskForm.setValue("probability4", currentValues.probability4);
+            // Also update criticality
+            if (currentValues.impact4) {
+              const criticality = calculateRiskCriticality(currentValues.probability4, currentValues.impact4);
+              riskForm.setValue("riskCriticality4", criticality);
+            }
+          }
+          
           if (currentValues.impact4) riskForm.setValue("impact4", currentValues.impact4);
-          if (currentValues.probability5) riskForm.setValue("probability5", currentValues.probability5);
+          
+          if (currentValues.probability5) {
+            riskForm.setValue("probability5", currentValues.probability5);
+            // Also update criticality
+            if (currentValues.impact5) {
+              const criticality = calculateRiskCriticality(currentValues.probability5, currentValues.impact5);
+              riskForm.setValue("riskCriticality5", criticality);
+            }
+          }
+          
           if (currentValues.impact5) riskForm.setValue("impact5", currentValues.impact5);
-          if (currentValues.probability6) riskForm.setValue("probability6", currentValues.probability6);
+          
+          if (currentValues.probability6) {
+            riskForm.setValue("probability6", currentValues.probability6);
+            // Also update criticality
+            if (currentValues.impact6) {
+              const criticality = calculateRiskCriticality(currentValues.probability6, currentValues.impact6);
+              riskForm.setValue("riskCriticality6", criticality);
+            }
+          }
+          
           if (currentValues.impact6) riskForm.setValue("impact6", currentValues.impact6);
         }, 200);
       }
@@ -688,8 +827,10 @@ export default function RiskAssessment() {
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
                 <Select
-                  value={riskForm.watch("probability3") || "Low"}
+                  defaultValue="Low"
+                  value={riskForm.watch("probability3")}
                   onValueChange={(value) => {
+                    console.log("Probability3 changed to:", value);
                     riskForm.setValue("probability3", value);
                     updateRiskCriticality(3, 'probability', value);
                   }}
@@ -706,8 +847,10 @@ export default function RiskAssessment() {
               </div>
               <div className="border border-orange-100 rounded-md p-2 bg-white w-[95%]">
                 <Select
-                  value={riskForm.watch("impact3") || "Low"}
+                  defaultValue="Low"
+                  value={riskForm.watch("impact3")}
                   onValueChange={(value) => {
+                    console.log("Impact3 changed to:", value);
                     riskForm.setValue("impact3", value);
                     updateRiskCriticality(3, 'impact', value);
                   }}
