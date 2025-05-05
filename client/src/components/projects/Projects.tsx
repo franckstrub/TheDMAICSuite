@@ -320,8 +320,8 @@ export default function Projects() {
   
   // Use API data - NEVER use sample data for this feature
   // Sort projects by ID to maintain a stable order regardless of status changes
-  const sortedProjects = projectsData?.projects 
-    ? [...projectsData.projects].sort((a, b) => a.id - b.id) 
+  const sortedProjects = projectsData && 'projects' in projectsData 
+    ? [...(projectsData.projects as any[])].sort((a, b) => a.id - b.id) 
     : [];
   const projects = filterProjects(sortedProjects);
 
@@ -589,10 +589,26 @@ export default function Projects() {
                         <div className="text-xs text-gray-500 mt-1">{project.progress}% Complete</div>
                       </TableCell>
                       <TableCell>
+                        {/* Timeline dates */}
                         <div className="text-xs">
                           <div>{formatDate(project.startDate)}</div>
                           <div className="text-gray-500">to {formatDate(project.targetEndDate) || "TBD"}</div>
                         </div>
+                        
+                        {/* Timeline progress cursor */}
+                        {project.startDate && project.targetEndDate && (
+                          <>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                              <div 
+                                className={`${getTimelineColor(calculateTimelineProgress(project.startDate, project.targetEndDate))} h-2 rounded-full`} 
+                                style={{ width: `${calculateTimelineProgress(project.startDate, project.targetEndDate)}%` }}
+                              ></div>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {calculateTimelineProgress(project.startDate, project.targetEndDate)}% Timeline
+                            </div>
+                          </>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="text-xs text-gray-500">
