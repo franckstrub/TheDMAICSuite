@@ -911,6 +911,22 @@ export default function DefinePhase() {
           customers2: data.sipoc.customers2
         });
         
+        console.log("SIPOC data to load - Row 3:", {
+          suppliers3: data.sipoc.suppliers3,
+          inputs3: data.sipoc.inputs3,
+          process3: data.sipoc.process3,
+          outputs3: data.sipoc.outputs3,
+          customers3: data.sipoc.customers3
+        });
+        
+        console.log("SIPOC data to load - Row 4:", {
+          suppliers4: data.sipoc.suppliers4,
+          inputs4: data.sipoc.inputs4,
+          process4: data.sipoc.process4,
+          outputs4: data.sipoc.outputs4,
+          customers4: data.sipoc.customers4
+        });
+        
         // Check if data appears to be scrambled (process containing 'S' values)
         let correctedData = {...data.sipoc};
         const isPotentiallyScrambled = 
@@ -955,6 +971,9 @@ export default function DefinePhase() {
             console.error("Error correcting SIPOC data:", error);
           }
         }
+        
+        // Debug form values before setting
+        console.log("Form values BEFORE reset:", sipocForm.getValues());
         
         // Set form values with potentially corrected data
         sipocForm.reset({
