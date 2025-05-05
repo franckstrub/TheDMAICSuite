@@ -895,6 +895,22 @@ export default function DefinePhase() {
       if (data?.sipoc) {
         console.log("Loaded SIPOC data:", data.sipoc);
         
+        // Add detailed logging for debugging
+        console.log("SIPOC data to load - Row 1:", {
+          suppliers: data.sipoc.suppliers,
+          inputs: data.sipoc.inputs,
+          process: data.sipoc.process,
+          outputs: data.sipoc.outputs,
+          customers: data.sipoc.customers
+        });
+        console.log("SIPOC data to load - Row 2:", {
+          suppliers2: data.sipoc.suppliers2,
+          inputs2: data.sipoc.inputs2,
+          process2: data.sipoc.process2,
+          outputs2: data.sipoc.outputs2,
+          customers2: data.sipoc.customers2
+        });
+        
         // Set form values
         sipocForm.reset({
           processName: data.sipoc.processName || "",
@@ -938,6 +954,24 @@ export default function DefinePhase() {
           customers7: data.sipoc.customers7 || "",
         });
         
+        // Check form values after reset
+        setTimeout(() => {
+          console.log("SIPOC form values after reset - Row 1:", {
+            suppliers: sipocForm.getValues().suppliers,
+            inputs: sipocForm.getValues().inputs,
+            process: sipocForm.getValues().process,
+            outputs: sipocForm.getValues().outputs,
+            customers: sipocForm.getValues().customers
+          });
+          console.log("SIPOC form values after reset - Row 2:", {
+            suppliers2: sipocForm.getValues().suppliers2,
+            inputs2: sipocForm.getValues().inputs2,
+            process2: sipocForm.getValues().process2,
+            outputs2: sipocForm.getValues().outputs2,
+            customers2: sipocForm.getValues().customers2
+          });
+        }, 300);
+
         // Determine how many rows to show based on the data
         let rowsToShow = 3; // Default is 3 rows
         
@@ -963,6 +997,16 @@ export default function DefinePhase() {
         if (data.sipoc.suppliers7 || data.sipoc.inputs7 || data.sipoc.process7 || 
             data.sipoc.outputs7 || data.sipoc.customers7) {
           rowsToShow = 7;
+        }
+        
+        // Check if there's data in rows 1-2 as well and ensure we show at least those
+        if (data.sipoc.suppliers || data.sipoc.inputs || data.sipoc.process ||
+            data.sipoc.outputs || data.sipoc.customers ||
+            data.sipoc.suppliers2 || data.sipoc.inputs2 || data.sipoc.process2 ||
+            data.sipoc.outputs2 || data.sipoc.customers2 ||
+            data.sipoc.suppliers3 || data.sipoc.inputs3 || data.sipoc.process3 ||
+            data.sipoc.outputs3 || data.sipoc.customers3) {
+          rowsToShow = Math.max(rowsToShow, 3);
         }
         
         // Update the visible rows state
@@ -1097,6 +1141,9 @@ export default function DefinePhase() {
   // Save SIPOC diagram mutation
   const saveSipocMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Debug the data being saved
+      console.log("Saving SIPOC data:", data);
+      
       const payload = {
         projectId,
         ...data,
@@ -1115,7 +1162,29 @@ export default function DefinePhase() {
         title: "Success",
         description: "SIPOC diagram saved successfully",
       });
+      
+      // Force a refetch of the SIPOC data to ensure it's up to date
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/sipoc`] });
+      
+      // Log after the save to confirm the data is correct
+      setTimeout(() => {
+        console.log("Current SIPOC form values after save:", {
+          row1: {
+            suppliers: sipocForm.getValues().suppliers,
+            inputs: sipocForm.getValues().inputs,
+            process: sipocForm.getValues().process, 
+            outputs: sipocForm.getValues().outputs,
+            customers: sipocForm.getValues().customers
+          },
+          row2: {
+            suppliers2: sipocForm.getValues().suppliers2,
+            inputs2: sipocForm.getValues().inputs2,
+            process2: sipocForm.getValues().process2,
+            outputs2: sipocForm.getValues().outputs2,
+            customers2: sipocForm.getValues().customers2
+          }
+        });
+      }, 500);
     },
     onError: (error) => {
       toast({
