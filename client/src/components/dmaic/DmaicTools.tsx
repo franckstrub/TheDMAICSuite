@@ -122,38 +122,44 @@ export default function DmaicTools() {
             {/* Project Timeline */}
             {currentProject?.startDate && currentProject?.targetEndDate && (
               <div className="flex flex-col md:ml-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <div className="flex flex-col">
-                    <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
-                      <div 
-                        className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
-                        style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
-                      ></div>
+                    <div className="flex items-center">
+                      <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                        <div 
+                          className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`} 
+                          style={{ width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                        {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
+                      </span>
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-36">
                       <span>{formatDate(currentProject.startDate)}</span>
                       <span>{formatDate(currentProject.targetEndDate)}</span>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                    {calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}% Timeline
-                  </span>
                 </div>
               </div>
             )}
             
             {/* Project Progress */}
             {currentProject?.progress !== undefined && (
-              <div className="flex items-center gap-2 md:ml-4">
-                <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
-                  <div 
-                    className={`${getProgressColor(currentProject.progress)} h-2 rounded-full`} 
-                    style={{ width: `${currentProject.progress}%` }}
-                  ></div>
+              <div className="flex items-start gap-2 md:ml-4">
+                <div className="flex flex-col">
+                  <div className="flex items-center">
+                    <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                      <div 
+                        className={`${getProgressColor(currentProject.progress)} h-2 rounded-full`} 
+                        style={{ width: `${currentProject.progress}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                      {currentProject.progress}% Complete
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500 whitespace-nowrap">
-                  {currentProject.progress}% Complete
-                </span>
               </div>
             )}
           </div>
