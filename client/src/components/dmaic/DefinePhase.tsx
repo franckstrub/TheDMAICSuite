@@ -3250,7 +3250,7 @@ export default function DefinePhase() {
               <input
                 type="text"
                 id="processName"
-                className="px-3 py-1 border rounded-md text-sm w-80"
+                className="px-3 py-1 border rounded-md text-sm w-[640px]"
                 placeholder="Enter process name"
                 {...sipocForm.register("processName")}
                 defaultValue={sipoc?.sipoc?.processName || ""}
