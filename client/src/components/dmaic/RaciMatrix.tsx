@@ -70,12 +70,27 @@ const RaciMatrix = ({
   const { data: raciMatrixData, isLoading } = useQuery({
     queryKey: ['/api/projects', projectId, 'raci-matrix'],
     queryFn: async () => {
-      const response = await apiRequest(`/api/projects/${projectId}/raci-matrix`);
-      if (response.ok) {
-        const data = await response.json();
-        return data.raciMatrix as ProjectRaciMatrix;
+      try {
+        // Use full absolute URL to avoid Window.fetch issues
+        const fullUrl = `${window.location.origin}/api/projects/${projectId}/raci-matrix`;
+        console.log("Making GET request to:", fullUrl);
+        
+        const response = await fetch(fullUrl, {
+          method: 'GET',
+          credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return data.raciMatrix as ProjectRaciMatrix;
+        } else {
+          console.log("No RACI matrix found for project:", projectId);
+          return null;
+        }
+      } catch (error) {
+        console.error("Error fetching RACI matrix:", error);
+        return null;
       }
-      return null;
     },
     onSuccess: (data) => {
       console.log("Fetched RACI matrix data:", data);
@@ -108,13 +123,18 @@ const RaciMatrix = ({
       console.log("Creating RACI matrix with data:", matrixDataString);
       
       try {
-        const response = await apiRequest(`/api/projects/${projectId}/raci-matrix`, {
+        // Use full absolute URL to avoid Window.fetch issues
+        const fullUrl = `${window.location.origin}/api/projects/${projectId}/raci-matrix`;
+        console.log("Making POST request to:", fullUrl);
+        
+        const response = await fetch(fullUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId: parseInt(projectId.toString(), 10),
             raciData: matrixDataString
-          })
+          }),
+          credentials: 'same-origin'
         });
         
         if (!response.ok) {
@@ -157,12 +177,17 @@ const RaciMatrix = ({
       console.log("Updating RACI matrix with data:", matrixDataString);
       
       try {
-        const response = await apiRequest(`/api/raci-matrix/${raciMatrixData.id}`, {
+        // Use full absolute URL to avoid Window.fetch issues
+        const fullUrl = `${window.location.origin}/api/raci-matrix/${raciMatrixData.id}`;
+        console.log("Making PUT request to:", fullUrl);
+        
+        const response = await fetch(fullUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             raciData: matrixDataString
-          })
+          }),
+          credentials: 'same-origin'
         });
         
         if (!response.ok) {
