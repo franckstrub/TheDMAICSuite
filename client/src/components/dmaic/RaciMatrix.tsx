@@ -210,14 +210,17 @@ const RaciMatrix = ({
   };
 
   // Update a role's RACI responsibility for a specific phase
-  const updateRoleResponsibility = (roleIndex: number, phase: keyof typeof raciData.roles[0]['phases'], value: RaciRole | null) => {
+  const updateRoleResponsibility = (roleIndex: number, phase: keyof typeof raciData.roles[0]['phases'], value: string) => {
+    // Convert "null" string to actual null, otherwise use the value as RaciRole
+    const processedValue = value === "null" ? null : value as RaciRole;
+    
     setRaciData(prev => {
       const newRoles = [...prev.roles];
       newRoles[roleIndex] = {
         ...newRoles[roleIndex],
         phases: {
           ...newRoles[roleIndex].phases,
-          [phase]: value
+          [phase]: processedValue
         }
       };
       return { ...prev, roles: newRoles };
@@ -272,18 +275,18 @@ const RaciMatrix = ({
                     {["define", "measure", "analyze", "improve", "control"].map((phase) => (
                       <td key={phase} className="border border-slate-200 p-2 text-center">
                         <Select
-                          value={role.phases[phase as keyof typeof role.phases] || ""}
+                          value={role.phases[phase as keyof typeof role.phases] || "null"}
                           onValueChange={(value) => updateRoleResponsibility(
                             roleIndex,
                             phase as keyof typeof role.phases,
-                            value as RaciRole
+                            value
                           )}
                         >
                           <SelectTrigger className="w-12 h-8 mx-auto">
                             <SelectValue placeholder="" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">-</SelectItem>
+                            <SelectItem value="null">-</SelectItem>
                             {raciRoleTypes.map((raciRole) => (
                               <SelectItem key={raciRole} value={raciRole}>
                                 {raciRole}
