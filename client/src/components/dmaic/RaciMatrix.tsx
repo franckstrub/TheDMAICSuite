@@ -307,7 +307,7 @@ const RaciMatrix = ({
                               className="h-8 w-8"
                               disabled={roleIndex < 5} // Prevent removing default roles
                             >
-                              <Trash className="h-4 w-4" />
+                              <MinusCircle className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
