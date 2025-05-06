@@ -978,45 +978,42 @@ export default function DefinePhase() {
   }, [charterError, charter, currentProject]);
 
   // Fetch customer requirements
-  const { data: requirementsData, isLoading: isRequirementsLoading } = useQuery({
+  const { data: requirementsData, isLoading: isRequirementsLoading, refetch: refetchRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/requirements`],
     enabled: !!user?.id && !!projectId,
     // Retry failed queries and set a stale time to avoid too many refreshes
     retry: 3,
-    staleTime: 10000,
-    refetchOnMount: "always",
+    staleTime: 5000,
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
-    onSuccess: (data) => {
-      console.log("Requirements data loaded:", data);
-      if (data?.requirements && data.requirements.length > 0) {
-        // Map the requirements data
-        const mappedRequirements = data.requirements.map((r: any) => ({
-          requirement: r.requirement || "",
-          customerRequirement: r.customerRequirement || "",
-          importance: r.importance || 3,
-          satisfaction: r.satisfaction || "",
-        }));
-        
-        console.log("Mapped requirements:", mappedRequirements);
-        
-        // Set the requirements state with the mapped data
-        setRequirements(mappedRequirements);
-      } else {
-        // If no requirements found in the API response, ensure we have at least one empty row
-        console.log("No requirements found, setting default empty row");
-        setRequirements([
-          { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
-        ]);
-      }
-    },
-    onError: (error) => {
-      console.error("Error fetching requirements:", error);
-      // Ensure we have at least one empty row even on error
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+  });
+  
+  // Add a separate useEffect to process requirements data when it changes
+  // This ensures the UI is always in sync with database state
+  useEffect(() => {
+    console.log("Requirements data changed:", requirementsData);
+    if (requirementsData?.requirements && requirementsData.requirements.length > 0) {
+      // Map the requirements data
+      const mappedRequirements = requirementsData.requirements.map((r: any) => ({
+        requirement: r.requirement || "",
+        customerRequirement: r.customerRequirement || "",
+        importance: r.importance || 3,
+        satisfaction: r.satisfaction || "",
+      }));
+      
+      console.log("Mapped requirements from data change:", mappedRequirements);
+      
+      // Set the requirements state with the mapped data
+      setRequirements(mappedRequirements);
+    } else if (requirementsData) {
+      // If we got data but no requirements, ensure we have at least one empty row
+      console.log("No requirements found in data change, setting default empty row");
       setRequirements([
         { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
       ]);
     }
-  });
+  }, [requirementsData]);
 
   // Save project charter mutation
   const saveCharterMutation = useMutation({
