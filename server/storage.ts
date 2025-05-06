@@ -523,6 +523,38 @@ export class MemStorage implements IStorage {
     }
     return undefined;
   }
+  
+  // RACI Matrix operations
+  async getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined> {
+    return Array.from(this.raciMatrices.values()).find(
+      (matrix) => matrix.projectId === projectId,
+    );
+  }
+
+  async createRaciMatrix(insertRaciMatrix: InsertRaciMatrix): Promise<ProjectRaciMatrix> {
+    const id = this.currentRaciMatrixId++;
+    const raciMatrix: ProjectRaciMatrix = { 
+      ...insertRaciMatrix, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.raciMatrices.set(id, raciMatrix);
+    return raciMatrix;
+  }
+
+  async updateRaciMatrix(id: number, raciMatrixUpdate: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined> {
+    const raciMatrix = this.raciMatrices.get(id);
+    if (raciMatrix) {
+      const updatedRaciMatrix = { 
+        ...raciMatrix, 
+        ...raciMatrixUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.raciMatrices.set(id, updatedRaciMatrix);
+      return updatedRaciMatrix;
+    }
+    return undefined;
+  }
 }
 
 // Database storage implementation
@@ -942,6 +974,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(processData.id, id))
       .returning();
     return data || undefined;
+  }
+  
+  // RACI Matrix operations
+  async getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined> {
+    const [raciMatrix] = await db
+      .select()
+      .from(projectRaciMatrix)
+      .where(eq(projectRaciMatrix.projectId, projectId));
+    return raciMatrix || undefined;
+  }
+
+  async createRaciMatrix(insertRaciMatrix: InsertRaciMatrix): Promise<ProjectRaciMatrix> {
+    const [raciMatrix] = await db
+      .insert(projectRaciMatrix)
+      .values({
+        ...insertRaciMatrix,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return raciMatrix;
+  }
+
+  async updateRaciMatrix(id: number, raciMatrixUpdate: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined> {
+    const [raciMatrix] = await db
+      .update(projectRaciMatrix)
+      .set({
+        ...raciMatrixUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(projectRaciMatrix.id, id))
+      .returning();
+    return raciMatrix || undefined;
   }
 }
 
