@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectRaciMatrix, RaciMatrixData, RaciRole, raciRoleTypes } from "@shared/schema";
-import { PlusCircle, Trash, MinusCircle } from "lucide-react";
+import { PlusCircle, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,20 +96,29 @@ const RaciMatrix = ({
   const createRaciMatrixMutation = useMutation({
     mutationFn: async () => {
       const matrixDataString = JSON.stringify(raciData);
-      const response = await apiRequest(`/api/projects/${projectId}/raci-matrix`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          matrixData: matrixDataString
-        })
-      });
+      console.log("Creating RACI matrix with data:", matrixDataString);
       
-      if (!response.ok) {
-        throw new Error('Failed to create RACI matrix');
+      try {
+        const response = await apiRequest(`/api/projects/${projectId}/raci-matrix`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: parseInt(projectId.toString(), 10),
+            matrixData: matrixDataString
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("RACI matrix creation error:", errorText);
+          throw new Error(`Failed to create RACI matrix: ${errorText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("RACI matrix creation exception:", error);
+        throw error;
       }
-      
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
@@ -119,6 +128,7 @@ const RaciMatrix = ({
       });
     },
     onError: (error) => {
+      console.error("RACI matrix creation error in handler:", error);
       toast({
         title: "Error",
         description: `Failed to create RACI matrix: ${error.message}`,
@@ -135,19 +145,28 @@ const RaciMatrix = ({
       }
       
       const matrixDataString = JSON.stringify(raciData);
-      const response = await apiRequest(`/api/raci-matrix/${raciMatrixData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          matrixData: matrixDataString
-        })
-      });
+      console.log("Updating RACI matrix with data:", matrixDataString);
       
-      if (!response.ok) {
-        throw new Error('Failed to update RACI matrix');
+      try {
+        const response = await apiRequest(`/api/raci-matrix/${raciMatrixData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            matrixData: matrixDataString
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("RACI matrix update error:", errorText);
+          throw new Error(`Failed to update RACI matrix: ${errorText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("RACI matrix update exception:", error);
+        throw error;
       }
-      
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
@@ -157,6 +176,7 @@ const RaciMatrix = ({
       });
     },
     onError: (error) => {
+      console.error("RACI matrix update error in handler:", error);
       toast({
         title: "Error",
         description: `Failed to update RACI matrix: ${error.message}`,
@@ -296,9 +316,9 @@ const RaciMatrix = ({
                               size="icon"
                               onClick={() => removeRole(roleIndex)}
                               className="h-8 w-8"
-                              disabled={roleIndex < 5} // Prevent removing default roles
+                              disabled={false}
                             >
-                              <MinusCircle className="h-4 w-4" />
+                              <Trash className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -315,17 +335,6 @@ const RaciMatrix = ({
           
           <div className="flex flex-col gap-4 mt-4">
             <div className="flex justify-start">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={saveRaciMatrix}
-                disabled={isLoading || createRaciMatrixMutation.isPending || updateRaciMatrixMutation.isPending}
-              >
-                {raciMatrixData?.id ? "Update RACI Matrix" : "Save RACI Matrix"}
-              </Button>
-            </div>
-            
-            <div className="flex justify-start">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -334,6 +343,17 @@ const RaciMatrix = ({
               >
                 <PlusCircle className="h-4 w-4" />
                 Add Role
+              </Button>
+            </div>
+            
+            <div className="flex justify-start">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={saveRaciMatrix}
+                disabled={isLoading || createRaciMatrixMutation.isPending || updateRaciMatrixMutation.isPending}
+              >
+                {raciMatrixData?.id ? "Update RACI Matrix" : "Save RACI Matrix"}
               </Button>
             </div>
           </div>
