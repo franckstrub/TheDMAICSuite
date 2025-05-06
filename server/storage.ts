@@ -1,6 +1,6 @@
 import {
   users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements,
-  datasets, dataCollectionPlans, storageConfigs, activityLogs, processData,
+  datasets, dataCollectionPlans, storageConfigs, activityLogs, processData, projectRaciMatrix,
   type User, type InsertUser,
   type Project, type InsertProject,
   type ProjectCharter, type InsertCharter,
@@ -11,7 +11,8 @@ import {
   type DataCollectionPlan, type InsertPlan,
   type StorageConfig, type InsertConfig,
   type ActivityLog, type InsertLog,
-  type ProcessData, type InsertProcessData
+  type ProcessData, type InsertProcessData,
+  type ProjectRaciMatrix, type InsertRaciMatrix, type RaciMatrixData
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -81,6 +82,11 @@ export interface IStorage {
   getProcessData(datasetId: number): Promise<ProcessData | undefined>;
   createProcessData(data: InsertProcessData): Promise<ProcessData>;
   updateProcessData(id: number, data: Partial<ProcessData>): Promise<ProcessData | undefined>;
+  
+  // RACI Matrix operations
+  getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined>;
+  createRaciMatrix(raciMatrix: InsertRaciMatrix): Promise<ProjectRaciMatrix>;
+  updateRaciMatrix(id: number, raciMatrix: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined>;
 }
 
 // In-memory storage implementation
@@ -96,6 +102,7 @@ export class MemStorage implements IStorage {
   private storageConfigs: Map<number, StorageConfig>;
   private activityLogs: Map<number, ActivityLog>;
   private processData: Map<number, ProcessData>;
+  private raciMatrices: Map<number, ProjectRaciMatrix>;
   
   private currentUserId: number;
   private currentProjectId: number;
@@ -108,6 +115,7 @@ export class MemStorage implements IStorage {
   private currentConfigId: number;
   private currentLogId: number;
   private currentProcessDataId: number;
+  private currentRaciMatrixId: number;
 
   constructor() {
     this.users = new Map();
@@ -121,6 +129,7 @@ export class MemStorage implements IStorage {
     this.storageConfigs = new Map();
     this.activityLogs = new Map();
     this.processData = new Map();
+    this.raciMatrices = new Map();
     
     this.currentUserId = 1;
     this.currentProjectId = 1;
@@ -133,6 +142,7 @@ export class MemStorage implements IStorage {
     this.currentConfigId = 1;
     this.currentLogId = 1;
     this.currentProcessDataId = 1;
+    this.currentRaciMatrixId = 1;
     
     // Create a default admin user
     this.createUser({
