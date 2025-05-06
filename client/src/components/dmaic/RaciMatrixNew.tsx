@@ -34,37 +34,19 @@ const RaciMatrixNew = ({
   const queryClient = useQueryClient();
   const { user } = useAppContext();
   const raciFormInitialized = useRef(false);
+  const charterDataLoaded = useRef(false);
   
-  // Default RACI matrix data with predefined roles from project charter
+  // Default RACI matrix data (empty initial state)
   const defaultRaciData: RaciMatrixData = {
-    roles: [
-      {
-        name: sponsor,
-        function: "Sponsor",
-        phases: { define: "R", measure: "A", analyze: "A", improve: "A", control: "A" }
-      },
-      {
-        name: financialController,
-        function: "Financial Controller",
-        phases: { define: "C", measure: "I", analyze: "I", improve: "C", control: "I" }
-      },
-      {
-        name: projectLeader,
-        function: "Project Leader",
-        phases: { define: "R", measure: "R", analyze: "R", improve: "R", control: "R" }
-      },
-      {
-        name: projectCoach,
-        function: "Project Coach",
-        phases: { define: "A", measure: "C", analyze: "C", improve: "C", control: "C" }
-      },
-      {
-        name: stakeholder,
-        function: stakeholderFunction,
-        phases: { define: "C", measure: "C", analyze: "C", improve: "C", control: "I" }
-      }
-    ].filter(role => role.name) // Only include roles that have a name
+    roles: []
   };
+  
+  // Get the project charter to populate role names
+  const { data: charterData } = useQuery({
+    queryKey: ['/api/projects', projectId, 'charter'],
+    enabled: !!projectId,
+    staleTime: 5000,
+  });
 
   // State for managing RACI matrix data
   const [raciData, setRaciData] = useState<RaciMatrixData>(defaultRaciData);
