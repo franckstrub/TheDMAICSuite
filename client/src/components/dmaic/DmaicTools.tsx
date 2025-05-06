@@ -282,7 +282,7 @@ function PhaseButton({ phase, activePhase, setActivePhase }: PhaseButtonProps) {
             isActive ? "bg-white" : "bg-primary",
           )}
         >
-          <span className={isActive ? "text-white" : "text-primary"}>
+          <span className={isActive ? "text-white" : "text-gray-700"}>
             {phase.charAt(0).toUpperCase()}
           </span>
         </span>
