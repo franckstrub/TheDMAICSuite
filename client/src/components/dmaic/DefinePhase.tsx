@@ -4266,7 +4266,7 @@ export default function DefinePhase() {
                     Importance (1-5)
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[20%]">
-                    Critical to Quality
+                    Critical to Quality (CTQ)
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[5%]">
                     Actions
@@ -4276,59 +4276,54 @@ export default function DefinePhase() {
               <tbody className="divide-y divide-gray-200">
                 {businessRequirements.map((req, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2 text-sm">
-                      <Textarea
-                        value={req.requirement}
-                        onChange={(e) => updateBusinessRequirement(index, "requirement", e.target.value)}
-                        placeholder="Enter requirement"
-                        className="min-w-full text-sm"
-                        rows={2}
-                      />
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <div className="border border-blue-100 rounded-md p-2 bg-blue-50/50 w-full">
+                        <Textarea
+                          className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                          value={req.requirement}
+                          onChange={(e) => updateBusinessRequirement(index, "requirement", e.target.value)}
+                          placeholder="Enter requirement"
+                        />
+                      </div>
                     </td>
-                    <td className="px-4 py-2 text-sm">
-                      <Textarea
-                        value={req.businessRequirement}
-                        onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
-                        placeholder="Enter business need"
-                        className="min-w-full text-sm"
-                        rows={2}
-                      />
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <div className="border border-emerald-100 rounded-md p-2 bg-emerald-50/50 w-full">
+                        <Textarea
+                          className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                          value={req.businessRequirement}
+                          onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
+                          placeholder="Enter business need"
+                        />
+                      </div>
                     </td>
-                    <td className="px-4 py-2 text-sm">
-                      <Select
-                        value={req.importance.toString()}
-                        onValueChange={(value) => updateBusinessRequirement(index, "importance", parseInt(value))}
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <select
+                        className="w-full p-2 border border-amber-200 rounded-md bg-amber-50/50 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50"
+                        value={req.importance}
+                        onChange={(e) => updateBusinessRequirement(index, "importance", parseInt(e.target.value))}
                       >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1 - Very Low</SelectItem>
-                          <SelectItem value="2">2 - Low</SelectItem>
-                          <SelectItem value="3">3 - Medium</SelectItem>
-                          <SelectItem value="4">4 - High</SelectItem>
-                          <SelectItem value="5">5 - Very High</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        {[1, 2, 3, 4, 5].map((val) => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
+                      </select>
                     </td>
-                    <td className="px-4 py-2 text-sm">
-                      <Textarea
-                        value={req.criticalToQuality}
-                        onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
-                        placeholder="Enter critical to quality factors"
-                        className="min-w-full text-sm"
-                        rows={2}
-                      />
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <div className="border border-purple-100 rounded-md p-2 bg-purple-50/50 w-full">
+                        <Textarea
+                          className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                          value={req.criticalToQuality}
+                          onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
+                          placeholder="Enter critical to quality factors"
+                        />
+                      </div>
                     </td>
-                    <td className="px-4 py-2 text-sm text-center">
-                      {index > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => removeBusinessRequirement(index)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                    <td className="px-4 py-2">
+                      {index === 0 ? (
+                        // No delete button for first row
+                        <span></span>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => removeBusinessRequirement(index)} className="text-red-500 hover:text-red-700">
+                          <i className="fas fa-trash"></i>
                         </Button>
                       )}
                     </td>
