@@ -223,56 +223,34 @@ const RaciMatrixNew = ({
     mutationFn: async () => {
       console.log("Saving RACI matrix with data:", raciData);
       
-      // Store whether this is an update or create operation
-      const isUpdate = !!raciMatrixData?.raciMatrix?.id;
-      console.log("Operation type:", isUpdate ? "UPDATE" : "CREATE");
-      
       try {
-        // Check if RACI matrix exists for update or create
-        if (isUpdate) {
-          // Update existing RACI matrix
-          const response = await fetch(`/api/raci-matrix/${raciMatrixData.raciMatrix.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              raciData: raciData // Send the object directly - server handles JSON serialization
-            }),
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("RACI matrix update error:", errorText);
-            throw new Error(`Failed to update RACI matrix: ${errorText}`);
-          }
-          
-          return { data: await response.json(), isUpdate };
-        } else {
-          // Create new RACI matrix
-          const response = await fetch(`/api/projects/${projectId}/raci-matrix`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              projectId: parseInt(projectId.toString(), 10),
-              raciData: raciData, // Send the object directly - server handles JSON serialization
-              userId: user?.id
-            }),
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("RACI matrix creation error:", errorText);
-            throw new Error(`Failed to create RACI matrix: ${errorText}`);
-          }
-          
-          return { data: await response.json(), isUpdate };
+        // We'll now always use the POST endpoint and let the server determine if it's an update or create
+        const response = await fetch(`/api/projects/${projectId}/raci-matrix`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: parseInt(projectId.toString(), 10),
+            raciData: raciData, // Send the object directly - server handles JSON serialization
+            userId: user?.id
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("RACI matrix save error:", errorText);
+          throw new Error(`Failed to save RACI matrix: ${errorText}`);
         }
+        
+        const responseData = await response.json();
+        console.log("RACI matrix save response:", responseData);
+        return responseData; // This now contains raciMatrix and isUpdate flag
       } catch (error) {
         console.error("RACI matrix save error:", error);
         throw error;
       }
     },
     onSuccess: async (result) => {
-      console.log("RACI matrix saved successfully");
+      console.log("RACI matrix saved successfully", result);
       // Store a flag in sessionStorage to remember that we have RACI data
       sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
       
