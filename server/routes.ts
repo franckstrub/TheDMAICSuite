@@ -1164,6 +1164,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // RACI Matrix routes
+  app.get("/api/projects/:projectId/raci-matrix", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const raciMatrix = await storage.getRaciMatrix(projectId);
+      
+      if (!raciMatrix) {
+        return res.status(404).json({ message: "RACI matrix not found" });
+      }
+      
+      return res.status(200).json({ raciMatrix });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/raci-matrix", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const raciMatrixInput: InsertRaciMatrix = {
+        ...req.body,
+        projectId
+      };
+      
+      const validatedData = insertRaciSchema.parse(raciMatrixInput);
+      const raciMatrix = await storage.createRaciMatrix(validatedData);
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_raci_matrix",
+          details: "Created RACI matrix"
+        });
+      }
+      
+      return res.status(201).json({ raciMatrix });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/raci-matrix/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const raciMatrixUpdate = req.body;
+      
+      const raciMatrix = await storage.updateRaciMatrix(id, raciMatrixUpdate);
+      if (!raciMatrix) {
+        return res.status(404).json({ message: "RACI matrix not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: raciMatrix.projectId,
+          action: "update_raci_matrix",
+          details: "Updated RACI matrix"
+        });
+      }
+      
+      return res.status(200).json({ raciMatrix });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
   // Debug route for project data
   app.get("/api/debug/project/:id", async (req: Request, res: Response) => {
     try {
