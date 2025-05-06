@@ -262,16 +262,14 @@ const RaciMatrixNew = ({
       
       toast({
         title: "Success",
-        description: result.isUpdate 
-          ? "RACI matrix updated successfully" 
-          : "RACI matrix created successfully",
+        description: "RACI matrix saved successfully",
       });
     },
     onError: (error) => {
       console.error("RACI matrix save error:", error);
       toast({
         title: "Error",
-        description: `Failed to save RACI matrix: ${error.message}`,
+        description: "Failed to save RACI matrix. Please try again.",
         variant: "destructive"
       });
     }
@@ -479,7 +477,7 @@ const RaciMatrixNew = ({
               onClick={handleSaveRaci}
               disabled={saveRaciMatrixMutation.isPending}
             >
-              {raciMatrixData?.raciMatrix?.id ? "Update RACI Matrix" : "Create RACI Matrix"}
+              Save RACI Matrix
             </Button>
           </div>
         </div>
