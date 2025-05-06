@@ -78,16 +78,25 @@ const RaciMatrix = ({
       return null;
     },
     onSuccess: (data) => {
-      if (data && data.matrixData) {
+      console.log("Fetched RACI matrix data:", data);
+      if (data) {
         try {
-          const parsedData = JSON.parse(data.matrixData) as RaciMatrixData;
-          setRaciData(parsedData);
+          // Try first with raciData, then fall back to matrixData for compatibility
+          const jsonString = data.raciData || data.matrixData;
+          if (jsonString) {
+            const parsedData = JSON.parse(jsonString) as RaciMatrixData;
+            console.log("Parsed RACI data:", parsedData);
+            setRaciData(parsedData);
+          } else {
+            console.warn("No matrixData or raciData found in response");
+          }
         } catch (error) {
           console.error('Error parsing RACI matrix data:', error);
         }
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error fetching RACI matrix:", error);
       // If no RACI matrix exists, we'll just use the default
     }
   });
@@ -104,7 +113,7 @@ const RaciMatrix = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId: parseInt(projectId.toString(), 10),
-            matrixData: matrixDataString
+            raciData: matrixDataString
           })
         });
         
@@ -152,7 +161,7 @@ const RaciMatrix = ({
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            matrixData: matrixDataString
+            raciData: matrixDataString
           })
         });
         
