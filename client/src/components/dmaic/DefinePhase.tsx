@@ -4259,35 +4259,39 @@ export default function DefinePhase() {
                   <th className="px-3 py-2 text-left text-sm font-medium text-sky-700 bg-sky-50 border-r-[6px] border-white w-1/4">
                     Business Requirement
                   </th>
-                  <th className="px-3 py-2 text-left text-sm font-medium text-amber-700 bg-amber-50 border-r-[6px] border-white w-1/4">
+                  <th className="px-3 py-2 text-left text-sm font-medium text-amber-700 bg-amber-50 border-r-[6px] border-white w-2/4">
                     BUSINESS NEED
                   </th>
-                  <th className="px-3 py-2 text-left text-sm font-medium text-emerald-700 bg-emerald-50 border-r-[6px] border-white w-1/6">
+                  <th className="px-3 py-2 text-left text-sm font-medium text-emerald-700 bg-emerald-50 border-r-[6px] border-white w-[120px]">
                     Importance (1-5)
                   </th>
                   <th className="px-3 py-2 text-left text-sm font-medium text-purple-700 bg-purple-50 w-1/4">
                     Critical to Quality
                   </th>
-                  <th className="w-[50px]"></th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 bg-gray-50 w-[80px]">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {businessRequirements.map((req, index) => (
                   <tr key={index}>
                     <td className="px-3 py-2 text-sm bg-sky-50/30">
-                      <Input
+                      <Textarea
                         value={req.requirement}
                         onChange={(e) => updateBusinessRequirement(index, "requirement", e.target.value)}
                         placeholder="Enter requirement"
                         className="min-w-full text-sm"
+                        rows={2}
                       />
                     </td>
                     <td className="px-3 py-2 text-sm bg-amber-50/30">
-                      <Input
+                      <Textarea
                         value={req.businessRequirement}
                         onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
-                        placeholder="Enter business requirement"
+                        placeholder="Enter business need"
                         className="min-w-full text-sm"
+                        rows={2}
                       />
                     </td>
                     <td className="px-3 py-2 text-sm bg-emerald-50/30">
