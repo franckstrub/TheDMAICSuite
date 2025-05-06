@@ -4198,7 +4198,7 @@ export default function DefinePhase() {
                 />
               </div>
               {index !== 0 && (
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-[27px]">
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
                   <Button 
                     type="button"
                     variant="ghost"
@@ -4226,7 +4226,7 @@ export default function DefinePhase() {
                           requirements[requirements.length - 1].customerRequirement)}
             >
               <PlusCircle className="mr-1 h-4 w-4" />
-              Add Customer Requirement
+              Add a Customer Requirement
             </Button>
           </div>
           
@@ -4306,7 +4306,7 @@ export default function DefinePhase() {
                 />
               </div>
               {index !== 0 && (
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-[27px]">
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
                   <Button 
                     type="button"
                     variant="ghost"
