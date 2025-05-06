@@ -4276,7 +4276,7 @@ export default function DefinePhase() {
               <tbody className="divide-y divide-gray-200">
                 {businessRequirements.map((req, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2 text-sm bg-blue-100/50">
+                    <td className="px-4 py-2 text-sm">
                       <Textarea
                         value={req.requirement}
                         onChange={(e) => updateBusinessRequirement(index, "requirement", e.target.value)}
@@ -4285,7 +4285,7 @@ export default function DefinePhase() {
                         rows={2}
                       />
                     </td>
-                    <td className="px-4 py-2 text-sm bg-emerald-100/50">
+                    <td className="px-4 py-2 text-sm">
                       <Textarea
                         value={req.businessRequirement}
                         onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
@@ -4294,7 +4294,7 @@ export default function DefinePhase() {
                         rows={2}
                       />
                     </td>
-                    <td className="px-4 py-2 text-sm bg-amber-100/50">
+                    <td className="px-4 py-2 text-sm">
                       <Select
                         value={req.importance.toString()}
                         onValueChange={(value) => updateBusinessRequirement(index, "importance", parseInt(value))}
@@ -4311,7 +4311,7 @@ export default function DefinePhase() {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-4 py-2 text-sm bg-purple-100/50">
+                    <td className="px-4 py-2 text-sm">
                       <Textarea
                         value={req.criticalToQuality}
                         onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
@@ -4320,7 +4320,7 @@ export default function DefinePhase() {
                         rows={2}
                       />
                     </td>
-                    <td className="px-4 py-2 text-sm bg-gray-100/50 text-center">
+                    <td className="px-4 py-2 text-sm text-center">
                       {index > 0 && (
                         <Button
                           variant="ghost"
