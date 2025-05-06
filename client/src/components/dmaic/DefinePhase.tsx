@@ -3754,6 +3754,9 @@ export default function DefinePhase() {
                         <Button variant="ghost" size="sm" disabled className="text-gray-400">
                           <i className="fas fa-plus"></i>
                         </Button>
+                      ) : index === 0 ? (
+                        // No delete button for first row
+                        <span></span>
                       ) : (
                         <Button variant="ghost" size="sm" onClick={() => removeRequirement(index)} className="text-red-500 hover:text-red-700">
                           <i className="fas fa-trash"></i>
