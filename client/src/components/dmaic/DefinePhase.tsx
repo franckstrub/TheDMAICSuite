@@ -1159,28 +1159,49 @@ export default function DefinePhase() {
         validRequirements : 
         [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
       
-      // For simplicity, just create/update each requirement
-      const promises = requirementsToSave.map(r => {
-        const payload = {
-          projectId,
-          requirement: r.requirement,
-          customerRequirement: r.customerRequirement || "",
-          importance: r.importance,
-          satisfaction: r.satisfaction, // This is now the CTQ field
-          userId: user?.id,
-        };
-        
-        return apiRequest("POST", `/api/projects/${projectId}/requirements`, payload);
-      });
+      console.log("Saving requirements:", requirementsToSave);
       
-      return Promise.all(promises);
+      try {
+        // First, get existing requirements to delete them
+        const existingReqs = await fetch(`/api/projects/${projectId}/requirements`).then(res => res.json());
+        
+        // Delete all existing requirements
+        if (existingReqs && existingReqs.requirements && existingReqs.requirements.length > 0) {
+          const deletePromises = existingReqs.requirements.map((req: any) => 
+            apiRequest("DELETE", `/api/requirements/${req.id}`, { userId: user?.id, projectId })
+          );
+          await Promise.all(deletePromises);
+        }
+        
+        // Now create new requirements
+        const createPromises = requirementsToSave.map(r => {
+          const payload = {
+            projectId,
+            requirement: r.requirement,
+            customerRequirement: r.customerRequirement || "",
+            importance: r.importance,
+            satisfaction: r.satisfaction, // This is now the CTQ field
+            userId: user?.id,
+          };
+          
+          return apiRequest("POST", `/api/projects/${projectId}/requirements`, payload);
+        });
+        
+        return Promise.all(createPromises);
+      } catch (error) {
+        console.error("Error saving requirements:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Customer requirements saved successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+      // Wait a moment to ensure the data is saved before reloading
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+      }, 300);
     },
     onError: (error) => {
       toast({
