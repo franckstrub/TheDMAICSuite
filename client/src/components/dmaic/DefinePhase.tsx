@@ -1008,12 +1008,17 @@ export default function DefinePhase() {
   useEffect(() => {
     console.log("Requirements data changed:", requirementsData);
     if (requirementsData?.requirements && requirementsData.requirements.length > 0) {
+      // Sort the requirements data by ID to maintain consistent order
+      const sortedRequirements = [...requirementsData.requirements].sort((a, b) => a.id - b.id);
+      console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
+      
       // Map the requirements data
-      const mappedRequirements = requirementsData.requirements.map((r: any) => ({
+      const mappedRequirements = sortedRequirements.map((r: any) => ({
         requirement: r.requirement || "",
         customerRequirement: r.customerRequirement || "",
         importance: r.importance || 3,
         satisfaction: r.satisfaction || "",
+        id: r.id, // Include ID to help with sorting
       }));
       
       console.log("Mapped requirements from data change:", mappedRequirements);
@@ -1244,15 +1249,20 @@ export default function DefinePhase() {
         console.log("Fresh requirements data after save:", freshData);
         
         if (freshData?.requirements && freshData.requirements.length > 0) {
+          // Sort the requirements data by ID to maintain order
+          const sortedRequirements = [...freshData.requirements].sort((a, b) => a.id - b.id);
+          console.log("Requirements sorted by ID in ascending order:", sortedRequirements);
+          
           // Map the requirements data
-          const mappedRequirements = freshData.requirements.map((r: any) => ({
+          const mappedRequirements = sortedRequirements.map((r: any) => ({
             requirement: r.requirement || "",
             customerRequirement: r.customerRequirement || "",
             importance: r.importance || 3,
             satisfaction: r.satisfaction || "",
+            id: r.id, // Store ID for consistency and sorting
           }));
           
-          console.log("Setting requirements state with fresh data:", mappedRequirements);
+          console.log("Setting requirements state with fresh sorted data:", mappedRequirements);
           // Force update the state with the fresh data
           setRequirements(mappedRequirements);
         }
@@ -1577,12 +1587,17 @@ export default function DefinePhase() {
       console.log("Loaded requirements from database:", data);
       
       if (data?.requirements && data.requirements.length > 0) {
-        // Map the requirements data
-        const mappedRequirements = data.requirements.map((r: any) => ({
+        // Map the requirements data and sort by ID to maintain order
+        // Sort by ID in ascending order so the first entered item appears first
+        const sortedRequirements = [...data.requirements].sort((a, b) => a.id - b.id);
+        console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
+        
+        const mappedRequirements = sortedRequirements.map((r: any) => ({
           requirement: r.requirement || "",
           customerRequirement: r.customerRequirement || "",
           importance: r.importance || 3, 
           satisfaction: r.satisfaction || "",
+          id: r.id, // Store the ID to help with sorting
         }));
         
         console.log("Setting requirements state with mapped data:", mappedRequirements);
