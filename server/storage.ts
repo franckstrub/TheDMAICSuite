@@ -989,14 +989,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRaciMatrix(insertRaciMatrix: InsertRaciMatrix): Promise<ProjectRaciMatrix> {
-    const [raciMatrix] = await db
-      .insert(projectRaciMatrix)
-      .values({
-        ...insertRaciMatrix,
-        lastUpdated: new Date()
-      })
-      .returning();
-    return raciMatrix;
+    // Check if a RACI matrix already exists for this project
+    const existingMatrix = await this.getRaciMatrix(insertRaciMatrix.projectId);
+    
+    if (existingMatrix) {
+      // Update existing RACI matrix instead of creating a new one
+      console.log(`Updating existing RACI matrix with ID ${existingMatrix.id} for project ${insertRaciMatrix.projectId}`);
+      const [updatedMatrix] = await db
+        .update(projectRaciMatrix)
+        .set({
+          raciData: insertRaciMatrix.raciData,
+          lastUpdated: new Date()
+        })
+        .where(eq(projectRaciMatrix.id, existingMatrix.id))
+        .returning();
+      return updatedMatrix;
+    } else {
+      // Create new RACI matrix if none exists
+      console.log(`Creating new RACI matrix for project ${insertRaciMatrix.projectId}`);
+      const [raciMatrix] = await db
+        .insert(projectRaciMatrix)
+        .values({
+          ...insertRaciMatrix,
+          lastUpdated: new Date()
+        })
+        .returning();
+      return raciMatrix;
+    }
   }
 
   async updateRaciMatrix(id: number, raciMatrixUpdate: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined> {
