@@ -47,6 +47,12 @@ export default function DefinePhase() {
   const urlProjectId = params.projectId;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sipocFormInitialized = useRef<boolean>(false);
+  const businessRequirementsInitialized = useRef<boolean>(false);
+  
+  // Business Requirements state - always include at least one empty row for new entries
+  const [businessRequirements, setBusinessRequirements] = useState([
+    { requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }
+  ]);
   
   // State for project image handling
   const [projectImage, setProjectImage] = useState<string | null>(null);
@@ -254,6 +260,17 @@ export default function DefinePhase() {
   // State to track the number of visible SIPOC rows (start with 3)
   const [visibleSipocRows, setVisibleSipocRows] = useState(3);
   
+  // Fetch business requirements
+  const { data: businessRequirementsData, isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
+    queryKey: [`/api/projects/${projectId}/business-requirements`],
+    enabled: !!user?.id && !!projectId,
+    retry: 3,
+    staleTime: 5000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+  });
+
   // Fetch SIPOC diagram if exists
   const { data: sipoc } = useQuery({
     queryKey: [`/api/projects/${projectId}/sipoc`],
