@@ -53,8 +53,13 @@ const RaciMatrixNew = ({
   
   // Function to clear RACI form initialization state
   const resetRaciFormInitialization = () => {
+    console.log("Resetting RACI form initialization");
     raciFormInitialized.current = false;
     charterDataLoaded.current = false;
+    
+    // Clear the session storage flag to ensure we can auto-populate fresh data
+    console.log(`Clearing session storage for project ${projectId}`);
+    sessionStorage.removeItem(`project_${projectId}_has_raci_data`);
   };
   
   // Populate RACI matrix directly from props passed by parent
@@ -123,8 +128,17 @@ const RaciMatrixNew = ({
     
     if (rolesFromProps.length > 0) {
       console.log("Setting RACI data with roles from props:", rolesFromProps);
+      
+      // Set the RACI data with the roles from props
       setRaciData({ roles: rolesFromProps });
       charterDataLoaded.current = true;
+      
+      // Automatically save the RACI matrix with the populated data
+      // We need to wait for the state update before saving
+      setTimeout(() => {
+        console.log("Auto-saving populated RACI matrix from props");
+        saveRaciMatrixMutation.mutate();
+      }, 500);
     } else {
       console.log("No roles found in props to populate RACI matrix");
     }
@@ -201,17 +215,27 @@ const RaciMatrixNew = ({
     
     if (rolesFromCharter.length > 0) {
       console.log("Setting RACI data with roles:", rolesFromCharter);
+      
+      // Set the RACI data with the roles from charter
       setRaciData({ roles: rolesFromCharter });
       charterDataLoaded.current = true;
+      
+      // Automatically save the RACI matrix with the populated data
+      // We need to wait for the state update before saving
+      setTimeout(() => {
+        console.log("Auto-saving populated RACI matrix");
+        saveRaciMatrixMutation.mutate();
+      }, 500);
     } else {
       console.log("No roles found in charter to populate RACI matrix");
     }
   };
   
-  // Clear the session storage data and ensure we use either props or API data for auto-population
+  // Ensure we have the most up-to-date data and use either props or API data for auto-population
   useEffect(() => {
-    // For testing, remove session storage flag to force auto-population
-    sessionStorage.removeItem(`project_${projectId}_has_raci_data`);
+    // Only remove session storage flag if we explicitly want to force repopulation
+    // This is now commented out to avoid overriding existing data
+    // sessionStorage.removeItem(`project_${projectId}_has_raci_data`);
     
     console.log("Charter props:", {
       sponsor, projectLeader, stakeholder, stakeholderFunction, financialController, projectCoach
