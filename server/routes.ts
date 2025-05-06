@@ -1189,19 +1189,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const validatedData = insertRaciSchema.parse(raciMatrixInput);
-      const raciMatrix = await storage.createRaciMatrix(validatedData);
       
-      // Log activity
-      if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_raci_matrix",
-          details: "Created RACI matrix"
+      // Check if a RACI matrix already exists for this project
+      const existingMatrix = await storage.getRaciMatrix(projectId);
+      let raciMatrix;
+      let isUpdate = false;
+      
+      if (existingMatrix) {
+        // Update existing matrix
+        isUpdate = true;
+        raciMatrix = await storage.updateRaciMatrix(existingMatrix.id, {
+          raciData: validatedData.raciData
         });
+        
+        // Log activity
+        if (req.body.userId) {
+          await storage.createActivityLog({
+            userId: req.body.userId,
+            projectId,
+            action: "update_raci_matrix",
+            details: "Updated RACI matrix"
+          });
+        }
+      } else {
+        // Create new matrix
+        raciMatrix = await storage.createRaciMatrix(validatedData);
+        
+        // Log activity
+        if (req.body.userId) {
+          await storage.createActivityLog({
+            userId: req.body.userId,
+            projectId,
+            action: "create_raci_matrix",
+            details: "Created RACI matrix"
+          });
+        }
       }
       
-      return res.status(201).json({ raciMatrix });
+      return res.status(201).json({ raciMatrix, isUpdate });
     } catch (err) {
       return handleErrors(err, res);
     }
