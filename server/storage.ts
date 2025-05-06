@@ -978,10 +978,13 @@ export class DatabaseStorage implements IStorage {
   
   // RACI Matrix operations
   async getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined> {
+    // Retrieve the most recent RACI matrix for this project
     const [raciMatrix] = await db
       .select()
       .from(projectRaciMatrix)
-      .where(eq(projectRaciMatrix.projectId, projectId));
+      .where(eq(projectRaciMatrix.projectId, projectId))
+      .orderBy(desc(projectRaciMatrix.lastUpdated))
+      .limit(1);
     return raciMatrix || undefined;
   }
 
