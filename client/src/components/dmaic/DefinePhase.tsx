@@ -4142,17 +4142,17 @@ export default function DefinePhase() {
             <table className="w-[95%] mx-auto divide-y divide-gray-200">
               <thead>
                 <tr className="w-full">
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-[40%] pr-8">Customer Requirement</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-[35%] pr-8">Customer Need</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-6 border-white w-[5%] pr-8">Importance (1-5)</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[18%] pr-8">Critical to Quality (CTQ)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-[40%]">Customer Requirement</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-[35%]">Customer Need</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-6 border-white w-[5%]">Importance (1-5)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[18%]">Critical to Quality (CTQ)</th>
                   <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[2%]">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {requirements.map((req, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <div className="border border-blue-100 rounded-md p-2 bg-blue-50/50 w-full">
                         <Textarea
                           className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
@@ -4162,7 +4162,7 @@ export default function DefinePhase() {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <div className="border border-emerald-100 rounded-md p-2 bg-emerald-50/50 w-full">
                         <Textarea
                           className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
@@ -4172,7 +4172,7 @@ export default function DefinePhase() {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <select
                         className="w-full p-2 border border-amber-200 rounded-md bg-amber-50/50 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50"
                         value={req.importance}
@@ -4183,7 +4183,7 @@ export default function DefinePhase() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <div className="border border-purple-100 rounded-md p-2 bg-purple-50/50 w-full">
                         <Textarea
                           className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
@@ -4256,16 +4256,16 @@ export default function DefinePhase() {
             <table className="w-[95%] mx-auto divide-y divide-gray-200">
               <thead>
                 <tr className="w-full">
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-[40%] pr-8">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-[40%]">
                     Business Requirement
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-[30%] pr-8">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-[30%]">
                     BUSINESS NEED
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-6 border-white w-[5%] pr-8">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-6 border-white w-[5%]">
                     Importance (1-5)
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[20%] pr-8">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[20%]">
                     Critical to Quality (CTQ)
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[5%]">
@@ -4276,7 +4276,7 @@ export default function DefinePhase() {
               <tbody className="divide-y divide-gray-200">
                 {businessRequirements.map((req, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <div className="border border-blue-100 rounded-md p-2 bg-blue-50/50 w-full">
                         <Textarea
                           className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
@@ -4286,7 +4286,7 @@ export default function DefinePhase() {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <div className="border border-emerald-100 rounded-md p-2 bg-emerald-50/50 w-full">
                         <Textarea
                           className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
@@ -4296,7 +4296,7 @@ export default function DefinePhase() {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <select
                         className="w-full p-2 border border-amber-200 rounded-md bg-amber-50/50 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50"
                         value={req.importance}
@@ -4307,7 +4307,7 @@ export default function DefinePhase() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-2 border-r-6 border-white pr-8">
+                    <td className="px-4 py-2 border-r-6 border-white">
                       <div className="border border-purple-100 rounded-md p-2 bg-purple-50/50 w-full">
                         <Textarea
                           className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
