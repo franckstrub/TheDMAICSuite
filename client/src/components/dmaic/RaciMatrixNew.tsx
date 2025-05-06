@@ -64,13 +64,18 @@ const RaciMatrixNew = ({
   
   // Populate RACI matrix with names from project charter if no existing RACI data
   const populateRaciFromCharter = () => {
-    if (!charterData?.charter || charterDataLoaded.current) return;
+    if (!charterData?.charter || charterDataLoaded.current) {
+      console.log("Cannot populate RACI: Charter data missing or already loaded");
+      return;
+    }
     
+    console.log("Populating RACI from charter", charterData.charter);
     const charter = charterData.charter;
     const rolesFromCharter = [];
     
     // Add Sponsor (if available)
     if (charter.sponsor) {
+      console.log("Adding sponsor:", charter.sponsor);
       rolesFromCharter.push({
         name: charter.sponsor,
         function: "Sponsor",
@@ -80,6 +85,7 @@ const RaciMatrixNew = ({
     
     // Add Project Leader (if available)
     if (charter.projectLeader) {
+      console.log("Adding project leader:", charter.projectLeader);
       rolesFromCharter.push({
         name: charter.projectLeader,
         function: "Project Leader",
@@ -89,6 +95,7 @@ const RaciMatrixNew = ({
     
     // Add Financial Controller (if available)
     if (charter.financialController) {
+      console.log("Adding financial controller:", charter.financialController);
       rolesFromCharter.push({
         name: charter.financialController,
         function: "Financial Controller", 
@@ -98,6 +105,7 @@ const RaciMatrixNew = ({
     
     // Add Stakeholder (if available)
     if (charter.stakeholder) {
+      console.log("Adding stakeholder:", charter.stakeholder);
       rolesFromCharter.push({
         name: charter.stakeholder,
         function: charter.stakeholderFunction || "Stakeholder",
@@ -107,6 +115,7 @@ const RaciMatrixNew = ({
     
     // Add Project Coach (if available)
     if (charter.projectCoach) {
+      console.log("Adding project coach:", charter.projectCoach);
       rolesFromCharter.push({
         name: charter.projectCoach,
         function: "Project Coach",
@@ -115,20 +124,28 @@ const RaciMatrixNew = ({
     }
     
     if (rolesFromCharter.length > 0) {
+      console.log("Setting RACI data with roles:", rolesFromCharter);
       setRaciData({ roles: rolesFromCharter });
       charterDataLoaded.current = true;
+    } else {
+      console.log("No roles found in charter to populate RACI matrix");
     }
   };
   
-  // Effect to populate RACI matrix from charter if no existing data
+  // Clear the session storage data for testing
   useEffect(() => {
-    const hasRaciData = sessionStorage.getItem(`project_${projectId}_has_raci_data`);
+    sessionStorage.removeItem(`project_${projectId}_has_raci_data`);
     
-    // Only auto-populate if there's no existing RACI data
-    if (hasRaciData !== 'true' && charterData?.charter && !charterDataLoaded.current) {
+    console.log("Charter data effect running", charterData, "loaded:", charterDataLoaded.current);
+    
+    // Make sure we auto-populate from charter if it exists
+    if (charterData?.charter && !charterDataLoaded.current) {
+      console.log("Attempting to populate RACI from charter!");
       populateRaciFromCharter();
     }
   }, [charterData, projectId]);
+
+  // This useEffect is already declared above and accomplishes the same thing
 
   // Get the RACI matrix data for the project
   const { data: raciMatrixData, isLoading } = useQuery({
