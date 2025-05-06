@@ -3700,22 +3700,24 @@ export default function DefinePhase() {
                 {requirements.map((req, index) => (
                   <tr key={index}>
                     <td className="px-4 py-2 border-r-6 border-white">
-                      <Input
-                        type="text"
-                        value={req.customerRequirement}
-                        onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
-                        placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
-                        className="border-blue-200 focus:border-blue-500 bg-blue-50/50"
-                      />
+                      <div className="border border-blue-100 rounded-md p-2 bg-blue-50/50 w-full">
+                        <Textarea
+                          className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                          value={req.customerRequirement}
+                          onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
+                          placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
+                        />
+                      </div>
                     </td>
                     <td className="px-4 py-2 border-r-6 border-white">
-                      <Input
-                        type="text"
-                        value={req.requirement}
-                        onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
-                        placeholder={index === requirements.length - 1 ? "Add new need..." : ""}
-                        className="border-emerald-200 focus:border-emerald-500 bg-emerald-50/50"
-                      />
+                      <div className="border border-emerald-100 rounded-md p-2 bg-emerald-50/50 w-full">
+                        <Textarea
+                          className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                          value={req.requirement}
+                          onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
+                          placeholder={index === requirements.length - 1 ? "Add new need..." : ""}
+                        />
+                      </div>
                     </td>
                     <td className="px-4 py-2 border-r-6 border-white">
                       <select
@@ -3729,18 +3731,19 @@ export default function DefinePhase() {
                       </select>
                     </td>
                     <td className="px-4 py-2 border-r-6 border-white">
-                      <Input
-                        type="text"
-                        value={req.satisfaction ? req.satisfaction.toString() : ""}
-                        onChange={(e) => {
-                          // Allow empty string or convert to number for backward compatibility
-                          const value = e.target.value === "" ? 0 : e.target.value;
-                          updateRequirement(index, "satisfaction", value);
-                        }}
-                        placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
-                        title="Critical to Quality (CTQ) specification"
-                        className="border-purple-200 focus:border-purple-500 bg-purple-50/50"
-                      />
+                      <div className="border border-purple-100 rounded-md p-2 bg-purple-50/50 w-full">
+                        <Textarea
+                          className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                          value={req.satisfaction ? req.satisfaction.toString() : ""}
+                          onChange={(e) => {
+                            // Allow empty string or convert to number for backward compatibility
+                            const value = e.target.value === "" ? 0 : e.target.value;
+                            updateRequirement(index, "satisfaction", value);
+                          }}
+                          placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
+                          title="Critical to Quality (CTQ) specification"
+                        />
+                      </div>
                     </td>
                     <td className="px-4 py-2">
                       {index === requirements.length - 1 && (req.requirement || req.customerRequirement) ? (
