@@ -989,6 +989,20 @@ export default function DefinePhase() {
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
   
+  // Initial data load effect - triggered on mount and when returning to page
+  useEffect(() => {
+    console.log("DefinePhase component mounted - checking for requirements");
+    
+    // Check if we have previously saved requirements in sessionStorage
+    const hasRequirements = sessionStorage.getItem(`project_${projectId}_has_requirements`);
+    
+    if (hasRequirements === 'true') {
+      console.log("Requirements flag found in sessionStorage, loading from database");
+      // Load data directly from database to ensure we have the latest
+      loadRequirementsFromDatabase(true);
+    }
+  }, [projectId]);
+  
   // Add a separate useEffect to process requirements data when it changes
   // This ensures the UI is always in sync with database state
   useEffect(() => {
@@ -1006,6 +1020,9 @@ export default function DefinePhase() {
       
       // Set the requirements state with the mapped data
       setRequirements(mappedRequirements);
+      
+      // Also set the sessionStorage flag to remember we have requirements for this project
+      sessionStorage.setItem(`project_${projectId}_has_requirements`, 'true');
     } else if (requirementsData) {
       // If we got data but no requirements, ensure we have at least one empty row
       console.log("No requirements found in data change, setting default empty row");
@@ -1013,7 +1030,7 @@ export default function DefinePhase() {
         { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
       ]);
     }
-  }, [requirementsData]);
+  }, [requirementsData, projectId]);
 
   // Save project charter mutation
   const saveCharterMutation = useMutation({
@@ -1551,46 +1568,104 @@ export default function DefinePhase() {
     });
   };
 
+  // Function to load requirements from the database
+  const loadRequirementsFromDatabase = async (silent = false) => {
+    try {
+      console.log("Explicitly loading requirements from database");
+      const response = await fetch(`/api/projects/${projectId}/requirements`);
+      const data = await response.json();
+      console.log("Loaded requirements from database:", data);
+      
+      if (data?.requirements && data.requirements.length > 0) {
+        // Map the requirements data
+        const mappedRequirements = data.requirements.map((r: any) => ({
+          requirement: r.requirement || "",
+          customerRequirement: r.customerRequirement || "",
+          importance: r.importance || 3, 
+          satisfaction: r.satisfaction || "",
+        }));
+        
+        console.log("Setting requirements state with mapped data:", mappedRequirements);
+        // Set the requirements state with the mapped data
+        setRequirements(mappedRequirements);
+        
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+        
+        if (!silent) {
+          toast({
+            title: "Data Refreshed",
+            description: "Customer requirements loaded successfully",
+          });
+        }
+        
+        return mappedRequirements;
+      } else {
+        // If no requirements found in the API response, ensure we have at least one empty row
+        console.log("No requirements found in database, setting default empty row");
+        const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+        setRequirements(defaultRow);
+        return defaultRow;
+      }
+    } catch (error) {
+      console.error("Error loading requirements from database:", error);
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "Could not load customer requirements",
+          variant: "destructive",
+        });
+      }
+      
+      // Ensure we have at least one empty row even on error
+      const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+      setRequirements(defaultRow);
+      return defaultRow;
+    }
+  };
+  
   const handleSaveRequirements = async () => {
     console.log("handleSaveRequirements called with requirements:", requirements);
     
-    // Ensure we always have at least one row (even if empty) before saving
-    if (requirements.length === 0) {
-      const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
-      setRequirements(defaultRow);
-      saveRequirementsMutation.mutate(defaultRow);
-    } else {
-      try {
-        // First retrieve existing requirements to ensure proper cleanup
-        const existingReqsResponse = await fetch(`/api/projects/${projectId}/requirements`);
-        const existingReqsData = await existingReqsResponse.json();
-        console.log("Current requirements in database before save:", existingReqsData);
-        
-        // Now proceed with saving
-        await saveRequirementsMutation.mutateAsync(requirements);
-        
-        // After successful save, explicitly refresh the requirements data
-        console.log("Requirements saved, now refreshing data");
-        const freshResponse = await fetch(`/api/projects/${projectId}/requirements`);
-        const freshData = await freshResponse.json();
-        console.log("Fresh requirements data from API:", freshData);
-        
-        if (freshData?.requirements && freshData.requirements.length > 0) {
-          // Map the requirements data
-          const mappedRequirements = freshData.requirements.map((r: any) => ({
-            requirement: r.requirement || "",
-            customerRequirement: r.customerRequirement || "",
-            importance: r.importance || 3,
-            satisfaction: r.satisfaction || "",
-          }));
-          
-          console.log("Setting requirements state with fresh data:", mappedRequirements);
-          // Force update the state with the fresh data
-          setRequirements(mappedRequirements);
-        }
-      } catch (error) {
-        console.error("Error in handleSaveRequirements:", error);
+    try {
+      // Ensure we always have at least one row (even if empty) before saving
+      let requirementsToSave = requirements;
+      if (requirements.length === 0) {
+        requirementsToSave = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+        setRequirements(requirementsToSave);
       }
+      
+      // Disable refetching temporarily to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+      
+      // First retrieve existing requirements to ensure proper cleanup
+      const existingReqsResponse = await fetch(`/api/projects/${projectId}/requirements`);
+      const existingReqsData = await existingReqsResponse.json();
+      console.log("Current requirements in database before save:", existingReqsData);
+      
+      // Now proceed with saving
+      console.log("Initiating save operation...");
+      await saveRequirementsMutation.mutateAsync(requirementsToSave);
+      
+      // Force refetch from database to ensure we have the latest data
+      console.log("Save complete, now reloading data directly from database");
+      await loadRequirementsFromDatabase(true); // silent load
+      
+      // Also force a refresh of the query cache
+      await refetchRequirements();
+      
+      console.log("Requirements save and reload operation complete");
+      
+      // Store a flag in sessionStorage to remember that we have requirements
+      // This helps when returning to this component after navigation
+      sessionStorage.setItem(`project_${projectId}_has_requirements`, 'true');
+    } catch (error) {
+      console.error("Error in handleSaveRequirements:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save customer requirements. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
