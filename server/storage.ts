@@ -315,6 +315,42 @@ export class MemStorage implements IStorage {
     return this.customerRequirements.delete(id);
   }
 
+  // Business Requirements operations
+  async getBusinessRequirements(projectId: number): Promise<BusinessRequirement[]> {
+    return Array.from(this.businessRequirements.values()).filter(
+      (req) => req.projectId === projectId,
+    );
+  }
+
+  async createBusinessRequirement(insertBusinessRequirement: InsertBusinessRequirement): Promise<BusinessRequirement> {
+    const id = this.currentBusinessRequirementId++;
+    const businessRequirement: BusinessRequirement = { 
+      ...insertBusinessRequirement, 
+      id, 
+      lastUpdated: new Date() 
+    };
+    this.businessRequirements.set(id, businessRequirement);
+    return businessRequirement;
+  }
+
+  async updateBusinessRequirement(id: number, businessRequirementUpdate: Partial<BusinessRequirement>): Promise<BusinessRequirement | undefined> {
+    const businessRequirement = this.businessRequirements.get(id);
+    if (businessRequirement) {
+      const updatedBusinessRequirement = { 
+        ...businessRequirement, 
+        ...businessRequirementUpdate, 
+        lastUpdated: new Date() 
+      };
+      this.businessRequirements.set(id, updatedBusinessRequirement);
+      return updatedBusinessRequirement;
+    }
+    return undefined;
+  }
+
+  async deleteBusinessRequirement(id: number): Promise<boolean> {
+    return this.businessRequirements.delete(id);
+  }
+
   // Dataset operations
   async getDatasets(): Promise<Dataset[]> {
     return Array.from(this.datasets.values());
@@ -702,6 +738,42 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRequirement(id: number): Promise<boolean> {
     const result = await db.delete(customerRequirements).where(eq(customerRequirements.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Business Requirements operations
+  async getBusinessRequirements(projectId: number): Promise<BusinessRequirement[]> {
+    return await db
+      .select()
+      .from(businessRequirements)
+      .where(eq(businessRequirements.projectId, projectId));
+  }
+
+  async createBusinessRequirement(insertBusinessRequirement: InsertBusinessRequirement): Promise<BusinessRequirement> {
+    const [businessRequirement] = await db
+      .insert(businessRequirements)
+      .values({
+        ...insertBusinessRequirement,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return businessRequirement;
+  }
+
+  async updateBusinessRequirement(id: number, businessRequirementUpdate: Partial<BusinessRequirement>): Promise<BusinessRequirement | undefined> {
+    const [businessRequirement] = await db
+      .update(businessRequirements)
+      .set({
+        ...businessRequirementUpdate,
+        lastUpdated: new Date()
+      })
+      .where(eq(businessRequirements.id, id))
+      .returning();
+    return businessRequirement || undefined;
+  }
+
+  async deleteBusinessRequirement(id: number): Promise<boolean> {
+    const result = await db.delete(businessRequirements).where(eq(businessRequirements.id, id));
     return result.rowCount > 0;
   }
 

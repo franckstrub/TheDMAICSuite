@@ -3,14 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
   insertUserSchema, insertProjectSchema, insertCharterSchema, 
-  insertSipocSchema, insertRequirementSchema, insertDatasetSchema,
+  insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema
 } from "@shared/schema";
 import { 
-  CustomerRequirement, DataCollectionPlan, Dataset, InsertCharter, 
+  CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
-  InsertProject, InsertRequirement, InsertSipoc, InsertUser, InsertRisk,
+  InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertUser, InsertRisk,
   Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks
 } from "@shared/schema";
