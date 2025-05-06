@@ -4141,12 +4141,22 @@ export default function DefinePhase() {
           <div className="overflow-x-auto">
             <table className="w-[95%] mx-auto divide-y divide-gray-200">
               <thead>
-                <tr className="w-full">
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-10 border-white w-[40%]">Customer Requirement</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-10 border-white w-[35%]">Customer Need</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-10 border-white w-[5%]">Importance (1-5)</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-10 border-white w-[18%]">Critical to Quality (CTQ)</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[2%]">Actions</th>
+                <tr className="w-full space-x-10">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                    <div className="bg-blue-100 text-blue-800 p-2 rounded-md w-full">Customer Requirement</div>
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                    <div className="bg-emerald-100 text-emerald-800 p-2 rounded-md w-full">Customer Need</div>
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                    <div className="bg-amber-100 text-amber-800 p-2 rounded-md w-full">Importance (1-5)</div>
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                    <div className="bg-purple-100 text-purple-800 p-2 rounded-md w-full">Critical to Quality (CTQ)</div>
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                    <div className="bg-gray-100 text-gray-800 p-2 rounded-md w-full">Actions</div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -4256,19 +4266,19 @@ export default function DefinePhase() {
             <table className="w-[95%] mx-auto divide-y divide-gray-200">
               <thead>
                 <tr className="w-full">
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-10 border-white w-[40%]">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 w-[40%]">
                     Business Requirement
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-10 border-white w-[30%]">
+                  <th className="pl-14 px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 w-[30%]">
                     BUSINESS NEED
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-10 border-white w-[5%]">
+                  <th className="pl-14 px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 w-[5%]">
                     Importance (1-5)
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-10 border-white w-[20%]">
+                  <th className="pl-14 px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 w-[20%]">
                     Critical to Quality (CTQ)
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[5%]">
+                  <th className="pl-14 px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[5%]">
                     Actions
                   </th>
                 </tr>
