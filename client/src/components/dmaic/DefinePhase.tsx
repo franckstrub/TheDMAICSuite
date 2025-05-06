@@ -4257,10 +4257,10 @@ export default function DefinePhase() {
               <thead>
                 <tr className="w-full">
                   <th className="px-3 py-2 text-left text-sm font-medium text-sky-700 bg-sky-50 border-r-[6px] border-white w-1/4">
-                    Requirement
+                    Business Requirement
                   </th>
                   <th className="px-3 py-2 text-left text-sm font-medium text-amber-700 bg-amber-50 border-r-[6px] border-white w-1/4">
-                    Business Requirement
+                    BUSINESS NEED
                   </th>
                   <th className="px-3 py-2 text-left text-sm font-medium text-emerald-700 bg-emerald-50 border-r-[6px] border-white w-1/6">
                     Importance (1-5)
@@ -4349,7 +4349,7 @@ export default function DefinePhase() {
           </div>
           
           {/* Save Business Requirements Button */}
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-start mt-4">
             <Button 
               type="button"
               onClick={() => saveBusinessRequirementsMutation.mutate(businessRequirements)}
