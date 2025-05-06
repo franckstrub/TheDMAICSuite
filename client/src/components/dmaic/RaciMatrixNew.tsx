@@ -223,9 +223,13 @@ const RaciMatrixNew = ({
     mutationFn: async () => {
       console.log("Saving RACI matrix with data:", raciData);
       
+      // Store whether this is an update or create operation
+      const isUpdate = !!raciMatrixData?.raciMatrix?.id;
+      console.log("Operation type:", isUpdate ? "UPDATE" : "CREATE");
+      
       try {
         // Check if RACI matrix exists for update or create
-        if (raciMatrixData?.raciMatrix?.id) {
+        if (isUpdate) {
           // Update existing RACI matrix
           const response = await fetch(`/api/raci-matrix/${raciMatrixData.raciMatrix.id}`, {
             method: 'PUT',
@@ -241,7 +245,7 @@ const RaciMatrixNew = ({
             throw new Error(`Failed to update RACI matrix: ${errorText}`);
           }
           
-          return await response.json();
+          return { data: await response.json(), isUpdate };
         } else {
           // Create new RACI matrix
           const response = await fetch(`/api/projects/${projectId}/raci-matrix`, {
@@ -260,14 +264,14 @@ const RaciMatrixNew = ({
             throw new Error(`Failed to create RACI matrix: ${errorText}`);
           }
           
-          return await response.json();
+          return { data: await response.json(), isUpdate };
         }
       } catch (error) {
         console.error("RACI matrix save error:", error);
         throw error;
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       console.log("RACI matrix saved successfully");
       // Store a flag in sessionStorage to remember that we have RACI data
       sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
@@ -280,7 +284,7 @@ const RaciMatrixNew = ({
       
       toast({
         title: "Success",
-        description: raciMatrixData?.raciMatrix?.id 
+        description: result.isUpdate 
           ? "RACI matrix updated successfully" 
           : "RACI matrix created successfully",
       });
@@ -497,7 +501,7 @@ const RaciMatrixNew = ({
               onClick={handleSaveRaci}
               disabled={saveRaciMatrixMutation.isPending}
             >
-              {raciMatrixData?.raciMatrix?.id ? "Update RACI Matrix" : "Save RACI Matrix"}
+              {raciMatrixData?.raciMatrix?.id ? "Update RACI Matrix" : "Create RACI Matrix"}
             </Button>
           </div>
         </div>
