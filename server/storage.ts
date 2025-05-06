@@ -1,11 +1,12 @@
 import {
-  users, projects, projectCharters, sipocDiagrams, customerRequirements,
+  users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements,
   datasets, dataCollectionPlans, storageConfigs, activityLogs, processData,
   type User, type InsertUser,
   type Project, type InsertProject,
   type ProjectCharter, type InsertCharter,
   type SipocDiagram, type InsertSipoc,
   type CustomerRequirement, type InsertRequirement,
+  type BusinessRequirement, type InsertBusinessRequirement,
   type Dataset, type InsertDataset,
   type DataCollectionPlan, type InsertPlan,
   type StorageConfig, type InsertConfig,
@@ -46,6 +47,12 @@ export interface IStorage {
   createRequirement(requirement: InsertRequirement): Promise<CustomerRequirement>;
   updateRequirement(id: number, requirement: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined>;
   deleteRequirement(id: number): Promise<boolean>;
+  
+  // Business Requirements operations
+  getBusinessRequirements(projectId: number): Promise<BusinessRequirement[]>;
+  createBusinessRequirement(requirement: InsertBusinessRequirement): Promise<BusinessRequirement>;
+  updateBusinessRequirement(id: number, requirement: Partial<BusinessRequirement>): Promise<BusinessRequirement | undefined>;
+  deleteBusinessRequirement(id: number): Promise<boolean>;
 
   // Dataset operations
   getDatasets(): Promise<Dataset[]>;
@@ -83,6 +90,7 @@ export class MemStorage implements IStorage {
   private projectCharters: Map<number, ProjectCharter>;
   private sipocDiagrams: Map<number, SipocDiagram>;
   private customerRequirements: Map<number, CustomerRequirement>;
+  private businessRequirements: Map<number, BusinessRequirement>;
   private datasets: Map<number, Dataset>;
   private dataCollectionPlans: Map<number, DataCollectionPlan>;
   private storageConfigs: Map<number, StorageConfig>;
@@ -94,6 +102,7 @@ export class MemStorage implements IStorage {
   private currentCharterId: number;
   private currentSipocId: number;
   private currentRequirementId: number;
+  private currentBusinessRequirementId: number;
   private currentDatasetId: number;
   private currentPlanId: number;
   private currentConfigId: number;
@@ -106,6 +115,7 @@ export class MemStorage implements IStorage {
     this.projectCharters = new Map();
     this.sipocDiagrams = new Map();
     this.customerRequirements = new Map();
+    this.businessRequirements = new Map();
     this.datasets = new Map();
     this.dataCollectionPlans = new Map();
     this.storageConfigs = new Map();
@@ -117,6 +127,7 @@ export class MemStorage implements IStorage {
     this.currentCharterId = 1;
     this.currentSipocId = 1;
     this.currentRequirementId = 1;
+    this.currentBusinessRequirementId = 1;
     this.currentDatasetId = 1;
     this.currentPlanId = 1;
     this.currentConfigId = 1;
