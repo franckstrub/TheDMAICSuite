@@ -4147,7 +4147,7 @@ export default function DefinePhase() {
               <h4 className="font-medium text-emerald-800 text-sm">Customer Need</h4>
             </div>
             <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-amber-800 text-sm">Imp.</h4>
+              <h4 className="font-small text-amber-800 text-sm">Importance</h4>
             </div>
             <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
@@ -4257,10 +4257,10 @@ export default function DefinePhase() {
               <h4 className="font-medium text-blue-800 text-sm">Business Requirement</h4>
             </div>
             <div className="col-span-4 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-emerald-800 text-sm">BUSINESS NEED</h4>
+              <h4 className="font-medium text-emerald-800 text-sm">Business Need</h4>
             </div>
             <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-amber-800 text-sm">Imp.</h4>
+              <h4 className="font-small text-amber-800 text-sm">Importance</h4>
             </div>
             <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
@@ -4330,8 +4330,8 @@ export default function DefinePhase() {
               className="flex items-center gap-1"
               onClick={addBusinessRequirement}
               disabled={businessRequirements.length > 0 && 
-                        !(businessRequirements[businessRequirements.length - 1].requirement || 
-                          businessRequirements[businessRequirements.length - 1].businessRequirement)}
+                        !businessRequirements[businessRequirements.length - 1].requirement && 
+                        !businessRequirements[businessRequirements.length - 1].businessRequirement}
             >
               <PlusCircle className="h-4 w-4" />
               Add Business Requirement

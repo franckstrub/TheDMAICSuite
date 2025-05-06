@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import MilestoneTimeline from "./MilestoneTimeline";
+import RiskAssessment from "./RiskAssessment";
 import {
   Card,
   CardContent,
@@ -46,6 +47,12 @@ export default function DefinePhase() {
   const urlProjectId = params.projectId;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sipocFormInitialized = useRef<boolean>(false);
+  const businessRequirementsInitialized = useRef<boolean>(false);
+  
+  // Business Requirements state - always include at least one empty row for new entries
+  const [businessRequirements, setBusinessRequirements] = useState([
+    { requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }
+  ]);
   
   // State for project image handling
   const [projectImage, setProjectImage] = useState<string | null>(null);
@@ -252,6 +259,23 @@ export default function DefinePhase() {
   
   // State to track the number of visible SIPOC rows (start with 3)
   const [visibleSipocRows, setVisibleSipocRows] = useState(3);
+  
+  // Fetch business requirements
+  const { data: businessRequirementsData, isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
+    queryKey: [`/api/projects/${projectId}/business-requirements`],
+    enabled: !!user?.id && !!projectId,
+    retry: 3,
+    staleTime: 5000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+  });
+
+  // Fetch SIPOC diagram if exists
+  const { data: sipoc } = useQuery({
+    queryKey: [`/api/projects/${projectId}/sipoc`],
+    enabled: !!user?.id && !!projectId
+  });
   
   // Effect to initialize SIPOC form with data from API
   useEffect(() => {
@@ -467,11 +491,9 @@ export default function DefinePhase() {
     });
   };
 
-  // Customer Requirements state
+  // Customer Requirements state - always include at least one empty row for new entries
   const [requirements, setRequirements] = useState([
-    { requirement: "Fast delivery", importance: 4, satisfaction: 2 },
-    { requirement: "Order accuracy", importance: 5, satisfaction: 3 },
-    { requirement: "", importance: 3, satisfaction: 3 },
+    { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" },
   ]);
   
   // FTE calculation state
@@ -972,32 +994,168 @@ export default function DefinePhase() {
     }
   }, [charterError, charter, currentProject]);
 
-  // Fetch SIPOC diagram if exists
-  const { data: sipoc } = useQuery({
-    queryKey: [`/api/projects/${projectId}/sipoc`],
-    enabled: !!user?.id && !!projectId,
-    onSuccess: (data) => {
-      if (data?.sipoc) {
-        console.log("Loaded SIPOC data:", data.sipoc);
-        console.log("SIPOC Load - Process Name from API:", data.sipoc.processName);
-      }
-    }
-  });
+  // This section has been moved above
 
   // Fetch customer requirements
-  const { data: requirementsData } = useQuery({
+  const { data: requirementsData, isLoading: isRequirementsLoading, refetch: refetchRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/requirements`],
     enabled: !!user?.id && !!projectId,
-    onSuccess: (data) => {
-      if (data?.requirements && data.requirements.length > 0) {
-        setRequirements(data.requirements.map((r: any) => ({
-          requirement: r.requirement,
-          importance: r.importance,
-          satisfaction: r.satisfaction,
-        })));
-      }
-    },
+    // Retry failed queries and set a stale time to avoid too many refreshes
+    retry: 3,
+    staleTime: 5000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
+  
+  // Initial data load effect for business requirements - triggered on mount and when returning to page
+  useEffect(() => {
+    console.log("DefinePhase component mounted - checking for business requirements");
+    
+    // Check if we have previously saved business requirements in sessionStorage
+    const hasBusinessRequirements = sessionStorage.getItem(`project_${projectId}_has_business_requirements`);
+    
+    if (hasBusinessRequirements === 'true') {
+      console.log("Business requirements flag found in sessionStorage, loading from database");
+      // Load data directly from database to ensure we have the latest
+      loadBusinessRequirementsFromDatabase(true);
+    }
+  }, [projectId]);
+  
+  // Add a separate useEffect to process business requirements data when it changes
+  useEffect(() => {
+    console.log("Business requirements data changed:", businessRequirementsData);
+    if (businessRequirementsData?.businessRequirements && businessRequirementsData.businessRequirements.length > 0) {
+      // Sort the business requirements data by ID to maintain consistency
+      const sortedBusinessRequirements = [...businessRequirementsData.businessRequirements].sort((a, b) => a.id - b.id);
+      console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+      
+      // Map and set to state, preserving the ID for later reference
+      const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
+        businessRequirement: r.businessRequirement || "",
+        requirement: r.requirement || "",
+        importance: r.importance || 3,
+        criticalToQuality: r.impact || "", // Use impact field but rename to criticalToQuality
+        id: r.id,
+      }));
+      
+      // Only initialize once
+      if (!businessRequirementsInitialized.current) {
+        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        setBusinessRequirements(mappedBusinessRequirements);
+        businessRequirementsInitialized.current = true;
+      }
+    }
+  }, [businessRequirementsData]);
+
+  // Function to load business requirements from the database
+  const loadBusinessRequirementsFromDatabase = async (silent = false) => {
+    try {
+      console.log("Explicitly loading business requirements from database");
+      const response = await fetch(`/api/projects/${projectId}/business-requirements`);
+      const data = await response.json();
+      console.log("Loaded business requirements from database:", data);
+      
+      if (data?.businessRequirements && data.businessRequirements.length > 0) {
+        // Map the business requirements data and sort by ID to maintain order
+        // Sort by ID in ascending order so the first entered item appears first
+        const sortedBusinessRequirements = [...data.businessRequirements].sort((a, b) => a.id - b.id);
+        console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+        
+        const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
+          requirement: r.requirement || "",
+          businessRequirement: r.businessRequirement || "",
+          importance: r.importance || 3, 
+          criticalToQuality: r.impact || "", // Use impact field but rename to criticalToQuality
+          id: r.id, // Store the ID to help with sorting
+        }));
+        
+        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        // Set the business requirements state with the mapped data
+        setBusinessRequirements(mappedBusinessRequirements);
+        
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+        
+        if (!silent) {
+          toast({
+            title: "Data Refreshed",
+            description: "Business requirements loaded successfully",
+          });
+        }
+        
+        return mappedBusinessRequirements;
+      } else {
+        // If no business requirements found in the API response, ensure we have at least one empty row
+        console.log("No business requirements found in database, setting default empty row");
+        const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+        setBusinessRequirements(defaultRow);
+        return defaultRow;
+      }
+    } catch (error) {
+      console.error("Error loading business requirements from database:", error);
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "Could not load business requirements",
+          variant: "destructive",
+        });
+      }
+      
+      // Ensure we have at least one empty row even on error
+      const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+      setBusinessRequirements(defaultRow);
+      return defaultRow;
+    }
+  };
+  
+  // Initial data load effect for customer requirements - triggered on mount and when returning to page
+  useEffect(() => {
+    console.log("DefinePhase component mounted - checking for requirements");
+    
+    // Check if we have previously saved requirements in sessionStorage
+    const hasRequirements = sessionStorage.getItem(`project_${projectId}_has_requirements`);
+    
+    if (hasRequirements === 'true') {
+      console.log("Requirements flag found in sessionStorage, loading from database");
+      // Load data directly from database to ensure we have the latest
+      loadRequirementsFromDatabase(true);
+    }
+  }, [projectId]);
+  
+  // Add a separate useEffect to process requirements data when it changes
+  // This ensures the UI is always in sync with database state
+  useEffect(() => {
+    console.log("Requirements data changed:", requirementsData);
+    if (requirementsData?.requirements && requirementsData.requirements.length > 0) {
+      // Sort the requirements data by ID to maintain consistent order
+      const sortedRequirements = [...requirementsData.requirements].sort((a, b) => a.id - b.id);
+      console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
+      
+      // Map the requirements data
+      const mappedRequirements = sortedRequirements.map((r: any) => ({
+        requirement: r.requirement || "",
+        customerRequirement: r.customerRequirement || "",
+        importance: r.importance || 3,
+        satisfaction: r.satisfaction || "",
+        id: r.id, // Include ID to help with sorting
+      }));
+      
+      console.log("Mapped requirements from data change:", mappedRequirements);
+      
+      // Set the requirements state with the mapped data
+      setRequirements(mappedRequirements);
+      
+      // Also set the sessionStorage flag to remember we have requirements for this project
+      sessionStorage.setItem(`project_${projectId}_has_requirements`, 'true');
+    } else if (requirementsData) {
+      // If we got data but no requirements, ensure we have at least one empty row
+      console.log("No requirements found in data change, setting default empty row");
+      setRequirements([
+        { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
+      ]);
+    }
+  }, [requirementsData, projectId]);
 
   // Save project charter mutation
   const saveCharterMutation = useMutation({
@@ -1143,34 +1301,173 @@ export default function DefinePhase() {
     },
   });
 
-  // Save customer requirements mutation
-  const saveRequirementsMutation = useMutation({
-    mutationFn: async (requirements: any[]) => {
-      const validRequirements = requirements.filter(r => r.requirement.trim() !== "");
+  // Save business requirements mutation
+  const saveBusinessRequirementsMutation = useMutation({
+    mutationFn: async (businessRequirements: any[]) => {
+      // Filter business requirements where either requirement or business requirement is filled
+      const validBusinessRequirements = businessRequirements.filter(r => 
+        r.businessRequirement.trim() !== "" || r.requirement.trim() !== ""
+      );
       
-      // For simplicity, just create/update each requirement
-      const promises = validRequirements.map(r => {
-        const payload = {
-          projectId,
-          requirement: r.requirement,
-          importance: r.importance,
-          satisfaction: r.satisfaction,
-          userId: user?.id,
-        };
+      // Always include at least one row even if empty, to ensure we always have a row in the database
+      const businessRequirementsToSave = validBusinessRequirements.length > 0 ? 
+        validBusinessRequirements : 
+        [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+      
+      console.log("Saving business requirements:", businessRequirementsToSave);
+      
+      try {
+        // First, get existing business requirements to delete them
+        const existingBusinessReqs = await fetch(`/api/projects/${projectId}/business-requirements`).then(res => res.json());
+        console.log("Existing business requirements before deletion:", existingBusinessReqs);
         
-        return apiRequest("POST", `/api/projects/${projectId}/requirements`, payload);
-      });
-      
-      return Promise.all(promises);
+        // Delete all existing business requirements
+        if (existingBusinessReqs && existingBusinessReqs.businessRequirements && existingBusinessReqs.businessRequirements.length > 0) {
+          console.log(`Deleting ${existingBusinessReqs.businessRequirements.length} existing business requirements`);
+          const deletePromises = existingBusinessReqs.businessRequirements.map((req: any) => 
+            apiRequest("DELETE", `/api/business-requirements/${req.id}`, { userId: user?.id, projectId })
+          );
+          await Promise.all(deletePromises);
+          console.log("All existing business requirements deleted");
+        }
+        
+        // Now create new business requirements
+        console.log(`Creating ${businessRequirementsToSave.length} new business requirements`);
+        const createPromises = businessRequirementsToSave.map(r => {
+          const payload = {
+            projectId,
+            requirement: r.requirement,
+            businessRequirement: r.businessRequirement || "",
+            importance: r.importance,
+            impact: r.criticalToQuality, // Map the criticalToQuality field to impact for storage
+            userId: user?.id,
+          };
+          
+          return apiRequest("POST", `/api/projects/${projectId}/business-requirements`, payload);
+        });
+        
+        const results = await Promise.all(createPromises);
+        console.log("New business requirements created:", results);
+        return results;
+      } catch (error) {
+        console.error("Error saving business requirements:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Customer requirements saved successfully",
+        description: "Business requirements saved successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+      
+      // Set the flag in sessionStorage to remember we have requirements for this project
+      sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
     },
     onError: (error) => {
+      console.error("Error in save business requirements mutation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save business requirements. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Save customer requirements mutation
+  const saveRequirementsMutation = useMutation({
+    mutationFn: async (requirements: any[]) => {
+      // Filter requirements where either customer requirement or need is filled
+      const validRequirements = requirements.filter(r => 
+        r.customerRequirement.trim() !== "" || r.requirement.trim() !== ""
+      );
+      
+      // Always include at least one row even if empty, to ensure we always have a row in the database
+      const requirementsToSave = validRequirements.length > 0 ? 
+        validRequirements : 
+        [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+      
+      console.log("Saving requirements:", requirementsToSave);
+      
+      try {
+        // First, get existing requirements to delete them
+        const existingReqs = await fetch(`/api/projects/${projectId}/requirements`).then(res => res.json());
+        console.log("Existing requirements before deletion:", existingReqs);
+        
+        // Delete all existing requirements
+        if (existingReqs && existingReqs.requirements && existingReqs.requirements.length > 0) {
+          console.log(`Deleting ${existingReqs.requirements.length} existing requirements`);
+          const deletePromises = existingReqs.requirements.map((req: any) => 
+            apiRequest("DELETE", `/api/requirements/${req.id}`, { userId: user?.id, projectId })
+          );
+          await Promise.all(deletePromises);
+          console.log("All existing requirements deleted");
+        }
+        
+        // Now create new requirements
+        console.log(`Creating ${requirementsToSave.length} new requirements`);
+        const createPromises = requirementsToSave.map(r => {
+          const payload = {
+            projectId,
+            requirement: r.requirement,
+            customerRequirement: r.customerRequirement || "",
+            importance: r.importance,
+            satisfaction: r.satisfaction, // This is now the CTQ field
+            userId: user?.id,
+          };
+          
+          return apiRequest("POST", `/api/projects/${projectId}/requirements`, payload);
+        });
+        
+        const results = await Promise.all(createPromises);
+        console.log("New requirements created:", results);
+        return results;
+      } catch (error) {
+        console.error("Error saving requirements:", error);
+        throw error;
+      }
+    },
+    onSuccess: async (data) => {
+      console.log("Requirements saved successfully:", data);
+      toast({
+        title: "Success",
+        description: "Customer requirements saved successfully",
+      });
+      
+      try {
+        // Directly fetch the latest requirements instead of just invalidating the query
+        console.log("Fetching latest requirements after successful save");
+        const response = await fetch(`/api/projects/${projectId}/requirements`);
+        const freshData = await response.json();
+        console.log("Fresh requirements data after save:", freshData);
+        
+        if (freshData?.requirements && freshData.requirements.length > 0) {
+          // Sort the requirements data by ID to maintain order
+          const sortedRequirements = [...freshData.requirements].sort((a, b) => a.id - b.id);
+          console.log("Requirements sorted by ID in ascending order:", sortedRequirements);
+          
+          // Map the requirements data
+          const mappedRequirements = sortedRequirements.map((r: any) => ({
+            requirement: r.requirement || "",
+            customerRequirement: r.customerRequirement || "",
+            importance: r.importance || 3,
+            satisfaction: r.satisfaction || "",
+            id: r.id, // Store ID for consistency and sorting
+          }));
+          
+          console.log("Setting requirements state with fresh sorted data:", mappedRequirements);
+          // Force update the state with the fresh data
+          setRequirements(mappedRequirements);
+        }
+        
+        // Also invalidate the query to ensure consistency
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+      } catch (error) {
+        console.error("Error fetching requirements after save:", error);
+      }
+    },
+    onError: (error) => {
+      console.error("Error in requirements mutation:", error);
       toast({
         title: "Error",
         description: `Failed to save customer requirements: ${error}`,
@@ -1474,8 +1771,110 @@ export default function DefinePhase() {
     });
   };
 
-  const handleSaveRequirements = () => {
-    saveRequirementsMutation.mutate(requirements);
+  // Function to load requirements from the database
+  const loadRequirementsFromDatabase = async (silent = false) => {
+    try {
+      console.log("Explicitly loading requirements from database");
+      const response = await fetch(`/api/projects/${projectId}/requirements`);
+      const data = await response.json();
+      console.log("Loaded requirements from database:", data);
+      
+      if (data?.requirements && data.requirements.length > 0) {
+        // Map the requirements data and sort by ID to maintain order
+        // Sort by ID in ascending order so the first entered item appears first
+        const sortedRequirements = [...data.requirements].sort((a, b) => a.id - b.id);
+        console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
+        
+        const mappedRequirements = sortedRequirements.map((r: any) => ({
+          requirement: r.requirement || "",
+          customerRequirement: r.customerRequirement || "",
+          importance: r.importance || 3, 
+          satisfaction: r.satisfaction || "",
+          id: r.id, // Store the ID to help with sorting
+        }));
+        
+        console.log("Setting requirements state with mapped data:", mappedRequirements);
+        // Set the requirements state with the mapped data
+        setRequirements(mappedRequirements);
+        
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+        
+        if (!silent) {
+          toast({
+            title: "Data Refreshed",
+            description: "Customer requirements loaded successfully",
+          });
+        }
+        
+        return mappedRequirements;
+      } else {
+        // If no requirements found in the API response, ensure we have at least one empty row
+        console.log("No requirements found in database, setting default empty row");
+        const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+        setRequirements(defaultRow);
+        return defaultRow;
+      }
+    } catch (error) {
+      console.error("Error loading requirements from database:", error);
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "Could not load customer requirements",
+          variant: "destructive",
+        });
+      }
+      
+      // Ensure we have at least one empty row even on error
+      const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+      setRequirements(defaultRow);
+      return defaultRow;
+    }
+  };
+  
+  const handleSaveRequirements = async () => {
+    console.log("handleSaveRequirements called with requirements:", requirements);
+    
+    try {
+      // Ensure we always have at least one row (even if empty) before saving
+      let requirementsToSave = requirements;
+      if (requirements.length === 0) {
+        requirementsToSave = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+        setRequirements(requirementsToSave);
+      }
+      
+      // Disable refetching temporarily to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+      
+      // First retrieve existing requirements to ensure proper cleanup
+      const existingReqsResponse = await fetch(`/api/projects/${projectId}/requirements`);
+      const existingReqsData = await existingReqsResponse.json();
+      console.log("Current requirements in database before save:", existingReqsData);
+      
+      // Now proceed with saving
+      console.log("Initiating save operation...");
+      await saveRequirementsMutation.mutateAsync(requirementsToSave);
+      
+      // Force refetch from database to ensure we have the latest data
+      console.log("Save complete, now reloading data directly from database");
+      await loadRequirementsFromDatabase(true); // silent load
+      
+      // Also force a refresh of the query cache
+      await refetchRequirements();
+      
+      console.log("Requirements save and reload operation complete");
+      
+      // Store a flag in sessionStorage to remember that we have requirements
+      // This helps when returning to this component after navigation
+      sessionStorage.setItem(`project_${projectId}_has_requirements`, 'true');
+    } catch (error) {
+      console.error("Error in handleSaveRequirements:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save customer requirements. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const updateRequirement = (index: number, field: string, value: any) => {
@@ -1485,19 +1884,80 @@ export default function DefinePhase() {
   };
 
   const addRequirement = () => {
-    if (requirements[requirements.length - 1].requirement.trim() !== "") {
-      setRequirements([...requirements, { requirement: "", importance: 3, satisfaction: 3 }]);
+    const lastReq = requirements[requirements.length - 1];
+    if (lastReq.requirement.trim() !== "" || lastReq.customerRequirement.trim() !== "") {
+      setRequirements([...requirements, { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }]);
     }
   };
 
   const removeRequirement = (index: number) => {
+    // Don't remove if it's the first row or if it's the only row remaining
+    if (index === 0 || requirements.length <= 1) {
+      return;
+    }
+    
     const newRequirements = [...requirements];
     newRequirements.splice(index, 1);
+    
+    // If we're about to remove all rows, make sure we keep at least one empty row
+    if (newRequirements.length === 0) {
+      newRequirements.push({ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" });
+    }
+    
     setRequirements(newRequirements);
   };
+  
+  // Business Requirements Functions
+  const addBusinessRequirement = () => {
+    // Only allow adding a new row if we have less than 6 rows
+    if (businessRequirements.length < 6) {
+      setBusinessRequirements([
+        ...businessRequirements,
+        { requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }
+      ]);
+    } else {
+      toast({
+        title: "Maximum Reached",
+        description: "You can only add up to 6 business requirements",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const updateBusinessRequirement = (index: number, field: string, value: any) => {
+    const updatedRequirements = [...businessRequirements];
+    updatedRequirements[index] = { ...updatedRequirements[index], [field]: value };
+    setBusinessRequirements(updatedRequirements);
+  };
+  
+  const removeBusinessRequirement = (index: number) => {
+    // Don't remove if it's the first row or if it's the only row remaining
+    if (index === 0 || businessRequirements.length <= 1) {
+      return;
+    }
+    
+    const updatedRequirements = [...businessRequirements];
+    updatedRequirements.splice(index, 1);
+    
+    // If we're about to remove all rows, make sure we keep at least one empty row
+    if (updatedRequirements.length === 0) {
+      updatedRequirements.push({ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" });
+    }
+    
+    setBusinessRequirements(updatedRequirements);
+  };
 
-  const calculateGap = (importance: number, satisfaction: number) => {
-    return importance - satisfaction;
+  const calculateGap = (importance: number, ctqValue: string | number) => {
+    // If ctqValue is a string and not a number, return 0 as gap can't be calculated
+    if (typeof ctqValue === 'string' && isNaN(Number(ctqValue))) {
+      return 0;
+    }
+    
+    // Convert ctqValue to number if it's a numeric string
+    const ctqNumber = typeof ctqValue === 'string' ? Number(ctqValue) : ctqValue;
+    
+    // Calculate gap between importance and CTQ (previously "satisfaction")
+    return importance - ctqNumber;
   };
 
   // These flags prevent multiple PDF export operations from running simultaneously
@@ -3256,7 +3716,7 @@ export default function DefinePhase() {
               <input
                 type="text"
                 id="processName"
-                className="px-3 py-1 border rounded-md text-sm w-80"
+                className="px-3 py-1 border rounded-md text-sm w-[640px]"
                 placeholder="Enter process name"
                 {...sipocForm.register("processName")}
                 defaultValue={sipoc?.sipoc?.processName || ""}
@@ -3471,7 +3931,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(4)}
                   title="Delete Row 4"
                 >
-                  <MinusCircle className="h-4 w-4" />
+                  <i className="fas fa-trash"></i>
                 </Button>
               </div>
             )}
@@ -3527,7 +3987,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(5)}
                   title="Delete Row 5"
                 >
-                  <MinusCircle className="h-4 w-4" />
+                  <i className="fas fa-trash"></i>
                 </Button>
               </div>
             )}
@@ -3583,7 +4043,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(6)}
                   title="Delete Row 6"
                 >
-                  <MinusCircle className="h-4 w-4" />
+                  <i className="fas fa-trash"></i>
                 </Button>
               </div>
             )}
@@ -3639,7 +4099,7 @@ export default function DefinePhase() {
                   onClick={() => deleteSipocRow(7)}
                   title="Delete Row 7"
                 >
-                  <MinusCircle className="h-4 w-4" />
+                  <i className="fas fa-trash"></i>
                 </Button>
               </div>
             )}
@@ -3678,86 +4138,221 @@ export default function DefinePhase() {
             Identify and prioritize customer requirements and needs.
           </p>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Need</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Importance (1-5)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Satisfaction (1-5)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gap</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {requirements.map((req, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2">
-                      <Input
-                        type="text"
-                        value={req.requirement}
-                        onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
-                        placeholder={index === requirements.length - 1 ? "Add new requirement..." : ""}
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <select
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        value={req.importance}
-                        onChange={(e) => updateRequirement(index, "importance", parseInt(e.target.value))}
-                      >
-                        {[1, 2, 3, 4, 5].map((val) => (
-                          <option key={val} value={val}>{val}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-2">
-                      <select
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        value={req.satisfaction}
-                        onChange={(e) => updateRequirement(index, "satisfaction", parseInt(e.target.value))}
-                      >
-                        {[1, 2, 3, 4, 5].map((val) => (
-                          <option key={val} value={val}>{val}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${calculateGap(req.importance, req.satisfaction) > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}`}>
-                        {calculateGap(req.importance, req.satisfaction)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      {index === requirements.length - 1 && req.requirement ? (
-                        <Button variant="ghost" size="sm" onClick={addRequirement}>
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : index === requirements.length - 1 ? (
-                        <Button variant="ghost" size="sm" disabled className="text-gray-400">
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : (
-                        <Button variant="ghost" size="sm" onClick={() => removeRequirement(index)} className="text-red-500 hover:text-red-700">
-                          <i className="fas fa-trash"></i>
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Headers using grid layout with consistent spacing */}
+          <div className="grid grid-cols-12 gap-2 mb-4">
+            <div className="col-span-4 p-3 bg-blue-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-blue-800 text-sm">Customer Requirement</h4>
+            </div>
+            <div className="col-span-4 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-emerald-800 text-sm">Customer Need</h4>
+            </div>
+            <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
+              <h4 className="font-small text-amber-800 text-sm">Importance</h4>
+            </div>
+            <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
+            </div>
+          </div>
+          
+          {/* Requirements rows using grid */}
+          {requirements.map((req, index) => (
+            <div key={index} className="grid grid-cols-12 gap-2 mb-2 relative">
+              <div className="col-span-4 border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                  value={req.customerRequirement}
+                  onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
+                  placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
+                />
+              </div>
+              <div className="col-span-4 border border-emerald-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                  value={req.requirement}
+                  onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
+                  placeholder={index === requirements.length - 1 ? "Add new need..." : ""}
+                />
+              </div>
+              <div className="col-span-1 border border-amber-100 rounded-md p-2 bg-white w-[95%]">
+                <select
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  value={req.importance}
+                  onChange={(e) => updateRequirement(index, "importance", parseInt(e.target.value))}
+                >
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <option key={val} value={val}>{val}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-3 border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                  value={req.satisfaction ? req.satisfaction.toString() : ""}
+                  onChange={(e) => {
+                    // Allow empty string or convert to number for backward compatibility
+                    const value = e.target.value === "" ? 0 : e.target.value;
+                    updateRequirement(index, "satisfaction", value);
+                  }}
+                  placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
+                  title="Critical to Quality (CTQ) specification"
+                />
+              </div>
+              {index !== 0 && (
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 absolute right-[-17px]">
+                  <Button 
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6"
+                    onClick={() => removeRequirement(index)}
+                  >
+                    <i className="fas fa-trash"></i>
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {/* Add Customer Requirement Button */}
+          <div className="flex justify-start mt-4 mb-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              className="flex items-center"
+              onClick={addRequirement}
+              disabled={requirements.length > 0 && 
+                        !(requirements[requirements.length - 1].requirement || 
+                          requirements[requirements.length - 1].customerRequirement)}
+            >
+              <PlusCircle className="mr-1 h-4 w-4" />
+              Add a Customer Requirement
+            </Button>
           </div>
           
           <div className="mt-4">
             <Button 
               onClick={handleSaveRequirements}
-              disabled={saveRequirementsMutation.isPending || requirements.every(r => !r.requirement)}
+              disabled={saveRequirementsMutation.isPending}
             >
               {saveRequirementsMutation.isPending ? "Saving..." : "Save Customer Requirements"}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Voice of Business */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Voice of Business</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Identify and prioritize business requirements and needs.
+          </p>
+          
+          {/* Headers using grid layout with consistent spacing */}
+          <div className="grid grid-cols-12 gap-2 mb-4">
+            <div className="col-span-4 p-3 bg-blue-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-blue-800 text-sm">Business Requirement</h4>
+            </div>
+            <div className="col-span-4 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-emerald-800 text-sm">Business Need</h4>
+            </div>
+            <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
+              <h4 className="font-small text-amber-800 text-sm">Importance</h4>
+            </div>
+            <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
+            </div>
+          </div>
+          
+          {/* Business Requirements rows using grid */}
+          {businessRequirements.map((req, index) => (
+            <div key={index} className="grid grid-cols-12 gap-2 mb-2 relative">
+              <div className="col-span-4 border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                  value={req.requirement}
+                  onChange={(e) => updateBusinessRequirement(index, "requirement", e.target.value)}
+                  placeholder="Enter requirement"
+                />
+              </div>
+              <div className="col-span-4 border border-emerald-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                  value={req.businessRequirement}
+                  onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
+                  placeholder="Enter business need"
+                />
+              </div>
+              <div className="col-span-1 border border-amber-100 rounded-md p-2 bg-white w-[95%]">
+                <select
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  value={req.importance}
+                  onChange={(e) => updateBusinessRequirement(index, "importance", parseInt(e.target.value))}
+                >
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <option key={val} value={val}>{val}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-3 border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+                <Textarea
+                  className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
+                  value={req.criticalToQuality}
+                  onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
+                  placeholder="Enter critical to quality factors"
+                />
+              </div>
+              {index !== 0 && (
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 absolute right-[-17px]">
+                  <Button 
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6"
+                    onClick={() => removeBusinessRequirement(index)}
+                  >
+                    <i className="fas fa-trash"></i>
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {/* Add Business Requirement Button */}
+          <div className="flex justify-start mt-4 mb-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-1"
+              onClick={addBusinessRequirement}
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add Business Requirement
+            </Button>
+          </div>
+          
+          {/* Save Business Requirements Button */}
+          <div className="flex justify-start mt-4">
+            <Button 
+              type="button"
+              onClick={() => saveBusinessRequirementsMutation.mutate(businessRequirements)}
+              variant="default" 
+              size="sm"
+              className="flex items-center gap-1"
+              disabled={saveBusinessRequirementsMutation.isPending}
+            >
+              {saveBusinessRequirementsMutation.isPending ? "Saving..." : "Save Business Requirements"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Project Risk Assessment Section */}
+      <RiskAssessment />
     </div>
   );
 }
