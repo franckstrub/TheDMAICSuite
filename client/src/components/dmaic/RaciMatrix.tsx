@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectRaciMatrix, RaciMatrixData, RaciRole, raciRoleTypes } from "@shared/schema";
-import { PlusCircle, Trash } from "lucide-react";
+import { PlusCircle, Trash, MinusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -322,25 +322,29 @@ const RaciMatrix = ({
             </table>
           </div>
           
-          <div className="flex justify-between mt-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="flex items-center gap-1"
-              onClick={addRole}
-            >
-              <PlusCircle className="h-4 w-4" />
-              Add Role
-            </Button>
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="flex justify-start">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={saveRaciMatrix}
+                disabled={isLoading || createRaciMatrixMutation.isPending || updateRaciMatrixMutation.isPending}
+              >
+                {raciMatrixData?.id ? "Update RACI Matrix" : "Save RACI Matrix"}
+              </Button>
+            </div>
             
-            <Button
-              variant="default"
-              size="sm"
-              onClick={saveRaciMatrix}
-              disabled={isLoading || createRaciMatrixMutation.isPending || updateRaciMatrixMutation.isPending}
-            >
-              {raciMatrixData?.id ? "Update RACI Matrix" : "Save RACI Matrix"}
-            </Button>
+            <div className="flex justify-start">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={addRole}
+              >
+                <PlusCircle className="h-4 w-4" />
+                Add Role
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
