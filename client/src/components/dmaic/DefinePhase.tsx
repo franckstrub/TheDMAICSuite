@@ -4256,27 +4256,27 @@ export default function DefinePhase() {
             <table className="w-[95%] mx-auto divide-y divide-gray-200">
               <thead>
                 <tr className="w-full">
-                  <th className="px-3 py-2 text-left text-sm font-medium text-sky-700 bg-sky-50 border-r-[6px] border-white w-1/4">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-[40%]">
                     Business Requirement
                   </th>
-                  <th className="px-3 py-2 text-left text-sm font-medium text-amber-700 bg-amber-50 border-r-[6px] border-white w-2/4">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-[30%]">
                     BUSINESS NEED
                   </th>
-                  <th className="px-3 py-2 text-left text-sm font-medium text-emerald-700 bg-emerald-50 border-r-[6px] border-white w-[120px]">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-6 border-white w-[5%]">
                     Importance (1-5)
                   </th>
-                  <th className="px-3 py-2 text-left text-sm font-medium text-purple-700 bg-purple-50 w-1/4">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[20%]">
                     Critical to Quality
                   </th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-700 bg-gray-50 w-[80px]">
-                    Action
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[5%]">
+                    Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {businessRequirements.map((req, index) => (
                   <tr key={index}>
-                    <td className="px-3 py-2 text-sm bg-sky-50/30">
+                    <td className="px-4 py-2 text-sm bg-blue-100/50">
                       <Textarea
                         value={req.requirement}
                         onChange={(e) => updateBusinessRequirement(index, "requirement", e.target.value)}
@@ -4285,7 +4285,7 @@ export default function DefinePhase() {
                         rows={2}
                       />
                     </td>
-                    <td className="px-3 py-2 text-sm bg-amber-50/30">
+                    <td className="px-4 py-2 text-sm bg-emerald-100/50">
                       <Textarea
                         value={req.businessRequirement}
                         onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
@@ -4294,7 +4294,7 @@ export default function DefinePhase() {
                         rows={2}
                       />
                     </td>
-                    <td className="px-3 py-2 text-sm bg-emerald-50/30">
+                    <td className="px-4 py-2 text-sm bg-amber-100/50">
                       <Select
                         value={req.importance.toString()}
                         onValueChange={(value) => updateBusinessRequirement(index, "importance", parseInt(value))}
@@ -4311,7 +4311,7 @@ export default function DefinePhase() {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-3 py-2 text-sm bg-purple-50/30">
+                    <td className="px-4 py-2 text-sm bg-purple-100/50">
                       <Textarea
                         value={req.criticalToQuality}
                         onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
@@ -4320,7 +4320,7 @@ export default function DefinePhase() {
                         rows={2}
                       />
                     </td>
-                    <td className="px-3 py-2 text-sm">
+                    <td className="px-4 py-2 text-sm bg-gray-100/50 text-center">
                       {index > 0 && (
                         <Button
                           variant="ghost"
