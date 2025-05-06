@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle } from "lucide-react";
 import { useParams } from "wouter";
@@ -370,70 +371,164 @@ const RaciMatrixNew = ({
         </p>
         
         {/* Headers */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
-          <div className="p-3 bg-slate-50 rounded-md text-center w-[95%]">
+        <div className="grid grid-cols-12 gap-2 mb-4">
+          <div className="col-span-3 p-3 bg-slate-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-slate-700 text-sm">Name</h4>
           </div>
-          <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
+          <div className="col-span-2 p-3 bg-blue-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-blue-600 text-sm">Define</h4>
           </div>
-          <div className="p-3 bg-green-50 rounded-md text-center w-[95%]">
+          <div className="col-span-2 p-3 bg-green-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-green-600 text-sm">Measure</h4>
           </div>
-          <div className="p-3 bg-purple-50 rounded-md text-center w-[95%]">
+          <div className="col-span-2 p-3 bg-purple-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-purple-600 text-sm">Analyze</h4>
           </div>
-          <div className="p-3 bg-amber-50 rounded-md text-center w-[95%]">
+          <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-amber-600 text-sm">Improve</h4>
           </div>
-          <div className="p-3 bg-emerald-50 rounded-md text-center w-[95%]">
+          <div className="col-span-1 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-emerald-600 text-sm">Control</h4>
           </div>
-          <div className="p-3 bg-white rounded-md text-center w-[95%]">
+          <div className="col-span-1 p-3 bg-white rounded-md text-center w-[95%]">
             <h4 className="font-medium text-gray-500 text-sm">Action</h4>
           </div>
         </div>
         
         {/* RACI Matrix Rows */}
         {raciData.roles.map((role, roleIndex) => (
-          <div key={roleIndex} className="grid grid-cols-7 gap-2 mb-2 items-center">
-            <div className="w-[95%]">
-              <Input
+          <div key={roleIndex} className="grid grid-cols-12 gap-2 mb-2 items-center">
+            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
+              <Textarea
                 value={role.name || ""}
                 onChange={(e) => updateRoleInfo(roleIndex, 'name', e.target.value)}
                 placeholder="Name"
-                className="w-full"
+                className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px] resize-y"
               />
             </div>
             
-            {/* DMAIC Phase Columns */}
-            {["define", "measure", "analyze", "improve", "control"].map((phase) => (
-              <div key={phase} className="w-[95%] text-center">
-                <Select
-                  value={role.phases[phase as keyof typeof role.phases] || "null"}
-                  onValueChange={(value) => updateRoleResponsibility(
-                    roleIndex,
-                    phase as keyof typeof role.phases,
-                    value
-                  )}
-                >
-                  <SelectTrigger className="w-12 h-10 mx-auto">
-                    <SelectValue placeholder="" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="null">-</SelectItem>
-                    {raciRoleTypes.map((raciRole) => (
-                      <SelectItem key={raciRole} value={raciRole}>
-                        {raciRole}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
+            {/* Define Phase */}
+            <div className="col-span-2 w-[95%] text-center">
+              <Select
+                value={role.phases.define || "null"}
+                onValueChange={(value) => updateRoleResponsibility(
+                  roleIndex,
+                  'define',
+                  value
+                )}
+              >
+                <SelectTrigger className="w-12 h-10 mx-auto">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="null">-</SelectItem>
+                  {raciRoleTypes.map((raciRole) => (
+                    <SelectItem key={raciRole} value={raciRole}>
+                      {raciRole}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Measure Phase */}
+            <div className="col-span-2 w-[95%] text-center">
+              <Select
+                value={role.phases.measure || "null"}
+                onValueChange={(value) => updateRoleResponsibility(
+                  roleIndex,
+                  'measure',
+                  value
+                )}
+              >
+                <SelectTrigger className="w-12 h-10 mx-auto">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="null">-</SelectItem>
+                  {raciRoleTypes.map((raciRole) => (
+                    <SelectItem key={raciRole} value={raciRole}>
+                      {raciRole}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Analyze Phase */}
+            <div className="col-span-2 w-[95%] text-center">
+              <Select
+                value={role.phases.analyze || "null"}
+                onValueChange={(value) => updateRoleResponsibility(
+                  roleIndex,
+                  'analyze',
+                  value
+                )}
+              >
+                <SelectTrigger className="w-12 h-10 mx-auto">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="null">-</SelectItem>
+                  {raciRoleTypes.map((raciRole) => (
+                    <SelectItem key={raciRole} value={raciRole}>
+                      {raciRole}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Improve Phase */}
+            <div className="col-span-1 w-[95%] text-center">
+              <Select
+                value={role.phases.improve || "null"}
+                onValueChange={(value) => updateRoleResponsibility(
+                  roleIndex,
+                  'improve',
+                  value
+                )}
+              >
+                <SelectTrigger className="w-12 h-10 mx-auto">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="null">-</SelectItem>
+                  {raciRoleTypes.map((raciRole) => (
+                    <SelectItem key={raciRole} value={raciRole}>
+                      {raciRole}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Control Phase */}
+            <div className="col-span-1 w-[95%] text-center">
+              <Select
+                value={role.phases.control || "null"}
+                onValueChange={(value) => updateRoleResponsibility(
+                  roleIndex,
+                  'control',
+                  value
+                )}
+              >
+                <SelectTrigger className="w-12 h-10 mx-auto">
+                  <SelectValue placeholder="" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="null">-</SelectItem>
+                  {raciRoleTypes.map((raciRole) => (
+                    <SelectItem key={raciRole} value={raciRole}>
+                      {raciRole}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             
             {/* Action Column */}
-            <div className="text-center">
+            <div className="col-span-1 text-center">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
