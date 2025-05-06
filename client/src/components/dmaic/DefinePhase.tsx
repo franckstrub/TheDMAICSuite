@@ -994,6 +994,8 @@ export default function DefinePhase() {
     }
   }, [charterError, charter, currentProject]);
 
+  // This section has been moved above
+
   // Fetch customer requirements
   const { data: requirementsData, isLoading: isRequirementsLoading, refetch: refetchRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/requirements`],
@@ -1006,7 +1008,108 @@ export default function DefinePhase() {
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
   
-  // Initial data load effect - triggered on mount and when returning to page
+  // Initial data load effect for business requirements - triggered on mount and when returning to page
+  useEffect(() => {
+    console.log("DefinePhase component mounted - checking for business requirements");
+    
+    // Check if we have previously saved business requirements in sessionStorage
+    const hasBusinessRequirements = sessionStorage.getItem(`project_${projectId}_has_business_requirements`);
+    
+    if (hasBusinessRequirements === 'true') {
+      console.log("Business requirements flag found in sessionStorage, loading from database");
+      // Load data directly from database to ensure we have the latest
+      loadBusinessRequirementsFromDatabase(true);
+    }
+  }, [projectId]);
+  
+  // Add a separate useEffect to process business requirements data when it changes
+  useEffect(() => {
+    console.log("Business requirements data changed:", businessRequirementsData);
+    if (businessRequirementsData?.businessRequirements && businessRequirementsData.businessRequirements.length > 0) {
+      // Sort the business requirements data by ID to maintain consistency
+      const sortedBusinessRequirements = [...businessRequirementsData.businessRequirements].sort((a, b) => a.id - b.id);
+      console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+      
+      // Map and set to state, preserving the ID for later reference
+      const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
+        businessRequirement: r.businessRequirement || "",
+        requirement: r.requirement || "",
+        importance: r.importance || 3,
+        criticalToQuality: r.impact || "", // Use impact field but rename to criticalToQuality
+        id: r.id,
+      }));
+      
+      // Only initialize once
+      if (!businessRequirementsInitialized.current) {
+        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        setBusinessRequirements(mappedBusinessRequirements);
+        businessRequirementsInitialized.current = true;
+      }
+    }
+  }, [businessRequirementsData]);
+
+  // Function to load business requirements from the database
+  const loadBusinessRequirementsFromDatabase = async (silent = false) => {
+    try {
+      console.log("Explicitly loading business requirements from database");
+      const response = await fetch(`/api/projects/${projectId}/business-requirements`);
+      const data = await response.json();
+      console.log("Loaded business requirements from database:", data);
+      
+      if (data?.businessRequirements && data.businessRequirements.length > 0) {
+        // Map the business requirements data and sort by ID to maintain order
+        // Sort by ID in ascending order so the first entered item appears first
+        const sortedBusinessRequirements = [...data.businessRequirements].sort((a, b) => a.id - b.id);
+        console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+        
+        const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
+          requirement: r.requirement || "",
+          businessRequirement: r.businessRequirement || "",
+          importance: r.importance || 3, 
+          criticalToQuality: r.impact || "", // Use impact field but rename to criticalToQuality
+          id: r.id, // Store the ID to help with sorting
+        }));
+        
+        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        // Set the business requirements state with the mapped data
+        setBusinessRequirements(mappedBusinessRequirements);
+        
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+        
+        if (!silent) {
+          toast({
+            title: "Data Refreshed",
+            description: "Business requirements loaded successfully",
+          });
+        }
+        
+        return mappedBusinessRequirements;
+      } else {
+        // If no business requirements found in the API response, ensure we have at least one empty row
+        console.log("No business requirements found in database, setting default empty row");
+        const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+        setBusinessRequirements(defaultRow);
+        return defaultRow;
+      }
+    } catch (error) {
+      console.error("Error loading business requirements from database:", error);
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "Could not load business requirements",
+          variant: "destructive",
+        });
+      }
+      
+      // Ensure we have at least one empty row even on error
+      const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+      setBusinessRequirements(defaultRow);
+      return defaultRow;
+    }
+  };
+  
+  // Initial data load effect for customer requirements - triggered on mount and when returning to page
   useEffect(() => {
     console.log("DefinePhase component mounted - checking for requirements");
     
@@ -1193,6 +1296,79 @@ export default function DefinePhase() {
       toast({
         title: "Error",
         description: `Failed to save SIPOC diagram: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Save business requirements mutation
+  const saveBusinessRequirementsMutation = useMutation({
+    mutationFn: async (businessRequirements: any[]) => {
+      // Filter business requirements where either requirement or business requirement is filled
+      const validBusinessRequirements = businessRequirements.filter(r => 
+        r.businessRequirement.trim() !== "" || r.requirement.trim() !== ""
+      );
+      
+      // Always include at least one row even if empty, to ensure we always have a row in the database
+      const businessRequirementsToSave = validBusinessRequirements.length > 0 ? 
+        validBusinessRequirements : 
+        [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+      
+      console.log("Saving business requirements:", businessRequirementsToSave);
+      
+      try {
+        // First, get existing business requirements to delete them
+        const existingBusinessReqs = await fetch(`/api/projects/${projectId}/business-requirements`).then(res => res.json());
+        console.log("Existing business requirements before deletion:", existingBusinessReqs);
+        
+        // Delete all existing business requirements
+        if (existingBusinessReqs && existingBusinessReqs.businessRequirements && existingBusinessReqs.businessRequirements.length > 0) {
+          console.log(`Deleting ${existingBusinessReqs.businessRequirements.length} existing business requirements`);
+          const deletePromises = existingBusinessReqs.businessRequirements.map((req: any) => 
+            apiRequest("DELETE", `/api/business-requirements/${req.id}`, { userId: user?.id, projectId })
+          );
+          await Promise.all(deletePromises);
+          console.log("All existing business requirements deleted");
+        }
+        
+        // Now create new business requirements
+        console.log(`Creating ${businessRequirementsToSave.length} new business requirements`);
+        const createPromises = businessRequirementsToSave.map(r => {
+          const payload = {
+            projectId,
+            requirement: r.requirement,
+            businessRequirement: r.businessRequirement || "",
+            importance: r.importance,
+            impact: r.criticalToQuality, // Map the criticalToQuality field to impact for storage
+            userId: user?.id,
+          };
+          
+          return apiRequest("POST", `/api/projects/${projectId}/business-requirements`, payload);
+        });
+        
+        const results = await Promise.all(createPromises);
+        console.log("New business requirements created:", results);
+        return results;
+      } catch (error) {
+        console.error("Error saving business requirements:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Business requirements saved successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+      
+      // Set the flag in sessionStorage to remember we have requirements for this project
+      sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
+    },
+    onError: (error) => {
+      console.error("Error in save business requirements mutation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save business requirements. Please try again.",
         variant: "destructive",
       });
     },
