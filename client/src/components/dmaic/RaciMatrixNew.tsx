@@ -137,10 +137,13 @@ const RaciMatrixNew = ({
   
   // Populate RACI matrix with names from project charter if no existing RACI data
   const populateRaciFromCharter = () => {
-    if (!charterData?.charter || charterDataLoaded.current) {
-      console.log("Cannot populate RACI: Charter data missing or already loaded");
+    if (!charterData?.charter) {
+      console.log("Cannot populate RACI: Charter data missing");
       return;
     }
+    
+    // Reset the charterDataLoaded flag to ensure we can repopulate if needed
+    charterDataLoaded.current = false;
     
     console.log("Populating RACI from charter", charterData.charter);
     const charter = charterData.charter;
@@ -269,14 +272,21 @@ const RaciMatrixNew = ({
           
           console.log("Final parsed RACI data:", parsedData);
           
+          // Check if RACI data is empty (no roles or empty roles array)
+          const isEmpty = !parsedData.roles || parsedData.roles.length === 0;
+          console.log("Is RACI data empty?", isEmpty);
+          
           // If the parsed data has roles, use it
-          if (parsedData.roles && parsedData.roles.length > 0) {
+          if (!isEmpty) {
+            console.log("Using existing RACI data with roles:", parsedData.roles.length);
             setRaciData(parsedData);
             raciFormInitialized.current = true;
             
             // Store a flag in sessionStorage to remember that we have RACI data
             sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
             return;
+          } else {
+            console.log("RACI data is empty, will try auto-populating");
           }
         } catch (error) {
           console.error('Error processing RACI matrix data:', error);
@@ -372,23 +382,44 @@ const RaciMatrixNew = ({
             }
             
             console.log("Final parsed RACI data:", parsedData);
-            setRaciData(parsedData);
-            raciFormInitialized.current = true;
             
-            // Store a flag in sessionStorage to remember that we have RACI data
-            sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
+            // Check if RACI data is empty (no roles or empty roles array)
+            const isEmpty = !parsedData || !parsedData.roles || parsedData.roles.length === 0;
+            console.log("Is RACI data empty in loadRaciDataFromDatabase?", isEmpty);
             
-            // Also trigger a query invalidation for React Query
-            queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
-            
-            if (!silent) {
-              toast({
-                title: "Data Refreshed",
-                description: "RACI matrix loaded successfully",
-              });
+            if (isEmpty && charterData?.charter && !charterDataLoaded.current) {
+              console.log("RACI data is empty in database load, auto-populating from charter");
+              // Populate from charter and return that instead
+              populateRaciFromCharter();
+              
+              if (!silent) {
+                toast({
+                  title: "Auto-populated",
+                  description: "RACI matrix populated from project charter",
+                });
+              }
+              
+              return raciData;
+            } else {
+              // Use the existing data
+              setRaciData(parsedData);
+              raciFormInitialized.current = true;
+              
+              // Store a flag in sessionStorage to remember that we have RACI data
+              sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
+              
+              // Also trigger a query invalidation for React Query
+              queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
+              
+              if (!silent) {
+                toast({
+                  title: "Data Refreshed",
+                  description: "RACI matrix loaded successfully",
+                });
+              }
+              
+              return parsedData;
             }
-            
-            return parsedData;
           }
         } catch (error) {
           console.error('Error parsing RACI matrix data:', error);
