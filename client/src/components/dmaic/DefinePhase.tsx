@@ -3804,7 +3804,7 @@ export default function DefinePhase() {
           <div className="mt-4">
             <Button 
               onClick={handleSaveRequirements}
-              disabled={saveRequirementsMutation.isPending || requirements.every(r => !r.requirement && !r.customerRequirement)}
+              disabled={saveRequirementsMutation.isPending}
             >
               {saveRequirementsMutation.isPending ? "Saving..." : "Save Customer Requirements"}
             </Button>
