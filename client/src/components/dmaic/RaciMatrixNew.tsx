@@ -56,6 +56,79 @@ const RaciMatrixNew = ({
     raciFormInitialized.current = false;
     charterDataLoaded.current = false;
   };
+  
+  // Populate RACI matrix directly from props passed by parent
+  const populateRaciFromProps = (charterProps: {
+    sponsor?: string,
+    stakeholder?: string,
+    stakeholderFunction?: string,
+    financialController?: string,
+    projectLeader?: string,
+    projectCoach?: string
+  }) => {
+    console.log("Populating RACI from props:", charterProps);
+    
+    // Build a list of roles from charter props
+    const rolesFromProps = [];
+    
+    // Add Sponsor (if available)
+    if (charterProps.sponsor) {
+      console.log("Adding sponsor from props:", charterProps.sponsor);
+      rolesFromProps.push({
+        name: charterProps.sponsor,
+        function: "Sponsor",
+        phases: { define: "A", measure: "A", analyze: "A", improve: "A", control: "A" }
+      });
+    }
+    
+    // Add Project Leader (if available)
+    if (charterProps.projectLeader) {
+      console.log("Adding project leader from props:", charterProps.projectLeader);
+      rolesFromProps.push({
+        name: charterProps.projectLeader,
+        function: "Project Leader",
+        phases: { define: "R", measure: "R", analyze: "R", improve: "R", control: "R" }
+      });
+    }
+    
+    // Add Financial Controller (if available)
+    if (charterProps.financialController) {
+      console.log("Adding financial controller from props:", charterProps.financialController);
+      rolesFromProps.push({
+        name: charterProps.financialController,
+        function: "Financial Controller", 
+        phases: { define: "C", measure: "I", analyze: "I", improve: "C", control: "I" }
+      });
+    }
+    
+    // Add Stakeholder (if available)
+    if (charterProps.stakeholder) {
+      console.log("Adding stakeholder from props:", charterProps.stakeholder);
+      rolesFromProps.push({
+        name: charterProps.stakeholder,
+        function: charterProps.stakeholderFunction || "Stakeholder",
+        phases: { define: "C", measure: "C", analyze: "C", improve: "C", control: "I" }
+      });
+    }
+    
+    // Add Project Coach (if available)
+    if (charterProps.projectCoach) {
+      console.log("Adding project coach from props:", charterProps.projectCoach);
+      rolesFromProps.push({
+        name: charterProps.projectCoach,
+        function: "Project Coach",
+        phases: { define: "A", measure: "C", analyze: "C", improve: "C", control: "C" }
+      });
+    }
+    
+    if (rolesFromProps.length > 0) {
+      console.log("Setting RACI data with roles from props:", rolesFromProps);
+      setRaciData({ roles: rolesFromProps });
+      charterDataLoaded.current = true;
+    } else {
+      console.log("No roles found in props to populate RACI matrix");
+    }
+  };
 
   // Re-initialize the form when navigating between projects
   useEffect(() => {
@@ -132,18 +205,35 @@ const RaciMatrixNew = ({
     }
   };
   
-  // Clear the session storage data for testing
+  // Clear the session storage data and ensure we use either props or API data for auto-population
   useEffect(() => {
+    // For testing, remove session storage flag to force auto-population
     sessionStorage.removeItem(`project_${projectId}_has_raci_data`);
     
-    console.log("Charter data effect running", charterData, "loaded:", charterDataLoaded.current);
+    console.log("Charter props:", {
+      sponsor, projectLeader, stakeholder, stakeholderFunction, financialController, projectCoach
+    });
+    console.log("Charter API data:", charterData);
     
-    // Make sure we auto-populate from charter if it exists
-    if (charterData?.charter && !charterDataLoaded.current) {
-      console.log("Attempting to populate RACI from charter!");
+    // First priority: use the props passed from the parent component
+    if (sponsor && projectLeader && !charterDataLoaded.current) {
+      console.log("Using props to auto-populate RACI matrix");
+      const charterFromProps = {
+        sponsor,
+        stakeholder,
+        stakeholderFunction,
+        financialController,
+        projectLeader,
+        projectCoach
+      };
+      populateRaciFromProps(charterFromProps);
+    } 
+    // Second priority: use the data from the API
+    else if (charterData?.charter && !charterDataLoaded.current) {
+      console.log("Using API data to auto-populate RACI matrix");
       populateRaciFromCharter();
     }
-  }, [charterData, projectId]);
+  }, [charterData, projectId, sponsor, projectLeader, stakeholder, stakeholderFunction, financialController, projectCoach]);
 
   // This useEffect is already declared above and accomplishes the same thing
 
@@ -156,43 +246,85 @@ const RaciMatrixNew = ({
     refetchOnWindowFocus: true,
     onSuccess: (data) => {
       console.log("Fetched RACI matrix data:", data);
-      if (data && data.raciMatrix) {
+      
+      // Check if we have valid RACI matrix data
+      if (data && data.raciMatrix && data.raciMatrix.raciData) {
         try {
           // The data structure is nested and the raciData field might be an object or string
           const raciData = data.raciMatrix.raciData;
           console.log("RACI data from response:", raciData);
           
-          if (raciData) {
-            // Handle both string and object formats
-            let parsedData: RaciMatrixData;
-            
-            if (typeof raciData === 'string') {
-              // If it's a string, parse it
-              parsedData = JSON.parse(raciData) as RaciMatrixData;
-            } else if (typeof raciData === 'object') {
-              // If it's already an object, use it directly
-              parsedData = raciData as RaciMatrixData;
-            } else {
-              throw new Error("Unexpected raciData format");
-            }
-            
-            console.log("Final parsed RACI data:", parsedData);
+          // Handle both string and object formats
+          let parsedData: RaciMatrixData;
+          
+          if (typeof raciData === 'string') {
+            // If it's a string, parse it
+            parsedData = JSON.parse(raciData) as RaciMatrixData;
+          } else if (typeof raciData === 'object') {
+            // If it's already an object, use it directly
+            parsedData = raciData as RaciMatrixData;
+          } else {
+            throw new Error("Unexpected raciData format");
+          }
+          
+          console.log("Final parsed RACI data:", parsedData);
+          
+          // If the parsed data has roles, use it
+          if (parsedData.roles && parsedData.roles.length > 0) {
             setRaciData(parsedData);
             raciFormInitialized.current = true;
             
             // Store a flag in sessionStorage to remember that we have RACI data
             sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
-          } else {
-            console.warn("No raciData found in response");
+            return;
           }
         } catch (error) {
           console.error('Error processing RACI matrix data:', error);
         }
       }
+      
+      console.log("No valid RACI data found in response, attempting to auto-populate");
+      
+      // If we reach here, there is no valid RACI data, so try to auto-populate
+      // First from props
+      if (sponsor && projectLeader && !charterDataLoaded.current) {
+        console.log("Auto-populating from props after empty API response");
+        const charterFromProps = {
+          sponsor,
+          stakeholder,
+          stakeholderFunction,
+          financialController,
+          projectLeader,
+          projectCoach
+        };
+        populateRaciFromProps(charterFromProps);
+      } 
+      // Then from charter API data
+      else if (charterData?.charter && !charterDataLoaded.current) {
+        console.log("Auto-populating from charter API data after empty API response");
+        populateRaciFromCharter();
+      }
     },
     onError: (error) => {
       console.error("Error fetching RACI matrix:", error);
-      // If no RACI matrix exists, we'll just use the default
+      
+      // On error, try auto-populating
+      if (sponsor && projectLeader && !charterDataLoaded.current) {
+        console.log("Auto-populating from props after API error");
+        const charterFromProps = {
+          sponsor,
+          stakeholder,
+          stakeholderFunction,
+          financialController,
+          projectLeader,
+          projectCoach
+        };
+        populateRaciFromProps(charterFromProps);
+      } 
+      else if (charterData?.charter && !charterDataLoaded.current) {
+        console.log("Auto-populating from charter API data after API error");
+        populateRaciFromCharter();
+      }
     }
   });
 
