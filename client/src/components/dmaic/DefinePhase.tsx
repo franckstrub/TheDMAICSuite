@@ -978,28 +978,44 @@ export default function DefinePhase() {
   }, [charterError, charter, currentProject]);
 
   // Fetch customer requirements
-  const { data: requirementsData } = useQuery({
+  const { data: requirementsData, isLoading: isRequirementsLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/requirements`],
     enabled: !!user?.id && !!projectId,
+    // Retry failed queries and set a stale time to avoid too many refreshes
+    retry: 3,
+    staleTime: 10000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     onSuccess: (data) => {
+      console.log("Requirements data loaded:", data);
       if (data?.requirements && data.requirements.length > 0) {
         // Map the requirements data
         const mappedRequirements = data.requirements.map((r: any) => ({
-          requirement: r.requirement,
+          requirement: r.requirement || "",
           customerRequirement: r.customerRequirement || "",
-          importance: r.importance,
-          satisfaction: r.satisfaction,
+          importance: r.importance || 3,
+          satisfaction: r.satisfaction || "",
         }));
+        
+        console.log("Mapped requirements:", mappedRequirements);
         
         // Set the requirements state with the mapped data
         setRequirements(mappedRequirements);
       } else {
         // If no requirements found in the API response, ensure we have at least one empty row
+        console.log("No requirements found, setting default empty row");
         setRequirements([
           { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
         ]);
       }
     },
+    onError: (error) => {
+      console.error("Error fetching requirements:", error);
+      // Ensure we have at least one empty row even on error
+      setRequirements([
+        { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
+      ]);
+    }
   });
 
   // Save project charter mutation
