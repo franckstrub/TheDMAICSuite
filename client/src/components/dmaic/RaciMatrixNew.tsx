@@ -88,15 +88,20 @@ const RaciMatrixNew = ({
     refetchOnWindowFocus: true,
     onSuccess: (data) => {
       console.log("Fetched RACI matrix data:", data);
-      if (data && !raciFormInitialized.current) {
+      if (data) {
         try {
           // Try first with raciData, then fall back to matrixData for compatibility
-          const jsonString = data.raciData || data.matrixData;
+          const jsonString = data.raciMatrix?.raciData || data.raciMatrix?.matrixData || data.raciData || data.matrixData;
+          console.log("JSON string from response:", jsonString);
+          
           if (jsonString) {
             const parsedData = JSON.parse(jsonString) as RaciMatrixData;
             console.log("Parsed RACI data:", parsedData);
             setRaciData(parsedData);
             raciFormInitialized.current = true;
+            
+            // Store a flag in sessionStorage to remember that we have RACI data
+            sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
           } else {
             console.warn("No matrixData or raciData found in response");
           }
@@ -131,10 +136,16 @@ const RaciMatrixNew = ({
       const data = await response.json();
       console.log("Loaded RACI matrix from database:", data);
       
-      if (data?.raciMatrix) {
+      // Try different data structures that might be returned by the API
+      // This handles both the case where data.raciMatrix exists and where data itself contains the data
+      const raciMatrixObj = data?.raciMatrix || data;
+      
+      if (raciMatrixObj) {
         try {
-          // Try first with raciData, then fall back to matrixData for compatibility
-          const jsonString = data.raciMatrix.raciData || data.raciMatrix.matrixData;
+          // Try all possible paths to the raciData property
+          const jsonString = raciMatrixObj.raciData || raciMatrixObj.matrixData;
+          console.log("JSON string from database:", jsonString);
+          
           if (jsonString) {
             const parsedData = JSON.parse(jsonString) as RaciMatrixData;
             console.log("Parsed RACI data:", parsedData);
