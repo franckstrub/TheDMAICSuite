@@ -656,6 +656,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return handleErrors(err, res);
     }
   });
+  
+  // Business Requirements routes
+  app.get("/api/projects/:projectId/business-requirements", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const businessRequirements = await storage.getBusinessRequirements(projectId);
+      
+      return res.status(200).json({ businessRequirements });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/business-requirements", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const businessRequirementData: InsertBusinessRequirement = {
+        ...req.body,
+        projectId
+      };
+      
+      const validatedData = insertBusinessRequirementSchema.parse(businessRequirementData);
+      const businessRequirement = await storage.createBusinessRequirement(validatedData);
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_business_requirement",
+          details: `Added business requirement: ${businessRequirement.requirement}`
+        });
+      }
+      
+      return res.status(201).json({ businessRequirement });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/business-requirements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const businessRequirementData = req.body as Partial<BusinessRequirement>;
+      
+      const businessRequirement = await storage.updateBusinessRequirement(id, businessRequirementData);
+      if (!businessRequirement) {
+        return res.status(404).json({ message: "Business requirement not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: businessRequirement.projectId,
+          action: "update_business_requirement",
+          details: `Updated business requirement: ${businessRequirement.requirement}`
+        });
+      }
+      
+      return res.status(200).json({ businessRequirement });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.delete("/api/business-requirements/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.body.userId;
+      const projectId = req.body.projectId;
+      
+      await storage.deleteBusinessRequirement(id);
+      
+      // Log activity
+      if (userId && projectId) {
+        await storage.createActivityLog({
+          userId,
+          projectId,
+          action: "delete_business_requirement",
+          details: "Deleted a business requirement"
+        });
+      }
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
 
   // Datasets routes
   app.get("/api/datasets", async (req: Request, res: Response) => {
