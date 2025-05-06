@@ -4025,6 +4025,128 @@ export default function DefinePhase() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Voice of Business */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Voice of Business</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Identify and prioritize business requirements and needs.
+          </p>
+          
+          <div className="overflow-x-auto">
+            <table className="w-[95%] mx-auto divide-y divide-gray-200">
+              <thead>
+                <tr className="w-full">
+                  <th className="px-3 py-2 text-left text-sm font-medium text-sky-700 bg-sky-50 border-r-[6px] border-white w-1/4">
+                    Requirement
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-medium text-amber-700 bg-amber-50 border-r-[6px] border-white w-1/4">
+                    Business Requirement
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-medium text-emerald-700 bg-emerald-50 border-r-[6px] border-white w-1/6">
+                    Importance (1-5)
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-medium text-purple-700 bg-purple-50 w-1/4">
+                    Critical to Quality
+                  </th>
+                  <th className="w-[50px]"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {businessRequirements.map((req, index) => (
+                  <tr key={index}>
+                    <td className="px-3 py-2 text-sm bg-sky-50/30">
+                      <Input
+                        value={req.requirement}
+                        onChange={(e) => updateBusinessRequirement(index, "requirement", e.target.value)}
+                        placeholder="Enter requirement"
+                        className="min-w-full text-sm"
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-sm bg-amber-50/30">
+                      <Input
+                        value={req.businessRequirement}
+                        onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
+                        placeholder="Enter business requirement"
+                        className="min-w-full text-sm"
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-sm bg-emerald-50/30">
+                      <Select
+                        value={req.importance.toString()}
+                        onValueChange={(value) => updateBusinessRequirement(index, "importance", parseInt(value))}
+                      >
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 - Very Low</SelectItem>
+                          <SelectItem value="2">2 - Low</SelectItem>
+                          <SelectItem value="3">3 - Medium</SelectItem>
+                          <SelectItem value="4">4 - High</SelectItem>
+                          <SelectItem value="5">5 - Very High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-3 py-2 text-sm bg-purple-50/30">
+                      <Textarea
+                        value={req.criticalToQuality}
+                        onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
+                        placeholder="Enter critical to quality factors"
+                        className="min-w-full text-sm"
+                        rows={2}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-sm">
+                      {index > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removeBusinessRequirement(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Add Business Requirement Button */}
+          <div className="flex justify-start mt-4 mb-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-1"
+              onClick={addBusinessRequirement}
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add Business Requirement
+            </Button>
+          </div>
+          
+          {/* Save Business Requirements Button */}
+          <div className="flex justify-end mt-4">
+            <Button 
+              type="button"
+              onClick={() => saveBusinessRequirementsMutation.mutate(businessRequirements)}
+              variant="default" 
+              size="sm"
+              className="flex items-center gap-1"
+              disabled={saveBusinessRequirementsMutation.isPending}
+            >
+              {saveBusinessRequirementsMutation.isPending ? "Saving..." : "Save Business Requirements"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Project Risk Assessment Section */}
       <RiskAssessment />
