@@ -3778,15 +3778,7 @@ export default function DefinePhase() {
                       </div>
                     </td>
                     <td className="px-4 py-2">
-                      {index === requirements.length - 1 && (req.requirement || req.customerRequirement) ? (
-                        <Button variant="ghost" size="sm" onClick={addRequirement}>
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : index === requirements.length - 1 ? (
-                        <Button variant="ghost" size="sm" disabled className="text-gray-400">
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : index === 0 ? (
+                      {index === 0 ? (
                         // No delete button for first row
                         <span></span>
                       ) : (
@@ -3799,6 +3791,23 @@ export default function DefinePhase() {
                 ))}
               </tbody>
             </table>
+          </div>
+          
+          {/* Add Customer Requirement Button */}
+          <div className="flex justify-start mt-4 mb-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              className="flex items-center"
+              onClick={addRequirement}
+              disabled={requirements.length > 0 && 
+                        !(requirements[requirements.length - 1].requirement || 
+                          requirements[requirements.length - 1].customerRequirement)}
+            >
+              <PlusCircle className="mr-1 h-4 w-4" />
+              Add a Customer Requirement
+            </Button>
           </div>
           
           <div className="mt-4">
