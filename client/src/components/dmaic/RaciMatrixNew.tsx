@@ -372,25 +372,25 @@ const RaciMatrixNew = ({
         
         {/* Headers */}
         <div className="grid grid-cols-12 gap-2 mb-4">
-          <div className="col-span-3 p-3 bg-slate-50 rounded-md text-center w-[95%]">
+          <div className="col-span-4 p-3 bg-slate-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-slate-700 text-sm">Name</h4>
           </div>
-          <div className="col-span-2 p-3 bg-blue-50 rounded-md text-center w-[95%]">
+          <div className="col-span-1.5 p-3 bg-blue-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-blue-600 text-sm">Define</h4>
           </div>
-          <div className="col-span-2 p-3 bg-green-50 rounded-md text-center w-[95%]">
+          <div className="col-span-1.5 p-3 bg-green-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-green-600 text-sm">Measure</h4>
           </div>
-          <div className="col-span-2 p-3 bg-purple-50 rounded-md text-center w-[95%]">
+          <div className="col-span-1.5 p-3 bg-purple-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-purple-600 text-sm">Analyze</h4>
           </div>
-          <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
+          <div className="col-span-1.5 p-3 bg-amber-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-amber-600 text-sm">Improve</h4>
           </div>
-          <div className="col-span-1 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
+          <div className="col-span-1.5 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-emerald-600 text-sm">Control</h4>
           </div>
-          <div className="col-span-1 p-3 bg-white rounded-md text-center w-[95%]">
+          <div className="col-span-0.5 p-3 bg-white rounded-md text-center w-[95%]">
             <h4 className="font-medium text-gray-500 text-sm">Action</h4>
           </div>
         </div>
@@ -398,7 +398,7 @@ const RaciMatrixNew = ({
         {/* RACI Matrix Rows */}
         {raciData.roles.map((role, roleIndex) => (
           <div key={roleIndex} className="grid grid-cols-12 gap-2 mb-2 items-center">
-            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
+            <div className="col-span-4 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
               <Textarea
                 value={role.name || ""}
                 onChange={(e) => updateRoleInfo(roleIndex, 'name', e.target.value)}
@@ -408,7 +408,7 @@ const RaciMatrixNew = ({
             </div>
             
             {/* Define Phase */}
-            <div className="col-span-2 w-[95%] text-center">
+            <div className="col-span-1.5 w-[95%] text-center">
               <Select
                 value={role.phases.define || "null"}
                 onValueChange={(value) => updateRoleResponsibility(
@@ -432,7 +432,7 @@ const RaciMatrixNew = ({
             </div>
             
             {/* Measure Phase */}
-            <div className="col-span-2 w-[95%] text-center">
+            <div className="col-span-1.5 w-[95%] text-center">
               <Select
                 value={role.phases.measure || "null"}
                 onValueChange={(value) => updateRoleResponsibility(
@@ -456,7 +456,7 @@ const RaciMatrixNew = ({
             </div>
             
             {/* Analyze Phase */}
-            <div className="col-span-2 w-[95%] text-center">
+            <div className="col-span-1.5 w-[95%] text-center">
               <Select
                 value={role.phases.analyze || "null"}
                 onValueChange={(value) => updateRoleResponsibility(
@@ -480,7 +480,7 @@ const RaciMatrixNew = ({
             </div>
             
             {/* Improve Phase */}
-            <div className="col-span-1 w-[95%] text-center">
+            <div className="col-span-1.5 w-[95%] text-center">
               <Select
                 value={role.phases.improve || "null"}
                 onValueChange={(value) => updateRoleResponsibility(
@@ -504,7 +504,7 @@ const RaciMatrixNew = ({
             </div>
             
             {/* Control Phase */}
-            <div className="col-span-1 w-[95%] text-center">
+            <div className="col-span-1.5 w-[95%] text-center">
               <Select
                 value={role.phases.control || "null"}
                 onValueChange={(value) => updateRoleResponsibility(
@@ -528,7 +528,7 @@ const RaciMatrixNew = ({
             </div>
             
             {/* Action Column */}
-            <div className="col-span-1 text-center">
+            <div className="col-span-0.5 text-center">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
