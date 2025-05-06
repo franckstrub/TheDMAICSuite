@@ -88,25 +88,37 @@ const RaciMatrixNew = ({
     refetchOnWindowFocus: true,
     onSuccess: (data) => {
       console.log("Fetched RACI matrix data:", data);
-      if (data) {
+      if (data && data.raciMatrix) {
         try {
-          // Try first with raciData, then fall back to matrixData for compatibility
-          const jsonString = data.raciMatrix?.raciData || data.raciMatrix?.matrixData || data.raciData || data.matrixData;
-          console.log("JSON string from response:", jsonString);
+          // The data structure is nested and the raciData field might be an object or string
+          const raciData = data.raciMatrix.raciData;
+          console.log("RACI data from response:", raciData);
           
-          if (jsonString) {
-            const parsedData = JSON.parse(jsonString) as RaciMatrixData;
-            console.log("Parsed RACI data:", parsedData);
+          if (raciData) {
+            // Handle both string and object formats
+            let parsedData: RaciMatrixData;
+            
+            if (typeof raciData === 'string') {
+              // If it's a string, parse it
+              parsedData = JSON.parse(raciData) as RaciMatrixData;
+            } else if (typeof raciData === 'object') {
+              // If it's already an object, use it directly
+              parsedData = raciData as RaciMatrixData;
+            } else {
+              throw new Error("Unexpected raciData format");
+            }
+            
+            console.log("Final parsed RACI data:", parsedData);
             setRaciData(parsedData);
             raciFormInitialized.current = true;
             
             // Store a flag in sessionStorage to remember that we have RACI data
             sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
           } else {
-            console.warn("No matrixData or raciData found in response");
+            console.warn("No raciData found in response");
           }
         } catch (error) {
-          console.error('Error parsing RACI matrix data:', error);
+          console.error('Error processing RACI matrix data:', error);
         }
       }
     },
@@ -136,19 +148,30 @@ const RaciMatrixNew = ({
       const data = await response.json();
       console.log("Loaded RACI matrix from database:", data);
       
-      // Try different data structures that might be returned by the API
-      // This handles both the case where data.raciMatrix exists and where data itself contains the data
+      // Navigate to the raciMatrix data (if present)
       const raciMatrixObj = data?.raciMatrix || data;
       
       if (raciMatrixObj) {
         try {
-          // Try all possible paths to the raciData property
-          const jsonString = raciMatrixObj.raciData || raciMatrixObj.matrixData;
-          console.log("JSON string from database:", jsonString);
+          // Get the raciData, which could be a string or an object
+          const raciData = raciMatrixObj.raciData || raciMatrixObj.matrixData;
+          console.log("RACI data from database:", raciData);
           
-          if (jsonString) {
-            const parsedData = JSON.parse(jsonString) as RaciMatrixData;
-            console.log("Parsed RACI data:", parsedData);
+          if (raciData) {
+            // Handle both string and object formats
+            let parsedData: RaciMatrixData;
+            
+            if (typeof raciData === 'string') {
+              // If it's a string, parse it
+              parsedData = JSON.parse(raciData) as RaciMatrixData;
+            } else if (typeof raciData === 'object') {
+              // If it's already an object, use it directly
+              parsedData = raciData as RaciMatrixData;
+            } else {
+              throw new Error("Unexpected raciData format");
+            }
+            
+            console.log("Final parsed RACI data:", parsedData);
             setRaciData(parsedData);
             raciFormInitialized.current = true;
             
@@ -198,18 +221,17 @@ const RaciMatrixNew = ({
   // Create RACI matrix mutation
   const saveRaciMatrixMutation = useMutation({
     mutationFn: async () => {
-      const matrixDataString = JSON.stringify(raciData);
-      console.log("Saving RACI matrix with data:", matrixDataString);
+      console.log("Saving RACI matrix with data:", raciData);
       
       try {
         // Check if RACI matrix exists for update or create
-        if (raciMatrixData?.id) {
+        if (raciMatrixData?.raciMatrix?.id) {
           // Update existing RACI matrix
-          const response = await fetch(`/api/raci-matrix/${raciMatrixData.id}`, {
+          const response = await fetch(`/api/raci-matrix/${raciMatrixData.raciMatrix.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              raciData: matrixDataString
+              raciData: raciData // Send the object directly - server handles JSON serialization
             }),
           });
           
@@ -227,7 +249,7 @@ const RaciMatrixNew = ({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               projectId: parseInt(projectId.toString(), 10),
-              raciData: matrixDataString,
+              raciData: raciData, // Send the object directly - server handles JSON serialization
               userId: user?.id
             }),
           });
@@ -258,7 +280,7 @@ const RaciMatrixNew = ({
       
       toast({
         title: "Success",
-        description: raciMatrixData?.id 
+        description: raciMatrixData?.raciMatrix?.id 
           ? "RACI matrix updated successfully" 
           : "RACI matrix created successfully",
       });
@@ -475,7 +497,7 @@ const RaciMatrixNew = ({
               onClick={handleSaveRaci}
               disabled={saveRaciMatrixMutation.isPending}
             >
-              {raciMatrixData?.id ? "Update RACI Matrix" : "Save RACI Matrix"}
+              {raciMatrixData?.raciMatrix?.id ? "Update RACI Matrix" : "Save RACI Matrix"}
             </Button>
           </div>
         </div>
