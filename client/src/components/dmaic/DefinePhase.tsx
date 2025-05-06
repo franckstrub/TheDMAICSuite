@@ -474,7 +474,12 @@ export default function DefinePhase() {
     });
   };
 
-
+  // Customer Requirements state
+  const [requirements, setRequirements] = useState([
+    { requirement: "Fast delivery", customerRequirement: "Delivery within 24 hours", importance: 4, satisfaction: 2 },
+    { requirement: "Order accuracy", customerRequirement: "100% accurate order fulfillment", importance: 5, satisfaction: 3 },
+    { requirement: "", customerRequirement: "", importance: 3, satisfaction: 3 },
+  ]);
   
   // FTE calculation state
   const [fteParams, setFteParams] = useState({
@@ -3670,7 +3675,104 @@ export default function DefinePhase() {
         </CardContent>
       </Card>
 
-
+      {/* Voice of Customer */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Voice of Customer</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Identify and prioritize customer requirements and needs.
+          </p>
+          
+          <div className="overflow-x-auto">
+            <table className="w-[95%] mx-auto divide-y divide-gray-200">
+              <thead>
+                <tr className="w-full">
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-1/5">Customer Requirement</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-1/5">Customer Need</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-6 border-white w-1/5">Importance (1-5)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-1/5">Critical to Quality (CTQ)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-1/5">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {requirements.map((req, index) => (
+                  <tr key={index}>
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <Input
+                        type="text"
+                        value={req.customerRequirement}
+                        onChange={(e) => updateRequirement(index, "customerRequirement", e.target.value)}
+                        placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
+                        className="border-blue-200 focus:border-blue-500 bg-blue-50/50"
+                      />
+                    </td>
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <Input
+                        type="text"
+                        value={req.requirement}
+                        onChange={(e) => updateRequirement(index, "requirement", e.target.value)}
+                        placeholder={index === requirements.length - 1 ? "Add new need..." : ""}
+                        className="border-emerald-200 focus:border-emerald-500 bg-emerald-50/50"
+                      />
+                    </td>
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <select
+                        className="w-full p-2 border border-amber-200 rounded-md bg-amber-50/50 focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50"
+                        value={req.importance}
+                        onChange={(e) => updateRequirement(index, "importance", parseInt(e.target.value))}
+                      >
+                        {[1, 2, 3, 4, 5].map((val) => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-2 border-r-6 border-white">
+                      <Input
+                        type="text"
+                        value={req.satisfaction ? req.satisfaction.toString() : ""}
+                        onChange={(e) => {
+                          // Allow empty string or convert to number for backward compatibility
+                          const value = e.target.value === "" ? 0 : e.target.value;
+                          updateRequirement(index, "satisfaction", value);
+                        }}
+                        placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
+                        title="Critical to Quality (CTQ) specification"
+                        className="border-purple-200 focus:border-purple-500 bg-purple-50/50"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      {index === requirements.length - 1 && (req.requirement || req.customerRequirement) ? (
+                        <Button variant="ghost" size="sm" onClick={addRequirement}>
+                          <i className="fas fa-plus"></i>
+                        </Button>
+                      ) : index === requirements.length - 1 ? (
+                        <Button variant="ghost" size="sm" disabled className="text-gray-400">
+                          <i className="fas fa-plus"></i>
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => removeRequirement(index)} className="text-red-500 hover:text-red-700">
+                          <i className="fas fa-trash"></i>
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="mt-4">
+            <Button 
+              onClick={handleSaveRequirements}
+              disabled={saveRequirementsMutation.isPending || requirements.every(r => !r.requirement && !r.customerRequirement)}
+            >
+              {saveRequirementsMutation.isPending ? "Saving..." : "Save Customer Requirements"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Project Risk Assessment Section */}
       <RiskAssessment />
