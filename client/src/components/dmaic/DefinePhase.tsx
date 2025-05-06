@@ -4139,28 +4139,25 @@ export default function DefinePhase() {
           </p>
           
           {/* Headers using grid layout with consistent spacing */}
-          <div className="grid grid-cols-5 gap-2 mb-4">
-            <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
+          <div className="grid grid-cols-12 gap-2 mb-4">
+            <div className="col-span-4 p-3 bg-blue-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-blue-800 text-sm">Customer Requirement</h4>
             </div>
-            <div className="p-3 bg-emerald-50 rounded-md text-center w-[95%]">
+            <div className="col-span-4 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-emerald-800 text-sm">Customer Need</h4>
             </div>
-            <div className="p-3 bg-amber-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-amber-800 text-sm">Importance (1-5)</h4>
+            <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-amber-800 text-sm">Imp.</h4>
             </div>
-            <div className="p-3 bg-purple-50 rounded-md text-center w-[95%]">
+            <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-gray-800 text-sm">Actions</h4>
             </div>
           </div>
           
           {/* Requirements rows using grid */}
           {requirements.map((req, index) => (
-            <div key={index} className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+            <div key={index} className="grid grid-cols-12 gap-2 mb-2 relative">
+              <div className="col-span-4 border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.customerRequirement}
@@ -4168,7 +4165,7 @@ export default function DefinePhase() {
                   placeholder={index === requirements.length - 1 ? "Add specific requirement..." : ""}
                 />
               </div>
-              <div className="border border-emerald-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="col-span-4 border border-emerald-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.requirement}
@@ -4176,7 +4173,7 @@ export default function DefinePhase() {
                   placeholder={index === requirements.length - 1 ? "Add new need..." : ""}
                 />
               </div>
-              <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="col-span-1 border border-amber-100 rounded-md p-2 bg-white w-[95%]">
                 <select
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   value={req.importance}
@@ -4187,7 +4184,7 @@ export default function DefinePhase() {
                   ))}
                 </select>
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="col-span-3 border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.satisfaction ? req.satisfaction.toString() : ""}
@@ -4200,22 +4197,19 @@ export default function DefinePhase() {
                   title="Critical to Quality (CTQ) specification"
                 />
               </div>
-              <div className="flex items-center justify-center">
-                {index === 0 ? (
-                  // No delete button for first row
-                  <span></span>
-                ) : (
+              {index !== 0 && (
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
                   <Button 
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6"
                     onClick={() => removeRequirement(index)}
                   >
                     <i className="fas fa-trash"></i>
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
           
@@ -4258,28 +4252,25 @@ export default function DefinePhase() {
           </p>
           
           {/* Headers using grid layout with consistent spacing */}
-          <div className="grid grid-cols-5 gap-2 mb-4">
-            <div className="p-3 bg-blue-50 rounded-md text-center w-[95%]">
+          <div className="grid grid-cols-12 gap-2 mb-4">
+            <div className="col-span-4 p-3 bg-blue-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-blue-800 text-sm">Business Requirement</h4>
             </div>
-            <div className="p-3 bg-emerald-50 rounded-md text-center w-[95%]">
+            <div className="col-span-4 p-3 bg-emerald-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-emerald-800 text-sm">BUSINESS NEED</h4>
             </div>
-            <div className="p-3 bg-amber-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-amber-800 text-sm">Importance (1-5)</h4>
+            <div className="col-span-1 p-3 bg-amber-50 rounded-md text-center w-[95%]">
+              <h4 className="font-medium text-amber-800 text-sm">Imp.</h4>
             </div>
-            <div className="p-3 bg-purple-50 rounded-md text-center w-[95%]">
+            <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
               <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-gray-800 text-sm">Actions</h4>
             </div>
           </div>
           
           {/* Business Requirements rows using grid */}
           {businessRequirements.map((req, index) => (
-            <div key={index} className="grid grid-cols-5 gap-2 mb-2 relative">
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+            <div key={index} className="grid grid-cols-12 gap-2 mb-2 relative">
+              <div className="col-span-4 border border-blue-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.requirement}
@@ -4287,7 +4278,7 @@ export default function DefinePhase() {
                   placeholder="Enter requirement"
                 />
               </div>
-              <div className="border border-emerald-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="col-span-4 border border-emerald-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.businessRequirement}
@@ -4295,7 +4286,7 @@ export default function DefinePhase() {
                   placeholder="Enter business need"
                 />
               </div>
-              <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="col-span-1 border border-amber-100 rounded-md p-2 bg-white w-[95%]">
                 <select
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   value={req.importance}
@@ -4306,7 +4297,7 @@ export default function DefinePhase() {
                   ))}
                 </select>
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="col-span-3 border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.criticalToQuality}
@@ -4314,22 +4305,19 @@ export default function DefinePhase() {
                   placeholder="Enter critical to quality factors"
                 />
               </div>
-              <div className="flex items-center justify-center">
-                {index === 0 ? (
-                  // No delete button for first row
-                  <span></span>
-                ) : (
+              {index !== 0 && (
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
                   <Button 
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6"
                     onClick={() => removeBusinessRequirement(index)}
                   >
                     <i className="fas fa-trash"></i>
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
           
