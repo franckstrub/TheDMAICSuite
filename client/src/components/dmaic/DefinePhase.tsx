@@ -474,11 +474,9 @@ export default function DefinePhase() {
     });
   };
 
-  // Customer Requirements state
+  // Customer Requirements state - always include at least one empty row for new entries
   const [requirements, setRequirements] = useState([
-    { requirement: "Fast delivery", customerRequirement: "Delivery within 24 hours", importance: 4, satisfaction: 2 },
-    { requirement: "Order accuracy", customerRequirement: "100% accurate order fulfillment", importance: 5, satisfaction: 3 },
-    { requirement: "", customerRequirement: "", importance: 3, satisfaction: 3 },
+    { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" },
   ]);
   
   // FTE calculation state
@@ -985,12 +983,21 @@ export default function DefinePhase() {
     enabled: !!user?.id && !!projectId,
     onSuccess: (data) => {
       if (data?.requirements && data.requirements.length > 0) {
-        setRequirements(data.requirements.map((r: any) => ({
+        // Map the requirements data
+        const mappedRequirements = data.requirements.map((r: any) => ({
           requirement: r.requirement,
           customerRequirement: r.customerRequirement || "",
           importance: r.importance,
           satisfaction: r.satisfaction,
-        })));
+        }));
+        
+        // Set the requirements state with the mapped data
+        setRequirements(mappedRequirements);
+      } else {
+        // If no requirements found in the API response, ensure we have at least one empty row
+        setRequirements([
+          { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
+        ]);
       }
     },
   });
@@ -1142,16 +1149,24 @@ export default function DefinePhase() {
   // Save customer requirements mutation
   const saveRequirementsMutation = useMutation({
     mutationFn: async (requirements: any[]) => {
-      const validRequirements = requirements.filter(r => r.requirement.trim() !== "");
+      // Filter requirements where either customer requirement or need is filled
+      const validRequirements = requirements.filter(r => 
+        r.customerRequirement.trim() !== "" || r.requirement.trim() !== ""
+      );
+      
+      // Always include at least one row even if empty, to ensure we always have a row in the database
+      const requirementsToSave = validRequirements.length > 0 ? 
+        validRequirements : 
+        [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
       
       // For simplicity, just create/update each requirement
-      const promises = validRequirements.map(r => {
+      const promises = requirementsToSave.map(r => {
         const payload = {
           projectId,
           requirement: r.requirement,
           customerRequirement: r.customerRequirement || "",
           importance: r.importance,
-          satisfaction: r.satisfaction,
+          satisfaction: r.satisfaction, // This is now the CTQ field
           userId: user?.id,
         };
         
@@ -1472,7 +1487,13 @@ export default function DefinePhase() {
   };
 
   const handleSaveRequirements = () => {
-    saveRequirementsMutation.mutate(requirements);
+    // Ensure we always have at least one row (even if empty) before saving
+    if (requirements.length === 0) {
+      setRequirements([{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }]);
+      saveRequirementsMutation.mutate([{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }]);
+    } else {
+      saveRequirementsMutation.mutate(requirements);
+    }
   };
 
   const updateRequirement = (index: number, field: string, value: any) => {
@@ -1489,8 +1510,19 @@ export default function DefinePhase() {
   };
 
   const removeRequirement = (index: number) => {
+    // Don't remove if it's the first row or if it's the only row remaining
+    if (index === 0 || requirements.length <= 1) {
+      return;
+    }
+    
     const newRequirements = [...requirements];
     newRequirements.splice(index, 1);
+    
+    // If we're about to remove all rows, make sure we keep at least one empty row
+    if (newRequirements.length === 0) {
+      newRequirements.push({ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" });
+    }
+    
     setRequirements(newRequirements);
   };
 
