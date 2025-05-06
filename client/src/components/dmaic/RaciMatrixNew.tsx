@@ -54,12 +54,81 @@ const RaciMatrixNew = ({
   // Function to clear RACI form initialization state
   const resetRaciFormInitialization = () => {
     raciFormInitialized.current = false;
+    charterDataLoaded.current = false;
   };
 
   // Re-initialize the form when navigating between projects
   useEffect(() => {
     resetRaciFormInitialization();
   }, [projectId]);
+  
+  // Populate RACI matrix with names from project charter if no existing RACI data
+  const populateRaciFromCharter = () => {
+    if (!charterData?.charter || charterDataLoaded.current) return;
+    
+    const charter = charterData.charter;
+    const rolesFromCharter = [];
+    
+    // Add Sponsor (if available)
+    if (charter.sponsor) {
+      rolesFromCharter.push({
+        name: charter.sponsor,
+        function: "Sponsor",
+        phases: { define: "R", measure: "A", analyze: "A", improve: "A", control: "A" }
+      });
+    }
+    
+    // Add Project Leader (if available)
+    if (charter.projectLeader) {
+      rolesFromCharter.push({
+        name: charter.projectLeader,
+        function: "Project Leader",
+        phases: { define: "R", measure: "R", analyze: "R", improve: "R", control: "R" }
+      });
+    }
+    
+    // Add Financial Controller (if available)
+    if (charter.financialController) {
+      rolesFromCharter.push({
+        name: charter.financialController,
+        function: "Financial Controller", 
+        phases: { define: "C", measure: "I", analyze: "I", improve: "C", control: "I" }
+      });
+    }
+    
+    // Add Stakeholder (if available)
+    if (charter.stakeholder) {
+      rolesFromCharter.push({
+        name: charter.stakeholder,
+        function: charter.stakeholderFunction || "Stakeholder",
+        phases: { define: "C", measure: "C", analyze: "C", improve: "C", control: "I" }
+      });
+    }
+    
+    // Add Project Coach (if available)
+    if (charter.projectCoach) {
+      rolesFromCharter.push({
+        name: charter.projectCoach,
+        function: "Project Coach",
+        phases: { define: "A", measure: "C", analyze: "C", improve: "C", control: "C" }
+      });
+    }
+    
+    if (rolesFromCharter.length > 0) {
+      setRaciData({ roles: rolesFromCharter });
+      charterDataLoaded.current = true;
+    }
+  };
+  
+  // Effect to populate RACI matrix from charter if no existing data
+  useEffect(() => {
+    const hasRaciData = sessionStorage.getItem(`project_${projectId}_has_raci_data`);
+    
+    // Only auto-populate if there's no existing RACI data
+    if (hasRaciData !== 'true' && charterData?.charter && !charterDataLoaded.current) {
+      populateRaciFromCharter();
+    }
+  }, [charterData, projectId]);
 
   // Get the RACI matrix data for the project
   const { data: raciMatrixData, isLoading } = useQuery({
@@ -177,15 +246,29 @@ const RaciMatrixNew = ({
         }
       }
       
-      // If no data found or error parsing, use the default
-      if (!silent) {
-        toast({
-          title: "No Data",
-          description: "Using default RACI matrix template",
-        });
+      // If no data found or error parsing, try to use charter data
+      if (charterData?.charter && !charterDataLoaded.current) {
+        // Try to populate from charter data
+        populateRaciFromCharter();
+        
+        if (!silent) {
+          toast({
+            title: "Auto-populated",
+            description: "RACI matrix populated from project charter",
+          });
+        }
+        
+        return raciData;
+      } else {
+        if (!silent) {
+          toast({
+            title: "No Data",
+            description: "Using default RACI matrix template",
+          });
+        }
+        
+        return defaultRaciData;
       }
-      
-      return defaultRaciData;
     } catch (error) {
       console.error("Error loading RACI matrix from database:", error);
       if (!silent) {
