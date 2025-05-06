@@ -809,7 +809,7 @@ export default function RiskAssessment() {
                 onClick={() => deleteRiskRow(2)}
                 title="Delete Row 2"
               >
-                <MinusCircle className="h-4 w-4" />
+                <i className="fas fa-trash"></i>
               </Button>
             </div>
           )}
@@ -895,7 +895,7 @@ export default function RiskAssessment() {
                 onClick={() => deleteRiskRow(3)}
                 title="Delete Row 3"
               >
-                <MinusCircle className="h-4 w-4" />
+                <i className="fas fa-trash"></i>
               </Button>
             </div>
           )}
@@ -977,7 +977,7 @@ export default function RiskAssessment() {
                 onClick={() => deleteRiskRow(4)}
                 title="Delete Row 4"
               >
-                <MinusCircle className="h-4 w-4" />
+                <i className="fas fa-trash"></i>
               </Button>
             </div>
           )}
@@ -1059,7 +1059,7 @@ export default function RiskAssessment() {
                 onClick={() => deleteRiskRow(5)}
                 title="Delete Row 5"
               >
-                <MinusCircle className="h-4 w-4" />
+                <i className="fas fa-trash"></i>
               </Button>
             </div>
           )}
@@ -1141,7 +1141,7 @@ export default function RiskAssessment() {
                 onClick={() => deleteRiskRow(6)}
                 title="Delete Row 6"
               >
-                <MinusCircle className="h-4 w-4" />
+                <i className="fas fa-trash"></i>
               </Button>
             </div>
           )}
