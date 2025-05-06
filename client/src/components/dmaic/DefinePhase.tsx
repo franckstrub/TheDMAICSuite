@@ -3689,11 +3689,11 @@ export default function DefinePhase() {
             <table className="w-[95%] mx-auto divide-y divide-gray-200">
               <thead>
                 <tr className="w-full">
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-2/5">Customer Requirement</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-2/5">Customer Need</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-blue-100 text-blue-800 border-r-6 border-white w-[40%]">Customer Requirement</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-emerald-100 text-emerald-800 border-r-6 border-white w-[35%]">Customer Need</th>
                   <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-amber-100 text-amber-800 border-r-6 border-white w-[5%]">Importance (1-5)</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[15%]">Critical to Quality (CTQ)</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[5%]">Actions</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-purple-100 text-purple-800 border-r-6 border-white w-[18%]">Critical to Quality (CTQ)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider bg-gray-100 text-gray-800 w-[2%]">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
