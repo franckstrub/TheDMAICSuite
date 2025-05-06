@@ -34,235 +34,50 @@ const RaciMatrixNew = ({
   const queryClient = useQueryClient();
   const { user } = useAppContext();
   const raciFormInitialized = useRef(false);
-  const charterDataLoaded = useRef(false);
   
-  // Default RACI matrix data (empty initial state)
+  // Default RACI matrix data with predefined roles from project charter
   const defaultRaciData: RaciMatrixData = {
-    roles: []
+    roles: [
+      {
+        name: sponsor,
+        function: "Sponsor",
+        phases: { define: "R", measure: "A", analyze: "A", improve: "A", control: "A" }
+      },
+      {
+        name: financialController,
+        function: "Financial Controller",
+        phases: { define: "C", measure: "I", analyze: "I", improve: "C", control: "I" }
+      },
+      {
+        name: projectLeader,
+        function: "Project Leader",
+        phases: { define: "R", measure: "R", analyze: "R", improve: "R", control: "R" }
+      },
+      {
+        name: projectCoach,
+        function: "Project Coach",
+        phases: { define: "A", measure: "C", analyze: "C", improve: "C", control: "C" }
+      },
+      {
+        name: stakeholder,
+        function: stakeholderFunction,
+        phases: { define: "C", measure: "C", analyze: "C", improve: "C", control: "I" }
+      }
+    ].filter(role => role.name) // Only include roles that have a name
   };
-  
-  // Get the project charter to populate role names
-  const { data: charterData } = useQuery({
-    queryKey: ['/api/projects', projectId, 'charter'],
-    enabled: !!projectId,
-    staleTime: 5000,
-  });
 
   // State for managing RACI matrix data
   const [raciData, setRaciData] = useState<RaciMatrixData>(defaultRaciData);
   
   // Function to clear RACI form initialization state
   const resetRaciFormInitialization = () => {
-    console.log("Resetting RACI form initialization");
     raciFormInitialized.current = false;
-    charterDataLoaded.current = false;
-    
-    // Clear the session storage flag to ensure we can auto-populate fresh data
-    console.log(`Clearing session storage for project ${projectId}`);
-    sessionStorage.removeItem(`project_${projectId}_has_raci_data`);
-  };
-  
-  // Populate RACI matrix directly from props passed by parent
-  const populateRaciFromProps = (charterProps: {
-    sponsor?: string,
-    stakeholder?: string,
-    stakeholderFunction?: string,
-    financialController?: string,
-    projectLeader?: string,
-    projectCoach?: string
-  }) => {
-    console.log("Populating RACI from props:", charterProps);
-    
-    // Build a list of roles from charter props
-    const rolesFromProps = [];
-    
-    // Add Sponsor (if available)
-    if (charterProps.sponsor) {
-      console.log("Adding sponsor from props:", charterProps.sponsor);
-      rolesFromProps.push({
-        name: charterProps.sponsor,
-        function: "Sponsor",
-        phases: { define: "A", measure: "A", analyze: "A", improve: "A", control: "A" }
-      });
-    }
-    
-    // Add Project Leader (if available)
-    if (charterProps.projectLeader) {
-      console.log("Adding project leader from props:", charterProps.projectLeader);
-      rolesFromProps.push({
-        name: charterProps.projectLeader,
-        function: "Project Leader",
-        phases: { define: "R", measure: "R", analyze: "R", improve: "R", control: "R" }
-      });
-    }
-    
-    // Add Financial Controller (if available)
-    if (charterProps.financialController) {
-      console.log("Adding financial controller from props:", charterProps.financialController);
-      rolesFromProps.push({
-        name: charterProps.financialController,
-        function: "Financial Controller", 
-        phases: { define: "C", measure: "I", analyze: "I", improve: "C", control: "I" }
-      });
-    }
-    
-    // Add Stakeholder (if available)
-    if (charterProps.stakeholder) {
-      console.log("Adding stakeholder from props:", charterProps.stakeholder);
-      rolesFromProps.push({
-        name: charterProps.stakeholder,
-        function: charterProps.stakeholderFunction || "Stakeholder",
-        phases: { define: "C", measure: "C", analyze: "C", improve: "C", control: "I" }
-      });
-    }
-    
-    // Add Project Coach (if available)
-    if (charterProps.projectCoach) {
-      console.log("Adding project coach from props:", charterProps.projectCoach);
-      rolesFromProps.push({
-        name: charterProps.projectCoach,
-        function: "Project Coach",
-        phases: { define: "A", measure: "C", analyze: "C", improve: "C", control: "C" }
-      });
-    }
-    
-    if (rolesFromProps.length > 0) {
-      console.log("Setting RACI data with roles from props:", rolesFromProps);
-      
-      // Set the RACI data with the roles from props
-      setRaciData({ roles: rolesFromProps });
-      charterDataLoaded.current = true;
-      
-      // Automatically save the RACI matrix with the populated data
-      // We need to wait for the state update before saving
-      setTimeout(() => {
-        console.log("Auto-saving populated RACI matrix from props");
-        saveRaciMatrixMutation.mutate();
-      }, 500);
-    } else {
-      console.log("No roles found in props to populate RACI matrix");
-    }
   };
 
   // Re-initialize the form when navigating between projects
   useEffect(() => {
     resetRaciFormInitialization();
   }, [projectId]);
-  
-  // Populate RACI matrix with names from project charter if no existing RACI data
-  const populateRaciFromCharter = () => {
-    if (!charterData?.charter) {
-      console.log("Cannot populate RACI: Charter data missing");
-      return;
-    }
-    
-    // Reset the charterDataLoaded flag to ensure we can repopulate if needed
-    charterDataLoaded.current = false;
-    
-    console.log("Populating RACI from charter", charterData.charter);
-    const charter = charterData.charter;
-    const rolesFromCharter = [];
-    
-    // Add Sponsor (if available)
-    if (charter.sponsor) {
-      console.log("Adding sponsor:", charter.sponsor);
-      rolesFromCharter.push({
-        name: charter.sponsor,
-        function: "Sponsor",
-        phases: { define: "R", measure: "A", analyze: "A", improve: "A", control: "A" }
-      });
-    }
-    
-    // Add Project Leader (if available)
-    if (charter.projectLeader) {
-      console.log("Adding project leader:", charter.projectLeader);
-      rolesFromCharter.push({
-        name: charter.projectLeader,
-        function: "Project Leader",
-        phases: { define: "R", measure: "R", analyze: "R", improve: "R", control: "R" }
-      });
-    }
-    
-    // Add Financial Controller (if available)
-    if (charter.financialController) {
-      console.log("Adding financial controller:", charter.financialController);
-      rolesFromCharter.push({
-        name: charter.financialController,
-        function: "Financial Controller", 
-        phases: { define: "C", measure: "I", analyze: "I", improve: "C", control: "I" }
-      });
-    }
-    
-    // Add Stakeholder (if available)
-    if (charter.stakeholder) {
-      console.log("Adding stakeholder:", charter.stakeholder);
-      rolesFromCharter.push({
-        name: charter.stakeholder,
-        function: charter.stakeholderFunction || "Stakeholder",
-        phases: { define: "C", measure: "C", analyze: "C", improve: "C", control: "I" }
-      });
-    }
-    
-    // Add Project Coach (if available)
-    if (charter.projectCoach) {
-      console.log("Adding project coach:", charter.projectCoach);
-      rolesFromCharter.push({
-        name: charter.projectCoach,
-        function: "Project Coach",
-        phases: { define: "A", measure: "C", analyze: "C", improve: "C", control: "C" }
-      });
-    }
-    
-    if (rolesFromCharter.length > 0) {
-      console.log("Setting RACI data with roles:", rolesFromCharter);
-      
-      // Set the RACI data with the roles from charter
-      setRaciData({ roles: rolesFromCharter });
-      charterDataLoaded.current = true;
-      
-      // Automatically save the RACI matrix with the populated data
-      // We need to wait for the state update before saving
-      setTimeout(() => {
-        console.log("Auto-saving populated RACI matrix");
-        saveRaciMatrixMutation.mutate();
-      }, 500);
-    } else {
-      console.log("No roles found in charter to populate RACI matrix");
-    }
-  };
-  
-  // Ensure we have the most up-to-date data and use either props or API data for auto-population
-  useEffect(() => {
-    // Only remove session storage flag if we explicitly want to force repopulation
-    // This is now commented out to avoid overriding existing data
-    // sessionStorage.removeItem(`project_${projectId}_has_raci_data`);
-    
-    console.log("Charter props:", {
-      sponsor, projectLeader, stakeholder, stakeholderFunction, financialController, projectCoach
-    });
-    console.log("Charter API data:", charterData);
-    
-    // First priority: use the props passed from the parent component
-    if (sponsor && projectLeader && !charterDataLoaded.current) {
-      console.log("Using props to auto-populate RACI matrix");
-      const charterFromProps = {
-        sponsor,
-        stakeholder,
-        stakeholderFunction,
-        financialController,
-        projectLeader,
-        projectCoach
-      };
-      populateRaciFromProps(charterFromProps);
-    } 
-    // Second priority: use the data from the API
-    else if (charterData?.charter && !charterDataLoaded.current) {
-      console.log("Using API data to auto-populate RACI matrix");
-      populateRaciFromCharter();
-    }
-  }, [charterData, projectId, sponsor, projectLeader, stakeholder, stakeholderFunction, financialController, projectCoach]);
-
-  // This useEffect is already declared above and accomplishes the same thing
 
   // Get the RACI matrix data for the project
   const { data: raciMatrixData, isLoading } = useQuery({
@@ -273,92 +88,43 @@ const RaciMatrixNew = ({
     refetchOnWindowFocus: true,
     onSuccess: (data) => {
       console.log("Fetched RACI matrix data:", data);
-      
-      // Check if we have valid RACI matrix data
-      if (data && data.raciMatrix && data.raciMatrix.raciData) {
+      if (data && data.raciMatrix) {
         try {
           // The data structure is nested and the raciData field might be an object or string
           const raciData = data.raciMatrix.raciData;
           console.log("RACI data from response:", raciData);
           
-          // Handle both string and object formats
-          let parsedData: RaciMatrixData;
-          
-          if (typeof raciData === 'string') {
-            // If it's a string, parse it
-            parsedData = JSON.parse(raciData) as RaciMatrixData;
-          } else if (typeof raciData === 'object') {
-            // If it's already an object, use it directly
-            parsedData = raciData as RaciMatrixData;
-          } else {
-            throw new Error("Unexpected raciData format");
-          }
-          
-          console.log("Final parsed RACI data:", parsedData);
-          
-          // Check if RACI data is empty (no roles or empty roles array)
-          const isEmpty = !parsedData.roles || parsedData.roles.length === 0;
-          console.log("Is RACI data empty?", isEmpty);
-          
-          // If the parsed data has roles, use it
-          if (!isEmpty) {
-            console.log("Using existing RACI data with roles:", parsedData.roles.length);
+          if (raciData) {
+            // Handle both string and object formats
+            let parsedData: RaciMatrixData;
+            
+            if (typeof raciData === 'string') {
+              // If it's a string, parse it
+              parsedData = JSON.parse(raciData) as RaciMatrixData;
+            } else if (typeof raciData === 'object') {
+              // If it's already an object, use it directly
+              parsedData = raciData as RaciMatrixData;
+            } else {
+              throw new Error("Unexpected raciData format");
+            }
+            
+            console.log("Final parsed RACI data:", parsedData);
             setRaciData(parsedData);
             raciFormInitialized.current = true;
             
             // Store a flag in sessionStorage to remember that we have RACI data
             sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
-            return;
           } else {
-            console.log("RACI data is empty, will try auto-populating");
+            console.warn("No raciData found in response");
           }
         } catch (error) {
           console.error('Error processing RACI matrix data:', error);
         }
       }
-      
-      console.log("No valid RACI data found in response, attempting to auto-populate");
-      
-      // If we reach here, there is no valid RACI data, so try to auto-populate
-      // First from props
-      if (sponsor && projectLeader && !charterDataLoaded.current) {
-        console.log("Auto-populating from props after empty API response");
-        const charterFromProps = {
-          sponsor,
-          stakeholder,
-          stakeholderFunction,
-          financialController,
-          projectLeader,
-          projectCoach
-        };
-        populateRaciFromProps(charterFromProps);
-      } 
-      // Then from charter API data
-      else if (charterData?.charter && !charterDataLoaded.current) {
-        console.log("Auto-populating from charter API data after empty API response");
-        populateRaciFromCharter();
-      }
     },
     onError: (error) => {
       console.error("Error fetching RACI matrix:", error);
-      
-      // On error, try auto-populating
-      if (sponsor && projectLeader && !charterDataLoaded.current) {
-        console.log("Auto-populating from props after API error");
-        const charterFromProps = {
-          sponsor,
-          stakeholder,
-          stakeholderFunction,
-          financialController,
-          projectLeader,
-          projectCoach
-        };
-        populateRaciFromProps(charterFromProps);
-      } 
-      else if (charterData?.charter && !charterDataLoaded.current) {
-        console.log("Auto-populating from charter API data after API error");
-        populateRaciFromCharter();
-      }
+      // If no RACI matrix exists, we'll just use the default
     }
   });
 
@@ -406,73 +172,38 @@ const RaciMatrixNew = ({
             }
             
             console.log("Final parsed RACI data:", parsedData);
+            setRaciData(parsedData);
+            raciFormInitialized.current = true;
             
-            // Check if RACI data is empty (no roles or empty roles array)
-            const isEmpty = !parsedData || !parsedData.roles || parsedData.roles.length === 0;
-            console.log("Is RACI data empty in loadRaciDataFromDatabase?", isEmpty);
+            // Store a flag in sessionStorage to remember that we have RACI data
+            sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
             
-            if (isEmpty && charterData?.charter && !charterDataLoaded.current) {
-              console.log("RACI data is empty in database load, auto-populating from charter");
-              // Populate from charter and return that instead
-              populateRaciFromCharter();
-              
-              if (!silent) {
-                toast({
-                  title: "Auto-populated",
-                  description: "RACI matrix populated from project charter",
-                });
-              }
-              
-              return raciData;
-            } else {
-              // Use the existing data
-              setRaciData(parsedData);
-              raciFormInitialized.current = true;
-              
-              // Store a flag in sessionStorage to remember that we have RACI data
-              sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
-              
-              // Also trigger a query invalidation for React Query
-              queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
-              
-              if (!silent) {
-                toast({
-                  title: "Data Refreshed",
-                  description: "RACI matrix loaded successfully",
-                });
-              }
-              
-              return parsedData;
+            // Also trigger a query invalidation for React Query
+            queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
+            
+            if (!silent) {
+              toast({
+                title: "Data Refreshed",
+                description: "RACI matrix loaded successfully",
+              });
             }
+            
+            return parsedData;
           }
         } catch (error) {
           console.error('Error parsing RACI matrix data:', error);
         }
       }
       
-      // If no data found or error parsing, try to use charter data
-      if (charterData?.charter && !charterDataLoaded.current) {
-        // Try to populate from charter data
-        populateRaciFromCharter();
-        
-        if (!silent) {
-          toast({
-            title: "Auto-populated",
-            description: "RACI matrix populated from project charter",
-          });
-        }
-        
-        return raciData;
-      } else {
-        if (!silent) {
-          toast({
-            title: "No Data",
-            description: "Using default RACI matrix template",
-          });
-        }
-        
-        return defaultRaciData;
+      // If no data found or error parsing, use the default
+      if (!silent) {
+        toast({
+          title: "No Data",
+          description: "Using default RACI matrix template",
+        });
       }
+      
+      return defaultRaciData;
     } catch (error) {
       console.error("Error loading RACI matrix from database:", error);
       if (!silent) {
