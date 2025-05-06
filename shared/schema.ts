@@ -309,6 +309,25 @@ export const insertRequirementSchema = createInsertSchema(customerRequirements).
   satisfaction: true,
 });
 
+// Business Requirements
+export const businessRequirements = pgTable("business_requirements", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  requirement: text("requirement").notNull(),
+  businessRequirement: text("business_requirement"),
+  importance: integer("importance").notNull(),
+  satisfaction: text("satisfaction").notNull().default(""), // CTQ field for business requirements
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertBusinessRequirementSchema = createInsertSchema(businessRequirements).pick({
+  projectId: true,
+  requirement: true,
+  businessRequirement: true,
+  importance: true,
+  satisfaction: true,
+});
+
 // Datasets
 export const datasets = pgTable("datasets", {
   id: serial("id").primaryKey(),
@@ -551,6 +570,9 @@ export type InsertSipoc = z.infer<typeof insertSipocSchema>;
 
 export type CustomerRequirement = typeof customerRequirements.$inferSelect;
 export type InsertRequirement = z.infer<typeof insertRequirementSchema>;
+
+export type BusinessRequirement = typeof businessRequirements.$inferSelect;
+export type InsertBusinessRequirement = z.infer<typeof insertBusinessRequirementSchema>;
 
 export type Dataset = typeof datasets.$inferSelect;
 export type InsertDataset = z.infer<typeof insertDatasetSchema>;
