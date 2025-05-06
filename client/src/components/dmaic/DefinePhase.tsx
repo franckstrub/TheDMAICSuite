@@ -1180,16 +1180,20 @@ export default function DefinePhase() {
       try {
         // First, get existing requirements to delete them
         const existingReqs = await fetch(`/api/projects/${projectId}/requirements`).then(res => res.json());
+        console.log("Existing requirements before deletion:", existingReqs);
         
         // Delete all existing requirements
         if (existingReqs && existingReqs.requirements && existingReqs.requirements.length > 0) {
+          console.log(`Deleting ${existingReqs.requirements.length} existing requirements`);
           const deletePromises = existingReqs.requirements.map((req: any) => 
             apiRequest("DELETE", `/api/requirements/${req.id}`, { userId: user?.id, projectId })
           );
           await Promise.all(deletePromises);
+          console.log("All existing requirements deleted");
         }
         
         // Now create new requirements
+        console.log(`Creating ${requirementsToSave.length} new requirements`);
         const createPromises = requirementsToSave.map(r => {
           const payload = {
             projectId,
@@ -1203,23 +1207,50 @@ export default function DefinePhase() {
           return apiRequest("POST", `/api/projects/${projectId}/requirements`, payload);
         });
         
-        return Promise.all(createPromises);
+        const results = await Promise.all(createPromises);
+        console.log("New requirements created:", results);
+        return results;
       } catch (error) {
         console.error("Error saving requirements:", error);
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      console.log("Requirements saved successfully:", data);
       toast({
         title: "Success",
         description: "Customer requirements saved successfully",
       });
-      // Wait a moment to ensure the data is saved before reloading
-      setTimeout(() => {
+      
+      try {
+        // Directly fetch the latest requirements instead of just invalidating the query
+        console.log("Fetching latest requirements after successful save");
+        const response = await fetch(`/api/projects/${projectId}/requirements`);
+        const freshData = await response.json();
+        console.log("Fresh requirements data after save:", freshData);
+        
+        if (freshData?.requirements && freshData.requirements.length > 0) {
+          // Map the requirements data
+          const mappedRequirements = freshData.requirements.map((r: any) => ({
+            requirement: r.requirement || "",
+            customerRequirement: r.customerRequirement || "",
+            importance: r.importance || 3,
+            satisfaction: r.satisfaction || "",
+          }));
+          
+          console.log("Setting requirements state with fresh data:", mappedRequirements);
+          // Force update the state with the fresh data
+          setRequirements(mappedRequirements);
+        }
+        
+        // Also invalidate the query to ensure consistency
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
-      }, 300);
+      } catch (error) {
+        console.error("Error fetching requirements after save:", error);
+      }
     },
     onError: (error) => {
+      console.error("Error in requirements mutation:", error);
       toast({
         title: "Error",
         description: `Failed to save customer requirements: ${error}`,
@@ -1523,13 +1554,46 @@ export default function DefinePhase() {
     });
   };
 
-  const handleSaveRequirements = () => {
+  const handleSaveRequirements = async () => {
+    console.log("handleSaveRequirements called with requirements:", requirements);
+    
     // Ensure we always have at least one row (even if empty) before saving
     if (requirements.length === 0) {
-      setRequirements([{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }]);
-      saveRequirementsMutation.mutate([{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }]);
+      const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+      setRequirements(defaultRow);
+      saveRequirementsMutation.mutate(defaultRow);
     } else {
-      saveRequirementsMutation.mutate(requirements);
+      try {
+        // First retrieve existing requirements to ensure proper cleanup
+        const existingReqsResponse = await fetch(`/api/projects/${projectId}/requirements`);
+        const existingReqsData = await existingReqsResponse.json();
+        console.log("Current requirements in database before save:", existingReqsData);
+        
+        // Now proceed with saving
+        await saveRequirementsMutation.mutateAsync(requirements);
+        
+        // After successful save, explicitly refresh the requirements data
+        console.log("Requirements saved, now refreshing data");
+        const freshResponse = await fetch(`/api/projects/${projectId}/requirements`);
+        const freshData = await freshResponse.json();
+        console.log("Fresh requirements data from API:", freshData);
+        
+        if (freshData?.requirements && freshData.requirements.length > 0) {
+          // Map the requirements data
+          const mappedRequirements = freshData.requirements.map((r: any) => ({
+            requirement: r.requirement || "",
+            customerRequirement: r.customerRequirement || "",
+            importance: r.importance || 3,
+            satisfaction: r.satisfaction || "",
+          }));
+          
+          console.log("Setting requirements state with fresh data:", mappedRequirements);
+          // Force update the state with the fresh data
+          setRequirements(mappedRequirements);
+        }
+      } catch (error) {
+        console.error("Error in handleSaveRequirements:", error);
+      }
     }
   };
 
