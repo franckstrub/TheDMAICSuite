@@ -182,7 +182,7 @@ const RaciMatrix = ({
         ...prev.roles,
         {
           name: "",
-          function: "",
+          function: "", // Keep this property for backward compatibility with the schema
           phases: { define: null, measure: null, analyze: null, improve: null, control: null }
         }
       ]
@@ -243,8 +243,7 @@ const RaciMatrix = ({
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-100">
-                  <th className="border border-slate-200 p-2 text-left w-1/6">Role</th>
-                  <th className="border border-slate-200 p-2 text-left w-1/6">Function</th>
+                  <th className="border border-slate-200 p-2 text-left w-1/4">Name</th>
                   <th className="border border-slate-200 p-2 text-center">Define</th>
                   <th className="border border-slate-200 p-2 text-center">Measure</th>
                   <th className="border border-slate-200 p-2 text-center">Analyze</th>
@@ -261,14 +260,6 @@ const RaciMatrix = ({
                         value={role.name || ""}
                         onChange={(e) => updateRoleInfo(roleIndex, 'name', e.target.value)}
                         placeholder="Name"
-                        className="w-full"
-                      />
-                    </td>
-                    <td className="border border-slate-200 p-2">
-                      <Input
-                        value={role.function || ""}
-                        onChange={(e) => updateRoleInfo(roleIndex, 'function', e.target.value)}
-                        placeholder="Function"
                         className="w-full"
                       />
                     </td>
