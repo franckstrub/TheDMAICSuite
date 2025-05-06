@@ -17,7 +17,7 @@ import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import MilestoneTimeline from "./MilestoneTimeline";
 import RiskAssessment from "./RiskAssessment";
-import RaciMatrix from "./RaciMatrix";
+import RaciMatrixNew from "./RaciMatrixNew";
 import {
   Card,
   CardContent,
@@ -4359,7 +4359,7 @@ export default function DefinePhase() {
       <RiskAssessment />
       
       {/* Project RACI Matrix Section */}
-      <RaciMatrix 
+      <RaciMatrixNew 
         projectId={Number(projectId)}
         sponsor={charter?.sponsor}
         stakeholder={charter?.stakeholder}
