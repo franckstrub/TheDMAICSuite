@@ -441,10 +441,10 @@ const RaciMatrixNew = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => removeRole(roleIndex)}
-                      className="h-8 w-8"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6"
                       disabled={false}
                     >
-                      <Trash className="h-4 w-4" />
+                      <i className="fas fa-trash"></i>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
