@@ -4198,7 +4198,7 @@ export default function DefinePhase() {
                 />
               </div>
               {index !== 0 && (
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 absolute right-[-17px]">
                   <Button 
                     type="button"
                     variant="ghost"
@@ -4306,7 +4306,7 @@ export default function DefinePhase() {
                 />
               </div>
               {index !== 0 && (
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-2">
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 absolute right-[-17px]">
                   <Button 
                     type="button"
                     variant="ghost"
@@ -4329,6 +4329,9 @@ export default function DefinePhase() {
               size="sm"
               className="flex items-center gap-1"
               onClick={addBusinessRequirement}
+              disabled={businessRequirements.length > 0 && 
+                        !(businessRequirements[businessRequirements.length - 1].requirement || 
+                          businessRequirements[businessRequirements.length - 1].businessRequirement)}
             >
               <PlusCircle className="h-4 w-4" />
               Add Business Requirement
