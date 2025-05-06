@@ -1906,6 +1906,46 @@ export default function DefinePhase() {
     
     setRequirements(newRequirements);
   };
+  
+  // Business Requirements Functions
+  const addBusinessRequirement = () => {
+    // Only allow adding a new row if we have less than 6 rows
+    if (businessRequirements.length < 6) {
+      setBusinessRequirements([
+        ...businessRequirements,
+        { requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }
+      ]);
+    } else {
+      toast({
+        title: "Maximum Reached",
+        description: "You can only add up to 6 business requirements",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const updateBusinessRequirement = (index: number, field: string, value: any) => {
+    const updatedRequirements = [...businessRequirements];
+    updatedRequirements[index] = { ...updatedRequirements[index], [field]: value };
+    setBusinessRequirements(updatedRequirements);
+  };
+  
+  const removeBusinessRequirement = (index: number) => {
+    // Don't remove if it's the first row or if it's the only row remaining
+    if (index === 0 || businessRequirements.length <= 1) {
+      return;
+    }
+    
+    const updatedRequirements = [...businessRequirements];
+    updatedRequirements.splice(index, 1);
+    
+    // If we're about to remove all rows, make sure we keep at least one empty row
+    if (updatedRequirements.length === 0) {
+      updatedRequirements.push({ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" });
+    }
+    
+    setBusinessRequirements(updatedRequirements);
+  };
 
   const calculateGap = (importance: number, ctqValue: string | number) => {
     // If ctqValue is a string and not a number, return 0 as gap can't be calculated
