@@ -2,6 +2,10 @@ import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// RACI role types
+export const raciRoleTypes = ["R", "A", "C", "I"] as const;
+export type RaciRole = typeof raciRoleTypes[number];
+
 // Users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -413,6 +417,22 @@ export const insertConfigSchema = createInsertSchema(storageConfigs).pick({
   localBackups: true,
 });
 
+// Project RACI Matrix
+export const projectRaciMatrix = pgTable("project_raci_matrix", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  // Store the matrix as structured JSON with role assignments
+  // Each row represents a team member/stakeholder
+  // Each column represents a DMAIC phase
+  raciData: jsonb("raci_data").notNull(),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertRaciSchema = createInsertSchema(projectRaciMatrix).pick({
+  projectId: true,
+  raciData: true,
+});
+
 // Activity Log
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
@@ -591,6 +611,24 @@ export type InsertProcessData = z.infer<typeof insertProcessDataSchema>;
 
 export type ProjectRisk = typeof projectRisks.$inferSelect;
 export type InsertRisk = z.infer<typeof insertRiskSchema>;
+
+export type ProjectRaciMatrix = typeof projectRaciMatrix.$inferSelect;
+export type InsertRaciMatrix = z.infer<typeof insertRaciSchema>;
+
+// RACI matrix data structure
+export type RaciMatrixData = {
+  roles: {
+    name: string;
+    function?: string;
+    phases: {
+      define: RaciRole | null;
+      measure: RaciRole | null;
+      analyze: RaciRole | null;
+      improve: RaciRole | null;
+      control: RaciRole | null;
+    };
+  }[];
+};
 
 // Define a SoftBenefit type for TypeScript usage
 export type SoftBenefit = {
