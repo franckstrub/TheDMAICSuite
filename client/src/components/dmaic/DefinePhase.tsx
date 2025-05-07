@@ -73,9 +73,6 @@ export default function DefinePhase() {
   
   // State for soft benefits management
   const [softBenefits, setSoftBenefits] = useState<SoftBenefit[]>([]);
-  const [showSoftBenefitDialog, setShowSoftBenefitDialog] = useState(false);
-  const [newBenefitText, setNewBenefitText] = useState("");
-  const [newBenefitCategory, setNewBenefitCategory] = useState<SoftBenefit['category']>("employee");
   
   // State for collapsible sections - default to collapsed
   const [isFinancialSectionExpanded, setIsFinancialSectionExpanded] = useState(false);
@@ -100,76 +97,6 @@ export default function DefinePhase() {
     }
   }, [isFinancialSectionExpanded, projectId]);
   
-  // Handler for adding new soft benefit
-  const handleAddSoftBenefit = () => {
-    // Only show the dialog if we haven't reached the max number of benefits
-    if (softBenefits.length < 4) {
-      setNewBenefitText("");
-      setNewBenefitCategory("employee");
-      setShowSoftBenefitDialog(true);
-    }
-  };
-  
-  // Handler for saving the new soft benefit
-  const handleSaveSoftBenefit = () => {
-    if (newBenefitText.trim()) {
-      const newBenefit: SoftBenefit = {
-        text: newBenefitText.trim(),
-        category: newBenefitCategory
-      };
-      
-      setSoftBenefits([...softBenefits, newBenefit]);
-      setShowSoftBenefitDialog(false);
-      
-      // Update the hidden input with the JSON string
-      const updatedBenefits = [...softBenefits, newBenefit];
-      charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
-    }
-  };
-  
-  // Handler for removing a soft benefit
-  const handleRemoveSoftBenefit = (index: number) => {
-    const updatedBenefits = [...softBenefits];
-    updatedBenefits.splice(index, 1);
-    setSoftBenefits(updatedBenefits);
-    
-    // Update the hidden input with the JSON string
-    charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
-  };
-  
-  // Helper function to get badge variant based on category
-  const getBadgeVariantForCategory = (category: SoftBenefit['category']) => {
-    switch (category) {
-      case "employee": return "secondary";
-      case "customer": return "outline";
-      case "process": return "default";
-      case "growth": return "secondary";
-      default: return "secondary";
-    }
-  };
-  
-  // Helper function to get category label
-  const getCategoryLabel = (category: SoftBenefit['category']) => {
-    switch (category) {
-      case "employee": return "Employee";
-      case "customer": return "Customer";
-      case "process": return "Process";
-      case "growth": return "Growth";
-      default: return "Other";
-    }
-  };
-  
-  // Helper function to get category icon (matching the dashboard)
-  const getCategoryIcon = (category: SoftBenefit['category']) => {
-    switch (category) {
-      case "employee": return "👥"; // Employee icon
-      case "customer": return "🤝"; // Customer icon
-      case "process": return "⚙️"; // Process icon
-      case "growth": return "📈"; // Growth icon
-      default: return "✓";
-    }
-  };
-
   // Project Charter form
   const charterForm = useForm({
     defaultValues: {
@@ -3381,28 +3308,16 @@ export default function DefinePhase() {
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-2">
                   <Label htmlFor="softBenefits" className="text-base">Soft Benefits (Non-Quantifiable)</Label>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleAddSoftBenefit}
-                    disabled={softBenefits.length >= 4} // Allow maximum 4 soft benefits
-                  >
-                    Add Benefit
-                  </Button>
                 </div>
                 
-                {/* Display existing soft benefits in quadrant layout */}
-                {softBenefits.length > 0 ? (
-                  <CharterSoftBenefitsQuadrant 
-                    benefits={softBenefits} 
-                    onRemove={handleRemoveSoftBenefit} 
-                  />
-                ) : (
-                  <div className="text-sm text-gray-500 italic mb-3 p-3 border border-dashed rounded-md">
-                    No soft benefits added yet. Add benefits that can't be quantified financially.
-                  </div>
-                )}
+                {/* Always display the editable soft benefits quadrant */}
+                <CharterSoftBenefitsQuadrant 
+                  benefits={softBenefits}
+                  onChange={(updatedBenefits) => {
+                    setSoftBenefits(updatedBenefits);
+                    charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
+                  }}
+                />
                 
                 <input 
                   type="hidden" 
@@ -3411,71 +3326,8 @@ export default function DefinePhase() {
                 />
                 
                 <p className="text-xs text-gray-500 mt-1">
-                  Add employee, customer, process, and growth & learning benefits that can't be measured financially. 
-                  Maximum {softBenefits.length}/4 benefits.
+                  Add employee, customer, process, and growth & learning benefits that can't be measured financially.
                 </p>
-                
-                {/* Dialog for adding new soft benefit */}
-                <Dialog open={showSoftBenefitDialog} onOpenChange={setShowSoftBenefitDialog}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Soft Benefit</DialogTitle>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="benefitCategory">Benefit Category</Label>
-                        <div className="mb-2 flex items-center gap-2">
-                          <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 text-lg bg-gray-50 rounded-md">
-                            {getCategoryIcon(newBenefitCategory)}
-                          </div>
-                          <span className="text-sm">{getCategoryLabel(newBenefitCategory)}</span>
-                        </div>
-                        <Select 
-                          value={newBenefitCategory} 
-                          onValueChange={(value) => setNewBenefitCategory(value as SoftBenefit['category'])}
-                        >
-                          <SelectTrigger id="benefitCategory">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="employee">👥 Employee Benefits</SelectItem>
-                            <SelectItem value="customer">🤝 Customer Benefits</SelectItem>
-                            <SelectItem value="process">⚙️ Process Benefits</SelectItem>
-                            <SelectItem value="growth">📈 Growth & Learning</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="benefitText">Benefit Description</Label>
-                        <Textarea 
-                          id="benefitText" 
-                          value={newBenefitText}
-                          onChange={(e) => setNewBenefitText(e.target.value)}
-                          placeholder="Describe the soft benefit..."
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-                    
-                    <DialogFooter>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowSoftBenefitDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="button" 
-                        onClick={handleSaveSoftBenefit}
-                        disabled={!newBenefitText.trim()}
-                      >
-                        Add Benefit
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
               </div>
             </div>
             
