@@ -403,13 +403,15 @@ const RaciMatrixNew = ({
     setShowOtherRoleInputs(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Update a role's name or function
-  const updateRoleInfo = (index: number, field: 'name' | 'function', value: string) => {
+  // Update a role's name or role type
+  const updateRoleInfo = (index: number, field: 'name' | 'role', value: string) => {
     setRaciData(prev => {
       const newRoles = [...prev.roles];
       newRoles[index] = {
         ...newRoles[index],
-        [field]: value
+        [field]: value,
+        // For backward compatibility, also update 'function' field
+        ...(field === 'role' && { function: value })
       };
       return { ...prev, roles: newRoles };
     });
@@ -421,7 +423,7 @@ const RaciMatrixNew = ({
   // Update the showOtherRoleInputs state when raciData changes
   useEffect(() => {
     // Update showOtherRoleInputs based on current roles
-    setShowOtherRoleInputs(raciData.roles.map(role => role.function === "Other"));
+    setShowOtherRoleInputs(raciData.roles.map(role => (role.role === "Other" || role.function === "Other")));
   }, [raciData.roles.length]);
 
   // Update a role's RACI responsibility for a specific phase
@@ -503,9 +505,9 @@ const RaciMatrixNew = ({
             {/* Role Dropdown */}
             <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
               <Select
-                value={role.function || ""}
+                value={role.role || role.function || ""}
                 onValueChange={(value) => {
-                  updateRoleInfo(roleIndex, 'function', value);
+                  updateRoleInfo(roleIndex, 'role', value);
                   // Track if "Other" is selected
                   const newShowOtherInputs = [...showOtherRoleInputs];
                   newShowOtherInputs[roleIndex] = value === "Other";
