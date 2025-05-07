@@ -4260,12 +4260,6 @@ export default function DefinePhase() {
       {/* Project Risk Assessment Section */}
       <RiskAssessment />
       
-      {/* Stakeholder Analysis Matrix Section */}
-      <StakeholderAnalysisMatrix 
-        projectId={Number(projectId)}
-        userId={user?.id}
-      />
-      
       {/* Project RACI Matrix Section */}
       <RaciMatrixNew 
         projectId={Number(projectId)}
@@ -4275,6 +4269,12 @@ export default function DefinePhase() {
         financialController={charter?.financialController}
         projectLeader={charter?.projectLeader}
         projectCoach={charter?.projectCoach}
+      />
+      
+      {/* Stakeholder Analysis Matrix Section */}
+      <StakeholderAnalysisMatrix 
+        projectId={Number(projectId)}
+        userId={user?.id}
       />
     </div>
   );

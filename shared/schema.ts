@@ -669,3 +669,29 @@ export type ProjectCosts = {
   capexCost: number;
   // Add any other cost types as needed
 };
+
+// Stakeholder Analysis Matrix
+export const stakeholderAnalysisItems = pgTable("stakeholder_analysis_items", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  stakeholderName: text("stakeholder_name").notNull(),
+  stakeholderRole: text("stakeholder_role"),
+  interestLevel: text("interest_level").$type<InterestLevel>().notNull().default("Medium"),
+  resistanceType: text("resistance_type").$type<ResistanceType | null>(),
+  influenceLevel: text("influence_level").$type<InfluenceLevel>().notNull().default("Medium"),
+  supportLevel: text("support_level").$type<SupportLevel>().notNull().default("Neutral"),
+  engagementStrategy: text("engagement_strategy"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+// Schema for inserting a stakeholder analysis item
+export const insertStakeholderAnalysisItemSchema = createInsertSchema(stakeholderAnalysisItems).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+// Type for insert operations
+export type InsertStakeholderAnalysisItem = z.infer<typeof insertStakeholderAnalysisItemSchema>;
+
+// Type for select operations
+export type StakeholderAnalysisItem = typeof stakeholderAnalysisItems.$inferSelect;
