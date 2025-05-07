@@ -372,17 +372,24 @@ const RaciMatrixNew = ({
 
   // Add a new role to the RACI matrix
   const addRole = () => {
-    setRaciData(prev => ({
-      ...prev,
-      roles: [
+    setRaciData(prev => {
+      const updatedRoles = [
         ...prev.roles,
         {
           name: "",
-          function: "", // Keep this property for backward compatibility with the schema
+          function: "", // Empty by default, will be filled with the role selection
           phases: { define: null, measure: null, analyze: null, improve: null, control: null }
         }
-      ]
-    }));
+      ];
+      
+      // Update showOtherRoleInputs to match the new number of roles
+      setShowOtherRoleInputs([...showOtherRoleInputs, false]);
+      
+      return {
+        ...prev,
+        roles: updatedRoles
+      };
+    });
   };
 
   // Remove a role from the RACI matrix
@@ -391,6 +398,9 @@ const RaciMatrixNew = ({
       ...prev,
       roles: prev.roles.filter((_, i) => i !== index)
     }));
+    
+    // Also update the showOtherRoleInputs array to remove the corresponding entry
+    setShowOtherRoleInputs(prev => prev.filter((_, i) => i !== index));
   };
 
   // Update a role's name or function
@@ -404,6 +414,15 @@ const RaciMatrixNew = ({
       return { ...prev, roles: newRoles };
     });
   };
+  
+  // State for tracking when "Other" role is selected
+  const [showOtherRoleInputs, setShowOtherRoleInputs] = useState<boolean[]>([]);
+  
+  // Update the showOtherRoleInputs state when raciData changes
+  useEffect(() => {
+    // Update showOtherRoleInputs based on current roles
+    setShowOtherRoleInputs(raciData.roles.map(role => role.function === "Other"));
+  }, [raciData.roles.length]);
 
   // Update a role's RACI responsibility for a specific phase
   const updateRoleResponsibility = (roleIndex: number, phase: keyof typeof raciData.roles[0]['phases'], value: string) => {
@@ -443,8 +462,11 @@ const RaciMatrixNew = ({
         
         {/* Headers */}
         <div className="grid grid-cols-12 gap-2 mb-4">
-          <div className="col-span-4 p-3 bg-slate-50 rounded-md text-center w-[95%]">
+          <div className="col-span-2.5 p-3 bg-slate-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-slate-700 text-sm">Name</h4>
+          </div>
+          <div className="col-span-1.5 p-3 bg-slate-100 rounded-md text-center w-[95%]">
+            <h4 className="font-medium text-slate-700 text-sm">Role</h4>
           </div>
           <div className="col-span-1.5 p-3 bg-blue-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-blue-600 text-sm">Define</h4>
@@ -469,13 +491,48 @@ const RaciMatrixNew = ({
         {/* RACI Matrix Rows */}
         {raciData.roles.map((role, roleIndex) => (
           <div key={roleIndex} className="grid grid-cols-12 gap-2 mb-2 items-center">
-            <div className="col-span-4 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
+            <div className="col-span-2.5 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
               <Textarea
                 value={role.name || ""}
                 onChange={(e) => updateRoleInfo(roleIndex, 'name', e.target.value)}
                 placeholder="Name"
                 className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px] resize-y"
               />
+            </div>
+            
+            {/* Role Dropdown */}
+            <div className="col-span-1.5 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
+              <Select
+                value={role.function || ""}
+                onValueChange={(value) => {
+                  updateRoleInfo(roleIndex, 'function', value);
+                  // Track if "Other" is selected
+                  const newShowOtherInputs = [...showOtherRoleInputs];
+                  newShowOtherInputs[roleIndex] = value === "Other";
+                  setShowOtherRoleInputs(newShowOtherInputs);
+                }}
+              >
+                <SelectTrigger className="w-full h-9">
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roleTypes.map((roleType) => (
+                    <SelectItem key={roleType} value={roleType}>
+                      {roleType}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Show text input for "Other" role */}
+              {showOtherRoleInputs[roleIndex] && (
+                <Input
+                  value={role.function === "Other" ? "" : role.function || ""}
+                  onChange={(e) => updateRoleInfo(roleIndex, 'function', e.target.value)}
+                  placeholder="Please specify the role"
+                  className="mt-2 w-full text-sm"
+                />
+              )}
             </div>
             
             {/* Define Phase */}
