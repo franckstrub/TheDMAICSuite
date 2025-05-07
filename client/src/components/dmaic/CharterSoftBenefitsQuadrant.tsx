@@ -44,16 +44,17 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     }
   };
 
-  // Update the main benefits array when any category changes
+  // Update the main benefits array with all benefits, including empty ones
+  // This prevents text from disappearing during editing
   const updateBenefits = () => {
     if (!onChange) return;
     
-    // Filter out empty benefits and combine all categories
+    // Include all benefits, even empty ones
     const allBenefits = [
-      ...employeeBenefits.filter(b => b.text.trim() !== ''), 
-      ...customerBenefits.filter(b => b.text.trim() !== ''), 
-      ...processBenefits.filter(b => b.text.trim() !== ''), 
-      ...growthBenefits.filter(b => b.text.trim() !== '')
+      ...employeeBenefits, 
+      ...customerBenefits, 
+      ...processBenefits, 
+      ...growthBenefits
     ];
     
     onChange(allBenefits);
@@ -64,7 +65,9 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     const updated = [...employeeBenefits];
     updated[index] = { ...updated[index], text };
     setEmployeeBenefits(updated);
-    updateBenefits();
+    
+    // Use setTimeout to ensure state update happens before sending to parent
+    setTimeout(() => updateBenefits(), 0);
   };
 
   // Handler for customer benefits changes
@@ -72,7 +75,9 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     const updated = [...customerBenefits];
     updated[index] = { ...updated[index], text };
     setCustomerBenefits(updated);
-    updateBenefits();
+    
+    // Use setTimeout to ensure state update happens before sending to parent
+    setTimeout(() => updateBenefits(), 0);
   };
 
   // Handler for process benefits changes
@@ -80,7 +85,9 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     const updated = [...processBenefits];
     updated[index] = { ...updated[index], text };
     setProcessBenefits(updated);
-    updateBenefits();
+    
+    // Use setTimeout to ensure state update happens before sending to parent
+    setTimeout(() => updateBenefits(), 0);
   };
 
   // Handler for growth benefits changes
@@ -88,7 +95,9 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     const updated = [...growthBenefits];
     updated[index] = { ...updated[index], text };
     setGrowthBenefits(updated);
-    updateBenefits();
+    
+    // Use setTimeout to ensure state update happens before sending to parent
+    setTimeout(() => updateBenefits(), 0);
   };
 
   // Helper function to render an editable benefit quad
