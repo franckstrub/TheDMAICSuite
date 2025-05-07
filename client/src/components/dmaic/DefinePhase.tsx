@@ -3352,11 +3352,19 @@ export default function DefinePhase() {
                 <CharterSoftBenefitsQuadrant 
                   benefits={softBenefits}
                   onChange={(updatedBenefits) => {
+                    console.log("Soft benefits updated:", updatedBenefits);
+                    // First update the state
                     setSoftBenefits(updatedBenefits);
-                    charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
-                    // Store in localStorage for persistence between page navigations
-                    localStorage.setItem(`project_${projectId}_softBenefits`, JSON.stringify(updatedBenefits));
-                    console.log("Soft benefits saved to localStorage:", updatedBenefits);
+                    
+                    // Then update the form value (in a timeout to avoid state conflicts)
+                    setTimeout(() => {
+                      const benefitsString = JSON.stringify(updatedBenefits);
+                      charterForm.setValue("softBenefits", benefitsString);
+                      
+                      // Store in localStorage for persistence between page navigations
+                      localStorage.setItem(`project_${projectId}_softBenefits`, benefitsString);
+                      console.log("Soft benefits saved to localStorage:", updatedBenefits);
+                    }, 0);
                   }}
                 />
                 
