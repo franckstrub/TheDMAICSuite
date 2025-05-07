@@ -121,8 +121,18 @@ const RaciMatrixNew = ({
     resetRaciFormInitialization();
   }, [projectId]);
 
+  // Define the response type
+  type RaciMatrixResponse = {
+    raciMatrix: {
+      id: number;
+      projectId: number;
+      raciData: string | RaciMatrixData;
+      userId: number;
+    }
+  };
+  
   // Get the RACI matrix data for the project
-  const { data: raciMatrixData, isLoading } = useQuery({
+  const { data: raciMatrixData, isLoading } = useQuery<RaciMatrixResponse>({
     queryKey: ['/api/projects', projectId, 'raci-matrix'],
     enabled: !!projectId,
     staleTime: 5000,
@@ -489,17 +499,17 @@ const RaciMatrixNew = ({
         {/* RACI Matrix Rows */}
         {raciData.roles.map((role, roleIndex) => (
           <div key={roleIndex} className="grid grid-cols-12 gap-2 mb-2 items-center">
-            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
-              <Textarea
+            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%] flex items-center">
+              <Input
                 value={role.name || ""}
                 onChange={(e) => updateRoleInfo(roleIndex, 'name', e.target.value)}
                 placeholder="Name"
-                className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px] resize-y"
+                className="w-full border-0 focus:ring-0 text-sm h-9"
               />
             </div>
             
             {/* Role Dropdown */}
-            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
+            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%] flex flex-col justify-center">
               <Select
                 value={role.role || ""}
                 onValueChange={(value) => {
