@@ -133,47 +133,45 @@ const RaciMatrixNew = ({
     staleTime: 5000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    onSuccess: (data) => {
-      console.log("Fetched RACI matrix data:", data);
-      if (data && data.raciMatrix) {
-        try {
-          // The data structure is nested and the raciData field might be an object or string
-          const raciData = data.raciMatrix.raciData;
-          console.log("RACI data from response:", raciData);
-          
-          if (raciData) {
-            // Handle both string and object formats
-            let parsedData: RaciMatrixData;
-            
-            if (typeof raciData === 'string') {
-              // If it's a string, parse it
-              parsedData = JSON.parse(raciData) as RaciMatrixData;
-            } else if (typeof raciData === 'object') {
-              // If it's already an object, use it directly
-              parsedData = raciData as RaciMatrixData;
-            } else {
-              throw new Error("Unexpected raciData format");
-            }
-            
-            console.log("Final parsed RACI data:", parsedData);
-            setRaciData(parsedData);
-            raciFormInitialized.current = true;
-            
-            // Store a flag in sessionStorage to remember that we have RACI data
-            sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
-          } else {
-            console.warn("No raciData found in response");
-          }
-        } catch (error) {
-          console.error('Error processing RACI matrix data:', error);
-        }
-      }
-    },
-    onError: (error) => {
-      console.error("Error fetching RACI matrix:", error);
-      // If no RACI matrix exists, we'll just use the default
-    }
   });
+
+  // Process RACI data when it's received
+  useEffect(() => {
+    if (raciMatrixData && raciMatrixData.raciMatrix) {
+      try {
+        console.log("Fetched RACI matrix data:", raciMatrixData);
+        // The data structure is nested and the raciData field might be an object or string
+        const raciData = raciMatrixData.raciMatrix.raciData;
+        console.log("RACI data from response:", raciData);
+        
+        if (raciData) {
+          // Handle both string and object formats
+          let parsedData: RaciMatrixData;
+          
+          if (typeof raciData === 'string') {
+            // If it's a string, parse it
+            parsedData = JSON.parse(raciData) as RaciMatrixData;
+          } else if (typeof raciData === 'object') {
+            // If it's already an object, use it directly
+            parsedData = raciData as RaciMatrixData;
+          } else {
+            throw new Error("Unexpected raciData format");
+          }
+          
+          console.log("Final parsed RACI data:", parsedData);
+          setRaciData(parsedData);
+          raciFormInitialized.current = true;
+          
+          // Store a flag in sessionStorage to remember that we have RACI data
+          sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
+        } else {
+          console.warn("No raciData found in response");
+        }
+      } catch (error) {
+        console.error('Error processing RACI matrix data:', error);
+      }
+    }
+  }, [raciMatrixData, projectId]);
 
   // Initial setup when component mounts
   useEffect(() => {
@@ -382,8 +380,7 @@ const RaciMatrixNew = ({
         ...prev.roles,
         {
           name: "",
-          role: "",     // New field for role selection
-          function: "", // For backward compatibility
+          role: "",     // Role field for selection
           phases: { define: null, measure: null, analyze: null, improve: null, control: null }
         }
       ];
@@ -415,9 +412,7 @@ const RaciMatrixNew = ({
       const newRoles = [...prev.roles];
       newRoles[index] = {
         ...newRoles[index],
-        [field]: value,
-        // For backward compatibility, also update 'function' field
-        ...(field === 'role' && { function: value })
+        [field]: value
       };
       return { ...prev, roles: newRoles };
     });
@@ -429,7 +424,7 @@ const RaciMatrixNew = ({
   // Update the showOtherRoleInputs state when raciData changes
   useEffect(() => {
     // Update showOtherRoleInputs based on current roles
-    setShowOtherRoleInputs(raciData.roles.map(role => (role.role === "Other" || role.function === "Other")));
+    setShowOtherRoleInputs(raciData.roles.map(role => role.role === "Other"));
   }, [raciData.roles.length]);
 
   // Update a role's RACI responsibility for a specific phase

@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import migrateRaciRolesToFunction from "./migrateRaciRoles";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +38,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Run database migrations
+  try {
+    await migrateRaciRolesToFunction();
+    console.log("RACI roles migration completed successfully");
+  } catch (error) {
+    console.error("RACI roles migration failed:", error);
+    // Continue with server startup even if migration fails
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
