@@ -28,7 +28,17 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [currentTab, setCurrentTab] = useState("dashboard");
   const [activePhase, setActivePhase] = useState("define");
-  const [currentProject, setCurrentProject] = useState<any>(null);
+  const [currentProject, setCurrentProjectState] = useState<any>(null);
+  
+  // Wrapper for setCurrentProject that also saves to localStorage
+  const setCurrentProject = (project: any) => {
+    setCurrentProjectState(project);
+    if (project) {
+      saveCurrentProjectToStorage(project);
+    } else {
+      localStorage.removeItem('currentProject');
+    }
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currency, setCurrency] = useState<CurrencyType>("$");
   const [implementationStatus, setImplementationStatus] = useState<ImplementationStatusType>("all");

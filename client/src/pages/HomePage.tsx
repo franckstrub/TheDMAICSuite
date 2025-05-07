@@ -55,8 +55,13 @@ export default function HomePage() {
         console.log(`Setting current project from URL to ID ${projectId} (${project.title})`);
         setCurrentProject(project);
       }
+    } else if (projectsData && params.tab === "dmaic" && !params.projectId && currentProject) {
+      // If we're on a DMAIC page without projectId but have a currentProject, update URL
+      console.log(`Redirecting to project page with ID ${currentProject.id}`);
+      const phase = params.phase || "define";
+      navigate(`/app/dmaic/${phase}/${currentProject.id}`);
     }
-  }, [projectsData, params.projectId, setCurrentProject]);
+  }, [projectsData, params.projectId, params.tab, params.phase, currentProject, setCurrentProject, navigate]);
 
   if (!user) {
     return null;
