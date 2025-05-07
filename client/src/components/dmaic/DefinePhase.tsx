@@ -652,27 +652,38 @@ export default function DefinePhase() {
             // Check if it looks like a JSON array (after removing extra quotes if needed)
             const benefitsStr = charter.charter.softBenefits.trim();
             
-            // Handle case where the string is stored with extra quotes (JSON string of a JSON string)
-            // This often happens when the database stores the value with extra quotes
-            if (benefitsStr.startsWith('"[') && benefitsStr.endsWith(']"')) {
-              // Remove the extra quotes and escape characters
-              const cleanedStr = benefitsStr.slice(1, -1).replace(/\\"/g, '"');
-              parsedBenefits = JSON.parse(cleanedStr);
-              console.log("Parsed soft benefits from double-quoted JSON string:", parsedBenefits);
-            }
-            // Standard case: JSON array stored as a string
-            else if (benefitsStr.startsWith('[') && benefitsStr.endsWith(']')) {
-              parsedBenefits = JSON.parse(benefitsStr);
-              console.log("Parsed soft benefits from JSON string:", parsedBenefits);
-            } 
-            // Legacy format case
-            else {
-              // Legacy format - convert to new format with a default category
-              parsedBenefits = [{ 
-                text: charter.charter.softBenefits, 
-                category: "process" 
-              }];
-              console.log("Converted legacy soft benefit format");
+            try {
+              // Handle case where the string is stored with extra quotes (JSON string of a JSON string)
+              // This often happens when the database stores the value with extra quotes
+              if (benefitsStr.startsWith('"[') && benefitsStr.endsWith(']"')) {
+                // Remove the extra quotes and escape characters
+                const cleanedStr = benefitsStr.slice(1, -1).replace(/\\"/g, '"');
+                parsedBenefits = JSON.parse(cleanedStr);
+                console.log("Parsed soft benefits from double-quoted JSON string:", parsedBenefits);
+              }
+              // Standard case: JSON array stored as a string
+              else if (benefitsStr.startsWith('[') && benefitsStr.endsWith(']')) {
+                parsedBenefits = JSON.parse(benefitsStr);
+                console.log("Parsed soft benefits from JSON string:", parsedBenefits);
+              } 
+              // Legacy format case
+              else {
+                // Legacy format - convert to new format with a default category
+                parsedBenefits = [{ 
+                  text: charter.charter.softBenefits, 
+                  category: "process" 
+                }];
+                console.log("Converted legacy soft benefit format");
+              }
+            } catch (parseError) {
+              console.error("Error parsing soft benefits string:", parseError);
+              // Set default empty benefits for each category
+              parsedBenefits = [
+                { text: "", category: "employee" },
+                { text: "", category: "customer" },
+                { text: "", category: "process" },
+                { text: "", category: "growth" }
+              ];
             }
           } else if (Array.isArray(charter.charter.softBenefits)) {
             // It's already an array

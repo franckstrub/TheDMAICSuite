@@ -15,8 +15,9 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
   const [processBenefits, setProcessBenefits] = useState<SoftBenefit[]>([]);
   const [growthBenefits, setGrowthBenefits] = useState<SoftBenefit[]>([]);
 
-  // Initialize our category-specific benefits arrays
+  // Initialize our category-specific benefits arrays - now responds to benefits changes
   useEffect(() => {
+    console.log("Benefits data changed in CharterSoftBenefitsQuadrant:", benefits);
     const employee = benefits.filter(b => b.category === 'employee');
     const customer = benefits.filter(b => b.category === 'customer');
     const process = benefits.filter(b => b.category === 'process');
@@ -26,7 +27,7 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     setCustomerBenefits(customer.length > 0 ? customer : [{ text: '', category: 'customer' }]);
     setProcessBenefits(process.length > 0 ? process : [{ text: '', category: 'process' }]);
     setGrowthBenefits(growth.length > 0 ? growth : [{ text: '', category: 'growth' }]);
-  }, []);
+  }, [benefits]); // Now depends on benefits prop
 
   // Helper function to get category icon (matching the dashboard)
   const getCategoryIcon = (category: SoftBenefit['category']) => {
