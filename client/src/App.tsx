@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AppContext, CurrencyType, ImplementationStatusType } from "@/store/AppContext";
+import { AppContext, CurrencyType, ImplementationStatusType, saveCurrentProjectToStorage, getStoredCurrentProject } from "@/store/AppContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
@@ -50,6 +50,13 @@ function App() {
     const storedCurrency = localStorage.getItem("currency");
     if (storedCurrency && ["$", "€", "£", "¥", "₩", "CHF"].includes(storedCurrency)) {
       setCurrency(storedCurrency as CurrencyType);
+    }
+    
+    // Load stored project if available
+    const storedProject = getStoredCurrentProject();
+    if (storedProject) {
+      console.log('Restoring current project from localStorage:', storedProject.title);
+      setCurrentProject(storedProject);
     }
   }, []);
 

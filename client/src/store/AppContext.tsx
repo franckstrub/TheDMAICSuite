@@ -17,6 +17,27 @@ export type ImplementationStatusType =
   | "abandoned"            // Abandoned projects
   | "active-completed";    // Active + Completed projects
 
+// Function to save current project to localStorage for persistence between refreshes
+export const saveCurrentProjectToStorage = (project: any) => {
+  if (project) {
+    localStorage.setItem('currentProject', JSON.stringify(project));
+  }
+};
+
+// Function to retrieve current project from localStorage
+export const getStoredCurrentProject = (): any | null => {
+  const storedProject = localStorage.getItem('currentProject');
+  if (storedProject) {
+    try {
+      return JSON.parse(storedProject);
+    } catch (err) {
+      console.error('Error parsing stored project:', err);
+      localStorage.removeItem('currentProject');
+    }
+  }
+  return null;
+};
+
 type AppContextType = {
   user: any | null;
   setUser: (user: any) => void;
