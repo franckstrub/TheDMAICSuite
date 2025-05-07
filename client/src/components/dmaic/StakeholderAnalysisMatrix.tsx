@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,11 @@ import {
   interestLevels, 
   influenceLevels, 
   supportLevels,
-  resistanceTypes
+  resistanceTypes,
+  type InterestLevel,
+  type InfluenceLevel,
+  type SupportLevel,
+  type ResistanceType
 } from '@shared/stakeholderAnalysis';
 
 // Component props
@@ -22,23 +26,29 @@ interface StakeholderAnalysisMatrixProps {
   userId?: number;
 }
 
+// Default row for creating new stakeholder items
+const createDefaultRow = (projectId: number): StakeholderAnalysisItem => ({
+  id: 0,
+  projectId,
+  stakeholderName: '',
+  stakeholderRole: '',
+  interestLevel: 'Medium' as InterestLevel,
+  influenceLevel: 'Medium' as InfluenceLevel,
+  supportLevel: 'Neutral' as SupportLevel,
+  resistanceType: 'Technical' as ResistanceType,
+  engagementStrategy: '',
+  lastUpdated: new Date()
+});
+
+// Type for API response data
+interface AnalysisResponse {
+  items: StakeholderAnalysisItem[];
+}
+
 // Main component
 export default function StakeholderAnalysisMatrix({ projectId, userId }: StakeholderAnalysisMatrixProps) {
   // State for stakeholder analysis items
-  const [items, setItems] = useState<StakeholderAnalysisItem[]>([{
-    id: 0,
-    projectId: Number(projectId),
-    stakeholderName: '',
-    stakeholderRole: '',
-    interestLevel: 'Medium',
-    influenceLevel: 'Medium',
-    supportLevel: 'Neutral',
-    resistanceType: 'Technical',
-    engagementStrategy: '',
-    lastUpdated: new Date()
-  }]);
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const toast = useToast();
+  const [items, setItems] = useState<StakeholderAnalysisItem[]>([createDefaultRow(Number(projectId))]);
   const queryClient = useQueryClient();
 
   // Data fetching with React Query
@@ -46,7 +56,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     data: analysisData, 
     isLoading: isAnalysisLoading, 
     refetch: refetchAnalysis 
-  } = useQuery({
+  } = useQuery<AnalysisResponse>({
     queryKey: [`/api/projects/${projectId}/stakeholder-analysis`],
     enabled: !!userId && !!projectId,
     retry: 3,
@@ -85,18 +95,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     } else if (analysisData) {
       // If we got data but no items, ensure we have at least one empty row
       console.log("No stakeholder analysis items found, setting default empty row");
-      setItems([{
-        id: 0,
-        projectId: Number(projectId),
-        stakeholderName: '',
-        stakeholderRole: '',
-        interestLevel: 'Medium',
-        influenceLevel: 'Medium',
-        supportLevel: 'Neutral',
-        resistanceType: 'Technical',
-        engagementStrategy: '',
-        lastUpdated: new Date()
-      }]);
+      setItems([createDefaultRow(Number(projectId))]);
     }
   }, [analysisData, projectId]);
 
@@ -110,18 +109,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         // If 404, it means there's no analysis yet
         if (response.status === 404) {
           console.log("No stakeholder analysis found in database yet");
-          const defaultRow = [{
-            id: 0,
-            projectId: Number(projectId),
-            stakeholderName: '',
-            stakeholderRole: '',
-            interestLevel: 'Medium',
-            influenceLevel: 'Medium',
-            supportLevel: 'Neutral',
-            resistanceType: 'Technical',
-            engagementStrategy: '',
-            lastUpdated: new Date()
-          }];
+          const defaultRow = [createDefaultRow(Number(projectId))];
           setItems(defaultRow);
           return defaultRow;
         }
@@ -129,7 +117,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         throw new Error(`HTTP error ${response.status}`);
       }
       
-      const data = await response.json();
+      const data = await response.json() as AnalysisResponse;
       console.log("Loaded stakeholder analysis from database:", data);
       
       if (data?.items && data.items.length > 0) {
@@ -154,18 +142,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       } else {
         // If no items found, ensure we have at least one empty row
         console.log("No items found in database, setting default empty row");
-        const defaultRow = [{
-          id: 0,
-          projectId: Number(projectId),
-          stakeholderName: '',
-          stakeholderRole: '',
-          interestLevel: 'Medium',
-          influenceLevel: 'Medium',
-          supportLevel: 'Neutral',
-          resistanceType: 'Technical',
-          engagementStrategy: '',
-          lastUpdated: new Date()
-        }];
+        const defaultRow = [createDefaultRow(Number(projectId))];
         setItems(defaultRow);
         return defaultRow;
       }
@@ -180,18 +157,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       }
       
       // Ensure we have at least one empty row even on error
-      const defaultRow = [{
-        id: 0,
-        projectId: Number(projectId),
-        stakeholderName: '',
-        stakeholderRole: '',
-        interestLevel: 'Medium',
-        influenceLevel: 'Medium',
-        supportLevel: 'Neutral',
-        resistanceType: 'Technical',
-        engagementStrategy: '',
-        lastUpdated: new Date()
-      }];
+      const defaultRow = [createDefaultRow(Number(projectId))];
       setItems(defaultRow);
       return defaultRow;
     }
@@ -206,18 +172,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       // Always include at least one row even if empty
       const itemsToSave = validItems.length > 0 ? 
         validItems : 
-        [{
-          id: 0,
-          projectId: Number(projectId),
-          stakeholderName: '',
-          stakeholderRole: '',
-          interestLevel: 'Medium',
-          influenceLevel: 'Medium',
-          supportLevel: 'Neutral',
-          resistanceType: 'Technical',
-          engagementStrategy: '',
-          lastUpdated: new Date()
-        }];
+        [createDefaultRow(Number(projectId))];
       
       console.log("Saving stakeholder analysis items:", itemsToSave);
       
@@ -226,13 +181,13 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         const existingItemsResponse = await fetch(`/api/projects/${projectId}/stakeholder-analysis`);
         
         if (existingItemsResponse.ok) {
-          const existingItemsData = await existingItemsResponse.json();
+          const existingItemsData = await existingItemsResponse.json() as AnalysisResponse;
           console.log("Current items in database before deletion:", existingItemsData);
           
           // Delete all existing items
-          if (existingItemsData && existingItemsData.items && existingItemsData.items.length > 0) {
+          if (existingItemsData?.items && existingItemsData.items.length > 0) {
             console.log(`Deleting ${existingItemsData.items.length} existing items`);
-            const deletePromises = existingItemsData.items.map((item: any) => 
+            const deletePromises = existingItemsData.items.map((item) => 
               apiRequest("DELETE", `/api/stakeholder-analysis/${item.id}`, { userId, projectId })
             );
             await Promise.all(deletePromises);
@@ -250,7 +205,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             interestLevel: item.interestLevel,
             influenceLevel: item.influenceLevel,
             supportLevel: item.supportLevel,
-            resistanceType: item.supportLevel === 'Resistant' ? item.resistanceType : null,
+            resistanceType: item.supportLevel === 'Resistant' ? item.resistanceType : undefined,
             engagementStrategy: item.engagementStrategy,
             userId,
           };
@@ -277,7 +232,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         // Directly fetch the latest items instead of just invalidating
         console.log("Fetching latest stakeholder analysis items after successful save");
         const response = await fetch(`/api/projects/${projectId}/stakeholder-analysis`);
-        const freshData = await response.json();
+        const freshData = await response.json() as AnalysisResponse;
         console.log("Fresh stakeholder analysis data after save:", freshData);
         
         if (freshData?.items && freshData.items.length > 0) {
@@ -313,18 +268,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       // Ensure we always have at least one row before saving
       let itemsToSave = items;
       if (items.length === 0) {
-        itemsToSave = [{
-          id: 0,
-          projectId: Number(projectId),
-          stakeholderName: '',
-          stakeholderRole: '',
-          interestLevel: 'Medium',
-          influenceLevel: 'Medium',
-          supportLevel: 'Neutral',
-          resistanceType: 'Technical',
-          engagementStrategy: '',
-          lastUpdated: new Date()
-        }];
+        itemsToSave = [createDefaultRow(Number(projectId))];
         setItems(itemsToSave);
       }
       
@@ -366,18 +310,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
   const addItem = () => {
     const lastItem = items[items.length - 1];
     if (lastItem.stakeholderName.trim() !== "") {
-      setItems([...items, {
-        id: 0,
-        projectId: Number(projectId),
-        stakeholderName: '',
-        stakeholderRole: '',
-        interestLevel: 'Medium',
-        influenceLevel: 'Medium',
-        supportLevel: 'Neutral',
-        resistanceType: 'Technical',
-        engagementStrategy: '',
-        lastUpdated: new Date()
-      }]);
+      setItems([...items, createDefaultRow(Number(projectId))]);
     }
   };
 
@@ -393,7 +326,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
   };
 
   // Function to determine matrix quadrant based on interest and influence
-  const getMatrixQuadrant = (interest: string, influence: string) => {
+  const getMatrixQuadrant = (interest: InterestLevel, influence: InfluenceLevel) => {
     if (interest === 'High' && influence === 'High') {
       return "Key Player";
     } else if (interest === 'High' && influence === 'Medium') {
@@ -411,6 +344,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     }
   };
 
+  // Event handler for the refresh button
+  const handleRefresh = () => {
+    loadAnalysisFromDatabase(false);
+  };
+
   // Render UI
   return (
     <div className="stakeholder-analysis-container">
@@ -419,7 +357,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         <Button 
           variant="outline" 
           size="sm"
-          onClick={loadAnalysisFromDatabase}
+          onClick={handleRefresh}
           disabled={isAnalysisLoading}
         >
           Refresh
@@ -459,7 +397,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                   </TableCell>
                   <TableCell>
                     <Input
-                      value={item.stakeholderRole}
+                      value={item.stakeholderRole || ''}
                       onChange={(e) => updateItem(index, 'stakeholderRole', e.target.value)}
                       className="w-full"
                       placeholder="Role/Function"
@@ -544,7 +482,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                   </TableCell>
                   <TableCell>
                     <Textarea
-                      value={item.engagementStrategy}
+                      value={item.engagementStrategy || ''}
                       onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
                       className="min-h-[60px] text-xs"
                       placeholder="Strategy to engage and manage this stakeholder"
