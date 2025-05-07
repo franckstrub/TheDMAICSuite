@@ -12,6 +12,17 @@ import { ProjectRaciMatrix, RaciMatrixData, RaciRole, raciRoleTypes } from "@sha
 import { useAppContext } from "@/store/AppContext";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+// Define role types for the RACI matrix
+const roleTypes = [
+  "Sponsor",
+  "Project Leader",
+  "Stakeholder",
+  "Financial Controller",
+  "Coach",
+  "Team Member/SME", 
+  "Other"
+];
+
 interface RaciMatrixProps {
   projectId: number;
   sponsor?: string;
