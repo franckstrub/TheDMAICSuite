@@ -429,8 +429,10 @@ const RaciMatrixNew = ({
   // Update the showOtherRoleInputs state when raciData changes
   useEffect(() => {
     // Update showOtherRoleInputs based on current roles
-    // Only show input if role is exactly "Other"
-    setShowOtherRoleInputs(raciData.roles.map(role => role.role === "Other"));
+    // Show input if role is exactly "Other" but not when it has "Other: " prefix
+    setShowOtherRoleInputs(raciData.roles.map(role => 
+      role.role === "Other" && !role.role?.startsWith("Other:")
+    ));
   }, [raciData.roles.length]);
 
   // Update a role's RACI responsibility for a specific phase
@@ -512,7 +514,7 @@ const RaciMatrixNew = ({
             {/* Role Dropdown */}
             <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%] flex flex-col justify-center">
               <Select
-                value={role.role || ""}
+                value={role.role?.startsWith("Other:") ? "Other" : role.role || ""}
                 onValueChange={(value) => {
                   updateRoleInfo(roleIndex, 'role', value);
                   // Track if "Other" is selected
@@ -536,11 +538,13 @@ const RaciMatrixNew = ({
               {/* Show text input for "Other" role */}
               {showOtherRoleInputs[roleIndex] && (
                 <Input
-                  value=""
+                  value={role.role?.startsWith("Other:") ? role.role.substring(7) : ""}
                   onChange={(e) => {
                     const otherRole = e.target.value.trim();
                     if (otherRole) {
                       updateRoleInfo(roleIndex, 'role', `Other: ${otherRole}`);
+                    } else {
+                      updateRoleInfo(roleIndex, 'role', "Other");
                     }
                   }}
                   placeholder="Please specify the role"
