@@ -53,10 +53,15 @@ export default function DmaicTools() {
   // Ensure we have the correct project loaded
   useEffect(() => {
     // Load from URL params if available
-    if (projectsData && "projects" in projectsData && params.projectId) {
+    if (projectsData && params.projectId) {
       const projectId = parseInt(params.projectId);
+      
+      // Type guard to ensure projects exists and is an array
+      const projects = Array.isArray((projectsData as any).projects) 
+        ? (projectsData as any).projects as any[]
+        : [];
+      
       // Find the project with the matching ID
-      const projects = projectsData.projects as any[];
       const project = projects.find((p: any) => p.id === projectId);
       if (project && (!currentProject || currentProject.id !== projectId)) {
         console.log(
