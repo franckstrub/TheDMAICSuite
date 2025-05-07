@@ -400,16 +400,18 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                       <Input
                         value={item.stakeholderName}
                         onChange={(e) => updateItem(index, 'stakeholderName', e.target.value)}
-                        className="w-full"
+                        className="w-full text-left"
                         placeholder="Stakeholder name"
+                        style={{ textAlign: 'left' }}
                       />
                     </TableCell>
                     <TableCell>
                       <Input
                         value={item.stakeholderRole || ''}
                         onChange={(e) => updateItem(index, 'stakeholderRole', e.target.value)}
-                        className="w-full"
+                        className="w-full text-left"
                         placeholder="Role/Function"
+                        style={{ textAlign: 'left' }}
                       />
                     </TableCell>
                     <TableCell>
@@ -493,8 +495,9 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                       <Textarea
                         value={item.engagementStrategy || ''}
                         onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
-                        className="min-h-[60px] text-xs"
+                        className="min-h-[60px] text-xs text-left"
                         placeholder="Strategy to engage and manage this stakeholder"
+                        style={{ textAlign: 'left' }}
                       />
                     </TableCell>
                     <TableCell>
