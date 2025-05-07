@@ -1417,6 +1417,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stakeholder Analysis Matrix routes
+  app.get("/api/projects/:projectId/stakeholder-analysis", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const items = await db.select().from(stakeholderAnalysisItems).where(eq(stakeholderAnalysisItems.projectId, projectId));
+      
+      return res.status(200).json({ items });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/stakeholder-analysis", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const analysisData = {
+        ...req.body,
+        projectId,
+      };
+      
+      // Validate the stakeholder analysis data
+      const validatedData = insertStakeholderAnalysisItemSchema.parse(analysisData);
+      
+      // Insert the item
+      const [newItem] = await db
+        .insert(stakeholderAnalysisItems)
+        .values([validatedData])
+        .returning();
+      
+      return res.status(201).json({ item: newItem });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/stakeholder-analysis/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Check if the item exists
+      const [existingItem] = await db
+        .select()
+        .from(stakeholderAnalysisItems)
+        .where(eq(stakeholderAnalysisItems.id, id));
+      
+      if (!existingItem) {
+        return res.status(404).json({ message: "Stakeholder analysis item not found" });
+      }
+      
+      // Update the item
+      const [updatedItem] = await db
+        .update(stakeholderAnalysisItems)
+        .set({
+          ...updateData,
+          lastUpdated: new Date(),
+        })
+        .where(eq(stakeholderAnalysisItems.id, id))
+        .returning();
+      
+      return res.status(200).json({ item: updatedItem });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.delete("/api/stakeholder-analysis/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if the item exists
+      const [existingItem] = await db
+        .select()
+        .from(stakeholderAnalysisItems)
+        .where(eq(stakeholderAnalysisItems.id, id));
+      
+      if (!existingItem) {
+        return res.status(404).json({ message: "Stakeholder analysis item not found" });
+      }
+      
+      // Delete the item
+      await db
+        .delete(stakeholderAnalysisItems)
+        .where(eq(stakeholderAnalysisItems.id, id));
+      
+      return res.status(200).json({ message: "Stakeholder analysis item deleted successfully" });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   // Create http server
   const httpServer = createServer(app);
   return httpServer;
