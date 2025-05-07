@@ -1,16 +1,43 @@
 import { useState, useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AppContext, CurrencyType, ImplementationStatusType, saveCurrentProjectToStorage, getStoredCurrentProject } from "@/store/AppContext";
+import { 
+  AppContext, 
+  CurrencyType, 
+  ImplementationStatusType, 
+  saveCurrentProjectToStorage, 
+  getStoredCurrentProject,
+  saveRouteToStorage,
+  getStoredRoute
+} from "@/store/AppContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
 import MockupPage from "@/pages/MockupPage";
 
 function Router() {
+  const [location, navigate] = useLocation();
+  
+  // Save the current route to localStorage whenever it changes
+  useEffect(() => {
+    if (location !== '/' && location !== '/app') {
+      saveRouteToStorage(location);
+      console.log('Saved current route to localStorage:', location);
+    }
+  }, [location]);
+  
+  // On initial load, check if we have a stored route to navigate to
+  useEffect(() => {
+    const storedRoute = getStoredRoute();
+    if (storedRoute && location === '/') {
+      console.log('Restoring route from localStorage:', storedRoute);
+      navigate(storedRoute);
+    }
+  }, []);
+  
   return (
     <Switch>
       <Route path="/" component={LandingPage}/>
