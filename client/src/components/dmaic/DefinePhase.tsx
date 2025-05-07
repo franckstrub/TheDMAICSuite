@@ -3314,15 +3314,8 @@ export default function DefinePhase() {
                 <CharterSoftBenefitsQuadrant 
                   benefits={softBenefits}
                   onChange={(updatedBenefits) => {
-                    // Set local state immediately for a responsive UI
                     setSoftBenefits(updatedBenefits);
-                    
-                    // Only update form value after user stops typing (a complete entry)
-                    // This prevents the form from constantly triggering updates
-                    // that could cause the UI to refresh and lose focus
-                    if (updatedBenefits.some(b => b.text.trim() !== '')) {
-                      charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
-                    }
+                    charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
                   }}
                 />
                 
