@@ -17,7 +17,7 @@ type HomeParams = {
 };
 
 export default function HomePage() {
-  const { user, setCurrentTab, setActivePhase, setCurrentProject } = useAppContext();
+  const { user, currentProject, setCurrentTab, setActivePhase, setCurrentProject } = useAppContext();
   const [location, navigate] = useLocation();
   const params = useParams<HomeParams>();
   
