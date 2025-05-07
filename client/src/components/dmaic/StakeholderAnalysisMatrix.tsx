@@ -340,6 +340,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       return "Keep Informed";
     } else if (interest === 'Low' && influence === 'High') {
       return "Key Context Setters";
+    } else if (interest === 'Medium' && influence === 'Low') {
+      return "Monitor";
+    } else if (interest === 'Low' && influence === 'Medium') {
+      return "Monitor";
+    } else if (interest === 'Low' && influence === 'Low') {
+      return "Monitor";
     } else {
       return "Monitor";
     }
@@ -542,9 +548,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
               <ul className="list-disc ml-4 space-y-0.5">
                 <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
                 <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Medium interest, high influence - Keep satisfied</li>
-                <li><span className="font-medium text-amber-700">Key context setter:</span> Low interest, high influence - Key context setter</li>
+                <li><span className="font-medium text-amber-700">Key Context Setters:</span> Low interest, high influence - Manage closely</li>
                 <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
-                <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low influence - Monitor with minimal effort</li>
+                <li><span className="font-medium text-blue-700">Keep Informed:</span> Medium interest, medium influence - Keep adequately informed</li>
+                <li><span className="font-medium text-blue-700">Show Consideration:</span> High interest, low influence - Show consideration</li>
+                <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low/medium influence - Monitor with minimal effort</li>
               </ul>
             </div>
             
