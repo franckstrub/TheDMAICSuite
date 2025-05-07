@@ -397,18 +397,18 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                 {items.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell>
-                      <Input
+                      <Textarea
                         value={item.stakeholderName}
                         onChange={(e) => updateItem(index, 'stakeholderName', e.target.value)}
-                        className="w-full"
+                        className="min-h-[60px] text-sm w-full"
                         placeholder="Stakeholder name"
                       />
                     </TableCell>
                     <TableCell>
-                      <Input
+                      <Textarea
                         value={item.stakeholderRole || ''}
                         onChange={(e) => updateItem(index, 'stakeholderRole', e.target.value)}
-                        className="w-full"
+                        className="min-h-[60px] text-sm w-full"
                         placeholder="Role/Function"
                       />
                     </TableCell>
