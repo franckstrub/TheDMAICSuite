@@ -520,28 +520,34 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             onClick={handleSaveAnalysis}
             className="bg-primary text-white px-6 py-2 rounded hover:bg-primary/90 transition-colors"
           >
-            Save Stakeholder
+            Save Stakeholder Analysis
           </Button>
         </div>
       </div>
 
       {/* Help text */}
       <div className="mt-4 text-sm text-gray-500">
-        <p><strong>Matrix Position Guide:</strong></p>
-        <ul className="list-disc ml-5 space-y-1">
-          <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
-          <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Keep satisfied</li>
-          <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
-          <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low influence - Monitor with minimal effort</li>
-        </ul>
-        
-        <p className="mt-3"><strong>Resistance Types:</strong></p>
-        <ul className="list-disc ml-5 space-y-1">
-          <li><span className="font-medium">Technical:</span> Resistance based on technical disagreements or concerns</li>
-          <li><span className="font-medium">Political:</span> Resistance due to organizational politics, power struggles or competing priorities</li>
-          <li><span className="font-medium">Cultural:</span> Resistance stemming from organizational culture or established ways of working</li>
-          <li><span className="font-medium">Personal:</span> Resistance due to personal reasons, career concerns, or individual preferences</li>
-        </ul>
+        <div className="flex flex-row gap-8">
+          <div className="w-1/2">
+            <p><strong>Matrix Position Guide:</strong></p>
+            <ul className="list-disc ml-5 space-y-1">
+              <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
+              <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Keep satisfied</li>
+              <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
+              <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low influence - Monitor with minimal effort</li>
+            </ul>
+          </div>
+          
+          <div className="w-1/2">
+            <p><strong>Resistance Types:</strong></p>
+            <ul className="list-disc ml-5 space-y-1">
+              <li><span className="font-medium">Technical:</span> Resistance based on technical disagreements or concerns</li>
+              <li><span className="font-medium">Political:</span> Resistance due to organizational politics, power struggles or competing priorities</li>
+              <li><span className="font-medium">Cultural:</span> Resistance stemming from organizational culture or established ways of working</li>
+              <li><span className="font-medium">Personal:</span> Resistance due to personal reasons, career concerns, or individual preferences</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
