@@ -642,13 +642,24 @@ export default function DefinePhase() {
         }
       }
       
-      // Load soft benefits if available
-      if (charter.charter.softBenefits) {
+      // Always initialize soft benefits
+      // This ensures we have all 4 categories even if benefits are empty in database
+      {
         try {
           let parsedBenefits: SoftBenefit[] = [];
           
+          // If benefits are undefined/null, initialize with empty benefits
+          if (!charter.charter.softBenefits) {
+            parsedBenefits = [
+              { text: "", category: "employee" },
+              { text: "", category: "customer" },
+              { text: "", category: "process" },
+              { text: "", category: "growth" }
+            ];
+            console.log("Initializing empty soft benefits for all categories");
+          }
           // If it's a string, try to parse it as JSON
-          if (typeof charter.charter.softBenefits === 'string') {
+          else if (typeof charter.charter.softBenefits === 'string') {
             // Check if it looks like a JSON array (after removing extra quotes if needed)
             const benefitsStr = charter.charter.softBenefits.trim();
             
