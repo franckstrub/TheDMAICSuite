@@ -515,12 +515,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         </Button>
         
         {/* Save button */}
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-start">
           <Button
             onClick={handleSaveAnalysis}
             className="bg-primary text-white px-6 py-2 rounded hover:bg-primary/90 transition-colors"
           >
-            Save Analysis
+            Save Stakeholder
           </Button>
         </div>
       </div>
