@@ -52,6 +52,7 @@ export default function DmaicTools() {
 
   // Ensure we have the correct project loaded
   useEffect(() => {
+    // Load from URL params if available
     if (projectsData && "projects" in projectsData && params.projectId) {
       const projectId = parseInt(params.projectId);
       // Find the project with the matching ID
@@ -64,7 +65,14 @@ export default function DmaicTools() {
         setCurrentProject(project);
       }
     }
-  }, [projectsData, params.projectId, currentProject, setCurrentProject]);
+    // If no project ID in params but we have a stored project, update URL to match stored project
+    else if (projectsData && currentProject?.id && !params.projectId) {
+      console.log(
+        `Updating URL to include stored project ID: ${currentProject.id}`,
+      );
+      navigate(`/app/dmaic/${params.phase || activePhase}/${currentProject.id}`);
+    }
+  }, [projectsData, params.projectId, currentProject, setCurrentProject, activePhase, params.phase, navigate]);
 
   // Set active phase from URL parameter if available
   useEffect(() => {
@@ -84,10 +92,18 @@ export default function DmaicTools() {
         navigate(`/app/dmaic/${params.phase}/${currentProject.id}`);
       }
     }
+    // If no phase in params but we have an active phase, update URL
+    else if (activePhase && !params.phase && currentProject?.id) {
+      console.log(
+        `Updating URL to include active phase: ${activePhase}`,
+      );
+      navigate(`/app/dmaic/${activePhase}/${currentProject.id}`);
+    }
   }, [
     params.phase,
     params.projectId,
     currentProject,
+    activePhase,
     setActivePhase,
     navigate,
   ]);

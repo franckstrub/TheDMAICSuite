@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AppContext, CurrencyType, ImplementationStatusType, saveCurrentProjectToStorage, getStoredCurrentProject } from "@/store/AppContext";
+import { AppContext, useAppContext, CurrencyType, ImplementationStatusType, saveCurrentProjectToStorage, getStoredCurrentProject } from "@/store/AppContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
 import MockupPage from "@/pages/MockupPage";
 
-function Router() {
+// Router component is declared after App to ensure context access
+function AppRouter() {
   return (
     <Switch>
       <Route path="/" component={LandingPage}/>
@@ -24,10 +25,39 @@ function Router() {
   );
 }
 
+// URL restoration component that will be used inside the context provider
+function ProjectRouteManager() {
+  const { currentProject, activePhase } = useAppContext();
+  const [location, navigate] = useLocation();
+  
+  // Handle URL redirection if we're starting on the default route but 
+  // have a stored project and activePhase
+  useEffect(() => {
+    // Only attempt to redirect if we're at the app root or dashboard without specific paths
+    if ((location === '/app' || location === '/app/dashboard') && currentProject && activePhase) {
+      console.log(`Redirecting to stored project: ${currentProject.id} and phase: ${activePhase}`);
+      navigate(`/app/dmaic/${activePhase}/${currentProject.id}`);
+    }
+  }, [location, currentProject, activePhase, navigate]);
+
+  return null;
+}
+
 function App() {
   const [user, setUser] = useState<any>(null);
-  const [currentTab, setCurrentTab] = useState("dashboard");
-  const [activePhase, setActivePhase] = useState("define");
+  const [currentTab, setCurrentTabState] = useState("dashboard");
+  const [activePhase, setActivePhaseState] = useState("define");
+  
+  // Wrappers for state setters that also save to localStorage
+  const setCurrentTab = (tab: string) => {
+    setCurrentTabState(tab);
+    localStorage.setItem('currentTab', tab);
+  };
+  
+  const setActivePhase = (phase: string) => {
+    setActivePhaseState(phase);
+    localStorage.setItem('activePhase', phase);
+  };
   const [currentProject, setCurrentProjectState] = useState<any>(null);
   
   // Wrapper for setCurrentProject that also saves to localStorage
@@ -67,6 +97,17 @@ function App() {
     if (storedProject) {
       console.log('Restoring current project from localStorage:', storedProject.title);
       setCurrentProject(storedProject);
+      
+      // Also restore currentTab and activePhase based on stored location
+      const storedTab = localStorage.getItem('currentTab');
+      if (storedTab) {
+        setCurrentTab(storedTab);
+      }
+      
+      const storedPhase = localStorage.getItem('activePhase');
+      if (storedPhase) {
+        setActivePhase(storedPhase);
+      }
     }
   }, []);
 
@@ -109,7 +150,8 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <ProjectRouteManager />
+          <AppRouter />
         </TooltipProvider>
       </AppContext.Provider>
     </QueryClientProvider>
