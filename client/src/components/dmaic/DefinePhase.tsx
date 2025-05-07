@@ -691,6 +691,14 @@ export default function DefinePhase() {
             console.log("Using already parsed soft benefits array");
           }
           
+          // Ensure we have at least one entry for each category
+          const categories = ["employee", "customer", "process", "growth"];
+          for (const category of categories) {
+            if (!parsedBenefits.some(b => b.category === category)) {
+              parsedBenefits.push({ text: "", category: category as SoftBenefit["category"] });
+            }
+          }
+          
           // Apply the parsed benefits
           setSoftBenefits(parsedBenefits);
           console.log("Loaded soft benefits:", parsedBenefits);
@@ -699,7 +707,15 @@ export default function DefinePhase() {
           charterForm.setValue("softBenefits", JSON.stringify(parsedBenefits));
         } catch (e) {
           console.error("Error parsing soft benefits:", e, "Value was:", charter.charter.softBenefits);
-          setSoftBenefits([]);
+          // If error, initialize with empty benefits for all categories
+          const defaultBenefits = [
+            { text: "", category: "employee" },
+            { text: "", category: "customer" },
+            { text: "", category: "process" },
+            { text: "", category: "growth" }
+          ];
+          setSoftBenefits(defaultBenefits);
+          charterForm.setValue("softBenefits", JSON.stringify(defaultBenefits));
         }
       }
       
@@ -3327,6 +3343,9 @@ export default function DefinePhase() {
                   onChange={(updatedBenefits) => {
                     setSoftBenefits(updatedBenefits);
                     charterForm.setValue("softBenefits", JSON.stringify(updatedBenefits));
+                    // Store in localStorage for persistence between page navigations
+                    localStorage.setItem(`project_${projectId}_softBenefits`, JSON.stringify(updatedBenefits));
+                    console.log("Soft benefits saved to localStorage:", updatedBenefits);
                   }}
                 />
                 
