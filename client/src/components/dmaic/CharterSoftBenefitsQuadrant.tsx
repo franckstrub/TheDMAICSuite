@@ -15,30 +15,18 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
   const [processBenefits, setProcessBenefits] = useState<SoftBenefit[]>([]);
   const [growthBenefits, setGrowthBenefits] = useState<SoftBenefit[]>([]);
 
-  // Initialize our category-specific benefits arrays only when benefits change and our local state is empty
-  // or when component first loads
+  // Initialize our category-specific benefits arrays
   useEffect(() => {
-    // Only update if we don't have data yet or if explicit data reload is needed
-    const shouldUpdate = 
-      employeeBenefits.length === 0 || 
-      customerBenefits.length === 0 || 
-      processBenefits.length === 0 || 
-      growthBenefits.length === 0;
-      
-    if (shouldUpdate) {
-      console.log("Initializing soft benefits from props:", benefits);
-      
-      const employee = benefits.filter(b => b.category === 'employee');
-      const customer = benefits.filter(b => b.category === 'customer');
-      const process = benefits.filter(b => b.category === 'process');
-      const growth = benefits.filter(b => b.category === 'growth');
-      
-      setEmployeeBenefits(employee.length > 0 ? employee : [{ text: '', category: 'employee' }]);
-      setCustomerBenefits(customer.length > 0 ? customer : [{ text: '', category: 'customer' }]);
-      setProcessBenefits(process.length > 0 ? process : [{ text: '', category: 'process' }]);
-      setGrowthBenefits(growth.length > 0 ? growth : [{ text: '', category: 'growth' }]);
-    }
-  }, [benefits, employeeBenefits.length, customerBenefits.length, processBenefits.length, growthBenefits.length]);
+    const employee = benefits.filter(b => b.category === 'employee');
+    const customer = benefits.filter(b => b.category === 'customer');
+    const process = benefits.filter(b => b.category === 'process');
+    const growth = benefits.filter(b => b.category === 'growth');
+    
+    setEmployeeBenefits(employee.length > 0 ? employee : [{ text: '', category: 'employee' }]);
+    setCustomerBenefits(customer.length > 0 ? customer : [{ text: '', category: 'customer' }]);
+    setProcessBenefits(process.length > 0 ? process : [{ text: '', category: 'process' }]);
+    setGrowthBenefits(growth.length > 0 ? growth : [{ text: '', category: 'growth' }]);
+  }, []);
 
   // Helper function to get category icon (matching the dashboard)
   const getCategoryIcon = (category: SoftBenefit['category']) => {
@@ -52,8 +40,7 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
   };
 
   // Update the main benefits array when any category changes
-  // Using React.useCallback to prevent recreating this function on each render
-  const updateBenefits = React.useCallback(() => {
+  const updateBenefits = () => {
     if (!onChange) return;
     
     // Filter out empty benefits and combine all categories
@@ -64,14 +51,8 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
       ...growthBenefits.filter(b => b.text.trim() !== '')
     ];
     
-    // Use a small delay to prevent rapid consecutive updates
-    // This helps reduce the frequency of onChange calls during typing
-    const timeoutId = setTimeout(() => {
-      onChange(allBenefits);
-    }, 300); // 300ms debounce
-    
-    return () => clearTimeout(timeoutId); // Cleanup on component unmount
-  }, [onChange, employeeBenefits, customerBenefits, processBenefits, growthBenefits]);
+    onChange(allBenefits);
+  };
 
   // Handler for employee benefits changes
   const handleEmployeeChange = (index: number, text: string) => {
