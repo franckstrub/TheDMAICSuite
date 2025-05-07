@@ -429,11 +429,11 @@ const RaciMatrixNew = ({
   // Update the showOtherRoleInputs state when raciData changes
   useEffect(() => {
     // Update showOtherRoleInputs based on current roles
-    // Show input if role is exactly "Other" but not when it has "Other: " prefix
+    // Show input if role is exactly "Other" or starts with "Other:"
     setShowOtherRoleInputs(raciData.roles.map(role => 
-      role.role === "Other" && !role.role?.startsWith("Other:")
+      role.role === "Other" || role.role?.startsWith("Other:")
     ));
-  }, [raciData.roles.length]);
+  }, [raciData.roles]);
 
   // Update a role's RACI responsibility for a specific phase
   const updateRoleResponsibility = (roleIndex: number, phase: keyof typeof raciData.roles[0]['phases'], value: string) => {
@@ -516,7 +516,13 @@ const RaciMatrixNew = ({
               <Select
                 value={role.role?.startsWith("Other:") ? "Other" : role.role || ""}
                 onValueChange={(value) => {
-                  updateRoleInfo(roleIndex, 'role', value);
+                  // If selecting Other but already had Other: specification, keep the specification
+                  if (value === "Other" && role.role?.startsWith("Other:")) {
+                    // Do nothing - keep the existing "Other: specification"
+                  } else {
+                    updateRoleInfo(roleIndex, 'role', value);
+                  }
+                  
                   // Track if "Other" is selected
                   const newShowOtherInputs = [...showOtherRoleInputs];
                   newShowOtherInputs[roleIndex] = value === "Other";
@@ -538,8 +544,9 @@ const RaciMatrixNew = ({
               {/* Show text input for "Other" role */}
               {showOtherRoleInputs[roleIndex] && (
                 <Input
-                  value={role.role?.startsWith("Other:") ? role.role.substring(7) : ""}
-                  onChange={(e) => {
+                  defaultValue={role.role?.startsWith("Other:") ? role.role.substring(7) : ""}
+                  key={`other-input-${roleIndex}-${role.role}`} 
+                  onBlur={(e) => {
                     const otherRole = e.target.value.trim();
                     if (otherRole) {
                       updateRoleInfo(roleIndex, 'role', `Other: ${otherRole}`);
