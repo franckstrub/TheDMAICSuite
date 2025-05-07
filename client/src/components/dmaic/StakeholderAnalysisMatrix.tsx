@@ -377,47 +377,47 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         {isAnalysisLoading && <div className="py-4">Loading stakeholder analysis...</div>}
       
         {/* Main content */}
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
+        <div className="bg-white rounded-lg p-2 border border-gray-200">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="border-collapse">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/6">Stakeholder Name</TableHead>
-                  <TableHead className="w-1/6">Role/Function</TableHead>
-                  <TableHead className="w-1/12">Interest</TableHead>
-                  <TableHead className="w-1/12">Influence</TableHead>
-                  <TableHead className="w-1/12">Support</TableHead>
-                  <TableHead className="w-1/12">Resistance Type</TableHead>
-                  <TableHead className="w-1/6">Matrix Position</TableHead>
-                  <TableHead className="w-1/4">Engagement Strategy</TableHead>
-                  <TableHead className="w-1/12">Actions</TableHead>
+                <TableRow className="py-0">
+                  <TableHead className="w-1/5 py-1">Stakeholder Name</TableHead>
+                  <TableHead className="w-1/5 py-1">Role/Function</TableHead>
+                  <TableHead className="w-[5%] py-1">Interest</TableHead>
+                  <TableHead className="w-[5%] py-1">Influence</TableHead>
+                  <TableHead className="w-[5%] py-1">Support</TableHead>
+                  <TableHead className="w-[6%] py-1">Resistance</TableHead>
+                  <TableHead className="w-[9%] py-1">Position</TableHead>
+                  <TableHead className="w-1/5 py-1">Engagement Strategy</TableHead>
+                  <TableHead className="w-[5%] py-1">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell>
+                    <TableCell className="p-1">
                       <Textarea
                         value={item.stakeholderName}
                         onChange={(e) => updateItem(index, 'stakeholderName', e.target.value)}
-                        className="min-h-[60px] text-sm w-full"
+                        className="min-h-[60px] text-sm w-full resize-y p-1"
                         placeholder="Stakeholder name"
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1">
                       <Textarea
                         value={item.stakeholderRole || ''}
                         onChange={(e) => updateItem(index, 'stakeholderRole', e.target.value)}
-                        className="min-h-[60px] text-sm w-full"
+                        className="min-h-[60px] text-sm w-full resize-y p-1"
                         placeholder="Role/Function"
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1">
                       <Select
                         value={item.interestLevel}
                         onValueChange={(value) => updateItem(index, 'interestLevel', value)}
                       >
-                        <SelectTrigger className="w-24">
+                        <SelectTrigger className="w-20 text-xs">
                           <SelectValue placeholder="Interest" />
                         </SelectTrigger>
                         <SelectContent>
@@ -427,12 +427,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1">
                       <Select
                         value={item.influenceLevel}
                         onValueChange={(value) => updateItem(index, 'influenceLevel', value)}
                       >
-                        <SelectTrigger className="w-24">
+                        <SelectTrigger className="w-20 text-xs">
                           <SelectValue placeholder="Influence" />
                         </SelectTrigger>
                         <SelectContent>
@@ -442,12 +442,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1">
                       <Select
                         value={item.supportLevel}
                         onValueChange={(value) => updateItem(index, 'supportLevel', value)}
                       >
-                        <SelectTrigger className="w-28">
+                        <SelectTrigger className="w-20 text-xs">
                           <SelectValue placeholder="Support" />
                         </SelectTrigger>
                         <SelectContent>
@@ -457,14 +457,14 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1">
                       {item.supportLevel === 'Resistant' ? (
                         <Select
                           value={item.resistanceType || 'Technical'}
                           onValueChange={(value) => updateItem(index, 'resistanceType', value)}
                         >
-                          <SelectTrigger className="w-28">
-                            <SelectValue placeholder="Resistance Type" />
+                          <SelectTrigger className="w-20 text-xs">
+                            <SelectValue placeholder="Type" />
                           </SelectTrigger>
                           <SelectContent>
                             {resistanceTypes.map((type) => (
@@ -476,7 +476,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         <div className="text-gray-400 italic text-xs">N/A</div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1">
                       <div className={`px-2 py-1 rounded-md text-xs font-medium ${
                         item.interestLevel === 'High' && item.influenceLevel === 'High' 
                           ? 'bg-red-100 text-red-800'
@@ -489,22 +489,22 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         {getMatrixQuadrant(item.interestLevel, item.influenceLevel)}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1">
                       <Textarea
                         value={item.engagementStrategy || ''}
                         onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
-                        className="min-h-[60px] text-xs"
+                        className="min-h-[60px] text-xs w-full resize-y p-1"
                         placeholder="Strategy to engage and manage this stakeholder"
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-1 text-center">
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => removeItem(index)}
                         disabled={items.length <= 1}
-                        className="h-8 w-8 text-red-500 hover:text-red-700"
+                        className="h-7 w-7 text-red-500 hover:text-red-700 p-1"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -535,11 +535,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         </div>
 
         {/* Help text */}
-        <div className="mt-4 text-sm text-gray-500">
-          <div className="flex flex-row gap-8">
+        <div className="mt-2 text-xs text-gray-500">
+          <div className="flex flex-row gap-4">
             <div className="w-1/2">
-              <p><strong>Matrix Position Guide:</strong></p>
-              <ul className="list-disc ml-5 space-y-1">
+              <p className="font-medium">Matrix Position Guide:</p>
+              <ul className="list-disc ml-4 space-y-0.5">
                 <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
                 <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Keep satisfied</li>
                 <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
@@ -548,12 +548,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             </div>
             
             <div className="w-1/2">
-              <p><strong>Resistance Types:</strong></p>
-              <ul className="list-disc ml-5 space-y-1">
-                <li><span className="font-medium">Technical:</span> Resistance based on technical disagreements or concerns</li>
-                <li><span className="font-medium">Political:</span> Resistance due to organizational politics, power struggles or competing priorities</li>
-                <li><span className="font-medium">Cultural:</span> Resistance stemming from organizational culture or established ways of working</li>
-                <li><span className="font-medium">Personal:</span> Resistance due to personal reasons, career concerns, or individual preferences</li>
+              <p className="font-medium">Resistance Types:</p>
+              <ul className="list-disc ml-4 space-y-0.5">
+                <li><span className="font-medium">Technical:</span> Technical disagreements or concerns</li>
+                <li><span className="font-medium">Political:</span> Organizational politics, power struggles, competing priorities</li>
+                <li><span className="font-medium">Cultural:</span> Conflicts with established culture or working practices</li>
+                <li><span className="font-medium">Personal:</span> Individual concerns, career issues, personal preferences</li>
               </ul>
             </div>
           </div>
