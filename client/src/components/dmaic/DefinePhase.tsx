@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import MilestoneTimeline from "./MilestoneTimeline";
 import RiskAssessment from "./RiskAssessment";
 import RaciMatrixNew from "./RaciMatrixNew";
+import StakeholderAnalysisMatrix from "./StakeholderAnalysisMatrix";
 import {
   Card,
   CardContent,
@@ -4258,6 +4259,12 @@ export default function DefinePhase() {
       
       {/* Project Risk Assessment Section */}
       <RiskAssessment />
+      
+      {/* Stakeholder Analysis Matrix Section */}
+      <StakeholderAnalysisMatrix 
+        projectId={Number(projectId)}
+        userId={user?.id}
+      />
       
       {/* Project RACI Matrix Section */}
       <RaciMatrixNew 

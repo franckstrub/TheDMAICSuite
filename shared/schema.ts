@@ -6,6 +6,22 @@ import { z } from "zod";
 export const raciRoleTypes = ["R", "A", "C", "I"] as const;
 export type RaciRole = typeof raciRoleTypes[number];
 
+// Stakeholder Analysis Interest Level
+export const interestLevels = ["High", "Medium", "Low"] as const;
+export type InterestLevel = typeof interestLevels[number];
+
+// Stakeholder Analysis Resistance Type
+export const resistanceTypes = ["Technical", "Political", "Cultural", "Personal"] as const; 
+export type ResistanceType = typeof resistanceTypes[number];
+
+// Stakeholder Analysis Influence Level
+export const influenceLevels = ["High", "Medium", "Low"] as const;
+export type InfluenceLevel = typeof influenceLevels[number];
+
+// Stakeholder Analysis Support Level
+export const supportLevels = ["Supporter", "Neutral", "Resistant"] as const;
+export type SupportLevel = typeof supportLevels[number];
+
 // Users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
