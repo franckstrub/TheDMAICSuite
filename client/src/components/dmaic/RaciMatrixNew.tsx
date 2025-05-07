@@ -23,6 +23,22 @@ const roleTypes = [
   "Other"
 ];
 
+// Map legacy role/function values to the new standardized roles
+const mapOldRolesToNew = (oldRole: string): string => {
+  // Direct mappings for common variations
+  const roleMap: Record<string, string> = {
+    "Manager": "Project Leader",
+    "Project Manager": "Project Leader",
+    "Leader": "Project Leader",
+    "Project Coach": "Coach",
+    "Controller": "Financial Controller",
+    "Finance": "Financial Controller"
+  };
+  
+  // Return the mapped value or the original if no mapping exists
+  return roleMap[oldRole] || oldRole;
+};
+
 interface RaciMatrixProps {
   projectId: number;
   sponsor?: string;
