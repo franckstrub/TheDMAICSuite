@@ -429,10 +429,8 @@ const RaciMatrixNew = ({
   // Update the showOtherRoleInputs state when raciData changes
   useEffect(() => {
     // Update showOtherRoleInputs based on current roles
-    // Show input if role is "Other" or starts with "Other: "
-    setShowOtherRoleInputs(raciData.roles.map(role => 
-      role.role === "Other" || role.role.startsWith("Other: ")
-    ));
+    // Only show input if role is exactly "Other"
+    setShowOtherRoleInputs(raciData.roles.map(role => role.role === "Other"));
   }, [raciData.roles.length]);
 
   // Update a role's RACI responsibility for a specific phase
@@ -514,19 +512,9 @@ const RaciMatrixNew = ({
             {/* Role Dropdown */}
             <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%] flex flex-col justify-center">
               <Select
-                value={role.role.startsWith("Other: ") ? "Other" : role.role}
+                value={role.role || ""}
                 onValueChange={(value) => {
-                  // If the user is switching to "Other", keep the current value but add the input field
-                  if (value === "Other") {
-                    // Don't change the value yet if switching from an "Other: something" to just "Other"
-                    if (!role.role.startsWith("Other: ")) {
-                      updateRoleInfo(roleIndex, 'role', "Other");
-                    }
-                  } else {
-                    // If switching away from "Other", update with the new role
-                    updateRoleInfo(roleIndex, 'role', value);
-                  }
-                  
+                  updateRoleInfo(roleIndex, 'role', value);
                   // Track if "Other" is selected
                   const newShowOtherInputs = [...showOtherRoleInputs];
                   newShowOtherInputs[roleIndex] = value === "Other";
@@ -548,11 +536,12 @@ const RaciMatrixNew = ({
               {/* Show text input for "Other" role */}
               {showOtherRoleInputs[roleIndex] && (
                 <Input
-                  value={role.role.startsWith("Other: ") ? role.role.substring(7) : ""}
+                  value=""
                   onChange={(e) => {
-                    // Concatenate "Other: " with the specification
-                    const specification = e.target.value.trim();
-                    updateRoleInfo(roleIndex, 'role', specification ? `Other: ${specification}` : "Other");
+                    const otherRole = e.target.value.trim();
+                    if (otherRole) {
+                      updateRoleInfo(roleIndex, 'role', `Other: ${otherRole}`);
+                    }
                   }}
                   placeholder="Please specify the role"
                   className="mt-2 w-full text-sm"
