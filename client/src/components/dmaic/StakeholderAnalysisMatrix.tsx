@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Trash2, Plus } from 'lucide-react';
 import { 
   StakeholderAnalysisItem, 
@@ -351,204 +352,213 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
 
   // Render UI
   return (
-    <div className="stakeholder-analysis-container">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Stakeholder Analysis Matrix</h2>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isAnalysisLoading}
-        >
-          Refresh
-        </Button>
-      </div>
+    <Card className="mt-6">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>Stakeholder Analysis Matrix</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isAnalysisLoading}
+          >
+            Refresh
+          </Button>
+        </div>
+      </CardHeader>
       
-      {/* Display loading state */}
-      {isAnalysisLoading && <div className="py-4">Loading stakeholder analysis...</div>}
+      <CardContent>
+        {/* Description text */}
+        <p className="text-sm text-gray-500 mb-4">
+          The Stakeholder Analysis Matrix helps identify stakeholders' influence and interest levels, and plan appropriate engagement strategies.
+        </p>
       
-      {/* Main content */}
-      <div className="bg-white rounded-lg p-4 border border-gray-200">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-1/6">Stakeholder Name</TableHead>
-                <TableHead className="w-1/6">Role/Function</TableHead>
-                <TableHead className="w-1/12">Interest</TableHead>
-                <TableHead className="w-1/12">Influence</TableHead>
-                <TableHead className="w-1/12">Support</TableHead>
-                <TableHead className="w-1/12">Resistance Type</TableHead>
-                <TableHead className="w-1/6">Matrix Position</TableHead>
-                <TableHead className="w-1/4">Engagement Strategy</TableHead>
-                <TableHead className="w-1/12">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Input
-                      value={item.stakeholderName}
-                      onChange={(e) => updateItem(index, 'stakeholderName', e.target.value)}
-                      className="w-full"
-                      placeholder="Stakeholder name"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={item.stakeholderRole || ''}
-                      onChange={(e) => updateItem(index, 'stakeholderRole', e.target.value)}
-                      className="w-full"
-                      placeholder="Role/Function"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={item.interestLevel}
-                      onValueChange={(value) => updateItem(index, 'interestLevel', value)}
-                    >
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Interest" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {interestLevels.map((level) => (
-                          <SelectItem key={level} value={level}>{level}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={item.influenceLevel}
-                      onValueChange={(value) => updateItem(index, 'influenceLevel', value)}
-                    >
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Influence" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {influenceLevels.map((level) => (
-                          <SelectItem key={level} value={level}>{level}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={item.supportLevel}
-                      onValueChange={(value) => updateItem(index, 'supportLevel', value)}
-                    >
-                      <SelectTrigger className="w-28">
-                        <SelectValue placeholder="Support" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {supportLevels.map((level) => (
-                          <SelectItem key={level} value={level}>{level}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    {item.supportLevel === 'Resistant' ? (
+        {/* Display loading state */}
+        {isAnalysisLoading && <div className="py-4">Loading stakeholder analysis...</div>}
+      
+        {/* Main content */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/6">Stakeholder Name</TableHead>
+                  <TableHead className="w-1/6">Role/Function</TableHead>
+                  <TableHead className="w-1/12">Interest</TableHead>
+                  <TableHead className="w-1/12">Influence</TableHead>
+                  <TableHead className="w-1/12">Support</TableHead>
+                  <TableHead className="w-1/12">Resistance Type</TableHead>
+                  <TableHead className="w-1/6">Matrix Position</TableHead>
+                  <TableHead className="w-1/4">Engagement Strategy</TableHead>
+                  <TableHead className="w-1/12">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Input
+                        value={item.stakeholderName}
+                        onChange={(e) => updateItem(index, 'stakeholderName', e.target.value)}
+                        className="w-full"
+                        placeholder="Stakeholder name"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={item.stakeholderRole || ''}
+                        onChange={(e) => updateItem(index, 'stakeholderRole', e.target.value)}
+                        className="w-full"
+                        placeholder="Role/Function"
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Select
-                        value={item.resistanceType || 'Technical'}
-                        onValueChange={(value) => updateItem(index, 'resistanceType', value)}
+                        value={item.interestLevel}
+                        onValueChange={(value) => updateItem(index, 'interestLevel', value)}
                       >
-                        <SelectTrigger className="w-28">
-                          <SelectValue placeholder="Resistance Type" />
+                        <SelectTrigger className="w-24">
+                          <SelectValue placeholder="Interest" />
                         </SelectTrigger>
                         <SelectContent>
-                          {resistanceTypes.map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          {interestLevels.map((level) => (
+                            <SelectItem key={level} value={level}>{level}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    ) : (
-                      <div className="text-gray-400 italic text-xs">N/A</div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className={`px-2 py-1 rounded-md text-xs font-medium ${
-                      item.interestLevel === 'High' && item.influenceLevel === 'High' 
-                        ? 'bg-red-100 text-red-800'
-                        : item.influenceLevel === 'High'
-                          ? 'bg-amber-100 text-amber-800'
-                          : item.interestLevel === 'High'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {getMatrixQuadrant(item.interestLevel, item.influenceLevel)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Textarea
-                      value={item.engagementStrategy || ''}
-                      onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
-                      className="min-h-[60px] text-xs"
-                      placeholder="Strategy to engage and manage this stakeholder"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeItem(index)}
-                      disabled={items.length <= 1}
-                      className="h-8 w-8 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        
-        {/* Add row button */}
-        <Button
-          onClick={addItem}
-          className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Add Stakeholder
-        </Button>
-        
-        {/* Save button */}
-        <div className="mt-6 flex justify-start">
-          <Button
-            onClick={handleSaveAnalysis}
-            className="bg-primary text-white px-6 py-2 rounded hover:bg-primary/90 transition-colors"
-          >
-            Save Stakeholder Analysis
-          </Button>
-        </div>
-      </div>
-
-      {/* Help text */}
-      <div className="mt-4 text-sm text-gray-500">
-        <div className="flex flex-row gap-8">
-          <div className="w-1/2">
-            <p><strong>Matrix Position Guide:</strong></p>
-            <ul className="list-disc ml-5 space-y-1">
-              <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
-              <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Keep satisfied</li>
-              <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
-              <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low influence - Monitor with minimal effort</li>
-            </ul>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={item.influenceLevel}
+                        onValueChange={(value) => updateItem(index, 'influenceLevel', value)}
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue placeholder="Influence" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {influenceLevels.map((level) => (
+                            <SelectItem key={level} value={level}>{level}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={item.supportLevel}
+                        onValueChange={(value) => updateItem(index, 'supportLevel', value)}
+                      >
+                        <SelectTrigger className="w-28">
+                          <SelectValue placeholder="Support" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {supportLevels.map((level) => (
+                            <SelectItem key={level} value={level}>{level}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {item.supportLevel === 'Resistant' ? (
+                        <Select
+                          value={item.resistanceType || 'Technical'}
+                          onValueChange={(value) => updateItem(index, 'resistanceType', value)}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue placeholder="Resistance Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {resistanceTypes.map((type) => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="text-gray-400 italic text-xs">N/A</div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className={`px-2 py-1 rounded-md text-xs font-medium ${
+                        item.interestLevel === 'High' && item.influenceLevel === 'High' 
+                          ? 'bg-red-100 text-red-800'
+                          : item.influenceLevel === 'High'
+                            ? 'bg-amber-100 text-amber-800'
+                            : item.interestLevel === 'High'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {getMatrixQuadrant(item.interestLevel, item.influenceLevel)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Textarea
+                        value={item.engagementStrategy || ''}
+                        onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
+                        className="min-h-[60px] text-xs"
+                        placeholder="Strategy to engage and manage this stakeholder"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(index)}
+                        disabled={items.length <= 1}
+                        className="h-8 w-8 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
           
-          <div className="w-1/2">
-            <p><strong>Resistance Types:</strong></p>
-            <ul className="list-disc ml-5 space-y-1">
-              <li><span className="font-medium">Technical:</span> Resistance based on technical disagreements or concerns</li>
-              <li><span className="font-medium">Political:</span> Resistance due to organizational politics, power struggles or competing priorities</li>
-              <li><span className="font-medium">Cultural:</span> Resistance stemming from organizational culture or established ways of working</li>
-              <li><span className="font-medium">Personal:</span> Resistance due to personal reasons, career concerns, or individual preferences</li>
-            </ul>
+          {/* Add row button */}
+          <Button
+            onClick={addItem}
+            className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add Stakeholder
+          </Button>
+          
+          {/* Save button */}
+          <div className="mt-6 flex justify-start">
+            <Button
+              onClick={handleSaveAnalysis}
+              className="bg-primary text-white px-6 py-2 rounded hover:bg-primary/90 transition-colors"
+            >
+              Save Stakeholder Analysis
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Help text */}
+        <div className="mt-4 text-sm text-gray-500">
+          <div className="flex flex-row gap-8">
+            <div className="w-1/2">
+              <p><strong>Matrix Position Guide:</strong></p>
+              <ul className="list-disc ml-5 space-y-1">
+                <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
+                <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Keep satisfied</li>
+                <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
+                <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low influence - Monitor with minimal effort</li>
+              </ul>
+            </div>
+            
+            <div className="w-1/2">
+              <p><strong>Resistance Types:</strong></p>
+              <ul className="list-disc ml-5 space-y-1">
+                <li><span className="font-medium">Technical:</span> Resistance based on technical disagreements or concerns</li>
+                <li><span className="font-medium">Political:</span> Resistance due to organizational politics, power struggles or competing priorities</li>
+                <li><span className="font-medium">Cultural:</span> Resistance stemming from organizational culture or established ways of working</li>
+                <li><span className="font-medium">Personal:</span> Resistance due to personal reasons, career concerns, or individual preferences</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
