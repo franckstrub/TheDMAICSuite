@@ -15,40 +15,23 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
   const [processBenefits, setProcessBenefits] = useState<SoftBenefit[]>([]);
   const [growthBenefits, setGrowthBenefits] = useState<SoftBenefit[]>([]);
 
-  // Initialize our category-specific benefits arrays - now responds to benefits changes
-  // but prevents reset during editing
+  // Simplified initialization that always shows data from benefits prop
+  // This runs whenever we receive new benefits from the parent
   useEffect(() => {
     console.log("Benefits data changed in CharterSoftBenefitsQuadrant:", benefits);
     
-    // Only initialize benefits when first loaded or when they're empty
-    // This prevents overwriting user input
-    if (benefits.length > 0 && (
-        employeeBenefits.length === 0 || 
-        customerBenefits.length === 0 || 
-        processBenefits.length === 0 || 
-        growthBenefits.length === 0)) {
-      
-      const employee = benefits.filter(b => b.category === 'employee');
-      const customer = benefits.filter(b => b.category === 'customer');
-      const process = benefits.filter(b => b.category === 'process');
-      const growth = benefits.filter(b => b.category === 'growth');
-      
-      setEmployeeBenefits(employee.length > 0 ? employee : [{ text: '', category: 'employee' }]);
-      setCustomerBenefits(customer.length > 0 ? customer : [{ text: '', category: 'customer' }]);
-      setProcessBenefits(process.length > 0 ? process : [{ text: '', category: 'process' }]);
-      setGrowthBenefits(growth.length > 0 ? growth : [{ text: '', category: 'growth' }]);
-    } else if (benefits.length === 0 && 
-               employeeBenefits.length === 0 && 
-               customerBenefits.length === 0 && 
-               processBenefits.length === 0 && 
-               growthBenefits.length === 0) {
-      // Initialize with empty benefits if nothing exists yet
-      setEmployeeBenefits([{ text: '', category: 'employee' }]);
-      setCustomerBenefits([{ text: '', category: 'customer' }]);
-      setProcessBenefits([{ text: '', category: 'process' }]);
-      setGrowthBenefits([{ text: '', category: 'growth' }]);
-    }
-  }, [benefits, employeeBenefits.length, customerBenefits.length, processBenefits.length, growthBenefits.length]);
+    // Get benefits for each category
+    const employee = benefits.filter(b => b.category === 'employee');
+    const customer = benefits.filter(b => b.category === 'customer');
+    const process = benefits.filter(b => b.category === 'process');
+    const growth = benefits.filter(b => b.category === 'growth');
+    
+    // Always ensure at least one empty benefit per category
+    setEmployeeBenefits(employee.length > 0 ? employee : [{ text: '', category: 'employee' }]);
+    setCustomerBenefits(customer.length > 0 ? customer : [{ text: '', category: 'customer' }]);
+    setProcessBenefits(process.length > 0 ? process : [{ text: '', category: 'process' }]);
+    setGrowthBenefits(growth.length > 0 ? growth : [{ text: '', category: 'growth' }]);
+  }, [benefits]);
 
   // Helper function to get category icon (matching the dashboard)
   const getCategoryIcon = (category: SoftBenefit['category']) => {
