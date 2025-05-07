@@ -42,27 +42,57 @@ const RaciMatrixNew = ({
       {
         name: sponsor,
         function: "Sponsor",
-        phases: { define: "R", measure: "A", analyze: "A", improve: "A", control: "A" }
+        phases: { 
+          define: "R" as RaciRole, 
+          measure: "A" as RaciRole, 
+          analyze: "A" as RaciRole, 
+          improve: "A" as RaciRole, 
+          control: "A" as RaciRole 
+        }
       },
       {
         name: financialController,
         function: "Financial Controller",
-        phases: { define: "C", measure: "I", analyze: "I", improve: "C", control: "I" }
+        phases: { 
+          define: "C" as RaciRole, 
+          measure: "I" as RaciRole, 
+          analyze: "I" as RaciRole, 
+          improve: "C" as RaciRole, 
+          control: "I" as RaciRole 
+        }
       },
       {
         name: projectLeader,
         function: "Project Leader",
-        phases: { define: "R", measure: "R", analyze: "R", improve: "R", control: "R" }
+        phases: { 
+          define: "R" as RaciRole, 
+          measure: "R" as RaciRole, 
+          analyze: "R" as RaciRole, 
+          improve: "R" as RaciRole, 
+          control: "R" as RaciRole 
+        }
       },
       {
         name: projectCoach,
         function: "Project Coach",
-        phases: { define: "A", measure: "C", analyze: "C", improve: "C", control: "C" }
+        phases: { 
+          define: "A" as RaciRole, 
+          measure: "C" as RaciRole, 
+          analyze: "C" as RaciRole, 
+          improve: "C" as RaciRole, 
+          control: "C" as RaciRole 
+        }
       },
       {
         name: stakeholder,
         function: stakeholderFunction,
-        phases: { define: "C", measure: "C", analyze: "C", improve: "C", control: "I" }
+        phases: { 
+          define: "C" as RaciRole, 
+          measure: "C" as RaciRole, 
+          analyze: "C" as RaciRole, 
+          improve: "C" as RaciRole, 
+          control: "I" as RaciRole 
+        }
       }
     ].filter(role => role.name) // Only include roles that have a name
   };
@@ -200,6 +230,13 @@ const RaciMatrixNew = ({
         // Validate that parsedData has the expected structure
         if (!parsedData.roles || !Array.isArray(parsedData.roles)) {
           console.error("Invalid RACI data format - missing roles array:", parsedData);
+          setRaciData(defaultRaciData);
+          return defaultRaciData;
+        }
+        
+        // Check if the roles array is empty and use default if it is
+        if (parsedData.roles.length === 0) {
+          console.log("RACI data has empty roles array, using default template");
           setRaciData(defaultRaciData);
           return defaultRaciData;
         }
