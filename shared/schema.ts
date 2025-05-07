@@ -619,7 +619,8 @@ export type InsertRaciMatrix = z.infer<typeof insertRaciSchema>;
 export type RaciMatrixData = {
   roles: {
     name: string;
-    function?: string;
+    role?: string;       // New field name
+    function?: string;   // Kept for backward compatibility
     phases: {
       define: RaciRole | null;
       measure: RaciRole | null;

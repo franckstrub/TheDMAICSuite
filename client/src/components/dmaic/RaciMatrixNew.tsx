@@ -52,7 +52,8 @@ const RaciMatrixNew = ({
     roles: [
       {
         name: sponsor,
-        function: "Sponsor",
+        role: "Sponsor",
+        function: "Sponsor", // For backward compatibility
         phases: { 
           define: "R" as RaciRole, 
           measure: "A" as RaciRole, 
@@ -63,7 +64,8 @@ const RaciMatrixNew = ({
       },
       {
         name: financialController,
-        function: "Financial Controller",
+        role: "Financial Controller",
+        function: "Financial Controller", // For backward compatibility
         phases: { 
           define: "C" as RaciRole, 
           measure: "I" as RaciRole, 
@@ -74,7 +76,8 @@ const RaciMatrixNew = ({
       },
       {
         name: projectLeader,
-        function: "Project Leader",
+        role: "Project Leader",
+        function: "Project Leader", // For backward compatibility
         phases: { 
           define: "R" as RaciRole, 
           measure: "R" as RaciRole, 
@@ -85,7 +88,8 @@ const RaciMatrixNew = ({
       },
       {
         name: projectCoach,
-        function: "Project Coach",
+        role: "Coach",
+        function: "Project Coach", // For backward compatibility
         phases: { 
           define: "A" as RaciRole, 
           measure: "C" as RaciRole, 
@@ -96,7 +100,8 @@ const RaciMatrixNew = ({
       },
       {
         name: stakeholder,
-        function: stakeholderFunction,
+        role: stakeholderFunction || "Stakeholder",
+        function: stakeholderFunction, // For backward compatibility
         phases: { 
           define: "C" as RaciRole, 
           measure: "C" as RaciRole, 
@@ -377,7 +382,8 @@ const RaciMatrixNew = ({
         ...prev.roles,
         {
           name: "",
-          function: "", // Empty by default, will be filled with the role selection
+          role: "",     // New field for role selection
+          function: "", // For backward compatibility
           phases: { define: null, measure: null, analyze: null, improve: null, control: null }
         }
       ];
@@ -529,8 +535,8 @@ const RaciMatrixNew = ({
               {/* Show text input for "Other" role */}
               {showOtherRoleInputs[roleIndex] && (
                 <Input
-                  value={role.function === "Other" ? "" : role.function || ""}
-                  onChange={(e) => updateRoleInfo(roleIndex, 'function', e.target.value)}
+                  value={(role.role === "Other" || role.function === "Other") ? "" : (role.role || role.function || "")}
+                  onChange={(e) => updateRoleInfo(roleIndex, 'role', e.target.value)}
                   placeholder="Please specify the role"
                   className="mt-2 w-full text-sm"
                 />
