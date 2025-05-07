@@ -22,11 +22,13 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     const process = benefits.filter(b => b.category === 'process');
     const growth = benefits.filter(b => b.category === 'growth');
     
+    console.log("Soft benefits loaded:", benefits);
+    
     setEmployeeBenefits(employee.length > 0 ? employee : [{ text: '', category: 'employee' }]);
     setCustomerBenefits(customer.length > 0 ? customer : [{ text: '', category: 'customer' }]);
     setProcessBenefits(process.length > 0 ? process : [{ text: '', category: 'process' }]);
     setGrowthBenefits(growth.length > 0 ? growth : [{ text: '', category: 'growth' }]);
-  }, []);
+  }, [benefits]);
 
   // Helper function to get category icon (matching the dashboard)
   const getCategoryIcon = (category: SoftBenefit['category']) => {
