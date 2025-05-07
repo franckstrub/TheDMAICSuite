@@ -8,6 +8,10 @@ import {
   insertRiskSchema, insertRaciSchema
 } from "@shared/schema";
 import { 
+  stakeholderAnalysisItems, 
+  insertStakeholderAnalysisItemSchema 
+} from "@shared/stakeholderAnalysis";
+import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
   InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertUser, InsertRisk,

@@ -12,7 +12,8 @@ import {
   StakeholderAnalysisItem, 
   interestLevels, 
   influenceLevels, 
-  supportLevels 
+  supportLevels,
+  resistanceTypes
 } from '@shared/stakeholderAnalysis';
 
 // Component props
@@ -32,6 +33,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     interestLevel: 'Medium',
     influenceLevel: 'Medium',
     supportLevel: 'Neutral',
+    resistanceType: 'Technical',
     engagementStrategy: '',
     lastUpdated: new Date()
   }]);
@@ -91,6 +93,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         interestLevel: 'Medium',
         influenceLevel: 'Medium',
         supportLevel: 'Neutral',
+        resistanceType: 'Technical',
         engagementStrategy: '',
         lastUpdated: new Date()
       }]);
@@ -115,6 +118,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             interestLevel: 'Medium',
             influenceLevel: 'Medium',
             supportLevel: 'Neutral',
+            resistanceType: 'Technical',
             engagementStrategy: '',
             lastUpdated: new Date()
           }];
@@ -158,6 +162,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           interestLevel: 'Medium',
           influenceLevel: 'Medium',
           supportLevel: 'Neutral',
+          resistanceType: 'Technical',
           engagementStrategy: '',
           lastUpdated: new Date()
         }];
@@ -183,6 +188,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         interestLevel: 'Medium',
         influenceLevel: 'Medium',
         supportLevel: 'Neutral',
+        resistanceType: 'Technical',
         engagementStrategy: '',
         lastUpdated: new Date()
       }];
@@ -208,6 +214,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           interestLevel: 'Medium',
           influenceLevel: 'Medium',
           supportLevel: 'Neutral',
+          resistanceType: 'Technical',
           engagementStrategy: '',
           lastUpdated: new Date()
         }];
@@ -243,6 +250,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             interestLevel: item.interestLevel,
             influenceLevel: item.influenceLevel,
             supportLevel: item.supportLevel,
+            resistanceType: item.supportLevel === 'Resistant' ? item.resistanceType : null,
             engagementStrategy: item.engagementStrategy,
             userId,
           };
@@ -313,6 +321,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           interestLevel: 'Medium',
           influenceLevel: 'Medium',
           supportLevel: 'Neutral',
+          resistanceType: 'Technical',
           engagementStrategy: '',
           lastUpdated: new Date()
         }];
@@ -365,6 +374,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         interestLevel: 'Medium',
         influenceLevel: 'Medium',
         supportLevel: 'Neutral',
+        resistanceType: 'Technical',
         engagementStrategy: '',
         lastUpdated: new Date()
       }]);
@@ -430,6 +440,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                 <TableHead className="w-1/12">Interest</TableHead>
                 <TableHead className="w-1/12">Influence</TableHead>
                 <TableHead className="w-1/12">Support</TableHead>
+                <TableHead className="w-1/12">Resistance Type</TableHead>
                 <TableHead className="w-1/6">Matrix Position</TableHead>
                 <TableHead className="w-1/4">Engagement Strategy</TableHead>
                 <TableHead className="w-1/12">Actions</TableHead>
@@ -500,6 +511,25 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                     </Select>
                   </TableCell>
                   <TableCell>
+                    {item.supportLevel === 'Resistant' ? (
+                      <Select
+                        value={item.resistanceType || 'Technical'}
+                        onValueChange={(value) => updateItem(index, 'resistanceType', value)}
+                      >
+                        <SelectTrigger className="w-28">
+                          <SelectValue placeholder="Resistance Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {resistanceTypes.map((type) => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="text-gray-400 italic text-xs">N/A</div>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className={`px-2 py-1 rounded-md text-xs font-medium ${
                       item.interestLevel === 'High' && item.influenceLevel === 'High' 
                         ? 'bg-red-100 text-red-800'
@@ -565,6 +595,14 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Keep satisfied</li>
           <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
           <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low influence - Monitor with minimal effort</li>
+        </ul>
+        
+        <p className="mt-3"><strong>Resistance Types:</strong></p>
+        <ul className="list-disc ml-5 space-y-1">
+          <li><span className="font-medium">Technical:</span> Resistance based on technical disagreements or concerns</li>
+          <li><span className="font-medium">Political:</span> Resistance due to organizational politics, power struggles or competing priorities</li>
+          <li><span className="font-medium">Cultural:</span> Resistance stemming from organizational culture or established ways of working</li>
+          <li><span className="font-medium">Personal:</span> Resistance due to personal reasons, career concerns, or individual preferences</li>
         </ul>
       </div>
     </div>
