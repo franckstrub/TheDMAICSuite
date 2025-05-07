@@ -53,7 +53,6 @@ const RaciMatrixNew = ({
       {
         name: sponsor,
         role: "Sponsor",
-        function: "Sponsor", // For backward compatibility
         phases: { 
           define: "R" as RaciRole, 
           measure: "A" as RaciRole, 
@@ -65,7 +64,6 @@ const RaciMatrixNew = ({
       {
         name: financialController,
         role: "Financial Controller",
-        function: "Financial Controller", // For backward compatibility
         phases: { 
           define: "C" as RaciRole, 
           measure: "I" as RaciRole, 
@@ -77,7 +75,6 @@ const RaciMatrixNew = ({
       {
         name: projectLeader,
         role: "Project Leader",
-        function: "Project Leader", // For backward compatibility
         phases: { 
           define: "R" as RaciRole, 
           measure: "R" as RaciRole, 
@@ -89,7 +86,6 @@ const RaciMatrixNew = ({
       {
         name: projectCoach,
         role: "Coach",
-        function: "Project Coach", // For backward compatibility
         phases: { 
           define: "A" as RaciRole, 
           measure: "C" as RaciRole, 
@@ -101,7 +97,6 @@ const RaciMatrixNew = ({
       {
         name: stakeholder,
         role: stakeholderFunction || "Stakeholder",
-        function: stakeholderFunction, // For backward compatibility
         phases: { 
           define: "C" as RaciRole, 
           measure: "C" as RaciRole, 
@@ -506,7 +501,7 @@ const RaciMatrixNew = ({
             {/* Role Dropdown */}
             <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
               <Select
-                value={role.role || role.function || ""}
+                value={role.role || ""}
                 onValueChange={(value) => {
                   updateRoleInfo(roleIndex, 'role', value);
                   // Track if "Other" is selected
@@ -530,7 +525,7 @@ const RaciMatrixNew = ({
               {/* Show text input for "Other" role */}
               {showOtherRoleInputs[roleIndex] && (
                 <Input
-                  value={(role.role === "Other" || role.function === "Other") ? "" : (role.role || role.function || "")}
+                  value={role.role === "Other" ? "" : role.role || ""}
                   onChange={(e) => updateRoleInfo(roleIndex, 'role', e.target.value)}
                   placeholder="Please specify the role"
                   className="mt-2 w-full text-sm"
