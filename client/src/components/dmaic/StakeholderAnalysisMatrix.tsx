@@ -390,7 +390,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                   <TableHead className="w-[6%] py-1">Resistance</TableHead>
                   <TableHead className="w-[9%] py-1">Position</TableHead>
                   <TableHead className="w-1/5 py-1">Engagement Strategy</TableHead>
-                  <TableHead className="w-[5%] py-1">Actions</TableHead>
+                  <TableHead className="w-[5%] py-1">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -506,7 +506,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         disabled={items.length <= 1}
                         className="h-7 w-7 text-red-500 hover:text-red-700 p-1"
                       >
-                        <Trash2 className="h-4 w-4" />
+                      <i className="fas fa-trash"></i>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -541,7 +541,8 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
               <p className="font-medium">Matrix Position Guide:</p>
               <ul className="list-disc ml-4 space-y-0.5">
                 <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
-                <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Keep satisfied</li>
+                <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Medium interest, high influence - Keep satisfied</li>
+                <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Low interest, high influence - Key context setter</li>
                 <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
                 <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low influence - Monitor with minimal effort</li>
               </ul>
