@@ -462,10 +462,10 @@ const RaciMatrixNew = ({
         
         {/* Headers */}
         <div className="grid grid-cols-12 gap-2 mb-4">
-          <div className="col-span-2.5 p-3 bg-slate-50 rounded-md text-center w-[95%]">
+          <div className="col-span-3 p-3 bg-slate-50 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-slate-700 text-sm">Name</h4>
           </div>
-          <div className="col-span-1.5 p-3 bg-slate-100 rounded-md text-center w-[95%]">
+          <div className="col-span-3 p-3 bg-slate-100 rounded-md text-center w-[95%]">
             <h4 className="font-medium text-slate-700 text-sm">Role</h4>
           </div>
           <div className="col-span-1.5 p-3 bg-blue-50 rounded-md text-center w-[95%]">
@@ -491,7 +491,7 @@ const RaciMatrixNew = ({
         {/* RACI Matrix Rows */}
         {raciData.roles.map((role, roleIndex) => (
           <div key={roleIndex} className="grid grid-cols-12 gap-2 mb-2 items-center">
-            <div className="col-span-2.5 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
+            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
               <Textarea
                 value={role.name || ""}
                 onChange={(e) => updateRoleInfo(roleIndex, 'name', e.target.value)}
@@ -501,7 +501,7 @@ const RaciMatrixNew = ({
             </div>
             
             {/* Role Dropdown */}
-            <div className="col-span-1.5 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
+            <div className="col-span-3 border border-slate-200 rounded-md p-2 bg-white w-[95%]">
               <Select
                 value={role.function || ""}
                 onValueChange={(value) => {
