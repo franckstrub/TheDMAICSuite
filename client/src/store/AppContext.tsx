@@ -38,6 +38,16 @@ export const getStoredCurrentProject = (): any | null => {
   return null;
 };
 
+// Function to save current route to localStorage
+export const saveRouteToStorage = (route: string) => {
+  localStorage.setItem('currentRoute', route);
+};
+
+// Function to get stored route from localStorage
+export const getStoredRoute = (): string | null => {
+  return localStorage.getItem('currentRoute');
+};
+
 type AppContextType = {
   user: any | null;
   setUser: (user: any) => void;

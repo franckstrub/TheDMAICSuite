@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import logoImage from "@/assets/logo.png";
+import { getStoredRoute } from "@/store/AppContext";
 
 export default function LandingPage() {
   const { user, setUser } = useAppContext();
@@ -20,10 +21,16 @@ export default function LandingPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Redirect to app if already logged in
+  // Redirect to app if already logged in, preferably to the last visited route
   useEffect(() => {
     if (user) {
-      navigate("/app");
+      const storedRoute = getStoredRoute();
+      if (storedRoute) {
+        console.log('Redirecting to previously stored route:', storedRoute);
+        navigate(storedRoute);
+      } else {
+        navigate("/app");
+      }
     }
   }, [user, navigate]);
 
@@ -50,7 +57,15 @@ export default function LandingPage() {
         title: "Success",
         description: "You have successfully logged in",
       });
-      navigate("/app");
+      
+      // Check if we have a stored route to navigate to
+      const storedRoute = getStoredRoute();
+      if (storedRoute) {
+        console.log('After login, redirecting to stored route:', storedRoute);
+        navigate(storedRoute);
+      } else {
+        navigate("/app");
+      }
     } catch (error) {
       toast({
         title: "Login Failed",
