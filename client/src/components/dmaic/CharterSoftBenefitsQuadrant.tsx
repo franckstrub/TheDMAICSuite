@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SoftBenefit } from '@shared/schema';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -8,52 +8,64 @@ interface CharterSoftBenefitsQuadrantProps {
 }
 
 const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = ({ benefits, onChange }) => {
-  // State to hold each category's benefits
-  const [employeeBenefit, setEmployeeBenefit] = useState<string>('');
-  const [customerBenefit, setCustomerBenefit] = useState<string>('');
-  const [processBenefit, setProcessBenefit] = useState<string>('');
-  const [growthBenefit, setGrowthBenefit] = useState<string>('');
+  // Keep original benefit objects to avoid unnecessary re-renders
+  const [benefitsMap, setBenefitsMap] = useState<{
+    employee: SoftBenefit,
+    customer: SoftBenefit,
+    process: SoftBenefit,
+    growth: SoftBenefit
+  }>({
+    employee: { text: '', category: 'employee' },
+    customer: { text: '', category: 'customer' },
+    process: { text: '', category: 'process' },
+    growth: { text: '', category: 'growth' }
+  });
   
-  // Load benefits when they change
+  // Track if we've initialized from props
+  const initialized = useRef(false);
+  
+  // Load benefits when they change from props, but only if coming from external source
   useEffect(() => {
-    // Process incoming benefits data
-    if (benefits && Array.isArray(benefits)) {
+    // Only process if we have real benefits data from props
+    if (benefits && Array.isArray(benefits) && benefits.length > 0) {
       console.log("Benefits data received:", benefits);
       
-      // Find one benefit for each category
-      const employee = benefits.find(b => b.category === 'employee');
-      const customer = benefits.find(b => b.category === 'customer');
-      const process = benefits.find(b => b.category === 'process');
-      const growth = benefits.find(b => b.category === 'growth');
+      // Create a map of the current benefits by category
+      const newBenefitsMap = {...benefitsMap};
       
-      // Update state with the found benefits
-      setEmployeeBenefit(employee?.text || '');
-      setCustomerBenefit(customer?.text || '');
-      setProcessBenefit(process?.text || '');
-      setGrowthBenefit(growth?.text || '');
+      // Update the map with data from props
+      benefits.forEach(benefit => {
+        if (benefit.category in newBenefitsMap) {
+          newBenefitsMap[benefit.category as keyof typeof newBenefitsMap] = benefit;
+        }
+      });
+      
+      // Only update state if we haven't initialized yet or it's clearly from external data source
+      if (!initialized.current) {
+        setBenefitsMap(newBenefitsMap);
+        initialized.current = true;
+      }
     }
   }, [benefits]);
   
-  // When any benefit is updated, trigger the onChange callback
-  useEffect(() => {
+  // Update text for a specific category
+  const updateBenefitText = (category: SoftBenefit['category'], text: string) => {
+    const updatedMap = {...benefitsMap};
+    updatedMap[category].text = text;
+    
+    setBenefitsMap(updatedMap);
+    
+    // Notify parent of all current benefits immediately
     if (onChange) {
-      // Create a SoftBenefit array with one entry per category
-      const updatedBenefits: SoftBenefit[] = [
-        { text: employeeBenefit, category: 'employee' },
-        { text: customerBenefit, category: 'customer' },
-        { text: processBenefit, category: 'process' },
-        { text: growthBenefit, category: 'growth' }
-      ];
-      
-      onChange(updatedBenefits);
+      const allBenefits = Object.values(updatedMap);
+      onChange(allBenefits);
     }
-  }, [employeeBenefit, customerBenefit, processBenefit, growthBenefit, onChange]);
+  };
   
   // Render a benefit card/quadrant
   const renderBenefitQuadrant = (
     title: string,
-    value: string,
-    setValue: React.Dispatch<React.SetStateAction<string>>,
+    category: SoftBenefit['category'],
     color: string,
     icon: string,
     placeholder: string
@@ -64,8 +76,8 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
         <span className="text-lg" aria-hidden="true">{icon}</span>
       </div>
       <Textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        value={benefitsMap[category].text}
+        onChange={(e) => updateBenefitText(category, e.target.value)}
         placeholder={placeholder}
         className="text-xs min-h-[60px] resize-y"
       />
@@ -76,32 +88,28 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
     <div className="grid grid-cols-2 gap-2 mb-3">
       {renderBenefitQuadrant(
         "Employee Benefits",
-        employeeBenefit,
-        setEmployeeBenefit,
+        "employee",
         "border-blue-100 bg-blue-50",
         "👥",
         "Add employee engagement, satisfaction, or teamwork benefits..."
       )}
       {renderBenefitQuadrant(
         "Customer Benefits",
-        customerBenefit,
-        setCustomerBenefit,
+        "customer",
         "border-green-100 bg-green-50",
         "🤝",
         "Add customer satisfaction, loyalty, or experience benefits..."
       )}
       {renderBenefitQuadrant(
         "Process Benefits",
-        processBenefit,
-        setProcessBenefit,
+        "process",
         "border-amber-100 bg-amber-50",
         "⚙️",
         "Add process stability, quality, or reliability benefits..."
       )}
       {renderBenefitQuadrant(
         "Growth & Learning",
-        growthBenefit,
-        setGrowthBenefit,
+        "growth",
         "border-purple-100 bg-purple-50",
         "📈",
         "Add organizational growth, learning, or innovation benefits..."
