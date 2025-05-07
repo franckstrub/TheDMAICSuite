@@ -131,12 +131,12 @@ const RaciMatrixNew = ({
 
   // Initial setup when component mounts
   useEffect(() => {
-    // Check if we have previously loaded RACI data in sessionStorage
-    const hasRaciData = sessionStorage.getItem(`project_${projectId}_has_raci_data`);
+    // Always check if RACI data exists for this project when the component mounts
+    console.log("RaciMatrixNew component mounted for project:", projectId);
     
-    if (hasRaciData === 'true' && !raciFormInitialized.current) {
-      console.log("RACI data flag found in sessionStorage, loading from database");
-      // Load data directly from database to ensure we have the latest
+    // Always attempt to load RACI matrix data from database on component mount
+    if (!raciFormInitialized.current) {
+      console.log("RACI form not initialized yet, checking for existing RACI data");
       loadRaciDataFromDatabase(true);
     }
   }, [projectId]);
@@ -144,67 +144,89 @@ const RaciMatrixNew = ({
   // Main loading function for RACI matrix data
   const loadRaciDataFromDatabase = async (silent = false) => {
     try {
-      console.log("Explicitly loading RACI matrix from database");
+      console.log("Explicitly loading RACI matrix from database for project:", projectId);
       const response = await fetch(`/api/projects/${projectId}/raci-matrix`);
+      
+      // If the response is not OK, it means there's no RACI matrix yet
+      if (!response.ok) {
+        console.log("No RACI matrix found for project:", projectId);
+        if (!silent) {
+          toast({
+            title: "No Data",
+            description: "Using default RACI matrix template",
+          });
+        }
+        setRaciData(defaultRaciData);
+        return defaultRaciData;
+      }
+      
       const data = await response.json();
       console.log("Loaded RACI matrix from database:", data);
       
-      // Navigate to the raciMatrix data (if present)
-      const raciMatrixObj = data?.raciMatrix || data;
+      // Check if we got a valid RACI matrix object
+      if (!data || !data.raciMatrix) {
+        console.log("Response does not contain a valid RACI matrix");
+        setRaciData(defaultRaciData);
+        return defaultRaciData;
+      }
       
-      if (raciMatrixObj) {
-        try {
-          // Get the raciData, which could be a string or an object
-          const raciData = raciMatrixObj.raciData || raciMatrixObj.matrixData;
-          console.log("RACI data from database:", raciData);
-          
-          if (raciData) {
-            // Handle both string and object formats
-            let parsedData: RaciMatrixData;
-            
-            if (typeof raciData === 'string') {
-              // If it's a string, parse it
-              parsedData = JSON.parse(raciData) as RaciMatrixData;
-            } else if (typeof raciData === 'object') {
-              // If it's already an object, use it directly
-              parsedData = raciData as RaciMatrixData;
-            } else {
-              throw new Error("Unexpected raciData format");
-            }
-            
-            console.log("Final parsed RACI data:", parsedData);
-            setRaciData(parsedData);
-            raciFormInitialized.current = true;
-            
-            // Store a flag in sessionStorage to remember that we have RACI data
-            sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
-            
-            // Also trigger a query invalidation for React Query
-            queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
-            
-            if (!silent) {
-              toast({
-                title: "Data Refreshed",
-                description: "RACI matrix loaded successfully",
-              });
-            }
-            
-            return parsedData;
-          }
-        } catch (error) {
-          console.error('Error parsing RACI matrix data:', error);
+      // Navigate to the raciMatrix data
+      const raciMatrixObj = data.raciMatrix;
+      
+      try {
+        // Get the raciData, which could be a string or an object
+        const raciData = raciMatrixObj.raciData;
+        console.log("RACI data from database:", raciData);
+        
+        if (!raciData) {
+          console.log("No RACI data found in the matrix object");
+          setRaciData(defaultRaciData);
+          return defaultRaciData;
         }
+        
+        // Handle both string and object formats
+        let parsedData: RaciMatrixData;
+        
+        if (typeof raciData === 'string') {
+          // If it's a string, parse it
+          parsedData = JSON.parse(raciData) as RaciMatrixData;
+        } else if (typeof raciData === 'object') {
+          // If it's already an object, use it directly
+          parsedData = raciData as RaciMatrixData;
+        } else {
+          throw new Error("Unexpected raciData format");
+        }
+        
+        // Validate that parsedData has the expected structure
+        if (!parsedData.roles || !Array.isArray(parsedData.roles)) {
+          console.error("Invalid RACI data format - missing roles array:", parsedData);
+          setRaciData(defaultRaciData);
+          return defaultRaciData;
+        }
+        
+        console.log("Final parsed RACI data:", parsedData);
+        setRaciData(parsedData);
+        raciFormInitialized.current = true;
+        
+        // Store a flag in sessionStorage to remember that we have RACI data
+        sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
+        
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
+        
+        if (!silent) {
+          toast({
+            title: "Data Loaded",
+            description: "RACI matrix loaded successfully",
+          });
+        }
+        
+        return parsedData;
+      } catch (error) {
+        console.error('Error parsing RACI matrix data:', error);
+        setRaciData(defaultRaciData);
+        return defaultRaciData;
       }
-      
-      // If no data found or error parsing, use the default
-      if (!silent) {
-        toast({
-          title: "No Data",
-          description: "Using default RACI matrix template",
-        });
-      }
-      
-      return defaultRaciData;
     } catch (error) {
       console.error("Error loading RACI matrix from database:", error);
       if (!silent) {
@@ -215,6 +237,7 @@ const RaciMatrixNew = ({
         });
       }
       
+      setRaciData(defaultRaciData);
       return defaultRaciData;
     }
   };
