@@ -111,7 +111,12 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
             key={index}
             value={benefit.text}
             onChange={(e) => handleChange(index, e.target.value)}
-            placeholder={`Enter ${title.toLowerCase()}...`}
+            placeholder={
+              category === "employee" ? "Add employee engagement, satisfaction, or teamwork benefits..." :
+              category === "customer" ? "Add customer satisfaction, loyalty, or experience benefits..." :
+              category === "process" ? "Add process stability, quality, or reliability benefits..." :
+              "Add organizational growth, learning, or innovation benefits..."
+            }
             className="text-xs min-h-[60px] resize-y"
           />
         ))}
