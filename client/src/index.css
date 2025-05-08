@@ -47,28 +47,6 @@
 --radius: 0.5rem;
   }
 
-/* Make all risk assessment textareas resizable - higher specificity */
-.risk-row .risk-name-textarea,
-.risk-row .risk-owner-textarea,
-.risk-row .risk-mitigation-textarea,
-textarea.risk-name-textarea,
-textarea.risk-owner-textarea,
-textarea.risk-mitigation-textarea,
-div textarea.risk-name-textarea,
-div textarea.risk-owner-textarea,
-div textarea.risk-mitigation-textarea {
-  resize: vertical !important;
-  overflow-y: auto !important;
-  min-height: 80px !important;
-  box-sizing: border-box !important;
-}
-
-/* Force all textareas to be resizable */
-textarea {
-  resize: vertical !important;
-  overflow-y: auto !important;
-}
-
 @layer base {
   * {
     @apply border-border;
@@ -444,30 +422,25 @@ textarea {
 }
 
 /* Risk Assessment Textareas */
-.risk-mitigation-textarea,
-.risk-name-textarea,
-.risk-owner-textarea {
-  resize: vertical !important;
-  box-sizing: border-box;
-  width: 100%;
-  flex-grow: 1;
-  overflow-y: auto;
-  display: block;
-  position: relative;
-  min-height: 24px;
-}
-
-/* Specific minimum heights */
 .risk-mitigation-textarea {
   min-height: 120px;
+  overflow-y: auto;
+  resize: vertical;
+  resize-handle: border-bottom;
 }
 
 .risk-name-textarea {
   min-height: 24px;
+  overflow-y: auto;
+  resize: vertical;
+  resize-handle: border-bottom;
 }
 
 .risk-owner-textarea {
   min-height: 24px;
+  overflow-y: auto;
+  resize: vertical;
+  resize-handle: border-bottom;
 }
 
 /* Risk Assessment Row container */
@@ -475,23 +448,8 @@ textarea {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 0.25rem;
-  align-items: stretch;
   margin-bottom: 0.5rem;
   position: relative;
-}
-
-/* Ensure all cells in a row have the same height */
-.risk-row > div {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  position: relative;
-}
-
-/* Style for textarea containers to maintain uniform height */
-.risk-row > div textarea {
-  flex: 1 1 auto;
-  height: 100% !important; /* Force consistent height across row */
 }
 
 @media print {
