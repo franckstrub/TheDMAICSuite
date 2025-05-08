@@ -1644,7 +1644,7 @@ export default function RiskAssessment() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-orange-100 rounded-md p-2 bg-white w-[95%] col-span-1">
+              <div className="border border-orange-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
                 <Select
                   value={riskForm.watch("impact4") || "Low"}
                   onValueChange={(value) => {
@@ -1662,13 +1662,13 @@ export default function RiskAssessment() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%] col-span-1 flex items-center justify-center">
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[98%] col-span-1 flex items-center justify-center">
                 <div className="text-lg font-bold">
                   {riskForm.watch("riskCriticality4") || 1}/9
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality4")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
                 <div className="relative">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
@@ -1716,7 +1716,7 @@ export default function RiskAssessment() {
                   </div>
                 </div>
               </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
                   rows={1}
@@ -1739,8 +1739,8 @@ export default function RiskAssessment() {
           
           {/* Fifth row (conditionally rendered) */}
           {visibleRiskRows >= 5 && (
-            <div className="grid grid-cols-12 gap-2 mb-2 relative">
-              <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
+            <div className="grid grid-cols-12 gap-1 mb-2 relative">
+              <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
                   rows={1}
@@ -1748,7 +1748,7 @@ export default function RiskAssessment() {
                   {...riskForm.register("riskName5")}
                 />
               </div>
-              <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
+              <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
                 <Select
                   value={riskForm.watch("probability5") || "Low"}
                   onValueChange={(value) => {
@@ -1766,7 +1766,7 @@ export default function RiskAssessment() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-orange-100 rounded-md p-2 bg-white w-[95%] col-span-1">
+              <div className="border border-orange-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
                 <Select
                   value={riskForm.watch("impact5") || "Low"}
                   onValueChange={(value) => {
@@ -1784,13 +1784,13 @@ export default function RiskAssessment() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%] col-span-1 flex items-center justify-center">
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[98%] col-span-1 flex items-center justify-center">
                 <div className="text-lg font-bold">
                   {riskForm.watch("riskCriticality5") || 1}/9
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality5")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
                 <div className="relative">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
@@ -1838,7 +1838,7 @@ export default function RiskAssessment() {
                   </div>
                 </div>
               </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
                   rows={1}
@@ -1861,8 +1861,8 @@ export default function RiskAssessment() {
           
           {/* Sixth row (conditionally rendered) */}
           {visibleRiskRows >= 6 && (
-            <div className="grid grid-cols-12 gap-2 mb-2 relative">
-              <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
+            <div className="grid grid-cols-12 gap-1 mb-2 relative">
+              <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
                   rows={1}
@@ -1870,7 +1870,7 @@ export default function RiskAssessment() {
                   {...riskForm.register("riskName6")}
                 />
               </div>
-              <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
+              <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
                 <Select
                   value={riskForm.watch("probability6") || "Low"}
                   onValueChange={(value) => {
@@ -1888,7 +1888,7 @@ export default function RiskAssessment() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-orange-100 rounded-md p-2 bg-white w-[95%] col-span-1">
+              <div className="border border-orange-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
                 <Select
                   value={riskForm.watch("impact6") || "Low"}
                   onValueChange={(value) => {
@@ -1906,13 +1906,13 @@ export default function RiskAssessment() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-purple-100 rounded-md p-2 bg-white w-[95%] col-span-1 flex items-center justify-center">
+              <div className="border border-purple-100 rounded-md p-2 bg-white w-[98%] col-span-1 flex items-center justify-center">
                 <div className="text-lg font-bold">
                   {riskForm.watch("riskCriticality6") || 1}/9
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality6")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
                 <div className="relative">
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
