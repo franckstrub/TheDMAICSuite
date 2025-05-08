@@ -426,18 +426,30 @@
   min-height: 120px;
   overflow-y: auto;
   resize: vertical;
+  resize-handle: border-bottom;
 }
 
 .risk-name-textarea {
   min-height: 24px;
   overflow-y: auto;
   resize: vertical;
+  resize-handle: border-bottom;
 }
 
 .risk-owner-textarea {
   min-height: 24px;
   overflow-y: auto;
   resize: vertical;
+  resize-handle: border-bottom;
+}
+
+/* Risk Assessment Row container */
+.risk-row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  position: relative;
 }
 
 @media print {
