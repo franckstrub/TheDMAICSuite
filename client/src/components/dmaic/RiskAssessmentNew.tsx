@@ -474,11 +474,11 @@ Monitoring and Review:
               Refresh
             </Button>
             <Button 
-              variant="default" 
+              variant="outline" 
               size="sm"
               onClick={saveRiskData}
               disabled={isSaving}
-              className="px-3"
+              className="px-2 py-0 h-7 text-xs"
             >
               {isSaving ? 'Saving...' : 'Save'}
             </Button>
