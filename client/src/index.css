@@ -423,27 +423,21 @@
 
 /* Risk Assessment Textareas */
 .risk-mitigation-textarea {
-  height: 120px !important;
-  min-height: 120px !important;
-  max-height: 120px !important;
-  overflow-y: auto !important;
-  resize: none !important;
+  min-height: 120px;
+  overflow-y: auto;
+  resize: vertical;
 }
 
 .risk-name-textarea {
-  height: 24px !important;
-  min-height: 24px !important;
-  max-height: 24px !important;
-  overflow-y: auto !important;
-  resize: none !important;
+  min-height: 24px;
+  overflow-y: auto;
+  resize: vertical;
 }
 
 .risk-owner-textarea {
-  height: 24px !important;
-  min-height: 24px !important;
-  max-height: 24px !important;
-  overflow-y: auto !important;
-  resize: none !important;
+  min-height: 24px;
+  overflow-y: auto;
+  resize: vertical;
 }
 
 @media print {
