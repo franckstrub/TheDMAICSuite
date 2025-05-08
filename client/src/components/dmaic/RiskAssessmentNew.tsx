@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PlusCircle, Sparkles, Save, Trash2 } from "lucide-react";
+import { PlusCircle, Sparkles, Save } from "lucide-react";
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 
@@ -704,7 +704,7 @@ Monitoring and Review:
                         className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full p-1"
                         onClick={() => deleteRiskRow(rowIndex)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <i className="fas fa-trash"></i>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">
@@ -786,7 +786,7 @@ Monitoring and Review:
                   disabled={isSaving}
                 >
                   <Save className="h-4 w-4" />
-                  {isSaving ? 'Saving...' : 'Save Changes'}
+                  {isSaving ? 'Saving...' : 'Save Risk Assessment'}
                 </Button>
               </div>
             </div>
