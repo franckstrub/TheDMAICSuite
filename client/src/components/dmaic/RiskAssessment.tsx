@@ -420,6 +420,9 @@ export default function RiskAssessment() {
   // Save risk assessment mutation
   const saveRiskMutation = useMutation({
     mutationFn: async (data: RiskFormData) => {
+      // Store current scroll position before saving
+      const scrollPosition = window.scrollY;
+      
       // Log data before saving to ensure probability and impact values are correct
       console.log("Saving risk data with the following values:", {
         probability: data.probability,
@@ -440,21 +443,41 @@ export default function RiskAssessment() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }).then(res => res.json());
+        }).then(res => {
+          // Store the scroll position in the returned data for use in onSuccess
+          const result = res.json();
+          return { result, scrollPosition };
+        });
       } else {
         return fetch(`/api/projects/${projectId}/risks`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }).then(res => res.json());
+        }).then(res => {
+          // Store the scroll position in the returned data for use in onSuccess
+          const result = res.json();
+          return { result, scrollPosition };
+        });
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Risk assessment saved successfully",
       });
+      
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/risks`] });
+      
+      // Restore scroll position after successful save
+      const scrollPosition = data.scrollPosition;
+      setTimeout(() => {
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'auto'
+        });
+        console.log("Restored scroll position to:", scrollPosition);
+      }, 100);
     },
     onError: (error) => {
       toast({
@@ -979,6 +1002,10 @@ export default function RiskAssessment() {
   const handleSaveRisk = (data: RiskFormData) => {
     console.log("Saving risk assessment data:", data);
     
+    // Capture the current scroll position before saving
+    const savedScrollPosition = window.scrollY;
+    console.log("Current scroll position before save:", savedScrollPosition);
+    
     // Make sure to capture current values before mutation
     const currentValues = {
       probability: data.probability,
@@ -1042,6 +1069,13 @@ export default function RiskAssessment() {
     
     saveRiskMutation.mutate(processedData, {
       onSuccess: () => {
+        // After successful save, restore the scroll position
+        console.log(`Restoring scroll position to ${savedScrollPosition}`);
+        window.scrollTo({
+          top: savedScrollPosition,
+          behavior: 'auto'
+        });
+        
         // After successful save, force reset the dropdown values explicitly
         console.log("After save, explicitly setting dropdown values again");
         
