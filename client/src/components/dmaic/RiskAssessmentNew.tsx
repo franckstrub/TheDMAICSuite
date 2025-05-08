@@ -354,33 +354,30 @@ export default function RiskAssessmentNew() {
       // Clone the current risk data
       let updatedRiskData = {...riskData};
       
-      // If we have multiple rows
-      if (visibleRiskRows > rowIndex) {
-        // Shift all data up from lower rows
-        for (let i = rowIndex; i < visibleRiskRows; i++) {
-          const currentRow = i;
-          const nextRow = i + 1;
-          
-          const currentSuffix = currentRow === 1 ? '' : currentRow.toString();
-          const nextSuffix = nextRow === 1 ? '' : nextRow.toString();
-          
-          // Move next row's data to current row
-          updatedRiskData[`riskName${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`riskName${nextSuffix}` as keyof RiskItem] || '';
-          updatedRiskData[`probability${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`probability${nextSuffix}` as keyof RiskItem] || 'Low';
-          updatedRiskData[`impact${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`impact${nextSuffix}` as keyof RiskItem] || 'Low';
-          updatedRiskData[`riskCriticality${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`riskCriticality${nextSuffix}` as keyof RiskItem] || 1;
-          updatedRiskData[`mitigationPlan${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`mitigationPlan${nextSuffix}` as keyof RiskItem] || '';
-          updatedRiskData[`riskOwner${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`riskOwner${nextSuffix}` as keyof RiskItem] || '';
-        }
+      // Shift all data up from lower rows
+      for (let i = rowIndex; i < visibleRiskRows; i++) {
+        const currentRow = i;
+        const nextRow = i + 1;
+        
+        const currentSuffix = currentRow === 1 ? '' : currentRow.toString();
+        const nextSuffix = nextRow === 1 ? '' : nextRow.toString();
+        
+        // Move next row's data to current row
+        updatedRiskData[`riskName${currentSuffix}` as keyof RiskItem] = 
+          updatedRiskData[`riskName${nextSuffix}` as keyof RiskItem] || '';
+        updatedRiskData[`probability${currentSuffix}` as keyof RiskItem] = 
+          updatedRiskData[`probability${nextSuffix}` as keyof RiskItem] || 'Low';
+        updatedRiskData[`impact${currentSuffix}` as keyof RiskItem] = 
+          updatedRiskData[`impact${nextSuffix}` as keyof RiskItem] || 'Low';
+        updatedRiskData[`riskCriticality${currentSuffix}` as keyof RiskItem] = 
+          updatedRiskData[`riskCriticality${nextSuffix}` as keyof RiskItem] || 1;
+        updatedRiskData[`mitigationPlan${currentSuffix}` as keyof RiskItem] = 
+          updatedRiskData[`mitigationPlan${nextSuffix}` as keyof RiskItem] || '';
+        updatedRiskData[`riskOwner${currentSuffix}` as keyof RiskItem] = 
+          updatedRiskData[`riskOwner${nextSuffix}` as keyof RiskItem] || '';
       }
       
-      // Clear the last row data
+      // Clear the last visible row data
       const lastSuffix = visibleRiskRows === 1 ? '' : visibleRiskRows.toString();
       updatedRiskData[`riskName${lastSuffix}` as keyof RiskItem] = '';
       updatedRiskData[`probability${lastSuffix}` as keyof RiskItem] = 'Low';
@@ -388,6 +385,22 @@ export default function RiskAssessmentNew() {
       updatedRiskData[`riskCriticality${lastSuffix}` as keyof RiskItem] = 1;
       updatedRiskData[`mitigationPlan${lastSuffix}` as keyof RiskItem] = '';
       updatedRiskData[`riskOwner${lastSuffix}` as keyof RiskItem] = '';
+      
+      // Also clear any data in rows above 6 (database schema limit)
+      // This prevents reappearing rows when navigating away and back
+      for (let i = 1; i <= 6; i++) {
+        if (i > visibleRiskRows - 1) {  // Clear rows beyond the new visible rows count
+          const suffix = i === 1 ? '' : i.toString();
+          
+          // Explicitly clear all fields for this row
+          updatedRiskData[`riskName${suffix}` as keyof RiskItem] = '';
+          updatedRiskData[`probability${suffix}` as keyof RiskItem] = 'Low';
+          updatedRiskData[`impact${suffix}` as keyof RiskItem] = 'Low';
+          updatedRiskData[`riskCriticality${suffix}` as keyof RiskItem] = 1;
+          updatedRiskData[`mitigationPlan${suffix}` as keyof RiskItem] = '';
+          updatedRiskData[`riskOwner${suffix}` as keyof RiskItem] = '';
+        }
+      }
       
       // Update UI immediately
       setRiskData(updatedRiskData);
