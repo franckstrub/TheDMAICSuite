@@ -596,16 +596,17 @@ export default function RiskAssessment() {
     setTimeout(() => {
       const textarea = textareaRefs.current[textareaKey];
       if (textarea) {
-        // Instead of adjusting height dynamically, use a fixed height for all textareas
-        const fixedHeight = 120; // Fixed height for all textareas
+        // Reset height to auto to get proper scrollHeight calculation
+        textarea.style.height = 'auto';
         
-        // Apply fixed styling
-        textarea.style.height = `${fixedHeight}px`;
-        textarea.style.minHeight = `${fixedHeight}px`;
-        textarea.style.maxHeight = `${fixedHeight}px`;
-        textarea.style.overflowY = 'auto'; // Enable scrolling for long content
+        // Calculate new height based on content
+        const minHeight = textarea.classList.contains('risk-mitigation-textarea') ? 120 : 24;
+        const newHeight = Math.max(minHeight, textarea.scrollHeight + 4);
         
-        console.log(`Set fixed height for ${textareaKey} to ${fixedHeight}px`);
+        // Set a reasonable initial height, but allow user resizing
+        textarea.style.height = `${newHeight}px`;
+        
+        console.log(`Adjusted initial height for ${textareaKey} to ${newHeight}px`);
       }
     }, 0);
   };
@@ -1272,13 +1273,15 @@ export default function RiskAssessment() {
                     if (el) {
                       textareaRefs.current["mitigationPlan"] = el;
                       
-                      // Simply store the reference, CSS classes handle the fixed height
+                      // Store the reference and set initial content
                       setTimeout(() => {
                         try {
                           if (riskData?.risk?.mitigationPlan && el) {
                             // Force the value to be set directly
                             el.value = riskData.risk.mitigationPlan;
                             console.log(`Direct ref injection for mitigationPlan completed`);
+                            // Initialize height based on content
+                            adjustTextareaHeight("mitigationPlan");
                           }
                         } catch (error) {
                           console.error("Error setting textarea content:", error);
