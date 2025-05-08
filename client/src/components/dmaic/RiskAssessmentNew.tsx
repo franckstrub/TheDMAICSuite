@@ -764,27 +764,31 @@ Monitoring and Review:
             {Array.from({length: visibleRiskRows}, (_, i) => renderRiskRow(i + 1))}
             
             {/* Add row button */}
-            <div className="flex justify-between mt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="flex items-center gap-1"
-                onClick={addRiskRow}
-              >
-                <PlusCircle className="h-4 w-4 mr-1" />
-                Add Risk
-              </Button>
+            <div className="flex flex-col gap-4 mt-4">
+              <div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={addRiskRow}
+                >
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  Add Risk
+                </Button>
+              </div>
               
-              <Button 
-                type="button"
-                variant="default"
-                className="flex items-center gap-2"
-                onClick={saveRiskData}
-                disabled={isSaving}
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
+              <div className="flex justify-end">
+                <Button 
+                  type="button"
+                  variant="default"
+                  className="flex items-center gap-2"
+                  onClick={saveRiskData}
+                  disabled={isSaving}
+                >
+                  <Save className="h-4 w-4" />
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
             </div>
           </>
         )}
