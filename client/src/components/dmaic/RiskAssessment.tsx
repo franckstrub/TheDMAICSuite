@@ -1960,7 +1960,7 @@ export default function RiskAssessment() {
                   </div>
                 </div>
               </div>
-              <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
+              <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
                   rows={1}
