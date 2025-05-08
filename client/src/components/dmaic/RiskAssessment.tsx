@@ -1209,7 +1209,7 @@ export default function RiskAssessment() {
               </div>
               <input type="hidden" {...riskForm.register("riskCriticality")} />
             </div>
-            <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-3 relative">
+            <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-3.5 relative">
               <div className="min-h-[200px]"> 
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
