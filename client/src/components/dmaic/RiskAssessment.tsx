@@ -748,6 +748,13 @@ export default function RiskAssessment() {
                 rows={3}
                 placeholder="Describe the risk"
                 {...riskForm.register("riskName")}
+                ref={(el) => {
+                  if (el) {
+                    textareaRefs.current["riskName"] = el;
+                    adjustTextareaHeight(el);
+                  }
+                }}
+                onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
               />
             </div>
             <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
@@ -832,6 +839,13 @@ export default function RiskAssessment() {
                 rows={3}
                 placeholder="Who is responsible for monitoring this risk?"
                 {...riskForm.register("riskOwner")}
+                ref={(el) => {
+                  if (el) {
+                    textareaRefs.current["riskOwner"] = el;
+                    adjustTextareaHeight(el);
+                  }
+                }}
+                onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
               />
             </div>
             {/* No delete button for first row (it's mandatory) */}
@@ -846,6 +860,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName2")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName2"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
@@ -930,6 +951,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner2")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner2"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <Button
@@ -954,6 +982,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName3")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName3"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
@@ -1180,6 +1215,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName5")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName5"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
@@ -1291,6 +1333,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName6")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName6"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
