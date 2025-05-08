@@ -189,9 +189,13 @@ export default function RiskAssessment() {
     resetRiskFormInitialization();
   }, [projectId]);
   
-  // Initialize form with data from API
+  // Initialize form with data from API - runs every time component loads
   useEffect(() => {
-    if (riskData?.risk && !riskFormInitialized.current) {
+    // Always reset form every time the data changes or component mounts
+    console.log("Risk data changed or component mounted - resetting form");
+    
+    // Remove the riskFormInitialized check to ensure it always runs
+    if (riskData?.risk) {
       console.log("Initializing risk form with data:", riskData.risk);
       
       // Debug check for all mitigation plans
@@ -203,163 +207,55 @@ export default function RiskAssessment() {
       console.log("DEBUG: Mitigation plan 6 from API:", riskData.risk.mitigationPlan6 || "EMPTY");
       
       try {
-        // Force reset of probability, impact, and criticality values directly
-        setTimeout(() => {
-          // Directly set probability and impact values for all rows
-          if (riskData && riskData.risk && riskData.risk.probability) {
-            console.log("Setting probability explicitly:", riskData.risk.probability);
-            riskForm.setValue("probability", riskData.risk.probability);
-            
-            // Ensure criticality is also set properly
-            if (riskData && riskData.risk && riskData.risk.impact) {
-              console.log("Recalculating criticality based on probability and impact");
-              const criticality = calculateRiskCriticality(riskData.risk.probability, riskData.risk.impact);
-              riskForm.setValue("riskCriticality", criticality);
-              console.log("Set criticality to:", criticality);
-            }
-          }
-          
-          if (riskData && riskData.risk && riskData.risk.impact) {
-            console.log("Setting impact explicitly:", riskData.risk.impact);
-            riskForm.setValue("impact", riskData.risk.impact);
-            
-            // We already handled criticality in the probability section above
-          }
-          
-          // Row 2
-          if (riskData && riskData.risk && riskData.risk.probability2) {
-            console.log("Setting probability2 explicitly:", riskData.risk.probability2);
-            riskForm.setValue("probability2", riskData.risk.probability2);
-            
-            // Ensure criticality is also set properly
-            if (riskData && riskData.risk && riskData.risk.impact2) {
-              const criticality = calculateRiskCriticality(riskData.risk.probability2, riskData.risk.impact2);
-              riskForm.setValue("riskCriticality2", criticality);
-              console.log("Set criticality2 to:", criticality);
-            }
-          }
-          
-          if (riskData && riskData.risk && riskData.risk.impact2) {
-            console.log("Setting impact2 explicitly:", riskData.risk.impact2);
-            riskForm.setValue("impact2", riskData.risk.impact2);
-          }
-          
-          // Row 3
-          if (riskData && riskData.risk && riskData.risk.probability3) {
-            console.log("Setting probability3 explicitly:", riskData.risk.probability3);
-            riskForm.setValue("probability3", riskData.risk.probability3);
-            
-            // Ensure criticality is also set properly
-            if (riskData && riskData.risk && riskData.risk.impact3) {
-              const criticality = calculateRiskCriticality(riskData.risk.probability3, riskData.risk.impact3);
-              riskForm.setValue("riskCriticality3", criticality);
-            }
-          }
-          
-          if (riskData && riskData.risk && riskData.risk.impact3) {
-            console.log("Setting impact3 explicitly:", riskData.risk.impact3);
-            riskForm.setValue("impact3", riskData.risk.impact3);
-          }
-          
-          // Row 4
-          if (riskData && riskData.risk && riskData.risk.probability4) {
-            console.log("Setting probability4 explicitly:", riskData.risk.probability4);
-            riskForm.setValue("probability4", riskData.risk.probability4);
-            
-            // Ensure criticality is also set properly
-            if (riskData && riskData.risk && riskData.risk.impact4) {
-              const criticality = calculateRiskCriticality(riskData.risk.probability4, riskData.risk.impact4);
-              riskForm.setValue("riskCriticality4", criticality);
-            }
-          }
-          
-          if (riskData && riskData.risk && riskData.risk.impact4) {
-            console.log("Setting impact4 explicitly:", riskData.risk.impact4);
-            riskForm.setValue("impact4", riskData.risk.impact4);
-          }
-          
-          // Row 5
-          if (riskData && riskData.risk && riskData.risk.probability5) {
-            console.log("Setting probability5 explicitly:", riskData.risk.probability5);
-            riskForm.setValue("probability5", riskData.risk.probability5);
-            
-            // Ensure criticality is also set properly
-            if (riskData && riskData.risk && riskData.risk.impact5) {
-              const criticality = calculateRiskCriticality(riskData.risk.probability5, riskData.risk.impact5);
-              riskForm.setValue("riskCriticality5", criticality);
-            }
-          }
-          
-          if (riskData && riskData.risk && riskData.risk.impact5) {
-            console.log("Setting impact5 explicitly:", riskData.risk.impact5);
-            riskForm.setValue("impact5", riskData.risk.impact5);
-          }
-          
-          // Row 6
-          if (riskData && riskData.risk && riskData.risk.probability6) {
-            console.log("Setting probability6 explicitly:", riskData.risk.probability6);
-            riskForm.setValue("probability6", riskData.risk.probability6);
-            
-            // Ensure criticality is also set properly
-            if (riskData && riskData.risk && riskData.risk.impact6) {
-              const criticality = calculateRiskCriticality(riskData.risk.probability6, riskData.risk.impact6);
-              riskForm.setValue("riskCriticality6", criticality);
-            }
-          }
-          
-          if (riskData && riskData.risk && riskData.risk.impact6) {
-            console.log("Setting impact6 explicitly:", riskData.risk.impact6);
-            riskForm.setValue("impact6", riskData.risk.impact6);
-          }
-        }, 100);
+        // SIMPLIFIED APPROACH: Reset the form directly with the API values
+        // This ensures the form shows the saved data when returning
         
-        // Set all fields with a single reset call
-        const formData = {
-          riskName: riskData && riskData.risk ? (riskData.risk.riskName || "") : "",
-          probability: riskData && riskData.risk ? (riskData.risk.probability || "Low") : "Low",
-          impact: riskData && riskData.risk ? (riskData.risk.impact || "Low") : "Low",
-          riskCriticality: riskData && riskData.risk ? (riskData.risk.riskCriticality || 1) : 1,
-          mitigationPlan: riskData && riskData.risk ? (riskData.risk.mitigationPlan || "") : "",
-          riskOwner: riskData && riskData.risk ? (riskData.risk.riskOwner || "") : "",
+        // Explicitly reset the form with all field values
+        riskForm.reset({
+          riskName: riskData.risk.riskName || "",
+          probability: riskData.risk.probability || "Low",
+          impact: riskData.risk.impact || "Low",
+          riskCriticality: riskData.risk.riskCriticality || 1,
+          mitigationPlan: riskData.risk.mitigationPlan || "",
+          riskOwner: riskData.risk.riskOwner || "",
           
-          riskName2: riskData && riskData.risk ? (riskData.risk.riskName2 || "") : "",
-          probability2: riskData && riskData.risk ? (riskData.risk.probability2 || "Low") : "Low",
-          impact2: riskData && riskData.risk ? (riskData.risk.impact2 || "Low") : "Low",
-          riskCriticality2: riskData && riskData.risk ? (riskData.risk.riskCriticality2 || 1) : 1,
-          mitigationPlan2: riskData && riskData.risk ? (riskData.risk.mitigationPlan2 || "") : "",
-          riskOwner2: riskData && riskData.risk ? (riskData.risk.riskOwner2 || "") : "",
+          riskName2: riskData.risk.riskName2 || "",
+          probability2: riskData.risk.probability2 || "Low",
+          impact2: riskData.risk.impact2 || "Low",
+          riskCriticality2: riskData.risk.riskCriticality2 || 1,
+          mitigationPlan2: riskData.risk.mitigationPlan2 || "",
+          riskOwner2: riskData.risk.riskOwner2 || "",
           
-          riskName3: riskData && riskData.risk ? (riskData.risk.riskName3 || "") : "",
-          probability3: riskData && riskData.risk ? (riskData.risk.probability3 || "Low") : "Low",
-          impact3: riskData && riskData.risk ? (riskData.risk.impact3 || "Low") : "Low",
-          riskCriticality3: riskData && riskData.risk ? (riskData.risk.riskCriticality3 || 1) : 1,
-          mitigationPlan3: riskData && riskData.risk ? (riskData.risk.mitigationPlan3 || "") : "",
-          riskOwner3: riskData && riskData.risk ? (riskData.risk.riskOwner3 || "") : "",
+          riskName3: riskData.risk.riskName3 || "",
+          probability3: riskData.risk.probability3 || "Low",
+          impact3: riskData.risk.impact3 || "Low",
+          riskCriticality3: riskData.risk.riskCriticality3 || 1,
+          mitigationPlan3: riskData.risk.mitigationPlan3 || "",
+          riskOwner3: riskData.risk.riskOwner3 || "",
           
-          riskName4: riskData && riskData.risk ? (riskData.risk.riskName4 || "") : "",
-          probability4: riskData && riskData.risk ? (riskData.risk.probability4 || "Low") : "Low",
-          impact4: riskData && riskData.risk ? (riskData.risk.impact4 || "Low") : "Low",
-          riskCriticality4: riskData && riskData.risk ? (riskData.risk.riskCriticality4 || 1) : 1,
-          mitigationPlan4: riskData && riskData.risk ? (riskData.risk.mitigationPlan4 || "") : "",
-          riskOwner4: riskData && riskData.risk ? (riskData.risk.riskOwner4 || "") : "",
+          riskName4: riskData.risk.riskName4 || "",
+          probability4: riskData.risk.probability4 || "Low",
+          impact4: riskData.risk.impact4 || "Low",
+          riskCriticality4: riskData.risk.riskCriticality4 || 1,
+          mitigationPlan4: riskData.risk.mitigationPlan4 || "",
+          riskOwner4: riskData.risk.riskOwner4 || "",
           
-          riskName5: riskData && riskData.risk ? (riskData.risk.riskName5 || "") : "",
-          probability5: riskData && riskData.risk ? (riskData.risk.probability5 || "Low") : "Low",
-          impact5: riskData && riskData.risk ? (riskData.risk.impact5 || "Low") : "Low",
-          riskCriticality5: riskData && riskData.risk ? (riskData.risk.riskCriticality5 || 1) : 1,
-          mitigationPlan5: riskData && riskData.risk ? (riskData.risk.mitigationPlan5 || "") : "",
-          riskOwner5: riskData && riskData.risk ? (riskData.risk.riskOwner5 || "") : "",
+          riskName5: riskData.risk.riskName5 || "",
+          probability5: riskData.risk.probability5 || "Low",
+          impact5: riskData.risk.impact5 || "Low",
+          riskCriticality5: riskData.risk.riskCriticality5 || 1,
+          mitigationPlan5: riskData.risk.mitigationPlan5 || "",
+          riskOwner5: riskData.risk.riskOwner5 || "",
           
-          riskName6: riskData && riskData.risk ? (riskData.risk.riskName6 || "") : "",
-          probability6: riskData && riskData.risk ? (riskData.risk.probability6 || "Low") : "Low",
-          impact6: riskData && riskData.risk ? (riskData.risk.impact6 || "Low") : "Low",
-          riskCriticality6: riskData && riskData.risk ? (riskData.risk.riskCriticality6 || 1) : 1,
-          mitigationPlan6: riskData && riskData.risk ? (riskData.risk.mitigationPlan6 || "") : "",
-          riskOwner6: riskData && riskData.risk ? (riskData.risk.riskOwner6 || "") : "",
-        };
+          riskName6: riskData.risk.riskName6 || "",
+          probability6: riskData.risk.probability6 || "Low",
+          impact6: riskData.risk.impact6 || "Low",
+          riskCriticality6: riskData.risk.riskCriticality6 || 1,
+          mitigationPlan6: riskData.risk.mitigationPlan6 || "",
+          riskOwner6: riskData.risk.riskOwner6 || "",
+        });
         
-        // Reset the form with all values at once
-        riskForm.reset(formData);
+        console.log("Form reset complete - values should display now");
         
         // Update row visibility
         let maxRow = 1; // Default to 1 row (mandatory)
@@ -444,9 +340,10 @@ export default function RiskAssessment() {
         console.error("Error initializing risk form:", error);
       }
       
-      // Set form as initialized
-      riskFormInitialized.current = true;
+      // Set form as initialized - but we will still re-initialize on each mount
+      riskFormInitialized.current = false; // Reset to false to ensure it always gets initialized on next visit
     }
+  // Remove the riskFormInitialized check from dependency array so it runs every time the component mounts
   }, [riskData?.risk, riskForm, projectId]);
   
   // Save risk assessment mutation
@@ -1446,7 +1343,10 @@ export default function RiskAssessment() {
                             
                             // Set content manually to avoid triggering the form state
                             el.value = riskData.risk.mitigationPlan;
-                            console.log(`Direct ref injection for mitigationPlan completed`);
+                            console.log(`Direct ref injection for mitigationPlan completed with value: ${riskData.risk.mitigationPlan.substring(0, 30)}...`);
+                            
+                            // Also update the form value to maintain sync
+                            riskForm.setValue("mitigationPlan", riskData.risk.mitigationPlan);
                             
                             // Initialize height based on content only on first load
                             // After that, preserve user's manual resizing
