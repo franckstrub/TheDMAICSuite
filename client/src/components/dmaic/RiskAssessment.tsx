@@ -1247,7 +1247,7 @@ export default function RiskAssessment() {
               <div> 
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan")}
                   ref={(el) => {
@@ -1260,13 +1260,17 @@ export default function RiskAssessment() {
                           if (riskData?.risk?.mitigationPlan && el) {
                             // Force the value to be set directly
                             el.value = riskData.risk.mitigationPlan;
-                            // Calculate better height
+                            // Calculate better height based on content
                             const lineCount = riskData.risk.mitigationPlan.split('\n').length;
-                            const minHeight = Math.max(72, lineCount * 24); // 72px = 3 rows × 24px
+                            const minHeight = Math.max(24, lineCount * 24); // 24px = 1 row (default text height)
                             el.style.height = 'auto';
                             el.style.minHeight = `${minHeight}px`;
                             el.style.height = `${minHeight}px`;
                             console.log(`Direct ref injection for mitigationPlan: ${lineCount} lines, height ${minHeight}px`);
+                          } else {
+                            // Set an exact height of 24px (matching 1 row) for empty fields
+                            el.style.height = '24px';
+                            el.style.minHeight = '24px';
                           }
                         } catch (error) {
                           console.error("Error setting textarea height:", error);
@@ -1274,6 +1278,7 @@ export default function RiskAssessment() {
                       }, 200);
                     }
                   }}
+                  style={{ height: '24px' }}
                 />
               </div>
               <TooltipProvider>
@@ -1367,7 +1372,7 @@ export default function RiskAssessment() {
                 <div>
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
-                    rows={3}
+                    rows={1}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan2")}
                     ref={(el) => {
@@ -1380,13 +1385,17 @@ export default function RiskAssessment() {
                             if (riskData?.risk?.mitigationPlan2 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan2;
-                              // Calculate better height
+                              // Calculate better height based on content
                               const lineCount = riskData.risk.mitigationPlan2.split('\n').length;
-                              const minHeight = Math.max(72, lineCount * 24); // 72px = 3 rows × 24px
+                              const minHeight = Math.max(24, lineCount * 24); // 24px = 1 row (default text height)
                               el.style.height = 'auto';
                               el.style.minHeight = `${minHeight}px`;
                               el.style.height = `${minHeight}px`;
                               console.log(`Direct ref injection for mitigationPlan2: ${lineCount} lines, height ${minHeight}px`);
+                            } else {
+                              // Set an exact height of 24px (matching 1 row) for empty fields
+                              el.style.height = '24px';
+                              el.style.minHeight = '24px';
                             }
                           } catch (error) {
                             console.error("Error setting textarea height:", error);
@@ -1394,6 +1403,7 @@ export default function RiskAssessment() {
                         }, 200);
                       }
                     }}
+                    style={{ height: '24px' }}
                   />
                 </div>
                 <TooltipProvider>
@@ -1496,12 +1506,17 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan3")}
                   ref={(el) => {
-                    if (el) textareaRefs.current["mitigationPlan3"] = el;
+                    if (el) {
+                      textareaRefs.current["mitigationPlan3"] = el;
+                      el.style.height = '24px';
+                      el.style.minHeight = '24px';
+                    }
                   }}
+                  style={{ height: '24px' }}
                 />
                 <TooltipProvider>
                   <Tooltip>
@@ -1599,12 +1614,17 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan4")}
                   ref={(el) => {
-                    if (el) textareaRefs.current["mitigationPlan4"] = el;
+                    if (el) {
+                      textareaRefs.current["mitigationPlan4"] = el;
+                      el.style.height = '24px';
+                      el.style.minHeight = '24px';
+                    }
                   }}
+                  style={{ height: '24px' }}
                 />
                 <TooltipProvider>
                   <Tooltip>
@@ -1702,12 +1722,17 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan5")}
                   ref={(el) => {
-                    if (el) textareaRefs.current["mitigationPlan5"] = el;
+                    if (el) {
+                      textareaRefs.current["mitigationPlan5"] = el;
+                      el.style.height = '24px';
+                      el.style.minHeight = '24px';
+                    }
                   }}
+                  style={{ height: '24px' }}
                 />
                 <TooltipProvider>
                   <Tooltip>
@@ -1805,12 +1830,17 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan6")}
                   ref={(el) => {
-                    if (el) textareaRefs.current["mitigationPlan6"] = el;
+                    if (el) {
+                      textareaRefs.current["mitigationPlan6"] = el;
+                      el.style.height = '24px';
+                      el.style.minHeight = '24px';
+                    }
                   }}
+                  style={{ height: '24px' }}
                 />
                 <TooltipProvider>
                   <Tooltip>
