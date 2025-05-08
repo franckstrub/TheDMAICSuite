@@ -1717,6 +1717,11 @@ export default function RiskAssessment() {
                     rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan3")}
+                    onInput={(e) => {
+                      // Ensure form state is updated when user types
+                      const value = (e.target as HTMLTextAreaElement).value;
+                      riskForm.setValue("mitigationPlan3", value);
+                    }}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan3"] = el;
@@ -1996,6 +2001,11 @@ export default function RiskAssessment() {
                     rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan5")}
+                    onInput={(e) => {
+                      // Ensure form state is updated when user types
+                      const value = (e.target as HTMLTextAreaElement).value;
+                      riskForm.setValue("mitigationPlan5", value);
+                    }}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan5"] = el;
@@ -2118,6 +2128,11 @@ export default function RiskAssessment() {
                     rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan6")}
+                    onInput={(e) => {
+                      // Ensure form state is updated when user types
+                      const value = (e.target as HTMLTextAreaElement).value;
+                      riskForm.setValue("mitigationPlan6", value);
+                    }}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan6"] = el;
