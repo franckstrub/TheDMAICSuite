@@ -11,6 +11,9 @@ import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 
+// Flag to prevent textarea resizing after save operations
+let skipNextTextareaResize = false;
+
 type RiskFormData = {
   riskName: string;
   probability: string;
@@ -366,6 +369,12 @@ export default function RiskAssessment() {
         setTimeout(() => {
           // Function to directly set textarea values and adjust heights
           const forceSetTextareaContent = () => {
+            // Skip textarea resizing if we're doing it after a save operation
+            if (skipNextTextareaResize) {
+              console.log("Skipping textarea resize after save operation");
+              return;
+            }
+            
             console.log("Forcing textarea content update after form initialization");
             for (let i = 1; i <= maxRow; i++) {
               const fieldName = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
@@ -378,6 +387,9 @@ export default function RiskAssessment() {
                 
                 // Directly set the value on the DOM element
                 textareaElement.value = fieldValue as string;
+                
+                // Skip height adjustment if we're in a save operation
+                if (skipNextTextareaResize) continue;
                 
                 // Calculate height based on content
                 const content = fieldValue as string;
@@ -401,7 +413,14 @@ export default function RiskAssessment() {
             }
           };
           
-          // Run multiple times with increasing delays to catch when DOM is ready
+          // If we're skipping resize, just run once and reset the flag
+          if (skipNextTextareaResize) {
+            forceSetTextareaContent();
+            skipNextTextareaResize = false;
+            return;
+          }
+          
+          // Otherwise run multiple times with increasing delays to catch when DOM is ready
           forceSetTextareaContent();
           setTimeout(forceSetTextareaContent, 200);
           setTimeout(forceSetTextareaContent, 500);
@@ -465,6 +484,10 @@ export default function RiskAssessment() {
         title: "Success",
         description: "Risk assessment saved successfully",
       });
+      
+      // Ensure the flag is set to skip textarea resizing after saving
+      skipNextTextareaResize = true;
+      console.log("Set skipNextTextareaResize flag in onSuccess handler");
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/risks`] });
@@ -604,6 +627,12 @@ export default function RiskAssessment() {
     if (riskFormInitialized.current) {
       // Force updating textareas with their values and adjust heights
       const forceUpdateTextareas = () => {
+        // Skip textarea resizing after save operation
+        if (skipNextTextareaResize) {
+          console.log("Skipping textarea resize in useEffect after save");
+          return;
+        }
+        
         for (let i = 1; i <= visibleRiskRows; i++) {
           const fieldName = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
           const textareaElement = textareaRefs.current[fieldName];
@@ -614,6 +643,9 @@ export default function RiskAssessment() {
             
             // Directly update the DOM element
             textareaElement.value = value;
+            
+            // Skip height calculation if we're in save operation
+            if (skipNextTextareaResize) continue;
             
             // Calculate appropriate height based on content
             const lineCount = value.split('\n').length;
@@ -635,7 +667,16 @@ export default function RiskAssessment() {
         console.log("Force updated all mitigation plan textarea heights");
       };
       
-      // Run multiple times with increasing delays to ensure DOM is ready
+      // If we're skipping resize due to save, just run once
+      if (skipNextTextareaResize) {
+        setTimeout(() => {
+          skipNextTextareaResize = false; // Reset flag after one run
+          console.log("Reset skip flag after save operation");
+        }, 100);
+        return;
+      }
+      
+      // Otherwise run multiple times with increasing delays to ensure DOM is ready
       setTimeout(forceUpdateTextareas, 100);
       setTimeout(forceUpdateTextareas, 300);
       setTimeout(forceUpdateTextareas, 500);
@@ -1001,6 +1042,10 @@ export default function RiskAssessment() {
   
   const handleSaveRisk = (data: RiskFormData) => {
     console.log("Saving risk assessment data:", data);
+    
+    // Set flag to skip resizing textareas after save operation
+    skipNextTextareaResize = true;
+    console.log("Set flag to skip textarea resize after save");
     
     // Capture the current scroll position before saving
     const savedScrollPosition = window.scrollY;
