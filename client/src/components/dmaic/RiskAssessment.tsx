@@ -656,12 +656,46 @@ export default function RiskAssessment() {
     // Show initial toast notification
     toast({
       title: "Generating mitigation plan",
-      description: "Creating mitigation suggestions based on risk details...",
+      description: `Analyzing risk: "${riskName.substring(0, 30)}${riskName.length > 30 ? '...' : ''}"`,
       variant: "default"
     });
     
-    // Get suggestions based on probability and impact - without repeating the risk information
-    let suggestion = `Recommended Mitigation Strategies:\n\n`;
+    // Determine risk type based on keywords in risk description
+    let riskType = "";
+    if (riskNameLower.includes("technology") || riskNameLower.includes("technical") || riskNameLower.includes("system") || riskNameLower.includes("software") || riskNameLower.includes("it")) {
+      riskType = "Technology";
+    } else if (riskNameLower.includes("resource") || riskNameLower.includes("staffing") || riskNameLower.includes("personnel") || riskNameLower.includes("team") || riskNameLower.includes("employee")) {
+      riskType = "Resource";
+    } else if (riskNameLower.includes("schedule") || riskNameLower.includes("timeline") || riskNameLower.includes("deadline") || riskNameLower.includes("delay")) {
+      riskType = "Schedule";
+    } else if (riskNameLower.includes("budget") || riskNameLower.includes("cost") || riskNameLower.includes("financial") || riskNameLower.includes("expense") || riskNameLower.includes("funding")) {
+      riskType = "Financial";
+    } else if (riskNameLower.includes("quality") || riskNameLower.includes("performance") || riskNameLower.includes("defect") || riskNameLower.includes("standard") || riskNameLower.includes("compliance")) {
+      riskType = "Quality";
+    } else if (riskNameLower.includes("change") || riskNameLower.includes("resist") || riskNameLower.includes("adopt") || riskNameLower.includes("accept")) {
+      riskType = "Change Management";
+    } else if (riskNameLower.includes("customer") || riskNameLower.includes("client") || riskNameLower.includes("user") || riskNameLower.includes("market")) {
+      riskType = "Customer/Market";
+    } else if (riskNameLower.includes("supplier") || riskNameLower.includes("vendor") || riskNameLower.includes("outsource") || riskNameLower.includes("third party")) {
+      riskType = "Supply Chain";
+    } else {
+      riskType = "General";
+    }
+    
+    // Create a more focused mitigation strategy
+    let suggestion = `Mitigation Plan for "${riskName}"\n\n`;
+    
+    // Add urgency indicator based on criticality
+    if (criticality >= 7) {
+      suggestion += "PRIORITY: HIGH - Requires immediate action and executive oversight\n\n";
+    } else if (criticality >= 4) {
+      suggestion += "PRIORITY: MEDIUM - Requires planned action and regular monitoring\n\n";
+    } else {
+      suggestion += "PRIORITY: LOW - Requires basic monitoring\n\n";
+    }
+    
+    // Prevention section
+    suggestion += "PREVENTION:\n";
     
     // Determine risk characteristics based on probability and impact
     const isProbabilityHigh = probability === "High";
@@ -729,25 +763,39 @@ export default function RiskAssessment() {
     
     if (riskNameLower.includes("technology") || riskNameLower.includes("technical") || riskNameLower.includes("system") || riskNameLower.includes("software") || riskNameLower.includes("it")) {
       specificRiskType = "Technology";
-      suggestion += "\n\nTechnology Risk Specific:\n";
+      suggestion += "\n\nCONTINGENCY:\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Conduct comprehensive technical assessments and penetration testing\n";
-        suggestion += "• Implement redundant systems or fallback options\n";
+      if (riskNameLower.includes("new") || riskNameLower.includes("not mastered")) {
+        // Specific contingency for new technology risks
+        suggestion += "• Prepare fallback technology options if new technology implementation fails\n";
+        suggestion += "• Establish phased implementation plan with clear validation gates\n";
+        suggestion += "• Create technical troubleshooting playbook for common issues\n";
+        if (isImpactHigh) {
+          suggestion += "• Maintain parallel systems until new technology is fully validated\n";
+          suggestion += "• Implement 24/7 technical support during critical deployment phases\n";
+        }
       } else {
-        suggestion += "• Conduct targeted technical assessments based on risk areas\n";
+        // Generic technology risk contingency
+        if (isProbabilityHigh) {
+          suggestion += "• Establish comprehensive technical support protocols\n";
+          suggestion += "• Implement technical redundancy for critical components\n";
+        } else {
+          suggestion += "• Create standardized technical support escalation procedures\n";
+        }
+        
+        if (isImpactHigh) {
+          suggestion += "• Develop detailed disaster recovery plan with regular testing\n";
+          suggestion += "• Create technical failover options for high-risk components\n";
+        } else {
+          suggestion += "• Document basic disaster recovery procedures\n";
+        }
       }
       
-      if (isImpactHigh) {
-        suggestion += "• Develop detailed disaster recovery procedures\n";
-        suggestion += "• Establish 24/7 technical support protocols\n";
-      } else {
-        suggestion += "• Establish standard technical support channels\n";
-      }
-      
-      suggestion += "• Ensure knowledge transfer and documentation\n";
-      suggestion += "• Consider prototype or pilot implementations before full deployment\n";
-      suggestion += "• Provide specialized training for technical staff";
+      suggestion += "\n\nOWNERSHIP & MONITORING:\n";
+      suggestion += "• Assign specialized technical team members to monitor adoption\n";
+      suggestion += "• Create knowledge sharing repository for implementation lessons\n";
+      suggestion += "• Establish regular technical review checkpoints\n";
+      suggestion += "• Document technical best practices and standards";
       
     } else if (riskNameLower.includes("resource") || riskNameLower.includes("staffing") || riskNameLower.includes("personnel") || riskNameLower.includes("team") || riskNameLower.includes("employee")) {
       specificRiskType = "Resource";
