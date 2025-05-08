@@ -284,7 +284,6 @@ export default function RiskAssessmentNew() {
       }
       
       const savedData = await response.json();
-      setRiskData(savedData.risk);
       
       // Store flag in sessionStorage
       sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
@@ -294,8 +293,9 @@ export default function RiskAssessmentNew() {
         description: "All changes have been saved successfully."
       });
       
-      // Immediately reload data to ensure everything is in sync
-      await loadRiskData(false);
+      // Update the local risk data with the saved data
+      // but don't trigger a full reload which causes jerking
+      setRiskData(savedData.risk);
       
     } catch (error) {
       console.error('Error saving risk data:', error);
@@ -457,12 +457,21 @@ Monitoring and Review:
     const textarea = textareaRefs.current[fieldName];
     if (!textarea) return;
     
+    // Store current height before adjusting
+    const currentHeight = textarea.style.height;
+    
     // Reset height to calculate scrollHeight correctly
     textarea.style.height = 'auto';
     
     // Calculate new height
     const minHeight = 80;
     const newHeight = Math.max(textarea.scrollHeight, minHeight);
+    
+    // If this is during a save operation and we already have a height set,
+    // maintain the current height to prevent jerking
+    if (isSaving && currentHeight && currentHeight !== 'auto' && !isAiGenerated) {
+      return;
+    }
     
     // Apply new height with transition for smooth resizing
     textarea.style.transition = isAiGenerated ? 'height 0.5s ease-in-out' : 'none';
