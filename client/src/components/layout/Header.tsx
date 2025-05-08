@@ -33,7 +33,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 z-10">
+    <header className="bg-white shadow-sm border-b border-gray-200 z-50 fixed top-0 left-0 right-0">
       <div className="flex justify-between items-center px-4 py-3">
         <div className="flex items-center space-x-3">
           <Button 

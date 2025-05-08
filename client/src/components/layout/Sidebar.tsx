@@ -58,8 +58,9 @@ export default function Sidebar() {
   };
 
   const sidebarClasses = cn(
-    "bg-white w-64 border-r border-gray-200 fixed inset-y-0 left-0 transform transition duration-200 ease-in-out md:translate-x-0 md:static md:inset-auto z-20",
-    sidebarOpen ? "translate-x-0" : "-translate-x-full"
+    "bg-white w-64 border-r border-gray-200 fixed left-0 transform transition duration-200 ease-in-out z-40",
+    sidebarOpen ? "translate-x-0" : "-translate-x-full",
+    "md:translate-x-0 top-16 bottom-0" // Add top offset for header and ensure it's fixed on desktop too
   );
 
   return (
