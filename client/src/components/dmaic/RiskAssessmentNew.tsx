@@ -478,8 +478,8 @@ Monitoring and Review:
               size="sm"
               onClick={saveRiskData}
               disabled={isSaving}
+              className="px-3"
             >
-              <Save className="mr-2 h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save'}
             </Button>
           </div>
