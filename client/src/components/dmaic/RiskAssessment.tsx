@@ -1073,6 +1073,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner3")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner3"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <Button
