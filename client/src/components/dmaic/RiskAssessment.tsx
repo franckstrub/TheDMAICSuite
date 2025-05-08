@@ -670,14 +670,28 @@ export default function RiskAssessment() {
           if (textareaElement) {
             // Get value from the form and update the element
             const value = riskForm.getValues(fieldName as any) || '';
-            textareaElement.value = value;
             
-            console.log(`Updated content for ${fieldName}`);
+            // Only update the value, but DO NOT trigger any height adjustments
+            // This prevents the "jerking effect" when saving
+            if (textareaElement.value !== value) {
+              console.log(`Updating content for ${fieldName} without resizing`);
+              
+              // Store current height before updating value
+              const currentHeight = textareaElement.style.height;
+              
+              // Update content
+              textareaElement.value = value;
+              
+              // Force maintain previous height to prevent auto-resize
+              if (currentHeight) {
+                textareaElement.style.height = currentHeight;
+              }
+            }
           } else {
             console.warn(`Textarea ref for ${fieldName} does not exist`);
           }
         }
-        console.log("Updated all mitigation plan textareas with current values");
+        console.log("Updated all mitigation plan textareas with current values (heights preserved)");
       };
       
       // If we're skipping resize due to save, just run once
@@ -690,11 +704,9 @@ export default function RiskAssessment() {
       }
       
       // Otherwise run multiple times with increasing delays to ensure DOM is ready
+      // But don't run too many times to avoid unwanted resize cycles
       setTimeout(forceUpdateTextareas, 100);
       setTimeout(forceUpdateTextareas, 300);
-      setTimeout(forceUpdateTextareas, 500);
-      setTimeout(forceUpdateTextareas, 1000);
-      setTimeout(forceUpdateTextareas, 2000);
     }
   }, [visibleRiskRows, riskFormInitialized.current, riskForm]);
 
@@ -1060,6 +1072,26 @@ export default function RiskAssessment() {
     skipNextTextareaResize = true;
     console.log("Set flag to skip textarea resize after save");
     
+    // Store current heights of all textareas to restore after save
+    const textareaHeights: Record<string, string> = {};
+    for (let i = 1; i <= 6; i++) {
+      const planField = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
+      const nameField = i === 1 ? 'riskName' : `riskName${i}`;
+      const ownerField = i === 1 ? 'riskOwner' : `riskOwner${i}`;
+      
+      // Capture current heights of all textarea elements
+      if (textareaRefs.current[planField]) {
+        textareaHeights[planField] = textareaRefs.current[planField].style.height;
+        console.log(`Saving current height for ${planField}: ${textareaHeights[planField]}`);
+      }
+      if (textareaRefs.current[nameField]) {
+        textareaHeights[nameField] = textareaRefs.current[nameField].style.height;
+      }
+      if (textareaRefs.current[ownerField]) {
+        textareaHeights[ownerField] = textareaRefs.current[ownerField].style.height;
+      }
+    }
+    
     // Capture the current scroll position before saving
     const savedScrollPosition = window.scrollY;
     console.log("Current scroll position before save:", savedScrollPosition);
@@ -1199,6 +1231,15 @@ export default function RiskAssessment() {
           
           if (currentValues.impact6) riskForm.setValue("impact6", currentValues.impact6);
           
+          // First restore heights for all textareas to avoid the jerking effect
+          console.log("Restoring textarea heights from before save");
+          for (const [key, height] of Object.entries(textareaHeights)) {
+            if (textareaRefs.current[key] && height) {
+              console.log(`Restoring height for ${key}: ${height}`);
+              textareaRefs.current[key].style.height = height;
+            }
+          }
+          
           // Now restore scroll position in a separate operation after form values are set
           setTimeout(() => {
             console.log(`Restoring scroll position to ${savedScrollPosition}`);
@@ -1314,15 +1355,28 @@ export default function RiskAssessment() {
                     if (el) {
                       textareaRefs.current["mitigationPlan"] = el;
                       
-                      // Store the reference and set initial content
+                      // Use a one-time direct DOM update to avoid "jerking" when loading/saving
                       setTimeout(() => {
                         try {
                           if (riskData?.risk?.mitigationPlan && el) {
-                            // Force the value to be set directly
+                            // Get the current height before making changes
+                            const currentHeight = el.style.height;
+                            console.log(`Current height before update: ${currentHeight}`);
+                            
+                            // Set content manually to avoid triggering the form state
                             el.value = riskData.risk.mitigationPlan;
                             console.log(`Direct ref injection for mitigationPlan completed`);
-                            // Initialize height based on content
-                            adjustTextareaHeight("mitigationPlan", true);
+                            
+                            // Initialize height based on content only on first load
+                            // After that, preserve user's manual resizing
+                            if (!currentHeight || currentHeight === 'auto' || currentHeight === '') {
+                              console.log("First load - adjusting height based on content");
+                              adjustTextareaHeight("mitigationPlan", true);
+                            } else {
+                              console.log(`Preserving user's manual height: ${currentHeight}`);
+                              // Keep the user's manual height adjustment
+                              el.style.height = currentHeight;
+                            }
                           }
                         } catch (error) {
                           console.error("Error setting textarea content:", error);
@@ -1432,13 +1486,28 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan2"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Use a one-time direct DOM update to avoid "jerking" when loading/saving
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan2 && el) {
-                              // Force the value to be set directly
+                              // Get the current height before making changes
+                              const currentHeight = el.style.height;
+                              console.log(`Current height before update: ${currentHeight}`);
+                              
+                              // Set content manually to avoid triggering the form state
                               el.value = riskData.risk.mitigationPlan2;
                               console.log(`Direct ref injection for mitigationPlan2 completed`);
+                              
+                              // Initialize height based on content only on first load
+                              // After that, preserve user's manual resizing
+                              if (!currentHeight || currentHeight === 'auto' || currentHeight === '') {
+                                console.log("First load - adjusting height based on content");
+                                adjustTextareaHeight("mitigationPlan2", true);
+                              } else {
+                                console.log(`Preserving user's manual height: ${currentHeight}`);
+                                // Keep the user's manual height adjustment
+                                el.style.height = currentHeight;
+                              }
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
