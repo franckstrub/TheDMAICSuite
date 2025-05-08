@@ -171,9 +171,10 @@ export default function RiskAssessmentNew() {
         let rowCount = 1; // Always show at least one row
         
         // First pass: Find the highest row with actual content
-        // Default to showing at least 3 rows to avoid the "blank" issue
-        let highestRowWithContent = 3;
+        // Now we'll only show rows that have actual content, plus exactly one empty row at the end
+        let highestRowWithContent = 0;
         
+        // First count how many rows have actual content
         for (let i = 1; i <= 6; i++) {
           const suffix = i === 1 ? '' : i.toString();
           
@@ -192,15 +193,21 @@ export default function RiskAssessmentNew() {
           
           if (hasAnyContent) {
             console.log(`Row ${i} has content - marking as viable row`);
-            // Make sure this row is always visible
-            if (i > highestRowWithContent) {
-              highestRowWithContent = i;
-            }
+            // This row has content so it should be visible
+            highestRowWithContent = i;
           }
         }
         
-        console.log(`Highest row with content detected: ${highestRowWithContent}`);
-        rowCount = Math.max(3, highestRowWithContent); // Always show at least 3 rows
+        // Always have at least one row, even if empty
+        highestRowWithContent = Math.max(1, highestRowWithContent);
+        
+        // Set rowCount to include all content rows plus exactly ONE empty row at the end for adding new content
+        rowCount = highestRowWithContent + 1;
+        
+        // Cap at 6 rows maximum (schema limit)
+        rowCount = Math.min(6, rowCount);
+        
+        console.log(`Highest row with content detected: ${highestRowWithContent}, showing ${rowCount} rows total`);
         
         // Second pass: Clean up any rows without content
         // This ensures all empty rows are explicitly cleared
