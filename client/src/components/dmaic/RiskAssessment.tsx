@@ -399,6 +399,7 @@ export default function RiskAssessment() {
                 // Make sure the form value also matches what's in the textarea
                 // This is critical for proper saving of manually input or modified values
                 riskForm.setValue(fieldName as any, fieldValue as string);
+                console.log(`Updated form value for ${fieldName}`, fieldValue ? (typeof fieldValue === 'string' ? fieldValue.substring(0, 30) + "..." : fieldValue) : "empty");
                 
                 // Skip height adjustment if we're in a save operation
                 if (skipNextTextareaResize) continue;
@@ -1127,6 +1128,7 @@ export default function RiskAssessment() {
       
       if (textareaElement) {
         // Get the current value directly from the DOM element
+        console.log(`Checking ${fieldName} sync before save...`);
         const actualValue = textareaElement.value;
         
         // Update the processed data with the actual value from the DOM
