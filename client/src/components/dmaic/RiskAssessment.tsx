@@ -1207,7 +1207,7 @@ export default function RiskAssessment() {
           </div>
           
           {/* First row of Risk (always visible and mandatory) */}
-          <div className="grid grid-cols-12 gap-1 mb-2 relative">
+          <div className="risk-row">
             <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
               <Textarea
                 className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
@@ -1325,7 +1325,7 @@ export default function RiskAssessment() {
           
           {/* Second row (conditionally rendered) */}
           {visibleRiskRows >= 2 && (
-            <div className="grid grid-cols-12 gap-1 mb-2 relative">
+            <div className="risk-row">
               <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
@@ -1451,7 +1451,7 @@ export default function RiskAssessment() {
           
           {/* Third row (conditionally rendered) */}
           {visibleRiskRows >= 3 && (
-            <div className="grid grid-cols-12 gap-1 mb-2 relative">
+            <div className="risk-row">
               <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
@@ -1577,7 +1577,7 @@ export default function RiskAssessment() {
           
           {/* Fourth row (conditionally rendered) */}
           {visibleRiskRows >= 4 && (
-            <div className="grid grid-cols-12 gap-1 mb-2 relative">
+            <div className="risk-row">
               <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
@@ -1699,7 +1699,7 @@ export default function RiskAssessment() {
           
           {/* Fifth row (conditionally rendered) */}
           {visibleRiskRows >= 5 && (
-            <div className="grid grid-cols-12 gap-1 mb-2 relative">
+            <div className="risk-row">
               <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
@@ -1821,7 +1821,7 @@ export default function RiskAssessment() {
           
           {/* Sixth row (conditionally rendered) */}
           {visibleRiskRows >= 6 && (
-            <div className="grid grid-cols-12 gap-1 mb-2 relative">
+            <div className="risk-row">
               <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
