@@ -1630,9 +1630,17 @@ export default function RiskAssessment() {
                               const currentHeight = el.style.height;
                               console.log(`Current height before update: ${currentHeight}`);
                               
-                              // Set content manually to avoid triggering the form state
+                              // CRITICAL FIX: Set content using all available methods to ensure it shows up
                               el.value = riskData.risk.mitigationPlan3;
-                              console.log(`Direct ref injection for mitigationPlan3 completed`);
+                              el.defaultValue = riskData.risk.mitigationPlan3; // Add defaultValue to help with re-hydration
+                              console.log(`Direct DOM injection for mitigationPlan3 with multiple methods. Value: ${riskData.risk.mitigationPlan3?.substring(0, 30) || ""}...`);
+                              
+                              // Force update the form value to maintain sync
+                              riskForm.setValue("mitigationPlan3", riskData.risk.mitigationPlan3 || "", {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true
+                              });
                               
                               // Initialize height based on content only on first load
                               // After that, preserve user's manual resizing
@@ -1767,9 +1775,17 @@ export default function RiskAssessment() {
                               const currentHeight = el.style.height;
                               console.log(`Current height before update: ${currentHeight}`);
                               
-                              // Set content manually to avoid triggering the form state
+                              // CRITICAL FIX: Set content using all available methods to ensure it shows up
                               el.value = riskData.risk.mitigationPlan4;
-                              console.log(`Direct ref injection for mitigationPlan4 completed`);
+                              el.defaultValue = riskData.risk.mitigationPlan4; // Add defaultValue to help with re-hydration
+                              console.log(`Direct DOM injection for mitigationPlan4 with multiple methods. Value: ${riskData.risk.mitigationPlan4?.substring(0, 30) || ""}...`);
+                              
+                              // Force update the form value to maintain sync
+                              riskForm.setValue("mitigationPlan4", riskData.risk.mitigationPlan4 || "", {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true
+                              });
                               
                               // Initialize height based on content only on first load
                               // After that, preserve user's manual resizing
@@ -1900,9 +1916,17 @@ export default function RiskAssessment() {
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan5 && el) {
-                              // Force the value to be set directly
+                              // CRITICAL FIX: Set content using all available methods to ensure it shows up
                               el.value = riskData.risk.mitigationPlan5;
-                              console.log(`Direct ref injection for mitigationPlan5 completed`);
+                              el.defaultValue = riskData.risk.mitigationPlan5; // Add defaultValue to help with re-hydration
+                              console.log(`Direct DOM injection for mitigationPlan5 with multiple methods. Value: ${riskData.risk.mitigationPlan5?.substring(0, 30) || ""}...`);
+                              
+                              // Force update the form value to maintain sync
+                              riskForm.setValue("mitigationPlan5", riskData.risk.mitigationPlan5 || "", {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true
+                              });
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -2022,9 +2046,17 @@ export default function RiskAssessment() {
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan6 && el) {
-                              // Force the value to be set directly
+                              // CRITICAL FIX: Set content using all available methods to ensure it shows up
                               el.value = riskData.risk.mitigationPlan6;
-                              console.log(`Direct ref injection for mitigationPlan6 completed`);
+                              el.defaultValue = riskData.risk.mitigationPlan6; // Add defaultValue to help with re-hydration
+                              console.log(`Direct DOM injection for mitigationPlan6 with multiple methods. Value: ${riskData.risk.mitigationPlan6?.substring(0, 30) || ""}...`);
+                              
+                              // Force update the form value to maintain sync
+                              riskForm.setValue("mitigationPlan6", riskData.risk.mitigationPlan6 || "", {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true
+                              });
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
