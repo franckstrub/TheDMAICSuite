@@ -265,11 +265,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         console.log("Fresh stakeholder analysis data after save:", freshData);
         
         if (freshData?.items && freshData.items.length > 0) {
-          // Use items in their original order without sorting
-          console.log("Using stakeholder analysis items in their original order:", freshData.items);
+          // Sort by ID
+          const sortedItems = [...freshData.items].sort((a, b) => a.id - b.id);
+          console.log("Items sorted by ID in ascending order:", sortedItems);
           
           // Update state
-          setItems(freshData.items);
+          setItems(sortedItems);
         }
         
         // Also invalidate the query to ensure consistency
