@@ -11,6 +11,36 @@ import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 
+// Custom styles to fix textarea heights and prevent resizing issues
+const styles = `
+  .risk-mitigation-textarea {
+    height: 120px !important;
+    min-height: 120px !important;
+    max-height: 120px !important;
+    overflow-y: auto !important;
+    resize: none !important;
+    transition: none !important;
+  }
+  
+  .risk-name-textarea {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    overflow-y: auto !important;
+    resize: none !important;
+    transition: none !important;
+  }
+  
+  .risk-owner-textarea {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    overflow-y: auto !important;
+    resize: none !important;
+    transition: none !important;
+  }
+`;
+
 // Flag to prevent textarea resizing after save operations
 let skipNextTextareaResize = false;
 
@@ -66,6 +96,19 @@ export default function RiskAssessment() {
   const riskFormInitialized = useRef<boolean>(false);
   const { user, currentProject } = useAppContext();
   const textareaRefs = useRef<{ [key: string]: HTMLTextAreaElement }>({});
+  
+  // Inject custom styles to ensure consistent textarea heights
+  useEffect(() => {
+    // Add styles to the document head
+    const styleElement = document.createElement('style');
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
+    
+    // Cleanup on component unmount
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = projectIdParam ? parseInt(projectIdParam) : (currentProject?.id || 1);
@@ -613,11 +656,11 @@ export default function RiskAssessment() {
   // Effect to adjust textareas after form is loaded or when visibleRiskRows changes
   useEffect(() => {
     if (riskFormInitialized.current) {
-      // Force updating textareas with their values and set fixed heights
+      // Force updating textareas with their values only (CSS classes handle heights)
       const forceUpdateTextareas = () => {
-        // Skip textarea resizing after save operation
+        // Skip operation after save if needed
         if (skipNextTextareaResize) {
-          console.log("Skipping textarea resize in useEffect after save");
+          console.log("Skipping textarea update in useEffect after save");
           return;
         }
         
@@ -626,27 +669,16 @@ export default function RiskAssessment() {
           const textareaElement = textareaRefs.current[fieldName];
           
           if (textareaElement) {
-            // Get value from the form
+            // Get value from the form and update the element
             const value = riskForm.getValues(fieldName as any) || '';
-            
-            // Directly update the DOM element
             textareaElement.value = value;
             
-            // Apply fixed height styling to all textareas consistently
-            const fixedHeight = 120; // Fixed height for all risk textareas
-            
-            // Set consistent styles
-            textareaElement.style.height = `${fixedHeight}px`;
-            textareaElement.style.minHeight = `${fixedHeight}px`;
-            textareaElement.style.maxHeight = `${fixedHeight}px`;
-            textareaElement.style.overflowY = 'auto'; // Enable scrolling for long content
-            
-            console.log(`Set fixed height for ${fieldName} to ${fixedHeight}px`);
+            console.log(`Updated content for ${fieldName}`);
           } else {
-            console.warn(`Textarea ref for ${fieldName} does not exist when attempting to adjust height`);
+            console.warn(`Textarea ref for ${fieldName} does not exist`);
           }
         }
-        console.log("Applied fixed heights to all mitigation plan textareas");
+        console.log("Updated all mitigation plan textareas with current values");
       };
       
       // If we're skipping resize due to save, just run once
@@ -1220,11 +1252,10 @@ export default function RiskAssessment() {
           <div className="grid grid-cols-12 gap-2 mb-2 relative">
             <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
               <Textarea
-                className="w-full p-2 border-0 focus:ring-0 text-sm"
+                className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
                 rows={1}
                 placeholder="Describe the risk"
                 {...riskForm.register("riskName")}
-                style={{ height: '24px' }}
               />
             </div>
             <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1276,39 +1307,28 @@ export default function RiskAssessment() {
             <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
               <div className="relative">
                 <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm pr-8"
-                  rows={1}
+                  className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                  rows={5}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan")}
                   ref={(el) => {
                     if (el) {
                       textareaRefs.current["mitigationPlan"] = el;
                       
-                      // On ref attachment, force update the height
+                      // Simply store the reference, CSS classes handle the fixed height
                       setTimeout(() => {
                         try {
                           if (riskData?.risk?.mitigationPlan && el) {
                             // Force the value to be set directly
                             el.value = riskData.risk.mitigationPlan;
-                            // Calculate better height based on content
-                            const lineCount = riskData.risk.mitigationPlan.split('\n').length;
-                            const minHeight = Math.max(24, lineCount * 24); // 24px = 1 row (default text height)
-                            el.style.height = 'auto';
-                            el.style.minHeight = `${minHeight}px`;
-                            el.style.height = `${minHeight}px`;
-                            console.log(`Direct ref injection for mitigationPlan: ${lineCount} lines, height ${minHeight}px`);
-                          } else {
-                            // Set an exact height of 24px (matching 1 row) for empty fields
-                            el.style.height = '24px';
-                            el.style.minHeight = '24px';
+                            console.log(`Direct ref injection for mitigationPlan completed`);
                           }
                         } catch (error) {
-                          console.error("Error setting textarea height:", error);
+                          console.error("Error setting textarea content:", error);
                         }
                       }, 200);
                     }
                   }}
-                  style={{ height: '24px' }}
                 />
                 <div className="absolute top-1 right-1">
                   <TooltipProvider>
@@ -1334,11 +1354,10 @@ export default function RiskAssessment() {
             </div>
             <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
               <Textarea
-                className="w-full p-2 border-0 focus:ring-0 text-sm"
+                className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
                 rows={1}
                 placeholder="Who is responsible for monitoring this risk?"
                 {...riskForm.register("riskOwner")}
-                style={{ height: '24px' }}
               />
             </div>
             {/* No delete button for first row (it's mandatory) */}
