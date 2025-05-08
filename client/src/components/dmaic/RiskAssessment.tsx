@@ -669,56 +669,22 @@ export default function RiskAssessment() {
     const isImpactHigh = impact === "High";
     const isImpactMedium = impact === "Medium";
     
-    // Generate more tailored suggestions based on risk criticality
+    // Generate more concise suggestions based on risk criticality - max 3 bullet points
     if (criticality >= 7) {
-      // High criticality (7-9)
-      suggestion += "• Implement multiple preventative controls with overlapping coverage\n";
-      
-      if (isProbabilityHigh) {
-        suggestion += "• Develop prevention strategies to reduce likelihood of occurrence\n";
-      }
-      
-      if (isImpactHigh) {
-        suggestion += "• Create detailed contingency and recovery plans to minimize impact\n";
-        suggestion += "• Consider risk transfer options (insurance, partnerships, contracts)\n";
-      }
-      
-      suggestion += "• Assign dedicated risk owner with executive oversight\n";
-      suggestion += "• Schedule frequent monitoring on weekly/bi-weekly basis\n";
-      suggestion += "• Implement early warning indicators and thresholds\n";
-      suggestion += "• Create detailed response and escalation procedures\n";
+      // High criticality (7-9) - 3 bullet points
+      suggestion += "• Implement preventative controls and assign dedicated risk owner with executive oversight\n";
+      suggestion += "• Create detailed contingency and recovery plans with response procedures\n";
+      suggestion += "• Schedule weekly monitoring with early warning indicators and thresholds\n";
     } else if (criticality >= 4) {
-      // Medium criticality (4-6)
-      suggestion += "• Implement key preventative controls\n";
-      
-      if (isProbabilityMedium || isProbabilityHigh) {
-        suggestion += "• Develop strategies to reduce occurrence probability\n";
-      }
-      
-      if (isImpactMedium || isImpactHigh) {
-        suggestion += "• Prepare specific response plans for impact reduction\n";
-      }
-      
-      suggestion += "• Assign dedicated risk owner for regular monitoring\n";
-      suggestion += "• Schedule monthly review of risk status\n";
-      suggestion += "• Define clear triggers for escalation\n";
-      suggestion += "• Document and communicate mitigation approach";
+      // Medium criticality (4-6) - 3 bullet points
+      suggestion += "• Implement key preventative controls with dedicated risk owner\n";
+      suggestion += "• Develop strategies to reduce probability and impact\n";
+      suggestion += "• Schedule monthly reviews with defined escalation triggers\n";
     } else {
-      // Low criticality (1-3)
-      suggestion += "• Implement basic monitoring controls\n";
-      
-      if (isProbabilityHigh) {
-        suggestion += "• Consider low-cost preventative measures\n";
-      }
-      
-      if (isImpactHigh) {
-        suggestion += "• Document simple response procedures\n";
-      }
-      
-      suggestion += "• Assign risk owner for awareness\n";
-      suggestion += "• Review quarterly or if conditions change\n";
-      suggestion += "• Accept risk with minimal controls\n";
-      suggestion += "• Document acceptance rationale";
+      // Low criticality (1-3) - 3 bullet points
+      suggestion += "• Implement basic monitoring controls with assigned risk owner\n";
+      suggestion += "• Review quarterly or when conditions change\n";
+      suggestion += "• Accept risk with minimal controls and documented rationale\n";
     }
     
     // Extract key themes from risk name for more targeted suggestions
@@ -729,47 +695,21 @@ export default function RiskAssessment() {
     
     if (riskNameLower.includes("technology") || riskNameLower.includes("technical") || riskNameLower.includes("system") || riskNameLower.includes("software") || riskNameLower.includes("it")) {
       specificRiskType = "Technology";
-      suggestion += "\n\nTechnology Risk Specific:\n";
+      suggestion += "\n\nTechnology Risk Specific (3 key actions):\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Conduct comprehensive technical assessments and penetration testing\n";
-        suggestion += "• Implement redundant systems or fallback options\n";
-      } else {
-        suggestion += "• Conduct targeted technical assessments based on risk areas\n";
-      }
-      
-      if (isImpactHigh) {
-        suggestion += "• Develop detailed disaster recovery procedures\n";
-        suggestion += "• Establish 24/7 technical support protocols\n";
-      } else {
-        suggestion += "• Establish standard technical support channels\n";
-      }
-      
-      suggestion += "• Ensure knowledge transfer and documentation\n";
-      suggestion += "• Consider prototype or pilot implementations before full deployment\n";
-      suggestion += "• Provide specialized training for technical staff";
+      // Just 3 bullet points, combining related points
+      suggestion += "• Conduct technical assessments and implement redundant systems as needed\n";
+      suggestion += "• Develop disaster recovery procedures with appropriate technical support\n";
+      suggestion += "• Ensure knowledge transfer, documentation and specialized staff training\n";
       
     } else if (riskNameLower.includes("resource") || riskNameLower.includes("staffing") || riskNameLower.includes("personnel") || riskNameLower.includes("team") || riskNameLower.includes("employee")) {
       specificRiskType = "Resource";
-      suggestion += "\n\nResource Risk Specific:\n";
+      suggestion += "\n\nResource Risk Specific (3 key actions):\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Develop comprehensive succession and continuity plans\n";
-        suggestion += "• Prioritize critical resource retention strategies\n";
-      } else {
-        suggestion += "• Create basic succession plans for key roles\n";
-      }
-      
-      if (isImpactHigh) {
-        suggestion += "• Establish partnerships with staffing agencies for rapid response\n";
-        suggestion += "• Create detailed knowledge transfer procedures\n";
-      } else {
-        suggestion += "• Maintain relationship with staffing resources\n";
-      }
-      
-      suggestion += "• Cross-train team members on critical functions\n";
-      suggestion += "• Implement knowledge sharing and documentation systems\n";
-      suggestion += "• Develop hiring or contractor contingencies as backup";
+      // Just 3 bullet points total
+      suggestion += "• Develop succession plans and resource retention strategies\n";
+      suggestion += "• Cross-train team members and create knowledge transfer procedures\n";
+      suggestion += "• Establish contingency plans with staffing partnerships as needed\n";
       
     } else if (riskNameLower.includes("schedule") || riskNameLower.includes("timeline") || riskNameLower.includes("deadline") || riskNameLower.includes("delay")) {
       specificRiskType = "Schedule";
