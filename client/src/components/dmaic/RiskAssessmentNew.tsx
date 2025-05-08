@@ -170,44 +170,53 @@ export default function RiskAssessmentNew() {
         // Determine how many rows to show based on which rows have meaningful content
         let rowCount = 1; // Always show at least one row
         
-        // First pass: Find the highest row with actual content
-        // Now we'll only show rows that have actual content, plus exactly one empty row at the end
-        let highestRowWithContent = 0;
-        
-        // First count how many rows have actual content
-        for (let i = 1; i <= 6; i++) {
-          const suffix = i === 1 ? '' : i.toString();
+        // If server provides rowsWithContent, use that value
+        if (data.rowsWithContent !== undefined) {
+          // Use the server's calculation of rows with content
+          // Add one extra row for adding new content
+          rowCount = Math.min(6, Math.max(data.rowsWithContent, 1) + 1);
+          console.log(`Server reports ${data.rowsWithContent} rows with content, showing ${rowCount} rows total`);
+        } else {
+          // Fallback to client-side analysis if server doesn't provide rowsWithContent
+          // First pass: Find the highest row with actual content
+          let highestRowWithContent = 0;
           
-          // Get content from all fields in this row
-          const riskName = riskItem[`riskName${suffix}`] || '';
-          const mitigationPlan = riskItem[`mitigationPlan${suffix}`] || '';
-          const riskOwner = riskItem[`riskOwner${suffix}`] || '';
-          
-          // A row has real content if ANY field has substantial text (even 1 character)
-          // We're being much more lenient now to ensure rows aren't missed
-          const hasAnyContent = (
-            riskName.trim().length > 0 ||
-            mitigationPlan.trim().length > 0 ||
-            riskOwner.trim().length > 0
-          );
-          
-          if (hasAnyContent) {
-            console.log(`Row ${i} has content - marking as viable row`);
-            // This row has content so it should be visible
-            highestRowWithContent = i;
+          // First count how many rows have actual content
+          for (let i = 1; i <= 6; i++) {
+            const suffix = i === 1 ? '' : i.toString();
+            
+            // Get content from all fields in this row
+            const riskName = riskItem[`riskName${suffix}`] || '';
+            const mitigationPlan = riskItem[`mitigationPlan${suffix}`] || '';
+            const riskOwner = riskItem[`riskOwner${suffix}`] || '';
+            
+            // A row has real content if ANY field has substantial text (even 1 character)
+            // We're being much more lenient now to ensure rows aren't missed
+            const hasAnyContent = (
+              riskName.trim().length > 0 ||
+              mitigationPlan.trim().length > 0 ||
+              riskOwner.trim().length > 0
+            );
+            
+            if (hasAnyContent) {
+              console.log(`Row ${i} has content - marking as viable row`);
+              // This row has content so it should be visible
+              highestRowWithContent = i;
+            }
           }
+          
+          // Always have at least one row, even if empty
+          highestRowWithContent = Math.max(1, highestRowWithContent);
+          
+          // Set rowCount to include all content rows plus exactly ONE empty row at the end for adding new content
+          rowCount = highestRowWithContent + 1;
+          
+          // Cap at 6 rows maximum (schema limit)
+          rowCount = Math.min(6, rowCount);
+          console.log(`Client detected ${highestRowWithContent} rows with content, showing ${rowCount} rows total`);
         }
         
-        // Always have at least one row, even if empty
-        highestRowWithContent = Math.max(1, highestRowWithContent);
-        
-        // Set rowCount to include all content rows plus exactly ONE empty row at the end for adding new content
-        rowCount = highestRowWithContent + 1;
-        
-        // Cap at 6 rows maximum (schema limit)
-        rowCount = Math.min(6, rowCount);
-        
-        console.log(`Highest row with content detected: ${highestRowWithContent}, showing ${rowCount} rows total`);
+        // Don't log highestRowWithContent when it's not set (when using server's rowsWithContent)
         
         // Second pass: Clean up any rows without content
         // This ensures all empty rows are explicitly cleared

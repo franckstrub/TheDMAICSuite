@@ -1076,14 +1076,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
           riskCriticality6: risk.riskCriticality6 || 1,
         };
         
+        // NEW: Calculate exactly how many rows have actual content
+        let rowsWithContent = 0;
+        const nonEmptyFields = [
+          // Row 1
+          sanitizedRisk.riskName?.trim().length > 0,
+          sanitizedRisk.mitigationPlan?.trim().length > 0,
+          sanitizedRisk.riskOwner?.trim().length > 0,
+          // Row 2
+          sanitizedRisk.riskName2?.trim().length > 0,
+          sanitizedRisk.mitigationPlan2?.trim().length > 0,
+          sanitizedRisk.riskOwner2?.trim().length > 0,
+          // Row 3
+          sanitizedRisk.riskName3?.trim().length > 0,
+          sanitizedRisk.mitigationPlan3?.trim().length > 0,
+          sanitizedRisk.riskOwner3?.trim().length > 0,
+          // Row 4
+          sanitizedRisk.riskName4?.trim().length > 0,
+          sanitizedRisk.mitigationPlan4?.trim().length > 0,
+          sanitizedRisk.riskOwner4?.trim().length > 0,
+          // Row 5
+          sanitizedRisk.riskName5?.trim().length > 0,
+          sanitizedRisk.mitigationPlan5?.trim().length > 0,
+          sanitizedRisk.riskOwner5?.trim().length > 0,
+          // Row 6
+          sanitizedRisk.riskName6?.trim().length > 0,
+          sanitizedRisk.mitigationPlan6?.trim().length > 0,
+          sanitizedRisk.riskOwner6?.trim().length > 0,
+        ];
+        
+        // Group non-empty fields by row
+        if (nonEmptyFields[0] || nonEmptyFields[1] || nonEmptyFields[2]) rowsWithContent = Math.max(rowsWithContent, 1);
+        if (nonEmptyFields[3] || nonEmptyFields[4] || nonEmptyFields[5]) rowsWithContent = Math.max(rowsWithContent, 2);
+        if (nonEmptyFields[6] || nonEmptyFields[7] || nonEmptyFields[8]) rowsWithContent = Math.max(rowsWithContent, 3);
+        if (nonEmptyFields[9] || nonEmptyFields[10] || nonEmptyFields[11]) rowsWithContent = Math.max(rowsWithContent, 4);
+        if (nonEmptyFields[12] || nonEmptyFields[13] || nonEmptyFields[14]) rowsWithContent = Math.max(rowsWithContent, 5);
+        if (nonEmptyFields[15] || nonEmptyFields[16] || nonEmptyFields[17]) rowsWithContent = Math.max(rowsWithContent, 6);
+        
+        console.log(`Server detected ${rowsWithContent} rows with actual content`);
         console.log('Sanitized risk data being returned:', {
           mitigationPlan: sanitizedRisk.mitigationPlan.substring(0, 30) + '...',
           mitigationPlan2: sanitizedRisk.mitigationPlan2.substring(0, 30) + '...',
         });
         
-        return res.status(200).json({ risk: sanitizedRisk });
+        return res.status(200).json({ 
+          risk: sanitizedRisk, 
+          rowsWithContent: rowsWithContent 
+        });
       } else {
-        return res.status(200).json({ risk: null });
+        return res.status(200).json({ risk: null, rowsWithContent: 0 });
       }
     } catch (err) {
       return handleErrors(err, res);
