@@ -805,28 +805,61 @@ export default function RiskAssessment() {
       suggestion += "\n• Reassess if conditions change";
     }
     
+    // Show generation in progress toast
+    toast({
+      title: "Generating mitigation plan",
+      description: "Creating AI-suggested mitigation strategy...",
+    });
+    
     // Update the form with the generated suggestion
+    console.log(`Setting value for field ${mitigationPlanField} to suggestion (length: ${suggestion.length})`);
     riskForm.setValue(mitigationPlanField as any, suggestion);
     
-    // Adjust textarea height to fit the new content with multiple retries
+    // Force form to recognize the change
+    riskForm.trigger(mitigationPlanField as any);
+    
+    // Check if the textarea ref exists
+    const textareaElement = textareaRefs.current[mitigationPlanField];
+    if (!textareaElement) {
+      console.warn(`Textarea ref for ${mitigationPlanField} does not exist!`);
+    } else {
+      console.log(`Textarea ref for ${mitigationPlanField} exists, will resize it.`);
+      // Set value directly on the element as a backup
+      textareaElement.value = suggestion;
+    }
+    
+    // Adjust textarea height to fit the new content with multiple retries using longer timeouts
     // First immediate adjustment
     adjustTextareaHeight(mitigationPlanField);
     
-    // Second adjustment after short delay
+    // Staggered adjustments with increasing timeouts for better reliability
     setTimeout(() => {
       adjustTextareaHeight(mitigationPlanField);
       
-      // Third adjustment after longer delay to ensure proper sizing once content is fully rendered
       setTimeout(() => {
         adjustTextareaHeight(mitigationPlanField);
         
-        // Final adjustment after DOM has fully updated
         setTimeout(() => {
           adjustTextareaHeight(mitigationPlanField);
-        }, 500);
-      }, 300);
-    }, 100);
+          
+          // Final adjustment after DOM has fully updated
+          setTimeout(() => {
+            // Make one last adjustment
+            adjustTextareaHeight(mitigationPlanField);
+            
+            // Force update the textarea if ref exists
+            const textarea = textareaRefs.current[mitigationPlanField];
+            if (textarea) {
+              textarea.style.height = 'auto';
+              const scrollHeight = textarea.scrollHeight;
+              textarea.style.height = `${scrollHeight + 16}px`;
+            }
+          }, 800);
+        }, 600);
+      }, 400);
+    }, 200);
     
+    // Show success toast
     toast({
       title: "Mitigation Plan Generated",
       description: `AI-assisted mitigation plan generated for ${specificRiskType || "General"} risk with ${criticality}/9 criticality.`
