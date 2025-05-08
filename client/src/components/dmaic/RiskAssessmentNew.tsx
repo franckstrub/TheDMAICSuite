@@ -509,15 +509,16 @@ Monitoring and Review:
           <div className="flex items-center">
             <CardTitle>Risk Assessment Matrix</CardTitle>
             <div className="ml-4">
-              <button 
+              <Button 
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={saveRiskData}
                 disabled={isSaving}
-                className="border border-gray-200 rounded text-xs px-3 py-1 h-6 bg-white hover:bg-gray-50 disabled:opacity-50 inline-block"
-                style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
+                className="h-7 text-xs w-16 px-2 py-0"
               >
                 {isSaving ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
             </div>
           </div>
           <div>
