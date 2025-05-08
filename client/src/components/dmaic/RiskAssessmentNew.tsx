@@ -777,7 +777,7 @@ Monitoring and Review:
                 </Button>
               </div>
               
-              <div className="flex justify-end">
+              <div>
                 <Button 
                   type="button"
                   variant="default"
