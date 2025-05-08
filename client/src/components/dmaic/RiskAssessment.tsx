@@ -175,8 +175,18 @@ export default function RiskAssessment() {
 
   // Fetch existing risk data
   const { data: riskData, isLoading: isRiskLoading } = useQuery<RiskResponse>({
-    queryKey: [`/api/projects/${projectId}/risks`],
-    enabled: !!projectId
+    queryKey: ['/api/projects', projectId, 'risks'],
+    enabled: !!projectId,
+    onSuccess: (data) => {
+      console.log("Risk data from API:", JSON.stringify(data, null, 2));
+      // Check if any mitigation plans exist and console log them
+      if (data?.risk?.mitigationPlan) {
+        console.log("Mitigation plan 1 exists:", data.risk.mitigationPlan.substring(0, 50) + "...");
+      }
+      if (data?.risk?.mitigationPlan2) {
+        console.log("Mitigation plan 2 exists:", data.risk.mitigationPlan2.substring(0, 50) + "...");
+      }
+    }
   });
   
   // Function to clear risk form initialization state
@@ -1764,13 +1774,28 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan4"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Use a one-time direct DOM update to avoid "jerking" when loading/saving
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan4 && el) {
-                              // Force the value to be set directly
+                              // Get the current height before making changes
+                              const currentHeight = el.style.height;
+                              console.log(`Current height before update: ${currentHeight}`);
+                              
+                              // Set content manually to avoid triggering the form state
                               el.value = riskData.risk.mitigationPlan4;
                               console.log(`Direct ref injection for mitigationPlan4 completed`);
+                              
+                              // Initialize height based on content only on first load
+                              // After that, preserve user's manual resizing
+                              if (!currentHeight || currentHeight === 'auto' || currentHeight === '') {
+                                console.log("First load - adjusting height based on content");
+                                adjustTextareaHeight("mitigationPlan4", true);
+                              } else {
+                                console.log(`Preserving user's manual height: ${currentHeight}`);
+                                // Keep the user's manual height adjustment
+                                el.style.height = currentHeight;
+                              }
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
