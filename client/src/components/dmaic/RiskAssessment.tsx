@@ -1582,6 +1582,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName3")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName3"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskName3"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1692,6 +1703,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner3")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner3"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskOwner3"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <Button
@@ -1716,6 +1738,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName4")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName4"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskName4"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1822,6 +1855,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner4")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner4"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskOwner4"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <Button
@@ -1846,6 +1890,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName5")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName5"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskName5"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1952,6 +2007,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner5")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner5"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskOwner5"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <Button
@@ -1976,6 +2042,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName6")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName6"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskName6"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -2082,6 +2159,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner6")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner6"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskOwner6"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <Button
