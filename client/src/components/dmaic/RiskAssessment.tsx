@@ -189,13 +189,15 @@ export default function RiskAssessment() {
     resetRiskFormInitialization();
   }, [projectId]);
   
-  // Force reset form data when the data loads - this is the critical fix
+  // MAJOR OVERHAUL: Force reset form data when the data loads AND after component mounts
   useEffect(() => {
     console.log("CRITICAL EFFECT: Risk data loaded or changed - ensuring form displays correctly", riskData?.risk?.id);
     
     // We'll run this every time data changes, regardless of initialization state
     if (riskData?.risk) {
-      console.log("Initializing risk form with data:", riskData.risk);
+      // Reset the initialization flag to force complete reinitialization
+      riskFormInitialized.current = false;
+      console.log("COMPLETE FORM RESET: Forcibly reinitializing with server data:", riskData.risk);
       
       // Debug check for all mitigation plans
       console.log("DEBUG: Mitigation plan 1 from API:", riskData.risk.mitigationPlan || "EMPTY");
