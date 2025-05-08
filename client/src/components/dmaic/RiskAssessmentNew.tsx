@@ -577,12 +577,12 @@ Monitoring and Review:
                   }}
                 />
               </div>
-              <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+              <div className="border border-amber-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
                 <Select
                   value={riskData.probability || 'Low'}
                   onValueChange={(value) => updateRiskCriticality(1, 'probability', value)}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-20">
                     <SelectValue placeholder="Probability" />
                   </SelectTrigger>
                   <SelectContent>
@@ -592,12 +592,12 @@ Monitoring and Review:
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-orange-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+              <div className="border border-orange-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
                 <Select
                   value={riskData.impact || 'Low'}
                   onValueChange={(value) => updateRiskCriticality(1, 'impact', value)}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-20">
                     <SelectValue placeholder="Impact" />
                   </SelectTrigger>
                   <SelectContent>
@@ -679,12 +679,12 @@ Monitoring and Review:
                     }}
                   />
                 </div>
-                <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+                <div className="border border-amber-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
                   <Select
                     value={riskData.probability2 || 'Low'}
                     onValueChange={(value) => updateRiskCriticality(2, 'probability', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-20">
                       <SelectValue placeholder="Probability" />
                     </SelectTrigger>
                     <SelectContent>
@@ -694,12 +694,12 @@ Monitoring and Review:
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="border border-orange-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+                <div className="border border-orange-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
                   <Select
                     value={riskData.impact2 || 'Low'}
                     onValueChange={(value) => updateRiskCriticality(2, 'impact', value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-20">
                       <SelectValue placeholder="Impact" />
                     </SelectTrigger>
                     <SelectContent>
@@ -709,7 +709,7 @@ Monitoring and Review:
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="border border-purple-100 rounded-md p-2 bg-white w-[98%] col-span-1 flex items-center justify-center">
+                <div className="border border-purple-100 rounded-md p-1 bg-white w-[97%] col-span-0.5 flex items-center justify-center">
                   <div className="text-lg font-bold">
                     {riskData.riskCriticality2 || 1}/9
                   </div>
