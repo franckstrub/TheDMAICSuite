@@ -1844,6 +1844,11 @@ export default function RiskAssessment() {
                     rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan4")}
+                    onInput={(e) => {
+                      // Ensure form state is updated when user types
+                      const value = (e.target as HTMLTextAreaElement).value;
+                      riskForm.setValue("mitigationPlan4", value);
+                    }}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan4"] = el;
