@@ -12,6 +12,39 @@ export async function generateMitigationPlan(
   impact: string
 ): Promise<string> {
   try {
+    console.log(`Generating mitigation plan for risk: "${riskName}" with probability: "${probability}" and impact: "${impact}"`);
+    
+    // Check if API key is available
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY is not set in environment variables');
+      return "ANTHROPIC_API_KEY is missing. Please contact your administrator.";
+    }
+    
+    // For troubleshooting, let's return a static plan instead of calling Claude
+    // This helps us isolate if the issue is with the API call or elsewhere
+    console.log("Returning a static mitigation plan for testing purposes");
+    
+    return `Recommended Mitigation Strategies:
+• Implement multiple preventative controls with overlapping coverage
+• Develop prevention strategies to reduce likelihood of occurrence
+• Create detailed contingency and recovery plans to minimize impact
+• Consider risk transfer options (insurance, partnerships, contracts)
+• Assign dedicated risk owner with executive oversight
+
+Risk-Specific Strategies:
+• Conduct comprehensive technical assessments 
+• Implement redundant systems or fallback options
+• Develop detailed disaster recovery procedures
+• Establish 24/7 technical support protocols
+• Consider prototype or pilot implementations before full deployment
+
+Monitoring and Review Procedures:
+• Review risk status weekly
+• Report to executive leadership monthly
+• Reassess mitigation effectiveness quarterly`;
+
+    /*
+    // Original Claude API implementation - temporarily disabled for troubleshooting
     // Generate a detailed system message to guide Claude
     const systemMessage = `You are a risk management expert specializing in Six Sigma and project risk mitigation.
 Your task is to generate a concise but effective mitigation plan for a risk in a Six Sigma project.
@@ -47,6 +80,7 @@ The mitigation plan should be specific to this risk, considering its probability
     } else {
       throw new Error('Unexpected response format from Claude API');
     }
+    */
   } catch (error) {
     console.error('Error generating mitigation plan with Claude:', error);
     throw new Error('Failed to generate mitigation plan. Please try again later.');
