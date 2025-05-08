@@ -287,6 +287,10 @@ export default function RiskAssessmentNew() {
   const saveRiskData = async () => {
     setIsSaving(true);
     
+    // Store scroll position and section element before any operations
+    const scrollPosition = window.scrollY;
+    const riskSection = document.getElementById('risk-assessment-section');
+    
     // First, ensure all textarea values are properly captured
     const updatedRiskData = {...riskData};
     
@@ -312,18 +316,47 @@ export default function RiskAssessmentNew() {
     }
     
     try {
-      await saveDataToServer(updatedRiskData);
+      // Save the data to server first
+      const savedResult = await saveDataToServer(updatedRiskData);
       
-      // Reload data from server to ensure we display exactly what's in the database
-      await loadRiskData(false);
+      // Directly update our state with the server response instead of reloading
+      if (savedResult && savedResult.risk) {
+        setRiskData(savedResult.risk);
+      }
       
-      // Only show success toast if we didn't already show a partial save warning
+      // Update session storage flag
+      sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
+      
+      // Show success toast
       if (visibleRiskRows <= 6) {
         toast({
           title: "Risk assessment saved",
           description: "All changes have been saved successfully."
         });
       }
+      
+      // We're intentionally NOT calling loadRiskData() here to prevent the page jerk
+      // Instead, we'll update our UI with the response from saveDataToServer
+      
+      // Restore scroll position after a short delay to ensure DOM is updated
+      setTimeout(() => {
+        // Restore scroll position
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'auto'
+        });
+        
+        // Force risk section into view if available
+        if (riskSection) {
+          riskSection.scrollIntoView({ 
+            behavior: 'auto',
+            block: 'start'
+          });
+        }
+        
+        console.log(`Restored scroll position to ${scrollPosition}px after saving`);
+      }, 50);
+      
     } catch (error) {
       console.error('Error saving risk data:', error);
       toast({
@@ -812,7 +845,7 @@ export default function RiskAssessmentNew() {
   };
   
   return (
-    <Card className="mt-6">
+    <Card className="mt-6" id="risk-assessment-section">
       <CardHeader>
         <div className="flex items-center">
           <CardTitle>Risk Assessment Matrix</CardTitle>
