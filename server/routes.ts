@@ -14,9 +14,9 @@ import {
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
-  InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertUser, InsertRisk,
-  InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
-  projects, projectCharters, projectRisks
+  InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertUser, InsertRisk, InsertRiskItem,
+  InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk, ProjectRiskItem,
+  projects, projectCharters, projectRisks, projectRiskItems
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -1029,8 +1029,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:projectId/risks", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // First, get the legacy risk data (if any)
       const [risk] = await db.select().from(projectRisks).where(eq(projectRisks.projectId, projectId));
       
+      // Then get the new risk items (if any)
+      const riskItems = await db.select()
+        .from(projectRiskItems)
+        .where(eq(projectRiskItems.projectId, projectId))
+        .orderBy(projectRiskItems.orderIndex);
+      
+      // The combined response will include both legacy risk format and the new items
       if (risk) {
         // Ensure all text fields are properly returned as empty strings if null
         // This helps with frontend display and prevents issues with optional chaining
@@ -1074,14 +1083,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           riskCriticality6: risk.riskCriticality6 || 1,
         };
         
-        console.log('Sanitized risk data being returned:', {
-          mitigationPlan: sanitizedRisk.mitigationPlan.substring(0, 30) + '...',
-          mitigationPlan2: sanitizedRisk.mitigationPlan2.substring(0, 30) + '...',
-        });
+        if (sanitizedRisk.mitigationPlan) {
+          console.log('Sanitized risk data being returned:', {
+            mitigationPlan: sanitizedRisk.mitigationPlan.substring(0, 30) + '...',
+            mitigationPlan2: sanitizedRisk.mitigationPlan2.substring(0, 30) + '...',
+          });
+        }
         
-        return res.status(200).json({ risk: sanitizedRisk });
+        // Return both the legacy risk object and the new items array
+        return res.status(200).json({ 
+          risk: sanitizedRisk,
+          riskItems: riskItems 
+        });
       } else {
-        return res.status(200).json({ risk: null });
+        // If no legacy risk exists, just return the risk items
+        return res.status(200).json({ 
+          risk: null,
+          riskItems: riskItems 
+        });
       }
     } catch (err) {
       return handleErrors(err, res);
@@ -1092,113 +1111,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = parseInt(req.params.projectId);
       
-      // Extract and sanitize fields that we want to save
-      const sanitizedRiskData = {
-        projectId,
-        // Ensure all text fields are defined with empty strings if null or undefined
-        mitigationPlan: req.body.mitigationPlan || '',
-        mitigationPlan2: req.body.mitigationPlan2 || '',
-        mitigationPlan3: req.body.mitigationPlan3 || '',
-        mitigationPlan4: req.body.mitigationPlan4 || '',
-        mitigationPlan5: req.body.mitigationPlan5 || '',
-        mitigationPlan6: req.body.mitigationPlan6 || '',
-        riskName: req.body.riskName || '',
-        riskName2: req.body.riskName2 || '',
-        riskName3: req.body.riskName3 || '',
-        riskName4: req.body.riskName4 || '',
-        riskName5: req.body.riskName5 || '',
-        riskName6: req.body.riskName6 || '',
-        riskOwner: req.body.riskOwner || '',
-        riskOwner2: req.body.riskOwner2 || '',
-        riskOwner3: req.body.riskOwner3 || '',
-        riskOwner4: req.body.riskOwner4 || '',
-        riskOwner5: req.body.riskOwner5 || '',
-        riskOwner6: req.body.riskOwner6 || '',
-        probability: req.body.probability || 'Low',
-        probability2: req.body.probability2 || 'Low',
-        probability3: req.body.probability3 || 'Low',
-        probability4: req.body.probability4 || 'Low',
-        probability5: req.body.probability5 || 'Low',
-        probability6: req.body.probability6 || 'Low',
-        impact: req.body.impact || 'Low',
-        impact2: req.body.impact2 || 'Low',
-        impact3: req.body.impact3 || 'Low',
-        impact4: req.body.impact4 || 'Low',
-        impact5: req.body.impact5 || 'Low',
-        impact6: req.body.impact6 || 'Low',
-        riskCriticality: req.body.riskCriticality || 1,
-        riskCriticality2: req.body.riskCriticality2 || 1,
-        riskCriticality3: req.body.riskCriticality3 || 1,
-        riskCriticality4: req.body.riskCriticality4 || 1,
-        riskCriticality5: req.body.riskCriticality5 || 1,
-        riskCriticality6: req.body.riskCriticality6 || 1,
-        // Always use the current date for lastUpdated
-        lastUpdated: new Date(),
-      };
-      
-      console.log('Sanitized risk creation data:', {
-        mitigationPlan: sanitizedRiskData.mitigationPlan.substring(0, 30) + '...',
-        mitigationPlan2: sanitizedRiskData.mitigationPlan2 ? sanitizedRiskData.mitigationPlan2.substring(0, 30) + '...' : 'empty',
-      });
-      
-      // Validate the risk data
-      const validatedData = insertRiskSchema.parse(sanitizedRiskData);
-      
-      // Insert risk data
-      const [risk] = await db.insert(projectRisks).values(validatedData).returning();
-      
-      // Further sanitize the response for consistent handling on the client side
-      const sanitizedRisk = {
-        ...risk,
-        mitigationPlan: risk.mitigationPlan || '',
-        mitigationPlan2: risk.mitigationPlan2 || '',
-        mitigationPlan3: risk.mitigationPlan3 || '',
-        mitigationPlan4: risk.mitigationPlan4 || '',
-        mitigationPlan5: risk.mitigationPlan5 || '',
-        mitigationPlan6: risk.mitigationPlan6 || '',
-        riskName: risk.riskName || '',
-        riskName2: risk.riskName2 || '',
-        riskName3: risk.riskName3 || '',
-        riskName4: risk.riskName4 || '',
-        riskName5: risk.riskName5 || '',
-        riskName6: risk.riskName6 || '',
-        riskOwner: risk.riskOwner || '',
-        riskOwner2: risk.riskOwner2 || '',
-        riskOwner3: risk.riskOwner3 || '',
-        riskOwner4: risk.riskOwner4 || '',
-        riskOwner5: risk.riskOwner5 || '',
-        riskOwner6: risk.riskOwner6 || '',
-        probability: risk.probability || 'Low',
-        probability2: risk.probability2 || 'Low',
-        probability3: risk.probability3 || 'Low',
-        probability4: risk.probability4 || 'Low',
-        probability5: risk.probability5 || 'Low',
-        probability6: risk.probability6 || 'Low',
-        impact: risk.impact || 'Low',
-        impact2: risk.impact2 || 'Low',
-        impact3: risk.impact3 || 'Low',
-        impact4: risk.impact4 || 'Low',
-        impact5: risk.impact5 || 'Low',
-        impact6: risk.impact6 || 'Low',
-        riskCriticality: risk.riskCriticality || 1,
-        riskCriticality2: risk.riskCriticality2 || 1,
-        riskCriticality3: risk.riskCriticality3 || 1,
-        riskCriticality4: risk.riskCriticality4 || 1,
-        riskCriticality5: risk.riskCriticality5 || 1,
-        riskCriticality6: risk.riskCriticality6 || 1,
-      };
-      
-      // Log activity
-      if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_risk_assessment",
-          details: "Created project risk assessment"
+      // Check if we're using the new approach with riskItems array
+      if (req.body.riskItems && Array.isArray(req.body.riskItems)) {
+        // New approach with unlimited risks
+        
+        // First, delete all existing risk items for this project
+        await db.delete(projectRiskItems).where(eq(projectRiskItems.projectId, projectId));
+        
+        // Insert all new risk items
+        const newRiskItems = [];
+        let orderIndex = 0;
+        
+        for (const item of req.body.riskItems) {
+          // Sanitize risk item data
+          const sanitizedItem = {
+            projectId,
+            orderIndex: orderIndex++,
+            riskName: item.riskName || '',
+            probability: item.probability || 'Low',
+            impact: item.impact || 'Low',
+            riskCriticality: parseInt(item.riskCriticality) || 1,
+            mitigationPlan: item.mitigationPlan || '',
+            riskOwner: item.riskOwner || '',
+          };
+          
+          // Insert into database
+          const [newItem] = await db.insert(projectRiskItems)
+            .values(sanitizedItem)
+            .returning();
+          
+          newRiskItems.push(newItem);
+        }
+        
+        // Log activity
+        if (req.body.userId) {
+          await storage.createActivityLog({
+            userId: req.body.userId,
+            projectId,
+            action: "create_risk_assessment",
+            details: "Created unlimited project risk items"
+          });
+        }
+        
+        // Return the new risk items
+        return res.status(201).json({ 
+          success: true,
+          riskItems: newRiskItems 
         });
+      } else {
+        // Legacy approach with fixed number of risks
+        
+        // Extract and sanitize fields that we want to save
+        const sanitizedRiskData = {
+          projectId,
+          // Ensure all text fields are defined with empty strings if null or undefined
+          mitigationPlan: req.body.mitigationPlan || '',
+          mitigationPlan2: req.body.mitigationPlan2 || '',
+          mitigationPlan3: req.body.mitigationPlan3 || '',
+          mitigationPlan4: req.body.mitigationPlan4 || '',
+          mitigationPlan5: req.body.mitigationPlan5 || '',
+          mitigationPlan6: req.body.mitigationPlan6 || '',
+          riskName: req.body.riskName || '',
+          riskName2: req.body.riskName2 || '',
+          riskName3: req.body.riskName3 || '',
+          riskName4: req.body.riskName4 || '',
+          riskName5: req.body.riskName5 || '',
+          riskName6: req.body.riskName6 || '',
+          riskOwner: req.body.riskOwner || '',
+          riskOwner2: req.body.riskOwner2 || '',
+          riskOwner3: req.body.riskOwner3 || '',
+          riskOwner4: req.body.riskOwner4 || '',
+          riskOwner5: req.body.riskOwner5 || '',
+          riskOwner6: req.body.riskOwner6 || '',
+          probability: req.body.probability || 'Low',
+          probability2: req.body.probability2 || 'Low',
+          probability3: req.body.probability3 || 'Low',
+          probability4: req.body.probability4 || 'Low',
+          probability5: req.body.probability5 || 'Low',
+          probability6: req.body.probability6 || 'Low',
+          impact: req.body.impact || 'Low',
+          impact2: req.body.impact2 || 'Low',
+          impact3: req.body.impact3 || 'Low',
+          impact4: req.body.impact4 || 'Low',
+          impact5: req.body.impact5 || 'Low',
+          impact6: req.body.impact6 || 'Low',
+          riskCriticality: req.body.riskCriticality || 1,
+          riskCriticality2: req.body.riskCriticality2 || 1,
+          riskCriticality3: req.body.riskCriticality3 || 1,
+          riskCriticality4: req.body.riskCriticality4 || 1,
+          riskCriticality5: req.body.riskCriticality5 || 1,
+          riskCriticality6: req.body.riskCriticality6 || 1,
+          // Always use the current date for lastUpdated
+          lastUpdated: new Date(),
+        };
+        
+        console.log('Sanitized risk creation data:', {
+          mitigationPlan: sanitizedRiskData.mitigationPlan.substring(0, 30) + '...',
+          mitigationPlan2: sanitizedRiskData.mitigationPlan2 ? sanitizedRiskData.mitigationPlan2.substring(0, 30) + '...' : 'empty',
+        });
+        
+        // Validate the risk data
+        const validatedData = insertRiskSchema.parse(sanitizedRiskData);
+        
+        // Insert risk data
+        const [risk] = await db.insert(projectRisks).values(validatedData).returning();
+        
+        // Further sanitize the response for consistent handling on the client side
+        const sanitizedRisk = {
+          ...risk,
+          mitigationPlan: risk.mitigationPlan || '',
+          mitigationPlan2: risk.mitigationPlan2 || '',
+          mitigationPlan3: risk.mitigationPlan3 || '',
+          mitigationPlan4: risk.mitigationPlan4 || '',
+          mitigationPlan5: risk.mitigationPlan5 || '',
+          mitigationPlan6: risk.mitigationPlan6 || '',
+          riskName: risk.riskName || '',
+          riskName2: risk.riskName2 || '',
+          riskName3: risk.riskName3 || '',
+          riskName4: risk.riskName4 || '',
+          riskName5: risk.riskName5 || '',
+          riskName6: risk.riskName6 || '',
+          riskOwner: risk.riskOwner || '',
+          riskOwner2: risk.riskOwner2 || '',
+          riskOwner3: risk.riskOwner3 || '',
+          riskOwner4: risk.riskOwner4 || '',
+          riskOwner5: risk.riskOwner5 || '',
+          riskOwner6: risk.riskOwner6 || '',
+          probability: risk.probability || 'Low',
+          probability2: risk.probability2 || 'Low',
+          probability3: risk.probability3 || 'Low',
+          probability4: risk.probability4 || 'Low',
+          probability5: risk.probability5 || 'Low',
+          probability6: risk.probability6 || 'Low',
+          impact: risk.impact || 'Low',
+          impact2: risk.impact2 || 'Low',
+          impact3: risk.impact3 || 'Low',
+          impact4: risk.impact4 || 'Low',
+          impact5: risk.impact5 || 'Low',
+          impact6: risk.impact6 || 'Low',
+          riskCriticality: risk.riskCriticality || 1,
+          riskCriticality2: risk.riskCriticality2 || 1,
+          riskCriticality3: risk.riskCriticality3 || 1,
+          riskCriticality4: risk.riskCriticality4 || 1,
+          riskCriticality5: risk.riskCriticality5 || 1,
+          riskCriticality6: risk.riskCriticality6 || 1,
+        };
+        
+        // Log activity
+        if (req.body.userId) {
+          await storage.createActivityLog({
+            userId: req.body.userId,
+            projectId,
+            action: "create_risk_assessment",
+            details: "Created project risk assessment"
+          });
+        }
+        
+        return res.status(201).json({ risk: sanitizedRisk });
       }
-      
-      return res.status(201).json({ risk: sanitizedRisk });
     } catch (err) {
       return handleErrors(err, res);
     }
@@ -1321,6 +1391,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       return res.status(200).json({ risk: sanitizedRisk });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  // New endpoints for individual risk items with unlimited quantity
+  app.post("/api/projects/:projectId/risk-items", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      // Sanitize input data
+      const sanitizedItem = {
+        projectId,
+        riskName: req.body.riskName || '',
+        probability: req.body.probability || 'Low',
+        impact: req.body.impact || 'Low',
+        riskCriticality: parseInt(req.body.riskCriticality) || 1,
+        mitigationPlan: req.body.mitigationPlan || '',
+        riskOwner: req.body.riskOwner || '',
+        orderIndex: parseInt(req.body.orderIndex) || 0,
+      };
+      
+      // Insert the new risk item
+      const [riskItem] = await db.insert(projectRiskItems)
+        .values(sanitizedItem)
+        .returning();
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId,
+          action: "create_risk_item",
+          details: "Added new project risk item"
+        });
+      }
+      
+      return res.status(201).json({ riskItem });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  app.put("/api/risk-items/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Sanitize input data
+      const sanitizedItem = {
+        riskName: req.body.riskName || '',
+        probability: req.body.probability || 'Low',
+        impact: req.body.impact || 'Low',
+        riskCriticality: parseInt(req.body.riskCriticality) || 1,
+        mitigationPlan: req.body.mitigationPlan || '',
+        riskOwner: req.body.riskOwner || '',
+        orderIndex: parseInt(req.body.orderIndex) || 0,
+        lastUpdated: new Date(),
+      };
+      
+      // Update the risk item
+      const [riskItem] = await db.update(projectRiskItems)
+        .set(sanitizedItem)
+        .where(eq(projectRiskItems.id, id))
+        .returning();
+      
+      if (!riskItem) {
+        return res.status(404).json({ message: "Risk item not found" });
+      }
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: riskItem.projectId,
+          action: "update_risk_item",
+          details: "Updated project risk item"
+        });
+      }
+      
+      return res.status(200).json({ riskItem });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  app.delete("/api/risk-items/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Get the risk item before deleting it to get the projectId for the activity log
+      const [riskItem] = await db.select().from(projectRiskItems).where(eq(projectRiskItems.id, id));
+      
+      if (!riskItem) {
+        return res.status(404).json({ message: "Risk item not found" });
+      }
+      
+      // Delete the risk item
+      await db.delete(projectRiskItems).where(eq(projectRiskItems.id, id));
+      
+      // Log activity
+      if (req.body.userId) {
+        await storage.createActivityLog({
+          userId: req.body.userId,
+          projectId: riskItem.projectId,
+          action: "delete_risk_item",
+          details: "Deleted project risk item"
+        });
+      }
+      
+      return res.status(200).json({ success: true });
     } catch (err) {
       return handleErrors(err, res);
     }
