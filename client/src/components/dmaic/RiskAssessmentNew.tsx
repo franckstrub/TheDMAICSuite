@@ -12,13 +12,17 @@ import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 
+// Define probability and impact levels as types
+type ProbabilityLevel = 'Low' | 'Medium' | 'High';
+type ImpactLevel = 'Low' | 'Medium' | 'High';
+
 // Risk item type definition
 type RiskItem = {
   id?: number;
   projectId: number;
   riskName: string;
-  probability: string;
-  impact: string;
+  probability: ProbabilityLevel;
+  impact: ImpactLevel;
   riskCriticality: number;
   mitigationPlan: string;
   riskOwner: string;
@@ -44,9 +48,9 @@ export default function RiskAssessmentNew() {
   
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = projectIdParam ? parseInt(projectIdParam) : (currentProject?.id || 1);
-  
+
   // Risk criticality calculation matrix (probability x impact)
-  const riskCriticalityMatrix = {
+  const riskCriticalityMatrix: Record<ProbabilityLevel, Record<ImpactLevel, number>> = {
     "Low": { "Low": 1, "Medium": 2, "High": 3 },
     "Medium": { "Low": 2, "Medium": 4, "High": 6 },
     "High": { "Low": 3, "Medium": 6, "High": 9 }
@@ -162,7 +166,17 @@ export default function RiskAssessmentNew() {
     if (field === 'probability' || field === 'impact') {
       const probability = field === 'probability' ? value : updatedItems[index].probability;
       const impact = field === 'impact' ? value : updatedItems[index].impact;
-      updatedItems[index].riskCriticality = riskCriticalityMatrix[probability][impact];
+      
+      // Type safety check to make sure probability and impact are valid keys
+      if (
+        (probability === 'Low' || probability === 'Medium' || probability === 'High') &&
+        (impact === 'Low' || impact === 'Medium' || impact === 'High')
+      ) {
+        // Use type assertion to avoid TypeScript error
+        const safeProb = probability as ProbabilityLevel;
+        const safeImpact = impact as ImpactLevel;
+        updatedItems[index].riskCriticality = riskCriticalityMatrix[safeProb][safeImpact];
+      }
     }
     
     setRiskItems(updatedItems);

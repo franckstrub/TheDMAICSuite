@@ -1397,6 +1397,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // New endpoints for individual risk items with unlimited quantity
+  // Get all risk items for a project
+  app.get("/api/projects/:projectId/risk-items", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      // Get all risk items for the project
+      const riskItems = await db.select()
+        .from(projectRiskItems)
+        .where(eq(projectRiskItems.projectId, projectId))
+        .orderBy(projectRiskItems.orderIndex);
+      
+      return res.status(200).json({ riskItems });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   app.post("/api/projects/:projectId/risk-items", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
