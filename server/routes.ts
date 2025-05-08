@@ -22,6 +22,7 @@ import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { ZodError } from "zod";
+import { generateMitigationPlan } from "./anthropic";
 
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
