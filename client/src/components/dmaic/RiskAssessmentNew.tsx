@@ -513,8 +513,8 @@ Monitoring and Review:
                 type="button"
                 onClick={saveRiskData}
                 disabled={isSaving}
-                className="border border-gray-200 rounded text-xs px-3 py-1 h-6 bg-white hover:bg-gray-50 disabled:opacity-50"
-                style={{ width: '50px' }}
+                className="border border-gray-200 rounded text-xs px-3 py-1 h-6 bg-white hover:bg-gray-50 disabled:opacity-50 inline-block"
+                style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
               >
                 {isSaving ? 'Saving...' : 'Save'}
               </button>
