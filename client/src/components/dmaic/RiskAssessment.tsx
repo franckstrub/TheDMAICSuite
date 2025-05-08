@@ -11,36 +11,6 @@ import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
 
-// Custom styles to fix textarea heights and prevent resizing issues
-const styles = `
-  .risk-mitigation-textarea {
-    height: 120px !important;
-    min-height: 120px !important;
-    max-height: 120px !important;
-    overflow-y: auto !important;
-    resize: none !important;
-    transition: none !important;
-  }
-  
-  .risk-name-textarea {
-    height: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
-    overflow-y: auto !important;
-    resize: none !important;
-    transition: none !important;
-  }
-  
-  .risk-owner-textarea {
-    height: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
-    overflow-y: auto !important;
-    resize: none !important;
-    transition: none !important;
-  }
-`;
-
 // Flag to prevent textarea resizing after save operations
 let skipNextTextareaResize = false;
 
@@ -97,19 +67,6 @@ export default function RiskAssessment() {
   const { user, currentProject } = useAppContext();
   const textareaRefs = useRef<{ [key: string]: HTMLTextAreaElement }>({});
   
-  // Inject custom styles to ensure consistent textarea heights
-  useEffect(() => {
-    // Add styles to the document head
-    const styleElement = document.createElement('style');
-    styleElement.textContent = styles;
-    document.head.appendChild(styleElement);
-    
-    // Cleanup on component unmount
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
-
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = projectIdParam ? parseInt(projectIdParam) : (currentProject?.id || 1);
   
