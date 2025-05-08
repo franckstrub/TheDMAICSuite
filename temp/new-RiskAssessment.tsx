@@ -828,9 +828,9 @@ export default function RiskAssessment() {
               textarea.style.height = `${scrollHeight + 16}px`;
             }
           }, 800);
-        }, 400);
-      }, 200);
-    }, 100);
+        }, 600);
+      }, 400);
+    }, 200);
     
     // No need for a second toast notification - we already showed one above
   };
