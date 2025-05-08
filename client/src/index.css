@@ -421,26 +421,33 @@
   display: block !important;
 }
 
-/* Risk Assessment Textareas */
-.risk-mitigation-textarea {
-  min-height: 120px;
-  overflow-y: auto;
+/* Risk Assessment Textareas - Common styles for all risk textareas */
+.risk-textarea-base {
   resize: vertical;
   resize-handle: border-bottom;
+  box-sizing: border-box;
+  width: 100%;
+  flex-grow: 1;
+  overflow-y: auto;
+  height: auto;
+  display: block;
+  position: relative;
+}
+
+/* Risk specific styles with their own min heights */
+.risk-mitigation-textarea {
+  composes: risk-textarea-base;
+  min-height: 120px;
 }
 
 .risk-name-textarea {
+  composes: risk-textarea-base;
   min-height: 24px;
-  overflow-y: auto;
-  resize: vertical;
-  resize-handle: border-bottom;
 }
 
 .risk-owner-textarea {
+  composes: risk-textarea-base;
   min-height: 24px;
-  overflow-y: auto;
-  resize: vertical;
-  resize-handle: border-bottom;
 }
 
 /* Risk Assessment Row container */
@@ -448,8 +455,15 @@
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 0.25rem;
+  align-items: stretch;
   margin-bottom: 0.5rem;
   position: relative;
+}
+
+/* Ensure textareas in each cell fill the available height */
+.risk-row > div {
+  display: flex;
+  flex-direction: column;
 }
 
 @media print {
