@@ -173,23 +173,35 @@ export default function RiskAssessmentNew() {
         // Check each row for meaningful content (not just default values)
         for (let i = 2; i <= 6; i++) {
           const suffix = i.toString();
+          
+          // Get all content from this row
           const riskName = riskItem[`riskName${suffix}`] || '';
           const mitigationPlan = riskItem[`mitigationPlan${suffix}`] || '';
           const riskOwner = riskItem[`riskOwner${suffix}`] || '';
           
-          // Check if there's actual content (trimming whitespace)
-          const hasName = riskName.trim().length > 0;
-          const hasMitigation = mitigationPlan.trim().length > 0; 
-          const hasOwner = riskOwner.trim().length > 0;
+          // CRITICAL: Much stricter check for content:
+          // 1. Trim all whitespace
+          // 2. Must have at least 3 characters to be considered content
+          const hasRealContent = (
+            riskName.trim().length > 2 ||
+            mitigationPlan.trim().length > 2 ||
+            riskOwner.trim().length > 2
+          );
           
-          // A row is only meaningful if it has actual text content (not just spaces/tabs)
-          const hasMeaningfulContent = hasName || hasMitigation || hasOwner;
-          
-          if (hasMeaningfulContent) {
-            console.log(`Row ${i} has meaningful content - will be displayed`);
-            rowCount = i;
+          if (hasRealContent) {
+            console.log(`Row ${i} has real content - will be displayed`);
+            rowCount = i; 
           } else {
-            console.log(`Row ${i} is empty or only has default values - will be hidden`);
+            console.log(`Row ${i} is empty or has minimal content - will be hidden`);
+            
+            // CRITICAL FIX: Force blank out this empty row data in our local state
+            // This ensures even if DB has content, our UI won't show it
+            riskItem[`riskName${suffix}`] = '';
+            riskItem[`probability${suffix}`] = 'Low';
+            riskItem[`impact${suffix}`] = 'Low';
+            riskItem[`riskCriticality${suffix}`] = 1;
+            riskItem[`mitigationPlan${suffix}`] = '';
+            riskItem[`riskOwner${suffix}`] = '';
           }
         }
         
@@ -291,9 +303,24 @@ export default function RiskAssessmentNew() {
       
       console.log(`Saving risk data via ${method} to ${url}`);
       
-      // Prepare payload with explicit fields
+      // ENHANCED SANITIZATION: Make a clean copy and ensure all fields 
+      // beyond visible rows are explicitly set to empty/default values
+      const sanitizedData = {...dataToSave};
+      
+      // For any row beyond what's currently visible, ensure data is cleared
+      for (let i = visibleRiskRows + 1; i <= 6; i++) {
+        const suffix = i === 1 ? '' : i.toString();
+        sanitizedData[`riskName${suffix}` as keyof RiskItem] = '';
+        sanitizedData[`probability${suffix}` as keyof RiskItem] = 'Low';
+        sanitizedData[`impact${suffix}` as keyof RiskItem] = 'Low';
+        sanitizedData[`riskCriticality${suffix}` as keyof RiskItem] = 1;
+        sanitizedData[`mitigationPlan${suffix}` as keyof RiskItem] = '';
+        sanitizedData[`riskOwner${suffix}` as keyof RiskItem] = '';
+      }
+      
+      // Prepare payload with explicit fields and sanitized data
       const payload = {
-        ...dataToSave,
+        ...sanitizedData,
         userId: user?.id || 1,
         projectId: Number(projectId),
       };
@@ -309,6 +336,16 @@ export default function RiskAssessmentNew() {
           duration: 5000
         });
       }
+      
+      // LOG what we're actually sending to the server
+      console.log("Final payload being saved:", {
+        method,
+        url,
+        visibleRows: visibleRiskRows,
+        hasRow2: !!payload.riskName2?.trim().length,
+        hasRow3: !!payload.riskName3?.trim().length,
+        hasRow4: !!payload.riskName4?.trim().length
+      });
       
       const response = await fetch(url, {
         method,
@@ -327,9 +364,23 @@ export default function RiskAssessmentNew() {
       
       const savedData = await response.json();
       
-      // Update the local risk data with the saved data
-      // but don't trigger a full reload which causes jerking
-      setRiskData({...savedData.risk});
+      // CRITICAL FIX: Make sure to sanitize the response data too before updating state
+      // This ensures that even if the server sends back unexpected values, we don't display them
+      const sanitizedResponse = {...savedData.risk};
+      
+      // Only keep visible rows - explicitly clear out any data for invisible rows
+      for (let i = visibleRiskRows + 1; i <= 6; i++) {
+        const suffix = i === 1 ? '' : i.toString();
+        sanitizedResponse[`riskName${suffix}`] = '';
+        sanitizedResponse[`probability${suffix}`] = 'Low';
+        sanitizedResponse[`impact${suffix}`] = 'Low';
+        sanitizedResponse[`riskCriticality${suffix}`] = 1;
+        sanitizedResponse[`mitigationPlan${suffix}`] = '';
+        sanitizedResponse[`riskOwner${suffix}`] = '';
+      }
+      
+      // Update the local risk data with the sanitized data
+      setRiskData(sanitizedResponse);
       
       return savedData;
     } catch (error) {
