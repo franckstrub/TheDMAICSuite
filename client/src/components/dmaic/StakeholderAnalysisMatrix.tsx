@@ -86,12 +86,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
   useEffect(() => {
     console.log("Stakeholder analysis data changed:", analysisData);
     if (analysisData?.items && analysisData.items.length > 0) {
-      // Sort the items by ID to maintain consistent order
-      const sortedItems = [...analysisData.items].sort((a, b) => a.id - b.id);
-      console.log("Stakeholder analysis items sorted by ID (ascending order):", sortedItems);
+      // Use items as they come from the database without sorting
+      console.log("Using stakeholder analysis items in their original order:", analysisData.items);
       
       // Set the items state with the data
-      setItems(sortedItems);
+      setItems(analysisData.items);
       
       // Store flag in sessionStorage
       sessionStorage.setItem(`project_${projectId}_has_stakeholder_analysis`, 'true');
@@ -152,12 +151,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       console.log("Loaded stakeholder analysis from database:", data);
       
       if (data?.items && data.items.length > 0) {
-        // Sort by ID to maintain order
-        const sortedItems = [...data.items].sort((a, b) => a.id - b.id);
-        console.log("Items sorted by ID (ascending order):", sortedItems);
+        // Use items as they come from the database without sorting
+        console.log("Using stakeholder analysis items in their original order:", data.items);
         
         // Set the items state with the data
-        setItems(sortedItems);
+        setItems(data.items);
         
         // Also trigger a query invalidation for React Query
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
@@ -169,7 +167,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           });
         }
         
-        return sortedItems;
+        return data.items;
       } else {
         // If no items found, ensure we have at least one empty row
         console.log("No items found in database, setting default empty row");
@@ -267,12 +265,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         console.log("Fresh stakeholder analysis data after save:", freshData);
         
         if (freshData?.items && freshData.items.length > 0) {
-          // Sort by ID
-          const sortedItems = [...freshData.items].sort((a, b) => a.id - b.id);
-          console.log("Items sorted by ID in ascending order:", sortedItems);
+          // Use items in their original order without sorting
+          console.log("Using stakeholder analysis items in their original order:", freshData.items);
           
           // Update state
-          setItems(sortedItems);
+          setItems(freshData.items);
         }
         
         // Also invalidate the query to ensure consistency
