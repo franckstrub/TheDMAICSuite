@@ -796,13 +796,35 @@ export default function RiskAssessment() {
               </div>
               <input type="hidden" {...riskForm.register("riskCriticality")} />
             </div>
-            <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+            <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
               <Textarea
                 className="w-full p-2 border-0 focus:ring-0 text-sm"
                 rows={3}
                 placeholder="How will you mitigate this risk?"
                 {...riskForm.register("mitigationPlan")}
+                ref={(el) => {
+                  if (el) {
+                    textareaRefs.current["mitigationPlan"] = el;
+                    adjustTextareaHeight(el);
+                  }
+                }}
+                onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
               />
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="absolute top-2 right-2 h-6 w-6 p-0"
+                onClick={() => generateMitigationPlan(1)}
+                disabled={isGeneratingMitigation[1]}
+              >
+                <Sparkles className="h-4 w-4 text-amber-500" />
+              </Button>
+              {isGeneratingMitigation[1] && (
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                  <div className="animate-spin h-5 w-5 border-2 border-amber-500 rounded-full border-t-transparent"></div>
+                </div>
+              )}
             </div>
             <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
               <Textarea
@@ -872,13 +894,35 @@ export default function RiskAssessment() {
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality2")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan2")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["mitigationPlan2"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 h-6 w-6 p-0"
+                  onClick={() => generateMitigationPlan(2)}
+                  disabled={isGeneratingMitigation[2]}
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </Button>
+                {isGeneratingMitigation[2] && (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <div className="animate-spin h-5 w-5 border-2 border-amber-500 rounded-full border-t-transparent"></div>
+                  </div>
+                )}
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -958,13 +1002,35 @@ export default function RiskAssessment() {
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality3")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan3")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["mitigationPlan3"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 h-6 w-6 p-0"
+                  onClick={() => generateMitigationPlan(3)}
+                  disabled={isGeneratingMitigation[3]}
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </Button>
+                {isGeneratingMitigation[3] && (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <div className="animate-spin h-5 w-5 border-2 border-amber-500 rounded-full border-t-transparent"></div>
+                  </div>
+                )}
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -996,6 +1062,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName4")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName4"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%]">
@@ -1040,13 +1113,35 @@ export default function RiskAssessment() {
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality4")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan4")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["mitigationPlan4"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 h-6 w-6 p-0"
+                  onClick={() => generateMitigationPlan(4)}
+                  disabled={isGeneratingMitigation[4]}
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </Button>
+                {isGeneratingMitigation[4] && (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <div className="animate-spin h-5 w-5 border-2 border-amber-500 rounded-full border-t-transparent"></div>
+                  </div>
+                )}
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -1054,6 +1149,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner4")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner4"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <Button
@@ -1122,13 +1224,35 @@ export default function RiskAssessment() {
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality5")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan5")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["mitigationPlan5"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 h-6 w-6 p-0"
+                  onClick={() => generateMitigationPlan(5)}
+                  disabled={isGeneratingMitigation[5]}
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </Button>
+                {isGeneratingMitigation[5] && (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <div className="animate-spin h-5 w-5 border-2 border-amber-500 rounded-full border-t-transparent"></div>
+                  </div>
+                )}
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -1136,6 +1260,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner5")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner5"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <Button
@@ -1204,13 +1335,35 @@ export default function RiskAssessment() {
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality6")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan6")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["mitigationPlan6"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 h-6 w-6 p-0"
+                  onClick={() => generateMitigationPlan(6)}
+                  disabled={isGeneratingMitigation[6]}
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </Button>
+                {isGeneratingMitigation[6] && (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <div className="animate-spin h-5 w-5 border-2 border-amber-500 rounded-full border-t-transparent"></div>
+                  </div>
+                )}
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -1218,6 +1371,13 @@ export default function RiskAssessment() {
                   rows={3}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner6")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner6"] = el;
+                      adjustTextareaHeight(el);
+                    }
+                  }}
+                  onInput={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
                 />
               </div>
               <Button
