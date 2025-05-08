@@ -508,18 +508,6 @@ Monitoring and Review:
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <CardTitle>Risk Assessment Matrix</CardTitle>
-            <div className="ml-4">
-              <Button 
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={saveRiskData}
-                disabled={isSaving}
-                className="h-7 text-xs w-16 px-2 py-0"
-              >
-                {isSaving ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
           </div>
           <div>
             <Button 
@@ -781,29 +769,31 @@ Monitoring and Review:
             )}
             
             {/* Add row button */}
-            {visibleRiskRows < 6 && (
+            <div className="flex flex-col gap-2">
+              {visibleRiskRows < 6 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addRiskRow}
+                  className="mt-2 self-start"
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Row
+                </Button>
+              )}
+              
+              {/* Save button */}
               <Button
                 type="button"
-                variant="outline"
-                onClick={addRiskRow}
-                className="mt-2"
+                variant="default"
+                onClick={saveRiskData}
+                className="self-start mt-2"
+                disabled={isSaving}
               >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Row
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Risk Assessment'}
               </Button>
-            )}
-            
-            {/* Save button */}
-            <Button
-              type="button"
-              variant="default"
-              onClick={saveRiskData}
-              className="mt-6 w-full"
-              disabled={isSaving}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save Risk Assessment'}
-            </Button>
+            </div>
           </>
         )}
       </CardContent>
