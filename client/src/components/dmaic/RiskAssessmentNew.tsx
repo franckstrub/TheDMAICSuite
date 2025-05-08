@@ -138,49 +138,103 @@ export default function RiskAssessmentNew() {
   // Load risk data from API
   const loadRiskData = async (showToast = false) => {
     setIsLoading(true);
+    
     try {
+      console.log("Fetching risk data for project:", projectId);
       const response = await fetch(`/api/projects/${projectId}/risks`);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch risk data');
+        throw new Error(`API response error: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('Loaded risk data:', data);
+      console.log('Raw risk data from API:', data);
       
       if (data && data.risk) {
-        setRiskData(data.risk);
+        // If we have risk data, update our state
+        console.log('Risk data successfully loaded from database:', data.risk);
         
-        // Determine how many rows should be visible
+        // First, fill any null values with appropriate defaults
+        const cleanedData = {...data.risk};
+        
+        // Ensure all fields have at least default values
+        for (let i = 1; i <= 6; i++) {
+          const suffix = i === 1 ? '' : i.toString();
+          cleanedData[`riskName${suffix}` as keyof RiskItem] = 
+            cleanedData[`riskName${suffix}` as keyof RiskItem] || '';
+          cleanedData[`probability${suffix}` as keyof RiskItem] = 
+            cleanedData[`probability${suffix}` as keyof RiskItem] || 'Low';
+          cleanedData[`impact${suffix}` as keyof RiskItem] = 
+            cleanedData[`impact${suffix}` as keyof RiskItem] || 'Low';
+          cleanedData[`riskCriticality${suffix}` as keyof RiskItem] = 
+            cleanedData[`riskCriticality${suffix}` as keyof RiskItem] || 1;
+          cleanedData[`mitigationPlan${suffix}` as keyof RiskItem] = 
+            cleanedData[`mitigationPlan${suffix}` as keyof RiskItem] || '';
+          cleanedData[`riskOwner${suffix}` as keyof RiskItem] = 
+            cleanedData[`riskOwner${suffix}` as keyof RiskItem] || '';
+        }
+        
+        // Set the cleaned data to state
+        setRiskData(cleanedData);
+        
+        // Determine how many rows should be visible by checking actual content
         let maxRow = 1; // Default to 1 row (mandatory)
-        if (data.risk.riskName6) maxRow = 6;
-        else if (data.risk.riskName5) maxRow = 5;
-        else if (data.risk.riskName4) maxRow = 4;
-        else if (data.risk.riskName3) maxRow = 3;
-        else if (data.risk.riskName2) maxRow = 2;
         
+        // Check rows 2-6 for any content
+        for (let i = 2; i <= 6; i++) {
+          const riskNameProp = `riskName${i}` as keyof RiskItem;
+          const mitigationPlanProp = `mitigationPlan${i}` as keyof RiskItem;
+          const riskOwnerProp = `riskOwner${i}` as keyof RiskItem;
+          
+          // If any field in this row has content, display the row
+          if (
+            cleanedData[riskNameProp] || 
+            cleanedData[mitigationPlanProp] || 
+            cleanedData[riskOwnerProp]
+          ) {
+            maxRow = Math.max(maxRow, i);
+          }
+        }
+        
+        console.log(`Setting visible rows to: ${maxRow} based on data content`);
         setVisibleRiskRows(maxRow);
         
-        // Store in sessionStorage
+        // Store in sessionStorage to remember we have data
         sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
         
         if (showToast) {
           toast({
             title: "Risk assessment data loaded",
-            description: "The risk assessment data has been refreshed."
+            description: "The risk assessment data has been refreshed.",
+            duration: 3000
           });
         }
       } else {
         // No saved data, set default
+        console.log("No risk data found in API response or empty data, using default");
         setRiskData(createDefaultRiskItem(projectId));
         setVisibleRiskRows(1);
+        
+        // Remove the session storage flag since no data was found
+        sessionStorage.removeItem(`project_${projectId}_has_risk_assessment`);
       }
     } catch (error) {
       console.error('Error loading risk data:', error);
+      
+      // Show error toast
       toast({
         title: "Error",
-        description: "Failed to load risk assessment data. Please try again.",
-        variant: "destructive"
+        description: "Failed to load risk assessment data. Creating a new form.",
+        variant: "destructive",
+        duration: 5000
       });
+      
+      // Set default risk data
+      setRiskData(createDefaultRiskItem(projectId));
+      setVisibleRiskRows(1);
+      
+      // Remove the session storage flag due to error
+      sessionStorage.removeItem(`project_${projectId}_has_risk_assessment`);
     } finally {
       setIsLoading(false);
     }
