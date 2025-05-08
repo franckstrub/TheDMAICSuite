@@ -1254,16 +1254,24 @@ export default function RiskAssessment() {
                     if (el) textareaRefs.current["mitigationPlan3"] = el;
                   }}
                 />
-                <Button 
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
-                  onClick={() => generateMitigationPlan(3)}
-                  title="Generate AI-assisted mitigation plan suggestions"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                        onClick={() => generateMitigationPlan(3)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -1349,16 +1357,24 @@ export default function RiskAssessment() {
                     if (el) textareaRefs.current["mitigationPlan4"] = el;
                   }}
                 />
-                <Button 
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
-                  onClick={() => generateMitigationPlan(4)}
-                  title="Generate AI-assisted mitigation plan suggestions"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                        onClick={() => generateMitigationPlan(4)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -1444,16 +1460,24 @@ export default function RiskAssessment() {
                     if (el) textareaRefs.current["mitigationPlan5"] = el;
                   }}
                 />
-                <Button 
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
-                  onClick={() => generateMitigationPlan(5)}
-                  title="Generate AI-assisted mitigation plan suggestions"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                        onClick={() => generateMitigationPlan(5)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -1539,16 +1563,24 @@ export default function RiskAssessment() {
                     if (el) textareaRefs.current["mitigationPlan6"] = el;
                   }}
                 />
-                <Button 
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
-                  onClick={() => generateMitigationPlan(6)}
-                  title="Generate AI-assisted mitigation plan suggestions"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                        onClick={() => generateMitigationPlan(6)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
