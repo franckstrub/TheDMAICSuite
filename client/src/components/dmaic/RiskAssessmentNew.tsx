@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PlusCircle, MinusCircle, Sparkles, Save } from "lucide-react";
+import { PlusCircle, Sparkles, Save } from "lucide-react";
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 
@@ -763,7 +763,7 @@ Monitoring and Review:
                   onClick={() => deleteRiskRow(2)}
                   title="Delete Row 2"
                 >
-                  <MinusCircle className="h-4 w-4" />
+                  <i className="fas fa-trash"></i>
                 </Button>
               </div>
             )}
