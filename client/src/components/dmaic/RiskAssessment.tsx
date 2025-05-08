@@ -656,105 +656,253 @@ export default function RiskAssessment() {
     // Show initial toast notification
     toast({
       title: "Generating mitigation plan",
-      description: "Creating concise mitigation suggestions...",
+      description: "Creating mitigation suggestions based on risk details...",
       variant: "default"
     });
     
-    // Extract key themes from risk name for targeted suggestions
+    // Get suggestions based on probability and impact - without repeating the risk information
+    let suggestion = `Recommended Mitigation Strategies:\n\n`;
+    
+    // Determine risk characteristics based on probability and impact
+    const isProbabilityHigh = probability === "High";
+    const isProbabilityMedium = probability === "Medium";
+    const isImpactHigh = impact === "High";
+    const isImpactMedium = impact === "Medium";
+    
+    // Generate more tailored suggestions based on risk criticality
+    if (criticality >= 7) {
+      // High criticality (7-9)
+      suggestion += "• Implement multiple preventative controls with overlapping coverage\n";
+      
+      if (isProbabilityHigh) {
+        suggestion += "• Develop prevention strategies to reduce likelihood of occurrence\n";
+      }
+      
+      if (isImpactHigh) {
+        suggestion += "• Create detailed contingency and recovery plans to minimize impact\n";
+        suggestion += "• Consider risk transfer options (insurance, partnerships, contracts)\n";
+      }
+      
+      suggestion += "• Assign dedicated risk owner with executive oversight\n";
+      suggestion += "• Schedule frequent monitoring on weekly/bi-weekly basis\n";
+      suggestion += "• Implement early warning indicators and thresholds\n";
+      suggestion += "• Create detailed response and escalation procedures\n";
+    } else if (criticality >= 4) {
+      // Medium criticality (4-6)
+      suggestion += "• Implement key preventative controls\n";
+      
+      if (isProbabilityMedium || isProbabilityHigh) {
+        suggestion += "• Develop strategies to reduce occurrence probability\n";
+      }
+      
+      if (isImpactMedium || isImpactHigh) {
+        suggestion += "• Prepare specific response plans for impact reduction\n";
+      }
+      
+      suggestion += "• Assign dedicated risk owner for regular monitoring\n";
+      suggestion += "• Schedule monthly review of risk status\n";
+      suggestion += "• Define clear triggers for escalation\n";
+      suggestion += "• Document and communicate mitigation approach";
+    } else {
+      // Low criticality (1-3)
+      suggestion += "• Implement basic monitoring controls\n";
+      
+      if (isProbabilityHigh) {
+        suggestion += "• Consider low-cost preventative measures\n";
+      }
+      
+      if (isImpactHigh) {
+        suggestion += "• Document simple response procedures\n";
+      }
+      
+      suggestion += "• Assign risk owner for awareness\n";
+      suggestion += "• Review quarterly or if conditions change\n";
+      suggestion += "• Accept risk with minimal controls\n";
+      suggestion += "• Document acceptance rationale";
+    }
+    
+    // Extract key themes from risk name for more targeted suggestions
     const riskNameLower = riskName.toLowerCase();
-    let suggestion = '';
+    
+    // Risk type specific suggestions
     let specificRiskType = "";
     
-    // Technology risk
     if (riskNameLower.includes("technology") || riskNameLower.includes("technical") || riskNameLower.includes("system") || riskNameLower.includes("software") || riskNameLower.includes("it")) {
       specificRiskType = "Technology";
-      suggestion = "Technology Risk Mitigation Plan:\n\n";
+      suggestion += "\n\nTechnology Risk Specific:\n";
       
-      // Maximum 3 high-value, specific points as requested
-      suggestion += "• Develop functional prototype/MVP before full implementation\n";
-      suggestion += "• Hire external technical experts with specific domain experience\n";
-      suggestion += "• Conduct technical benchmarking with similar implementations";
-    } 
-    // Change management/acceptance risk
-    else if (riskNameLower.includes("change") || riskNameLower.includes("accept") || riskNameLower.includes("resist") || riskNameLower.includes("adopt") || riskNameLower.includes("culture") || riskNameLower.includes("people")) {
-      specificRiskType = "Change Management";
-      suggestion = "People Acceptance Risk Mitigation Plan:\n\n";
-      
-      // Maximum 3 high-value, specific points as requested
-      suggestion += "• Create targeted 'What's in it for me?' communications for each stakeholder group\n";
-      suggestion += "• Establish change champion network with representatives from each affected area\n";
-      suggestion += "• Implement regular feedback mechanisms to identify and address resistance early";
-    }
-    // Financial/budget risk
-    else if (riskNameLower.includes("budget") || riskNameLower.includes("cost") || riskNameLower.includes("financial") || riskNameLower.includes("expense") || riskNameLower.includes("funding")) {
-      specificRiskType = "Financial";
-      suggestion = "Financial Risk Mitigation Plan:\n\n";
-      
-      // Maximum 3 high-value, specific points as requested
-      suggestion += "• Conduct comprehensive ROI analysis with detailed CAPEX justification\n";
-      suggestion += "• Implement tiered funding approach with stage-gates for continued investment\n";
-      suggestion += "• Establish regular financial reviews with clear variance thresholds";
-    }
-    // Planning/timeline/execution risk
-    else if (riskNameLower.includes("schedule") || riskNameLower.includes("timeline") || riskNameLower.includes("deadline") || riskNameLower.includes("delay") || riskNameLower.includes("execution") || riskNameLower.includes("planning")) {
-      specificRiskType = "Planning";
-      suggestion = "Planning Execution Risk Mitigation Plan:\n\n";
-      
-      // Maximum 3 high-value, specific points as requested
-      suggestion += "• Implement bi-weekly steering committee meetings with executive escalation paths\n";
-      suggestion += "• Establish formal scope management process with impact assessment\n";
-      suggestion += "• Create multi-generation planning approach with flexible resource allocation";
-    }
-    // Resource/staffing risk
-    else if (riskNameLower.includes("resource") || riskNameLower.includes("staffing") || riskNameLower.includes("personnel") || riskNameLower.includes("team") || riskNameLower.includes("employee")) {
-      specificRiskType = "Resource";
-      suggestion = "Resource Risk Mitigation Plan:\n\n";
-      
-      // Maximum 3 high-value, specific points as requested
-      suggestion += "• Develop cross-training program for critical skill areas\n";
-      suggestion += "• Establish relationships with external staffing partners/consultants\n";
-      suggestion += "• Create detailed skill inventory and resource allocation matrix";
-    }
-    // Quality/performance risk
-    else if (riskNameLower.includes("quality") || riskNameLower.includes("performance") || riskNameLower.includes("defect") || riskNameLower.includes("standard") || riskNameLower.includes("compliance")) {
-      specificRiskType = "Quality";
-      suggestion = "Quality Risk Mitigation Plan:\n\n";
-      
-      // Maximum 3 high-value, specific points as requested
-      suggestion += "• Implement stage-gate quality reviews with clear acceptance criteria\n";
-      suggestion += "• Establish independent verification and validation process\n";
-      suggestion += "• Create detailed performance monitoring with automated alerts";
-    }
-    // Scope risk
-    else if (riskNameLower.includes("scope") || riskNameLower.includes("requirement") || riskNameLower.includes("specification") || riskNameLower.includes("definition") || riskNameLower.includes("creep")) {
-      specificRiskType = "Scope";
-      suggestion = "Scope Risk Mitigation Plan:\n\n";
-      
-      // Maximum 3 high-value, specific points as requested
-      suggestion += "• Implement formal change control process with impact assessment\n";
-      suggestion += "• Conduct regular scope verification sessions with stakeholders\n";
-      suggestion += "• Create detailed requirements traceability matrix";
-    }
-    // Generic risk with no specific category identified
-    else {
-      specificRiskType = "General";
-      suggestion = "Risk Mitigation Plan:\n\n";
-      
-      // Maximum 3 high-value, specific points based on criticality
-      if (criticality >= 7) {
-        suggestion += "• Assign executive sponsor with direct oversight responsibility\n";
-        suggestion += "• Implement weekly monitoring with defined threshold indicators\n";
-        suggestion += "• Develop comprehensive contingency plan with dedicated resources";
-      } else if (criticality >= 4) {
-        suggestion += "• Assign dedicated risk owner with clear monitoring responsibilities\n";
-        suggestion += "• Establish bi-weekly review process with defined escalation paths\n";
-        suggestion += "• Develop targeted mitigation actions with measurable outcomes";
+      if (isProbabilityHigh) {
+        suggestion += "• Conduct comprehensive technical assessments and penetration testing\n";
+        suggestion += "• Implement redundant systems or fallback options\n";
       } else {
-        suggestion += "• Assign risk owner for monitoring responsibilities\n";
-        suggestion += "• Implement monthly review process with basic tracking\n";
-        suggestion += "• Document acceptance criteria and threshold for increased response";
+        suggestion += "• Conduct targeted technical assessments based on risk areas\n";
       }
+      
+      if (isImpactHigh) {
+        suggestion += "• Develop detailed disaster recovery procedures\n";
+        suggestion += "• Establish 24/7 technical support protocols\n";
+      } else {
+        suggestion += "• Establish standard technical support channels\n";
+      }
+      
+      suggestion += "• Ensure knowledge transfer and documentation\n";
+      suggestion += "• Consider prototype or pilot implementations before full deployment\n";
+      suggestion += "• Provide specialized training for technical staff";
+      
+    } else if (riskNameLower.includes("resource") || riskNameLower.includes("staffing") || riskNameLower.includes("personnel") || riskNameLower.includes("team") || riskNameLower.includes("employee")) {
+      specificRiskType = "Resource";
+      suggestion += "\n\nResource Risk Specific:\n";
+      
+      if (isProbabilityHigh) {
+        suggestion += "• Develop comprehensive succession and continuity plans\n";
+        suggestion += "• Prioritize critical resource retention strategies\n";
+      } else {
+        suggestion += "• Create basic succession plans for key roles\n";
+      }
+      
+      if (isImpactHigh) {
+        suggestion += "• Establish partnerships with staffing agencies for rapid response\n";
+        suggestion += "• Create detailed knowledge transfer procedures\n";
+      } else {
+        suggestion += "• Maintain relationship with staffing resources\n";
+      }
+      
+      suggestion += "• Cross-train team members on critical functions\n";
+      suggestion += "• Implement knowledge sharing and documentation systems\n";
+      suggestion += "• Develop hiring or contractor contingencies as backup";
+      
+    } else if (riskNameLower.includes("schedule") || riskNameLower.includes("timeline") || riskNameLower.includes("deadline") || riskNameLower.includes("delay")) {
+      specificRiskType = "Schedule";
+      suggestion += "\n\nSchedule Risk Specific:\n";
+      
+      if (isProbabilityHigh) {
+        suggestion += "• Build substantial buffer time (20-30%) into critical path activities\n";
+        suggestion += "• Implement formal change control procedures for timeline changes\n";
+      } else {
+        suggestion += "• Build reasonable buffer time (10-15%) into critical path activities\n";
+      }
+      
+      if (isImpactHigh) {
+        suggestion += "• Prepare contingency plan for deadline failure scenarios\n";
+        suggestion += "• Identify potential scope reduction options if necessary\n";
+      } else {
+        suggestion += "• Document potential scope adjustment options\n";
+      }
+      
+      suggestion += "• Map and monitor all schedule dependencies\n";
+      suggestion += "• Create detailed milestone tracking system\n";
+      suggestion += "• Develop acceleration options if delays occur\n";
+      suggestion += "• Establish clear escalation paths for timeline issues";
+      
+    } else if (riskNameLower.includes("budget") || riskNameLower.includes("cost") || riskNameLower.includes("financial") || riskNameLower.includes("expense") || riskNameLower.includes("funding")) {
+      specificRiskType = "Financial";
+      suggestion += "\n\nFinancial Risk Specific:\n";
+      
+      if (isProbabilityHigh) {
+        suggestion += "• Include substantial contingency reserves (15-20%) in budget\n";
+        suggestion += "• Implement stricter spending controls and approvals\n";
+      } else {
+        suggestion += "• Include reasonable contingency reserves (10%) in budget\n";
+      }
+      
+      if (isImpactHigh) {
+        suggestion += "• Prepare detailed cost reduction options for emergency scenarios\n";
+        suggestion += "• Establish emergency funding sources or protocols\n";
+      } else {
+        suggestion += "• Document potential cost-saving measures if needed\n";
+      }
+      
+      suggestion += "• Implement detailed cost tracking system with frequent reviews\n";
+      suggestion += "• Set clear spending approval thresholds and authority\n";
+      suggestion += "• Create key financial performance indicators and alerts\n";
+      suggestion += "• Establish regular financial review schedule";
+      
+    } else if (riskNameLower.includes("quality") || riskNameLower.includes("performance") || riskNameLower.includes("defect") || riskNameLower.includes("standard") || riskNameLower.includes("compliance")) {
+      specificRiskType = "Quality";
+      suggestion += "\n\nQuality Risk Specific:\n";
+      
+      if (isProbabilityHigh) {
+        suggestion += "• Implement comprehensive quality management system\n";
+        suggestion += "• Conduct preventative quality reviews at multiple stages\n";
+      } else {
+        suggestion += "• Implement targeted quality control procedures\n";
+      }
+      
+      if (isImpactHigh) {
+        suggestion += "• Develop rapid response protocols for critical quality issues\n";
+        suggestion += "• Create remediation plans with dedicated resources\n";
+      } else {
+        suggestion += "• Prepare standard remediation approaches for common issues\n";
+      }
+      
+      suggestion += "• Establish clear quality criteria, standards and metrics\n";
+      suggestion += "• Conduct regular testing throughout process\n";
+      suggestion += "• Implement independent quality verification\n";
+      suggestion += "• Provide quality-focused training to team members";
+      
+    } else if (riskNameLower.includes("change") || riskNameLower.includes("adoption") || riskNameLower.includes("resistance") || riskNameLower.includes("acceptance") || riskNameLower.includes("stakeholder")) {
+      specificRiskType = "Change Management";
+      suggestion += "\n\nChange Management Risk Specific:\n";
+      
+      if (isProbabilityHigh) {
+        suggestion += "• Develop comprehensive change management and communication plan\n";
+        suggestion += "• Conduct stakeholder impact analysis and prioritization\n";
+      } else {
+        suggestion += "• Create standard change management approach\n";
+      }
+      
+      if (isImpactHigh) {
+        suggestion += "• Engage executive sponsors to champion the change\n";
+        suggestion += "• Establish formal feedback and concern resolution processes\n";
+      } else {
+        suggestion += "• Identify key stakeholders for targeted engagement\n";
+      }
+      
+      suggestion += "• Provide clear and frequent communications on rationale and benefits\n";
+      suggestion += "• Create targeted training and support materials\n";
+      suggestion += "• Establish feedback channels for concerns and suggestions\n";
+      suggestion += "• Identify and engage change champions within organization";
     }
+    
+    // If no specific risk type was identified, provide general suggestions
+    if (!specificRiskType) {
+      suggestion += "\n\nGeneral Risk Response Recommendations:\n";
+      suggestion += "• Document clear assumptions and conditions\n";
+      suggestion += "• Establish regular review and reassessment cycle\n";
+      suggestion += "• Create communication plan for status updates\n";
+      suggestion += "• Identify key stakeholders to involve in mitigation\n";
+      suggestion += "• Define clear success criteria for mitigation efforts";
+    }
+    
+    // Add conclusion based on criticality
+    suggestion += "\n\nMonitoring and Review:";
+    if (criticality >= 7) {
+      suggestion += "\n• Review risk status weekly";
+      suggestion += "\n• Report to executive leadership monthly";
+      suggestion += "\n• Reassess mitigation effectiveness quarterly";
+    } else if (criticality >= 4) {
+      suggestion += "\n• Review risk status bi-weekly";
+      suggestion += "\n• Report to project leadership monthly";
+      suggestion += "\n• Reassess mitigation effectiveness quarterly";
+    } else {
+      suggestion += "\n• Review risk status monthly";
+      suggestion += "\n• Report in standard project updates";
+      suggestion += "\n• Reassess if conditions change";
+    }
+    
+    // Show success toast when plan is generated with specific risk type and criticality if detected
+    let criticalityLevel = "Low";
+    if (criticality >= 7) criticalityLevel = "High";
+    else if (criticality >= 4) criticalityLevel = "Medium";
+    
+    toast({
+      title: "Mitigation plan generated",
+      description: specificRiskType 
+        ? `AI-suggested strategies for ${criticalityLevel} ${specificRiskType} risk are ready.` 
+        : `AI-suggested strategies for ${criticalityLevel} risk (${criticality}/9) are ready.`,
+      variant: "default",
+      className: "bg-green-50 border-green-200 text-green-700"
+    });
     
     // Update the form with the generated suggestion
     console.log(`Setting value for field ${mitigationPlanField} to suggestion (length: ${suggestion.length})`);
@@ -800,37 +948,9 @@ export default function RiskAssessment() {
               textarea.style.height = `${scrollHeight + 16}px`;
             }
           }, 800);
-        }, 400);
-      }, 200);
-    }, 100);
-    
-    // Show success notification with specific risk type
-    toast({
-      title: `${specificRiskType} Risk Mitigation Plan`,
-      description: `Created concise, targeted suggestions for risk mitigation.`,
-      variant: "default",
-      className: "bg-green-50 border-green-200 text-green-700"
-    });
-  };        
-        setTimeout(() => {
-          adjustTextareaHeight(mitigationPlanField);
-          
-          // Final adjustment after DOM has fully updated
-          setTimeout(() => {
-            // Make one last adjustment
-            adjustTextareaHeight(mitigationPlanField);
-            
-            // Force update the textarea if ref exists
-            const textarea = textareaRefs.current[mitigationPlanField];
-            if (textarea) {
-              textarea.style.height = 'auto';
-              const scrollHeight = textarea.scrollHeight;
-              textarea.style.height = `${scrollHeight + 16}px`;
-            }
-          }, 800);
-        }, 400);
-      }, 200);
-    }, 100);
+        }, 600);
+      }, 400);
+    }, 200);
     
     // No need for a second toast notification - we already showed one above
   };
@@ -1017,7 +1137,7 @@ export default function RiskAssessment() {
               <h4 className="font-medium text-red-600 text-sm">Risk</h4>
             </div>
             <div className="p-3 bg-amber-50 rounded-md text-center w-[95%] col-span-1">
-              <h4 className="font-small text-amber-600 text-sm">Probability</h4>
+              <h4 className="font-medium text-amber-600 text-sm">Probability</h4>
             </div>
             <div className="p-3 bg-orange-50 rounded-md text-center w-[95%] col-span-1">
               <h4 className="font-medium text-orange-600 text-sm">Impact</h4>
