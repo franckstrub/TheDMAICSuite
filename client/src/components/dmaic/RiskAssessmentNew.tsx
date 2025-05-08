@@ -177,22 +177,35 @@ export default function RiskAssessmentNew() {
         // Set the cleaned data to state
         setRiskData(cleanedData);
         
-        // Determine how many rows should be visible by checking actual content
+        // Determine how many rows should be visible by checking MEANINGFUL content
         let maxRow = 1; // Default to 1 row (mandatory)
         
-        // Check rows 2-6 for any content
+        // Check rows 2-6 for any SIGNIFICANT content (not just default values)
         for (let i = 2; i <= 6; i++) {
           const riskNameProp = `riskName${i}` as keyof RiskItem;
           const mitigationPlanProp = `mitigationPlan${i}` as keyof RiskItem;
           const riskOwnerProp = `riskOwner${i}` as keyof RiskItem;
           
-          // If any field in this row has content, display the row
-          if (
-            cleanedData[riskNameProp] || 
-            cleanedData[mitigationPlanProp] || 
-            cleanedData[riskOwnerProp]
-          ) {
+          // Only consider rows with non-empty content in risk name or mitigation plan or owner
+          // Empty strings or all default values don't count as meaningful content
+          const hasNonEmptyRiskName = 
+            typeof cleanedData[riskNameProp] === 'string' && 
+            (cleanedData[riskNameProp] as string).trim() !== '';
+            
+          const hasNonEmptyMitigationPlan = 
+            typeof cleanedData[mitigationPlanProp] === 'string' && 
+            (cleanedData[mitigationPlanProp] as string).trim() !== '';
+            
+          const hasNonEmptyRiskOwner = 
+            typeof cleanedData[riskOwnerProp] === 'string' && 
+            (cleanedData[riskOwnerProp] as string).trim() !== '';
+          
+          // Display row only if it has MEANINGFUL content in at least one of these fields
+          if (hasNonEmptyRiskName || hasNonEmptyMitigationPlan || hasNonEmptyRiskOwner) {
             maxRow = Math.max(maxRow, i);
+            console.log(`Row ${i} has meaningful content - will be displayed`);
+          } else {
+            console.log(`Row ${i} is empty or only has default values - will be hidden`);
           }
         }
         
