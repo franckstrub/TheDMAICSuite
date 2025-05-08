@@ -591,33 +591,21 @@ export default function RiskAssessment() {
     });
   };
   
-  // Function to auto-adjust textarea height based on content
+  // Function to set fixed height for all textareas to prevent resizing issues
   const adjustTextareaHeight = (textareaKey: string) => {
     setTimeout(() => {
       const textarea = textareaRefs.current[textareaKey];
       if (textarea) {
-        // Reset height to auto to get accurate scrollHeight measurement
-        textarea.style.height = 'auto';
+        // Instead of adjusting height dynamically, use a fixed height for all textareas
+        const fixedHeight = 120; // Fixed height for all textareas
         
-        // Get textarea content and calculate lines
-        const content = textarea.value || '';
-        const lineCount = content.split('\n').length;
+        // Apply fixed styling
+        textarea.style.height = `${fixedHeight}px`;
+        textarea.style.minHeight = `${fixedHeight}px`;
+        textarea.style.maxHeight = `${fixedHeight}px`;
+        textarea.style.overflowY = 'auto'; // Enable scrolling for long content
         
-        // Calculate new height based on content (add a larger buffer for better appearance)
-        // Use line count to help calculate a more appropriate height
-        const minHeight = 80; // Increased minimum height
-        const lineHeight = 20; // Approximate height per line
-        const estimatedHeight = lineCount * lineHeight;
-        const scrollHeight = textarea.scrollHeight;
-        
-        // Use the larger of estimated height or scrollHeight
-        const newHeight = Math.max(minHeight, scrollHeight + 16, estimatedHeight + 16);
-        
-        // Add smooth transition for a better user experience
-        textarea.style.transition = 'height 0.3s ease-in-out';
-        textarea.style.height = `${newHeight}px`;
-        
-        console.log(`Adjusted textarea height for ${textareaKey} to ${newHeight}px (${lineCount} lines)`);
+        console.log(`Set fixed height for ${textareaKey} to ${fixedHeight}px`);
       }
     }, 0);
   };
@@ -625,7 +613,7 @@ export default function RiskAssessment() {
   // Effect to adjust textareas after form is loaded or when visibleRiskRows changes
   useEffect(() => {
     if (riskFormInitialized.current) {
-      // Force updating textareas with their values and adjust heights
+      // Force updating textareas with their values and set fixed heights
       const forceUpdateTextareas = () => {
         // Skip textarea resizing after save operation
         if (skipNextTextareaResize) {
@@ -644,27 +632,21 @@ export default function RiskAssessment() {
             // Directly update the DOM element
             textareaElement.value = value;
             
-            // Skip height calculation if we're in save operation
-            if (skipNextTextareaResize) continue;
+            // Apply fixed height styling to all textareas consistently
+            const fixedHeight = 120; // Fixed height for all risk textareas
             
-            // Calculate appropriate height based on content
-            const lineCount = value.split('\n').length;
-            const minHeight = 80;
-            const lineHeight = 20;
-            const estimatedHeight = Math.max(minHeight, lineCount * lineHeight + 16);
+            // Set consistent styles
+            textareaElement.style.height = `${fixedHeight}px`;
+            textareaElement.style.minHeight = `${fixedHeight}px`;
+            textareaElement.style.maxHeight = `${fixedHeight}px`;
+            textareaElement.style.overflowY = 'auto'; // Enable scrolling for long content
             
-            // Force set height with extra padding
-            textareaElement.style.height = 'auto';
-            const scrollHeight = textareaElement.scrollHeight;
-            const newHeight = Math.max(estimatedHeight, scrollHeight + 32);
-            textareaElement.style.height = `${newHeight}px`;
-            
-            console.log(`Force updated textarea ${fieldName} with height ${newHeight}px (${lineCount} lines)`);
+            console.log(`Set fixed height for ${fieldName} to ${fixedHeight}px`);
           } else {
             console.warn(`Textarea ref for ${fieldName} does not exist when attempting to adjust height`);
           }
         }
-        console.log("Force updated all mitigation plan textarea heights");
+        console.log("Applied fixed heights to all mitigation plan textareas");
       };
       
       // If we're skipping resize due to save, just run once
