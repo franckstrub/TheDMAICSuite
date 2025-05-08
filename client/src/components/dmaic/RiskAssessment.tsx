@@ -1051,13 +1051,14 @@ export default function RiskAssessment() {
                 }}
               />
               <Button 
-                size="sm" 
-                variant="ghost" 
-                className="absolute top-2 right-2 p-1 h-8 w-8"
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
                 onClick={() => generateMitigationPlan(1)}
                 title="Generate AI-assisted mitigation plan suggestions"
               >
-                <Sparkles className="h-4 w-4 text-amber-500" />
+                <Sparkles className="h-4 w-4" />
               </Button>
             </div>
             <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
@@ -1139,13 +1140,14 @@ export default function RiskAssessment() {
                   }}
                 />
                 <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="absolute top-2 right-2 p-1 h-8 w-8"
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
                   onClick={() => generateMitigationPlan(2)}
                   title="Generate AI-assisted mitigation plan suggestions"
                 >
-                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <Sparkles className="h-4 w-4" />
                 </Button>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
@@ -1237,13 +1239,14 @@ export default function RiskAssessment() {
                   }}
                 />
                 <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="absolute top-2 right-2 p-1 h-8 w-8"
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
                   onClick={() => generateMitigationPlan(3)}
                   title="Generate AI-assisted mitigation plan suggestions"
                 >
-                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <Sparkles className="h-4 w-4" />
                 </Button>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
@@ -1331,13 +1334,14 @@ export default function RiskAssessment() {
                   }}
                 />
                 <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="absolute top-2 right-2 p-1 h-8 w-8"
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
                   onClick={() => generateMitigationPlan(4)}
                   title="Generate AI-assisted mitigation plan suggestions"
                 >
-                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <Sparkles className="h-4 w-4" />
                 </Button>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
