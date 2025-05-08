@@ -221,20 +221,20 @@ export default function RiskAssessmentNew() {
     } catch (error) {
       console.error('Error loading risk data:', error);
       
-      // Show error toast
+      // Show error toast with more detailed explanation
       toast({
         title: "Error",
-        description: "Failed to load risk assessment data. Creating a new form.",
+        description: "Unable to load risk data. A new form has been created - your changes will be saved when you update any field.",
         variant: "destructive",
         duration: 5000
       });
       
       // Set default risk data
-      setRiskData(createDefaultRiskItem(projectId));
+      const defaultData = createDefaultRiskItem(projectId);
+      setRiskData(defaultData);
       setVisibleRiskRows(1);
       
-      // Remove the session storage flag due to error
-      sessionStorage.removeItem(`project_${projectId}_has_risk_assessment`);
+      // We don't remove the sessionStorage flag here - let the user try to save new data
     } finally {
       setIsLoading(false);
     }
@@ -644,20 +644,11 @@ Monitoring and Review:
   
   // Initial data load on component mount
   useEffect(() => {
-    console.log("RiskAssessment component mounted - checking for saved data");
+    console.log("RiskAssessment component mounted - always try loading from database first");
     
-    // Check if we have previously saved data in sessionStorage
-    const hasRiskData = sessionStorage.getItem(`project_${projectId}_has_risk_assessment`);
+    // Always attempt to load from the database first, regardless of sessionStorage state
+    loadRiskData(false);
     
-    if (hasRiskData === 'true') {
-      console.log("Risk assessment flag found in sessionStorage, loading from database");
-      loadRiskData(false);
-    } else {
-      // No saved data, set default
-      console.log("No saved risk assessment found, using default");
-      setRiskData(createDefaultRiskItem(projectId));
-      setVisibleRiskRows(1);
-    }
   }, [projectId]);
   
   // Removed manual refresh function as it's no longer needed
