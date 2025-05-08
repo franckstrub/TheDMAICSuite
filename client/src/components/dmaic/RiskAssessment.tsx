@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, MinusCircle } from "lucide-react";
+import { PlusCircle, MinusCircle, Sparkles } from "lucide-react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
@@ -61,6 +61,10 @@ export default function RiskAssessment() {
   const [visibleRiskRows, setVisibleRiskRows] = useState(1); // Start with 1 row (mandatory)
   const riskFormInitialized = useRef<boolean>(false);
   const { user, currentProject } = useAppContext();
+  const [isGeneratingMitigation, setIsGeneratingMitigation] = useState<{ [key: number]: boolean }>({});
+  
+  // Create refs for the mitigation plan textareas
+  const textareaRefs = useRef<{ [key: string]: HTMLTextAreaElement }>({});
 
   // Use URL project ID if available, otherwise fall back to current project
   const projectId = projectIdParam ? parseInt(projectIdParam) : (currentProject?.id || 1);
@@ -459,6 +463,89 @@ export default function RiskAssessment() {
   const calculateRiskCriticality = (probability: string, impact: string): number => {
     if (!probability || !impact) return 1;
     return riskCriticalityMatrix[probability as keyof typeof riskCriticalityMatrix]?.[impact as keyof typeof riskCriticalityMatrix[keyof typeof riskCriticalityMatrix]] || 1;
+  };
+  
+  // Auto-adjust textarea height based on content
+  const adjustTextareaHeight = (textareaElement: HTMLTextAreaElement | null) => {
+    if (!textareaElement) return;
+    
+    // Reset height to calculate proper scrollHeight
+    textareaElement.style.height = "auto";
+    
+    // Set new height based on content
+    const newHeight = Math.max(textareaElement.scrollHeight, 70); // Minimum height of 70px
+    textareaElement.style.height = `${newHeight}px`;
+  };
+  
+  // Function to generate AI-assisted mitigation plan based on risk details
+  const generateMitigationPlan = async (rowIndex: number) => {
+    try {
+      const rowSuffix = rowIndex === 1 ? "" : rowIndex;
+      const riskName = riskForm.getValues(`riskName${rowSuffix}` as any);
+      const probability = riskForm.getValues(`probability${rowSuffix}` as any);
+      const impact = riskForm.getValues(`impact${rowSuffix}` as any);
+      const criticality = calculateRiskCriticality(probability, impact);
+      
+      // Show loading indicator
+      setIsGeneratingMitigation(prev => ({ ...prev, [rowIndex]: true }));
+      
+      // Simulate AI generation with contextual response based on criticality
+      // In a real implementation, this would call an AI service
+      let mitigationPlan = "";
+      
+      // Small delay to simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Generate mitigation plan based on risk details
+      if (criticality >= 7) {
+        // High criticality (7-9)
+        mitigationPlan = `COMPREHENSIVE MITIGATION STRATEGY FOR HIGH-RISK ITEM:\n\n` +
+          `1. Establish a dedicated risk response team with specialized expertise in ${riskName.toLowerCase()} challenges\n` +
+          `2. Implement continuous monitoring with daily status reviews\n` +
+          `3. Develop detailed contingency plans with trigger points for escalation\n` +
+          `4. Secure additional budget/resources to address this critical risk area\n` +
+          `5. Consider external expertise consultation to supplement internal capabilities`;
+      } else if (criticality >= 4) {
+        // Medium criticality (4-6)
+        mitigationPlan = `STRUCTURED MITIGATION APPROACH FOR MEDIUM-RISK ITEM:\n\n` +
+          `1. Assign a risk owner with clear accountability for monitoring this ${riskName.toLowerCase()} risk\n` +
+          `2. Implement weekly monitoring procedures with documented checkpoints\n` +
+          `3. Develop alternative approaches that could be activated if risk materializes\n` +
+          `4. Create communication protocols to ensure stakeholders are informed of status changes`;
+      } else {
+        // Low criticality (1-3)
+        mitigationPlan = `BASIC MITIGATION APPROACH FOR LOW-RISK ITEM:\n\n` +
+          `1. Document the ${riskName.toLowerCase()} risk in the project risk register\n` +
+          `2. Implement monthly monitoring to track any changes in probability or impact\n` +
+          `3. Define simple response procedures that can be activated if the risk escalates`;
+      }
+      
+      // Update the form field
+      riskForm.setValue(`mitigationPlan${rowSuffix}` as any, mitigationPlan);
+      
+      // Adjust textarea height after setting value
+      setTimeout(() => {
+        const textareaKey = `mitigationPlan${rowSuffix}`;
+        adjustTextareaHeight(textareaRefs.current[textareaKey]);
+      }, 0);
+      
+      // Hide loading indicator
+      setIsGeneratingMitigation(prev => ({ ...prev, [rowIndex]: false }));
+      
+      toast({
+        title: "Mitigation Plan Generated",
+        description: "AI-assisted mitigation plan has been generated based on risk details.",
+      });
+    } catch (error) {
+      console.error("Error generating mitigation plan:", error);
+      setIsGeneratingMitigation(prev => ({ ...prev, [rowIndex]: false }));
+      
+      toast({
+        title: "Error",
+        description: "Failed to generate mitigation plan. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Update risk criticality when probability or impact changes
