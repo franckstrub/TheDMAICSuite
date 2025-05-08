@@ -463,8 +463,19 @@ Monitoring and Review:
     <Card className="mt-6">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle>Risk Assessment Matrix</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle>Risk Assessment Matrix</CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={saveRiskData}
+              disabled={isSaving}
+              className="px-2 py-0 h-7 text-xs w-16"
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+          <div>
             <Button 
               variant="outline" 
               size="sm"
@@ -472,15 +483,6 @@ Monitoring and Review:
               disabled={isLoading}
             >
               Refresh
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={saveRiskData}
-              disabled={isSaving}
-              className="px-2 py-0 h-7 text-xs"
-            >
-              {isSaving ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>
