@@ -170,38 +170,73 @@ export default function RiskAssessmentNew() {
         // Determine how many rows to show based on which rows have meaningful content
         let rowCount = 1; // Always show at least one row
         
-        // Check each row for meaningful content (not just default values)
-        for (let i = 2; i <= 6; i++) {
-          const suffix = i.toString();
+        // First pass: Find the highest row with actual content
+        // Default to showing at least 3 rows to avoid the "blank" issue
+        let highestRowWithContent = 3;
+        
+        for (let i = 1; i <= 6; i++) {
+          const suffix = i === 1 ? '' : i.toString();
           
-          // Get all content from this row
+          // Get content from all fields in this row
           const riskName = riskItem[`riskName${suffix}`] || '';
           const mitigationPlan = riskItem[`mitigationPlan${suffix}`] || '';
           const riskOwner = riskItem[`riskOwner${suffix}`] || '';
           
-          // CRITICAL: Much stricter check for content:
-          // 1. Trim all whitespace
-          // 2. Must have at least 3 characters to be considered content
-          const hasRealContent = (
-            riskName.trim().length > 2 ||
-            mitigationPlan.trim().length > 2 ||
-            riskOwner.trim().length > 2
+          // A row has real content if ANY field has substantial text (even 1 character)
+          // We're being much more lenient now to ensure rows aren't missed
+          const hasAnyContent = (
+            riskName.trim().length > 0 ||
+            mitigationPlan.trim().length > 0 ||
+            riskOwner.trim().length > 0
           );
           
-          if (hasRealContent) {
-            console.log(`Row ${i} has real content - will be displayed`);
-            rowCount = i; 
-          } else {
-            console.log(`Row ${i} is empty or has minimal content - will be hidden`);
-            
-            // CRITICAL FIX: Force blank out this empty row data in our local state
-            // This ensures even if DB has content, our UI won't show it
+          if (hasAnyContent) {
+            console.log(`Row ${i} has content - marking as viable row`);
+            // Make sure this row is always visible
+            if (i > highestRowWithContent) {
+              highestRowWithContent = i;
+            }
+          }
+        }
+        
+        console.log(`Highest row with content detected: ${highestRowWithContent}`);
+        rowCount = Math.max(3, highestRowWithContent); // Always show at least 3 rows
+        
+        // Second pass: Clean up any rows without content
+        // This ensures all empty rows are explicitly cleared
+        for (let i = 1; i <= 6; i++) {
+          const suffix = i === 1 ? '' : i.toString();
+          
+          // Get content from all fields in this row
+          const riskName = riskItem[`riskName${suffix}`] || '';
+          const mitigationPlan = riskItem[`mitigationPlan${suffix}`] || '';
+          const riskOwner = riskItem[`riskOwner${suffix}`] || '';
+          
+          // Check if there's any content at all - we're being much more lenient now
+          const hasAnyContent = (
+            riskName.trim().length > 0 ||
+            mitigationPlan.trim().length > 0 ||
+            riskOwner.trim().length > 0
+          );
+          
+          // If this row should be shown (at or below our rowCount) but has no content,
+          // leave it as is but blank. If it's above our rowCount, clear it completely.
+          if (i > rowCount || !hasAnyContent) {
+            // Force blank out this row's data in our local state to prevent ghost data
             riskItem[`riskName${suffix}`] = '';
             riskItem[`probability${suffix}`] = 'Low';
             riskItem[`impact${suffix}`] = 'Low';
             riskItem[`riskCriticality${suffix}`] = 1;
             riskItem[`mitigationPlan${suffix}`] = '';
             riskItem[`riskOwner${suffix}`] = '';
+            
+            if (i <= rowCount) {
+              console.log(`Row ${i} is empty but will be shown (within visible row count)`);
+            } else {
+              console.log(`Row ${i} is empty and above row count - will be hidden`);
+            }
+          } else {
+            console.log(`Row ${i} has content and will be shown`);
           }
         }
         
