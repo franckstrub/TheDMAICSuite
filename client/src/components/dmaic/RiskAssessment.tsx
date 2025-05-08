@@ -1338,6 +1338,13 @@ export default function RiskAssessment() {
                     if (el) {
                       textareaRefs.current["mitigationPlan"] = el;
                       
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        // The small timeout ensures the resize has completed
+                        setTimeout(() => adjustTextareaHeight("mitigationPlan"), 10);
+                      });
+                      
                       // Store the reference and set initial content
                       setTimeout(() => {
                         try {
@@ -1456,13 +1463,21 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan2"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Add manual resize event listener
+                        el.addEventListener('mouseup', () => {
+                          // This ensures that when user manually resizes, we sync heights
+                          setTimeout(() => adjustTextareaHeight("mitigationPlan2"), 10);
+                        });
+                        
+                        // Store the reference and set initial content
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan2 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan2;
                               console.log(`Direct ref injection for mitigationPlan2 completed`);
+                              // Initialize height based on content
+                              adjustTextareaHeight("mitigationPlan2", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -1582,13 +1597,21 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan3"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Add manual resize event listener
+                        el.addEventListener('mouseup', () => {
+                          // This ensures that when user manually resizes, we sync heights
+                          setTimeout(() => adjustTextareaHeight("mitigationPlan3"), 10);
+                        });
+                        
+                        // Store the reference and set initial content
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan3 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan3;
                               console.log(`Direct ref injection for mitigationPlan3 completed`);
+                              // Initialize height based on content
+                              adjustTextareaHeight("mitigationPlan3", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
