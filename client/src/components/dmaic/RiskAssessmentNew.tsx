@@ -387,7 +387,7 @@ export default function RiskAssessmentNew() {
     const updatedRiskData = {...riskData};
     const suffixProp = rowIndex === 1 ? '' : rowIndex.toString();
     
-    // Clear all fields for this row
+    // Clear all fields for this row (set to empty strings or default values)
     updatedRiskData[`riskName${suffixProp}` as keyof RiskItem] = '';
     updatedRiskData[`probability${suffixProp}` as keyof RiskItem] = 'Low';
     updatedRiskData[`impact${suffixProp}` as keyof RiskItem] = 'Low';
@@ -395,7 +395,50 @@ export default function RiskAssessmentNew() {
     updatedRiskData[`mitigationPlan${suffixProp}` as keyof RiskItem] = '';
     updatedRiskData[`riskOwner${suffixProp}` as keyof RiskItem] = '';
     
+    // Save the updated data with emptied values to the database
     setRiskData(updatedRiskData);
+    
+    // Save immediately to persist the deletion in the database
+    const saveUpdatedData = async () => {
+      try {
+        const url = riskData.id 
+          ? `/api/risks/${riskData.id}` 
+          : `/api/projects/${projectId}/risks`;
+        
+        const method = riskData.id ? 'PUT' : 'POST';
+        
+        await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ...updatedRiskData,
+            userId: user?.id || 1,
+            projectId: Number(projectId),
+          })
+        });
+        
+        // Store flag in sessionStorage
+        sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
+        
+        toast({
+          title: "Row deleted",
+          description: "Risk row has been deleted and changes saved.",
+          duration: 3000
+        });
+      } catch (error) {
+        console.error('Error saving risk data after deletion:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete risk row. Please try again.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    // Execute the save
+    saveUpdatedData();
     
     // Decrease visible rows
     if (visibleRiskRows > 1) {
@@ -460,6 +503,7 @@ export default function RiskAssessmentNew() {
     
     setTimeout(() => {
       const mitigationPlanField = `mitigationPlan${suffixProp}` as keyof RiskItem;
+      const fieldNameAsString = `mitigationPlan${suffixProp}`;
       
       const template = `Recommended Mitigation Strategies:
 
@@ -493,9 +537,9 @@ Monitoring and Review:
       setRiskData(updatedRiskData);
       
       // Update the textarea directly as well for immediate display
-      if (textareaRefs.current[mitigationPlanField]) {
-        textareaRefs.current[mitigationPlanField].value = template;
-        adjustTextareaHeight(mitigationPlanField, true);
+      if (textareaRefs.current[fieldNameAsString as string]) {
+        textareaRefs.current[fieldNameAsString as string].value = template;
+        adjustTextareaHeight(fieldNameAsString as string, true);
       }
       
       toast({
@@ -530,6 +574,8 @@ Monitoring and Review:
     // Apply new height with transition for smooth resizing
     textarea.style.transition = isAiGenerated ? 'height 0.5s ease-in-out' : 'none';
     textarea.style.height = `${newHeight}px`;
+    
+    console.log(`Adjusted textarea height for ${fieldName} to ${newHeight}px`);
   };
   
   // Handle manual input to textareas
