@@ -1,9 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-// Initialize the Anthropic client
+// Initialize the Anthropic client with proper API key validation
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// Validate API key format
+if (!process.env.ANTHROPIC_API_KEY || !process.env.ANTHROPIC_API_KEY.startsWith('sk-ant-')) {
+  console.warn('Warning: ANTHROPIC_API_KEY is missing or has incorrect format. API calls will fail.');
+}
 
 // Generate a mitigation plan using Claude
 export async function generateMitigationPlan(
@@ -44,9 +49,9 @@ The mitigation plan should be specific to this risk, considering its probability
       console.log("Sending request to Anthropic API...");
       console.log("API Key starts with:", process.env.ANTHROPIC_API_KEY?.substring(0, 5) + "...");
       
-      // Call the Anthropic API
+      // Call the Anthropic API with the latest available model
       const response = await anthropic.messages.create({
-        model: 'claude-3-sonnet-20240229', // Using claude-3-sonnet-20240229 as fallback since claude-3-7-sonnet-20250219 might not exist
+        model: 'claude-3-haiku-20240307', // Using the latest haiku model
         max_tokens: 750,
         temperature: 0.7,
         system: systemMessage,
