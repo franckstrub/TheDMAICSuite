@@ -1613,7 +1613,7 @@ export default function RiskAssessment() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                className="absolute right-[-2px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
                 onClick={() => deleteRiskRow(2)}
                 title="Delete Row 2"
               >
