@@ -67,19 +67,21 @@ export default function RiskAssessmentNew() {
       const response = await fetch(`/api/projects/${projectId}/risk-items`);
       
       if (!response.ok) {
-        throw new Error("Failed to fetch risk items");
+        throw new Error(`Failed to fetch risk items: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
       
       // If no items returned, create a default risk item
-      if (!data.riskItems || data.riskItems.length === 0) {
+      if (!data || !data.riskItems || data.riskItems.length === 0) {
+        console.log("No risk items found, creating default item");
         setRiskItems([{
           ...DEFAULT_RISK_ITEM,
           projectId,
           orderIndex: 0
         }]);
       } else {
+        console.log(`Found ${data.riskItems.length} risk items`);
         // Sort items by orderIndex
         const sortedItems = data.riskItems.sort((a: RiskItem, b: RiskItem) => a.orderIndex - b.orderIndex);
         setRiskItems(sortedItems);
@@ -116,6 +118,8 @@ export default function RiskAssessmentNew() {
     };
     
     try {
+      console.log(`Adding new risk item to project ${projectId}:`, newItem);
+      
       const response = await fetch(`/api/projects/${projectId}/risk-items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,10 +130,13 @@ export default function RiskAssessmentNew() {
       });
       
       if (!response.ok) {
-        throw new Error("Failed to create risk item");
+        const errorText = await response.text();
+        console.error(`Server error (${response.status}): ${errorText}`);
+        throw new Error(`Failed to create risk item: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
+      console.log("Risk item created successfully:", data.riskItem);
       
       // Add the new item to the state with the ID from the server
       setRiskItems([...riskItems, data.riskItem]);
@@ -153,6 +160,13 @@ export default function RiskAssessmentNew() {
         description: "Failed to add new risk item",
         variant: "destructive",
       });
+      
+      // Add a default item to the UI even if server request fails
+      const tempItem = {
+        ...newItem,
+        id: undefined // Mark as not saved on server
+      };
+      setRiskItems([...riskItems, tempItem]);
     }
   };
   
