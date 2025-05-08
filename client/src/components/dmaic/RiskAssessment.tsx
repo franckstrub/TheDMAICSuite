@@ -575,10 +575,8 @@ export default function RiskAssessment() {
     // Generate appropriate mitigation plan based on risk details
     const criticality = calculateRiskCriticality(probability, impact);
     
-    // Use toast with id so we can update it later
-    const toastId = Date.now().toString();
+    // Show initial toast notification
     toast({
-      id: toastId,
       title: "Generating mitigation plan",
       description: "Creating mitigation suggestions based on risk details...",
       variant: "default"
@@ -814,11 +812,16 @@ export default function RiskAssessment() {
       suggestion += "\n• Reassess if conditions change";
     }
     
-    // Update the in-progress toast with success message
+    // Show success toast when plan is generated with specific risk type and criticality if detected
+    let criticalityLevel = "Low";
+    if (criticality >= 7) criticalityLevel = "High";
+    else if (criticality >= 4) criticalityLevel = "Medium";
+    
     toast({
-      id: toastId,
       title: "Mitigation plan generated",
-      description: "AI-suggested mitigation strategies are ready.",
+      description: specificRiskType 
+        ? `AI-suggested strategies for ${criticalityLevel} ${specificRiskType} risk are ready.` 
+        : `AI-suggested strategies for ${criticalityLevel} risk (${criticality}/9) are ready.`,
       variant: "default",
       className: "bg-green-50 border-green-200 text-green-700"
     });
@@ -871,13 +874,7 @@ export default function RiskAssessment() {
       }, 400);
     }, 200);
     
-    // Update in-progress toast to success  
-    toast({
-      title: "Success!",
-      description: `Mitigation suggestions ready${specificRiskType ? ` for ${specificRiskType} risk` : ""}.`,
-      variant: "default",
-      className: "bg-green-50 border-green-200 text-green-700"
-    });
+    // No need for a second toast notification - we already showed one above
   };
 
   // Calculate risk criticality based on probability and impact
