@@ -173,11 +173,16 @@ export default function RiskAssessmentNew() {
         // Check each row for meaningful content (not just default values)
         for (let i = 2; i <= 6; i++) {
           const suffix = i.toString();
-          const hasName = riskItem[`riskName${suffix}`];
-          const hasMitigation = riskItem[`mitigationPlan${suffix}`];
-          const hasOwner = riskItem[`riskOwner${suffix}`];
+          const riskName = riskItem[`riskName${suffix}`] || '';
+          const mitigationPlan = riskItem[`mitigationPlan${suffix}`] || '';
+          const riskOwner = riskItem[`riskOwner${suffix}`] || '';
           
-          // If any of the key fields have content, consider this row meaningful
+          // Check if there's actual content (trimming whitespace)
+          const hasName = riskName.trim().length > 0;
+          const hasMitigation = mitigationPlan.trim().length > 0; 
+          const hasOwner = riskOwner.trim().length > 0;
+          
+          // A row is only meaningful if it has actual text content (not just spaces/tabs)
           const hasMeaningfulContent = hasName || hasMitigation || hasOwner;
           
           if (hasMeaningfulContent) {
@@ -377,30 +382,23 @@ export default function RiskAssessmentNew() {
           updatedRiskData[`riskOwner${nextSuffix}` as keyof RiskItem] || '';
       }
       
-      // Clear the last visible row data
-      const lastSuffix = visibleRiskRows === 1 ? '' : visibleRiskRows.toString();
-      updatedRiskData[`riskName${lastSuffix}` as keyof RiskItem] = '';
-      updatedRiskData[`probability${lastSuffix}` as keyof RiskItem] = 'Low';
-      updatedRiskData[`impact${lastSuffix}` as keyof RiskItem] = 'Low';
-      updatedRiskData[`riskCriticality${lastSuffix}` as keyof RiskItem] = 1;
-      updatedRiskData[`mitigationPlan${lastSuffix}` as keyof RiskItem] = '';
-      updatedRiskData[`riskOwner${lastSuffix}` as keyof RiskItem] = '';
-      
-      // Also clear any data in rows above 6 (database schema limit)
-      // This prevents reappearing rows when navigating away and back
-      for (let i = 1; i <= 6; i++) {
-        if (i > visibleRiskRows - 1) {  // Clear rows beyond the new visible rows count
-          const suffix = i === 1 ? '' : i.toString();
-          
-          // Explicitly clear all fields for this row
-          updatedRiskData[`riskName${suffix}` as keyof RiskItem] = '';
-          updatedRiskData[`probability${suffix}` as keyof RiskItem] = 'Low';
-          updatedRiskData[`impact${suffix}` as keyof RiskItem] = 'Low';
-          updatedRiskData[`riskCriticality${suffix}` as keyof RiskItem] = 1;
-          updatedRiskData[`mitigationPlan${suffix}` as keyof RiskItem] = '';
-          updatedRiskData[`riskOwner${suffix}` as keyof RiskItem] = '';
-        }
+      // CRITICAL FIX: Clear ALL rows from the deleted position to the end
+      // This ensures we don't have "ghost" data in the database that reappears
+      for (let i = visibleRiskRows - 1; i <= 6; i++) {
+        // For each row from the last visible row to the end of our schema, clear data
+        const suffix = i === 1 ? '' : i.toString();
+        
+        // Explicitly clear all fields for this row
+        updatedRiskData[`riskName${suffix}` as keyof RiskItem] = '';
+        updatedRiskData[`probability${suffix}` as keyof RiskItem] = 'Low';
+        updatedRiskData[`impact${suffix}` as keyof RiskItem] = 'Low';
+        updatedRiskData[`riskCriticality${suffix}` as keyof RiskItem] = 1;
+        updatedRiskData[`mitigationPlan${suffix}` as keyof RiskItem] = '';
+        updatedRiskData[`riskOwner${suffix}` as keyof RiskItem] = '';
       }
+      
+      // Log the data we're about to save
+      console.log("Updated risk data after deletion (about to save):", updatedRiskData);
       
       // Update UI immediately
       setRiskData(updatedRiskData);
@@ -417,6 +415,9 @@ export default function RiskAssessmentNew() {
             description: "Risk row has been deleted and changes saved to the database.",
             duration: 3000
           });
+          
+          // Ensure session storage is updated
+          sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
         })
         .catch(error => {
           console.error('Error saving risk data after deletion:', error);
