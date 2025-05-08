@@ -22,7 +22,8 @@ import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { ZodError } from "zod";
-import { generateMitigationPlan } from "./anthropic";
+// Switching from Claude to Google AI for mitigation plan generation
+import { generateMitigationPlan } from "./googleai";
 
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
@@ -1342,7 +1343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const probValue = probability || 'Low';
       const impactValue = impact || 'Low';
       
-      // Generate the mitigation plan using Claude
+      // Generate the mitigation plan using Google AI
       try {
         const mitigationPlan = await generateMitigationPlan(
           riskName,
@@ -1352,11 +1353,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.status(200).json({ mitigationPlan });
       } catch (apiError: any) {
-        console.error("Claude API error:", apiError);
+        console.error("Google AI API error:", apiError);
         return res.status(500).json({ 
           error: true,
-          message: `Claude AI error: ${apiError.message || 'Unknown error'}`,
-          details: "Make sure you have a valid ANTHROPIC_API_KEY set in your environment"
+          message: `Google AI error: ${apiError.message || 'Unknown error'}`,
+          details: "Make sure you have a valid GOOGLE_API_KEY set in your environment"
         });
       }
     } catch (err) {
