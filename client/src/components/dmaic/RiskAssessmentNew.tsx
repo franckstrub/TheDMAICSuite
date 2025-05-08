@@ -560,28 +560,13 @@ Monitoring and Review:
     }
   }, [projectId]);
   
-  // Handle manual refresh
-  const handleRefresh = () => {
-    loadRiskData(true);
-  };
+  // Removed manual refresh function as it's no longer needed
   
   return (
     <Card className="mt-6">
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <CardTitle>Risk Assessment Matrix</CardTitle>
-          </div>
-          <div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              Refresh
-            </Button>
-          </div>
+        <div className="flex items-center">
+          <CardTitle>Risk Assessment Matrix</CardTitle>
         </div>
       </CardHeader>
       
