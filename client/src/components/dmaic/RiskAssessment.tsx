@@ -58,32 +58,6 @@ type RiskFormData = {
   riskOwner6?: string;
 }
 
-// Add a global style to force textareas to be resizable
-const globalResizableStyles = `
-  <style>
-    textarea {
-      resize: vertical !important;
-      overflow-y: auto !important;
-    }
-    
-    .risk-name-textarea, 
-    .risk-owner-textarea, 
-    .risk-mitigation-textarea {
-      resize: vertical !important;
-      overflow-y: auto !important;
-    }
-    
-    /* Target resize handle specifically */
-    textarea::-webkit-resizer {
-      border: 2px solid #a0aec0 !important;
-      background-color: #e2e8f0 !important;
-      box-shadow: 0 0 3px rgba(0, 0, 0, 0.2) !important;
-      visibility: visible !important;
-      display: block !important;
-    }
-  </style>
-`;
-
 export default function RiskAssessment() {
   const { id: projectIdParam } = useParams();
   const { toast } = useToast();
@@ -214,53 +188,6 @@ export default function RiskAssessment() {
   useEffect(() => {
     resetRiskFormInitialization();
   }, [projectId]);
-  
-  // Inject global CSS styles directly into the document head
-  useEffect(() => {
-    // Create a style element to inject CSS
-    const styleElement = document.createElement('div');
-    styleElement.innerHTML = globalResizableStyles;
-    document.head.appendChild(styleElement);
-    
-    // Clean up on unmount
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
-  
-  // Make all textareas resizable - with force attribute insertion using raw DOM
-  useEffect(() => {
-    const makeTextareasResizable = () => {
-      // Force ALL textareas to be resizable
-      const allTextareas = document.querySelectorAll('textarea');
-      allTextareas.forEach((textarea) => {
-        const element = textarea as HTMLElement;
-        element.setAttribute('style', 'resize: vertical !important; overflow-y: auto !important; min-height: 80px !important;' + element.getAttribute('style'));
-      });
-      
-      // Extra emphasis on risk assessment textareas
-      const textareas = document.querySelectorAll('.risk-name-textarea, .risk-owner-textarea, .risk-mitigation-textarea');
-      textareas.forEach((textarea) => {
-        const element = textarea as HTMLElement;
-        element.setAttribute('style', 'resize: vertical !important; overflow-y: auto !important; min-height: 80px !important;' + element.getAttribute('style'));
-      });
-      
-      console.log("Applied forced resizable styles to ALL textareas");
-    };
-    
-    // Run immediately
-    makeTextareasResizable();
-    
-    // Also apply multiple times with delays to make sure it takes effect
-    const timers = [
-      setTimeout(makeTextareasResizable, 200),
-      setTimeout(makeTextareasResizable, 500),
-      setTimeout(makeTextareasResizable, 1000),
-      setTimeout(makeTextareasResizable, 2000)
-    ];
-    
-    return () => timers.forEach(timer => clearTimeout(timer));
-  }, [visibleRiskRows]);
   
   // Initialize form with data from API
   useEffect(() => {
@@ -683,11 +610,7 @@ export default function RiskAssessment() {
           // Set a reasonable initial height, but allow user resizing
           textarea.style.height = `${newHeight}px`;
           
-          // Ensure textarea is resizable regardless of CSS
-          textarea.style.resize = 'vertical';
-          textarea.style.overflowY = 'auto';
-          
-          console.log(`Adjusted initial height for ${textareaKey} to ${newHeight}px and ensured it's resizable`);
+          console.log(`Adjusted initial height for ${textareaKey} to ${newHeight}px`);
         }
         
         // The synchronizing height feature should only work for manual resizing
@@ -709,45 +632,19 @@ export default function RiskAssessment() {
           
           // For AI-generated content or manual resize, synchronize the heights
           if (isAiGenerated || (textarea.style.height && parseInt(textarea.style.height) > 120)) {
-            // Find the maximum height among all textareas in this row
-            let maxHeight = 120; // Minimum height
-            
-            // Get the current heights of all textareas in this row
-            if (riskNameTextarea && riskNameTextarea.style.height) {
-              maxHeight = Math.max(maxHeight, parseInt(riskNameTextarea.style.height));
-            }
-            
-            if (mitigationPlanTextarea && mitigationPlanTextarea.style.height) {
-              maxHeight = Math.max(maxHeight, parseInt(mitigationPlanTextarea.style.height));
-            }
-            
-            if (riskOwnerTextarea && riskOwnerTextarea.style.height) {
-              maxHeight = Math.max(maxHeight, parseInt(riskOwnerTextarea.style.height));
-            }
-            
-            // Get the height of the current textarea that triggered the adjustment
             const currentHeight = parseInt(textarea.style.height);
-            maxHeight = Math.max(maxHeight, currentHeight);
+            console.log(`Synchronizing heights for row ${rowNumber || '1'} to match ${textareaKey}: ${currentHeight}px`);
             
-            console.log(`Synchronizing heights for row ${rowNumber || '1'} to maximum height: ${maxHeight}px`);
-            
-            // Set all textareas in the row to the maximum height and ensure they're resizable
-            if (riskNameTextarea) {
-              riskNameTextarea.style.height = `${maxHeight}px`;
-              riskNameTextarea.style.resize = 'vertical';
-              riskNameTextarea.style.overflowY = 'auto';
+            if (riskNameTextarea && textareaKey !== riskNameField) {
+              riskNameTextarea.style.height = `${currentHeight}px`;
             }
             
-            if (mitigationPlanTextarea) {
-              mitigationPlanTextarea.style.height = `${maxHeight}px`;
-              mitigationPlanTextarea.style.resize = 'vertical';
-              mitigationPlanTextarea.style.overflowY = 'auto';
+            if (mitigationPlanTextarea && textareaKey !== mitigationPlanField) {
+              mitigationPlanTextarea.style.height = `${currentHeight}px`;
             }
             
-            if (riskOwnerTextarea) {
-              riskOwnerTextarea.style.height = `${maxHeight}px`;
-              riskOwnerTextarea.style.resize = 'vertical';
-              riskOwnerTextarea.style.overflowY = 'auto';
+            if (riskOwnerTextarea && textareaKey !== riskOwnerField) {
+              riskOwnerTextarea.style.height = `${currentHeight}px`;
             }
           }
         }
@@ -776,10 +673,6 @@ export default function RiskAssessment() {
             textareaElement.value = value;
             
             console.log(`Updated content for ${fieldName}`);
-            
-            // Force synchronization of all textareas in this row
-            const rowNum = i === 1 ? '' : i;
-            adjustTextareaHeight(fieldName, true);
           } else {
             console.warn(`Textarea ref for ${fieldName} does not exist`);
           }
@@ -1362,17 +1255,6 @@ export default function RiskAssessment() {
                 rows={1}
                 placeholder="Describe the risk"
                 {...riskForm.register("riskName")}
-                ref={(el) => {
-                  if (el) {
-                    textareaRefs.current["riskName"] = el;
-                    
-                    // Add manual resize event listener
-                    el.addEventListener('mouseup', () => {
-                      // This ensures that when user manually resizes, we sync heights
-                      setTimeout(() => adjustTextareaHeight("riskName"), 10);
-                    });
-                  }
-                }}
               />
             </div>
             <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1432,13 +1314,6 @@ export default function RiskAssessment() {
                     if (el) {
                       textareaRefs.current["mitigationPlan"] = el;
                       
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        // The small timeout ensures the resize has completed
-                        setTimeout(() => adjustTextareaHeight("mitigationPlan"), 10);
-                      });
-                      
                       // Store the reference and set initial content
                       setTimeout(() => {
                         try {
@@ -1484,17 +1359,6 @@ export default function RiskAssessment() {
                 rows={1}
                 placeholder="Who is responsible for monitoring this risk?"
                 {...riskForm.register("riskOwner")}
-                ref={(el) => {
-                  if (el) {
-                    textareaRefs.current["riskOwner"] = el;
-                    
-                    // Add manual resize event listener
-                    el.addEventListener('mouseup', () => {
-                      // This ensures that when user manually resizes, we sync heights
-                      setTimeout(() => adjustTextareaHeight("riskOwner"), 10);
-                    });
-                  }
-                }}
               />
             </div>
             {/* No delete button for first row (it's mandatory) */}
@@ -1509,17 +1373,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName2")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskName2"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskName2"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1579,21 +1432,13 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan2"] = el;
                         
-                        // Add manual resize event listener
-                        el.addEventListener('mouseup', () => {
-                          // This ensures that when user manually resizes, we sync heights
-                          setTimeout(() => adjustTextareaHeight("mitigationPlan2"), 10);
-                        });
-                        
-                        // Store the reference and set initial content
+                        // Simply store the reference, CSS classes handle the fixed height
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan2 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan2;
                               console.log(`Direct ref injection for mitigationPlan2 completed`);
-                              // Initialize height based on content
-                              adjustTextareaHeight("mitigationPlan2", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -1630,17 +1475,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner2")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskOwner2"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskOwner2"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <Button
@@ -1665,17 +1499,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName3")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskName3"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskName3"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1735,21 +1558,13 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan3"] = el;
                         
-                        // Add manual resize event listener
-                        el.addEventListener('mouseup', () => {
-                          // This ensures that when user manually resizes, we sync heights
-                          setTimeout(() => adjustTextareaHeight("mitigationPlan3"), 10);
-                        });
-                        
-                        // Store the reference and set initial content
+                        // Simply store the reference, CSS classes handle the fixed height
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan3 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan3;
                               console.log(`Direct ref injection for mitigationPlan3 completed`);
-                              // Initialize height based on content
-                              adjustTextareaHeight("mitigationPlan3", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -1786,17 +1601,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner3")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskOwner3"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskOwner3"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <Button
@@ -1821,17 +1625,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName4")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskName4"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskName4"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1887,21 +1680,13 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan4"] = el;
                         
-                        // Add manual resize event listener
-                        el.addEventListener('mouseup', () => {
-                          // This ensures that when user manually resizes, we sync heights
-                          setTimeout(() => adjustTextareaHeight("mitigationPlan4"), 10);
-                        });
-                        
-                        // Store the reference and set initial content
+                        // Simply store the reference, CSS classes handle the fixed height
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan4 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan4;
                               console.log(`Direct ref injection for mitigationPlan4 completed`);
-                              // Initialize height based on content
-                              adjustTextareaHeight("mitigationPlan4", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -1938,17 +1723,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner4")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskOwner4"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskOwner4"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <Button
@@ -1973,17 +1747,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName5")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskName5"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskName5"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -2039,21 +1802,13 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan5"] = el;
                         
-                        // Add manual resize event listener
-                        el.addEventListener('mouseup', () => {
-                          // This ensures that when user manually resizes, we sync heights
-                          setTimeout(() => adjustTextareaHeight("mitigationPlan5"), 10);
-                        });
-                        
-                        // Store the reference and set initial content
+                        // Simply store the reference, CSS classes handle the fixed height
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan5 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan5;
                               console.log(`Direct ref injection for mitigationPlan5 completed`);
-                              // Initialize height based on content
-                              adjustTextareaHeight("mitigationPlan5", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -2090,17 +1845,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner5")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskOwner5"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskOwner5"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <Button
@@ -2125,17 +1869,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName6")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskName6"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskName6"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -2191,21 +1924,13 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan6"] = el;
                         
-                        // Add manual resize event listener
-                        el.addEventListener('mouseup', () => {
-                          // This ensures that when user manually resizes, we sync heights
-                          setTimeout(() => adjustTextareaHeight("mitigationPlan6"), 10);
-                        });
-                        
-                        // Store the reference and set initial content
+                        // Simply store the reference, CSS classes handle the fixed height
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan6 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan6;
                               console.log(`Direct ref injection for mitigationPlan6 completed`);
-                              // Initialize height based on content
-                              adjustTextareaHeight("mitigationPlan6", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -2242,17 +1967,6 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner6")}
-                  ref={(el) => {
-                    if (el) {
-                      textareaRefs.current["riskOwner6"] = el;
-                      
-                      // Add manual resize event listener
-                      el.addEventListener('mouseup', () => {
-                        // This ensures that when user manually resizes, we sync heights
-                        setTimeout(() => adjustTextareaHeight("riskOwner6"), 10);
-                      });
-                    }
-                  }}
                 />
               </div>
               <Button
