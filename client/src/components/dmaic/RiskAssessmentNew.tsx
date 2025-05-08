@@ -448,7 +448,7 @@ export default function RiskAssessmentNew() {
     setRiskData(updatedRiskData);
   };
   
-  // Generate mitigation plan with AI
+  // Generate mitigation plan with Claude AI
   const generateMitigationPlan = async (rowIndex: number) => {
     const suffixProp = rowIndex === 1 ? '' : rowIndex.toString();
     const riskNameField = `riskName${suffixProp}` as keyof RiskItem;
@@ -469,62 +469,61 @@ export default function RiskAssessmentNew() {
     }
     
     // Add loading toast
-    toast({
+    const loadingToast = toast({
       title: "Generating mitigation plan",
-      description: "Please wait while we create a suggested mitigation plan...",
-      variant: "default"
+      description: "Please wait while we use Claude AI to create a tailored mitigation plan...",
+      variant: "default",
+      duration: 10000
     });
     
-    // For now, let's use a sample mitigation plan template
-    // In a real app, this would call an AI service
-    
-    setTimeout(() => {
+    try {
       const mitigationPlanField = `mitigationPlan${suffixProp}` as keyof RiskItem;
       const fieldNameAsString = `mitigationPlan${suffixProp}`;
       
-      const template = `Recommended Mitigation Strategies:
-
-• Implement multiple preventative controls with overlapping coverage
-• Develop prevention strategies to reduce likelihood of occurrence
-• Create detailed contingency and recovery plans to minimize impact
-• Consider risk transfer options (insurance, partnerships, contracts)
-• Assign dedicated risk owner with executive oversight
-• Schedule frequent monitoring on weekly/bi-weekly basis
-• Implement early warning indicators and thresholds
-• Create detailed response and escalation procedures
-
-
-Technology Risk Specific:
-• Conduct comprehensive technical assessments and penetration testing
-• Implement redundant systems or fallback options
-• Develop detailed disaster recovery procedures
-• Establish 24/7 technical support protocols
-• Ensure knowledge transfer and documentation
-• Consider prototype or pilot implementations before full deployment
-• Provide specialized training for technical staff
-
-Monitoring and Review:
-• Review risk status weekly
-• Report to executive leadership monthly
-• Reassess mitigation effectiveness quarterly`;
+      // Call our API endpoint to generate a mitigation plan with Claude
+      const response = await fetch('/api/generate-mitigation-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          riskName,
+          probability,
+          impact
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to generate mitigation plan: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const generatedPlan = data.mitigationPlan;
       
       // Update the risk data with the generated plan
       const updatedRiskData = {...riskData};
-      updatedRiskData[mitigationPlanField] = template;
+      updatedRiskData[mitigationPlanField] = generatedPlan;
       setRiskData(updatedRiskData);
       
       // Update the textarea directly as well for immediate display
       if (textareaRefs.current[fieldNameAsString as string]) {
-        textareaRefs.current[fieldNameAsString as string].value = template;
+        textareaRefs.current[fieldNameAsString as string].value = generatedPlan;
         adjustTextareaHeight(fieldNameAsString as string, true);
       }
       
       toast({
         title: "Mitigation plan generated",
-        description: "A suggested mitigation plan has been created. Feel free to edit it as needed.",
+        description: "An AI-suggested mitigation plan has been created based on your risk details. Feel free to edit it as needed.",
         variant: "default"
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Error generating mitigation plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate mitigation plan. Please try again or create one manually.",
+        variant: "destructive"
+      });
+    }
   };
   
   // Adjust textarea height based on content
