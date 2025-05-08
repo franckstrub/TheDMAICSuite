@@ -224,16 +224,59 @@ export default function RiskAssessmentNew() {
         mitigationPlan2: updatedRiskData.mitigationPlan2?.substring(0, 30) + '...'
       });
       
+      // Ensure all fields are explicitly included in payload
+      const payload = {
+        ...updatedRiskData,
+        userId: user?.id || 1,
+        projectId: Number(projectId),
+        // Explicitly include all fields to ensure they're saved properly
+        riskName: updatedRiskData.riskName || '',
+        riskName2: updatedRiskData.riskName2 || '',
+        riskName3: updatedRiskData.riskName3 || '',
+        riskName4: updatedRiskData.riskName4 || '',
+        riskName5: updatedRiskData.riskName5 || '',
+        riskName6: updatedRiskData.riskName6 || '',
+        probability: updatedRiskData.probability || 'Low',
+        probability2: updatedRiskData.probability2 || 'Low',
+        probability3: updatedRiskData.probability3 || 'Low',
+        probability4: updatedRiskData.probability4 || 'Low',
+        probability5: updatedRiskData.probability5 || 'Low',
+        probability6: updatedRiskData.probability6 || 'Low', 
+        impact: updatedRiskData.impact || 'Low',
+        impact2: updatedRiskData.impact2 || 'Low',
+        impact3: updatedRiskData.impact3 || 'Low',
+        impact4: updatedRiskData.impact4 || 'Low',
+        impact5: updatedRiskData.impact5 || 'Low',
+        impact6: updatedRiskData.impact6 || 'Low',
+        riskCriticality: updatedRiskData.riskCriticality || 1,
+        riskCriticality2: updatedRiskData.riskCriticality2 || 1,
+        riskCriticality3: updatedRiskData.riskCriticality3 || 1,
+        riskCriticality4: updatedRiskData.riskCriticality4 || 1,
+        riskCriticality5: updatedRiskData.riskCriticality5 || 1,
+        riskCriticality6: updatedRiskData.riskCriticality6 || 1,
+        mitigationPlan: updatedRiskData.mitigationPlan || '',
+        mitigationPlan2: updatedRiskData.mitigationPlan2 || '',
+        mitigationPlan3: updatedRiskData.mitigationPlan3 || '',
+        mitigationPlan4: updatedRiskData.mitigationPlan4 || '',
+        mitigationPlan5: updatedRiskData.mitigationPlan5 || '',
+        mitigationPlan6: updatedRiskData.mitigationPlan6 || '',
+        riskOwner: updatedRiskData.riskOwner || '',
+        riskOwner2: updatedRiskData.riskOwner2 || '',
+        riskOwner3: updatedRiskData.riskOwner3 || '',
+        riskOwner4: updatedRiskData.riskOwner4 || '', 
+        riskOwner5: updatedRiskData.riskOwner5 || '',
+        riskOwner6: updatedRiskData.riskOwner6 || '',
+      };
+      
+      console.log('Sending probability:', payload.probability);
+      console.log('Sending impact:', payload.impact);
+      
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...updatedRiskData,
-          userId: user?.id || 1,
-          projectId
-        })
+        body: JSON.stringify(payload)
       });
       
       if (!response.ok) {
@@ -463,17 +506,19 @@ Monitoring and Review:
     <Card className="mt-6">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <div className="flex flex-row items-center gap-4">
+          <div className="flex items-center">
             <CardTitle>Risk Assessment Matrix</CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={saveRiskData}
-              disabled={isSaving}
-              className="px-2 py-0 h-7 text-xs w-16"
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
+            <div className="ml-4">
+              <button 
+                type="button"
+                onClick={saveRiskData}
+                disabled={isSaving}
+                className="border border-gray-200 rounded text-xs px-3 py-1 h-6 bg-white hover:bg-gray-50 disabled:opacity-50"
+                style={{ width: '50px' }}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
           </div>
           <div>
             <Button 
