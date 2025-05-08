@@ -14,6 +14,10 @@ import { useAppContext } from "@/store/AppContext";
 // Flag to prevent textarea resizing after save operations
 let skipNextTextareaResize = false;
 
+// Create a component-level persistent cache for risk data
+// This will ensure data persists even when React clears it
+let persistentRiskCache: any = null;
+
 type RiskFormData = {
   riskName: string;
   probability: string;
@@ -176,7 +180,13 @@ export default function RiskAssessment() {
   // Fetch existing risk data
   const { data: riskData, isLoading: isRiskLoading } = useQuery<RiskResponse>({
     queryKey: ['/api/projects', projectId, 'risks'],
-    enabled: !!projectId
+    enabled: !!projectId,
+    // Add caching options to ensure data is preserved and not revalidated when navigating
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    // Try to force refetch on navigation
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
   
   // Function to clear risk form initialization state
