@@ -58,6 +58,32 @@ type RiskFormData = {
   riskOwner6?: string;
 }
 
+// Add a global style to force textareas to be resizable
+const globalResizableStyles = `
+  <style>
+    textarea {
+      resize: vertical !important;
+      overflow-y: auto !important;
+    }
+    
+    .risk-name-textarea, 
+    .risk-owner-textarea, 
+    .risk-mitigation-textarea {
+      resize: vertical !important;
+      overflow-y: auto !important;
+    }
+    
+    /* Target resize handle specifically */
+    textarea::-webkit-resizer {
+      border: 2px solid #a0aec0 !important;
+      background-color: #e2e8f0 !important;
+      box-shadow: 0 0 3px rgba(0, 0, 0, 0.2) !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+  </style>
+`;
+
 export default function RiskAssessment() {
   const { id: projectIdParam } = useParams();
   const { toast } = useToast();
@@ -188,6 +214,19 @@ export default function RiskAssessment() {
   useEffect(() => {
     resetRiskFormInitialization();
   }, [projectId]);
+  
+  // Inject global CSS styles directly into the document head
+  useEffect(() => {
+    // Create a style element to inject CSS
+    const styleElement = document.createElement('div');
+    styleElement.innerHTML = globalResizableStyles;
+    document.head.appendChild(styleElement);
+    
+    // Clean up on unmount
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
   
   // Make all textareas resizable - with force attribute insertion using raw DOM
   useEffect(() => {
