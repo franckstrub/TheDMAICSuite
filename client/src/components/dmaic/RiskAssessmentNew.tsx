@@ -701,7 +701,7 @@ Monitoring and Review:
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full p-1"
+                        className="absolute right+[25px] h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full p-1"
                         onClick={() => deleteRiskRow(rowIndex)}
                       >
                         <i className="fas fa-trash"></i>
