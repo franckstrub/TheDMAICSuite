@@ -189,12 +189,11 @@ export default function RiskAssessment() {
     resetRiskFormInitialization();
   }, [projectId]);
   
-  // Initialize form with data from API - runs every time component loads
+  // Force reset form data when the data loads - this is the critical fix
   useEffect(() => {
-    // Always reset form every time the data changes or component mounts
-    console.log("Risk data changed or component mounted - resetting form");
+    console.log("CRITICAL EFFECT: Risk data loaded or changed - ensuring form displays correctly", riskData?.risk?.id);
     
-    // Remove the riskFormInitialized check to ensure it always runs
+    // We'll run this every time data changes, regardless of initialization state
     if (riskData?.risk) {
       console.log("Initializing risk form with data:", riskData.risk);
       
@@ -1341,12 +1340,17 @@ export default function RiskAssessment() {
                             const currentHeight = el.style.height;
                             console.log(`Current height before update: ${currentHeight}`);
                             
-                            // Set content manually to avoid triggering the form state
+                            // CRITICAL FIX: Set content using all available methods to ensure it shows up
                             el.value = riskData.risk.mitigationPlan;
-                            console.log(`Direct ref injection for mitigationPlan completed with value: ${riskData.risk.mitigationPlan.substring(0, 30)}...`);
+                            el.defaultValue = riskData.risk.mitigationPlan; // Add defaultValue to help with re-hydration
+                            console.log(`Direct DOM injection for mitigationPlan with multiple methods. Value: ${riskData.risk.mitigationPlan.substring(0, 30)}...`);
                             
-                            // Also update the form value to maintain sync
-                            riskForm.setValue("mitigationPlan", riskData.risk.mitigationPlan);
+                            // Force update the form value to maintain sync
+                            riskForm.setValue("mitigationPlan", riskData.risk.mitigationPlan, {
+                              shouldDirty: true,
+                              shouldTouch: true,
+                              shouldValidate: true
+                            });
                             
                             // Initialize height based on content only on first load
                             // After that, preserve user's manual resizing
@@ -1475,9 +1479,17 @@ export default function RiskAssessment() {
                               const currentHeight = el.style.height;
                               console.log(`Current height before update: ${currentHeight}`);
                               
-                              // Set content manually to avoid triggering the form state
+                              // CRITICAL FIX: Set content using all available methods to ensure it shows up
                               el.value = riskData.risk.mitigationPlan2;
-                              console.log(`Direct ref injection for mitigationPlan2 completed`);
+                              el.defaultValue = riskData.risk.mitigationPlan2; // Add defaultValue to help with re-hydration
+                              console.log(`Direct DOM injection for mitigationPlan2 with multiple methods. Value: ${riskData.risk.mitigationPlan2.substring(0, 30)}...`);
+                              
+                              // Force update the form value to maintain sync
+                              riskForm.setValue("mitigationPlan2", riskData.risk.mitigationPlan2, {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true
+                              });
                               
                               // Initialize height based on content only on first load
                               // After that, preserve user's manual resizing
