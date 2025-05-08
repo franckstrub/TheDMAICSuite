@@ -1074,9 +1074,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = parseInt(req.params.projectId);
       
-      // Pre-sanitize risk data to ensure all text fields have values and not null
+      // Extract and sanitize fields that we want to save
       const sanitizedRiskData = {
-        ...req.body,
         projectId,
         // Ensure all text fields are defined with empty strings if null or undefined
         mitigationPlan: req.body.mitigationPlan || '',
@@ -1097,6 +1096,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         riskOwner4: req.body.riskOwner4 || '',
         riskOwner5: req.body.riskOwner5 || '',
         riskOwner6: req.body.riskOwner6 || '',
+        probability: req.body.probability || 'Low',
+        probability2: req.body.probability2 || 'Low',
+        probability3: req.body.probability3 || 'Low',
+        probability4: req.body.probability4 || 'Low',
+        probability5: req.body.probability5 || 'Low',
+        probability6: req.body.probability6 || 'Low',
+        impact: req.body.impact || 'Low',
+        impact2: req.body.impact2 || 'Low',
+        impact3: req.body.impact3 || 'Low',
+        impact4: req.body.impact4 || 'Low',
+        impact5: req.body.impact5 || 'Low',
+        impact6: req.body.impact6 || 'Low',
+        riskCriticality: req.body.riskCriticality || 1,
+        riskCriticality2: req.body.riskCriticality2 || 1,
+        riskCriticality3: req.body.riskCriticality3 || 1,
+        riskCriticality4: req.body.riskCriticality4 || 1,
+        riskCriticality5: req.body.riskCriticality5 || 1,
+        riskCriticality6: req.body.riskCriticality6 || 1,
+        // Always use the current date for lastUpdated
+        lastUpdated: new Date(),
       };
       
       console.log('Sanitized risk creation data:', {
