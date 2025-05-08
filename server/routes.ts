@@ -1343,13 +1343,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const impactValue = impact || 'Low';
       
       // Generate the mitigation plan using Claude
-      const mitigationPlan = await generateMitigationPlan(
-        riskName,
-        probValue,
-        impactValue
-      );
-      
-      return res.status(200).json({ mitigationPlan });
+      try {
+        const mitigationPlan = await generateMitigationPlan(
+          riskName,
+          probValue,
+          impactValue
+        );
+        
+        return res.status(200).json({ mitigationPlan });
+      } catch (apiError: any) {
+        console.error("Claude API error:", apiError);
+        return res.status(500).json({ 
+          error: true,
+          message: `Claude AI error: ${apiError.message || 'Unknown error'}`,
+          details: "Make sure you have a valid ANTHROPIC_API_KEY set in your environment"
+        });
+      }
     } catch (err) {
       console.error("Error generating mitigation plan:", err);
       return handleErrors(err, res);

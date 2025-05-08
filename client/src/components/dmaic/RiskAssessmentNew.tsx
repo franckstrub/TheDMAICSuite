@@ -471,7 +471,7 @@ export default function RiskAssessmentNew() {
     // Add loading toast
     const loadingToast = toast({
       title: "Generating mitigation plan",
-      description: "Please wait while we use Claude AI to create a tailored mitigation plan...",
+      description: "Please wait while we generate an AI-powered mitigation plan for you...",
       variant: "default",
       duration: 10000
     });
