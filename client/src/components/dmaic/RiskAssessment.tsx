@@ -1069,16 +1069,11 @@ export default function RiskAssessment() {
     
     saveRiskMutation.mutate(processedData, {
       onSuccess: () => {
-        // After successful save, restore the scroll position
-        console.log(`Restoring scroll position to ${savedScrollPosition}`);
-        window.scrollTo({
-          top: savedScrollPosition,
-          behavior: 'auto'
-        });
-        
         // After successful save, force reset the dropdown values explicitly
         console.log("After save, explicitly setting dropdown values again");
         
+        // Use a more reliable way to preserve scroll position
+        // First set the values, then restore scroll in a separate timeout
         setTimeout(() => {
           if (currentValues.probability) {
             riskForm.setValue("probability", currentValues.probability);
@@ -1145,6 +1140,13 @@ export default function RiskAssessment() {
           }
           
           if (currentValues.impact6) riskForm.setValue("impact6", currentValues.impact6);
+          
+          // Now restore scroll position in a separate operation after form values are set
+          setTimeout(() => {
+            console.log(`Restoring scroll position to ${savedScrollPosition}`);
+            // Use standard method without behavior option for maximum browser compatibility
+            window.scrollTo(0, savedScrollPosition);
+          }, 50);
         }, 200);
       }
     });
