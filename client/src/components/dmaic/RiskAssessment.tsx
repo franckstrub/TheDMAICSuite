@@ -189,23 +189,38 @@ export default function RiskAssessment() {
     resetRiskFormInitialization();
   }, [projectId]);
   
-  // Make all textareas resizable
+  // Make all textareas resizable - with force attribute insertion using raw DOM
   useEffect(() => {
     const makeTextareasResizable = () => {
+      // Force ALL textareas to be resizable
+      const allTextareas = document.querySelectorAll('textarea');
+      allTextareas.forEach((textarea) => {
+        const element = textarea as HTMLElement;
+        element.setAttribute('style', 'resize: vertical !important; overflow-y: auto !important; min-height: 80px !important;' + element.getAttribute('style'));
+      });
+      
+      // Extra emphasis on risk assessment textareas
       const textareas = document.querySelectorAll('.risk-name-textarea, .risk-owner-textarea, .risk-mitigation-textarea');
       textareas.forEach((textarea) => {
         const element = textarea as HTMLElement;
-        element.style.resize = 'vertical';
-        element.style.overflowY = 'auto';
+        element.setAttribute('style', 'resize: vertical !important; overflow-y: auto !important; min-height: 80px !important;' + element.getAttribute('style'));
       });
-      console.log("Applied resizable styles to all risk assessment textareas");
+      
+      console.log("Applied forced resizable styles to ALL textareas");
     };
     
+    // Run immediately
     makeTextareasResizable();
-    // Also apply after a delay to make sure it takes effect
-    const timer = setTimeout(makeTextareasResizable, 500);
     
-    return () => clearTimeout(timer);
+    // Also apply multiple times with delays to make sure it takes effect
+    const timers = [
+      setTimeout(makeTextareasResizable, 200),
+      setTimeout(makeTextareasResizable, 500),
+      setTimeout(makeTextareasResizable, 1000),
+      setTimeout(makeTextareasResizable, 2000)
+    ];
+    
+    return () => timers.forEach(timer => clearTimeout(timer));
   }, [visibleRiskRows]);
   
   // Initialize form with data from API
