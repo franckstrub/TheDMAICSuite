@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import MilestoneTimeline from "./MilestoneTimeline";
-import RiskAssessment from "./RiskAssessment";
+import RiskAssessmentNew from "./RiskAssessmentNew";
 import RaciMatrixNew from "./RaciMatrixNew";
 import StakeholderAnalysisMatrix from "./StakeholderAnalysisMatrix";
 import {
@@ -4258,7 +4258,7 @@ export default function DefinePhase() {
       </Card>
       
       {/* Project Risk Assessment Section */}
-      <RiskAssessment />
+      <RiskAssessmentNew />
       
       {/* Project RACI Matrix Section */}
       <RaciMatrixNew 
