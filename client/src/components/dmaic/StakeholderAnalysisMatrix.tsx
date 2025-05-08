@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -52,6 +52,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
   // State for stakeholder analysis items
   const [items, setItems] = useState<StakeholderAnalysisItem[]>([createDefaultRow(Number(projectId))]);
   const queryClient = useQueryClient();
+  const textareaRefs = useRef<{[key: string | number]: HTMLTextAreaElement | null}>({});
 
   // Data fetching with React Query
   const { 
@@ -100,6 +101,34 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       setItems([createDefaultRow(Number(projectId))]);
     }
   }, [analysisData, projectId]);
+  
+  // Adjust textarea heights after items are rendered or updated
+  useEffect(() => {
+    if (items.length > 0) {
+      // Use setTimeout to ensure the DOM has been updated
+      setTimeout(() => {
+        items.forEach((_, index) => {
+          // Adjust strategy field
+          adjustTextareaHeight(index);
+          
+          // Adjust name field
+          const nameTextarea = textareaRefs.current[`name-${index}`];
+          if (nameTextarea) {
+            nameTextarea.style.height = 'auto';
+            nameTextarea.style.height = `${Math.max(60, nameTextarea.scrollHeight + 4)}px`;
+          }
+          
+          // Adjust role field
+          const roleTextarea = textareaRefs.current[`role-${index}`];
+          if (roleTextarea) {
+            roleTextarea.style.height = 'auto';
+            roleTextarea.style.height = `${Math.max(60, roleTextarea.scrollHeight + 4)}px`;
+          }
+        });
+        console.log("Adjusted all textarea heights after items update");
+      }, 100);
+    }
+  }, [items]);
 
   // Function to load analysis from database
   const loadAnalysisFromDatabase = async (silent = false) => {
@@ -487,6 +516,23 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     return suggestion;
   };
 
+  // Function to auto-adjust textarea height based on content
+  const adjustTextareaHeight = (index: number | string) => {
+    setTimeout(() => {
+      const textarea = textareaRefs.current[index];
+      if (textarea) {
+        // Reset height to default to get accurate scrollHeight measurement
+        textarea.style.height = 'auto';
+        
+        // Calculate new height based on content (add a small buffer for better appearance)
+        const newHeight = Math.max(60, textarea.scrollHeight + 4);
+        textarea.style.height = `${newHeight}px`;
+        
+        console.log(`Adjusted textarea height for index ${index} to ${newHeight}px`);
+      }
+    }, 0);
+  };
+
   // Event handler for the refresh button
   const handleRefresh = () => {
     loadAnalysisFromDatabase(false);
@@ -540,16 +586,26 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                   <TableRow key={index}>
                     <TableCell className="p-1">
                       <Textarea
+                        ref={(el) => textareaRefs.current[`name-${index}`] = el}
                         value={item.stakeholderName}
-                        onChange={(e) => updateItem(index, 'stakeholderName', e.target.value)}
+                        onChange={(e) => {
+                          updateItem(index, 'stakeholderName', e.target.value);
+                          // Auto-adjust height when user types
+                          adjustTextareaHeight(`name-${index}`);
+                        }}
                         className="min-h-[60px] text-sm w-full resize-y p-1"
                         placeholder="Stakeholder name"
                       />
                     </TableCell>
                     <TableCell className="p-1">
                       <Textarea
+                        ref={(el) => textareaRefs.current[`role-${index}`] = el}
                         value={item.stakeholderRole || ''}
-                        onChange={(e) => updateItem(index, 'stakeholderRole', e.target.value)}
+                        onChange={(e) => {
+                          updateItem(index, 'stakeholderRole', e.target.value);
+                          // Auto-adjust height when user types
+                          adjustTextareaHeight(`role-${index}`);
+                        }}
                         className="min-h-[60px] text-sm w-full resize-y p-1"
                         placeholder="Role/Function"
                       />
@@ -634,9 +690,14 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                     <TableCell className="p-1">
                       <div className="relative">
                         <Textarea
+                          ref={(el) => textareaRefs.current[index] = el}
                           value={item.engagementStrategy || ''}
-                          onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
-                          className="min-h-[60px] text-xs w-full resize-y p-1 pr-8"
+                          onChange={(e) => {
+                            updateItem(index, 'engagementStrategy', e.target.value);
+                            // Auto-adjust height when user types
+                            adjustTextareaHeight(index);
+                          }}
+                          className="min-h-[60px] text-xs w-full resize-y p-1 pr-8 whitespace-pre-wrap"
                           placeholder="Strategy to engage and manage this stakeholder"
                         />
                         <TooltipProvider>
@@ -655,10 +716,14 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                     item.supportLevel === 'Resistant' ? item.resistanceType : null
                                   );
                                   updateItem(index, 'engagementStrategy', suggestion);
+                                  
                                   toast({
                                     title: "AI Strategy Generated",
                                     description: "The engagement strategy has been suggested based on stakeholder attributes",
                                   });
+                                  
+                                  // Auto-adjust height after content is set
+                                  setTimeout(() => adjustTextareaHeight(index), 50);
                                 }}
                               >
                                 <Sparkles className="h-4 w-4" />
