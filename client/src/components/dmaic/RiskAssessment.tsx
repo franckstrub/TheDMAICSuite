@@ -1368,11 +1368,10 @@ export default function RiskAssessment() {
             <div className="grid grid-cols-12 gap-2 mb-2 relative">
               <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
                 <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName2")}
-                  style={{ height: '24px' }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1424,39 +1423,28 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
                 <div className="relative">
                   <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8"
-                    rows={1}
+                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                    rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan2")}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan2"] = el;
                         
-                        // On ref attachment, force update the height
+                        // Simply store the reference, CSS classes handle the fixed height
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan2 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan2;
-                              // Calculate better height based on content
-                              const lineCount = riskData.risk.mitigationPlan2.split('\n').length;
-                              const minHeight = Math.max(24, lineCount * 24); // 24px = 1 row (default text height)
-                              el.style.height = 'auto';
-                              el.style.minHeight = `${minHeight}px`;
-                              el.style.height = `${minHeight}px`;
-                              console.log(`Direct ref injection for mitigationPlan2: ${lineCount} lines, height ${minHeight}px`);
-                            } else {
-                              // Set an exact height of 24px (matching 1 row) for empty fields
-                              el.style.height = '24px';
-                              el.style.minHeight = '24px';
+                              console.log(`Direct ref injection for mitigationPlan2 completed`);
                             }
                           } catch (error) {
-                            console.error("Error setting textarea height:", error);
+                            console.error("Error setting textarea content:", error);
                           }
                         }, 200);
                       }
                     }}
-                    style={{ height: '24px' }}
                   />
                   <div className="absolute top-1 right-1">
                     <TooltipProvider>
@@ -1482,11 +1470,10 @@ export default function RiskAssessment() {
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
                 <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner2")}
-                  style={{ height: '24px' }}
                 />
               </div>
               <Button
@@ -1563,18 +1550,28 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
                 <div className="relative">
                   <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8"
-                    rows={1}
+                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                    rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan3")}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan3"] = el;
-                        el.style.height = '24px';
-                        el.style.minHeight = '24px';
+                        
+                        // Simply store the reference, CSS classes handle the fixed height
+                        setTimeout(() => {
+                          try {
+                            if (riskData?.risk?.mitigationPlan3 && el) {
+                              // Force the value to be set directly
+                              el.value = riskData.risk.mitigationPlan3;
+                              console.log(`Direct ref injection for mitigationPlan3 completed`);
+                            }
+                          } catch (error) {
+                            console.error("Error setting textarea content:", error);
+                          }
+                        }, 200);
                       }
                     }}
-                    style={{ height: '24px' }}
                   />
                   <div className="absolute top-1 right-1">
                     <TooltipProvider>
@@ -1677,18 +1674,28 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
                 <div className="relative">
                   <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8"
-                    rows={1}
+                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                    rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan4")}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan4"] = el;
-                        el.style.height = '24px';
-                        el.style.minHeight = '24px';
+                        
+                        // Simply store the reference, CSS classes handle the fixed height
+                        setTimeout(() => {
+                          try {
+                            if (riskData?.risk?.mitigationPlan4 && el) {
+                              // Force the value to be set directly
+                              el.value = riskData.risk.mitigationPlan4;
+                              console.log(`Direct ref injection for mitigationPlan4 completed`);
+                            }
+                          } catch (error) {
+                            console.error("Error setting textarea content:", error);
+                          }
+                        }, 200);
                       }
                     }}
-                    style={{ height: '24px' }}
                   />
                   <div className="absolute top-1 right-1">
                     <TooltipProvider>
@@ -1791,18 +1798,28 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
                 <div className="relative">
                   <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8"
-                    rows={1}
+                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                    rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan5")}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan5"] = el;
-                        el.style.height = '24px';
-                        el.style.minHeight = '24px';
+                        
+                        // Simply store the reference, CSS classes handle the fixed height
+                        setTimeout(() => {
+                          try {
+                            if (riskData?.risk?.mitigationPlan5 && el) {
+                              // Force the value to be set directly
+                              el.value = riskData.risk.mitigationPlan5;
+                              console.log(`Direct ref injection for mitigationPlan5 completed`);
+                            }
+                          } catch (error) {
+                            console.error("Error setting textarea content:", error);
+                          }
+                        }, 200);
                       }
                     }}
-                    style={{ height: '24px' }}
                   />
                   <div className="absolute top-1 right-1">
                     <TooltipProvider>
@@ -1905,18 +1922,28 @@ export default function RiskAssessment() {
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4">
                 <div className="relative">
                   <Textarea
-                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8"
-                    rows={1}
+                    className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                    rows={5}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan6")}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan6"] = el;
-                        el.style.height = '24px';
-                        el.style.minHeight = '24px';
+                        
+                        // Simply store the reference, CSS classes handle the fixed height
+                        setTimeout(() => {
+                          try {
+                            if (riskData?.risk?.mitigationPlan6 && el) {
+                              // Force the value to be set directly
+                              el.value = riskData.risk.mitigationPlan6;
+                              console.log(`Direct ref injection for mitigationPlan6 completed`);
+                            }
+                          } catch (error) {
+                            console.error("Error setting textarea content:", error);
+                          }
+                        }, 200);
                       }
                     }}
-                    style={{ height: '24px' }}
                   />
                   <div className="absolute top-1 right-1">
                     <TooltipProvider>
