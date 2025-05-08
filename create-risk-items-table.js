@@ -5,15 +5,14 @@
  * Run with: npx tsx create-risk-items-table.js
  */
 
-import { sql } from "drizzle-orm";
-import { db } from "./server/db";
+import { pool } from "./server/db";
 
 async function createRiskItemsTable() {
   try {
     console.log("Creating project_risk_items table...");
 
-    // Create the project_risk_items table
-    await sql`
+    // Create the project_risk_items table using raw SQL
+    const createTableQuery = `
       CREATE TABLE IF NOT EXISTS project_risk_items (
         id SERIAL PRIMARY KEY,
         project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -26,11 +25,16 @@ async function createRiskItemsTable() {
         order_index INTEGER NOT NULL DEFAULT 0,
         last_updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       )
-    `.execute(db);
+    `;
 
+    await pool.query(createTableQuery);
     console.log("Successfully created project_risk_items table");
   } catch (error) {
     console.error("Error creating project_risk_items table:", error);
+  } finally {
+    // Close the connection
+    console.log("Closing database connection...");
+    await pool.end();
   }
 }
 
