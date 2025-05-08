@@ -425,14 +425,14 @@
 .risk-mitigation-textarea,
 .risk-name-textarea,
 .risk-owner-textarea {
-  resize: vertical;
-  resize-handle: border-bottom;
+  resize: vertical !important;
   box-sizing: border-box;
   width: 100%;
   flex-grow: 1;
   overflow-y: auto;
   display: block;
   position: relative;
+  min-height: 24px;
 }
 
 /* Specific minimum heights */
