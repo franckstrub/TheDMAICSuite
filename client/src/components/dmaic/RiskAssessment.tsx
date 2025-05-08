@@ -660,6 +660,9 @@ export default function RiskAssessment() {
       variant: "default"
     });
     
+    // Extract key themes from risk name for targeted suggestions
+    const riskNameLower = riskName.toLowerCase();
+    
     // Determine risk type based on keywords in risk description
     let riskType = "";
     if (riskNameLower.includes("technology") || riskNameLower.includes("technical") || riskNameLower.includes("system") || riskNameLower.includes("software") || riskNameLower.includes("it")) {
@@ -755,8 +758,7 @@ export default function RiskAssessment() {
       suggestion += "• Document acceptance rationale";
     }
     
-    // Extract key themes from risk name for more targeted suggestions
-    const riskNameLower = riskName.toLowerCase();
+    // We already have riskNameLower defined above, use it for more targeted suggestions
     
     // Risk type specific suggestions
     let specificRiskType = "";
@@ -799,117 +801,230 @@ export default function RiskAssessment() {
       
     } else if (riskNameLower.includes("resource") || riskNameLower.includes("staffing") || riskNameLower.includes("personnel") || riskNameLower.includes("team") || riskNameLower.includes("employee")) {
       specificRiskType = "Resource";
-      suggestion += "\n\nResource Risk Specific:\n";
+      suggestion += "\n\nCONTINGENCY:\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Develop comprehensive succession and continuity plans\n";
-        suggestion += "• Prioritize critical resource retention strategies\n";
+      if (riskNameLower.includes("turnover") || riskNameLower.includes("retention") || riskNameLower.includes("leaving")) {
+        // Specific contingency for staff turnover/retention risks
+        suggestion += "• Develop targeted retention plan for critical team members\n";
+        suggestion += "• Create comprehensive knowledge transfer protocol for key roles\n";
+        if (isImpactHigh) {
+          suggestion += "• Establish emergency staffing plan with qualified contractors\n";
+          suggestion += "• Create shadow roles where critical knowledge is concentrated\n";
+          suggestion += "• Document detailed process guides for critical functions\n";
+        } else {
+          suggestion += "• Implement basic knowledge sharing processes\n";
+          suggestion += "• Create succession planning for key positions\n";
+        }
+      } else if (riskNameLower.includes("skill") || riskNameLower.includes("capability") || riskNameLower.includes("expertise")) {
+        // Specific contingency for skill gap risks
+        suggestion += "• Develop targeted training program focused on critical skill gaps\n";
+        suggestion += "• Identify external expertise sources to supplement internal skills\n";
+        if (isProbabilityHigh) {
+          suggestion += "• Create skill-specific development plans with clear milestones\n";
+          suggestion += "• Establish mentoring pairs for knowledge transfer\n";
+        }
       } else {
-        suggestion += "• Create basic succession plans for key roles\n";
+        // Generic resource risk contingency
+        if (isProbabilityHigh) {
+          suggestion += "• Develop comprehensive succession and continuity plans\n";
+          suggestion += "• Prioritize critical resource retention strategies\n";
+        } else {
+          suggestion += "• Create basic succession plans for key roles\n";
+        }
+        
+        if (isImpactHigh) {
+          suggestion += "• Establish partnerships with staffing agencies for rapid response\n";
+          suggestion += "• Create detailed knowledge transfer procedures\n";
+        } else {
+          suggestion += "• Maintain relationship with staffing resources\n";
+        }
       }
       
-      if (isImpactHigh) {
-        suggestion += "• Establish partnerships with staffing agencies for rapid response\n";
-        suggestion += "• Create detailed knowledge transfer procedures\n";
-      } else {
-        suggestion += "• Maintain relationship with staffing resources\n";
-      }
-      
+      suggestion += "\n\nOWNERSHIP & MONITORING:\n";
       suggestion += "• Cross-train team members on critical functions\n";
-      suggestion += "• Implement knowledge sharing and documentation systems\n";
-      suggestion += "• Develop hiring or contractor contingencies as backup";
+      suggestion += "• Create dashboard of resource allocation and utilization\n";
+      suggestion += "• Maintain resource risk register with monthly updates\n";
+      suggestion += "• Document decision criteria for resource escalation";
       
     } else if (riskNameLower.includes("schedule") || riskNameLower.includes("timeline") || riskNameLower.includes("deadline") || riskNameLower.includes("delay")) {
       specificRiskType = "Schedule";
-      suggestion += "\n\nSchedule Risk Specific:\n";
+      suggestion += "\n\nCONTINGENCY:\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Build substantial buffer time (20-30%) into critical path activities\n";
-        suggestion += "• Implement formal change control procedures for timeline changes\n";
+      if (riskNameLower.includes("deadline") || riskNameLower.includes("milestone")) {
+        // Specific contingency for deadline or milestone risks
+        suggestion += "• Identify critical vs. non-critical milestones with flexibility assessment\n";
+        suggestion += "• Develop detailed recovery plans for each critical milestone\n";
+        if (isImpactHigh) {
+          suggestion += "• Create tiered scope-reduction options if significant delays occur\n";
+          suggestion += "• Establish executive authorization process for schedule revisions\n";
+        }
+        if (isProbabilityHigh) {
+          suggestion += "• Pre-position additional resources that can be deployed quickly\n";
+          suggestion += "• Implement twice-weekly status checks on high-risk milestones\n";
+        }
+      } else if (riskNameLower.includes("dependency") || riskNameLower.includes("external")) {
+        // Specific contingency for dependency or external timing risks
+        suggestion += "• Map all external dependencies with clear ownership and timing\n";
+        suggestion += "• Create communication protocol with all dependency owners\n";
+        if (isImpactHigh) {
+          suggestion += "• Develop workaround options for each critical dependency\n";
+          suggestion += "• Establish parallel execution paths where possible\n";
+        }
       } else {
-        suggestion += "• Build reasonable buffer time (10-15%) into critical path activities\n";
+        // Generic schedule risk contingency
+        if (isProbabilityHigh) {
+          suggestion += "• Build substantial buffer time (20-30%) into critical path activities\n";
+          suggestion += "• Implement formal change control procedures for timeline changes\n";
+        } else {
+          suggestion += "• Build reasonable buffer time (10-15%) into critical path activities\n";
+        }
+        
+        if (isImpactHigh) {
+          suggestion += "• Prepare contingency plan for deadline failure scenarios\n";
+          suggestion += "• Identify potential scope reduction options if necessary\n";
+        } else {
+          suggestion += "• Document potential scope adjustment options\n";
+        }
       }
       
-      if (isImpactHigh) {
-        suggestion += "• Prepare contingency plan for deadline failure scenarios\n";
-        suggestion += "• Identify potential scope reduction options if necessary\n";
-      } else {
-        suggestion += "• Document potential scope adjustment options\n";
-      }
-      
-      suggestion += "• Map and monitor all schedule dependencies\n";
-      suggestion += "• Create detailed milestone tracking system\n";
-      suggestion += "• Develop acceleration options if delays occur\n";
-      suggestion += "• Establish clear escalation paths for timeline issues";
+      suggestion += "\n\nOWNERSHIP & MONITORING:\n";
+      suggestion += "• Create visual schedule tracking dashboard with clear status indicators\n";
+      suggestion += "• Define specific leading indicators for potential schedule slippage\n";
+      suggestion += "• Establish clear decision criteria for implementing contingency plans\n";
+      suggestion += "• Document acceleration options with resource requirements and costs";
       
     } else if (riskNameLower.includes("budget") || riskNameLower.includes("cost") || riskNameLower.includes("financial") || riskNameLower.includes("expense") || riskNameLower.includes("funding")) {
       specificRiskType = "Financial";
-      suggestion += "\n\nFinancial Risk Specific:\n";
+      suggestion += "\n\nCONTINGENCY:\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Include substantial contingency reserves (15-20%) in budget\n";
-        suggestion += "• Implement stricter spending controls and approvals\n";
+      if (riskNameLower.includes("overrun") || riskNameLower.includes("exceed")) {
+        // Specific contingency for cost overrun risks
+        suggestion += "• Develop tiered cost reduction options that can be activated progressively\n";
+        suggestion += "• Create decision trigger points for implementing cost control measures\n";
+        if (isImpactHigh) {
+          suggestion += "• Establish scope reduction options with cost-benefit analysis\n";
+          suggestion += "• Prepare decision protocol for accelerating or deferring expenditures\n";
+        }
+        if (isProbabilityHigh) {
+          suggestion += "• Implement enhanced financial tracking with weekly validation\n";
+          suggestion += "• Create pre-approved options for reallocating budget between categories\n";
+        }
+      } else if (riskNameLower.includes("funding") || riskNameLower.includes("approval")) {
+        // Specific contingency for funding approval risks
+        suggestion += "• Develop phased implementation approach with discrete funding gates\n";
+        suggestion += "• Create minimum viable project option with reduced scope/cost\n";
+        if (isImpactHigh) {
+          suggestion += "• Prepare alternative funding source options and requirements\n";
+          suggestion += "• Establish clear ROI metrics to strengthen funding case\n";
+        }
       } else {
-        suggestion += "• Include reasonable contingency reserves (10%) in budget\n";
+        // Generic financial risk contingency  
+        if (isProbabilityHigh) {
+          suggestion += "• Include substantial contingency reserves (15-20%) in budget\n";
+          suggestion += "• Implement stricter spending controls and approvals\n";
+        } else {
+          suggestion += "• Include reasonable contingency reserves (10%) in budget\n";
+        }
+        
+        if (isImpactHigh) {
+          suggestion += "• Prepare detailed cost reduction options for emergency scenarios\n";
+          suggestion += "• Establish emergency funding sources or protocols\n";
+        } else {
+          suggestion += "• Document potential cost-saving measures if needed\n";
+        }
       }
       
-      if (isImpactHigh) {
-        suggestion += "• Prepare detailed cost reduction options for emergency scenarios\n";
-        suggestion += "• Establish emergency funding sources or protocols\n";
-      } else {
-        suggestion += "• Document potential cost-saving measures if needed\n";
-      }
-      
-      suggestion += "• Implement detailed cost tracking system with frequent reviews\n";
-      suggestion += "• Set clear spending approval thresholds and authority\n";
-      suggestion += "• Create key financial performance indicators and alerts\n";
-      suggestion += "• Establish regular financial review schedule";
+      suggestion += "\n\nOWNERSHIP & MONITORING:\n";
+      suggestion += "• Create financial dashboard with spend tracking against budget\n";
+      suggestion += "• Define early warning KPIs to trigger contingency implementation\n";
+      suggestion += "• Schedule regular financial reviews with increasing frequency as risk rises\n";
+      suggestion += "• Document approval authority levels for different financial scenarios";
       
     } else if (riskNameLower.includes("quality") || riskNameLower.includes("performance") || riskNameLower.includes("defect") || riskNameLower.includes("standard") || riskNameLower.includes("compliance")) {
       specificRiskType = "Quality";
-      suggestion += "\n\nQuality Risk Specific:\n";
+      suggestion += "\n\nCONTINGENCY:\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Implement comprehensive quality management system\n";
-        suggestion += "• Conduct preventative quality reviews at multiple stages\n";
+      if (riskNameLower.includes("compliance") || riskNameLower.includes("standard") || riskNameLower.includes("regulation")) {
+        // Specific contingency for compliance/standards risks
+        suggestion += "• Develop detailed compliance control inventory with verification points\n";
+        suggestion += "• Create compliance monitoring system with escalation protocols\n";
+        if (isImpactHigh) {
+          suggestion += "• Establish emergency compliance response team for critical issues\n";
+          suggestion += "• Create detailed remediation action plans for non-compliance scenarios\n";
+        }
+        if (isProbabilityHigh) {
+          suggestion += "• Implement compliance pre-verification at multiple project stages\n";
+          suggestion += "• Establish expert review protocol before key compliance milestones\n";
+        }
+      } else if (riskNameLower.includes("defect") || riskNameLower.includes("error") || riskNameLower.includes("failure")) {
+        // Specific contingency for defect/error risks
+        suggestion += "• Develop multi-level quality inspection protocol with clear criteria\n";
+        suggestion += "• Create defect classification and prioritization system\n";
+        if (isImpactHigh) {
+          suggestion += "• Establish rapid response team for critical defect remediation\n";
+          suggestion += "• Implement root cause analysis process for all major defects\n";
+        }
       } else {
-        suggestion += "• Implement targeted quality control procedures\n";
+        // Generic quality risk contingency
+        if (isProbabilityHigh) {
+          suggestion += "• Implement comprehensive quality management system\n";
+          suggestion += "• Conduct preventative quality reviews at multiple stages\n";
+        } else {
+          suggestion += "• Implement targeted quality control procedures\n";
+        }
+        
+        if (isImpactHigh) {
+          suggestion += "• Develop rapid response protocols for critical quality issues\n";
+          suggestion += "• Create remediation plans with dedicated resources\n";
+        } else {
+          suggestion += "• Prepare standard remediation approaches for common issues\n";
+        }
       }
       
-      if (isImpactHigh) {
-        suggestion += "• Develop rapid response protocols for critical quality issues\n";
-        suggestion += "• Create remediation plans with dedicated resources\n";
-      } else {
-        suggestion += "• Prepare standard remediation approaches for common issues\n";
-      }
-      
+      suggestion += "\n\nOWNERSHIP & MONITORING:\n";
       suggestion += "• Establish clear quality criteria, standards and metrics\n";
-      suggestion += "• Conduct regular testing throughout process\n";
-      suggestion += "• Implement independent quality verification\n";
-      suggestion += "• Provide quality-focused training to team members";
+      suggestion += "• Implement regular quality verification checkpoints\n";
+      suggestion += "• Create quality dashboard with leading and lagging indicators\n";
+      suggestion += "• Document quality escalation protocol with decision criteria";
       
-    } else if (riskNameLower.includes("change") || riskNameLower.includes("adoption") || riskNameLower.includes("resistance") || riskNameLower.includes("acceptance") || riskNameLower.includes("stakeholder")) {
+    } else if (riskNameLower.includes("change") || riskNameLower.includes("adoption") || riskNameLower.includes("resistance") || riskNameLower.includes("acceptance") || riskNameLower.includes("stakeholder") || riskNameLower.includes("people")) {
       specificRiskType = "Change Management";
-      suggestion += "\n\nChange Management Risk Specific:\n";
+      suggestion += "\n\nCONTINGENCY:\n";
       
-      if (isProbabilityHigh) {
-        suggestion += "• Develop comprehensive change management and communication plan\n";
-        suggestion += "• Conduct stakeholder impact analysis and prioritization\n";
+      if (riskNameLower.includes("people") || riskNameLower.includes("acceptance")) {
+        // Specific contingency for people change acceptance risks
+        suggestion += "• Prepare targeted communication strategy for specific resistance scenarios\n";
+        suggestion += "• Develop intervention protocol for addressing serious resistance\n";
+        if (isImpactHigh) {
+          suggestion += "• Create phased implementation plan with adoption checkpoints\n";
+          suggestion += "• Establish executive escalation process for critical resistance\n";
+          suggestion += "• Develop contingency plan for minimum viable implementation\n";
+        } else {
+          suggestion += "• Create incentive structure to encourage adoption\n";
+          suggestion += "• Establish feedback mechanisms for addressing concerns\n";
+        }
       } else {
-        suggestion += "• Create standard change management approach\n";
+        // Generic change management contingency
+        if (isProbabilityHigh) {
+          suggestion += "• Develop targeted stakeholder engagement strategies\n";
+          suggestion += "• Create detailed communications plan with key messaging\n";
+        } else {
+          suggestion += "• Create general change management communications\n";
+        }
+        
+        if (isImpactHigh) {
+          suggestion += "• Establish executive sponsorship with visible support activities\n";
+          suggestion += "• Create formal escalation process for resistance mitigation\n";
+        } else {
+          suggestion += "• Identify key stakeholders for focused engagement\n";
+        }
       }
       
-      if (isImpactHigh) {
-        suggestion += "• Engage executive sponsors to champion the change\n";
-        suggestion += "• Establish formal feedback and concern resolution processes\n";
-      } else {
-        suggestion += "• Identify key stakeholders for targeted engagement\n";
-      }
-      
-      suggestion += "• Provide clear and frequent communications on rationale and benefits\n";
-      suggestion += "• Create targeted training and support materials\n";
-      suggestion += "• Establish feedback channels for concerns and suggestions\n";
-      suggestion += "• Identify and engage change champions within organization";
+      suggestion += "\n\nOWNERSHIP & MONITORING:\n";
+      suggestion += "• Deploy change champions network throughout organization\n";
+      suggestion += "• Conduct regular pulse surveys to monitor acceptance levels\n";
+      suggestion += "• Establish early warning indicators for change resistance\n";
+      suggestion += "• Document lessons learned to improve future change initiatives";
     }
     
     // If no specific risk type was identified, provide general suggestions
