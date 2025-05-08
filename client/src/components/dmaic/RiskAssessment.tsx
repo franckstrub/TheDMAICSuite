@@ -361,6 +361,26 @@ export default function RiskAssessment() {
         
         console.log(`Setting risk rows to ${maxRow}`);
         setVisibleRiskRows(maxRow);
+        
+        // Add a function to adjust all mitigation plan textareas after form initialization
+        setTimeout(() => {
+          // Adjust all mitigation plan textareas
+          const adjustAllMitigationPlanTextareas = () => {
+            console.log("Adjusting all mitigation plan textareas after form initialization");
+            for (let i = 1; i <= maxRow; i++) {
+              const fieldName = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
+              adjustTextareaHeight(fieldName);
+            }
+          };
+          
+          // Run once immediately
+          adjustAllMitigationPlanTextareas();
+          
+          // Then run a few more times with increasing delays to ensure proper rendering
+          setTimeout(adjustAllMitigationPlanTextareas, 200);
+          setTimeout(adjustAllMitigationPlanTextareas, 500);
+          setTimeout(adjustAllMitigationPlanTextareas, 1000);
+        }, 100);
       } catch (error) {
         console.error("Error initializing risk form:", error);
       }
