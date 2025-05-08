@@ -189,6 +189,25 @@ export default function RiskAssessment() {
     resetRiskFormInitialization();
   }, [projectId]);
   
+  // Make all textareas resizable
+  useEffect(() => {
+    const makeTextareasResizable = () => {
+      const textareas = document.querySelectorAll('.risk-name-textarea, .risk-owner-textarea, .risk-mitigation-textarea');
+      textareas.forEach((textarea) => {
+        const element = textarea as HTMLElement;
+        element.style.resize = 'vertical';
+        element.style.overflowY = 'auto';
+      });
+      console.log("Applied resizable styles to all risk assessment textareas");
+    };
+    
+    makeTextareasResizable();
+    // Also apply after a delay to make sure it takes effect
+    const timer = setTimeout(makeTextareasResizable, 500);
+    
+    return () => clearTimeout(timer);
+  }, [visibleRiskRows]);
+  
   // Initialize form with data from API
   useEffect(() => {
     if (riskData?.risk && !riskFormInitialized.current) {
@@ -610,7 +629,11 @@ export default function RiskAssessment() {
           // Set a reasonable initial height, but allow user resizing
           textarea.style.height = `${newHeight}px`;
           
-          console.log(`Adjusted initial height for ${textareaKey} to ${newHeight}px`);
+          // Ensure textarea is resizable regardless of CSS
+          textarea.style.resize = 'vertical';
+          textarea.style.overflowY = 'auto';
+          
+          console.log(`Adjusted initial height for ${textareaKey} to ${newHeight}px and ensured it's resizable`);
         }
         
         // The synchronizing height feature should only work for manual resizing
@@ -654,17 +677,23 @@ export default function RiskAssessment() {
             
             console.log(`Synchronizing heights for row ${rowNumber || '1'} to maximum height: ${maxHeight}px`);
             
-            // Set all textareas in the row to the maximum height
+            // Set all textareas in the row to the maximum height and ensure they're resizable
             if (riskNameTextarea) {
               riskNameTextarea.style.height = `${maxHeight}px`;
+              riskNameTextarea.style.resize = 'vertical';
+              riskNameTextarea.style.overflowY = 'auto';
             }
             
             if (mitigationPlanTextarea) {
               mitigationPlanTextarea.style.height = `${maxHeight}px`;
+              mitigationPlanTextarea.style.resize = 'vertical';
+              mitigationPlanTextarea.style.overflowY = 'auto';
             }
             
             if (riskOwnerTextarea) {
               riskOwnerTextarea.style.height = `${maxHeight}px`;
+              riskOwnerTextarea.style.resize = 'vertical';
+              riskOwnerTextarea.style.overflowY = 'auto';
             }
           }
         }
