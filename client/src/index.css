@@ -47,13 +47,26 @@
 --radius: 0.5rem;
   }
 
-/* Make all risk assessment textareas resizable */
-.risk-name-textarea,
-.risk-owner-textarea,
-.risk-mitigation-textarea {
+/* Make all risk assessment textareas resizable - higher specificity */
+.risk-row .risk-name-textarea,
+.risk-row .risk-owner-textarea,
+.risk-row .risk-mitigation-textarea,
+textarea.risk-name-textarea,
+textarea.risk-owner-textarea,
+textarea.risk-mitigation-textarea,
+div textarea.risk-name-textarea,
+div textarea.risk-owner-textarea,
+div textarea.risk-mitigation-textarea {
   resize: vertical !important;
   overflow-y: auto !important;
   min-height: 80px !important;
+  box-sizing: border-box !important;
+}
+
+/* Force all textareas to be resizable */
+textarea {
+  resize: vertical !important;
+  overflow-y: auto !important;
 }
 
 @layer base {
