@@ -1279,6 +1279,17 @@ export default function RiskAssessment() {
                 rows={1}
                 placeholder="Describe the risk"
                 {...riskForm.register("riskName")}
+                ref={(el) => {
+                  if (el) {
+                    textareaRefs.current["riskName"] = el;
+                    
+                    // Add manual resize event listener
+                    el.addEventListener('mouseup', () => {
+                      // This ensures that when user manually resizes, we sync heights
+                      setTimeout(() => adjustTextareaHeight("riskName"), 10);
+                    });
+                  }
+                }}
               />
             </div>
             <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1390,6 +1401,17 @@ export default function RiskAssessment() {
                 rows={1}
                 placeholder="Who is responsible for monitoring this risk?"
                 {...riskForm.register("riskOwner")}
+                ref={(el) => {
+                  if (el) {
+                    textareaRefs.current["riskOwner"] = el;
+                    
+                    // Add manual resize event listener
+                    el.addEventListener('mouseup', () => {
+                      // This ensures that when user manually resizes, we sync heights
+                      setTimeout(() => adjustTextareaHeight("riskOwner"), 10);
+                    });
+                  }
+                }}
               />
             </div>
             {/* No delete button for first row (it's mandatory) */}
@@ -1404,6 +1426,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName2")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskName2"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskName2"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
@@ -1514,6 +1547,17 @@ export default function RiskAssessment() {
                   rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner2")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["riskOwner2"] = el;
+                      
+                      // Add manual resize event listener
+                      el.addEventListener('mouseup', () => {
+                        // This ensures that when user manually resizes, we sync heights
+                        setTimeout(() => adjustTextareaHeight("riskOwner2"), 10);
+                      });
+                    }
+                  }}
                 />
               </div>
               <Button
@@ -1727,13 +1771,21 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan4"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Add manual resize event listener
+                        el.addEventListener('mouseup', () => {
+                          // This ensures that when user manually resizes, we sync heights
+                          setTimeout(() => adjustTextareaHeight("mitigationPlan4"), 10);
+                        });
+                        
+                        // Store the reference and set initial content
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan4 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan4;
                               console.log(`Direct ref injection for mitigationPlan4 completed`);
+                              // Initialize height based on content
+                              adjustTextareaHeight("mitigationPlan4", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -1849,13 +1901,21 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan5"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Add manual resize event listener
+                        el.addEventListener('mouseup', () => {
+                          // This ensures that when user manually resizes, we sync heights
+                          setTimeout(() => adjustTextareaHeight("mitigationPlan5"), 10);
+                        });
+                        
+                        // Store the reference and set initial content
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan5 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan5;
                               console.log(`Direct ref injection for mitigationPlan5 completed`);
+                              // Initialize height based on content
+                              adjustTextareaHeight("mitigationPlan5", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
@@ -1971,13 +2031,21 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan6"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Add manual resize event listener
+                        el.addEventListener('mouseup', () => {
+                          // This ensures that when user manually resizes, we sync heights
+                          setTimeout(() => adjustTextareaHeight("mitigationPlan6"), 10);
+                        });
+                        
+                        // Store the reference and set initial content
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan6 && el) {
                               // Force the value to be set directly
                               el.value = riskData.risk.mitigationPlan6;
                               console.log(`Direct ref injection for mitigationPlan6 completed`);
+                              // Initialize height based on content
+                              adjustTextareaHeight("mitigationPlan6", true);
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
