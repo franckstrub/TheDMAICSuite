@@ -42,7 +42,11 @@ The mitigation plan should be specific to this risk, considering its probability
     });
 
     // Extract and return the response content
-    return response.content[0].text;
+    if (response.content[0].type === 'text') {
+      return response.content[0].text;
+    } else {
+      throw new Error('Unexpected response format from Claude API');
+    }
   } catch (error) {
     console.error('Error generating mitigation plan with Claude:', error);
     throw new Error('Failed to generate mitigation plan. Please try again later.');
