@@ -175,7 +175,7 @@ export default function RiskAssessment() {
 
   // Fetch existing risk data
   const { data: riskData, isLoading: isRiskLoading } = useQuery<RiskResponse>({
-    queryKey: [`/api/projects/${projectId}/risks`],
+    queryKey: ['/api/projects', projectId, 'risks'],
     enabled: !!projectId
   });
   
@@ -193,6 +193,19 @@ export default function RiskAssessment() {
   useEffect(() => {
     if (riskData?.risk && !riskFormInitialized.current) {
       console.log("Initializing risk form with data:", riskData.risk);
+      
+      // Debug check for mitigation plans
+      if (riskData.risk.mitigationPlan) {
+        console.log("DEBUG: Mitigation plan 1 from API:", riskData.risk.mitigationPlan.substring(0, 50) + "...");
+      } else {
+        console.log("DEBUG: Mitigation plan 1 is NULL or EMPTY in API response");
+      }
+      
+      if (riskData.risk.mitigationPlan2) {
+        console.log("DEBUG: Mitigation plan 2 from API:", riskData.risk.mitigationPlan2.substring(0, 50) + "...");
+      } else {
+        console.log("DEBUG: Mitigation plan 2 is NULL or EMPTY in API response");
+      }
       
       try {
         // Force reset of probability, impact, and criticality values directly
@@ -388,6 +401,10 @@ export default function RiskAssessment() {
                 // Directly set the value on the DOM element
                 textareaElement.value = fieldValue as string;
                 
+                // Make sure the form value also matches what's in the textarea
+                // This is critical for proper saving of manually input or modified values
+                riskForm.setValue(fieldName as any, fieldValue as string);
+                
                 // Skip height adjustment if we're in a save operation
                 if (skipNextTextareaResize) continue;
                 
@@ -442,7 +459,30 @@ export default function RiskAssessment() {
       // Store current scroll position before saving
       const scrollPosition = window.scrollY;
       
-      // Log data before saving to ensure all values are correct, especially mitigation plans
+      // Check for actual values in DOM elements to ensure we have the latest content
+      // This ensures manually edited content is properly saved
+      for (let i = 1; i <= 6; i++) {
+        const fieldName = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
+        const textareaElement = textareaRefs.current[fieldName];
+        
+        if (textareaElement) {
+          // Check if the textarea value differs from form state
+          const formValue = data[fieldName as keyof RiskFormData] as string || '';
+          const domValue = textareaElement.value;
+          
+          if (domValue !== formValue) {
+            console.log(`Detected difference in ${fieldName} between form state and DOM value`);
+            console.log(`- Form state length: ${formValue.length}`);
+            console.log(`- DOM value length: ${domValue.length}`);
+            
+            // Update the data object with the actual textarea content
+            // This ensures manually edited content is properly saved
+            (data as any)[fieldName] = domValue;
+          }
+        }
+      }
+      
+      // Log data before saving to ensure all values are correct
       console.log("Saving risk data with the following values:", {
         probability: data.probability,
         impact: data.impact,
@@ -502,8 +542,8 @@ export default function RiskAssessment() {
       console.log("Set skipNextTextareaResize flag in onSuccess handler");
       
       // Invalidate queries to refresh data
-      console.log(`Invalidating query for key: /api/projects/${projectId}/risks`);
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/risks`] });
+      console.log(`Invalidating risk query for projectId: ${projectId}`);
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'risks'] });
       
       // Restore scroll position after successful save
       const scrollPosition = data.scrollPosition;
@@ -1081,6 +1121,39 @@ export default function RiskAssessment() {
   const handleSaveRisk = (data: RiskFormData) => {
     console.log("Saving risk assessment data:", data);
     
+    // CRITICAL FIX: Ensure data synchronization by reading directly from textareas
+    // This ensures any manually entered text gets saved properly
+    const processedData = { ...data };
+    
+    // Update mitigation plans from textarea elements directly before saving
+    for (let i = 1; i <= 6; i++) {
+      const fieldName = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
+      const textareaElement = textareaRefs.current[fieldName];
+      
+      if (textareaElement) {
+        // Get the current value directly from the DOM element
+        const actualValue = textareaElement.value;
+        
+        // Update the processed data with the actual value from the DOM
+        (processedData as any)[fieldName] = actualValue;
+        
+        console.log(`Direct sync: Updated ${fieldName} with DOM value: ${actualValue.substring(0, 30)}...`);
+      }
+    }
+    
+    // Debug check for mitigation plans in form data before saving
+    if (processedData.mitigationPlan) {
+      console.log("DEBUG: Sending mitigation plan 1 to server:", processedData.mitigationPlan.substring(0, 50) + "...");
+    } else {
+      console.log("DEBUG: Mitigation plan 1, to be saved, is NULL or EMPTY");
+    }
+    
+    if (processedData.mitigationPlan2) {
+      console.log("DEBUG: Sending mitigation plan 2 to server:", processedData.mitigationPlan2.substring(0, 50) + "...");
+    } else {
+      console.log("DEBUG: Mitigation plan 2, to be saved, is NULL or EMPTY");
+    }
+    
     // Set flag to skip resizing textareas after save operation
     skipNextTextareaResize = true;
     console.log("Set flag to skip textarea resize after save");
@@ -1111,61 +1184,59 @@ export default function RiskAssessment() {
     
     // Make sure to capture current values before mutation
     const currentValues = {
-      probability: data.probability,
-      impact: data.impact, 
-      probability2: data.probability2,
-      impact2: data.impact2,
-      probability3: data.probability3,
-      impact3: data.impact3,
-      probability4: data.probability4,
-      impact4: data.impact4,
-      probability5: data.probability5,
-      impact5: data.impact5,
-      probability6: data.probability6,
-      impact6: data.impact6,
+      probability: processedData.probability,
+      impact: processedData.impact, 
+      probability2: processedData.probability2,
+      impact2: processedData.impact2,
+      probability3: processedData.probability3,
+      impact3: processedData.impact3,
+      probability4: processedData.probability4,
+      impact4: processedData.impact4,
+      probability5: processedData.probability5,
+      impact5: processedData.impact5,
+      probability6: processedData.probability6,
+      impact6: processedData.impact6,
     };
     
-    // Ensure all criticality values are correctly calculated before saving
-    const processedData = { ...data };
-    
+    // Calculate risk criticality values
     // Row 1
-    if (data.probability && data.impact) {
-      const criticality = calculateRiskCriticality(data.probability, data.impact);
+    if (processedData.probability && processedData.impact) {
+      const criticality = calculateRiskCriticality(processedData.probability, processedData.impact);
       processedData.riskCriticality = criticality;
       console.log("Recalculated criticality for row 1:", criticality);
     }
     
     // Row 2
-    if (data.probability2 && data.impact2) {
-      const criticality = calculateRiskCriticality(data.probability2, data.impact2);
+    if (processedData.probability2 && processedData.impact2) {
+      const criticality = calculateRiskCriticality(processedData.probability2, processedData.impact2);
       processedData.riskCriticality2 = criticality;
       console.log("Recalculated criticality for row 2:", criticality);
     }
     
     // Row 3
-    if (data.probability3 && data.impact3) {
-      const criticality = calculateRiskCriticality(data.probability3, data.impact3);
+    if (processedData.probability3 && processedData.impact3) {
+      const criticality = calculateRiskCriticality(processedData.probability3, processedData.impact3);
       processedData.riskCriticality3 = criticality;
       console.log("Recalculated criticality for row 3:", criticality);
     }
     
     // Row 4
-    if (data.probability4 && data.impact4) {
-      const criticality = calculateRiskCriticality(data.probability4, data.impact4);
+    if (processedData.probability4 && processedData.impact4) {
+      const criticality = calculateRiskCriticality(processedData.probability4, processedData.impact4);
       processedData.riskCriticality4 = criticality;
       console.log("Recalculated criticality for row 4:", criticality);
     }
     
     // Row 5
-    if (data.probability5 && data.impact5) {
-      const criticality = calculateRiskCriticality(data.probability5, data.impact5);
+    if (processedData.probability5 && processedData.impact5) {
+      const criticality = calculateRiskCriticality(processedData.probability5, processedData.impact5);
       processedData.riskCriticality5 = criticality;
       console.log("Recalculated criticality for row 5:", criticality);
     }
     
     // Row 6
-    if (data.probability6 && data.impact6) {
-      const criticality = calculateRiskCriticality(data.probability6, data.impact6);
+    if (processedData.probability6 && processedData.impact6) {
+      const criticality = calculateRiskCriticality(processedData.probability6, processedData.impact6);
       processedData.riskCriticality6 = criticality;
       console.log("Recalculated criticality for row 6:", criticality);
     }
