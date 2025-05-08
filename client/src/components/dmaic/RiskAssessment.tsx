@@ -1192,9 +1192,10 @@ export default function RiskAssessment() {
             <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
               <Textarea
                 className="w-full p-2 border-0 focus:ring-0 text-sm"
-                rows={3}
+                rows={1}
                 placeholder="Describe the risk"
                 {...riskForm.register("riskName")}
+                style={{ height: '24px' }}
               />
             </div>
             <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1303,9 +1304,10 @@ export default function RiskAssessment() {
             <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
               <Textarea
                 className="w-full p-2 border-0 focus:ring-0 text-sm"
-                rows={3}
+                rows={1}
                 placeholder="Who is responsible for monitoring this risk?"
                 {...riskForm.register("riskOwner")}
+                style={{ height: '24px' }}
               />
             </div>
             {/* No delete button for first row (it's mandatory) */}
@@ -1317,9 +1319,10 @@ export default function RiskAssessment() {
               <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName2")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1428,9 +1431,10 @@ export default function RiskAssessment() {
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner2")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <Button
@@ -1452,9 +1456,10 @@ export default function RiskAssessment() {
               <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName3")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1540,9 +1545,10 @@ export default function RiskAssessment() {
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner3")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <Button
@@ -1564,9 +1570,10 @@ export default function RiskAssessment() {
               <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName4")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1648,9 +1655,10 @@ export default function RiskAssessment() {
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner4")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <Button
@@ -1672,9 +1680,10 @@ export default function RiskAssessment() {
               <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName5")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1756,9 +1765,10 @@ export default function RiskAssessment() {
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner5")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <Button
@@ -1780,9 +1790,10 @@ export default function RiskAssessment() {
               <div className="border border-red-100 rounded-md p-2 bg-white w-[95%] col-span-3">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Describe the risk"
                   {...riskForm.register("riskName6")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <div className="border border-amber-100 rounded-md p-2 bg-white w-[95%] col-span-1">
@@ -1864,9 +1875,10 @@ export default function RiskAssessment() {
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%] col-span-2">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
+                  rows={1}
                   placeholder="Who is responsible for monitoring this risk?"
                   {...riskForm.register("riskOwner6")}
+                  style={{ height: '24px' }}
                 />
               </div>
               <Button
