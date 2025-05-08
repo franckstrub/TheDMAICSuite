@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Wand2, Sparkles } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   StakeholderAnalysisItem, 
   interestLevels, 
@@ -350,6 +351,141 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       return "Monitor";
     }
   };
+  
+  // Function to generate AI-assisted engagement strategy suggestions
+  const generateEngagementStrategy = (
+    interest: InterestLevel, 
+    influence: InfluenceLevel, 
+    supportLevel: SupportLevel,
+    resistanceType?: ResistanceType | null
+  ) => {
+    const position = getMatrixQuadrant(interest, influence);
+    const supportState = supportLevel === 'Resistant' 
+      ? `resistant (${resistanceType || 'unspecified'} resistance)`
+      : supportLevel.toLowerCase();
+    
+    // Base strategies by position
+    const baseStrategies = {
+      "Key Player": [
+        "Include in project steering committee",
+        "Schedule regular one-on-one meetings",
+        "Involve in key decision-making processes",
+        "Provide detailed project updates weekly"
+      ],
+      "Keep Satisfied": [
+        "Proactively address concerns",
+        "Provide regular status updates",
+        "Consult on decisions affecting their area",
+        "Schedule monthly check-in meetings"
+      ],
+      "Key Context Setters": [
+        "Focus on relationship building",
+        "Emphasize project benefits to their objectives",
+        "Leverage their influence for project support",
+        "Identify and address potential conflicts early"
+      ],
+      "Meet Their Needs": [
+        "Provide detailed information about their area of interest",
+        "Create opportunities for their input",
+        "Acknowledge and incorporate their feedback",
+        "Show how the project addresses their needs"
+      ],
+      "Keep Informed": [
+        "Share regular project updates",
+        "Solicit feedback on specific topics",
+        "Include in group communications",
+        "Invite to relevant meetings"
+      ],
+      "Show Consideration": [
+        "Acknowledge their interest in the project",
+        "Provide information relevant to their concerns",
+        "Create opportunities for their input",
+        "Address their specific questions"
+      ],
+      "Monitor": [
+        "Include in general project communications",
+        "Monitor for changes in interest or influence",
+        "Provide basic project information",
+        "Minimal engagement unless status changes"
+      ]
+    };
+    
+    // Modified strategies based on support level
+    let supportModifiers = {
+      "supporter": [
+        "Leverage their support to influence others",
+        "Recognize their positive contributions",
+        "Invite to champion specific project elements",
+        "Engage as project advocates"
+      ],
+      "neutral": [
+        "Focus on building understanding and buy-in",
+        "Highlight project benefits relevant to them",
+        "Provide evidence of project value",
+        "Address potential concerns proactively"
+      ],
+      "resistant": {
+        "Technical": [
+          "Provide detailed technical information",
+          "Involve technical experts they respect",
+          "Address specific technical concerns",
+          "Create opportunities for technical review"
+        ],
+        "Political": [
+          "Connect project goals to organizational priorities",
+          "Identify and address competing interests",
+          "Build broader coalition of support",
+          "Engage senior leaders to help align interests"
+        ],
+        "Cultural": [
+          "Acknowledge organizational culture concerns",
+          "Show alignment with core values",
+          "Implement changes gradually with their input",
+          "Create cultural transition plan"
+        ],
+        "Personal": [
+          "Address individual concerns privately",
+          "Show how project supports their goals",
+          "Create win-win opportunities",
+          "Identify and mitigate personal impact"
+        ],
+        "unspecified": [
+          "Identify root causes of resistance",
+          "Listen to concerns and acknowledge them",
+          "Provide information that addresses specific concerns",
+          "Find areas of common ground"
+        ]
+      }
+    };
+    
+    // Select strategies based on position and support level
+    let strategies = [...baseStrategies[position]];
+    
+    if (supportLevel === 'Resistant' && resistanceType) {
+      strategies = strategies.concat(
+        supportModifiers.resistant[resistanceType as keyof typeof supportModifiers.resistant] ||
+        supportModifiers.resistant.unspecified
+      );
+    } else if (supportLevel === 'Supporter') {
+      strategies = strategies.concat(supportModifiers.supporter);
+    } else if (supportLevel === 'Neutral') {
+      strategies = strategies.concat(supportModifiers.neutral);
+    }
+    
+    // Randomize but ensure we don't always get the same suggestions
+    const shuffledStrategies = [...strategies].sort(() => 0.5 - Math.random());
+    
+    // Build the personalized strategy suggestion
+    let suggestion = `${position} | ${supportLevel}:\n`;
+    
+    // Add 2-3 specific strategy elements
+    const numStrategies = Math.min(3, shuffledStrategies.length);
+    for (let i = 0; i < numStrategies; i++) {
+      suggestion += `• ${shuffledStrategies[i]}\n`;
+    }
+    
+    return suggestion;
+  };
 
   // Event handler for the refresh button
   const handleRefresh = () => {
@@ -496,12 +632,44 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                       </div>
                     </TableCell>
                     <TableCell className="p-1">
-                      <Textarea
-                        value={item.engagementStrategy || ''}
-                        onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
-                        className="min-h-[60px] text-xs w-full resize-y p-1"
-                        placeholder="Strategy to engage and manage this stakeholder"
-                      />
+                      <div className="relative">
+                        <Textarea
+                          value={item.engagementStrategy || ''}
+                          onChange={(e) => updateItem(index, 'engagementStrategy', e.target.value)}
+                          className="min-h-[60px] text-xs w-full resize-y p-1 pr-8"
+                          placeholder="Strategy to engage and manage this stakeholder"
+                        />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                                onClick={() => {
+                                  const suggestion = generateEngagementStrategy(
+                                    item.interestLevel,
+                                    item.influenceLevel,
+                                    item.supportLevel,
+                                    item.supportLevel === 'Resistant' ? item.resistanceType : null
+                                  );
+                                  updateItem(index, 'engagementStrategy', suggestion);
+                                  toast({
+                                    title: "AI Strategy Generated",
+                                    description: "The engagement strategy has been suggested based on stakeholder attributes",
+                                  });
+                                }}
+                              >
+                                <Sparkles className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p className="text-xs">Generate AI-suggested engagement strategy</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </TableCell>
                     <TableCell className="p-1 text-center">
                       <Button
@@ -548,7 +716,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
               <ul className="list-disc ml-4 space-y-0.5">
                 <li><span className="font-medium text-red-700">Key Player:</span> High interest, high influence - Manage closely</li>
                 <li><span className="font-medium text-amber-700">Keep Satisfied:</span> Medium interest, high influence - Keep satisfied</li>
-                <li><span className="font-medium text-amber-700">Key Context Setters:</span> Low interest, high influence - Manage closely</li>
+                <li><span className="font-medium text-amber-700">Key Context Setters:</span> Low interest, high influence - Keep minimally engaged but well-informed</li>
                 <li><span className="font-medium text-blue-700">Meet Their Needs:</span> High interest, medium influence - Keep informed</li>
                 <li><span className="font-medium text-blue-700">Keep Informed:</span> Medium interest, medium influence - Keep adequately informed</li>
                 <li><span className="font-medium text-blue-700">Show Consideration:</span> High interest, low influence - Show consideration</li>
