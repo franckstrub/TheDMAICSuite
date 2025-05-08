@@ -194,18 +194,13 @@ export default function RiskAssessment() {
     if (riskData?.risk && !riskFormInitialized.current) {
       console.log("Initializing risk form with data:", riskData.risk);
       
-      // Debug check for mitigation plans
-      if (riskData.risk.mitigationPlan) {
-        console.log("DEBUG: Mitigation plan 1 from API:", riskData.risk.mitigationPlan.substring(0, 50) + "...");
-      } else {
-        console.log("DEBUG: Mitigation plan 1 is NULL or EMPTY in API response");
-      }
-      
-      if (riskData.risk.mitigationPlan2) {
-        console.log("DEBUG: Mitigation plan 2 from API:", riskData.risk.mitigationPlan2.substring(0, 50) + "...");
-      } else {
-        console.log("DEBUG: Mitigation plan 2 is NULL or EMPTY in API response");
-      }
+      // Debug check for all mitigation plans
+      console.log("DEBUG: Mitigation plan 1 from API:", riskData.risk.mitigationPlan || "EMPTY");
+      console.log("DEBUG: Mitigation plan 2 from API:", riskData.risk.mitigationPlan2 || "EMPTY");
+      console.log("DEBUG: Mitigation plan 3 from API:", riskData.risk.mitigationPlan3 || "EMPTY");
+      console.log("DEBUG: Mitigation plan 4 from API:", riskData.risk.mitigationPlan4 || "EMPTY");
+      console.log("DEBUG: Mitigation plan 5 from API:", riskData.risk.mitigationPlan5 || "EMPTY");
+      console.log("DEBUG: Mitigation plan 6 from API:", riskData.risk.mitigationPlan6 || "EMPTY");
       
       try {
         // Force reset of probability, impact, and criticality values directly
