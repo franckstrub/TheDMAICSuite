@@ -47,6 +47,15 @@
 --radius: 0.5rem;
   }
 
+/* Make all risk assessment textareas resizable */
+.risk-name-textarea,
+.risk-owner-textarea,
+.risk-mitigation-textarea {
+  resize: vertical !important;
+  overflow-y: auto !important;
+  min-height: 80px !important;
+}
+
 @layer base {
   * {
     @apply border-border;
