@@ -693,6 +693,10 @@ export default function RiskAssessment() {
             textareaElement.value = value;
             
             console.log(`Updated content for ${fieldName}`);
+            
+            // Force synchronization of all textareas in this row
+            const rowNum = i === 1 ? '' : i;
+            adjustTextareaHeight(fieldName, true);
           } else {
             console.warn(`Textarea ref for ${fieldName} does not exist`);
           }
