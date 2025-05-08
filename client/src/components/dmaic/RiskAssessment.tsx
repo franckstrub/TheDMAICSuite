@@ -362,24 +362,51 @@ export default function RiskAssessment() {
         console.log(`Setting risk rows to ${maxRow}`);
         setVisibleRiskRows(maxRow);
         
-        // Add a function to adjust all mitigation plan textareas after form initialization
+        // When form is initialized, we need to manually ensure textareas have correct content and size
         setTimeout(() => {
-          // Adjust all mitigation plan textareas
-          const adjustAllMitigationPlanTextareas = () => {
-            console.log("Adjusting all mitigation plan textareas after form initialization");
+          // Function to directly set textarea values and adjust heights
+          const forceSetTextareaContent = () => {
+            console.log("Forcing textarea content update after form initialization");
             for (let i = 1; i <= maxRow; i++) {
               const fieldName = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
-              adjustTextareaHeight(fieldName);
+              const textareaElement = textareaRefs.current[fieldName];
+              
+              if (textareaElement) {
+                // Get the field value directly from the risk data
+                const fieldKey = fieldName as keyof typeof riskData.risk;
+                const fieldValue = riskData.risk[fieldKey] || '';
+                
+                // Directly set the value on the DOM element
+                textareaElement.value = fieldValue as string;
+                
+                // Calculate height based on content
+                const content = fieldValue as string;
+                const lineCount = content.split('\n').length;
+                const minHeight = 80;
+                const lineHeight = 20;
+                
+                // Manually calculate a better height based on content
+                textareaElement.style.height = 'auto';
+                const scrollHeight = Math.max(textareaElement.scrollHeight, lineCount * lineHeight);
+                const newHeight = Math.max(minHeight, scrollHeight + 40); // Add extra padding
+                
+                // Force set the textarea height with transition
+                textareaElement.style.transition = 'height 0.3s ease-in-out';
+                textareaElement.style.height = `${newHeight}px`;
+                
+                console.log(`Direct DOM update for ${fieldName}: ${lineCount} lines, height: ${newHeight}px`);
+              } else {
+                console.warn(`Textarea ref for ${fieldName} not found during initialization`);
+              }
             }
           };
           
-          // Run once immediately
-          adjustAllMitigationPlanTextareas();
-          
-          // Then run a few more times with increasing delays to ensure proper rendering
-          setTimeout(adjustAllMitigationPlanTextareas, 200);
-          setTimeout(adjustAllMitigationPlanTextareas, 500);
-          setTimeout(adjustAllMitigationPlanTextareas, 1000);
+          // Run multiple times with increasing delays to catch when DOM is ready
+          forceSetTextareaContent();
+          setTimeout(forceSetTextareaContent, 200);
+          setTimeout(forceSetTextareaContent, 500);
+          setTimeout(forceSetTextareaContent, 1000);
+          setTimeout(forceSetTextareaContent, 2000);
         }, 100);
       } catch (error) {
         console.error("Error initializing risk form:", error);
@@ -549,19 +576,50 @@ export default function RiskAssessment() {
     }, 0);
   };
 
-  // Effect to adjust textareas after form is loaded
+  // Effect to adjust textareas after form is loaded or when visibleRiskRows changes
   useEffect(() => {
     if (riskFormInitialized.current) {
-      // Adjust all mitigation plan textareas for visible rows
-      setTimeout(() => {
+      // Force updating textareas with their values and adjust heights
+      const forceUpdateTextareas = () => {
         for (let i = 1; i <= visibleRiskRows; i++) {
           const fieldName = i === 1 ? 'mitigationPlan' : `mitigationPlan${i}`;
-          adjustTextareaHeight(fieldName);
+          const textareaElement = textareaRefs.current[fieldName];
+          
+          if (textareaElement) {
+            // Get value from the form
+            const value = riskForm.getValues(fieldName as any) || '';
+            
+            // Directly update the DOM element
+            textareaElement.value = value;
+            
+            // Calculate appropriate height based on content
+            const lineCount = value.split('\n').length;
+            const minHeight = 80;
+            const lineHeight = 20;
+            const estimatedHeight = Math.max(minHeight, lineCount * lineHeight + 16);
+            
+            // Force set height with extra padding
+            textareaElement.style.height = 'auto';
+            const scrollHeight = textareaElement.scrollHeight;
+            const newHeight = Math.max(estimatedHeight, scrollHeight + 32);
+            textareaElement.style.height = `${newHeight}px`;
+            
+            console.log(`Force updated textarea ${fieldName} with height ${newHeight}px (${lineCount} lines)`);
+          } else {
+            console.warn(`Textarea ref for ${fieldName} does not exist when attempting to adjust height`);
+          }
         }
-        console.log("Adjusted all mitigation plan textarea heights");
-      }, 200);
+        console.log("Force updated all mitigation plan textarea heights");
+      };
+      
+      // Run multiple times with increasing delays to ensure DOM is ready
+      setTimeout(forceUpdateTextareas, 100);
+      setTimeout(forceUpdateTextareas, 300);
+      setTimeout(forceUpdateTextareas, 500);
+      setTimeout(forceUpdateTextareas, 1000);
+      setTimeout(forceUpdateTextareas, 2000);
     }
-  }, [visibleRiskRows, riskFormInitialized.current]);
+  }, [visibleRiskRows, riskFormInitialized.current, riskForm]);
 
   // Function to generate AI-assisted mitigation plan suggestions
   const generateMitigationPlan = (rowNumber: number) => {
@@ -1152,15 +1210,39 @@ export default function RiskAssessment() {
               <input type="hidden" {...riskForm.register("riskCriticality")} />
             </div>
             <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
-              <Textarea
-                className="w-full p-2 border-0 focus:ring-0 text-sm"
-                rows={3}
-                placeholder="How will you mitigate this risk?"
-                {...riskForm.register("mitigationPlan")}
-                ref={(el) => {
-                  if (el) textareaRefs.current["mitigationPlan"] = el;
-                }}
-              />
+              <div className="min-h-[200px]"> 
+                <Textarea
+                  className="w-full p-2 border-0 focus:ring-0 text-sm"
+                  rows={10}
+                  placeholder="How will you mitigate this risk?"
+                  {...riskForm.register("mitigationPlan")}
+                  ref={(el) => {
+                    if (el) {
+                      textareaRefs.current["mitigationPlan"] = el;
+                      
+                      // On ref attachment, force update the height
+                      setTimeout(() => {
+                        try {
+                          if (riskData?.risk?.mitigationPlan && el) {
+                            // Force the value to be set directly
+                            el.value = riskData.risk.mitigationPlan;
+                            // Calculate better height
+                            const lineCount = riskData.risk.mitigationPlan.split('\n').length;
+                            const minHeight = Math.max(200, lineCount * 24);
+                            el.style.height = 'auto';
+                            el.style.minHeight = `${minHeight}px`;
+                            el.style.height = `${minHeight}px`;
+                            console.log(`Direct ref injection for mitigationPlan: ${lineCount} lines, height ${minHeight}px`);
+                          }
+                        } catch (error) {
+                          console.error("Error setting textarea height:", error);
+                        }
+                      }, 200);
+                    }
+                  }}
+                  style={{ minHeight: '200px' }}
+                />
+              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1249,15 +1331,39 @@ export default function RiskAssessment() {
                 <input type="hidden" {...riskForm.register("riskCriticality2")} />
               </div>
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
-                <Textarea
-                  className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={3}
-                  placeholder="How will you mitigate this risk?"
-                  {...riskForm.register("mitigationPlan2")}
-                  ref={(el) => {
-                    if (el) textareaRefs.current["mitigationPlan2"] = el;
-                  }}
-                />
+                <div className="min-h-[200px]">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm"
+                    rows={10}
+                    placeholder="How will you mitigate this risk?"
+                    {...riskForm.register("mitigationPlan2")}
+                    ref={(el) => {
+                      if (el) {
+                        textareaRefs.current["mitigationPlan2"] = el;
+                        
+                        // On ref attachment, force update the height
+                        setTimeout(() => {
+                          try {
+                            if (riskData?.risk?.mitigationPlan2 && el) {
+                              // Force the value to be set directly
+                              el.value = riskData.risk.mitigationPlan2;
+                              // Calculate better height
+                              const lineCount = riskData.risk.mitigationPlan2.split('\n').length;
+                              const minHeight = Math.max(200, lineCount * 24);
+                              el.style.height = 'auto';
+                              el.style.minHeight = `${minHeight}px`;
+                              el.style.height = `${minHeight}px`;
+                              console.log(`Direct ref injection for mitigationPlan2: ${lineCount} lines, height ${minHeight}px`);
+                            }
+                          } catch (error) {
+                            console.error("Error setting textarea height:", error);
+                          }
+                        }, 200);
+                      }
+                    }}
+                    style={{ minHeight: '200px' }}
+                  />
+                </div>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
