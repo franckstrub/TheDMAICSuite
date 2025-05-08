@@ -1329,12 +1329,28 @@ export default function RiskAssessment() {
                   className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
                   rows={5}
                   placeholder="How will you mitigate this risk?"
+                  defaultValue={riskData?.risk?.mitigationPlan || ""}
                   {...riskForm.register("mitigationPlan")}
                   ref={(el) => {
                     if (el) {
                       textareaRefs.current["mitigationPlan"] = el;
                       
-                      // Use a one-time direct DOM update to avoid "jerking" when loading/saving
+                      // Set defaultValue attribute directly on HTML element to force it to show
+                      el.defaultValue = riskData?.risk?.mitigationPlan || "";
+                      
+                      // Use a series of direct DOM updates to ensure content displays correctly
+                      // First immediate update
+                      if (riskData?.risk?.mitigationPlan) {
+                        el.value = riskData.risk.mitigationPlan;
+                        // Force the form to know about this value
+                        riskForm.setValue("mitigationPlan", riskData.risk.mitigationPlan, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: true
+                        });
+                      }
+                      
+                      // Follow up with another update after a delay
                       setTimeout(() => {
                         try {
                           if (riskData?.risk?.mitigationPlan && el) {
@@ -1369,6 +1385,19 @@ export default function RiskAssessment() {
                           console.error("Error setting textarea content:", error);
                         }
                       }, 200);
+                      
+                      // One more update after a longer delay to ensure it takes
+                      setTimeout(() => {
+                        if (riskData?.risk?.mitigationPlan && el.value !== riskData.risk.mitigationPlan) {
+                          console.log("CRITICAL: Value did not stick in textarea, trying again with a third injection");
+                          el.value = riskData.risk.mitigationPlan;
+                          riskForm.setValue("mitigationPlan", riskData.risk.mitigationPlan, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                            shouldValidate: true
+                          });
+                        }
+                      }, 1000);
                     }
                   }}
                 />
@@ -1468,12 +1497,28 @@ export default function RiskAssessment() {
                     className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
                     rows={5}
                     placeholder="How will you mitigate this risk?"
+                    defaultValue={riskData?.risk?.mitigationPlan2 || ""}
                     {...riskForm.register("mitigationPlan2")}
                     ref={(el) => {
                       if (el) {
                         textareaRefs.current["mitigationPlan2"] = el;
                         
-                        // Use a one-time direct DOM update to avoid "jerking" when loading/saving
+                        // Set defaultValue attribute directly on HTML element to force it to show
+                        el.defaultValue = riskData?.risk?.mitigationPlan2 || "";
+                        
+                        // Use a series of direct DOM updates to ensure content displays correctly
+                        // First immediate update
+                        if (riskData?.risk?.mitigationPlan2) {
+                          el.value = riskData.risk.mitigationPlan2;
+                          // Force the form to know about this value
+                          riskForm.setValue("mitigationPlan2", riskData.risk.mitigationPlan2, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                            shouldValidate: true
+                          });
+                        }
+                        
+                        // Follow up with another update after a delay
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan2 && el) {
@@ -1508,6 +1553,19 @@ export default function RiskAssessment() {
                             console.error("Error setting textarea content:", error);
                           }
                         }, 200);
+                        
+                        // One more update after a longer delay to ensure it takes
+                        setTimeout(() => {
+                          if (riskData?.risk?.mitigationPlan2 && el.value !== riskData.risk.mitigationPlan2) {
+                            console.log("CRITICAL: Value did not stick in textarea, trying again with a third injection");
+                            el.value = riskData.risk.mitigationPlan2;
+                            riskForm.setValue("mitigationPlan2", riskData.risk.mitigationPlan2, {
+                              shouldDirty: true,
+                              shouldTouch: true,
+                              shouldValidate: true
+                            });
+                          }
+                        }, 1000);
                       }
                     }}
                   />
