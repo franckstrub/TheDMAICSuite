@@ -1031,7 +1031,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const [risk] = await db.select().from(projectRisks).where(eq(projectRisks.projectId, projectId));
       
-      return res.status(200).json({ risk });
+      if (risk) {
+        // Ensure all text fields are properly returned as empty strings if null
+        // This helps with frontend display and prevents issues with optional chaining
+        const sanitizedRisk = {
+          ...risk,
+          mitigationPlan: risk.mitigationPlan || '',
+          mitigationPlan2: risk.mitigationPlan2 || '',
+          mitigationPlan3: risk.mitigationPlan3 || '',
+          mitigationPlan4: risk.mitigationPlan4 || '',
+          mitigationPlan5: risk.mitigationPlan5 || '',
+          mitigationPlan6: risk.mitigationPlan6 || '',
+          riskName: risk.riskName || '',
+          riskName2: risk.riskName2 || '',
+          riskName3: risk.riskName3 || '',
+          riskName4: risk.riskName4 || '',
+          riskName5: risk.riskName5 || '',
+          riskName6: risk.riskName6 || '',
+          riskOwner: risk.riskOwner || '',
+          riskOwner2: risk.riskOwner2 || '',
+          riskOwner3: risk.riskOwner3 || '',
+          riskOwner4: risk.riskOwner4 || '',
+          riskOwner5: risk.riskOwner5 || '',
+          riskOwner6: risk.riskOwner6 || '',
+        };
+        
+        console.log('Sanitized risk data being returned:', {
+          mitigationPlan: sanitizedRisk.mitigationPlan.substring(0, 30) + '...',
+          mitigationPlan2: sanitizedRisk.mitigationPlan2.substring(0, 30) + '...',
+        });
+        
+        return res.status(200).json({ risk: sanitizedRisk });
+      } else {
+        return res.status(200).json({ risk: null });
+      }
     } catch (err) {
       return handleErrors(err, res);
     }
@@ -1040,16 +1073,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/risks", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const riskData = {
+      
+      // Pre-sanitize risk data to ensure all text fields have values and not null
+      const sanitizedRiskData = {
         ...req.body,
         projectId,
+        // Ensure all text fields are defined with empty strings if null or undefined
+        mitigationPlan: req.body.mitigationPlan || '',
+        mitigationPlan2: req.body.mitigationPlan2 || '',
+        mitigationPlan3: req.body.mitigationPlan3 || '',
+        mitigationPlan4: req.body.mitigationPlan4 || '',
+        mitigationPlan5: req.body.mitigationPlan5 || '',
+        mitigationPlan6: req.body.mitigationPlan6 || '',
+        riskName: req.body.riskName || '',
+        riskName2: req.body.riskName2 || '',
+        riskName3: req.body.riskName3 || '',
+        riskName4: req.body.riskName4 || '',
+        riskName5: req.body.riskName5 || '',
+        riskName6: req.body.riskName6 || '',
+        riskOwner: req.body.riskOwner || '',
+        riskOwner2: req.body.riskOwner2 || '',
+        riskOwner3: req.body.riskOwner3 || '',
+        riskOwner4: req.body.riskOwner4 || '',
+        riskOwner5: req.body.riskOwner5 || '',
+        riskOwner6: req.body.riskOwner6 || '',
       };
       
+      console.log('Sanitized risk creation data:', {
+        mitigationPlan: sanitizedRiskData.mitigationPlan.substring(0, 30) + '...',
+        mitigationPlan2: sanitizedRiskData.mitigationPlan2 ? sanitizedRiskData.mitigationPlan2.substring(0, 30) + '...' : 'empty',
+      });
+      
       // Validate the risk data
-      const validatedData = insertRiskSchema.parse(riskData);
+      const validatedData = insertRiskSchema.parse(sanitizedRiskData);
       
       // Insert risk data
       const [risk] = await db.insert(projectRisks).values(validatedData).returning();
+      
+      // Further sanitize the response for consistent handling on the client side
+      const sanitizedRisk = {
+        ...risk,
+        mitigationPlan: risk.mitigationPlan || '',
+        mitigationPlan2: risk.mitigationPlan2 || '',
+        mitigationPlan3: risk.mitigationPlan3 || '',
+        mitigationPlan4: risk.mitigationPlan4 || '',
+        mitigationPlan5: risk.mitigationPlan5 || '',
+        mitigationPlan6: risk.mitigationPlan6 || '',
+        riskName: risk.riskName || '',
+        riskName2: risk.riskName2 || '',
+        riskName3: risk.riskName3 || '',
+        riskName4: risk.riskName4 || '',
+        riskName5: risk.riskName5 || '',
+        riskName6: risk.riskName6 || '',
+        riskOwner: risk.riskOwner || '',
+        riskOwner2: risk.riskOwner2 || '',
+        riskOwner3: risk.riskOwner3 || '',
+        riskOwner4: risk.riskOwner4 || '',
+        riskOwner5: risk.riskOwner5 || '',
+        riskOwner6: risk.riskOwner6 || '',
+      };
       
       // Log activity
       if (req.body.userId) {
@@ -1061,7 +1143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      return res.status(201).json({ risk });
+      return res.status(201).json({ risk: sanitizedRisk });
     } catch (err) {
       return handleErrors(err, res);
     }
@@ -1070,7 +1152,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/risks/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const riskUpdate = req.body;
+      
+      // Pre-sanitize risk update data to ensure all string fields are properly defined
+      // This prevents issues with NULL values in text fields
+      const riskUpdate = {
+        ...req.body,
+        mitigationPlan: req.body.mitigationPlan || '',
+        mitigationPlan2: req.body.mitigationPlan2 || '',
+        mitigationPlan3: req.body.mitigationPlan3 || '',
+        mitigationPlan4: req.body.mitigationPlan4 || '',
+        mitigationPlan5: req.body.mitigationPlan5 || '',
+        mitigationPlan6: req.body.mitigationPlan6 || '',
+        riskName: req.body.riskName || '',
+        riskName2: req.body.riskName2 || '',
+        riskName3: req.body.riskName3 || '', 
+        riskName4: req.body.riskName4 || '',
+        riskName5: req.body.riskName5 || '',
+        riskName6: req.body.riskName6 || '',
+        riskOwner: req.body.riskOwner || '',
+        riskOwner2: req.body.riskOwner2 || '',
+        riskOwner3: req.body.riskOwner3 || '',
+        riskOwner4: req.body.riskOwner4 || '',
+        riskOwner5: req.body.riskOwner5 || '',
+        riskOwner6: req.body.riskOwner6 || '',
+      };
+      
+      console.log('Sanitized risk update data:', {
+        mitigationPlan: riskUpdate.mitigationPlan.substring(0, 30) + '...',
+        mitigationPlan2: riskUpdate.mitigationPlan2.substring(0, 30) + '...',
+      });
       
       // Update risk data
       const [risk] = await db
@@ -1083,6 +1193,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Risk assessment not found" });
       }
       
+      // Further sanitize the response to ensure consistency
+      const sanitizedRisk = {
+        ...risk,
+        mitigationPlan: risk.mitigationPlan || '',
+        mitigationPlan2: risk.mitigationPlan2 || '',
+        mitigationPlan3: risk.mitigationPlan3 || '',
+        mitigationPlan4: risk.mitigationPlan4 || '',
+        mitigationPlan5: risk.mitigationPlan5 || '',
+        mitigationPlan6: risk.mitigationPlan6 || '',
+        riskName: risk.riskName || '',
+        riskName2: risk.riskName2 || '',
+        riskName3: risk.riskName3 || '',
+        riskName4: risk.riskName4 || '',
+        riskName5: risk.riskName5 || '',
+        riskName6: risk.riskName6 || '',
+        riskOwner: risk.riskOwner || '',
+        riskOwner2: risk.riskOwner2 || '',
+        riskOwner3: risk.riskOwner3 || '',
+        riskOwner4: risk.riskOwner4 || '',
+        riskOwner5: risk.riskOwner5 || '',
+        riskOwner6: risk.riskOwner6 || '',
+      };
+      
       // Log activity
       if (req.body.userId) {
         await storage.createActivityLog({
@@ -1093,7 +1226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      return res.status(200).json({ risk });
+      return res.status(200).json({ risk: sanitizedRisk });
     } catch (err) {
       return handleErrors(err, res);
     }
