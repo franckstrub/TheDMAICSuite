@@ -632,19 +632,39 @@ export default function RiskAssessment() {
           
           // For AI-generated content or manual resize, synchronize the heights
           if (isAiGenerated || (textarea.style.height && parseInt(textarea.style.height) > 120)) {
+            // Find the maximum height among all textareas in this row
+            let maxHeight = 120; // Minimum height
+            
+            // Get the current heights of all textareas in this row
+            if (riskNameTextarea && riskNameTextarea.style.height) {
+              maxHeight = Math.max(maxHeight, parseInt(riskNameTextarea.style.height));
+            }
+            
+            if (mitigationPlanTextarea && mitigationPlanTextarea.style.height) {
+              maxHeight = Math.max(maxHeight, parseInt(mitigationPlanTextarea.style.height));
+            }
+            
+            if (riskOwnerTextarea && riskOwnerTextarea.style.height) {
+              maxHeight = Math.max(maxHeight, parseInt(riskOwnerTextarea.style.height));
+            }
+            
+            // Get the height of the current textarea that triggered the adjustment
             const currentHeight = parseInt(textarea.style.height);
-            console.log(`Synchronizing heights for row ${rowNumber || '1'} to match ${textareaKey}: ${currentHeight}px`);
+            maxHeight = Math.max(maxHeight, currentHeight);
             
-            if (riskNameTextarea && textareaKey !== riskNameField) {
-              riskNameTextarea.style.height = `${currentHeight}px`;
+            console.log(`Synchronizing heights for row ${rowNumber || '1'} to maximum height: ${maxHeight}px`);
+            
+            // Set all textareas in the row to the maximum height
+            if (riskNameTextarea) {
+              riskNameTextarea.style.height = `${maxHeight}px`;
             }
             
-            if (mitigationPlanTextarea && textareaKey !== mitigationPlanField) {
-              mitigationPlanTextarea.style.height = `${currentHeight}px`;
+            if (mitigationPlanTextarea) {
+              mitigationPlanTextarea.style.height = `${maxHeight}px`;
             }
             
-            if (riskOwnerTextarea && textareaKey !== riskOwnerField) {
-              riskOwnerTextarea.style.height = `${currentHeight}px`;
+            if (riskOwnerTextarea) {
+              riskOwnerTextarea.style.height = `${maxHeight}px`;
             }
           }
         }
