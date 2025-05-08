@@ -175,18 +175,8 @@ export default function RiskAssessment() {
 
   // Fetch existing risk data
   const { data: riskData, isLoading: isRiskLoading } = useQuery<RiskResponse>({
-    queryKey: ['/api/projects', projectId, 'risks'],
-    enabled: !!projectId,
-    onSuccess: (data) => {
-      console.log("Risk data from API:", JSON.stringify(data, null, 2));
-      // Check if any mitigation plans exist and console log them
-      if (data?.risk?.mitigationPlan) {
-        console.log("Mitigation plan 1 exists:", data.risk.mitigationPlan.substring(0, 50) + "...");
-      }
-      if (data?.risk?.mitigationPlan2) {
-        console.log("Mitigation plan 2 exists:", data.risk.mitigationPlan2.substring(0, 50) + "...");
-      }
-    }
+    queryKey: [`/api/projects/${projectId}/risks`],
+    enabled: !!projectId
   });
   
   // Function to clear risk form initialization state
@@ -452,12 +442,24 @@ export default function RiskAssessment() {
       // Store current scroll position before saving
       const scrollPosition = window.scrollY;
       
-      // Log data before saving to ensure probability and impact values are correct
+      // Log data before saving to ensure all values are correct, especially mitigation plans
       console.log("Saving risk data with the following values:", {
         probability: data.probability,
         impact: data.impact,
+        riskName: data.riskName,
+        mitigationPlan: data.mitigationPlan ? data.mitigationPlan.substring(0, 30) + "..." : null,
+        riskOwner: data.riskOwner,
+        
         probability2: data.probability2,
-        impact2: data.impact2
+        impact2: data.impact2,
+        riskName2: data.riskName2,
+        mitigationPlan2: data.mitigationPlan2 ? data.mitigationPlan2.substring(0, 30) + "..." : null,
+        riskOwner2: data.riskOwner2,
+        
+        probability3: data.probability3,
+        impact3: data.impact3,
+        riskName3: data.riskName3,
+        mitigationPlan3: data.mitigationPlan3 ? data.mitigationPlan3.substring(0, 30) + "..." : null
       });
       
       const payload = {
@@ -500,6 +502,7 @@ export default function RiskAssessment() {
       console.log("Set skipNextTextareaResize flag in onSuccess handler");
       
       // Invalidate queries to refresh data
+      console.log(`Invalidating query for key: /api/projects/${projectId}/risks`);
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/risks`] });
       
       // Restore scroll position after successful save
