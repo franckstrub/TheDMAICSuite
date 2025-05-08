@@ -338,47 +338,24 @@ export default function RiskAssessmentNew() {
       // We're intentionally NOT calling loadRiskData() here to prevent the page jerk
       // Instead, we'll update our UI with the response from saveDataToServer
       
-      // Prevent default form submission behavior which might cause page jumps
-      e.preventDefault && e.preventDefault();
-      
-      // Instantly maintain focus on the save button to prevent losing position
-      document.activeElement.blur();
-      
-      // Capture save button to refocus after save
-      const saveButton = document.querySelector('button:contains("Save Risk Assessment")');
-      
       // Restore scroll position after a short delay to ensure DOM is updated
       setTimeout(() => {
-        // Force the risk section to stay in the current viewport position
+        // Restore scroll position
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'auto'
+        });
+        
+        // Force risk section into view if available
         if (riskSection) {
-          // Get the current viewport position
-          const sectionRect = riskSection.getBoundingClientRect();
-          const currentViewportTop = sectionRect.top;
-          
-          // Calculate the absolute position to maintain current viewport
-          const targetScrollY = window.scrollY + currentViewportTop - 100; // Subtract 100px to keep it visibly in view
-          
-          // Scroll to this position without animation
-          window.scrollTo({
-            top: targetScrollY,
-            behavior: 'auto'
+          riskSection.scrollIntoView({ 
+            behavior: 'auto',
+            block: 'start'
           });
-          
-          console.log(`Maintained Risk Assessment section in view at scroll position ${targetScrollY}px`);
-        } else {
-          // Fallback to original position if section not found
-          window.scrollTo({
-            top: scrollPosition,
-            behavior: 'auto'
-          });
-          console.log(`Restored scroll position to ${scrollPosition}px after saving`);
         }
         
-        // Refocus on save button if found
-        if (saveButton) {
-          saveButton.focus();
-        }
-      }, 10); // Reduced delay to 10ms for faster response
+        console.log(`Restored scroll position to ${scrollPosition}px after saving`);
+      }, 50);
       
     } catch (error) {
       console.error('Error saving risk data:', error);
