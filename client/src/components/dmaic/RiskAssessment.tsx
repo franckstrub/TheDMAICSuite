@@ -1244,10 +1244,10 @@ export default function RiskAssessment() {
               <input type="hidden" {...riskForm.register("riskCriticality")} />
             </div>
             <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
-              <div className="min-h-[200px]"> 
+              <div> 
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
-                  rows={10}
+                  rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan")}
                   ref={(el) => {
@@ -1262,7 +1262,7 @@ export default function RiskAssessment() {
                             el.value = riskData.risk.mitigationPlan;
                             // Calculate better height
                             const lineCount = riskData.risk.mitigationPlan.split('\n').length;
-                            const minHeight = Math.max(200, lineCount * 24);
+                            const minHeight = Math.max(72, lineCount * 24); // 72px = 3 rows × 24px
                             el.style.height = 'auto';
                             el.style.minHeight = `${minHeight}px`;
                             el.style.height = `${minHeight}px`;
@@ -1274,7 +1274,6 @@ export default function RiskAssessment() {
                       }, 200);
                     }
                   }}
-                  style={{ minHeight: '200px' }}
                 />
               </div>
               <TooltipProvider>
@@ -1365,10 +1364,10 @@ export default function RiskAssessment() {
                 <input type="hidden" {...riskForm.register("riskCriticality2")} />
               </div>
               <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] col-span-4 relative">
-                <div className="min-h-[200px]">
+                <div>
                   <Textarea
                     className="w-full p-2 border-0 focus:ring-0 text-sm"
-                    rows={10}
+                    rows={3}
                     placeholder="How will you mitigate this risk?"
                     {...riskForm.register("mitigationPlan2")}
                     ref={(el) => {
@@ -1383,7 +1382,7 @@ export default function RiskAssessment() {
                               el.value = riskData.risk.mitigationPlan2;
                               // Calculate better height
                               const lineCount = riskData.risk.mitigationPlan2.split('\n').length;
-                              const minHeight = Math.max(200, lineCount * 24);
+                              const minHeight = Math.max(72, lineCount * 24); // 72px = 3 rows × 24px
                               el.style.height = 'auto';
                               el.style.minHeight = `${minHeight}px`;
                               el.style.height = `${minHeight}px`;
@@ -1395,7 +1394,6 @@ export default function RiskAssessment() {
                         }, 200);
                       }
                     }}
-                    style={{ minHeight: '200px' }}
                   />
                 </div>
                 <TooltipProvider>
