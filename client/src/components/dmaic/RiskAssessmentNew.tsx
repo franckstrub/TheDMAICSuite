@@ -454,57 +454,18 @@ export default function RiskAssessmentNew() {
       // Clone the current risk data
       let updatedRiskData = {...riskData};
       
-      // If we're deleting the last row, we don't need to shift anything
-      if (rowIndex === visibleRiskRows) {
-        // Just clear the last row's data
-        const suffix = rowIndex === 1 ? '' : rowIndex.toString();
-        updatedRiskData[`riskName${suffix}` as keyof RiskItem] = '';
-        updatedRiskData[`probability${suffix}` as keyof RiskItem] = 'Low';
-        updatedRiskData[`impact${suffix}` as keyof RiskItem] = 'Low';
-        updatedRiskData[`riskCriticality${suffix}` as keyof RiskItem] = 1;
-        updatedRiskData[`mitigationPlan${suffix}` as keyof RiskItem] = '';
-        updatedRiskData[`riskOwner${suffix}` as keyof RiskItem] = '';
-        
-        console.log(`Deleted the last row (${rowIndex}) - simply cleared its data`);
-      } else {
-        // Otherwise shift all data up from lower rows
-        for (let i = rowIndex; i < visibleRiskRows; i++) {
-          const currentRow = i;
-          const nextRow = i + 1;
-          
-          const currentSuffix = currentRow === 1 ? '' : currentRow.toString();
-          const nextSuffix = nextRow === 1 ? '' : nextRow.toString();
-          
-          // Move next row's data to current row
-          updatedRiskData[`riskName${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`riskName${nextSuffix}` as keyof RiskItem] || '';
-          updatedRiskData[`probability${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`probability${nextSuffix}` as keyof RiskItem] || 'Low';
-          updatedRiskData[`impact${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`impact${nextSuffix}` as keyof RiskItem] || 'Low';
-          updatedRiskData[`riskCriticality${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`riskCriticality${nextSuffix}` as keyof RiskItem] || 1;
-          updatedRiskData[`mitigationPlan${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`mitigationPlan${nextSuffix}` as keyof RiskItem] || '';
-          updatedRiskData[`riskOwner${currentSuffix}` as keyof RiskItem] = 
-            updatedRiskData[`riskOwner${nextSuffix}` as keyof RiskItem] || '';
-        }
-        
-        console.log(`Shifted all data up from rows ${rowIndex+1} to ${visibleRiskRows}`);
-        
-        // Only clear the last row that would now be duplicated
-        const lastRowSuffix = visibleRiskRows === 1 ? '' : visibleRiskRows.toString();
-        
-        // Clear just this last row
-        updatedRiskData[`riskName${lastRowSuffix}` as keyof RiskItem] = '';
-        updatedRiskData[`probability${lastRowSuffix}` as keyof RiskItem] = 'Low';
-        updatedRiskData[`impact${lastRowSuffix}` as keyof RiskItem] = 'Low';
-        updatedRiskData[`riskCriticality${lastRowSuffix}` as keyof RiskItem] = 1;
-        updatedRiskData[`mitigationPlan${lastRowSuffix}` as keyof RiskItem] = '';
-        updatedRiskData[`riskOwner${lastRowSuffix}` as keyof RiskItem] = '';
-        
-        console.log(`Cleared the duplicated last row (${visibleRiskRows})`);
-      }
+      // Directly clear only the row being deleted - don't shift anything
+      const suffix = rowIndex === 1 ? '' : rowIndex.toString();
+      
+      console.log(`Directly clearing only row ${rowIndex} without shifting data`);
+      
+      // Clear only the specific row being deleted
+      updatedRiskData[`riskName${suffix}` as keyof RiskItem] = '';
+      updatedRiskData[`probability${suffix}` as keyof RiskItem] = 'Low';
+      updatedRiskData[`impact${suffix}` as keyof RiskItem] = 'Low';
+      updatedRiskData[`riskCriticality${suffix}` as keyof RiskItem] = 1;
+      updatedRiskData[`mitigationPlan${suffix}` as keyof RiskItem] = '';
+      updatedRiskData[`riskOwner${suffix}` as keyof RiskItem] = '';
       
       // Log the data we're about to save
       console.log("Updated risk data after deletion (about to save):", updatedRiskData);
