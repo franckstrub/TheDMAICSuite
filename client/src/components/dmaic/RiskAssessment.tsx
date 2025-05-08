@@ -592,21 +592,62 @@ export default function RiskAssessment() {
   };
   
   // Function to set fixed height for all textareas to prevent resizing issues
-  const adjustTextareaHeight = (textareaKey: string) => {
+  // isAiGenerated parameter controls whether to adjust height automatically or only for user-resize events
+  const adjustTextareaHeight = (textareaKey: string, isAiGenerated: boolean = false) => {
     setTimeout(() => {
       const textarea = textareaRefs.current[textareaKey];
       if (textarea) {
-        // Reset height to auto to get proper scrollHeight calculation
-        textarea.style.height = 'auto';
+        // Only adjust height automatically if it's AI-generated content
+        // For normal save/load operations, respect user's manual resizing
+        if (isAiGenerated) {
+          // Reset height to auto to get proper scrollHeight calculation
+          textarea.style.height = 'auto';
+          
+          // Calculate new height based on content
+          const minHeight = textarea.classList.contains('risk-mitigation-textarea') ? 120 : 24;
+          const newHeight = Math.max(minHeight, textarea.scrollHeight + 4);
+          
+          // Set a reasonable initial height, but allow user resizing
+          textarea.style.height = `${newHeight}px`;
+          
+          console.log(`Adjusted initial height for ${textareaKey} to ${newHeight}px`);
+        }
         
-        // Calculate new height based on content
-        const minHeight = textarea.classList.contains('risk-mitigation-textarea') ? 120 : 24;
-        const newHeight = Math.max(minHeight, textarea.scrollHeight + 4);
-        
-        // Set a reasonable initial height, but allow user resizing
-        textarea.style.height = `${newHeight}px`;
-        
-        console.log(`Adjusted initial height for ${textareaKey} to ${newHeight}px`);
+        // The synchronizing height feature should only work for manual resizing
+        // or AI-generated content, not during save or add risk operations
+        if (!skipNextTextareaResize || isAiGenerated) {
+          // Extract the row number (if any) from the textarea key
+          const rowMatch = textareaKey.match(/(\d+)$/);
+          const rowNumber = rowMatch ? rowMatch[1] : '';
+          
+          // Find all textareas in this row and synchronize their heights
+          const riskNameField = rowNumber ? `riskName${rowNumber}` : 'riskName';
+          const mitigationPlanField = rowNumber ? `mitigationPlan${rowNumber}` : 'mitigationPlan';
+          const riskOwnerField = rowNumber ? `riskOwner${rowNumber}` : 'riskOwner';
+          
+          // Find the textareas for this row
+          const riskNameTextarea = textareaRefs.current[riskNameField];
+          const mitigationPlanTextarea = textareaRefs.current[mitigationPlanField];
+          const riskOwnerTextarea = textareaRefs.current[riskOwnerField];
+          
+          // For AI-generated content or manual resize, synchronize the heights
+          if (isAiGenerated || (textarea.style.height && parseInt(textarea.style.height) > 120)) {
+            const currentHeight = parseInt(textarea.style.height);
+            console.log(`Synchronizing heights for row ${rowNumber || '1'} to match ${textareaKey}: ${currentHeight}px`);
+            
+            if (riskNameTextarea && textareaKey !== riskNameField) {
+              riskNameTextarea.style.height = `${currentHeight}px`;
+            }
+            
+            if (mitigationPlanTextarea && textareaKey !== mitigationPlanField) {
+              mitigationPlanTextarea.style.height = `${currentHeight}px`;
+            }
+            
+            if (riskOwnerTextarea && textareaKey !== riskOwnerField) {
+              riskOwnerTextarea.style.height = `${currentHeight}px`;
+            }
+          }
+        }
       }
     }, 0);
   };
@@ -958,23 +999,23 @@ export default function RiskAssessment() {
     }
     
     // Adjust textarea height to fit the new content with multiple retries using longer timeouts
-    // First immediate adjustment
-    adjustTextareaHeight(mitigationPlanField);
+    // First immediate adjustment - passing true for isAiGenerated parameter
+    adjustTextareaHeight(mitigationPlanField, true);
     
     // Staggered adjustments with increasing timeouts for better reliability
     setTimeout(() => {
-      adjustTextareaHeight(mitigationPlanField);
+      adjustTextareaHeight(mitigationPlanField, true);
       
       setTimeout(() => {
-        adjustTextareaHeight(mitigationPlanField);
+        adjustTextareaHeight(mitigationPlanField, true);
         
         setTimeout(() => {
-          adjustTextareaHeight(mitigationPlanField);
+          adjustTextareaHeight(mitigationPlanField, true);
           
           // Final adjustment after DOM has fully updated
           setTimeout(() => {
             // Make one last adjustment
-            adjustTextareaHeight(mitigationPlanField);
+            adjustTextareaHeight(mitigationPlanField, true);
             
             // Force update the textarea if ref exists
             const textarea = textareaRefs.current[mitigationPlanField];
@@ -1281,7 +1322,7 @@ export default function RiskAssessment() {
                             el.value = riskData.risk.mitigationPlan;
                             console.log(`Direct ref injection for mitigationPlan completed`);
                             // Initialize height based on content
-                            adjustTextareaHeight("mitigationPlan");
+                            adjustTextareaHeight("mitigationPlan", true);
                           }
                         } catch (error) {
                           console.error("Error setting textarea content:", error);
