@@ -481,7 +481,7 @@ export const insertProcessDataSchema = createInsertSchema(processData).pick({
   data: true,
 });
 
-// Project Risk Assessment
+// Project Risk Assessment - Legacy schema (kept for backward compatibility)
 export const projectRisks = pgTable("project_risks", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
@@ -533,6 +533,21 @@ export const projectRisks = pgTable("project_risks", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
+// Project Risk Assessment - New schema for unlimited risks
+export const projectRiskItems = pgTable("project_risk_items", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  riskName: text("risk_name").notNull(),
+  probability: text("probability").notNull().default('Low'),
+  impact: text("impact").notNull().default('Low'),
+  riskCriticality: integer("risk_criticality").notNull().default(1),
+  mitigationPlan: text("mitigation_plan"),
+  riskOwner: text("risk_owner"),
+  orderIndex: integer("order_index").notNull().default(0), // To maintain the order of risks
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+// Legacy schema for backward compatibility
 export const insertRiskSchema = createInsertSchema(projectRisks).pick({
   projectId: true,
   
@@ -578,6 +593,9 @@ export const insertRiskSchema = createInsertSchema(projectRisks).pick({
   mitigationPlan6: true,
   riskOwner6: true,
 });
+
+// New schema for individual risk items 
+export const insertRiskItemSchema = createInsertSchema(projectRiskItems);
 
 // Type definitions
 export type User = typeof users.$inferSelect;
@@ -627,6 +645,9 @@ export type InsertProcessData = z.infer<typeof insertProcessDataSchema>;
 
 export type ProjectRisk = typeof projectRisks.$inferSelect;
 export type InsertRisk = z.infer<typeof insertRiskSchema>;
+
+export type ProjectRiskItem = typeof projectRiskItems.$inferSelect;
+export type InsertRiskItem = z.infer<typeof insertRiskItemSchema>;
 
 export type ProjectRaciMatrix = typeof projectRaciMatrix.$inferSelect;
 export type InsertRaciMatrix = z.infer<typeof insertRaciSchema>;
