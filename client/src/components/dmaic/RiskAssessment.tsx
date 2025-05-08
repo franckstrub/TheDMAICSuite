@@ -575,8 +575,17 @@ export default function RiskAssessment() {
     // Generate appropriate mitigation plan based on risk details
     const criticality = calculateRiskCriticality(probability, impact);
     
-    // Get suggestions based on probability and impact
-    let suggestion = `Mitigation Plan for "${riskName}" (${probability} probability, ${impact} impact, ${criticality}/9 criticality):\n\n`;
+    // Use toast with id so we can update it later
+    const toastId = Date.now().toString();
+    toast({
+      id: toastId,
+      title: "Generating mitigation plan",
+      description: "Creating mitigation suggestions based on risk details...",
+      variant: "default"
+    });
+    
+    // Get suggestions based on probability and impact - without repeating the risk information
+    let suggestion = `Recommended Mitigation Strategies:\n\n`;
     
     // Determine risk characteristics based on probability and impact
     const isProbabilityHigh = probability === "High";
@@ -805,10 +814,13 @@ export default function RiskAssessment() {
       suggestion += "\n• Reassess if conditions change";
     }
     
-    // Show generation in progress toast
+    // Update the in-progress toast with success message
     toast({
-      title: "Generating mitigation plan",
-      description: "Creating AI-suggested mitigation strategy...",
+      id: toastId,
+      title: "Mitigation plan generated",
+      description: "AI-suggested mitigation strategies are ready.",
+      variant: "default",
+      className: "bg-green-50 border-green-200 text-green-700"
     });
     
     // Update the form with the generated suggestion
@@ -859,10 +871,12 @@ export default function RiskAssessment() {
       }, 400);
     }, 200);
     
-    // Show success toast
+    // Update in-progress toast to success  
     toast({
-      title: "Mitigation Plan Generated",
-      description: `AI-assisted mitigation plan generated for ${specificRiskType || "General"} risk with ${criticality}/9 criticality.`
+      title: "Success!",
+      description: `Mitigation suggestions ready${specificRiskType ? ` for ${specificRiskType} risk` : ""}.`,
+      variant: "default",
+      className: "bg-green-50 border-green-200 text-green-700"
     });
   };
 
