@@ -1327,6 +1327,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Risk Mitigation Plan Generation with Claude AI
+  app.post("/api/generate-mitigation-plan", async (req: Request, res: Response) => {
+    try {
+      const { riskName, probability, impact } = req.body;
+      
+      if (!riskName) {
+        return res.status(400).json({ 
+          message: "Risk name is required to generate a mitigation plan" 
+        });
+      }
+      
+      // Default values for probability and impact if not provided
+      const probValue = probability || 'Low';
+      const impactValue = impact || 'Low';
+      
+      // Generate the mitigation plan using Claude
+      const mitigationPlan = await generateMitigationPlan(
+        riskName,
+        probValue,
+        impactValue
+      );
+      
+      return res.status(200).json({ mitigationPlan });
+    } catch (err) {
+      console.error("Error generating mitigation plan:", err);
+      return handleErrors(err, res);
+    }
+  });
+
   // Process Data routes
   app.get("/api/datasets/:datasetId/process-data", async (req: Request, res: Response) => {
     try {
