@@ -546,10 +546,10 @@ Monitoring and Review:
               <div className="col-span-3 p-2 bg-red-50 rounded-md text-center">
                 <h4 className="font-medium text-red-600 text-sm">Risk Name</h4>
               </div>
-              <div className="col-span-1.5 p-2 bg-amber-50 rounded-md text-center">
+              <div className="col-span-1.5 p-2 bg-amber-50 rounded-md text-center w-[120px]">
                 <h4 className="font-medium text-amber-600 text-sm">Probability</h4>
               </div>
-              <div className="col-span-1.5 p-2 bg-orange-50 rounded-md text-center">
+              <div className="col-span-1.5 p-2 bg-orange-50 rounded-md text-center w-[120px]">
                 <h4 className="font-medium text-orange-600 text-sm">Impact</h4>
               </div>
               <div className="col-span-1 p-2 bg-purple-50 rounded-md text-center">
@@ -577,7 +577,7 @@ Monitoring and Review:
                   }}
                 />
               </div>
-              <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+              <div className="border border-amber-100 rounded-md p-2 bg-white w-[120px] col-span-1.5">
                 <Select
                   value={riskData.probability || 'Low'}
                   onValueChange={(value) => updateRiskCriticality(1, 'probability', value)}
@@ -592,7 +592,7 @@ Monitoring and Review:
                   </SelectContent>
                 </Select>
               </div>
-              <div className="border border-orange-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+              <div className="border border-orange-100 rounded-md p-2 bg-white w-[120px] col-span-1.5">
                 <Select
                   value={riskData.impact || 'Low'}
                   onValueChange={(value) => updateRiskCriticality(1, 'impact', value)}
@@ -679,7 +679,7 @@ Monitoring and Review:
                     }}
                   />
                 </div>
-                <div className="border border-amber-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+                <div className="border border-amber-100 rounded-md p-2 bg-white w-[120px] col-span-1.5">
                   <Select
                     value={riskData.probability2 || 'Low'}
                     onValueChange={(value) => updateRiskCriticality(2, 'probability', value)}
@@ -694,7 +694,7 @@ Monitoring and Review:
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="border border-orange-100 rounded-md p-2 bg-white w-[98%] col-span-1.5">
+                <div className="border border-orange-100 rounded-md p-2 bg-white w-[120px] col-span-1.5">
                   <Select
                     value={riskData.impact2 || 'Low'}
                     onValueChange={(value) => updateRiskCriticality(2, 'impact', value)}
