@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PlusCircle, MinusCircle, Sparkles } from "lucide-react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -464,11 +465,25 @@ export default function RiskAssessment() {
         // Reset height to auto to get accurate scrollHeight measurement
         textarea.style.height = 'auto';
         
-        // Calculate new height based on content (add a small buffer for better appearance)
-        const newHeight = Math.max(60, textarea.scrollHeight + 4);
+        // Get textarea content and calculate lines
+        const content = textarea.value || '';
+        const lineCount = content.split('\n').length;
+        
+        // Calculate new height based on content (add a larger buffer for better appearance)
+        // Use line count to help calculate a more appropriate height
+        const minHeight = 80; // Increased minimum height
+        const lineHeight = 20; // Approximate height per line
+        const estimatedHeight = lineCount * lineHeight;
+        const scrollHeight = textarea.scrollHeight;
+        
+        // Use the larger of estimated height or scrollHeight
+        const newHeight = Math.max(minHeight, scrollHeight + 16, estimatedHeight + 16);
+        
+        // Add smooth transition for a better user experience
+        textarea.style.transition = 'height 0.3s ease-in-out';
         textarea.style.height = `${newHeight}px`;
         
-        console.log(`Adjusted textarea height for ${textareaKey} to ${newHeight}px`);
+        console.log(`Adjusted textarea height for ${textareaKey} to ${newHeight}px (${lineCount} lines)`);
       }
     }, 0);
   };
@@ -746,38 +761,23 @@ export default function RiskAssessment() {
     // Update the form with the generated suggestion
     riskForm.setValue(mitigationPlanField as any, suggestion);
     
-    // Adjust textarea height to fit the new content
+    // Adjust textarea height to fit the new content with multiple retries
+    // First immediate adjustment
+    adjustTextareaHeight(mitigationPlanField);
+    
+    // Second adjustment after short delay
     setTimeout(() => {
       adjustTextareaHeight(mitigationPlanField);
-    }, 100);
-    
-    toast({
-      title: "Mitigation Plan Generated",
-      description: `AI-assisted mitigation plan generated for ${specificRiskType || "General"} risk with ${criticality}/9 criticality.`
-    });
-    
-    // Add conclusion based on criticality
-    suggestion += "\n\nMonitoring and Review:";
-    if (criticality >= 7) {
-      suggestion += "\n• Review risk status weekly";
-      suggestion += "\n• Report to executive leadership monthly";
-      suggestion += "\n• Reassess mitigation effectiveness quarterly";
-    } else if (criticality >= 4) {
-      suggestion += "\n• Review risk status bi-weekly";
-      suggestion += "\n• Report to project leadership monthly";
-      suggestion += "\n• Reassess mitigation effectiveness quarterly";
-    } else {
-      suggestion += "\n• Review risk status monthly";
-      suggestion += "\n• Report in standard project updates";
-      suggestion += "\n• Reassess if conditions change";
-    }
-    
-    // Update the form with the generated suggestion
-    riskForm.setValue(mitigationPlanField as any, suggestion);
-    
-    // Adjust textarea height to fit the new content
-    setTimeout(() => {
-      adjustTextareaHeight(mitigationPlanField);
+      
+      // Third adjustment after longer delay to ensure proper sizing once content is fully rendered
+      setTimeout(() => {
+        adjustTextareaHeight(mitigationPlanField);
+        
+        // Final adjustment after DOM has fully updated
+        setTimeout(() => {
+          adjustTextareaHeight(mitigationPlanField);
+        }, 500);
+      }, 300);
     }, 100);
     
     toast({
@@ -1050,16 +1050,24 @@ export default function RiskAssessment() {
                   if (el) textareaRefs.current["mitigationPlan"] = el;
                 }}
               />
-              <Button 
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
-                onClick={() => generateMitigationPlan(1)}
-                title="Generate AI-assisted mitigation plan suggestions"
-              >
-                <Sparkles className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                      onClick={() => generateMitigationPlan(1)}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
               <Textarea
@@ -1139,16 +1147,24 @@ export default function RiskAssessment() {
                     if (el) textareaRefs.current["mitigationPlan2"] = el;
                   }}
                 />
-                <Button 
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
-                  onClick={() => generateMitigationPlan(2)}
-                  title="Generate AI-assisted mitigation plan suggestions"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                        onClick={() => generateMitigationPlan(2)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
