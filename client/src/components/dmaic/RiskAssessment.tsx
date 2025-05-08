@@ -1414,13 +1414,25 @@ export default function RiskAssessment() {
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality5")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan5")}
+                  ref={(el) => {
+                    if (el) textareaRefs.current["mitigationPlan5"] = el;
+                  }}
                 />
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="absolute top-2 right-2 p-1 h-8 w-8"
+                  onClick={() => generateMitigationPlan(5)}
+                  title="Generate AI-assisted mitigation plan suggestions"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </Button>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
@@ -1496,13 +1508,25 @@ export default function RiskAssessment() {
                 </div>
                 <input type="hidden" {...riskForm.register("riskCriticality6")} />
               </div>
-              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%]">
+              <div className="border border-blue-100 rounded-md p-2 bg-white w-[95%] relative">
                 <Textarea
                   className="w-full p-2 border-0 focus:ring-0 text-sm"
                   rows={3}
                   placeholder="How will you mitigate this risk?"
                   {...riskForm.register("mitigationPlan6")}
+                  ref={(el) => {
+                    if (el) textareaRefs.current["mitigationPlan6"] = el;
+                  }}
                 />
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="absolute top-2 right-2 p-1 h-8 w-8"
+                  onClick={() => generateMitigationPlan(6)}
+                  title="Generate AI-assisted mitigation plan suggestions"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </Button>
               </div>
               <div className="border border-green-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
