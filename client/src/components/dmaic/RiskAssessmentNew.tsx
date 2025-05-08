@@ -56,6 +56,9 @@ interface RiskItem {
   riskOwner6?: string;
 
   lastUpdated?: Date;
+  
+  // Allow for dynamic fields beyond the 6 defined in the schema
+  [key: string]: string | number | Date | undefined;
 }
 
 // Create a default risk item
@@ -211,6 +214,25 @@ export default function RiskAssessmentNew() {
       }
     }
     
+    // Also handle dynamic rows beyond 6 (these won't be saved to database but will persist in memory)
+    for (let i = 7; i <= visibleRiskRows; i++) {
+      const riskNameField = `extraRisk_${i}_name`;
+      const mitigationPlanField = `extraRisk_${i}_mitigationPlan`;
+      const riskOwnerField = `extraRisk_${i}_riskOwner`;
+      
+      if (textareaRefs.current[riskNameField]) {
+        updatedRiskData[riskNameField as keyof RiskItem] = textareaRefs.current[riskNameField].value;
+      }
+      
+      if (textareaRefs.current[mitigationPlanField]) {
+        updatedRiskData[mitigationPlanField as keyof RiskItem] = textareaRefs.current[mitigationPlanField].value;
+      }
+      
+      if (textareaRefs.current[riskOwnerField]) {
+        updatedRiskData[riskOwnerField as keyof RiskItem] = textareaRefs.current[riskOwnerField].value;
+      }
+    }
+    
     try {
       const url = riskData.id 
         ? `/api/risks/${riskData.id}` 
@@ -268,6 +290,19 @@ export default function RiskAssessmentNew() {
         riskOwner6: updatedRiskData.riskOwner6 || '',
       };
       
+      // Additional information to warn users about rows beyond 6
+      if (visibleRiskRows > 6) {
+        const notSavedCount = visibleRiskRows - 6;
+        console.log(`Warning: ${notSavedCount} risk rows beyond the 6th row will not be saved to the database.`);
+        
+        // Add extra warning for rows beyond 6
+        toast({
+          title: "Risk Assessment Saved Partially",
+          description: `Note: The first 6 risk items have been saved to the database. ${notSavedCount} additional items will be displayed but not persisted between sessions.`,
+          duration: 5000
+        });
+      }
+      
       console.log('Sending probability:', payload.probability);
       console.log('Sending impact:', payload.impact);
       
@@ -288,14 +323,29 @@ export default function RiskAssessmentNew() {
       // Store flag in sessionStorage
       sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
       
-      toast({
-        title: "Risk assessment saved",
-        description: "All changes have been saved successfully."
-      });
+      // Only show success toast if we didn't already show a partial save warning
+      if (visibleRiskRows <= 6) {
+        toast({
+          title: "Risk assessment saved",
+          description: "All changes have been saved successfully."
+        });
+      }
       
-      // Update the local risk data with the saved data
+      // Keep dynamic rows in the updated data
+      const mergedData = {
+        ...savedData.risk,
+      };
+      
+      // Add any dynamic row data to the merged data
+      for (const key in updatedRiskData) {
+        if (key.startsWith('extraRisk_')) {
+          mergedData[key] = updatedRiskData[key];
+        }
+      }
+      
+      // Update the local risk data with the saved data plus dynamic rows
       // but don't trigger a full reload which causes jerking
-      setRiskData(savedData.risk);
+      setRiskData(mergedData);
       
     } catch (error) {
       console.error('Error saving risk data:', error);
@@ -311,15 +361,19 @@ export default function RiskAssessmentNew() {
   
   // Handle adding a new row
   const addRiskRow = () => {
-    if (visibleRiskRows < 6) {
-      setVisibleRiskRows(prev => prev + 1);
-    } else {
+    // Our current schema supports up to 6 rows, but we'll allow any number of rows to be added
+    // Beyond 6 rows, we'll warn that they won't be persistently stored
+    if (visibleRiskRows >= 6) {
       toast({
-        title: "Maximum rows reached",
-        description: "You can add up to 6 risk items.",
-        variant: "default"
+        title: "Storage Warning",
+        description: "Note: The database schema supports up to 6 risk items for persistent storage. Items beyond 6 will be displayed but won't be saved.",
+        variant: "default",
+        duration: 5000
       });
     }
+    
+    // Allow adding rows without any limit
+    setVisibleRiskRows(prev => prev + 1);
   };
   
   // Handle removing a row
@@ -664,7 +718,8 @@ Monitoring and Review:
               </div>
             </div>
             
-            {/* Second row (conditionally rendered) */}
+            {/* Risk rows 2-6 (conditionally rendered) */}
+            {/* Row 2 */}
             {visibleRiskRows >= 2 && (
               <div className="grid grid-cols-12 gap-1 mb-4 relative risk-row">
                 <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
@@ -777,9 +832,703 @@ Monitoring and Review:
               </div>
             )}
             
+            {/* Row 3 */}
+            {visibleRiskRows >= 3 && (
+              <div className="grid grid-cols-12 gap-1 mb-4 relative risk-row">
+                <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
+                    rows={1}
+                    placeholder="Describe the risk"
+                    value={riskData.riskName3 || ''}
+                    onChange={(e) => handleTextareaChange('riskName3', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskName3'] = el;
+                    }}
+                  />
+                </div>
+                <div className="border border-amber-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.probability3 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(3, 'probability', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Probability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-orange-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.impact3 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(3, 'impact', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Impact" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-purple-100 rounded-md p-1 bg-white w-[97%] col-span-0.5 flex items-center justify-center">
+                  <div className="text-lg font-bold">
+                    {riskData.riskCriticality3 || 1}/9
+                  </div>
+                </div>
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
+                  <div className="relative">
+                    <Textarea
+                      className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                      rows={5}
+                      placeholder="How will you mitigate this risk?"
+                      value={riskData.mitigationPlan3 || ''}
+                      onChange={(e) => handleTextareaChange('mitigationPlan3', e)}
+                      ref={(el) => {
+                        if (el) {
+                          textareaRefs.current['mitigationPlan3'] = el;
+                          // Adjust height on mount
+                          setTimeout(() => adjustTextareaHeight('mitigationPlan3'), 0);
+                        }
+                      }}
+                    />
+                    <div className="absolute top-1 right-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                              onClick={() => generateMitigationPlan(3)}
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
+                    rows={1}
+                    placeholder="Who is responsible for monitoring this risk?"
+                    value={riskData.riskOwner3 || ''}
+                    onChange={(e) => handleTextareaChange('riskOwner3', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskOwner3'] = el;
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteRiskRow(3)}
+                  title="Delete Row 3"
+                >
+                  <i className="fas fa-trash"></i>
+                </Button>
+              </div>
+            )}
+            
+            {/* Row 4 */}
+            {visibleRiskRows >= 4 && (
+              <div className="grid grid-cols-12 gap-1 mb-4 relative risk-row">
+                <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
+                    rows={1}
+                    placeholder="Describe the risk"
+                    value={riskData.riskName4 || ''}
+                    onChange={(e) => handleTextareaChange('riskName4', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskName4'] = el;
+                    }}
+                  />
+                </div>
+                <div className="border border-amber-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.probability4 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(4, 'probability', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Probability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-orange-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.impact4 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(4, 'impact', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Impact" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-purple-100 rounded-md p-1 bg-white w-[97%] col-span-0.5 flex items-center justify-center">
+                  <div className="text-lg font-bold">
+                    {riskData.riskCriticality4 || 1}/9
+                  </div>
+                </div>
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
+                  <div className="relative">
+                    <Textarea
+                      className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                      rows={5}
+                      placeholder="How will you mitigate this risk?"
+                      value={riskData.mitigationPlan4 || ''}
+                      onChange={(e) => handleTextareaChange('mitigationPlan4', e)}
+                      ref={(el) => {
+                        if (el) {
+                          textareaRefs.current['mitigationPlan4'] = el;
+                          // Adjust height on mount
+                          setTimeout(() => adjustTextareaHeight('mitigationPlan4'), 0);
+                        }
+                      }}
+                    />
+                    <div className="absolute top-1 right-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                              onClick={() => generateMitigationPlan(4)}
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
+                    rows={1}
+                    placeholder="Who is responsible for monitoring this risk?"
+                    value={riskData.riskOwner4 || ''}
+                    onChange={(e) => handleTextareaChange('riskOwner4', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskOwner4'] = el;
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteRiskRow(4)}
+                  title="Delete Row 4"
+                >
+                  <i className="fas fa-trash"></i>
+                </Button>
+              </div>
+            )}
+            
+            {/* Row 5 */}
+            {visibleRiskRows >= 5 && (
+              <div className="grid grid-cols-12 gap-1 mb-4 relative risk-row">
+                <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
+                    rows={1}
+                    placeholder="Describe the risk"
+                    value={riskData.riskName5 || ''}
+                    onChange={(e) => handleTextareaChange('riskName5', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskName5'] = el;
+                    }}
+                  />
+                </div>
+                <div className="border border-amber-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.probability5 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(5, 'probability', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Probability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-orange-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.impact5 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(5, 'impact', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Impact" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-purple-100 rounded-md p-1 bg-white w-[97%] col-span-0.5 flex items-center justify-center">
+                  <div className="text-lg font-bold">
+                    {riskData.riskCriticality5 || 1}/9
+                  </div>
+                </div>
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
+                  <div className="relative">
+                    <Textarea
+                      className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                      rows={5}
+                      placeholder="How will you mitigate this risk?"
+                      value={riskData.mitigationPlan5 || ''}
+                      onChange={(e) => handleTextareaChange('mitigationPlan5', e)}
+                      ref={(el) => {
+                        if (el) {
+                          textareaRefs.current['mitigationPlan5'] = el;
+                          // Adjust height on mount
+                          setTimeout(() => adjustTextareaHeight('mitigationPlan5'), 0);
+                        }
+                      }}
+                    />
+                    <div className="absolute top-1 right-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                              onClick={() => generateMitigationPlan(5)}
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
+                    rows={1}
+                    placeholder="Who is responsible for monitoring this risk?"
+                    value={riskData.riskOwner5 || ''}
+                    onChange={(e) => handleTextareaChange('riskOwner5', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskOwner5'] = el;
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteRiskRow(5)}
+                  title="Delete Row 5"
+                >
+                  <i className="fas fa-trash"></i>
+                </Button>
+              </div>
+            )}
+            
+            {/* Row 6 */}
+            {visibleRiskRows >= 6 && (
+              <div className="grid grid-cols-12 gap-1 mb-4 relative risk-row">
+                <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
+                    rows={1}
+                    placeholder="Describe the risk"
+                    value={riskData.riskName6 || ''}
+                    onChange={(e) => handleTextareaChange('riskName6', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskName6'] = el;
+                    }}
+                  />
+                </div>
+                <div className="border border-amber-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.probability6 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(6, 'probability', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Probability" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-orange-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                  <Select
+                    value={riskData.impact6 || 'Low'}
+                    onValueChange={(value) => updateRiskCriticality(6, 'impact', value)}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="Impact" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="border border-purple-100 rounded-md p-1 bg-white w-[97%] col-span-0.5 flex items-center justify-center">
+                  <div className="text-lg font-bold">
+                    {riskData.riskCriticality6 || 1}/9
+                  </div>
+                </div>
+                <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
+                  <div className="relative">
+                    <Textarea
+                      className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                      rows={5}
+                      placeholder="How will you mitigate this risk?"
+                      value={riskData.mitigationPlan6 || ''}
+                      onChange={(e) => handleTextareaChange('mitigationPlan6', e)}
+                      ref={(el) => {
+                        if (el) {
+                          textareaRefs.current['mitigationPlan6'] = el;
+                          // Adjust height on mount
+                          setTimeout(() => adjustTextareaHeight('mitigationPlan6'), 0);
+                        }
+                      }}
+                    />
+                    <div className="absolute top-1 right-1">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                              onClick={() => generateMitigationPlan(6)}
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </div>
+                <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
+                  <Textarea
+                    className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
+                    rows={1}
+                    placeholder="Who is responsible for monitoring this risk?"
+                    value={riskData.riskOwner6 || ''}
+                    onChange={(e) => handleTextareaChange('riskOwner6', e)}
+                    ref={(el) => {
+                      if (el) textareaRefs.current['riskOwner6'] = el;
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => deleteRiskRow(6)}
+                  title="Delete Row 6"
+                >
+                  <i className="fas fa-trash"></i>
+                </Button>
+              </div>
+            )}
+            
+            {/* Dynamically render rows beyond 6 */}
+            {Array.from({ length: Math.max(0, visibleRiskRows - 6) }).map((_, index) => {
+              const rowIndex = index + 7; // Start from row 7
+              
+              // Create dynamic field names for additional rows
+              const riskNameField = `extraRisk_${rowIndex}_name`;
+              const probabilityField = `extraRisk_${rowIndex}_probability`;
+              const impactField = `extraRisk_${rowIndex}_impact`;
+              const criticalityField = `extraRisk_${rowIndex}_criticality`;
+              const mitigationPlanField = `extraRisk_${rowIndex}_mitigationPlan`;
+              const riskOwnerField = `extraRisk_${rowIndex}_riskOwner`;
+              
+              // Initialize values in riskData if not already present
+              if (!(riskNameField in riskData)) {
+                riskData[riskNameField as keyof RiskItem] = '';
+              }
+              if (!(probabilityField in riskData)) {
+                riskData[probabilityField as keyof RiskItem] = 'Low';
+              }
+              if (!(impactField in riskData)) {
+                riskData[impactField as keyof RiskItem] = 'Low';
+              }
+              if (!(criticalityField in riskData)) {
+                riskData[criticalityField as keyof RiskItem] = 1;
+              }
+              if (!(mitigationPlanField in riskData)) {
+                riskData[mitigationPlanField as keyof RiskItem] = '';
+              }
+              if (!(riskOwnerField in riskData)) {
+                riskData[riskOwnerField as keyof RiskItem] = '';
+              }
+              
+              return (
+                <div key={`risk-row-${rowIndex}`} className="grid grid-cols-12 gap-1 mb-4 relative risk-row">
+                  <div className="border border-red-100 rounded-md p-2 bg-white w-[98%] col-span-3">
+                    <Textarea
+                      className="w-full p-2 border-0 focus:ring-0 text-sm risk-name-textarea"
+                      rows={1}
+                      placeholder="Describe the risk"
+                      value={riskData[riskNameField as keyof RiskItem] as string || ''}
+                      onChange={(e) => handleTextareaChange(riskNameField, e)}
+                      ref={(el) => {
+                        if (el) textareaRefs.current[riskNameField] = el;
+                      }}
+                    />
+                  </div>
+                  <div className="border border-amber-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                    <Select
+                      value={riskData[probabilityField as keyof RiskItem] as string || 'Low'}
+                      onValueChange={(value) => {
+                        const updatedRiskData = {...riskData};
+                        updatedRiskData[probabilityField as keyof RiskItem] = value;
+                        
+                        // Calculate criticality
+                        const probability = value;
+                        const impact = riskData[impactField as keyof RiskItem] as string || 'Low';
+                        const criticality = calculateRiskCriticality(probability, impact);
+                        updatedRiskData[criticalityField as keyof RiskItem] = criticality;
+                        
+                        setRiskData(updatedRiskData);
+                      }}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="Probability" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="border border-orange-100 rounded-md p-1 bg-white w-[97%] col-span-0.5">
+                    <Select
+                      value={riskData[impactField as keyof RiskItem] as string || 'Low'}
+                      onValueChange={(value) => {
+                        const updatedRiskData = {...riskData};
+                        updatedRiskData[impactField as keyof RiskItem] = value;
+                        
+                        // Calculate criticality
+                        const impact = value;
+                        const probability = riskData[probabilityField as keyof RiskItem] as string || 'Low';
+                        const criticality = calculateRiskCriticality(probability, impact);
+                        updatedRiskData[criticalityField as keyof RiskItem] = criticality;
+                        
+                        setRiskData(updatedRiskData);
+                      }}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="Impact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="border border-purple-100 rounded-md p-1 bg-white w-[97%] col-span-0.5 flex items-center justify-center">
+                    <div className="text-lg font-bold">
+                      {riskData[criticalityField as keyof RiskItem] as number || 1}/9
+                    </div>
+                  </div>
+                  <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
+                    <div className="relative">
+                      <Textarea
+                        className="w-full p-2 border-0 focus:ring-0 text-sm pr-8 risk-mitigation-textarea"
+                        rows={5}
+                        placeholder="How will you mitigate this risk?"
+                        value={riskData[mitigationPlanField as keyof RiskItem] as string || ''}
+                        onChange={(e) => handleTextareaChange(mitigationPlanField, e)}
+                        ref={(el) => {
+                          if (el) {
+                            textareaRefs.current[mitigationPlanField] = el;
+                            // Adjust height on mount
+                            setTimeout(() => adjustTextareaHeight(mitigationPlanField), 0);
+                          }
+                        }}
+                      />
+                      <div className="absolute top-1 right-1">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
+                                onClick={() => {
+                                  // Generate mitigation plan for dynamic rows
+                                  const riskName = riskData[riskNameField as keyof RiskItem] as string;
+                                  if (!riskName) {
+                                    toast({
+                                      title: "Missing information",
+                                      description: "Please enter a risk name before generating a mitigation plan.",
+                                      variant: "default"
+                                    });
+                                    return;
+                                  }
+                                  
+                                  toast({
+                                    title: "Generating mitigation plan",
+                                    description: "Please wait while we create a suggested mitigation plan...",
+                                    variant: "default"
+                                  });
+                                  
+                                  setTimeout(() => {
+                                    const template = `Recommended Mitigation Strategies:
+
+• Implement multiple preventative controls with overlapping coverage
+• Develop prevention strategies to reduce likelihood of occurrence
+• Create detailed contingency and recovery plans to minimize impact
+• Consider risk transfer options (insurance, partnerships, contracts)
+• Assign dedicated risk owner with executive oversight
+• Schedule frequent monitoring on weekly/bi-weekly basis
+• Implement early warning indicators and thresholds
+• Create detailed response and escalation procedures
+
+
+Technology Risk Specific:
+• Conduct comprehensive technical assessments and penetration testing
+• Implement redundant systems or fallback options
+• Develop detailed disaster recovery procedures
+• Establish 24/7 technical support protocols
+• Ensure knowledge transfer and documentation
+• Consider prototype or pilot implementations before full deployment
+• Provide specialized training for technical staff
+
+Monitoring and Review:
+• Review risk status weekly
+• Report to executive leadership monthly
+• Reassess mitigation effectiveness quarterly`;
+                                    
+                                    // Update the risk data with the generated plan
+                                    const updatedRiskData = {...riskData};
+                                    updatedRiskData[mitigationPlanField as keyof RiskItem] = template;
+                                    setRiskData(updatedRiskData);
+                                    
+                                    // Update the textarea directly as well for immediate display
+                                    if (textareaRefs.current[mitigationPlanField]) {
+                                      textareaRefs.current[mitigationPlanField].value = template;
+                                      adjustTextareaHeight(mitigationPlanField, true);
+                                    }
+                                    
+                                    toast({
+                                      title: "Mitigation plan generated",
+                                      description: "A suggested mitigation plan has been created. Feel free to edit it as needed.",
+                                      variant: "default"
+                                    });
+                                  }, 1000);
+                                }}
+                              >
+                                <Sparkles className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p className="text-xs">Generate AI-suggested mitigation plan</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border border-green-100 rounded-md p-2 bg-white w-[98%] col-span-2">
+                    <Textarea
+                      className="w-full p-2 border-0 focus:ring-0 text-sm risk-owner-textarea"
+                      rows={1}
+                      placeholder="Who is responsible for monitoring this risk?"
+                      value={riskData[riskOwnerField as keyof RiskItem] as string || ''}
+                      onChange={(e) => handleTextareaChange(riskOwnerField, e)}
+                      ref={(el) => {
+                        if (el) textareaRefs.current[riskOwnerField] = el;
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-[-25px] top-1/2 transform -translate-y-1/2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => {
+                      // Clear fields for this dynamic row
+                      const updatedRiskData = {...riskData};
+                      updatedRiskData[riskNameField as keyof RiskItem] = '';
+                      updatedRiskData[probabilityField as keyof RiskItem] = 'Low';
+                      updatedRiskData[impactField as keyof RiskItem] = 'Low';
+                      updatedRiskData[criticalityField as keyof RiskItem] = 1;
+                      updatedRiskData[mitigationPlanField as keyof RiskItem] = '';
+                      updatedRiskData[riskOwnerField as keyof RiskItem] = '';
+                      
+                      setRiskData(updatedRiskData);
+                      
+                      // Decrease visible rows
+                      setVisibleRiskRows(prev => prev - 1);
+                    }}
+                    title={`Delete Row ${rowIndex}`}
+                  >
+                    <i className="fas fa-trash"></i>
+                  </Button>
+                </div>
+              );
+            })}
+            
             {/* Add row button */}
             <div className="flex flex-col gap-2">
-              {visibleRiskRows < 6 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -789,7 +1538,6 @@ Monitoring and Review:
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Row
                 </Button>
-              )}
               
               {/* Save button */}
               <Button
