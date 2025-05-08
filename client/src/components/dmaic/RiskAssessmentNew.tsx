@@ -314,6 +314,9 @@ export default function RiskAssessmentNew() {
     try {
       await saveDataToServer(updatedRiskData);
       
+      // Reload data from server to ensure we display exactly what's in the database
+      await loadRiskData(false);
+      
       // Only show success toast if we didn't already show a partial save warning
       if (visibleRiskRows <= 6) {
         toast({
@@ -501,6 +504,9 @@ export default function RiskAssessmentNew() {
       // Save to server
       saveDataToServer(updatedRiskData)
         .then(() => {
+          // Reload the risk data from the server to ensure we see exactly what's in the database
+          loadRiskData(false);
+          
           // Show success message
           toast({
             title: "Row deleted",
