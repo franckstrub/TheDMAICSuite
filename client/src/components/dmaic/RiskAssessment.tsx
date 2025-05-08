@@ -1627,13 +1627,28 @@ export default function RiskAssessment() {
                       if (el) {
                         textareaRefs.current["mitigationPlan3"] = el;
                         
-                        // Simply store the reference, CSS classes handle the fixed height
+                        // Use a one-time direct DOM update to avoid "jerking" when loading/saving
                         setTimeout(() => {
                           try {
                             if (riskData?.risk?.mitigationPlan3 && el) {
-                              // Force the value to be set directly
+                              // Get the current height before making changes
+                              const currentHeight = el.style.height;
+                              console.log(`Current height before update: ${currentHeight}`);
+                              
+                              // Set content manually to avoid triggering the form state
                               el.value = riskData.risk.mitigationPlan3;
                               console.log(`Direct ref injection for mitigationPlan3 completed`);
+                              
+                              // Initialize height based on content only on first load
+                              // After that, preserve user's manual resizing
+                              if (!currentHeight || currentHeight === 'auto' || currentHeight === '') {
+                                console.log("First load - adjusting height based on content");
+                                adjustTextareaHeight("mitigationPlan3", true);
+                              } else {
+                                console.log(`Preserving user's manual height: ${currentHeight}`);
+                                // Keep the user's manual height adjustment
+                                el.style.height = currentHeight;
+                              }
                             }
                           } catch (error) {
                             console.error("Error setting textarea content:", error);
