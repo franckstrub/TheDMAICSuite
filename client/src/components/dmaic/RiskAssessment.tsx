@@ -123,19 +123,70 @@ export default function RiskAssessment() {
     }
   });
   
+  // Define a type for the risk data object
+  interface Risk {
+    id?: number;
+    projectId?: number;
+    userId?: number;
+    riskName?: string;
+    probability?: string;
+    impact?: string;
+    riskCriticality?: number;
+    mitigationPlan?: string;
+    riskOwner?: string;
+    riskName2?: string;
+    probability2?: string;
+    impact2?: string;
+    riskCriticality2?: number;
+    mitigationPlan2?: string;
+    riskOwner2?: string;
+    riskName3?: string;
+    probability3?: string;
+    impact3?: string;
+    riskCriticality3?: number;
+    mitigationPlan3?: string;
+    riskOwner3?: string;
+    riskName4?: string;
+    probability4?: string;
+    impact4?: string;
+    riskCriticality4?: number;
+    mitigationPlan4?: string;
+    riskOwner4?: string;
+    riskName5?: string;
+    probability5?: string;
+    impact5?: string;
+    riskCriticality5?: number;
+    mitigationPlan5?: string;
+    riskOwner5?: string;
+    riskName6?: string;
+    probability6?: string;
+    impact6?: string;
+    riskCriticality6?: number;
+    mitigationPlan6?: string;
+    riskOwner6?: string;
+    lastUpdated?: string;
+  }
+  
+  // Define a type for the risk data response
+  interface RiskResponse {
+    risk: Risk;
+  }
+
   // Fetch existing risk data
-  const { data: riskData, isLoading: isRiskLoading } = useQuery({
+  const { data: riskData, isLoading: isRiskLoading } = useQuery<RiskResponse>({
     queryKey: [`/api/projects/${projectId}/risks`],
     enabled: !!projectId,
-    onSuccess: (data) => {
-      // Log the data returned from the server to debug probability/impact issues
-      console.log("Risk data loaded from server:", data?.risk);
-      if (data?.risk) {
-        console.log("Loaded probability:", data.risk.probability);
-        console.log("Loaded impact:", data.risk.impact);
-      }
-    }
+    gcTime: 0, // Don't cache this query to ensure fresh data on rerenders
   });
+  
+  // Log risk data when it changes
+  useEffect(() => {
+    if (riskData?.risk) {
+      console.log("Risk data loaded from server:", riskData.risk);
+      console.log("Loaded probability:", riskData.risk.probability);
+      console.log("Loaded impact:", riskData.risk.impact);
+    }
+  }, [riskData?.risk]);
   
   // Function to clear risk form initialization state
   const resetRiskFormInitialization = () => {
@@ -328,6 +379,39 @@ export default function RiskAssessment() {
       
       // Set form as initialized
       riskFormInitialized.current = true;
+      
+      // Initialize textarea heights
+      setTimeout(() => {
+        // First row fields
+        if (textareaRefs.current["riskName"]) adjustTextareaHeight(textareaRefs.current["riskName"]);
+        if (textareaRefs.current["mitigationPlan"]) adjustTextareaHeight(textareaRefs.current["mitigationPlan"]);
+        if (textareaRefs.current["riskOwner"]) adjustTextareaHeight(textareaRefs.current["riskOwner"]);
+        
+        // Second row fields
+        if (textareaRefs.current["riskName2"]) adjustTextareaHeight(textareaRefs.current["riskName2"]);
+        if (textareaRefs.current["mitigationPlan2"]) adjustTextareaHeight(textareaRefs.current["mitigationPlan2"]);
+        if (textareaRefs.current["riskOwner2"]) adjustTextareaHeight(textareaRefs.current["riskOwner2"]);
+        
+        // Third row fields
+        if (textareaRefs.current["riskName3"]) adjustTextareaHeight(textareaRefs.current["riskName3"]);
+        if (textareaRefs.current["mitigationPlan3"]) adjustTextareaHeight(textareaRefs.current["mitigationPlan3"]);
+        if (textareaRefs.current["riskOwner3"]) adjustTextareaHeight(textareaRefs.current["riskOwner3"]);
+        
+        // Fourth row fields
+        if (textareaRefs.current["riskName4"]) adjustTextareaHeight(textareaRefs.current["riskName4"]);
+        if (textareaRefs.current["mitigationPlan4"]) adjustTextareaHeight(textareaRefs.current["mitigationPlan4"]);
+        if (textareaRefs.current["riskOwner4"]) adjustTextareaHeight(textareaRefs.current["riskOwner4"]);
+        
+        // Fifth row fields
+        if (textareaRefs.current["riskName5"]) adjustTextareaHeight(textareaRefs.current["riskName5"]);
+        if (textareaRefs.current["mitigationPlan5"]) adjustTextareaHeight(textareaRefs.current["mitigationPlan5"]);
+        if (textareaRefs.current["riskOwner5"]) adjustTextareaHeight(textareaRefs.current["riskOwner5"]);
+        
+        // Sixth row fields
+        if (textareaRefs.current["riskName6"]) adjustTextareaHeight(textareaRefs.current["riskName6"]);
+        if (textareaRefs.current["mitigationPlan6"]) adjustTextareaHeight(textareaRefs.current["mitigationPlan6"]);
+        if (textareaRefs.current["riskOwner6"]) adjustTextareaHeight(textareaRefs.current["riskOwner6"]);
+      }, 300);
     }
   }, [riskData?.risk, riskForm, projectId]);
   
