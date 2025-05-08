@@ -545,16 +545,22 @@ export default function RiskAssessment() {
 
   // Function to generate AI-assisted mitigation plan suggestions
   const generateMitigationPlan = (rowNumber: number) => {
+    console.log(`Generating mitigation plan for row ${rowNumber}`);
+    
     // Get the field names based on row number
     const riskNameField = rowNumber === 1 ? 'riskName' : `riskName${rowNumber}`;
     const probabilityField = rowNumber === 1 ? 'probability' : `probability${rowNumber}`;
     const impactField = rowNumber === 1 ? 'impact' : `impact${rowNumber}`;
     const mitigationPlanField = rowNumber === 1 ? 'mitigationPlan' : `mitigationPlan${rowNumber}`;
     
+    console.log(`Using fields: riskName=${riskNameField}, probability=${probabilityField}, impact=${impactField}, mitigationPlan=${mitigationPlanField}`);
+    
     // Get the current values
     const riskName = riskForm.getValues(riskNameField as any) || "";
     const probability = riskForm.getValues(probabilityField as any) || "Low";
     const impact = riskForm.getValues(impactField as any) || "Low";
+    
+    console.log(`Current values: riskName="${riskName}", probability="${probability}", impact="${impact}"`)
     
     // If risk name is empty, show an error
     if (!riskName.trim()) {
