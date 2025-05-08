@@ -1155,8 +1155,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Pre-sanitize risk update data to ensure all string fields are properly defined
       // This prevents issues with NULL values in text fields
+      // Extract fields we want to update and ensure they have default values
       const riskUpdate = {
-        ...req.body,
         mitigationPlan: req.body.mitigationPlan || '',
         mitigationPlan2: req.body.mitigationPlan2 || '',
         mitigationPlan3: req.body.mitigationPlan3 || '',
@@ -1175,6 +1175,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         riskOwner4: req.body.riskOwner4 || '',
         riskOwner5: req.body.riskOwner5 || '',
         riskOwner6: req.body.riskOwner6 || '',
+        projectId: req.body.projectId,
+        probability: req.body.probability || 'Low',
+        probability2: req.body.probability2 || 'Low',
+        probability3: req.body.probability3 || 'Low',
+        probability4: req.body.probability4 || 'Low',
+        probability5: req.body.probability5 || 'Low',
+        probability6: req.body.probability6 || 'Low',
+        impact: req.body.impact || 'Low',
+        impact2: req.body.impact2 || 'Low',
+        impact3: req.body.impact3 || 'Low',
+        impact4: req.body.impact4 || 'Low',
+        impact5: req.body.impact5 || 'Low',
+        impact6: req.body.impact6 || 'Low',
+        riskCriticality: req.body.riskCriticality || 1,
+        riskCriticality2: req.body.riskCriticality2 || 1,
+        riskCriticality3: req.body.riskCriticality3 || 1,
+        riskCriticality4: req.body.riskCriticality4 || 1,
+        riskCriticality5: req.body.riskCriticality5 || 1,
+        riskCriticality6: req.body.riskCriticality6 || 1,
+        // Use current timestamp for lastUpdated instead of client-sent value
+        lastUpdated: new Date(),
       };
       
       console.log('Sanitized risk update data:', {
