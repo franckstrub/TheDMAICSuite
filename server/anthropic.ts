@@ -49,8 +49,9 @@ The mitigation plan should be specific to this risk, considering its probability
     console.log("API Key starts with:", process.env.ANTHROPIC_API_KEY?.substring(0, 8) + "...");
     
     // Call the Anthropic API with an available model
+    // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
     const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307', // Using an available model
+      model: 'claude-3-7-sonnet-20250219', // Using the latest available model
       max_tokens: 750,
       temperature: 0.7,
       system: systemMessage,
@@ -67,8 +68,12 @@ The mitigation plan should be specific to this risk, considering its probability
     } else {
       throw new Error('Unexpected response format from Claude API');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating mitigation plan with Claude:', error);
-    throw new Error(`Failed to generate mitigation plan: ${error.message || 'Unknown error'}`);
+    if (error.status === 401) {
+      throw new Error('Authentication failed: Invalid API key. Please check your ANTHROPIC_API_KEY environment variable.');
+    } else {
+      throw new Error(`Failed to generate mitigation plan: ${error.message || 'Unknown error'}`);
+    }
   }
 }

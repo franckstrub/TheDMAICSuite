@@ -494,7 +494,12 @@ export default function RiskAssessmentNew() {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to generate mitigation plan: ${response.status}`);
+        const errorData = await response.json();
+        if (response.status === 500 && errorData.message?.includes('authentication')) {
+          throw new Error('API key authentication failed. Please contact your administrator to set up a valid Claude API key.');
+        } else {
+          throw new Error(`Failed to generate mitigation plan: ${errorData.message || response.status}`);
+        }
       }
       
       const data = await response.json();
@@ -516,11 +521,11 @@ export default function RiskAssessmentNew() {
         description: "An AI-suggested mitigation plan has been created based on your risk details. Feel free to edit it as needed.",
         variant: "default"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating mitigation plan:', error);
       toast({
         title: "Error",
-        description: "Failed to generate mitigation plan. Please try again or create one manually.",
+        description: error.message || "Failed to generate mitigation plan. Please try again or create one manually.",
         variant: "destructive"
       });
     }
@@ -637,7 +642,7 @@ export default function RiskAssessmentNew() {
         </div>
         <div className="border border-purple-100 rounded-md p-2 bg-white w-[98%] col-span-1 flex items-center justify-center">
           <div className="text-lg font-bold">
-            {riskData[criticalityField] || 1}/9
+            {String((riskData[criticalityField] as number) || 1)}/9
           </div>
         </div>
         <div className="border border-blue-100 rounded-md p-2 bg-white w-[98%] col-span-4">
