@@ -202,7 +202,9 @@ export default function DefinePhase() {
   // Fetch SIPOC diagram if exists
   const { data: sipoc } = useQuery({
     queryKey: [`/api/projects/${projectId}/sipoc`],
-    enabled: !!user?.id && !!projectId
+    enabled: !!user?.id && !!projectId,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false
   });
   
   // Effect to initialize SIPOC form with data from API
@@ -539,6 +541,7 @@ export default function DefinePhase() {
   const { data: charter, isError: charterError } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!user?.id && !!projectId,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -1039,8 +1042,8 @@ export default function DefinePhase() {
         // Set the business requirements state with the mapped data
         setBusinessRequirements(mappedBusinessRequirements);
         
-        // Also trigger a query invalidation for React Query
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+        // Don't trigger automatic invalidation to avoid refresh
+        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
         
         if (!silent) {
           toast({
