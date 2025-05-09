@@ -4353,44 +4353,8 @@ export default function DefinePhase() {
 
       {/* Elevator Speech Section */}
       <Card className="mt-8">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Elevator Speech</CardTitle>
-          <div className="flex gap-2">
-            {!elevatorSpeech && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center gap-2"
-                onClick={() => {
-                  setElevatorSpeech("Write your elevator speech here. This should be a concise summary of your project's purpose, benefits, and impact.");
-                }}
-              >
-                Create Manually
-              </Button>
-            )}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-2"
-                    onClick={() => handleGenerateElevatorSpeech()}
-                    disabled={isGeneratingElevatorSpeech}
-                  >
-                    {isGeneratingElevatorSpeech ? (
-                      <>Generating<span className="animate-spin ml-1">⏳</span></>
-                    ) : (
-                      <Sparkles className="h-4 w-4 text-blue-500" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Generate AI-assisted elevator speech</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
         </CardHeader>
         <CardContent>
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
