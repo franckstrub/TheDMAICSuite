@@ -598,7 +598,7 @@ export default function Dashboard() {
     refetchOnMount: false,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    cacheTime: Infinity
+    gcTime: Infinity // Using gcTime instead of deprecated cacheTime
   });
   
   // Create a function to extract soft benefits from project data
@@ -928,7 +928,7 @@ export default function Dashboard() {
     refetchOnMount: false,
     refetchOnReconnect: false,
     staleTime: Infinity,
-    cacheTime: Infinity
+    gcTime: Infinity // Using gcTime instead of deprecated cacheTime
   });
   
   // Apply selected date range
