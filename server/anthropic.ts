@@ -124,9 +124,10 @@ Keep it concise, compelling, and free of technical jargon.`;
 
     console.log("Elevator speech response received from Anthropic API");
     
-    // Extract and return the response content
+    // Extract and return the response content with an AI generated tag
     if (response.content[0].type === 'text') {
-      return response.content[0].text;
+      // Add a marker to identify AI-generated content
+      return "AI has generated this elevator speech based on your project data:\n\n" + response.content[0].text;
     } else {
       throw new Error('Unexpected response format from Claude API');
     }
