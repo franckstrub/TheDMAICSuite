@@ -139,7 +139,7 @@ import YourSectionComponent from './YourSectionComponent';
      queryKey: [`/api/projects/${projectId}/your-section-items`],
      enabled: !!userId && !!projectId,
      staleTime: 5000,
-     refetchInterval: 900000, //900 seconds Franck Strub insteaed of 10000 -> 10 sec.//
+     refetchInterval: 10000,
    });
    ```
 
