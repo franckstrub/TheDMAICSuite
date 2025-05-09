@@ -51,6 +51,7 @@ interface GanttTask {
   startDate: Date | string;
   endDate: Date | string;
   dmaicPhase: "define" | "measure" | "analyze" | "improve" | "control";
+  dmaic_phase?: "define" | "measure" | "analyze" | "improve" | "control"; // Backend field name
   owner?: string;
   percentComplete: number;
   parentTaskId?: number;
@@ -88,8 +89,13 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
   // State for new/editing task
   const [currentTask, setCurrentTask] = useState<GanttTask>(newTaskTemplate);
   
+  // Response type for tasks API
+  interface TasksResponse {
+    tasks: GanttTask[];
+  }
+  
   // Query to fetch tasks
-  const { data: tasksData, isLoading, isError } = useQuery({
+  const { data: tasksData, isLoading, isError } = useQuery<TasksResponse>({
     queryKey: ['/api/projects', projectId, 'gantt-tasks'],
     enabled: !!projectId,
   });
@@ -167,7 +173,17 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
   // Effect to update tasks when data changes
   useEffect(() => {
     if (tasksData?.tasks) {
-      setTasks(tasksData.tasks);
+      // Transform tasks to handle any backend/frontend property name differences
+      const transformedTasks = tasksData.tasks.map((task: GanttTask) => {
+        // If the task already has dmaicPhase, use it
+        // Otherwise, try to get it from dmaic_phase
+        const dmaicPhase = task.dmaicPhase || task.dmaic_phase || 'define';
+        return {
+          ...task,
+          dmaicPhase
+        } as GanttTask;
+      });
+      setTasks(transformedTasks);
     }
   }, [tasksData]);
   
@@ -194,10 +210,18 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
   
   // Handler for saving a task
   const handleSaveTask = () => {
+    // Transform the task data for backend compatibility
+    const { dmaicPhase, ...restTask } = currentTask;
+    const transformedTask = {
+      ...restTask,
+      dmaic_phase: dmaicPhase, // Backend expects dmaic_phase
+      dmaicPhase // Keep dmaicPhase for the frontend
+    };
+    
     if (editingTask) {
-      updateTaskMutation.mutate(currentTask);
+      updateTaskMutation.mutate(transformedTask);
     } else {
-      createTaskMutation.mutate(currentTask);
+      createTaskMutation.mutate(transformedTask);
     }
   };
   
@@ -307,9 +331,169 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
             
             <div className="overflow-x-auto">
               <div className="w-full border rounded-md bg-gray-50 p-4 min-h-[400px]">
-                <p className="text-center text-gray-500">
-                  Gantt chart visualization will be implemented here
-                </p>
+                {/* Gantt Chart Header */}
+                <div className="flex border-b pb-2 mb-4">
+                  <div className="w-1/4 font-semibold">Task Name</div>
+                  <div className="w-1/6 font-semibold">Owner</div>
+                  <div className="w-1/6 font-semibold">Phase</div>
+                  <div className="w-1/6 font-semibold">Dates</div>
+                  <div className="w-1/6 font-semibold">Progress</div>
+                  <div className="w-1/12 font-semibold text-right">Actions</div>
+                </div>
+                
+                {/* Gantt Chart Tasks */}
+                <div className="space-y-2">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="flex items-center border-b border-gray-100 pb-2">
+                      <div className="w-1/4 flex items-center">
+                        <div 
+                          className={`w-3 h-3 rounded-full mr-2 ${getDmaicPhaseColor(task.dmaicPhase)}`}
+                        />
+                        <span className="font-medium truncate">{task.taskName}</span>
+                      </div>
+                      <div className="w-1/6 text-sm text-gray-600">
+                        {task.owner || "Unassigned"}
+                      </div>
+                      <div className="w-1/6">
+                        <span className={`px-2 py-1 rounded-md text-xs text-white ${getDmaicPhaseColor(task.dmaicPhase)}`}>
+                          {task.dmaicPhase.charAt(0).toUpperCase() + task.dmaicPhase.slice(1)}
+                        </span>
+                      </div>
+                      <div className="w-1/6 text-sm">
+                        <div>{formatDate(task.startDate)}</div>
+                        <div className="text-gray-400">to {formatDate(task.endDate)}</div>
+                      </div>
+                      <div className="w-1/6">
+                        <div className="bg-gray-200 h-2 rounded-full w-full">
+                          <div 
+                            className={`h-2 rounded-full ${getDmaicPhaseColor(task.dmaicPhase)}`}
+                            style={{ width: `${task.percentComplete}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 text-right">{task.percentComplete}%</div>
+                      </div>
+                      <div className="w-1/12 flex justify-end space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditTask(task)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                            <path d="m15 5 4 4"/>
+                          </svg>
+                          <span className="sr-only">Edit</span>
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteTask(task.id as number)}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            <line x1="10" x2="10" y1="11" y2="17"/>
+                            <line x1="14" x2="14" y1="11" y2="17"/>
+                          </svg>
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Timeline View */}
+                <div className="mt-8 border-t pt-4">
+                  <h3 className="text-lg font-medium mb-4">Timeline View</h3>
+                  <div className="relative">
+                    {/* Phase Indicators */}
+                    <div className="flex mb-2">
+                      <div className="flex items-center mr-4">
+                        <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
+                        <span className="text-xs">Define</span>
+                      </div>
+                      <div className="flex items-center mr-4">
+                        <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+                        <span className="text-xs">Measure</span>
+                      </div>
+                      <div className="flex items-center mr-4">
+                        <div className="w-3 h-3 rounded-full bg-yellow-500 mr-1"></div>
+                        <span className="text-xs">Analyze</span>
+                      </div>
+                      <div className="flex items-center mr-4">
+                        <div className="w-3 h-3 rounded-full bg-orange-500 mr-1"></div>
+                        <span className="text-xs">Improve</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-full bg-purple-500 mr-1"></div>
+                        <span className="text-xs">Control</span>
+                      </div>
+                    </div>
+                    
+                    {/* Gantt Timeline Visualization */}
+                    <div className="h-[300px] border rounded-md overflow-x-auto">
+                      {tasks.length > 0 ? (
+                        <div className="min-w-[800px] relative h-full p-4">
+                          {/* Time scale */}
+                          <div className="flex border-b mb-2 pb-1">
+                            {Array.from({ length: 12 }).map((_, i) => (
+                              <div key={i} className="flex-1 text-xs text-center">{i + 1}</div>
+                            ))}
+                          </div>
+                          
+                          {/* Task bars */}
+                          <div className="space-y-4 relative">
+                            {tasks.map((task) => {
+                              // Calculate position and width of task bar
+                              // This is a simplified calculation - in a real implementation, 
+                              // you would calculate this based on actual dates and timeline scale
+                              const startDate = new Date(task.startDate);
+                              const endDate = new Date(task.endDate);
+                              
+                              // Simple calculation for demonstration purposes
+                              // Assuming timeline spans 12 months
+                              const start = Math.max(0, startDate.getMonth());
+                              const end = Math.min(11, endDate.getMonth());
+                              const duration = end - start + 1;
+                              
+                              const left = (start / 12) * 100;
+                              const width = (duration / 12) * 100;
+                              
+                              return (
+                                <div key={task.id} className="h-8 flex items-center">
+                                  <div className="w-1/5 pr-2 text-sm font-medium truncate">
+                                    {task.taskName}
+                                  </div>
+                                  <div className="w-4/5 relative h-6">
+                                    <div 
+                                      className={`absolute top-0 h-full rounded-md ${getDmaicPhaseColor(task.dmaicPhase)} flex items-center justify-center`}
+                                      style={{ 
+                                        left: `${left}%`, 
+                                        width: `${width}%`,
+                                        minWidth: '30px'
+                                      }}
+                                    >
+                                      <span className="text-white text-xs truncate px-1">
+                                        {task.percentComplete}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <p className="text-gray-500">Add tasks to see the timeline</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
