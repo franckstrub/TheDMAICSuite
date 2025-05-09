@@ -1836,15 +1836,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/projects/:projectId/gantt-tasks", async (req: Request, res: Response) => {
     try {
+      console.log("📊 Creating Gantt task - Request body:", JSON.stringify(req.body, null, 2));
       const projectId = parseInt(req.params.projectId);
+      console.log("📊 Project ID:", projectId);
       
       // Process task data to handle field discrepancies
       const rawTaskData = req.body;
       
       // Make sure we have dmaic_phase from either source
       const dmaic_phase = rawTaskData.dmaic_phase || rawTaskData.dmaicPhase;
+      console.log("📊 Determined DMAIC phase:", dmaic_phase);
       
       if (!dmaic_phase) {
+        console.log("📊 ERROR: Missing DMAIC phase!");
         return res.status(400).json({ 
           message: "Validation error", 
           errors: [{ path: ["dmaic_phase"], message: "DMAIC phase is required" }] 
@@ -1860,32 +1864,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate: rawTaskData.endDate,
         owner: rawTaskData.owner,
         dmaic_phase,
-        percentComplete: rawTaskData.percentComplete || 0,
-        displayOrder: rawTaskData.displayOrder || 0,
+        percentComplete: rawTaskData.percentComplete !== undefined ? rawTaskData.percentComplete : 0,
+        displayOrder: rawTaskData.displayOrder !== undefined ? rawTaskData.displayOrder : 0,
         parentTaskId: rawTaskData.parentTaskId,
       };
       
-      console.log("Processed task data for insert:", taskData);
+      console.log("📊 Processed task data for insert:", JSON.stringify(taskData, null, 2));
       
-      // Validate the task data
-      const validatedData = insertGanttTaskSchema.parse(taskData);
-      
-      // Insert the task
-      const [newTask] = await db
-        .insert(ganttChartTasks)
-        .values([validatedData])
-        .returning();
-      
-      return res.status(201).json({ task: newTask });
+      try {
+        // Validate the task data
+        const validatedData = insertGanttTaskSchema.parse(taskData);
+        console.log("📊 Validated data:", JSON.stringify(validatedData, null, 2));
+        
+        // Insert the task
+        const [newTask] = await db
+          .insert(ganttChartTasks)
+          .values([validatedData])
+          .returning();
+        
+        console.log("📊 Task created successfully:", JSON.stringify(newTask, null, 2));
+        return res.status(201).json({ task: newTask });
+      } catch (validationErr) {
+        console.error("📊 Validation ERROR:", validationErr);
+        if (validationErr instanceof ZodError) {
+          return res.status(400).json({
+            message: "Validation error",
+            errors: validationErr.errors
+          });
+        }
+        throw validationErr;
+      }
     } catch (err) {
-      console.error("Error creating Gantt task:", err);
+      console.error("📊 Error creating Gantt task:", err);
       return handleErrors(err, res);
     }
   });
   
   app.put("/api/gantt-tasks/:id", async (req: Request, res: Response) => {
     try {
+      console.log("📊 Updating Gantt task - Request body:", JSON.stringify(req.body, null, 2));
       const id = parseInt(req.params.id);
+      console.log("📊 Task ID to update:", id);
       const rawUpdateData = req.body;
       
       // Check if the task exists
@@ -1895,11 +1914,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(ganttChartTasks.id, id));
       
       if (!existingTask) {
+        console.log("📊 ERROR: Task not found with ID:", id);
         return res.status(404).json({ message: "Gantt task not found" });
       }
+      console.log("📊 Found existing task:", JSON.stringify(existingTask, null, 2));
       
       // Process update data to handle field discrepancies
       const dmaic_phase = rawUpdateData.dmaic_phase || rawUpdateData.dmaicPhase || existingTask.dmaic_phase;
+      console.log("📊 Determined DMAIC phase for update:", dmaic_phase);
       
       // Create clean data for database update
       const updateData: Record<string, any> = {
@@ -1922,21 +1944,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      console.log("Processed task data for update:", updateData);
+      console.log("📊 Processed task data for update:", JSON.stringify(updateData, null, 2));
       
-      // Update the task
-      const [updatedTask] = await db
-        .update(ganttChartTasks)
-        .set({
-          ...updateData,
-          lastUpdated: new Date(),
-        })
-        .where(eq(ganttChartTasks.id, id))
-        .returning();
-      
-      return res.status(200).json({ task: updatedTask });
+      try {
+        // Update the task
+        const [updatedTask] = await db
+          .update(ganttChartTasks)
+          .set({
+            ...updateData,
+            lastUpdated: new Date(),
+          })
+          .where(eq(ganttChartTasks.id, id))
+          .returning();
+        
+        console.log("📊 Task updated successfully:", JSON.stringify(updatedTask, null, 2));
+        return res.status(200).json({ task: updatedTask });
+      } catch (dbError) {
+        console.error("📊 Database error during update:", dbError);
+        throw dbError;
+      }
     } catch (err) {
-      console.error("Error updating Gantt task:", err);
+      console.error("📊 Error updating Gantt task:", err);
       return handleErrors(err, res);
     }
   });
