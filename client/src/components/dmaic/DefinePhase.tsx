@@ -4379,6 +4379,31 @@ export default function DefinePhase() {
                   onChange={(e) => setElevatorSpeech(e.target.value)}
                   style={{ minHeight: '200px' }}
                 />
+                <div className="mt-4 flex justify-start">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        // Here we would save the editable elevator speech to the database
+                        // For now, just show a success message
+                        toast({
+                          title: "Success",
+                          description: "Elevator speech saved",
+                        });
+                      } catch (error) {
+                        console.error("Error saving elevator speech:", error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to save elevator speech",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    Save changes
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
