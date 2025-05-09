@@ -20,6 +20,7 @@ import MilestoneTimeline from "./MilestoneTimeline";
 import RiskAssessmentNew from "./RiskAssessmentNew";
 import RaciMatrixNew from "./RaciMatrixNew";
 import StakeholderAnalysisMatrix from "./StakeholderAnalysisMatrix";
+import GateReviewValidation from "./GateReviewValidation";
 import {
   Card,
   CardContent,
@@ -4437,6 +4438,11 @@ export default function DefinePhase() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Gate Review and Validation Section */}
+      <div className="mt-6">
+        <GateReviewValidation />
+      </div>
     </div>
   );
 }
