@@ -4390,10 +4390,23 @@ export default function DefinePhase() {
                 <div className="flex flex-col items-center justify-center p-10 mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md">
                   <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
                   <p className="text-gray-400 text-sm mb-4">
-                    Create a concise and compelling elevator speech
+                    Click the AI magic button to create a concise and compelling elevator speech
                     that summarizes your project's purpose, benefits, and impact.
                   </p>
                   <div className="flex space-x-4">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Sparkles 
+                            className="h-6 w-6 text-blue-500 cursor-pointer hover:text-blue-700 mb-2" 
+                            onClick={() => handleGenerateElevatorSpeech()}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">AI-generated Elevator Speech</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
                       type="button"
                       variant="outline"
