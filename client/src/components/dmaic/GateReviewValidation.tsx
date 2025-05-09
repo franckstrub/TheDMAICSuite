@@ -123,13 +123,27 @@ export default function GateReviewValidation() {
 
   // Fetch existing deliverables
   const { data: deliverablesData, isLoading: isLoadingDeliverables } = useQuery({
-    queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase],
+    queryKey: [`/api/projects/${projectId}/gate-review-deliverables`],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/gate-review-deliverables?phase=${phase}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch deliverables');
+      }
+      return response.json();
+    },
     enabled: !!projectId
   });
 
   // Fetch existing validators
   const { data: validatorsData, isLoading: isLoadingValidators } = useQuery({
-    queryKey: [`/api/projects/${projectId}/gate-review-validators`, phase],
+    queryKey: [`/api/projects/${projectId}/gate-review-validators`],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/gate-review-validators?phase=${phase}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch validators');
+      }
+      return response.json();
+    },
     enabled: !!projectId
   });
 
@@ -178,8 +192,10 @@ export default function GateReviewValidation() {
 
   // Initialize with default deliverables if none exist
   useEffect(() => {
+    console.log("Deliverables data received:", deliverablesData);
     if (deliverablesData) {
-      if (deliverablesData.deliverables.length === 0) {
+      if (deliverablesData.deliverables && deliverablesData.deliverables.length === 0) {
+        console.log("No deliverables found, using defaults");
         // If no deliverables exist yet, use the defaults
         setDeliverables(
           defaultDefineDeliverables.map(deliverable => ({
@@ -187,17 +203,25 @@ export default function GateReviewValidation() {
             projectId: parseInt(projectId || "0")
           }))
         );
-      } else {
+      } else if (deliverablesData.deliverables) {
+        console.log("Setting deliverables from data:", deliverablesData.deliverables);
         setDeliverables(deliverablesData.deliverables);
+      } else {
+        console.log("Deliverables data structure is unexpected:", deliverablesData);
       }
     }
   }, [deliverablesData, projectId]);
 
   // Initialize validators from charter if none exist
   useEffect(() => {
-    if (validatorsData) {
+    console.log("Validators data received:", validatorsData);
+    console.log("Charter data:", charter);
+    
+    if (validatorsData && validatorsData.validators) {
+      console.log("Setting validators from data:", validatorsData.validators);
       setValidators(validatorsData.validators);
     } else if (charter && charter.charter) {
+      console.log("No validators found, creating defaults from charter");
       // If no validators exist yet but we have charter data, create default validators
       // from the project charter's key stakeholders
       const defaultValidators: Validator[] = [];
@@ -652,10 +676,10 @@ export default function GateReviewValidation() {
             </div>
             
             {/* Save Button */}
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-start mt-6">
               <Button 
                 onClick={saveData}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary text-white hover:bg-primary/90"
               >
                 Save Gate Review
               </Button>
