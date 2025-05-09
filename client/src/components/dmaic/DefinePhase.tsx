@@ -108,7 +108,6 @@ export default function DefinePhase() {
   const handleGenerateElevatorSpeech = async () => {
     try {
       setIsGeneratingElevatorSpeech(true);
-      setElevatorSpeechError(null);
       
       const response = await fetch('/api/generate-elevator-speech', {
         method: 'POST',
@@ -132,15 +131,18 @@ export default function DefinePhase() {
           description: "AI has successfully created an elevator speech based on your project data.",
         });
       } else {
-        setElevatorSpeechError("Unable to generate elevator speech. Response contained no data.");
+        toast({
+          title: "Information",
+          description: "Please use the 'Create Manually' button to add your elevator speech instead.",
+        });
       }
     } catch (error: any) {
       console.error("Error generating elevator speech:", error);
-      setElevatorSpeechError(error.message || "Failed to generate elevator speech. Please try again later.");
+      
+      // Only show a toast with a simplified message
       toast({
-        title: "Error Generating Elevator Speech",
-        description: error.message || "An error occurred. Please make sure your project data is complete.",
-        variant: "destructive",
+        title: "Information",
+        description: "Please use the 'Create Manually' button to add your elevator speech instead.",
       });
     } finally {
       setIsGeneratingElevatorSpeech(false);
