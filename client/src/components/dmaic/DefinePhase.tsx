@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle, MinusCircle } from "lucide-react";
+import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle, MinusCircle, Sparkles } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
@@ -15,6 +15,7 @@ import { SoftBenefit } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { exportElementToPdf } from "@/lib/pdfExport";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import MilestoneTimeline from "./MilestoneTimeline";
 import RiskAssessmentNew from "./RiskAssessmentNew";
 import RaciMatrixNew from "./RaciMatrixNew";
@@ -4334,19 +4335,28 @@ export default function DefinePhase() {
       <Card className="mt-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Elevator Speech</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-2"
-            onClick={() => handleGenerateElevatorSpeech()}
-            disabled={isGeneratingElevatorSpeech}
-          >
-            {isGeneratingElevatorSpeech ? (
-              <>Generating<span className="animate-spin ml-1">⏳</span></>
-            ) : (
-              <>Generate with AI <span className="text-lg">✨</span></>
-            )}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={() => handleGenerateElevatorSpeech()}
+                  disabled={isGeneratingElevatorSpeech}
+                >
+                  {isGeneratingElevatorSpeech ? (
+                    <>Generating<span className="animate-spin ml-1">⏳</span></>
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Generate AI-assisted elevator speech</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardHeader>
         <CardContent>
           {elevatorSpeechError ? (
@@ -4365,7 +4375,7 @@ export default function DefinePhase() {
               <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
                 <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
                 <p className="text-gray-400 text-sm">
-                  Click the "Generate with AI" button to create a concise and compelling elevator speech
+                  Click the AI magic button to create a concise and compelling elevator speech
                   that summarizes your project's purpose, benefits, and impact.
                 </p>
               </div>
