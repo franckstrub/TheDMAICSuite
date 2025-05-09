@@ -19,6 +19,7 @@ import MilestoneTimeline from "./MilestoneTimeline";
 import RiskAssessmentNew from "./RiskAssessmentNew";
 import RaciMatrixNew from "./RaciMatrixNew";
 import StakeholderAnalysisMatrix from "./StakeholderAnalysisMatrix";
+import GanttChart from "./GanttChart";
 import {
   Card,
   CardContent,
@@ -4273,6 +4274,12 @@ export default function DefinePhase() {
       
       {/* Stakeholder Analysis Matrix Section */}
       <StakeholderAnalysisMatrix 
+        projectId={Number(projectId)}
+        userId={user?.id}
+      />
+      
+      {/* Project Gantt Chart Section */}
+      <GanttChart 
         projectId={Number(projectId)}
         userId={user?.id}
       />

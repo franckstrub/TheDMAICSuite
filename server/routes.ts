@@ -1815,6 +1815,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return handleErrors(err, res);
     }
   });
+  
+  // Gantt Chart routes
+  app.get("/api/projects/:projectId/gantt-tasks", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      const tasks = await db
+        .select()
+        .from(ganttChartTasks)
+        .where(eq(ganttChartTasks.projectId, projectId))
+        .orderBy(asc(ganttChartTasks.displayOrder));
+      
+      return res.status(200).json({ tasks });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  app.post("/api/projects/:projectId/gantt-tasks", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const taskData = {
+        ...req.body,
+        projectId,
+      };
+      
+      // Validate the task data
+      const validatedData = insertGanttTaskSchema.parse(taskData);
+      
+      // Insert the task
+      const [newTask] = await db
+        .insert(ganttChartTasks)
+        .values([validatedData])
+        .returning();
+      
+      return res.status(201).json({ task: newTask });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  app.put("/api/gantt-tasks/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Check if the task exists
+      const [existingTask] = await db
+        .select()
+        .from(ganttChartTasks)
+        .where(eq(ganttChartTasks.id, id));
+      
+      if (!existingTask) {
+        return res.status(404).json({ message: "Gantt task not found" });
+      }
+      
+      // Update the task
+      const [updatedTask] = await db
+        .update(ganttChartTasks)
+        .set({
+          ...updateData,
+          lastUpdated: new Date(),
+        })
+        .where(eq(ganttChartTasks.id, id))
+        .returning();
+      
+      return res.status(200).json({ task: updatedTask });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  app.delete("/api/gantt-tasks/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if the task exists
+      const [existingTask] = await db
+        .select()
+        .from(ganttChartTasks)
+        .where(eq(ganttChartTasks.id, id));
+      
+      if (!existingTask) {
+        return res.status(404).json({ message: "Gantt task not found" });
+      }
+      
+      // Delete the task
+      await db
+        .delete(ganttChartTasks)
+        .where(eq(ganttChartTasks.id, id));
+      
+      return res.status(200).json({ message: "Gantt task deleted successfully" });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
 
   // Create http server
   const httpServer = createServer(app);
