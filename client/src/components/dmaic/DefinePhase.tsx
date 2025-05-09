@@ -1214,10 +1214,9 @@ export default function DefinePhase() {
         title: "Success",
         description: "Project charter saved successfully",
       });
-      // Invalidate the charter query
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
-      // IMPORTANT: Also invalidate the projects list to update the title in UI
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      // Don't invalidate queries to avoid automatic refresh
+      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
+      // queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       console.log("Project list queries invalidated to refresh updated title");
     },
     onError: (error) => {
@@ -1258,7 +1257,8 @@ export default function DefinePhase() {
         title: "Success",
         description: "SIPOC diagram saved successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/sipoc`] });
+      // Don't trigger automatic invalidation to avoid refresh
+      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/sipoc`] });
     },
     onError: (error) => {
       toast({
@@ -1429,8 +1429,8 @@ export default function DefinePhase() {
           setRequirements(mappedRequirements);
         }
         
-        // Also invalidate the query to ensure consistency
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+        // Don't trigger automatic invalidation to avoid refresh
+        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
       } catch (error) {
         console.error("Error fetching requirements after save:", error);
       }
