@@ -101,10 +101,10 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
 
 export default function GateReviewValidation() {
   const { projectId } = useParams();
-  const { toast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const phase = "define"; // This component is for the Define phase
-
+  
   // States for form handling
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [validators, setValidators] = useState<Validator[]>([]);
@@ -114,7 +114,7 @@ export default function GateReviewValidation() {
   const [newDeliverableDescription, setNewDeliverableDescription] = useState('');
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
-
+  
   // Fetch the project charter to get validators
   const { data: charter } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
@@ -146,7 +146,7 @@ export default function GateReviewValidation() {
           await apiRequest(`/api/projects/${projectId}/gate-review-deliverables`, 'POST', deliverable);
         }
       }
-
+      
       // Process all validators
       for (const validator of validators) {
         if (validator.id) {
@@ -157,11 +157,11 @@ export default function GateReviewValidation() {
           await apiRequest(`/api/projects/${projectId}/gate-review-validators`, 'POST', validator);
         }
       }
-
+      
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
-
+      
       toast({
         title: "Success",
         description: "Gate review data saved successfully",
@@ -201,7 +201,7 @@ export default function GateReviewValidation() {
       // If no validators exist yet but we have charter data, create default validators
       // from the project charter's key stakeholders
       const defaultValidators: Validator[] = [];
-
+      
       if (charter.charter.sponsor) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
@@ -256,7 +256,7 @@ export default function GateReviewValidation() {
   // Add a new deliverable
   const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
-
+    
     const newDeliverableObj: Deliverable = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
@@ -265,7 +265,7 @@ export default function GateReviewValidation() {
       isRequired: false,
       isCompleted: false
     };
-
+    
     setDeliverables([...deliverables, newDeliverableObj]);
     setNewDeliverable('');
     setNewDeliverableDescription('');
@@ -275,7 +275,7 @@ export default function GateReviewValidation() {
   // Add a new validator
   const addValidator = () => {
     if (!newValidatorName.trim() || !newValidatorRole.trim()) return;
-
+    
     const newValidatorObj: Validator = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
@@ -283,7 +283,7 @@ export default function GateReviewValidation() {
       validatorRole: newValidatorRole,
       status: "Pending"
     };
-
+    
     setValidators([...validators, newValidatorObj]);
     setNewValidatorName('');
     setNewValidatorRole('');
@@ -407,7 +407,7 @@ export default function GateReviewValidation() {
                   </Button>
                 </div>
               </div>
-
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -459,7 +459,7 @@ export default function GateReviewValidation() {
                       </TableCell>
                     </TableRow>
                   ))}
-
+                  
                   {/* Add new deliverable row */}
                   {isAddingDeliverable && (
                     <TableRow>
@@ -508,7 +508,7 @@ export default function GateReviewValidation() {
                 </TableBody>
               </Table>
             </div>
-
+            
             {/* Validators Section */}
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -522,7 +522,7 @@ export default function GateReviewValidation() {
                   Add Validator
                 </Button>
               </div>
-
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -597,7 +597,7 @@ export default function GateReviewValidation() {
                       </TableCell>
                     </TableRow>
                   ))}
-
+                  
                   {/* Add new validator row */}
                   {isAddingValidator && (
                     <TableRow>
@@ -650,7 +650,7 @@ export default function GateReviewValidation() {
                 </TableBody>
               </Table>
             </div>
-
+            
             {/* Save Button */}
             <div className="flex justify-end mt-6">
               <Button 
