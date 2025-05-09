@@ -695,3 +695,42 @@ export type InsertStakeholderAnalysisItem = z.infer<typeof insertStakeholderAnal
 
 // Type for select operations
 export type StakeholderAnalysisItem = typeof stakeholderAnalysisItems.$inferSelect;
+
+// Gantt chart tasks
+export const ganttChartTasks = pgTable("gantt_chart_tasks", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  
+  // Task properties
+  taskName: text("task_name").notNull(),
+  taskDescription: text("task_description"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  owner: text("owner"),
+  dmaic_phase: text("dmaic_phase").notNull(),
+  percentComplete: integer("percent_complete").default(0),
+  
+  // Optional parent/child relationship
+  parentTaskId: integer("parent_task_id"),
+  
+  // Order within the gantt chart
+  displayOrder: integer("display_order").default(0),
+  
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertGanttTaskSchema = createInsertSchema(ganttChartTasks).pick({
+  projectId: true,
+  taskName: true,
+  taskDescription: true,
+  startDate: true,
+  endDate: true,
+  owner: true,
+  dmaic_phase: true,
+  percentComplete: true,
+  parentTaskId: true,
+  displayOrder: true,
+});
+
+export type GanttChartTask = typeof ganttChartTasks.$inferSelect;
+export type InsertGanttTask = z.infer<typeof insertGanttTaskSchema>;
