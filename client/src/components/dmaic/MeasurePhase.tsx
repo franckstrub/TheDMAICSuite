@@ -176,7 +176,8 @@ export default function MeasurePhase() {
         title: "Success",
         description: "Data collection plan saved successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
+      // Disable automatic query invalidation to prevent refreshes
+      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
     },
     onError: (error) => {
       toast({
@@ -286,7 +287,8 @@ export default function MeasurePhase() {
         setBusinessRequirements(mappedBusinessRequirements);
         
         // Also trigger a query invalidation for React Query
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+        // Disable automatic query invalidation to prevent refreshes
+        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
         
         if (!silent) {
           toast({
@@ -409,8 +411,8 @@ export default function MeasurePhase() {
         description: "Business requirements saved successfully",
       });
       
-      // Invalidate and refetch to get latest data with IDs
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+      // Disable automatic query invalidation to prevent refreshes
+      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
       
       // Set flag in session storage
       sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
