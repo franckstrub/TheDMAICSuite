@@ -4348,7 +4348,7 @@ export default function DefinePhase() {
                   {isGeneratingElevatorSpeech ? (
                     <>Generating<span className="animate-spin ml-1">⏳</span></>
                   ) : (
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-4 w-4 text-blue-500" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -4369,20 +4369,23 @@ export default function DefinePhase() {
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             {elevatorSpeech ? (
               <div className="prose max-w-none relative">
-                <div className="absolute top-0 right-0 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  AI Generated
+                <div className="relative">
+                  <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-blue-500" />
+                    AI Generated
+                  </div>
+                  <textarea
+                    className="w-full h-auto text-gray-800 whitespace-pre-wrap p-4 border border-gray-200 rounded-md resize-none focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    value={elevatorSpeech}
+                    onChange={(e) => setElevatorSpeech(e.target.value)}
+                    style={{ minHeight: '200px' }}
+                  />
                 </div>
-                <textarea
-                  className="w-full h-auto text-gray-800 whitespace-pre-wrap mt-6 border-none resize-none focus:ring-0 focus:outline-none"
-                  value={elevatorSpeech}
-                  onChange={(e) => setElevatorSpeech(e.target.value)}
-                  style={{ minHeight: '200px' }}
-                />
                 <div className="mt-4 flex justify-start">
                   <Button
                     variant="default"
                     size="sm"
+                    className="bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
                     onClick={async () => {
                       try {
                         // Here we would save the editable elevator speech to the database
@@ -4401,7 +4404,7 @@ export default function DefinePhase() {
                       }
                     }}
                   >
-                    Save changes
+                    Save Elevator Speech
                   </Button>
                 </div>
               </div>
