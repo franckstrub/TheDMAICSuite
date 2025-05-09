@@ -182,6 +182,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   goals: true,
   scope: true,
   projectImage: true,
+  elevatorSpeech: true,
   // Project dates
   startDate: true,
   targetEndDate: true,
