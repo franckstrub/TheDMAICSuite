@@ -110,16 +110,23 @@ export default function DefinePhase() {
       setIsGeneratingElevatorSpeech(true);
       setElevatorSpeechError(null);
       
-      const response = await apiRequest('/api/generate-elevator-speech', {
+      const response = await fetch('/api/generate-elevator-speech', {
         method: 'POST',
-        data: {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           projectId,
           userId: user?.id
-        },
+        }),
       });
       
-      if (response.elevatorSpeech) {
-        setElevatorSpeech(response.elevatorSpeech);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.elevatorSpeech) {
+        setElevatorSpeech(data.elevatorSpeech);
         toast({
           title: "Elevator Speech Generated",
           description: "AI has successfully created an elevator speech based on your project data.",
@@ -4369,31 +4376,30 @@ export default function DefinePhase() {
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             {elevatorSpeech ? (
               <div>
-                <div className="border border-gray-200 rounded-md relative">
-                  <div className="absolute top-3 right-3 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1 z-10">
+                <div className="relative mb-4">
+                  <textarea
+                    className="w-full min-h-[200px] p-4 pt-10 text-gray-800 resize-none border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={elevatorSpeech}
+                    onChange={(e) => setElevatorSpeech(e.target.value)}
+                  />
+                  <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
                     <Sparkles className="h-3 w-3 text-blue-500" />
                     AI Generated
                   </div>
-                  <textarea
-                    className="w-full p-4 text-gray-800 resize-none rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    value={elevatorSpeech}
-                    onChange={(e) => setElevatorSpeech(e.target.value)}
-                    rows={8}
-                  />
                 </div>
-                <div className="mt-4">
-                  <button
-                    className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
-                    onClick={() => {
-                      toast({
-                        title: "Success",
-                        description: "Elevator speech saved"
-                      });
-                    }}
-                  >
-                    Save Elevator Speech
-                  </button>
-                </div>
+                
+                <Button 
+                  type="button"
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
+                  onClick={() => {
+                    toast({
+                      title: "Success",
+                      description: "Elevator speech saved"
+                    });
+                  }}
+                >
+                  Save Elevator Speech
+                </Button>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
