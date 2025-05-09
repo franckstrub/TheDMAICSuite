@@ -4368,7 +4368,7 @@ export default function DefinePhase() {
           
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             {elevatorSpeech ? (
-              <div className="prose max-w-none relative">
+              <>
                 <div className="relative">
                   <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
                     <Sparkles className="h-3 w-3 text-blue-500" />
@@ -4381,33 +4381,22 @@ export default function DefinePhase() {
                     style={{ minHeight: '200px' }}
                   />
                 </div>
-                <div className="mt-4 flex justify-start">
+                
+                <div className="mt-4">
                   <Button
                     variant="default"
-                    size="sm"
-                    className="bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
-                    onClick={async () => {
-                      try {
-                        // Here we would save the editable elevator speech to the database
-                        // For now, just show a success message
-                        toast({
-                          title: "Success",
-                          description: "Elevator speech saved",
-                        });
-                      } catch (error) {
-                        console.error("Error saving elevator speech:", error);
-                        toast({
-                          title: "Error",
-                          description: "Failed to save elevator speech",
-                          variant: "destructive",
-                        });
-                      }
+                    className="mt-4 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                    onClick={() => {
+                      toast({
+                        title: "Success",
+                        description: "Elevator speech saved"
+                      });
                     }}
                   >
                     Save Elevator Speech
                   </Button>
                 </div>
-              </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
                 <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
