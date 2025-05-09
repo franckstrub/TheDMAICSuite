@@ -52,13 +52,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {/* Overlay for sidebar on mobile */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-gray-600 bg-opacity-50 md:hidden z-30"
+            className="fixed inset-0 bg-gray-600 bg-opacity-50 md:hidden z-10"
             onClick={() => setSidebarOpen(false)}
           />
         )}
         
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 pb-10 pt-16 md:pl-64">
+        <main className="flex-1 overflow-y-auto bg-gray-50 pb-10">
           {children}
         </main>
       </div>
