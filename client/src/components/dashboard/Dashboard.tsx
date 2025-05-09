@@ -593,12 +593,6 @@ export default function Dashboard() {
   const { data: allProjects, isLoading: isLoadingProjects } = useQuery<ProjectsData>({
     queryKey: ["/api/projects", user?.id, effectiveTimeframe],
     enabled: !!user?.id,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    staleTime: Infinity,
-    gcTime: Infinity // Using gcTime instead of deprecated cacheTime
   });
   
   // Create a function to extract soft benefits from project data
@@ -923,12 +917,6 @@ export default function Dashboard() {
   const { data: logs, isLoading: isLoadingLogs } = useQuery<LogsData>({
     queryKey: ["/api/activity-logs", effectiveTimeframe],
     enabled: !!user?.id,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    staleTime: Infinity,
-    gcTime: Infinity // Using gcTime instead of deprecated cacheTime
   });
   
   // Apply selected date range

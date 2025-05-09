@@ -4,7 +4,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useNoRefetchQueries } from "@/hooks/useNoRefetchQueries";
 import { 
   AppContext, 
   CurrencyType, 
@@ -53,9 +52,6 @@ function Router() {
 }
 
 function App() {
-  // Disable all automatic refetching in the entire application
-  useNoRefetchQueries();
-  
   const [user, setUser] = useState<any>(null);
   const [currentTab, setCurrentTab] = useState("dashboard");
   const [activePhase, setActivePhase] = useState("define");

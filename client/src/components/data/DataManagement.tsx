@@ -100,8 +100,7 @@ export default function DataManagement() {
         description: "Dataset created successfully",
       });
       setShowNewDatasetDialog(false);
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ["/api/datasets"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/datasets"] });
       resetNewDatasetForm();
     },
     onError: (error) => {
@@ -123,8 +122,7 @@ export default function DataManagement() {
         title: "Success",
         description: "Dataset deleted successfully",
       });
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ["/api/datasets"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/datasets"] });
     },
     onError: (error) => {
       toast({

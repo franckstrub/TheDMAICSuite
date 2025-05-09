@@ -267,8 +267,8 @@ const RaciMatrixNew = ({
         // Store a flag in sessionStorage to remember that we have RACI data
         sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
         
-        // Disable automatic query invalidation to prevent refreshes
-        // queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
         
         if (!silent) {
           toast({
@@ -334,8 +334,8 @@ const RaciMatrixNew = ({
       // Store a flag in sessionStorage to remember that we have RACI data
       sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
       
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
+      // Invalidate the cache to trigger a refetch
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
       
       // Force a refresh from the database to ensure we have the latest data
       await loadRaciDataFromDatabase(true);

@@ -125,9 +125,10 @@ export default function MeasurePhase() {
     queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!user?.id && !!projectId,
     retry: 3,
-    staleTime: Infinity,
+    staleTime: 5000,
     refetchOnMount: true,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
   
   // Fetch data collection plans
@@ -176,8 +177,7 @@ export default function MeasurePhase() {
         title: "Success",
         description: "Data collection plan saved successfully",
       });
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
     },
     onError: (error) => {
       toast({
@@ -287,8 +287,7 @@ export default function MeasurePhase() {
         setBusinessRequirements(mappedBusinessRequirements);
         
         // Also trigger a query invalidation for React Query
-        // Disable automatic query invalidation to prevent refreshes
-        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
         
         if (!silent) {
           toast({
@@ -411,8 +410,8 @@ export default function MeasurePhase() {
         description: "Business requirements saved successfully",
       });
       
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+      // Invalidate and refetch to get latest data with IDs
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
       
       // Set flag in session storage
       sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
