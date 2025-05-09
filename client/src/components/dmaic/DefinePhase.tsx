@@ -75,6 +75,11 @@ export default function DefinePhase() {
   // State for soft benefits management
   const [softBenefits, setSoftBenefits] = useState<SoftBenefit[]>([]);
   
+  // State for elevator speech
+  const [elevatorSpeech, setElevatorSpeech] = useState<string>("");
+  const [isGeneratingElevatorSpeech, setIsGeneratingElevatorSpeech] = useState<boolean>(false);
+  const [elevatorSpeechError, setElevatorSpeechError] = useState<string | null>(null);
+  
   // State for collapsible sections - default to collapsed
   const [isFinancialSectionExpanded, setIsFinancialSectionExpanded] = useState(false);
   
@@ -97,6 +102,42 @@ export default function DefinePhase() {
       localStorage.setItem(`financial_section_expanded_${projectId}`, isFinancialSectionExpanded.toString());
     }
   }, [isFinancialSectionExpanded, projectId]);
+  
+  // Function to handle elevator speech generation
+  const handleGenerateElevatorSpeech = async () => {
+    try {
+      setIsGeneratingElevatorSpeech(true);
+      setElevatorSpeechError(null);
+      
+      const response = await apiRequest('/api/generate-elevator-speech', {
+        method: 'POST',
+        data: {
+          projectId,
+          userId: user?.id
+        },
+      });
+      
+      if (response.elevatorSpeech) {
+        setElevatorSpeech(response.elevatorSpeech);
+        toast({
+          title: "Elevator Speech Generated",
+          description: "AI has successfully created an elevator speech based on your project data.",
+        });
+      } else {
+        setElevatorSpeechError("Unable to generate elevator speech. Response contained no data.");
+      }
+    } catch (error: any) {
+      console.error("Error generating elevator speech:", error);
+      setElevatorSpeechError(error.message || "Failed to generate elevator speech. Please try again later.");
+      toast({
+        title: "Error Generating Elevator Speech",
+        description: error.message || "An error occurred. Please make sure your project data is complete.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingElevatorSpeech(false);
+    }
+  };
   
   // Project Charter form
   const charterForm = useForm({
@@ -4285,6 +4326,50 @@ export default function DefinePhase() {
         <CardContent>
           <div className="flex items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
             <p className="text-gray-500">Gantt Plan section will be implemented here</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Elevator Speech Section */}
+      <Card className="mt-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Elevator Speech</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => handleGenerateElevatorSpeech()}
+            disabled={isGeneratingElevatorSpeech}
+          >
+            {isGeneratingElevatorSpeech ? (
+              <>Generating<span className="animate-spin ml-1">⏳</span></>
+            ) : (
+              <>Generate with AI <span className="text-lg">✨</span></>
+            )}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {elevatorSpeechError ? (
+            <div className="p-4 mb-4 text-red-800 bg-red-100 border border-red-200 rounded-md">
+              <p className="font-semibold">Error generating elevator speech:</p>
+              <p>{elevatorSpeechError}</p>
+            </div>
+          ) : null}
+          
+          <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
+            {elevatorSpeech ? (
+              <div className="prose max-w-none">
+                <p className="text-gray-800 whitespace-pre-wrap">{elevatorSpeech}</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
+                <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
+                <p className="text-gray-400 text-sm">
+                  Click the "Generate with AI" button to create a concise and compelling elevator speech
+                  that summarizes your project's purpose, benefits, and impact.
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
