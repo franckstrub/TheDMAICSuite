@@ -57,6 +57,7 @@ export const projects = pgTable("projects", {
   benefits: jsonb("benefits"),
   costs: jsonb("costs"),
   softBenefits: jsonb("soft_benefits"),
+  elevatorSpeech: text("elevator_speech"),
 });
 
 export const insertProjectSchema = createInsertSchema(projects).pick({
@@ -70,6 +71,7 @@ export const insertProjectSchema = createInsertSchema(projects).pick({
   startDate: true,
   targetEndDate: true,
   createdBy: true,
+  elevatorSpeech: true,
 });
 
 // Stakeholder schema

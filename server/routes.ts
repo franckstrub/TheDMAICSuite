@@ -1422,7 +1422,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Generating elevator speech for project ID: ${projectId}`);
       
-      // Retrieve project charter data
+      // Get the project
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Retrieve project charter data for context
       const charter = await storage.getProjectCharter(projectId);
       if (!charter) {
         return res.status(404).json({ 
@@ -1444,8 +1450,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           businessRequirements
         );
         
-        // Save the elevator speech to the charter
-        await storage.updateCharter(charter.id, {
+        // Save the elevator speech to the project (not charter)
+        await storage.updateProject(projectId, {
           elevatorSpeech
         });
         
@@ -1484,14 +1490,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Elevator speech content is required" });
       }
       
-      // Get the project charter
-      const charter = await storage.getProjectCharter(projectId);
-      if (!charter) {
-        return res.status(404).json({ message: "Project charter not found" });
+      // Get the project
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
       }
       
-      // Update the charter with the elevator speech
-      await storage.updateCharter(charter.id, {
+      // Update the project with the elevator speech
+      await storage.updateProject(projectId, {
         elevatorSpeech
       });
       
@@ -1501,7 +1507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           projectId,
           action: "save_elevator_speech",
-          details: "Saved elevator speech"
+          details: "Saved elevator speech in Define phase"
         });
       }
       
