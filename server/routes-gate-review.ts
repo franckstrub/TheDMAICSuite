@@ -1,92 +1,68 @@
-// This is a temporary file to show the route implementation for the Gate Review feature
-// These routes would need to be integrated into the main routes.ts file
-
-import { Express, Request, Response } from "express";
-import { 
-  insertGateReviewDeliverableSchema, 
-  insertGateReviewValidatorSchema 
-} from "@shared/schema";
+import { Express, Request, Response } from 'express';
+import { z } from 'zod';
+import { insertGateReviewDeliverableSchema, insertGateReviewValidatorSchema } from '@shared/schema';
 
 export function registerGateReviewRoutes(app: Express, storage: any) {
-  // Gate Review Deliverables routes
+  // Gate Review Deliverables Routes
   app.get("/api/projects/:projectId/gate-review-deliverables", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const phase = req.query.phase as string || "define";
+      const phase = req.query.phase as string || 'define'; // Default to define phase if not specified
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
       
       const deliverables = await storage.getGateReviewDeliverables(projectId, phase);
-      
-      return res.status(200).json({ deliverables });
-    } catch (err) {
-      console.error("Error fetching gate review deliverables:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to fetch gate review deliverables" 
-      });
+      res.json({ deliverables });
+    } catch (error) {
+      console.error("Error getting gate review deliverables:", error);
+      res.status(500).json({ error: "Failed to get gate review deliverables" });
     }
   });
 
   app.post("/api/projects/:projectId/gate-review-deliverables", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const phase = req.body.phase || "define";
       
-      const deliverableData = {
-        ...req.body,
-        projectId,
-        phase
-      };
-      
-      const validatedData = insertGateReviewDeliverableSchema.parse(deliverableData);
-      const deliverable = await storage.createGateReviewDeliverable(validatedData);
-      
-      // Log activity if userId provided
-      if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_gate_review_deliverable",
-          details: `Created ${phase} phase gate review deliverable: ${deliverable.name}`
-        });
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
       }
       
-      return res.status(201).json({ deliverable });
-    } catch (err) {
-      console.error("Error creating gate review deliverable:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to create gate review deliverable" 
+      const validatedData = insertGateReviewDeliverableSchema.parse({
+        ...req.body,
+        projectId
       });
+      
+      const deliverable = await storage.createGateReviewDeliverable(validatedData);
+      res.status(201).json({ deliverable });
+    } catch (error) {
+      console.error("Error creating gate review deliverable:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create gate review deliverable" });
     }
   });
 
   app.put("/api/gate-review-deliverables/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const deliverableUpdate = req.body;
       
-      const deliverable = await storage.updateGateReviewDeliverable(id, deliverableUpdate);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid deliverable ID" });
+      }
+      
+      const deliverable = await storage.getGateReviewDeliverable(id);
       if (!deliverable) {
-        return res.status(404).json({ message: "Gate review deliverable not found" });
+        return res.status(404).json({ error: "Deliverable not found" });
       }
       
-      // Log activity if userId provided
-      if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: deliverable.projectId,
-          action: "update_gate_review_deliverable",
-          details: `Updated ${deliverable.phase} phase gate review deliverable: ${deliverable.name}`
-        });
-      }
-      
-      return res.status(200).json({ deliverable });
-    } catch (err) {
-      console.error("Error updating gate review deliverable:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to update gate review deliverable" 
-      });
+      const updatedDeliverable = await storage.updateGateReviewDeliverable(id, req.body);
+      res.json({ deliverable: updatedDeliverable });
+    } catch (error) {
+      console.error("Error updating gate review deliverable:", error);
+      res.status(500).json({ error: "Failed to update gate review deliverable" });
     }
   });
 
@@ -94,120 +70,88 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
     try {
       const id = parseInt(req.params.id);
       
-      // Get the deliverable to log details before deletion
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid deliverable ID" });
+      }
+      
       const deliverable = await storage.getGateReviewDeliverable(id);
       if (!deliverable) {
-        return res.status(404).json({ message: "Gate review deliverable not found" });
+        return res.status(404).json({ error: "Deliverable not found" });
       }
       
-      const deleted = await storage.deleteGateReviewDeliverable(id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Gate review deliverable not found" });
-      }
+      const success = await storage.deleteGateReviewDeliverable(id);
       
-      // Log activity if userId provided
-      if (req.query.userId) {
-        await storage.createActivityLog({
-          userId: parseInt(req.query.userId as string),
-          projectId: deliverable.projectId,
-          action: "delete_gate_review_deliverable",
-          details: `Deleted ${deliverable.phase} phase gate review deliverable: ${deliverable.name}`
-        });
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: "Failed to delete gate review deliverable" });
       }
-      
-      return res.status(200).json({ success: true });
-    } catch (err) {
-      console.error("Error deleting gate review deliverable:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to delete gate review deliverable" 
-      });
+    } catch (error) {
+      console.error("Error deleting gate review deliverable:", error);
+      res.status(500).json({ error: "Failed to delete gate review deliverable" });
     }
   });
 
-  // Gate Review Validators routes
+  // Gate Review Validators Routes
   app.get("/api/projects/:projectId/gate-review-validators", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const phase = req.query.phase as string || "define";
+      const phase = req.query.phase as string || 'define'; // Default to define phase if not specified
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
       
       const validators = await storage.getGateReviewValidators(projectId, phase);
-      
-      return res.status(200).json({ validators });
-    } catch (err) {
-      console.error("Error fetching gate review validators:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to fetch gate review validators" 
-      });
+      res.json({ validators });
+    } catch (error) {
+      console.error("Error getting gate review validators:", error);
+      res.status(500).json({ error: "Failed to get gate review validators" });
     }
   });
 
   app.post("/api/projects/:projectId/gate-review-validators", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const phase = req.body.phase || "define";
       
-      const validatorData = {
-        ...req.body,
-        projectId,
-        phase
-      };
-      
-      const validatedData = insertGateReviewValidatorSchema.parse(validatorData);
-      const validator = await storage.createGateReviewValidator(validatedData);
-      
-      // Log activity if userId provided
-      if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_gate_review_validator",
-          details: `Added ${phase} phase gate review validator: ${validator.validatorName} (${validator.validatorRole})`
-        });
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
       }
       
-      return res.status(201).json({ validator });
-    } catch (err) {
-      console.error("Error creating gate review validator:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to create gate review validator" 
+      const validatedData = insertGateReviewValidatorSchema.parse({
+        ...req.body,
+        projectId
       });
+      
+      const validator = await storage.createGateReviewValidator(validatedData);
+      res.status(201).json({ validator });
+    } catch (error) {
+      console.error("Error creating gate review validator:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create gate review validator" });
     }
   });
 
   app.put("/api/gate-review-validators/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const validatorUpdate = req.body;
       
-      const validator = await storage.updateGateReviewValidator(id, validatorUpdate);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid validator ID" });
+      }
+      
+      const validator = await storage.getGateReviewValidator(id);
       if (!validator) {
-        return res.status(404).json({ message: "Gate review validator not found" });
+        return res.status(404).json({ error: "Validator not found" });
       }
       
-      // Log activity if userId provided
-      if (req.body.userId) {
-        const statusText = validatorUpdate.status 
-          ? ` with status '${validatorUpdate.status}'` 
-          : '';
-        
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: validator.projectId,
-          action: "update_gate_review_validator",
-          details: `Updated ${validator.phase} phase gate review validator: ${validator.validatorName}${statusText}`
-        });
-      }
-      
-      return res.status(200).json({ validator });
-    } catch (err) {
-      console.error("Error updating gate review validator:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to update gate review validator" 
-      });
+      const updatedValidator = await storage.updateGateReviewValidator(id, req.body);
+      res.json({ validator: updatedValidator });
+    } catch (error) {
+      console.error("Error updating gate review validator:", error);
+      res.status(500).json({ error: "Failed to update gate review validator" });
     }
   });
 
@@ -215,34 +159,25 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
     try {
       const id = parseInt(req.params.id);
       
-      // Get the validator to log details before deletion
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid validator ID" });
+      }
+      
       const validator = await storage.getGateReviewValidator(id);
       if (!validator) {
-        return res.status(404).json({ message: "Gate review validator not found" });
+        return res.status(404).json({ error: "Validator not found" });
       }
       
-      const deleted = await storage.deleteGateReviewValidator(id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Gate review validator not found" });
-      }
+      const success = await storage.deleteGateReviewValidator(id);
       
-      // Log activity if userId provided
-      if (req.query.userId) {
-        await storage.createActivityLog({
-          userId: parseInt(req.query.userId as string),
-          projectId: validator.projectId,
-          action: "delete_gate_review_validator",
-          details: `Removed ${validator.phase} phase gate review validator: ${validator.validatorName} (${validator.validatorRole})`
-        });
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: "Failed to delete gate review validator" });
       }
-      
-      return res.status(200).json({ success: true });
-    } catch (err) {
-      console.error("Error deleting gate review validator:", err);
-      return res.status(500).json({ 
-        error: true, 
-        message: "Failed to delete gate review validator" 
-      });
+    } catch (error) {
+      console.error("Error deleting gate review validator:", error);
+      res.status(500).json({ error: "Failed to delete gate review validator" });
     }
   });
 }

@@ -90,6 +90,20 @@ export interface IStorage {
   getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined>;
   createRaciMatrix(raciMatrix: InsertRaciMatrix): Promise<ProjectRaciMatrix>;
   updateRaciMatrix(id: number, raciMatrix: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined>;
+  
+  // Gate Review Deliverables operations
+  getGateReviewDeliverables(projectId: number, phase: string): Promise<GateReviewDeliverable[]>;
+  getGateReviewDeliverable(id: number): Promise<GateReviewDeliverable | undefined>;
+  createGateReviewDeliverable(deliverable: InsertGateReviewDeliverable): Promise<GateReviewDeliverable>;
+  updateGateReviewDeliverable(id: number, deliverable: Partial<GateReviewDeliverable>): Promise<GateReviewDeliverable | undefined>;
+  deleteGateReviewDeliverable(id: number): Promise<boolean>;
+  
+  // Gate Review Validators operations
+  getGateReviewValidators(projectId: number, phase: string): Promise<GateReviewValidator[]>;
+  getGateReviewValidator(id: number): Promise<GateReviewValidator | undefined>;
+  createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator>;
+  updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined>;
+  deleteGateReviewValidator(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
@@ -106,6 +120,8 @@ export class MemStorage implements IStorage {
   private activityLogs: Map<number, ActivityLog>;
   private processData: Map<number, ProcessData>;
   private raciMatrices: Map<number, ProjectRaciMatrix>;
+  private gateReviewDeliverables: Map<number, GateReviewDeliverable>;
+  private gateReviewValidators: Map<number, GateReviewValidator>;
   
   private currentUserId: number;
   private currentProjectId: number;
@@ -119,6 +135,8 @@ export class MemStorage implements IStorage {
   private currentLogId: number;
   private currentProcessDataId: number;
   private currentRaciMatrixId: number;
+  private currentGateReviewDeliverableId: number;
+  private currentGateReviewValidatorId: number;
 
   constructor() {
     this.users = new Map();
@@ -133,6 +151,8 @@ export class MemStorage implements IStorage {
     this.activityLogs = new Map();
     this.processData = new Map();
     this.raciMatrices = new Map();
+    this.gateReviewDeliverables = new Map();
+    this.gateReviewValidators = new Map();
     
     this.currentUserId = 1;
     this.currentProjectId = 1;
@@ -146,6 +166,8 @@ export class MemStorage implements IStorage {
     this.currentLogId = 1;
     this.currentProcessDataId = 1;
     this.currentRaciMatrixId = 1;
+    this.currentGateReviewDeliverableId = 1;
+    this.currentGateReviewValidatorId = 1;
     
     // Create a default admin user
     this.createUser({
@@ -1061,6 +1083,110 @@ export class DatabaseStorage implements IStorage {
       .where(eq(projectRaciMatrix.id, id))
       .returning();
     return raciMatrix || undefined;
+  }
+  
+  // Gate Review Deliverables operations
+  async getGateReviewDeliverables(projectId: number, phase: string): Promise<GateReviewDeliverable[]> {
+    const deliverables = await db
+      .select()
+      .from(gateReviewDeliverables)
+      .where(
+        and(
+          eq(gateReviewDeliverables.projectId, projectId),
+          eq(gateReviewDeliverables.phase, phase)
+        )
+      );
+    return deliverables;
+  }
+  
+  async getGateReviewDeliverable(id: number): Promise<GateReviewDeliverable | undefined> {
+    const [deliverable] = await db
+      .select()
+      .from(gateReviewDeliverables)
+      .where(eq(gateReviewDeliverables.id, id));
+    return deliverable || undefined;
+  }
+  
+  async createGateReviewDeliverable(deliverable: InsertGateReviewDeliverable): Promise<GateReviewDeliverable> {
+    const [newDeliverable] = await db
+      .insert(gateReviewDeliverables)
+      .values({
+        ...deliverable,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return newDeliverable;
+  }
+  
+  async updateGateReviewDeliverable(id: number, deliverable: Partial<GateReviewDeliverable>): Promise<GateReviewDeliverable | undefined> {
+    const [updatedDeliverable] = await db
+      .update(gateReviewDeliverables)
+      .set({
+        ...deliverable,
+        lastUpdated: new Date()
+      })
+      .where(eq(gateReviewDeliverables.id, id))
+      .returning();
+    return updatedDeliverable || undefined;
+  }
+  
+  async deleteGateReviewDeliverable(id: number): Promise<boolean> {
+    const result = await db
+      .delete(gateReviewDeliverables)
+      .where(eq(gateReviewDeliverables.id, id));
+    return result.rowCount > 0;
+  }
+  
+  // Gate Review Validators operations
+  async getGateReviewValidators(projectId: number, phase: string): Promise<GateReviewValidator[]> {
+    const validators = await db
+      .select()
+      .from(gateReviewValidators)
+      .where(
+        and(
+          eq(gateReviewValidators.projectId, projectId),
+          eq(gateReviewValidators.phase, phase)
+        )
+      );
+    return validators;
+  }
+  
+  async getGateReviewValidator(id: number): Promise<GateReviewValidator | undefined> {
+    const [validator] = await db
+      .select()
+      .from(gateReviewValidators)
+      .where(eq(gateReviewValidators.id, id));
+    return validator || undefined;
+  }
+  
+  async createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator> {
+    const [newValidator] = await db
+      .insert(gateReviewValidators)
+      .values({
+        ...validator,
+        lastUpdated: new Date()
+      })
+      .returning();
+    return newValidator;
+  }
+  
+  async updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined> {
+    const [updatedValidator] = await db
+      .update(gateReviewValidators)
+      .set({
+        ...validator,
+        lastUpdated: new Date()
+      })
+      .where(eq(gateReviewValidators.id, id))
+      .returning();
+    return updatedValidator || undefined;
+  }
+  
+  async deleteGateReviewValidator(id: number): Promise<boolean> {
+    const result = await db
+      .delete(gateReviewValidators)
+      .where(eq(gateReviewValidators.id, id));
+    return result.rowCount > 0;
   }
 }
 
