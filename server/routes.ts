@@ -1855,18 +1855,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Process dates to ensure they're valid
+      let startDate = null;
+      let endDate = null;
+      
+      try {
+        if (rawTaskData.startDate) {
+          if (typeof rawTaskData.startDate === 'string') {
+            startDate = new Date(rawTaskData.startDate);
+            if (isNaN(startDate.getTime())) {
+              throw new Error("Invalid start date");
+            }
+          } else {
+            startDate = rawTaskData.startDate;
+          }
+        }
+        
+        if (rawTaskData.endDate) {
+          if (typeof rawTaskData.endDate === 'string') {
+            endDate = new Date(rawTaskData.endDate);
+            if (isNaN(endDate.getTime())) {
+              throw new Error("Invalid end date");
+            }
+          } else {
+            endDate = rawTaskData.endDate;
+          }
+        }
+      } catch (err) {
+        const dateErr = err as Error;
+        console.log("📊 ERROR with date formatting:", dateErr.message);
+        return res.status(400).json({
+          message: "Invalid date format",
+          errors: [{ path: ["dates"], message: dateErr.message }]
+        });
+      }
+      
       // Create clean data for database insert
       const taskData = {
         projectId,
         taskName: rawTaskData.taskName,
-        taskDescription: rawTaskData.taskDescription,
-        startDate: rawTaskData.startDate,
-        endDate: rawTaskData.endDate,
-        owner: rawTaskData.owner,
+        taskDescription: rawTaskData.taskDescription || null,
+        startDate: startDate,
+        endDate: endDate,
+        owner: rawTaskData.owner || null,
         dmaic_phase,
-        percentComplete: rawTaskData.percentComplete !== undefined ? rawTaskData.percentComplete : 0,
-        displayOrder: rawTaskData.displayOrder !== undefined ? rawTaskData.displayOrder : 0,
-        parentTaskId: rawTaskData.parentTaskId,
+        percentComplete: typeof rawTaskData.percentComplete === 'number' ? rawTaskData.percentComplete : 0,
+        displayOrder: typeof rawTaskData.displayOrder === 'number' ? rawTaskData.displayOrder : 0,
+        parentTaskId: rawTaskData.parentTaskId || null,
       };
       
       console.log("📊 Processed task data for insert:", JSON.stringify(taskData, null, 2));
@@ -1876,10 +1911,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validatedData = insertGanttTaskSchema.parse(taskData);
         console.log("📊 Validated data:", JSON.stringify(validatedData, null, 2));
         
-        // Insert the task
+        // Insert the task - FIX: use values() with an object, not an array
         const [newTask] = await db
           .insert(ganttChartTasks)
-          .values([validatedData])
+          .values(validatedData)
           .returning();
         
         console.log("📊 Task created successfully:", JSON.stringify(newTask, null, 2));
@@ -1923,17 +1958,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dmaic_phase = rawUpdateData.dmaic_phase || rawUpdateData.dmaicPhase || existingTask.dmaic_phase;
       console.log("📊 Determined DMAIC phase for update:", dmaic_phase);
       
+      // Process dates to ensure they're valid
+      let startDate = existingTask.startDate;
+      let endDate = existingTask.endDate;
+      
+      try {
+        if (rawUpdateData.startDate) {
+          if (typeof rawUpdateData.startDate === 'string') {
+            startDate = new Date(rawUpdateData.startDate);
+            if (isNaN(startDate.getTime())) {
+              throw new Error("Invalid start date");
+            }
+          } else {
+            startDate = rawUpdateData.startDate;
+          }
+        }
+        
+        if (rawUpdateData.endDate) {
+          if (typeof rawUpdateData.endDate === 'string') {
+            endDate = new Date(rawUpdateData.endDate);
+            if (isNaN(endDate.getTime())) {
+              throw new Error("Invalid end date");
+            }
+          } else {
+            endDate = rawUpdateData.endDate;
+          }
+        }
+      } catch (err) {
+        const dateErr = err as Error;
+        console.log("📊 ERROR with date formatting:", dateErr.message);
+        return res.status(400).json({
+          message: "Invalid date format",
+          errors: [{ path: ["dates"], message: dateErr.message }]
+        });
+      }
+      
       // Create clean data for database update
       const updateData: Record<string, any> = {
         taskName: rawUpdateData.taskName,
-        taskDescription: rawUpdateData.taskDescription,
-        startDate: rawUpdateData.startDate,
-        endDate: rawUpdateData.endDate,
-        owner: rawUpdateData.owner,
+        taskDescription: rawUpdateData.taskDescription !== undefined ? rawUpdateData.taskDescription : existingTask.taskDescription,
+        startDate,
+        endDate,
+        owner: rawUpdateData.owner !== undefined ? rawUpdateData.owner : existingTask.owner,
         dmaic_phase,
-        percentComplete: rawUpdateData.percentComplete,
-        displayOrder: rawUpdateData.displayOrder,
-        parentTaskId: rawUpdateData.parentTaskId,
+        percentComplete: rawUpdateData.percentComplete !== undefined ? rawUpdateData.percentComplete : existingTask.percentComplete,
+        displayOrder: rawUpdateData.displayOrder !== undefined ? rawUpdateData.displayOrder : existingTask.displayOrder,
+        parentTaskId: rawUpdateData.parentTaskId !== undefined ? rawUpdateData.parentTaskId : existingTask.parentTaskId,
       };
       
       // Remove undefined fields to avoid overwriting with nulls
@@ -1947,11 +2017,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("📊 Processed task data for update:", JSON.stringify(updateData, null, 2));
       
       try {
+        // Validate the data with our schema before updating
+        const validatedData = insertGanttTaskSchema.parse(updateData);
+        console.log("📊 Validated update data:", JSON.stringify(validatedData, null, 2));
+        
         // Update the task
         const [updatedTask] = await db
           .update(ganttChartTasks)
           .set({
-            ...updateData,
+            ...validatedData,
             lastUpdated: new Date(),
           })
           .where(eq(ganttChartTasks.id, id))
@@ -1959,9 +2033,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log("📊 Task updated successfully:", JSON.stringify(updatedTask, null, 2));
         return res.status(200).json({ task: updatedTask });
-      } catch (dbError) {
-        console.error("📊 Database error during update:", dbError);
-        throw dbError;
+      } catch (validationErr) {
+        console.error("📊 Validation ERROR during update:", validationErr);
+        if (validationErr instanceof ZodError) {
+          return res.status(400).json({
+            message: "Validation error",
+            errors: validationErr.errors
+          });
+        }
+        throw validationErr;
       }
     } catch (err) {
       console.error("📊 Error updating Gantt task:", err);
