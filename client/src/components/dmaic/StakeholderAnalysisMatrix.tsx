@@ -542,14 +542,6 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Stakeholder Analysis Matrix</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isAnalysisLoading}
-          >
-            Refresh
-          </Button>
         </div>
       </CardHeader>
       
