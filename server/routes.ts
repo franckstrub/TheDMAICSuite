@@ -26,6 +26,7 @@ import { ZodError } from "zod";
 import { generateMitigationPlan } from "./googleai";
 // Import the Claude API for generating elevator speeches
 import { generateElevatorSpeech } from "./anthropic";
+import { registerGateReviewRoutes } from "./routes-gate-review";
 
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
@@ -1929,6 +1930,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create http server
+  // Register the Gate Review routes
+  registerGateReviewRoutes(app, storage);
+  
   const httpServer = createServer(app);
   return httpServer;
 }
