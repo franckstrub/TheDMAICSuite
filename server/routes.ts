@@ -5,7 +5,7 @@ import {
   insertUserSchema, insertProjectSchema, insertCharterSchema, 
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
-  insertRiskSchema, insertRaciSchema, insertGanttTaskSchema, InsertGanttTask
+  insertRiskSchema, insertRaciSchema, insertGanttTaskSchema
 } from "@shared/schema";
 import { 
   stakeholderAnalysisItems, 
@@ -16,7 +16,7 @@ import {
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
   InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertUser, InsertRisk,
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
-  projects, projectCharters, projectRisks, ganttChartTasks, GanttChartTask
+  projects, projectCharters, projectRisks
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -178,7 +178,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Error handling middleware
   const handleErrors = (err: any, res: Response) => {
     if (err instanceof ZodError) {
-      console.error("Validation error:", JSON.stringify(err.errors, null, 2));
       return res.status(400).json({
         message: "Validation error",
         errors: err.errors
@@ -1812,263 +1811,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(stakeholderAnalysisItems.id, id));
       
       return res.status(200).json({ message: "Stakeholder analysis item deleted successfully" });
-    } catch (err) {
-      return handleErrors(err, res);
-    }
-  });
-  
-  // Gantt Chart routes
-  app.get("/api/projects/:projectId/gantt-tasks", async (req: Request, res: Response) => {
-    try {
-      const projectId = parseInt(req.params.projectId);
-      
-      const tasks = await db
-        .select()
-        .from(ganttChartTasks)
-        .where(eq(ganttChartTasks.projectId, projectId))
-        .orderBy(asc(ganttChartTasks.displayOrder));
-      
-      return res.status(200).json({ tasks });
-    } catch (err) {
-      return handleErrors(err, res);
-    }
-  });
-  
-  app.post("/api/projects/:projectId/gantt-tasks", async (req: Request, res: Response) => {
-    try {
-      console.log("📊 Creating Gantt task - Request body:", JSON.stringify(req.body, null, 2));
-      const projectId = parseInt(req.params.projectId);
-      console.log("📊 Project ID:", projectId);
-      
-      // Process task data to handle field discrepancies
-      const rawTaskData = req.body;
-      
-      // Make sure we have dmaic_phase from either source
-      const dmaic_phase = rawTaskData.dmaic_phase || rawTaskData.dmaicPhase;
-      console.log("📊 Determined DMAIC phase:", dmaic_phase);
-      
-      if (!dmaic_phase) {
-        console.log("📊 ERROR: Missing DMAIC phase!");
-        return res.status(400).json({ 
-          message: "Validation error", 
-          errors: [{ path: ["dmaic_phase"], message: "DMAIC phase is required" }] 
-        });
-      }
-      
-      // Process dates to ensure they're valid
-      let startDate = null;
-      let endDate = null;
-      
-      try {
-        if (rawTaskData.startDate) {
-          if (typeof rawTaskData.startDate === 'string') {
-            startDate = new Date(rawTaskData.startDate);
-            if (isNaN(startDate.getTime())) {
-              throw new Error("Invalid start date");
-            }
-          } else {
-            startDate = rawTaskData.startDate;
-          }
-        }
-        
-        if (rawTaskData.endDate) {
-          if (typeof rawTaskData.endDate === 'string') {
-            endDate = new Date(rawTaskData.endDate);
-            if (isNaN(endDate.getTime())) {
-              throw new Error("Invalid end date");
-            }
-          } else {
-            endDate = rawTaskData.endDate;
-          }
-        }
-      } catch (err) {
-        const dateErr = err as Error;
-        console.log("📊 ERROR with date formatting:", dateErr.message);
-        return res.status(400).json({
-          message: "Invalid date format",
-          errors: [{ path: ["dates"], message: dateErr.message }]
-        });
-      }
-      
-      // Create clean data for database insert
-      const taskData = {
-        projectId,
-        taskName: rawTaskData.taskName,
-        taskDescription: rawTaskData.taskDescription || null,
-        startDate: startDate,
-        endDate: endDate,
-        owner: rawTaskData.owner || null,
-        dmaic_phase,
-        percentComplete: typeof rawTaskData.percentComplete === 'number' ? rawTaskData.percentComplete : 0,
-        displayOrder: typeof rawTaskData.displayOrder === 'number' ? rawTaskData.displayOrder : 0,
-        parentTaskId: rawTaskData.parentTaskId || null,
-      };
-      
-      console.log("📊 Processed task data for insert:", JSON.stringify(taskData, null, 2));
-      
-      try {
-        // Validate the task data
-        const validatedData = insertGanttTaskSchema.parse(taskData);
-        console.log("📊 Validated data:", JSON.stringify(validatedData, null, 2));
-        
-        // Insert the task - FIX: use values() with an object, not an array
-        const [newTask] = await db
-          .insert(ganttChartTasks)
-          .values(validatedData)
-          .returning();
-        
-        console.log("📊 Task created successfully:", JSON.stringify(newTask, null, 2));
-        return res.status(201).json({ task: newTask });
-      } catch (validationErr) {
-        console.error("📊 Validation ERROR:", validationErr);
-        if (validationErr instanceof ZodError) {
-          return res.status(400).json({
-            message: "Validation error",
-            errors: validationErr.errors
-          });
-        }
-        throw validationErr;
-      }
-    } catch (err) {
-      console.error("📊 Error creating Gantt task:", err);
-      return handleErrors(err, res);
-    }
-  });
-  
-  app.put("/api/gantt-tasks/:id", async (req: Request, res: Response) => {
-    try {
-      console.log("📊 Updating Gantt task - Request body:", JSON.stringify(req.body, null, 2));
-      const id = parseInt(req.params.id);
-      console.log("📊 Task ID to update:", id);
-      const rawUpdateData = req.body;
-      
-      // Check if the task exists
-      const [existingTask] = await db
-        .select()
-        .from(ganttChartTasks)
-        .where(eq(ganttChartTasks.id, id));
-      
-      if (!existingTask) {
-        console.log("📊 ERROR: Task not found with ID:", id);
-        return res.status(404).json({ message: "Gantt task not found" });
-      }
-      console.log("📊 Found existing task:", JSON.stringify(existingTask, null, 2));
-      
-      // Process update data to handle field discrepancies
-      const dmaic_phase = rawUpdateData.dmaic_phase || rawUpdateData.dmaicPhase || existingTask.dmaic_phase;
-      console.log("📊 Determined DMAIC phase for update:", dmaic_phase);
-      
-      // Process dates to ensure they're valid
-      let startDate = existingTask.startDate;
-      let endDate = existingTask.endDate;
-      
-      try {
-        if (rawUpdateData.startDate) {
-          if (typeof rawUpdateData.startDate === 'string') {
-            startDate = new Date(rawUpdateData.startDate);
-            if (isNaN(startDate.getTime())) {
-              throw new Error("Invalid start date");
-            }
-          } else {
-            startDate = rawUpdateData.startDate;
-          }
-        }
-        
-        if (rawUpdateData.endDate) {
-          if (typeof rawUpdateData.endDate === 'string') {
-            endDate = new Date(rawUpdateData.endDate);
-            if (isNaN(endDate.getTime())) {
-              throw new Error("Invalid end date");
-            }
-          } else {
-            endDate = rawUpdateData.endDate;
-          }
-        }
-      } catch (err) {
-        const dateErr = err as Error;
-        console.log("📊 ERROR with date formatting:", dateErr.message);
-        return res.status(400).json({
-          message: "Invalid date format",
-          errors: [{ path: ["dates"], message: dateErr.message }]
-        });
-      }
-      
-      // Create clean data for database update
-      const updateData: Record<string, any> = {
-        taskName: rawUpdateData.taskName,
-        taskDescription: rawUpdateData.taskDescription !== undefined ? rawUpdateData.taskDescription : existingTask.taskDescription,
-        startDate,
-        endDate,
-        owner: rawUpdateData.owner !== undefined ? rawUpdateData.owner : existingTask.owner,
-        dmaic_phase,
-        percentComplete: rawUpdateData.percentComplete !== undefined ? rawUpdateData.percentComplete : existingTask.percentComplete,
-        displayOrder: rawUpdateData.displayOrder !== undefined ? rawUpdateData.displayOrder : existingTask.displayOrder,
-        parentTaskId: rawUpdateData.parentTaskId !== undefined ? rawUpdateData.parentTaskId : existingTask.parentTaskId,
-      };
-      
-      // Remove undefined fields to avoid overwriting with nulls
-      Object.keys(updateData).forEach(key => {
-        const typedKey = key as keyof typeof updateData;
-        if (updateData[typedKey] === undefined) {
-          delete updateData[typedKey];
-        }
-      });
-      
-      console.log("📊 Processed task data for update:", JSON.stringify(updateData, null, 2));
-      
-      try {
-        // Validate the data with our schema before updating
-        const validatedData = insertGanttTaskSchema.parse(updateData);
-        console.log("📊 Validated update data:", JSON.stringify(validatedData, null, 2));
-        
-        // Update the task
-        const [updatedTask] = await db
-          .update(ganttChartTasks)
-          .set({
-            ...validatedData,
-            lastUpdated: new Date(),
-          })
-          .where(eq(ganttChartTasks.id, id))
-          .returning();
-        
-        console.log("📊 Task updated successfully:", JSON.stringify(updatedTask, null, 2));
-        return res.status(200).json({ task: updatedTask });
-      } catch (validationErr) {
-        console.error("📊 Validation ERROR during update:", validationErr);
-        if (validationErr instanceof ZodError) {
-          return res.status(400).json({
-            message: "Validation error",
-            errors: validationErr.errors
-          });
-        }
-        throw validationErr;
-      }
-    } catch (err) {
-      console.error("📊 Error updating Gantt task:", err);
-      return handleErrors(err, res);
-    }
-  });
-  
-  app.delete("/api/gantt-tasks/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      
-      // Check if the task exists
-      const [existingTask] = await db
-        .select()
-        .from(ganttChartTasks)
-        .where(eq(ganttChartTasks.id, id));
-      
-      if (!existingTask) {
-        return res.status(404).json({ message: "Gantt task not found" });
-      }
-      
-      // Delete the task
-      await db
-        .delete(ganttChartTasks)
-        .where(eq(ganttChartTasks.id, id));
-      
-      return res.status(200).json({ message: "Gantt task deleted successfully" });
     } catch (err) {
       return handleErrors(err, res);
     }

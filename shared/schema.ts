@@ -719,35 +719,18 @@ export const ganttChartTasks = pgTable("gantt_chart_tasks", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertGanttTaskSchema = createInsertSchema(ganttChartTasks)
-  .pick({
-    projectId: true,
-    taskName: true,
-    taskDescription: true,
-    startDate: true,
-    endDate: true,
-    owner: true,
-    dmaic_phase: true,
-    percentComplete: true,
-    parentTaskId: true,
-    displayOrder: true,
-  })
-  .extend({
-    // Ensure taskName is not empty
-    taskName: z.string().min(1, "Task name is required"),
-    // Make these fields optional
-    taskDescription: z.string().optional().nullable(),
-    owner: z.string().optional().nullable(),
-    parentTaskId: z.number().optional().nullable(),
-    // Validate DMAIC phase
-    dmaic_phase: z.enum(["define", "measure", "analyze", "improve", "control"]),
-    // Ensure dates are valid 
-    startDate: z.string().or(z.date()),
-    endDate: z.string().or(z.date()),
-    // Default values for numeric fields
-    percentComplete: z.number().min(0).max(100).default(0),
-    displayOrder: z.number().default(0),
-  });
+export const insertGanttTaskSchema = createInsertSchema(ganttChartTasks).pick({
+  projectId: true,
+  taskName: true,
+  taskDescription: true,
+  startDate: true,
+  endDate: true,
+  owner: true,
+  dmaic_phase: true,
+  percentComplete: true,
+  parentTaskId: true,
+  displayOrder: true,
+});
 
 export type GanttChartTask = typeof ganttChartTasks.$inferSelect;
 export type InsertGanttTask = z.infer<typeof insertGanttTaskSchema>;
