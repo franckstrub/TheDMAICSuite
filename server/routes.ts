@@ -5,7 +5,7 @@ import {
   insertUserSchema, insertProjectSchema, insertCharterSchema, 
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
-  insertRiskSchema, insertRaciSchema, insertGanttTaskSchema
+  insertRiskSchema, insertRaciSchema, insertGanttTaskSchema, InsertGanttTask
 } from "@shared/schema";
 import { 
   stakeholderAnalysisItems, 
@@ -16,7 +16,7 @@ import {
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
   InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertUser, InsertRisk,
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
-  projects, projectCharters, projectRisks
+  projects, projectCharters, projectRisks, ganttChartTasks, GanttChartTask
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
