@@ -39,9 +39,15 @@ export default function HomePage() {
     }
   }, [params, setCurrentTab, setActivePhase]);
   
-  // Fetch projects and handle the projectId parameter
+  // Fetch projects and handle the projectId parameter - with automatic refresh completely disabled
   const { data: projectsData } = useQuery({ 
-    queryKey: ["/api/projects"] 
+    queryKey: ["/api/projects"],
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity,
+    cacheTime: Infinity
   });
   
   // Update the current project based on the projectId URL parameter
