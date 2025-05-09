@@ -4368,24 +4368,22 @@ export default function DefinePhase() {
           
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             {elevatorSpeech ? (
-              <>
-                <div className="relative">
-                  <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
+              <div>
+                <div className="border border-gray-200 rounded-md relative">
+                  <div className="absolute top-3 right-3 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1 z-10">
                     <Sparkles className="h-3 w-3 text-blue-500" />
                     AI Generated
                   </div>
                   <textarea
-                    className="w-full h-auto text-gray-800 whitespace-pre-wrap p-4 border border-gray-200 rounded-md resize-none focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    className="w-full p-4 text-gray-800 resize-none rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={elevatorSpeech}
                     onChange={(e) => setElevatorSpeech(e.target.value)}
-                    style={{ minHeight: '200px' }}
+                    rows={8}
                   />
                 </div>
-                
                 <div className="mt-4">
-                  <Button
-                    variant="default"
-                    className="mt-4 bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                  <button
+                    className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
                     onClick={() => {
                       toast({
                         title: "Success",
@@ -4394,9 +4392,9 @@ export default function DefinePhase() {
                     }}
                   >
                     Save Elevator Speech
-                  </Button>
+                  </button>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
                 <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
