@@ -4342,34 +4342,53 @@ export default function DefinePhase() {
       <Card className="mt-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Elevator Speech</CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center gap-2"
-                  onClick={() => handleGenerateElevatorSpeech()}
-                  disabled={isGeneratingElevatorSpeech}
-                >
-                  {isGeneratingElevatorSpeech ? (
-                    <>Generating<span className="animate-spin ml-1">⏳</span></>
-                  ) : (
-                    <Sparkles className="h-4 w-4 text-blue-500" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Generate AI-assisted elevator speech</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex gap-2">
+            {!elevatorSpeech && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-2"
+                onClick={() => {
+                  setElevatorSpeech("Write your elevator speech here. This should be a concise summary of your project's purpose, benefits, and impact.");
+                }}
+              >
+                Create Manually
+              </Button>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-2"
+                    onClick={() => handleGenerateElevatorSpeech()}
+                    disabled={isGeneratingElevatorSpeech}
+                  >
+                    {isGeneratingElevatorSpeech ? (
+                      <>Generating<span className="animate-spin ml-1">⏳</span></>
+                    ) : (
+                      <Sparkles className="h-4 w-4 text-blue-500" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Generate AI-assisted elevator speech</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </CardHeader>
         <CardContent>
           {elevatorSpeechError ? (
             <div className="p-4 mb-4 text-red-800 bg-red-100 border border-red-200 rounded-md">
               <p className="font-semibold">Error generating elevator speech:</p>
               <p>{elevatorSpeechError}</p>
+              {elevatorSpeechError.includes("credit balance") && (
+                <p className="mt-2 text-sm">
+                  It appears there is an issue with the Anthropic API credits. You can still create an elevator speech manually by clicking the "Create Manually" button.
+                </p>
+              )}
             </div>
           ) : null}
           
