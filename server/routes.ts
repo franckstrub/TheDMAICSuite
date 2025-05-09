@@ -1486,9 +1486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const { elevatorSpeech, userId } = req.body;
       
-      if (!elevatorSpeech) {
-        return res.status(400).json({ message: "Elevator speech content is required" });
-      }
+      // Allow empty elevator speech (just passing through)
       
       // Get the project
       const project = await storage.getProject(projectId);

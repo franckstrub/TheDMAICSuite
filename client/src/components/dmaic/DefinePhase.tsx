@@ -4392,13 +4392,16 @@ export default function DefinePhase() {
                 className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
                 onClick={async () => {
                   try {
+                    // Always provide at least an empty string, even if elevatorSpeech is null/undefined
+                    const speechToSave = elevatorSpeech === null || elevatorSpeech === undefined ? "" : elevatorSpeech;
+                    
                     const response = await fetch(`/api/projects/${projectId}/elevator-speech`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
                       },
                       body: JSON.stringify({
-                        elevatorSpeech: elevatorSpeech || "",
+                        elevatorSpeech: speechToSave,
                         userId: user?.id,
                       }),
                     });
