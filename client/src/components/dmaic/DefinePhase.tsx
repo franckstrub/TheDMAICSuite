@@ -249,6 +249,19 @@ export default function DefinePhase() {
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
 
+  // Fetch project data to get the elevator speech
+  const { data: projectData } = useQuery({
+    queryKey: [`/api/projects/${projectId}`],
+    enabled: !!user?.id && !!projectId
+  });
+  
+  // Load elevator speech from project data when available
+  useEffect(() => {
+    if (projectData?.project?.elevatorSpeech) {
+      setElevatorSpeech(projectData.project.elevatorSpeech);
+    }
+  }, [projectData?.project?.elevatorSpeech]);
+  
   // Fetch SIPOC diagram if exists
   const { data: sipoc } = useQuery({
     queryKey: [`/api/projects/${projectId}/sipoc`],
