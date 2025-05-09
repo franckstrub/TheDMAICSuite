@@ -4372,9 +4372,19 @@ export default function DefinePhase() {
                       AI Generated
                     </div>
                   )}
-                  <Sparkles className="absolute top-2 right-10 h-5 w-5 text-blue-500 cursor-pointer hover:text-blue-700" 
-                    onClick={() => handleGenerateElevatorSpeech()}
-                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Sparkles 
+                          className="absolute top-2 right-10 h-5 w-5 text-blue-500 cursor-pointer hover:text-blue-700" 
+                          onClick={() => handleGenerateElevatorSpeech()}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">AI-generated Elevator Speech</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-10 mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md">
@@ -4384,10 +4394,19 @@ export default function DefinePhase() {
                     that summarizes your project's purpose, benefits, and impact.
                   </p>
                   <div className="flex space-x-4">
-                    <Sparkles 
-                      className="h-6 w-6 text-blue-500 cursor-pointer hover:text-blue-700 mb-2" 
-                      onClick={() => handleGenerateElevatorSpeech()}
-                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Sparkles 
+                            className="h-6 w-6 text-blue-500 cursor-pointer hover:text-blue-700 mb-2" 
+                            onClick={() => handleGenerateElevatorSpeech()}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">AI-generated Elevator Speech</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
                       type="button"
                       variant="outline"
