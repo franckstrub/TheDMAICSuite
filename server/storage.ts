@@ -103,7 +103,9 @@ export interface IStorage {
   getGateReviewValidator(id: number): Promise<GateReviewValidator | undefined>;
   createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator>;
   updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined>;
-  deleteGateReviewValidator(id: number): Promise<boolean>;
+  import { gateReviewValidators, gateReviewDeliverables } from '@shared/schema';
+
+deleteGateReviewValidator(id: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
