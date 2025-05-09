@@ -103,9 +103,11 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
   // Mutation for creating a task
   const createTaskMutation = useMutation({
     mutationFn: (task: GanttTask) => {
+      console.log("Submitting task to API:", JSON.stringify(task, null, 2));
       return apiRequest(`/api/projects/${projectId}/gantt-tasks`, 'POST', task);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Task created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'gantt-tasks'] });
       toast({
         title: "Task Created",
@@ -114,11 +116,28 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
       setIsTaskModalOpen(false);
       setCurrentTask(newTaskTemplate);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error creating task:", error);
+      // Try to extract more detailed error information
+      let errorMessage = "Failed to create task. Please try again.";
+      
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        
+        // Extract validation errors if available
+        if (error.response.data?.errors) {
+          const validationErrors = error.response.data.errors
+            .map((err: any) => `${err.path.join('.')}: ${err.message}`)
+            .join('; ');
+          errorMessage = `Validation errors: ${validationErrors}`;
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create task. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
