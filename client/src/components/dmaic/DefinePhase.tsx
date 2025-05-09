@@ -4406,8 +4406,8 @@ export default function DefinePhase() {
           ) : null}
           
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
-            {elevatorSpeech ? (
-              <div>
+            <div>
+              {elevatorSpeech ? (
                 <div className="relative mb-4">
                   <textarea
                     className="w-full min-h-[200px] p-4 text-gray-800 resize-none border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -4424,56 +4424,64 @@ export default function DefinePhase() {
                     onClick={() => handleGenerateElevatorSpeech()}
                   />
                 </div>
-                
-                <Button 
-                  type="button"
-                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`/api/projects/${projectId}/elevator-speech`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          elevatorSpeech,
-                          userId: user?.id,
-                        }),
-                      });
-                      
-                      if (!response.ok) {
-                        throw new Error('Failed to save elevator speech');
-                      }
-                      
-                      // Invalidate the project query to refresh the data
-                      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-                      
-                      toast({
-                        title: "Success",
-                        description: "Elevator speech saved successfully"
-                      });
-                    } catch (error) {
-                      console.error("Error saving elevator speech:", error);
-                      toast({
-                        title: "Error",
-                        description: "Failed to save elevator speech. Please try again.",
-                        variant: "destructive"
-                      });
+              ) : (
+                <div className="flex flex-col items-center justify-center p-10 mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md">
+                  <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Click the AI magic button to create a concise and compelling elevator speech
+                    that summarizes your project's purpose, benefits, and impact.
+                  </p>
+                  <Sparkles 
+                    className="h-6 w-6 text-blue-500 cursor-pointer hover:text-blue-700 mb-2" 
+                    onClick={() => handleGenerateElevatorSpeech()}
+                  />
+                </div>
+              )}
+              
+              <Button 
+                type="button"
+                className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/api/projects/${projectId}/elevator-speech`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        elevatorSpeech: elevatorSpeech || "",
+                        userId: user?.id,
+                      }),
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to save elevator speech');
                     }
-                  }}
-                >
-                  Save Elevator Speech
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
-                <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
-                <p className="text-gray-400 text-sm">
-                  Click the AI magic button to create a concise and compelling elevator speech
-                  that summarizes your project's purpose, benefits, and impact.
-                </p>
-              </div>
-            )}
+                    
+                    // Invalidate the project query to refresh the data
+                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
+                    
+                    toast({
+                      title: "Success",
+                      description: "Elevator speech saved successfully"
+                    });
+                  } catch (error) {
+                    console.error("Error saving elevator speech:", error);
+                    toast({
+                      title: "Error",
+                      description: "Failed to save elevator speech. Please try again.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                disabled={isGeneratingElevatorSpeech}
+              >
+                {isGeneratingElevatorSpeech ? 
+                  "Generating..." : 
+                  "Save Elevator Speech"
+                }
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
