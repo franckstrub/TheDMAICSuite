@@ -24,6 +24,8 @@ import { z } from "zod";
 import { ZodError } from "zod";
 // Switching from Claude to Google AI for mitigation plan generation
 import { generateMitigationPlan } from "./googleai";
+// Import the Claude API for generating elevator speeches
+import { generateElevatorSpeech } from "./anthropic";
 
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
@@ -1403,6 +1405,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (err) {
       console.error("Error generating mitigation plan:", err);
+      return handleErrors(err, res);
+    }
+  });
+  
+  // Elevator Speech Generation with Claude AI
+  app.post("/api/generate-elevator-speech", async (req: Request, res: Response) => {
+    try {
+      const { projectId, userId } = req.body;
+      
+      if (!projectId) {
+        return res.status(400).json({ 
+          message: "Project ID is required to generate an elevator speech" 
+        });
+      }
+      
+      console.log(`Generating elevator speech for project ID: ${projectId}`);
+      
+      // Retrieve project charter data
+      const charter = await storage.getProjectCharter(projectId);
+      if (!charter) {
+        return res.status(404).json({ 
+          message: "Project charter not found. Please complete the project charter first." 
+        });
+      }
+      
+      // Retrieve customer requirements (Voice of Customer)
+      const customerRequirements = await storage.getRequirementsByProjectId(projectId);
+      
+      // Retrieve business requirements (Voice of Business)
+      const businessRequirements = await storage.getBusinessRequirementsByProjectId(projectId);
+      
+      // Generate the elevator speech using Claude AI
+      try {
+        const elevatorSpeech = await generateElevatorSpeech(
+          charter,
+          customerRequirements,
+          businessRequirements
+        );
+        
+        // Log activity if userId provided
+        if (userId) {
+          await storage.createActivityLog({
+            userId,
+            projectId,
+            action: "generate_elevator_speech",
+            details: "Generated elevator speech using AI"
+          });
+        }
+        
+        return res.status(200).json({ elevatorSpeech });
+      } catch (apiError: any) {
+        console.error("Claude AI API error:", apiError);
+        return res.status(500).json({ 
+          error: true,
+          message: `Claude AI error: ${apiError.message || 'Unknown error'}`,
+          details: "Make sure you have a valid ANTHROPIC_API_KEY set in your environment"
+        });
+      }
+    } catch (err) {
+      console.error("Error generating elevator speech:", err);
       return handleErrors(err, res);
     }
   });
