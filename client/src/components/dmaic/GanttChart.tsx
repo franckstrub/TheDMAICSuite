@@ -47,16 +47,17 @@ interface GanttTask {
   id?: number;
   projectId: number;
   taskName: string;
-  taskDescription?: string;
+  taskDescription?: string | null;
   startDate: Date | string;
   endDate: Date | string;
   dmaicPhase: "define" | "measure" | "analyze" | "improve" | "control";
-  dmaic_phase?: "define" | "measure" | "analyze" | "improve" | "control"; // Backend field name
-  owner?: string;
+  dmaic_phase: "define" | "measure" | "analyze" | "improve" | "control"; // Backend field name (required)
+  owner?: string | null;
   percentComplete: number;
-  parentTaskId?: number;
+  parentTaskId?: number | null;
   displayOrder: number;
-  dependencies?: number[]; // IDs of tasks this task depends on
+  dependencies?: number[]; // IDs of tasks this task depends on (for future use)
+  lastUpdated?: Date | string; // Backend tracking field
 }
 
 // Props for the component
@@ -82,6 +83,7 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
     startDate: new Date(),
     endDate: new Date(),
     dmaicPhase: "define",
+    dmaic_phase: "define", // Include both formats
     percentComplete: 0,
     displayOrder: 0
   };
