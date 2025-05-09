@@ -125,10 +125,9 @@ export default function MeasurePhase() {
     queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!user?.id && !!projectId,
     retry: 3,
-    staleTime: 5000,
+    staleTime: Infinity,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+    refetchOnWindowFocus: false
   });
   
   // Fetch data collection plans
