@@ -140,10 +140,10 @@ export default function GateReviewValidation() {
       for (const deliverable of deliverables) {
         if (deliverable.id) {
           // Update existing deliverable
-          await apiRequest(`/api/gate-review-deliverables/${deliverable.id}`, 'PUT', deliverable);
+          await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
         } else {
           // Create new deliverable
-          await apiRequest(`/api/projects/${projectId}/gate-review-deliverables`, 'POST', deliverable);
+          await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
         }
       }
       
@@ -151,10 +151,10 @@ export default function GateReviewValidation() {
       for (const validator of validators) {
         if (validator.id) {
           // Update existing validator
-          await apiRequest(`/api/gate-review-validators/${validator.id}`, 'PUT', validator);
+          await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
         } else {
           // Create new validator
-          await apiRequest(`/api/projects/${projectId}/gate-review-validators`, 'POST', validator);
+          await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
       
