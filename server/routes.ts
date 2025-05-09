@@ -5,7 +5,7 @@ import {
   insertUserSchema, insertProjectSchema, insertCharterSchema, 
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
-  insertRiskSchema, insertRaciSchema
+  insertRiskSchema, insertRaciSchema, insertGanttTaskSchema
 } from "@shared/schema";
 import { 
   stakeholderAnalysisItems, 
