@@ -79,6 +79,7 @@ export default function DefinePhase() {
   // State for elevator speech
   const [elevatorSpeech, setElevatorSpeech] = useState<string>("");
   const [isGeneratingElevatorSpeech, setIsGeneratingElevatorSpeech] = useState<boolean>(false);
+  const [elevatorSpeechError, setElevatorSpeechError] = useState<string | null>(null);
   
   // State for collapsible sections - default to collapsed
   const [isFinancialSectionExpanded, setIsFinancialSectionExpanded] = useState(false);
@@ -107,6 +108,7 @@ export default function DefinePhase() {
   const handleGenerateElevatorSpeech = async () => {
     try {
       setIsGeneratingElevatorSpeech(true);
+      setElevatorSpeechError(null);
       
       const response = await fetch('/api/generate-elevator-speech', {
         method: 'POST',
@@ -130,18 +132,15 @@ export default function DefinePhase() {
           description: "AI has successfully created an elevator speech based on your project data.",
         });
       } else {
-        toast({
-          title: "Information",
-          description: "Please use the 'Create Manually' button to add your elevator speech instead.",
-        });
+        setElevatorSpeechError("Unable to generate elevator speech. Response contained no data.");
       }
     } catch (error: any) {
       console.error("Error generating elevator speech:", error);
-      
-      // Only show a toast with a simplified message
+      setElevatorSpeechError(error.message || "Failed to generate elevator speech. Please try again later.");
       toast({
-        title: "Information",
-        description: "Please use the 'Create Manually' button to add your elevator speech instead.",
+        title: "Error Generating Elevator Speech",
+        description: error.message || "An error occurred. Please make sure your project data is complete.",
+        variant: "destructive",
       });
     } finally {
       setIsGeneratingElevatorSpeech(false);
@@ -4394,7 +4393,17 @@ export default function DefinePhase() {
           </div>
         </CardHeader>
         <CardContent>
-
+          {elevatorSpeechError ? (
+            <div className="p-4 mb-4 text-red-800 bg-red-100 border border-red-200 rounded-md">
+              <p className="font-semibold">Error generating elevator speech:</p>
+              <p>{elevatorSpeechError}</p>
+              {elevatorSpeechError.includes("credit balance") && (
+                <p className="mt-2 text-sm">
+                  It appears there is an issue with the Anthropic API credits. You can still create an elevator speech manually by clicking the "Create Manually" button.
+                </p>
+              )}
+            </div>
+          ) : null}
           
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             <div>
@@ -4422,10 +4431,22 @@ export default function DefinePhase() {
                     Click the AI magic button to create a concise and compelling elevator speech
                     that summarizes your project's purpose, benefits, and impact.
                   </p>
-                  <Sparkles 
-                    className="h-6 w-6 text-blue-500 cursor-pointer hover:text-blue-700 mb-2" 
-                    onClick={() => handleGenerateElevatorSpeech()}
-                  />
+                  <div className="flex space-x-4">
+                    <Sparkles 
+                      className="h-6 w-6 text-blue-500 cursor-pointer hover:text-blue-700 mb-2" 
+                      onClick={() => handleGenerateElevatorSpeech()}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="text-blue-800 border-blue-300 hover:bg-blue-50"
+                      onClick={() => {
+                        setElevatorSpeech("Type your elevator speech here...");
+                      }}
+                    >
+                      Create Manually
+                    </Button>
+                  </div>
                 </div>
               )}
               
