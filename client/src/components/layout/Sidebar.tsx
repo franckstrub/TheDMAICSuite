@@ -58,7 +58,7 @@ export default function Sidebar() {
   };
 
   const sidebarClasses = cn(
-    "bg-white w-64 border-r border-gray-200 fixed inset-y-0 left-0 transform transition duration-200 ease-in-out md:translate-x-0 md:static md:inset-auto z-20",
+    "bg-white w-64 border-r border-gray-200 fixed inset-y-0 left-0 transform transition duration-200 ease-in-out md:translate-x-0 md:sticky md:top-0 md:h-screen z-20",
     sidebarOpen ? "translate-x-0" : "-translate-x-full"
   );
 

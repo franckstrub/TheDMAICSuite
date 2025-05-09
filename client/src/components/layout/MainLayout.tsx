@@ -58,8 +58,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
         )}
         
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 pb-10">
-          {children}
+        <main className="flex-1 overflow-y-auto bg-gray-50 pb-10 pt-0">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
