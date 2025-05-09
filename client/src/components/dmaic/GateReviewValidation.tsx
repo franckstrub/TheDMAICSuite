@@ -33,7 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { apiRequest } from '@lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { CheckCircle, XCircle, Clock, Plus, Trash2 } from 'lucide-react';
 
 // Types for our validators and deliverables
@@ -133,10 +133,35 @@ export default function GateReviewValidation() {
     enabled: !!projectId
   });
 
-  // Create a mock function for saving data (will be replaced by real API calls later)
+  // Save data to backend
   const saveData = async () => {
     try {
-      // This is just a mockup - in the real implementation we would save to the backend
+      // Process all deliverables
+      for (const deliverable of deliverables) {
+        if (deliverable.id) {
+          // Update existing deliverable
+          await apiRequest(`/api/gate-review-deliverables/${deliverable.id}`, 'PUT', deliverable);
+        } else {
+          // Create new deliverable
+          await apiRequest(`/api/projects/${projectId}/gate-review-deliverables`, 'POST', deliverable);
+        }
+      }
+      
+      // Process all validators
+      for (const validator of validators) {
+        if (validator.id) {
+          // Update existing validator
+          await apiRequest(`/api/gate-review-validators/${validator.id}`, 'PUT', validator);
+        } else {
+          // Create new validator
+          await apiRequest(`/api/projects/${projectId}/gate-review-validators`, 'POST', validator);
+        }
+      }
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
+      
       toast({
         title: "Success",
         description: "Gate review data saved successfully",
