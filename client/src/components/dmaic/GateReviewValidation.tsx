@@ -217,7 +217,7 @@ export default function GateReviewValidation() {
     console.log("Validators data received:", validatorsData);
     console.log("Charter data:", charter);
     
-    if (validatorsData && validatorsData.validators) {
+    if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
       console.log("Setting validators from data:", validatorsData.validators);
       setValidators(validatorsData.validators);
     } else if (charter && charter.charter) {
