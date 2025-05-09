@@ -63,10 +63,9 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     queryKey: [`/api/projects/${projectId}/stakeholder-analysis`],
     enabled: !!userId && !!projectId,
     retry: 3,
-    staleTime: 5000,
+    staleTime: Infinity,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchOnWindowFocus: false
   });
 
   // Initial data loading when component mounts or when returning to page
