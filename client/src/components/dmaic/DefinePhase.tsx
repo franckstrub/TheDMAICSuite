@@ -4410,24 +4410,56 @@ export default function DefinePhase() {
               <div>
                 <div className="relative mb-4">
                   <textarea
-                    className="w-full min-h-[200px] p-4 pt-10 text-gray-800 resize-none border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full min-h-[200px] p-4 text-gray-800 resize-none border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={elevatorSpeech}
                     onChange={(e) => setElevatorSpeech(e.target.value)}
                   />
-                  <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
-                    <Sparkles className="h-3 w-3 text-blue-500" />
-                    AI Generated
-                  </div>
+                  {projectData?.project?.elevatorSpeech && projectData.project.elevatorSpeech.includes("AI has generated this elevator speech") && (
+                    <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-blue-500" />
+                      AI Generated
+                    </div>
+                  )}
+                  <Sparkles className="absolute top-2 right-10 h-5 w-5 text-blue-500 cursor-pointer hover:text-blue-700" 
+                    onClick={() => handleGenerateElevatorSpeech()}
+                  />
                 </div>
                 
                 <Button 
                   type="button"
                   className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
-                  onClick={() => {
-                    toast({
-                      title: "Success",
-                      description: "Elevator speech saved"
-                    });
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/projects/${projectId}/elevator-speech`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          elevatorSpeech,
+                          userId: user?.id,
+                        }),
+                      });
+                      
+                      if (!response.ok) {
+                        throw new Error('Failed to save elevator speech');
+                      }
+                      
+                      // Invalidate the project query to refresh the data
+                      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
+                      
+                      toast({
+                        title: "Success",
+                        description: "Elevator speech saved successfully"
+                      });
+                    } catch (error) {
+                      console.error("Error saving elevator speech:", error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to save elevator speech. Please try again.",
+                        variant: "destructive"
+                      });
+                    }
                   }}
                 >
                   Save Elevator Speech
