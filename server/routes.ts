@@ -1444,6 +1444,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           businessRequirements
         );
         
+        // Save the elevator speech to the charter
+        await storage.updateCharter(charter.id, {
+          elevatorSpeech
+        });
+        
         // Log activity if userId provided
         if (userId) {
           await storage.createActivityLog({
@@ -1465,6 +1470,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (err) {
       console.error("Error generating elevator speech:", err);
+      return handleErrors(err, res);
+    }
+  });
+  
+  // Save Elevator Speech
+  app.post("/api/projects/:projectId/elevator-speech", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { elevatorSpeech, userId } = req.body;
+      
+      if (!elevatorSpeech) {
+        return res.status(400).json({ message: "Elevator speech content is required" });
+      }
+      
+      // Get the project charter
+      const charter = await storage.getProjectCharter(projectId);
+      if (!charter) {
+        return res.status(404).json({ message: "Project charter not found" });
+      }
+      
+      // Update the charter with the elevator speech
+      await storage.updateCharter(charter.id, {
+        elevatorSpeech
+      });
+      
+      // Log activity if userId provided
+      if (userId) {
+        await storage.createActivityLog({
+          userId,
+          projectId,
+          action: "save_elevator_speech",
+          details: "Saved elevator speech"
+        });
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: "Elevator speech saved successfully" 
+      });
+    } catch (err) {
+      console.error("Error saving elevator speech:", err);
       return handleErrors(err, res);
     }
   });
