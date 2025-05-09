@@ -178,6 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Error handling middleware
   const handleErrors = (err: any, res: Response) => {
     if (err instanceof ZodError) {
+      console.error("Validation error:", JSON.stringify(err.errors, null, 2));
       return res.status(400).json({
         message: "Validation error",
         errors: err.errors
@@ -1836,10 +1837,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/gantt-tasks", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Process task data to handle field discrepancies
+      const rawTaskData = req.body;
+      
+      // Make sure we have dmaic_phase from either source
+      const dmaic_phase = rawTaskData.dmaic_phase || rawTaskData.dmaicPhase;
+      
+      if (!dmaic_phase) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: [{ path: ["dmaic_phase"], message: "DMAIC phase is required" }] 
+        });
+      }
+      
+      // Create clean data for database insert
       const taskData = {
-        ...req.body,
         projectId,
+        taskName: rawTaskData.taskName,
+        taskDescription: rawTaskData.taskDescription,
+        startDate: rawTaskData.startDate,
+        endDate: rawTaskData.endDate,
+        owner: rawTaskData.owner,
+        dmaic_phase,
+        percentComplete: rawTaskData.percentComplete || 0,
+        displayOrder: rawTaskData.displayOrder || 0,
+        parentTaskId: rawTaskData.parentTaskId,
       };
+      
+      console.log("Processed task data for insert:", taskData);
       
       // Validate the task data
       const validatedData = insertGanttTaskSchema.parse(taskData);
@@ -1852,6 +1878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       return res.status(201).json({ task: newTask });
     } catch (err) {
+      console.error("Error creating Gantt task:", err);
       return handleErrors(err, res);
     }
   });
@@ -1859,7 +1886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/gantt-tasks/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const updateData = req.body;
+      const rawUpdateData = req.body;
       
       // Check if the task exists
       const [existingTask] = await db
@@ -1870,6 +1897,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingTask) {
         return res.status(404).json({ message: "Gantt task not found" });
       }
+      
+      // Process update data to handle field discrepancies
+      const dmaic_phase = rawUpdateData.dmaic_phase || rawUpdateData.dmaicPhase || existingTask.dmaic_phase;
+      
+      // Create clean data for database update
+      const updateData: Record<string, any> = {
+        taskName: rawUpdateData.taskName,
+        taskDescription: rawUpdateData.taskDescription,
+        startDate: rawUpdateData.startDate,
+        endDate: rawUpdateData.endDate,
+        owner: rawUpdateData.owner,
+        dmaic_phase,
+        percentComplete: rawUpdateData.percentComplete,
+        displayOrder: rawUpdateData.displayOrder,
+        parentTaskId: rawUpdateData.parentTaskId,
+      };
+      
+      // Remove undefined fields to avoid overwriting with nulls
+      Object.keys(updateData).forEach(key => {
+        const typedKey = key as keyof typeof updateData;
+        if (updateData[typedKey] === undefined) {
+          delete updateData[typedKey];
+        }
+      });
+      
+      console.log("Processed task data for update:", updateData);
       
       // Update the task
       const [updatedTask] = await db
@@ -1883,6 +1936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       return res.status(200).json({ task: updatedTask });
     } catch (err) {
+      console.error("Error updating Gantt task:", err);
       return handleErrors(err, res);
     }
   });
