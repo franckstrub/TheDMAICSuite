@@ -146,9 +146,11 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
   // Mutation for updating a task
   const updateTaskMutation = useMutation({
     mutationFn: (task: GanttTask) => {
+      console.log("Updating task to API:", JSON.stringify(task, null, 2));
       return apiRequest(`/api/gantt-tasks/${task.id}`, 'PUT', task);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Task updated successfully:", data);
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'gantt-tasks'] });
       toast({
         title: "Task Updated",
@@ -157,11 +159,28 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
       setIsTaskModalOpen(false);
       setEditingTask(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error updating task:", error);
+      // Try to extract more detailed error information
+      let errorMessage = "Failed to update task. Please try again.";
+      
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        
+        // Extract validation errors if available
+        if (error.response.data?.errors) {
+          const validationErrors = error.response.data.errors
+            .map((err: any) => `${err.path.join('.')}: ${err.message}`)
+            .join('; ');
+          errorMessage = `Validation errors: ${validationErrors}`;
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to update task. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -229,42 +248,78 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
   
   // Handler for saving a task
   const handleSaveTask = () => {
-    // Transform the task data for backend compatibility
-    const { dmaicPhase, ...restTask } = currentTask;
-    
-    // Set the display order for new tasks
-    if (!editingTask) {
-      // Add at the end of the list, or start at 0 if no tasks
-      const newDisplayOrder = tasks.length > 0 
-        ? Math.max(...tasks.map(t => t.displayOrder || 0)) + 1 
-        : 0;
-      restTask.displayOrder = newDisplayOrder;
-    }
-    
-    // Format dates as ISO strings for the backend
-    const startDate = typeof restTask.startDate === 'string'
-      ? new Date(restTask.startDate).toISOString()
-      : restTask.startDate.toISOString();
+    try {
+      // Transform the task data for backend compatibility
+      const { dmaicPhase, ...restTask } = currentTask;
       
-    const endDate = typeof restTask.endDate === 'string'
-      ? new Date(restTask.endDate).toISOString()
-      : restTask.endDate.toISOString();
-    
-    const transformedTask = {
-      ...restTask,
-      startDate,
-      endDate,
-      dmaic_phase: dmaicPhase, // Backend expects dmaic_phase
-      dmaicPhase // Keep dmaicPhase for the frontend
-    };
-    
-    // Log what we're sending to server for debugging
-    console.log("Sending task data:", transformedTask);
-    
-    if (editingTask) {
-      updateTaskMutation.mutate(transformedTask);
-    } else {
-      createTaskMutation.mutate(transformedTask);
+      // Ensure projectId is set and is a number
+      const taskProjectId = typeof projectId === 'string' ? parseInt(projectId) : projectId;
+      
+      // Set the display order for new tasks
+      if (!editingTask) {
+        // Add at the end of the list, or start at 0 if no tasks
+        const newDisplayOrder = tasks.length > 0 
+          ? Math.max(...tasks.map(t => t.displayOrder || 0)) + 1 
+          : 0;
+        restTask.displayOrder = newDisplayOrder;
+      }
+      
+      // Format dates properly - ensure they're valid dates first
+      let startDateObj, endDateObj;
+      
+      try {
+        startDateObj = typeof restTask.startDate === 'string' 
+          ? new Date(restTask.startDate) 
+          : restTask.startDate;
+          
+        endDateObj = typeof restTask.endDate === 'string' 
+          ? new Date(restTask.endDate) 
+          : restTask.endDate;
+      } catch (err) {
+        console.error("Date parsing error:", err);
+        toast({
+          title: "Invalid Date",
+          description: "Please enter valid start and end dates.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate dates
+      if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+        toast({
+          title: "Invalid Date",
+          description: "Start date or end date is invalid.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Create the final task object
+      const transformedTask = {
+        ...restTask,
+        projectId: taskProjectId,
+        startDate: startDateObj.toISOString(),
+        endDate: endDateObj.toISOString(),
+        dmaic_phase: dmaicPhase, // Backend expects dmaic_phase
+        dmaicPhase: dmaicPhase, // Keep dmaicPhase for the frontend type system
+      };
+      
+      // Log what we're sending to server for debugging
+      console.log("Sending task data:", JSON.stringify(transformedTask, null, 2));
+      
+      if (editingTask) {
+        updateTaskMutation.mutate(transformedTask);
+      } else {
+        createTaskMutation.mutate(transformedTask);
+      }
+    } catch (error) {
+      console.error("Error preparing task data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare task data. Please check all fields and try again.",
+        variant: "destructive",
+      });
     }
   };
   
