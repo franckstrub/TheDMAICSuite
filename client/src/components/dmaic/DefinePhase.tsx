@@ -4276,6 +4276,18 @@ export default function DefinePhase() {
         projectId={Number(projectId)}
         userId={user?.id}
       />
+
+      {/* Gantt Plan Section */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Gantt Plan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
+            <p className="text-gray-500">Gantt Plan section will be implemented here</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
