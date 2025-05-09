@@ -4395,73 +4395,92 @@ export default function DefinePhase() {
         <CardContent>
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             <div>
-              <div className="relative mb-4">
-                <textarea
-                  className="w-full min-h-[200px] p-4 text-gray-800 resize-none border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={elevatorSpeech || ""}
-                  onChange={(e) => setElevatorSpeech(e.target.value)}
-                  placeholder="Type your elevator speech here or use the AI generation button below to create one automatically."
-                />
-                {elevatorSpeech && projectData?.project?.elevatorSpeech && projectData.project.elevatorSpeech.includes("AI has generated this elevator speech") && (
-                  <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
-                    <Sparkles className="h-3 w-3 text-blue-500" />
-                    AI Generated
+              {elevatorSpeech ? (
+                <div className="relative mb-4">
+                  <textarea
+                    className="w-full min-h-[200px] p-4 text-gray-800 resize-none border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={elevatorSpeech}
+                    onChange={(e) => setElevatorSpeech(e.target.value)}
+                  />
+                  {projectData?.project?.elevatorSpeech && projectData.project.elevatorSpeech.includes("AI has generated this elevator speech") && (
+                    <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-blue-500" />
+                      AI Generated
+                    </div>
+                  )}
+                  <Sparkles className="absolute top-2 right-10 h-5 w-5 text-blue-500 cursor-pointer hover:text-blue-700" 
+                    onClick={() => handleGenerateElevatorSpeech()}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-10 mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md">
+                  <p className="text-gray-500 mb-2">No elevator speech generated yet.</p>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Click the AI magic button to create a concise and compelling elevator speech
+                    that summarizes your project's purpose, benefits, and impact.
+                  </p>
+                  <div className="flex space-x-4">
+                    <Sparkles 
+                      className="h-6 w-6 text-blue-500 cursor-pointer hover:text-blue-700 mb-2" 
+                      onClick={() => handleGenerateElevatorSpeech()}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="text-blue-800 border-blue-300 hover:bg-blue-50"
+                      onClick={() => {
+                        setElevatorSpeech("Type your elevator speech here...");
+                      }}
+                    >
+                      Create Manually
+                    </Button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
               
-              <div className="flex space-x-4">
-                <Button 
-                  type="button"
-                  className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
-                  onClick={() => handleGenerateElevatorSpeech()}
-                  disabled={isGeneratingElevatorSpeech}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {isGeneratingElevatorSpeech ? "Generating..." : "Generate with AI"}
-                </Button>
-                
-                <Button 
-                  type="button"
-                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`/api/projects/${projectId}/elevator-speech`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          elevatorSpeech: elevatorSpeech || "",
-                          userId: user?.id,
-                        }),
-                      });
-                      
-                      if (!response.ok) {
-                        throw new Error('Failed to save elevator speech');
-                      }
-                      
-                      // Invalidate the project query to refresh the data
-                      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
-                      
-                      toast({
-                        title: "Success",
-                        description: "Elevator speech saved successfully"
-                      });
-                    } catch (error) {
-                      console.error("Error saving elevator speech:", error);
-                      toast({
-                        title: "Error",
-                        description: "Failed to save elevator speech. Please try again.",
-                        variant: "destructive"
-                      });
+              <Button 
+                type="button"
+                className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/api/projects/${projectId}/elevator-speech`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        elevatorSpeech: elevatorSpeech || "",
+                        userId: user?.id,
+                      }),
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to save elevator speech');
                     }
-                  }}
-                  disabled={isGeneratingElevatorSpeech}
-                >
-                  Save Elevator Speech
-                </Button>
-              </div>
+                    
+                    // Invalidate the project query to refresh the data
+                    queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
+                    
+                    toast({
+                      title: "Success",
+                      description: "Elevator speech saved successfully"
+                    });
+                  } catch (error) {
+                    console.error("Error saving elevator speech:", error);
+                    toast({
+                      title: "Error",
+                      description: "Failed to save elevator speech. Please try again.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                disabled={isGeneratingElevatorSpeech}
+              >
+                {isGeneratingElevatorSpeech ? 
+                  "Generating..." : 
+                  "Save Elevator Speech"
+                }
+              </Button>
             </div>
           </div>
         </CardContent>
