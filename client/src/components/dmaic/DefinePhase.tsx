@@ -4348,7 +4348,7 @@ export default function DefinePhase() {
                   {isGeneratingElevatorSpeech ? (
                     <>Generating<span className="animate-spin ml-1">⏳</span></>
                   ) : (
-                    <Sparkles className="h-4 w-4 text-yellow-500" />
+                    <Sparkles className="h-4 w-4 text-blue-500" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -4369,8 +4369,8 @@ export default function DefinePhase() {
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             {elevatorSpeech ? (
               <div className="prose max-w-none relative">
-                <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-yellow-500" />
+                <div className="absolute top-0 right-0 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-blue-500" />
                   AI Generated
                 </div>
                 <p className="text-gray-800 whitespace-pre-wrap mt-6">{elevatorSpeech}</p>
