@@ -111,7 +111,8 @@ export default function Projects() {
         description: "Project created successfully",
       });
       setShowNewProjectDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      // Disable automatic query invalidation to prevent refreshes
+      // queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       resetNewProjectForm();
     },
     onError: (error) => {
@@ -137,7 +138,8 @@ export default function Projects() {
         title: "Success",
         description: "Project moved to trash",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      // Disable automatic query invalidation to prevent refreshes
+      // queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error) => {
       toast({
