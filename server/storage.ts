@@ -35,6 +35,7 @@ export interface IStorage {
 
   // Project Charter operations
   getCharter(projectId: number): Promise<ProjectCharter | undefined>;
+  getProjectCharter(projectId: number): Promise<ProjectCharter | undefined>; // Alias for getCharter
   createCharter(charter: InsertCharter): Promise<ProjectCharter>;
   updateCharter(id: number, charter: Partial<ProjectCharter>): Promise<ProjectCharter | undefined>;
 
@@ -45,12 +46,14 @@ export interface IStorage {
 
   // Customer Requirements operations
   getRequirements(projectId: number): Promise<CustomerRequirement[]>;
+  getRequirementsByProjectId(projectId: number): Promise<CustomerRequirement[]>; // Alias for getRequirements
   createRequirement(requirement: InsertRequirement): Promise<CustomerRequirement>;
   updateRequirement(id: number, requirement: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined>;
   deleteRequirement(id: number): Promise<boolean>;
   
   // Business Requirements operations
   getBusinessRequirements(projectId: number): Promise<BusinessRequirement[]>;
+  getBusinessRequirementsByProjectId(projectId: number): Promise<BusinessRequirement[]>; // Alias for getBusinessRequirements
   createBusinessRequirement(requirement: InsertBusinessRequirement): Promise<BusinessRequirement>;
   updateBusinessRequirement(id: number, requirement: Partial<BusinessRequirement>): Promise<BusinessRequirement | undefined>;
   deleteBusinessRequirement(id: number): Promise<boolean>;
@@ -231,6 +234,11 @@ export class MemStorage implements IStorage {
       (charter) => charter.projectId === projectId,
     );
   }
+  
+  // Alias for getCharter
+  async getProjectCharter(projectId: number): Promise<ProjectCharter | undefined> {
+    return this.getCharter(projectId);
+  }
 
   async createCharter(insertCharter: InsertCharter): Promise<ProjectCharter> {
     const id = this.currentCharterId++;
@@ -295,6 +303,11 @@ export class MemStorage implements IStorage {
       (req) => req.projectId === projectId,
     );
   }
+  
+  // Alias for getRequirements
+  async getRequirementsByProjectId(projectId: number): Promise<CustomerRequirement[]> {
+    return this.getRequirements(projectId);
+  }
 
   async createRequirement(insertRequirement: InsertRequirement): Promise<CustomerRequirement> {
     const id = this.currentRequirementId++;
@@ -330,6 +343,11 @@ export class MemStorage implements IStorage {
     return Array.from(this.businessRequirements.values()).filter(
       (req) => req.projectId === projectId,
     );
+  }
+  
+  // Alias for getBusinessRequirements
+  async getBusinessRequirementsByProjectId(projectId: number): Promise<BusinessRequirement[]> {
+    return this.getBusinessRequirements(projectId);
   }
 
   async createBusinessRequirement(insertBusinessRequirement: InsertBusinessRequirement): Promise<BusinessRequirement> {
@@ -658,6 +676,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(projectCharters.projectId, projectId));
     return charter || undefined;
   }
+  
+  // Alias for getCharter
+  async getProjectCharter(projectId: number): Promise<ProjectCharter | undefined> {
+    return this.getCharter(projectId);
+  }
 
   async createCharter(insertCharter: InsertCharter): Promise<ProjectCharter> {
     const [charter] = await db
@@ -754,6 +777,11 @@ export class DatabaseStorage implements IStorage {
       .from(customerRequirements)
       .where(eq(customerRequirements.projectId, projectId));
   }
+  
+  // Alias for getRequirements
+  async getRequirementsByProjectId(projectId: number): Promise<CustomerRequirement[]> {
+    return this.getRequirements(projectId);
+  }
 
   async createRequirement(insertRequirement: InsertRequirement): Promise<CustomerRequirement> {
     const [requirement] = await db
@@ -789,6 +817,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(businessRequirements)
       .where(eq(businessRequirements.projectId, projectId));
+  }
+  
+  // Alias for getBusinessRequirements
+  async getBusinessRequirementsByProjectId(projectId: number): Promise<BusinessRequirement[]> {
+    return this.getBusinessRequirements(projectId);
   }
 
   async createBusinessRequirement(insertBusinessRequirement: InsertBusinessRequirement): Promise<BusinessRequirement> {
