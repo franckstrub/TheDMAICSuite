@@ -101,7 +101,7 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
 
 export default function GateReviewValidation() {
   const { projectId } = useParams();
-  const toast = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const phase = "define"; // This component is for the Define phase
   
