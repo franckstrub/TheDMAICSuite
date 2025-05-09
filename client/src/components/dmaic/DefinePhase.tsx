@@ -137,11 +137,14 @@ export default function DefinePhase() {
     } catch (error: any) {
       console.error("Error generating elevator speech:", error);
       setElevatorSpeechError(error.message || "Failed to generate elevator speech. Please try again later.");
-      toast({
-        title: "Error Generating Elevator Speech",
-        description: error.message || "An error occurred. Please make sure your project data is complete.",
-        variant: "destructive",
-      });
+      
+      // Only show a toast if it's not related to API credit balance
+      if (!error.message.includes("credit balance")) {
+        toast({
+          title: "Information",
+          description: "Please use the 'Create Manually' button to add your elevator speech instead.",
+        });
+      }
     } finally {
       setIsGeneratingElevatorSpeech(false);
     }
@@ -4393,17 +4396,6 @@ export default function DefinePhase() {
           </div>
         </CardHeader>
         <CardContent>
-          {elevatorSpeechError ? (
-            <div className="p-4 mb-4 text-red-800 bg-red-100 border border-red-200 rounded-md">
-              <p className="font-semibold">Error generating elevator speech:</p>
-              <p>{elevatorSpeechError}</p>
-              {elevatorSpeechError.includes("credit balance") && (
-                <p className="mt-2 text-sm">
-                  It appears there is an issue with the Anthropic API credits. You can still create an elevator speech manually by clicking the "Create Manually" button.
-                </p>
-              )}
-            </div>
-          ) : null}
           
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             <div>
