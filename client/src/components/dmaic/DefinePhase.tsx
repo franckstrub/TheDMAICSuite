@@ -4390,7 +4390,7 @@ export default function DefinePhase() {
               
               <Button 
                 type="button"
-                className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium"
+                className="bg-primary hover:bg-primary/90 text-white font-medium"
                 onClick={async () => {
                   try {
                     // Always provide at least an empty string, even if elevatorSpeech is null/undefined
