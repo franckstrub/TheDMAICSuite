@@ -4393,18 +4393,6 @@ export default function DefinePhase() {
           </div>
         </CardHeader>
         <CardContent>
-          {elevatorSpeechError ? (
-            <div className="p-4 mb-4 text-red-800 bg-red-100 border border-red-200 rounded-md">
-              <p className="font-semibold">Error generating elevator speech:</p>
-              <p>{elevatorSpeechError}</p>
-              {elevatorSpeechError.includes("credit balance") && (
-                <p className="mt-2 text-sm">
-                  It appears there is an issue with the Anthropic API credits. You can still create an elevator speech manually by clicking the "Create Manually" button.
-                </p>
-              )}
-            </div>
-          ) : null}
-          
           <div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
             <div>
               {elevatorSpeech ? (
