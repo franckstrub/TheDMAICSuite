@@ -698,3 +698,49 @@ export type InsertStakeholderAnalysisItem = z.infer<typeof insertStakeholderAnal
 
 // Type for select operations
 export type StakeholderAnalysisItem = typeof stakeholderAnalysisItems.$inferSelect;
+
+// Gate Review Validation Status
+export const validationStatusTypes = ["Pending", "Approved", "Rejected"] as const;
+export type ValidationStatus = typeof validationStatusTypes[number];
+
+// Gate Review Deliverables
+export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  phase: text("phase").notNull(), // define, measure, analyze, improve, control
+  name: text("name").notNull(),
+  description: text("description"),
+  isRequired: boolean("is_required").notNull().default(true),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertGateReviewDeliverableSchema = createInsertSchema(gateReviewDeliverables).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertGateReviewDeliverable = z.infer<typeof insertGateReviewDeliverableSchema>;
+export type GateReviewDeliverable = typeof gateReviewDeliverables.$inferSelect;
+
+// Gate Review Validators
+export const gateReviewValidators = pgTable("gate_review_validators", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  phase: text("phase").notNull(), // define, measure, analyze, improve, control
+  validatorName: text("validator_name").notNull(),
+  validatorRole: text("validator_role").notNull(), // sponsor, project_leader, financial_controller, coach, other
+  status: text("status").$type<ValidationStatus>().notNull().default("Pending"),
+  comments: text("comments"),
+  validatedDate: timestamp("validated_date"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertGateReviewValidatorSchema = createInsertSchema(gateReviewValidators).omit({
+  id: true,
+  validatedDate: true,
+  lastUpdated: true,
+});
+
+export type InsertGateReviewValidator = z.infer<typeof insertGateReviewValidatorSchema>;
+export type GateReviewValidator = typeof gateReviewValidators.$inferSelect;
