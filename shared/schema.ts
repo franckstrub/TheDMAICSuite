@@ -22,6 +22,10 @@ export type InfluenceLevel = typeof influenceLevels[number];
 export const supportLevels = ["Supporter", "Neutral", "Resistant"] as const;
 export type SupportLevel = typeof supportLevels[number];
 
+// Gate Review Validation Status
+export const validationStatusTypes = ["Pending", "Approved", "Rejected"] as const;
+export type ValidationStatus = typeof validationStatusTypes[number];
+
 // Users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -698,10 +702,6 @@ export type InsertStakeholderAnalysisItem = z.infer<typeof insertStakeholderAnal
 
 // Type for select operations
 export type StakeholderAnalysisItem = typeof stakeholderAnalysisItems.$inferSelect;
-
-// Gate Review Validation Status
-export const validationStatusTypes = ["Pending", "Approved", "Rejected"] as const;
-export type ValidationStatus = typeof validationStatusTypes[number];
 
 // Gate Review Deliverables
 export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
