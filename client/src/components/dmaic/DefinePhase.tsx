@@ -1327,7 +1327,8 @@ export default function DefinePhase() {
         title: "Success",
         description: "Business requirements saved successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+      // Don't trigger automatic invalidation to avoid refresh
+      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
       
       // Set the flag in sessionStorage to remember we have requirements for this project
       sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
@@ -1765,8 +1766,8 @@ export default function DefinePhase() {
         // Set the requirements state with the mapped data
         setRequirements(mappedRequirements);
         
-        // Also trigger a query invalidation for React Query
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+        // Don't trigger automatic invalidation to avoid refresh
+        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
         
         if (!silent) {
           toast({
