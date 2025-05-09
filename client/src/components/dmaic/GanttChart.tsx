@@ -212,11 +212,35 @@ export default function GanttChart({ projectId, userId }: GanttChartProps) {
   const handleSaveTask = () => {
     // Transform the task data for backend compatibility
     const { dmaicPhase, ...restTask } = currentTask;
+    
+    // Set the display order for new tasks
+    if (!editingTask) {
+      // Add at the end of the list, or start at 0 if no tasks
+      const newDisplayOrder = tasks.length > 0 
+        ? Math.max(...tasks.map(t => t.displayOrder || 0)) + 1 
+        : 0;
+      restTask.displayOrder = newDisplayOrder;
+    }
+    
+    // Format dates as ISO strings for the backend
+    const startDate = typeof restTask.startDate === 'string'
+      ? new Date(restTask.startDate).toISOString()
+      : restTask.startDate.toISOString();
+      
+    const endDate = typeof restTask.endDate === 'string'
+      ? new Date(restTask.endDate).toISOString()
+      : restTask.endDate.toISOString();
+    
     const transformedTask = {
       ...restTask,
+      startDate,
+      endDate,
       dmaic_phase: dmaicPhase, // Backend expects dmaic_phase
       dmaicPhase // Keep dmaicPhase for the frontend
     };
+    
+    // Log what we're sending to server for debugging
+    console.log("Sending task data:", transformedTask);
     
     if (editingTask) {
       updateTaskMutation.mutate(transformedTask);
