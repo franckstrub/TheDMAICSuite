@@ -194,10 +194,9 @@ export default function DefinePhase() {
     queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!user?.id && !!projectId,
     retry: 3,
-    staleTime: 5000,
+    staleTime: Infinity,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+    refetchOnWindowFocus: false,
   });
 
   // Fetch SIPOC diagram if exists
@@ -967,12 +966,11 @@ export default function DefinePhase() {
   const { data: requirementsData, isLoading: isRequirementsLoading, refetch: refetchRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/requirements`],
     enabled: !!user?.id && !!projectId,
-    // Retry failed queries and set a stale time to avoid too many refreshes
+    // Retry failed queries but avoid automatic refetching
     retry: 3,
-    staleTime: 5000,
+    staleTime: Infinity,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+    refetchOnWindowFocus: false
   });
   
   // Initial data load effect for business requirements - triggered on mount and when returning to page
