@@ -194,17 +194,16 @@ export default function DefinePhase() {
     queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!user?.id && !!projectId,
     retry: 3,
-    staleTime: Infinity,
+    staleTime: 5000,
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
 
   // Fetch SIPOC diagram if exists
   const { data: sipoc } = useQuery({
     queryKey: [`/api/projects/${projectId}/sipoc`],
-    enabled: !!user?.id && !!projectId,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false
+    enabled: !!user?.id && !!projectId
   });
   
   // Effect to initialize SIPOC form with data from API
@@ -541,7 +540,6 @@ export default function DefinePhase() {
   const { data: charter, isError: charterError } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!user?.id && !!projectId,
-    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -969,11 +967,12 @@ export default function DefinePhase() {
   const { data: requirementsData, isLoading: isRequirementsLoading, refetch: refetchRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/requirements`],
     enabled: !!user?.id && !!projectId,
-    // Retry failed queries but avoid automatic refetching
+    // Retry failed queries and set a stale time to avoid too many refreshes
     retry: 3,
-    staleTime: Infinity,
+    staleTime: 5000,
     refetchOnMount: true,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
   
   // Initial data load effect for business requirements - triggered on mount and when returning to page
@@ -1042,8 +1041,8 @@ export default function DefinePhase() {
         // Set the business requirements state with the mapped data
         setBusinessRequirements(mappedBusinessRequirements);
         
-        // Don't trigger automatic invalidation to avoid refresh
-        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
         
         if (!silent) {
           toast({
@@ -1214,9 +1213,10 @@ export default function DefinePhase() {
         title: "Success",
         description: "Project charter saved successfully",
       });
-      // Don't invalidate queries to avoid automatic refresh
-      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
-      // queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      // Invalidate the charter query
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
+      // IMPORTANT: Also invalidate the projects list to update the title in UI
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
       console.log("Project list queries invalidated to refresh updated title");
     },
     onError: (error) => {
@@ -1257,8 +1257,7 @@ export default function DefinePhase() {
         title: "Success",
         description: "SIPOC diagram saved successfully",
       });
-      // Don't trigger automatic invalidation to avoid refresh
-      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/sipoc`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/sipoc`] });
     },
     onError: (error) => {
       toast({
@@ -1327,8 +1326,7 @@ export default function DefinePhase() {
         title: "Success",
         description: "Business requirements saved successfully",
       });
-      // Don't trigger automatic invalidation to avoid refresh
-      // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
       
       // Set the flag in sessionStorage to remember we have requirements for this project
       sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
@@ -1429,8 +1427,8 @@ export default function DefinePhase() {
           setRequirements(mappedRequirements);
         }
         
-        // Don't trigger automatic invalidation to avoid refresh
-        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+        // Also invalidate the query to ensure consistency
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
       } catch (error) {
         console.error("Error fetching requirements after save:", error);
       }
@@ -1766,8 +1764,8 @@ export default function DefinePhase() {
         // Set the requirements state with the mapped data
         setRequirements(mappedRequirements);
         
-        // Don't trigger automatic invalidation to avoid refresh
-        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
         
         if (!silent) {
           toast({

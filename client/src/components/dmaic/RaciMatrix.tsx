@@ -150,8 +150,7 @@ const RaciMatrix = ({
       }
     },
     onSuccess: () => {
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
       toast({
         title: "Success",
         description: "RACI matrix created successfully",
@@ -204,8 +203,7 @@ const RaciMatrix = ({
       }
     },
     onSuccess: () => {
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
       toast({
         title: "Success",
         description: "RACI matrix updated successfully",

@@ -63,9 +63,10 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     queryKey: [`/api/projects/${projectId}/stakeholder-analysis`],
     enabled: !!userId && !!projectId,
     retry: 3,
-    staleTime: Infinity,
+    staleTime: 5000,
     refetchOnMount: true,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
   // Initial data loading when component mounts or when returning to page
@@ -156,8 +157,8 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         // Set the items state with the data
         setItems(data.items);
         
-        // Disable automatic query invalidation to prevent refreshes
-        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
+        // Also trigger a query invalidation for React Query
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
         
         if (!silent) {
           toast({
@@ -272,8 +273,8 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           setItems(sortedItems);
         }
         
-        // Disable automatic query invalidation to prevent refreshes
-        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
+        // Also invalidate the query to ensure consistency
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
       } catch (error) {
         console.error("Error fetching items after save:", error);
       }

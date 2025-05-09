@@ -111,8 +111,7 @@ export default function Projects() {
         description: "Project created successfully",
       });
       setShowNewProjectDialog(false);
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       resetNewProjectForm();
     },
     onError: (error) => {
@@ -138,8 +137,7 @@ export default function Projects() {
         title: "Success",
         description: "Project moved to trash",
       });
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error) => {
       toast({
@@ -160,8 +158,7 @@ export default function Projects() {
         title: "Success",
         description: "Project permanently deleted",
       });
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error) => {
       toast({
@@ -191,8 +188,7 @@ export default function Projects() {
       });
       setShowStatusChangeDialog(false);
       setSelectedProject(null);
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
     },
     onError: (error) => {
       console.error("Status update failed:", error);

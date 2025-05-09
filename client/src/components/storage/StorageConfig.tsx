@@ -100,8 +100,7 @@ export default function StorageConfig() {
         title: "Success",
         description: "Storage configuration saved successfully",
       });
-      // Disable automatic query invalidation to prevent refreshes
-      // queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/storage-config`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/storage-config`] });
     },
     onError: (error) => {
       toast({
