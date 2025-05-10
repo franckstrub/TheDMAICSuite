@@ -529,7 +529,7 @@ export default function GateReviewValidation() {
                                 onClick={() => removeDeliverable(index)}
                                 disabled={deliverable.isRequired}
                               >
-                                <i className="fas fa-trash"></i>
+                                <i className="fas fa-trash text-gray-500"></i>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -675,7 +675,7 @@ export default function GateReviewValidation() {
                           size="icon"
                           onClick={() => removeValidator(index)}
                         >
-                          <i className="text-gray-500 fas fa-trash"></i>
+                          <i className="fas fa-trash"></i>
                         </Button>
                       </TableCell>
                     </TableRow>
