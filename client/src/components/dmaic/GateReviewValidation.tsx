@@ -72,21 +72,21 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
   {
     phase: "define",
     name: "SIPOC Diagram",
-    description: "Process mapping from Suppliers to Customers",
+    description: "High Level Process mapping from Suppliers to Customers",
     isRequired: true,
     isCompleted: false
   },
   {
     phase: "define",
-    name: "Customer Requirements",
-    description: "Voice of Customer (VOC) documentation",
+    name: "Voice of Customer",
+    description: "Voice of Customer (VOC) Requirements, needs and CTQs documentation",
     isRequired: true,
     isCompleted: false
   },
   {
     phase: "define",
-    name: "Business Requirements",
-    description: "Voice of Business (VOB) documentation",
+    name: "Voice of Business",
+    description: "Voice of Business (VOB) Requirements, needs and CTQs documentation",
     isRequired: true,
     isCompleted: false
   },
@@ -205,7 +205,37 @@ export default function GateReviewValidation() {
         );
       } else if (deliverablesData.deliverables) {
         console.log("Setting deliverables from data:", deliverablesData.deliverables);
-        setDeliverables(deliverablesData.deliverables);
+        
+        // Create a map to organize deliverables by name to match the original order
+        const deliverableMap = new Map<string, Deliverable>();
+        deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
+          deliverableMap.set(deliverable.name, deliverable);
+        });
+        
+        // Get all existing names from database and default list
+        const existingNames = new Set<string>([
+          ...deliverablesData.deliverables.map((d: Deliverable) => d.name),
+          ...defaultDefineDeliverables.map((d) => d.name)
+        ]);
+        
+        // First, add all default deliverables in their original order
+        const orderedDeliverables: Deliverable[] = [];
+        defaultDefineDeliverables.forEach(defaultDeliverable => {
+          if (existingNames.has(defaultDeliverable.name) && deliverableMap.has(defaultDeliverable.name)) {
+            // Add existing deliverable with this name
+            orderedDeliverables.push(deliverableMap.get(defaultDeliverable.name)!);
+            // Remove from map to track what we've already added
+            deliverableMap.delete(defaultDeliverable.name);
+          }
+        });
+        
+        // Then add any custom deliverables that aren't in the default list
+        deliverableMap.forEach((deliverable: Deliverable) => {
+          orderedDeliverables.push(deliverable);
+        });
+        
+        console.log("Ordered deliverables:", orderedDeliverables);
+        setDeliverables(orderedDeliverables);
       } else {
         console.log("Deliverables data structure is unexpected:", deliverablesData);
       }
@@ -219,7 +249,36 @@ export default function GateReviewValidation() {
     
     if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
       console.log("Setting validators from data:", validatorsData.validators);
-      setValidators(validatorsData.validators);
+      
+      // Define the default validator roles in the preferred order
+      const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Coach"];
+      
+      // Create a map of validators by role
+      const validatorsByRole = new Map<string, Validator>();
+      const customValidators: Validator[] = [];
+      
+      // Categorize validators into standard vs custom
+      validatorsData.validators.forEach((validator: Validator) => {
+        if (standardRoles.includes(validator.validatorRole)) {
+          validatorsByRole.set(validator.validatorRole, validator);
+        } else {
+          customValidators.push(validator);
+        }
+      });
+      
+      // Reorder validators: first standard roles in preferred order, then custom validators
+      const orderedValidators: Validator[] = [];
+      standardRoles.forEach(role => {
+        if (validatorsByRole.has(role)) {
+          orderedValidators.push(validatorsByRole.get(role)!);
+        }
+      });
+      
+      // Add custom validators 
+      orderedValidators.push(...customValidators);
+      
+      console.log("Ordered validators:", orderedValidators);
+      setValidators(orderedValidators);
     } else if (charter && charter.charter) {
       console.log("No validators found, creating defaults from charter");
       // If no validators exist yet but we have charter data, create default validators
@@ -470,7 +529,7 @@ export default function GateReviewValidation() {
                                 onClick={() => removeDeliverable(index)}
                                 disabled={deliverable.isRequired}
                               >
-                                <Trash2 className="w-4 h-4 text-gray-500" />
+                                <i className="fas fa-trash"></i>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -536,14 +595,14 @@ export default function GateReviewValidation() {
             {/* Validators Section */}
             <div>
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-medium">Validators</h3>
+                <h3 className="text-lg font-medium">Approvers</h3>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsAddingValidator(true)}
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add Validator
+                  Add Approver
                 </Button>
               </div>
               
@@ -616,7 +675,7 @@ export default function GateReviewValidation() {
                           size="icon"
                           onClick={() => removeValidator(index)}
                         >
-                          <Trash2 className="w-4 h-4 text-gray-500" />
+                          <i className="text-gray-500 fas fa-trash"></i>
                         </Button>
                       </TableCell>
                     </TableRow>
