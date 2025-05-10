@@ -480,14 +480,6 @@ export default function GateReviewValidation() {
                       style={{ width: `${deliverableCompletionPercentage}%` }}
                     ></div>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setIsAddingDeliverable(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add
-                  </Button>
                 </div>
               </div>
               
@@ -583,7 +575,7 @@ export default function GateReviewValidation() {
                             size="sm"
                             onClick={addDeliverable}
                           >
-                            Add
+                            Add Deliverable
                           </Button>
                         </div>
                       </TableCell>
@@ -591,6 +583,18 @@ export default function GateReviewValidation() {
                   )}
                 </TableBody>
               </Table>
+              
+              {/* Add Deliverable button moved to below the table */}
+              <div className="mt-4 mb-4 flex justify-start">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsAddingDeliverable(true)}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Deliverable
+                </Button>
+              </div>
             </div>
             
             {/* Validators Section */}
