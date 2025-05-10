@@ -1,6 +1,7 @@
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 import { 
+  projects,
   projectCharters,
   sipocDiagrams,
   customerRequirements,
@@ -129,7 +130,7 @@ export async function permanentlyDeleteProject(projectId: number): Promise<numbe
     console.log('Deletion summary:', results);
     
     return deletionCount;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error during cascade deletion of project ${projectId}:`, error);
     throw new Error(`Failed to permanently delete project: ${error.message}`);
   }
@@ -148,8 +149,8 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
     console.log("Running database cleanup for orphaned project data...");
     
     // Get all valid project IDs
-    const validProjects = await db.select({ id: { id: 'id' } }).from({ id: 'projects' });
-    const validProjectIds = validProjects.map(p => p.id.id);
+    const validProjects = await db.select({ id: projects.id }).from(projects);
+    const validProjectIds = validProjects.map(p => p.id);
     
     console.log(`Found ${validProjectIds.length} valid projects. Cleaning up orphaned data...`);
     
@@ -170,33 +171,45 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
     ];
     
     for (const { name, table } of tables) {
-      // Get all records from this table
-      const records = await db.select({ id: 'id', projectId: 'project_id' }).from(table);
-      
-      // Find orphaned records (those with project_id not in validProjectIds)
-      const orphaned = records.filter(record => 
-        record.projectId !== null && !validProjectIds.includes(record.projectId)
-      );
-      
-      if (orphaned.length > 0) {
-        console.log(`Found ${orphaned.length} orphaned records in ${name}`);
+      try {
+        // Get all records from this table with their ID and project ID
+        const records = await db.select({
+          id: table.id,
+          projectId: table.projectId
+        }).from(table);
         
-        // Delete orphaned records
-        const orphanedIds = orphaned.map(record => record.id);
-        const deleteResult = await db.delete(table)
-          .where(table.id.in(orphanedIds))
-          .returning();
+        // Find orphaned records (those with project_id not in validProjectIds)
+        const orphaned = records.filter(record => 
+          record.projectId !== null && !validProjectIds.includes(record.projectId)
+        );
         
-        results[name] = deleteResult.length;
-        console.log(`Deleted ${deleteResult.length} orphaned records from ${name}`);
-      } else {
+        if (orphaned.length > 0) {
+          console.log(`Found ${orphaned.length} orphaned records in ${name}`);
+          
+          // Delete each orphaned record individually to avoid the "in" operator type issue
+          let deleteCount = 0;
+          for (const record of orphaned) {
+            const deleteResult = await db.delete(table)
+              .where(eq(table.id, record.id))
+              .returning();
+              
+            deleteCount += deleteResult.length;
+          }
+          
+          results[name] = deleteCount;
+          console.log(`Deleted ${deleteCount} orphaned records from ${name}`);
+        } else {
+          results[name] = 0;
+          console.log(`No orphaned records found in ${name}`);
+        }
+      } catch (cleanupError) {
+        console.error(`Error cleaning up ${name}:`, cleanupError);
         results[name] = 0;
-        console.log(`No orphaned records found in ${name}`);
       }
     }
     
     return results;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error during orphaned data cleanup:", error);
     throw new Error(`Failed to clean up orphaned project data: ${error.message}`);
   }

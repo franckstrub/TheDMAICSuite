@@ -27,6 +27,7 @@ import { generateMitigationPlan } from "./googleai";
 // Import the Claude API for generating elevator speeches
 import { generateElevatorSpeech } from "./anthropic";
 import { registerGateReviewRoutes } from "./routes-gate-review";
+import { permanentlyDeleteProject } from "./cascade-project-delete";
 
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
@@ -320,7 +321,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Project not found" });
       }
       
+      // First use cascade deletion to remove all project-related data
+      console.log(`Starting cascade deletion for project ${id}: ${project.title}`);
+      const tablesAffected = await permanentlyDeleteProject(id);
+      console.log(`Cascade deletion completed. Affected ${tablesAffected} tables.`);
+      
+      // Then delete the project itself
       await storage.deleteProject(id);
+      console.log(`Project ${id} successfully deleted from the projects table.`);
       
       // Log activity
       if (userId) {
