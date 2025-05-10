@@ -149,7 +149,7 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
     console.log("Running database cleanup for orphaned project data...");
     
     // Get all valid project IDs
-    const validProjects = await db.select({ id: projects.id }).from(projects);
+    const validProjects = await db.select().from(projects);
     const validProjectIds = validProjects.map(p => p.id);
     
     console.log(`Found ${validProjectIds.length} valid projects. Cleaning up orphaned data...`);
@@ -172,21 +172,20 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
     
     for (const { name, table } of tables) {
       try {
-        // Get all records from this table with their ID and project ID
-        const records = await db.select({
-          id: table.id,
-          projectId: table.projectId
-        }).from(table);
+        // Get all records from this table
+        const records = await db.select().from(table);
         
         // Find orphaned records (those with project_id not in validProjectIds)
         const orphaned = records.filter(record => 
-          record.projectId !== null && !validProjectIds.includes(record.projectId)
+          record.projectId !== null && 
+          record.projectId !== undefined && 
+          !validProjectIds.includes(record.projectId)
         );
         
         if (orphaned.length > 0) {
           console.log(`Found ${orphaned.length} orphaned records in ${name}`);
           
-          // Delete each orphaned record individually to avoid the "in" operator type issue
+          // Delete each orphaned record individually
           let deleteCount = 0;
           for (const record of orphaned) {
             const deleteResult = await db.delete(table)
@@ -202,7 +201,7 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
           results[name] = 0;
           console.log(`No orphaned records found in ${name}`);
         }
-      } catch (cleanupError) {
+      } catch (cleanupError: any) {
         console.error(`Error cleaning up ${name}:`, cleanupError);
         results[name] = 0;
       }
