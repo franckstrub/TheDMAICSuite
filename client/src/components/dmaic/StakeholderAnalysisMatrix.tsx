@@ -66,32 +66,32 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     staleTime: 5000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: false, // Refetch every 10 seconds
   });
 
   // Initial data loading when component mounts or when returning to page
   useEffect(() => {
     console.log("StakeholderAnalysisMatrix mounted - checking for saved items");
-    
+
     // Check if we have previously saved items in sessionStorage
     const hasItems = sessionStorage.getItem(`project_${projectId}_has_stakeholder_analysis`);
-    
+
     if (hasItems === 'true') {
       console.log("Stakeholder analysis flag found in sessionStorage, loading from database");
       loadAnalysisFromDatabase(true);
     }
   }, [projectId]);
-  
+
   // React to data changes to keep UI in sync with database
   useEffect(() => {
     console.log("Stakeholder analysis data changed:", analysisData);
     if (analysisData?.items && analysisData.items.length > 0) {
       // Use items as they come from the database without sorting
       console.log("Using stakeholder analysis items in their original order:", analysisData.items);
-      
+
       // Set the items state with the data
       setItems(analysisData.items);
-      
+
       // Store flag in sessionStorage
       sessionStorage.setItem(`project_${projectId}_has_stakeholder_analysis`, 'true');
     } else if (analysisData) {
@@ -100,7 +100,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       setItems([createDefaultRow(Number(projectId))]);
     }
   }, [analysisData, projectId]);
-  
+
   // Adjust textarea heights after items are rendered or updated
   useEffect(() => {
     if (items.length > 0) {
@@ -109,14 +109,14 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         items.forEach((_, index) => {
           // Adjust strategy field
           adjustTextareaHeight(index);
-          
+
           // Adjust name field
           const nameTextarea = textareaRefs.current[`name-${index}`];
           if (nameTextarea) {
             nameTextarea.style.height = 'auto';
             nameTextarea.style.height = `${Math.max(60, nameTextarea.scrollHeight + 4)}px`;
           }
-          
+
           // Adjust role field
           const roleTextarea = textareaRefs.current[`role-${index}`];
           if (roleTextarea) {
@@ -134,7 +134,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     try {
       console.log("Explicitly loading stakeholder analysis from database");
       const response = await fetch(`/api/projects/${projectId}/stakeholder-analysis`);
-      
+
       if (!response.ok) {
         // If 404, it means there's no analysis yet
         if (response.status === 404) {
@@ -143,30 +143,30 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           setItems(defaultRow);
           return defaultRow;
         }
-        
+
         throw new Error(`HTTP error ${response.status}`);
       }
-      
+
       const data = await response.json() as AnalysisResponse;
       console.log("Loaded stakeholder analysis from database:", data);
-      
+
       if (data?.items && data.items.length > 0) {
         // Use items as they come from the database without sorting
         console.log("Using stakeholder analysis items in their original order:", data.items);
-        
+
         // Set the items state with the data
         setItems(data.items);
-        
+
         // Also trigger a query invalidation for React Query
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
-        
+
         if (!silent) {
           toast({
             title: "Data Refreshed",
             description: "Stakeholder analysis loaded successfully",
           });
         }
-        
+
         return data.items;
       } else {
         // If no items found, ensure we have at least one empty row
@@ -184,7 +184,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           variant: "destructive",
         });
       }
-      
+
       // Ensure we have at least one empty row even on error
       const defaultRow = [createDefaultRow(Number(projectId))];
       setItems(defaultRow);
@@ -197,22 +197,22 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     mutationFn: async (items: StakeholderAnalysisItem[]) => {
       // Filter out items with empty stakeholder names
       const validItems = items.filter(item => item.stakeholderName.trim() !== "");
-      
+
       // Always include at least one row even if empty
       const itemsToSave = validItems.length > 0 ? 
         validItems : 
         [createDefaultRow(Number(projectId))];
-      
+
       console.log("Saving stakeholder analysis items:", itemsToSave);
-      
+
       try {
         // First, get existing items to delete them
         const existingItemsResponse = await fetch(`/api/projects/${projectId}/stakeholder-analysis`);
-        
+
         if (existingItemsResponse.ok) {
           const existingItemsData = await existingItemsResponse.json() as AnalysisResponse;
           console.log("Current items in database before deletion:", existingItemsData);
-          
+
           // Delete all existing items
           if (existingItemsData?.items && existingItemsData.items.length > 0) {
             console.log(`Deleting ${existingItemsData.items.length} existing items`);
@@ -223,7 +223,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             console.log("All existing items deleted");
           }
         }
-        
+
         // Now create new items
         console.log(`Creating ${itemsToSave.length} new items`);
         const createPromises = itemsToSave.map(item => {
@@ -238,10 +238,10 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             engagementStrategy: item.engagementStrategy,
             userId,
           };
-          
+
           return apiRequest("POST", `/api/projects/${projectId}/stakeholder-analysis`, payload);
         });
-        
+
         const results = await Promise.all(createPromises);
         console.log("New stakeholder analysis items created:", results);
         return results;
@@ -256,23 +256,23 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         title: "Success",
         description: "Stakeholder analysis saved successfully",
       });
-      
+
       try {
         // Directly fetch the latest items instead of just invalidating
         console.log("Fetching latest stakeholder analysis items after successful save");
         const response = await fetch(`/api/projects/${projectId}/stakeholder-analysis`);
         const freshData = await response.json() as AnalysisResponse;
         console.log("Fresh stakeholder analysis data after save:", freshData);
-        
+
         if (freshData?.items && freshData.items.length > 0) {
           // Sort by ID
           const sortedItems = [...freshData.items].sort((a, b) => a.id - b.id);
           console.log("Items sorted by ID in ascending order:", sortedItems);
-          
+
           // Update state
           setItems(sortedItems);
         }
-        
+
         // Also invalidate the query to ensure consistency
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
       } catch (error) {
@@ -292,7 +292,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
   // Event handler for saving analysis
   const handleSaveAnalysis = async () => {
     console.log("handleSaveAnalysis called with items:", items);
-    
+
     try {
       // Ensure we always have at least one row before saving
       let itemsToSave = items;
@@ -300,23 +300,23 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         itemsToSave = [createDefaultRow(Number(projectId))];
         setItems(itemsToSave);
       }
-      
+
       // Disable refetching temporarily to prevent race conditions
       await queryClient.cancelQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
-      
+
       // Now proceed with saving
       console.log("Initiating stakeholder analysis save operation...");
       await saveAnalysisMutation.mutateAsync(itemsToSave);
-      
+
       // Force refetch to ensure we have the latest data
       console.log("Save complete, now reloading data directly from database");
       await loadAnalysisFromDatabase(true); // silent load
-      
+
       // Also force a refresh of the query cache
       await refetchAnalysis();
-      
+
       console.log("Stakeholder analysis save and reload operation complete");
-      
+
       // Store a flag in sessionStorage
       sessionStorage.setItem(`project_${projectId}_has_stakeholder_analysis`, 'true');
     } catch (error) {
@@ -348,7 +348,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     if (items.length <= 1) {
       return;
     }
-    
+
     const newItems = [...items];
     newItems.splice(index, 1);
     setItems(newItems);
@@ -378,7 +378,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       return "Monitor";
     }
   };
-  
+
   // Function to generate AI-assisted engagement strategy suggestions
   const generateEngagementStrategy = (
     interest: InterestLevel, 
@@ -390,7 +390,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     const supportState = supportLevel === 'Resistant' 
       ? `resistant (${resistanceType || 'unspecified'} resistance)`
       : supportLevel.toLowerCase();
-    
+
     // Base strategies by position
     const baseStrategies = {
       "Key Player": [
@@ -436,7 +436,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         "Minimal engagement unless status changes"
       ]
     };
-    
+
     // Modified strategies based on support level
     let supportModifiers = {
       "supporter": [
@@ -484,10 +484,10 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         ]
       }
     };
-    
+
     // Select strategies based on position and support level
     let strategies = [...baseStrategies[position]];
-    
+
     if (supportLevel === 'Resistant' && resistanceType) {
       strategies = strategies.concat(
         supportModifiers.resistant[resistanceType as keyof typeof supportModifiers.resistant] ||
@@ -498,19 +498,19 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     } else if (supportLevel === 'Neutral') {
       strategies = strategies.concat(supportModifiers.neutral);
     }
-    
+
     // Randomize but ensure we don't always get the same suggestions
     const shuffledStrategies = [...strategies].sort(() => 0.5 - Math.random());
-    
+
     // Build the personalized strategy suggestion
     let suggestion = `${position} | ${supportLevel}:\n`;
-    
+
     // Add 2-3 specific strategy elements
     const numStrategies = Math.min(3, shuffledStrategies.length);
     for (let i = 0; i < numStrategies; i++) {
       suggestion += `• ${shuffledStrategies[i]}\n`;
     }
-    
+
     return suggestion;
   };
 
@@ -521,11 +521,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       if (textarea) {
         // Reset height to default to get accurate scrollHeight measurement
         textarea.style.height = 'auto';
-        
+
         // Calculate new height based on content (add a small buffer for better appearance)
         const newHeight = Math.max(60, textarea.scrollHeight + 4);
         textarea.style.height = `${newHeight}px`;
-        
+
         console.log(`Adjusted textarea height for index ${index} to ${newHeight}px`);
       }
     }, 0);
@@ -544,16 +544,16 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           <CardTitle>Stakeholder Analysis Matrix</CardTitle>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {/* Description text */}
         <p className="text-sm text-gray-500 mb-4">
           The Stakeholder Analysis Matrix helps identify stakeholders' influence and interest levels, and plan appropriate engagement strategies.
         </p>
-      
+
         {/* Display loading state */}
         {isAnalysisLoading && <div className="py-4">Loading stakeholder analysis...</div>}
-      
+
         {/* Main content */}
         <div className="bg-white rounded-lg p-2 border border-gray-200">
           <div className="overflow-x-auto">
@@ -706,12 +706,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                     item.supportLevel === 'Resistant' ? item.resistanceType : null
                                   );
                                   updateItem(index, 'engagementStrategy', suggestion);
-                                  
+
                                   toast({
                                     title: "AI Strategy Generated",
                                     description: "The engagement strategy has been suggested based on stakeholder attributes",
                                   });
-                                  
+
                                   // Auto-adjust height after content is set
                                   setTimeout(() => adjustTextareaHeight(index), 50);
                                 }}
@@ -743,7 +743,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
               </TableBody>
             </Table>
           </div>
-          
+
           {/* Add row button */}
           <Button
             onClick={addItem}
@@ -751,7 +751,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
           >
             <Plus className="h-4 w-4 mr-2" /> Add Stakeholder
           </Button>
-          
+
           {/* Save button */}
           <div className="mt-6 flex justify-start">
             <Button
@@ -778,7 +778,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                 <li><span className="font-medium text-gray-700">Monitor:</span> Low interest, low/medium influence - Monitor with minimal effort</li>
               </ul>
             </div>
-            
+
             <div className="w-1/2">
               <p className="font-medium">Resistance Types:</p>
               <ul className="list-disc ml-4 space-y-0.5">

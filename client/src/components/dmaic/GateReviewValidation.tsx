@@ -90,10 +90,46 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
     isRequired: true,
     isCompleted: false
   },
+  
   {
     phase: "define",
     name: "Risk Assessment",
     description: "Initial project risk analysis and mitigation plans",
+    isRequired: true,
+    isCompleted: false
+  },
+  {
+    phase: "define",
+    name: "RACI Matrix",
+    description: "Project RACI (Responsible, Accountable, Consulted, Informed) matrix",
+    isRequired: true,
+    isCompleted: false
+  },
+  {
+    phase: "define",
+    name: "Stakeholder Analysis",
+    description: "Project Stakeholder Analysis Matrix",
+    isRequired: true,
+    isCompleted: false
+  },
+  {
+    phase: "define",
+    name: "Gantt Plan",
+    description: "Project Gantt Plan",
+    isRequired: true,
+    isCompleted: false
+  },
+  {
+    phase: "define",
+    name: "Elevator Speech",
+    description: "Project Elevator Speech",
+    isRequired: true,
+    isCompleted: false
+  },
+  {
+    phase: "define",
+    name: "Gate Review and Validation",
+    description: "Project Gate Review and Validation by Sponsor & Key Stakeholders",
     isRequired: true,
     isCompleted: false
   }
