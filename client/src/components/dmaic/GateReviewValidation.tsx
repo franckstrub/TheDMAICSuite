@@ -528,8 +528,9 @@ export default function GateReviewValidation() {
                                 size="icon"
                                 onClick={() => removeDeliverable(index)}
                                 disabled={deliverable.isRequired}
+                                className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
                               >
-                                <i className="fas fa-trash text-gray-500"></i>
+                                <i className="fas fa-trash"></i>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -674,6 +675,7 @@ export default function GateReviewValidation() {
                           variant="ghost" 
                           size="icon"
                           onClick={() => removeValidator(index)}
+                          className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
                         >
                           <i className="fas fa-trash"></i>
                         </Button>
