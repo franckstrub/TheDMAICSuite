@@ -590,6 +590,7 @@ export default function GateReviewValidation() {
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsAddingDeliverable(true)}
+                  className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Deliverable
@@ -601,14 +602,6 @@ export default function GateReviewValidation() {
             <div>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-medium">Approvers</h3>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsAddingValidator(true)}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Approver
-                </Button>
               </div>
               
               <Table>
@@ -738,6 +731,17 @@ export default function GateReviewValidation() {
                   )}
                 </TableBody>
               </Table>
+              <div className="flex justify-start items-center mb-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsAddingValidator(true)}
+                  className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Approver
+                </Button>
+              </div>
             </div>
             
             {/* Save Button */}
