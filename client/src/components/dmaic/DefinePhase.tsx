@@ -247,7 +247,7 @@ export default function DefinePhase() {
     staleTime: 5000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+    refetchInterval: false, // was 10000 Refetch every 10 seconds to ensure latest data 10 sec. is 10000
   });
 
   // Fetch project data to get the elevator speech
@@ -1035,7 +1035,7 @@ export default function DefinePhase() {
     staleTime: 5000,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
+    refetchInterval: false, // was 10000. Refetch every 10 seconds to ensure latest data
   });
   
   // Initial data load effect for business requirements - triggered on mount and when returning to page
