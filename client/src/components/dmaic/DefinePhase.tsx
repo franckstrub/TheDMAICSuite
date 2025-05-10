@@ -4365,7 +4365,7 @@ export default function DefinePhase() {
                   className="w-full min-h-[200px] p-4 text-gray-800 resize-none border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={elevatorSpeech || ""}
                   onChange={(e) => setElevatorSpeech(e.target.value)}
-                  placeholder="Type your elevator speech here or generate it by AI..."
+                  placeholder="Type your elevator speech here or generate it by AI... Elevator speech structure: Good morning Sir, I am in charge of a new project...              Here's what the project is about... Here's why it's important to do it... Here's what we want to achieve... Here’s what the benefits are... Here's how you could help us..."
                 />
                 {projectData?.project?.elevatorSpeech && projectData.project.elevatorSpeech.includes("AI has generated this elevator speech") && (
                   <div className="absolute top-2 right-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md flex items-center gap-1">
