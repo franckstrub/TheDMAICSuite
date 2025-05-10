@@ -27,7 +27,7 @@ import { generateMitigationPlan } from "./googleai";
 // Import the Claude API for generating elevator speeches
 import { generateElevatorSpeech } from "./anthropic";
 import { registerGateReviewRoutes } from "./routes-gate-review";
-import { permanentlyDeleteProject } from "./cascade-project-delete";
+import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
 
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
@@ -1933,6 +1933,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       return res.status(200).json({ message: "Stakeholder analysis item deleted successfully" });
     } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+  
+  // Database cleanup and maintenance routes
+  app.post("/api/admin/cleanup-orphaned-data", async (req: Request, res: Response) => {
+    try {
+      console.log("Starting database cleanup of orphaned project data...");
+      const results = await cleanupOrphanedProjectData();
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: "Orphaned data cleanup completed successfully",
+        results 
+      });
+    } catch (err) {
+      console.error("Error during orphaned data cleanup:", err);
       return handleErrors(err, res);
     }
   });
