@@ -596,16 +596,13 @@ export default function GateReviewValidation() {
                                 toast({
                                   title: "Success",
                                   description: `File "${file.name}" uploaded successfully`,
-                                  variant: "default"
+                                  variant: "default",
+                                  duration: 3000
                                 });
 
-                                // Refresh deliverables
-                                queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-
-                                toast({
-                                  title: "Success",
-                                  description: "File uploaded successfully",
-                                });
+                                // Force refresh of deliverables data
+                                await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+                                await queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
                               } catch (error) {
                                 console.error('Upload error:', error);
                                 toast({
