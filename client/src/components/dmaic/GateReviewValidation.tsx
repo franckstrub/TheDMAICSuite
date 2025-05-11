@@ -376,10 +376,10 @@ export default function GateReviewValidation() {
   };
 
   // Add a new deliverable
-  const addDeliverable = () => {
+  const addDeliverable = async () => {
     if (!newDeliverable.trim()) return;
     
-    const newDeliverableObj: Deliverable = {
+    const newDeliverableObj: Omit<Deliverable, 'id'> = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
       name: newDeliverable,
@@ -387,11 +387,28 @@ export default function GateReviewValidation() {
       isRequired: false,
       isCompleted: false
     };
-    
-    setDeliverables([...deliverables, newDeliverableObj]);
-    setNewDeliverable('');
-    setNewDeliverableDescription('');
-    setIsAddingDeliverable(false);
+
+    try {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, newDeliverableObj);
+      if (response?.deliverable) {
+        setDeliverables([...deliverables, response.deliverable]);
+        setNewDeliverable('');
+        setNewDeliverableDescription('');
+        setIsAddingDeliverable(false);
+        
+        toast({
+          title: "Success",
+          description: "New deliverable added successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding deliverable:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add new deliverable",
+        variant: "destructive"
+      });
+    }
   };
 
   // Add a new validator
@@ -603,17 +620,23 @@ export default function GateReviewValidation() {
                         <Badge variant="outline" className="bg-gray-50">Optional</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={addDeliverable}
+                            className="h-7 px-2 text-green-600 hover:text-green-800 border-green-600 hover:bg-green-50"
+                            >
+                              <Check className="w-4 h-4" />
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
                             onClick={() => setIsAddingDeliverable(false)}
-                          
                             className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
                             >
                               <i className="fas fa-trash"></i>
                           </Button>
-
                         </div>
                       </TableCell>
                     </TableRow>
