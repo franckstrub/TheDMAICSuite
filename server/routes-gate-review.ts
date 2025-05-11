@@ -1,3 +1,4 @@
+
 import { Express, Request, Response } from 'express';
 import { z } from 'zod';
 import { insertGateReviewDeliverableSchema, insertGateReviewValidatorSchema } from '@shared/schema';
@@ -187,25 +188,25 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
   // Add this route to handle file uploads
   const upload = multer({ storage: multer.memoryStorage() });
   app.post("/api/projects/:projectId/gate-review-attachments", upload.single('file'), async (req: Request, res: Response) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
+
+      const fileName = `gate-review-attachments/${projectId}/${Date.now()}-${req.file.originalname}`;
+      
+      await objectStorage.put(fileName, req.file.buffer);
+      const url = await objectStorage.getUrl(fileName);
+
+      res.json({ url });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Failed to upload file" });
     }
-
-    const projectId = parseInt(req.params.projectId);
-    if (isNaN(projectId)) {
-      return res.status(400).json({ error: "Invalid project ID" });
-    }
-
-    const fileName = `gate-review-attachments/${projectId}/${Date.now()}-${req.file.originalname}`;
-    
-    await objectStorage.put(fileName, req.file.buffer);
-    const url = await objectStorage.getUrl(fileName);
-
-    res.json({ url });
-  } catch (error) {
-    console.error("Error uploading file:", error);
-    res.status(500).json({ error: "Failed to upload file" });
-  }
   });
-});
+}
