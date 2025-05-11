@@ -182,9 +182,9 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
   });
 }
 import multer from 'multer';
-import ObjectStorage from '@replit/object-storage';
+import { Client } from '@replit/object-storage';
 
-const storage = new ObjectStorage();
+const storage = new Client();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Add this route to handle file uploads
