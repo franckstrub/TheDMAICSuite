@@ -6,7 +6,12 @@ import multer from 'multer';
 import { Client } from '@replit/object-storage';
 
 export function registerGateReviewRoutes(app: Express, storage: any) {
-  const objectStorage = new Client();
+  let objectStorage: Client | null = null;
+  try {
+    objectStorage = new Client();
+  } catch (error) {
+    console.warn("Failed to initialize object storage client:", error);
+  }
   // Gate Review Deliverables Routes
   app.get("/api/projects/:projectId/gate-review-deliverables", async (req: Request, res: Response) => {
     try {
@@ -198,12 +203,20 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
 
+      if (!objectStorage) {
+        return res.status(503).json({ error: "Object storage is not available" });
+      }
+
       const fileName = `gate-review-attachments/${projectId}/${Date.now()}-${req.file.originalname}`;
       
-      await objectStorage.put(fileName, req.file.buffer);
-      const url = await objectStorage.getUrl(fileName);
-
-      res.json({ url });
+      try {
+        await objectStorage.put(fileName, req.file.buffer);
+        const url = await objectStorage.getUrl(fileName);
+        res.json({ url });
+      } catch (error) {
+        console.error("Error interacting with object storage:", error);
+        res.status(503).json({ error: "Failed to store file" });
+      }
     } catch (error) {
       console.error("Error uploading file:", error);
       res.status(500).json({ error: "Failed to upload file" });
