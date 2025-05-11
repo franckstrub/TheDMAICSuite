@@ -553,7 +553,7 @@ export default function GateReviewValidation() {
                         >
                           <i className="fas fa-paperclip"></i>
                         </a>
-                      ) : (
+                      ) : !deliverable.isRequired && (
                         <label className="cursor-pointer">
                           <input 
                             type="file"
