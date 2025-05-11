@@ -586,13 +586,7 @@ export default function GateReviewValidation() {
 
                                 if (!response2) throw new Error('Failed to update deliverable');
 
-                                // Update the local state immediately after successful DB update
-                                const newDeliverables = deliverables.map(d =>
-                                  d.id === deliverable.id ? updatedDeliverable : d
-                                );
-                                setDeliverables(newDeliverables);
-
-                                // Show success message
+                                // Show success message first
                                 toast({
                                   title: "Success",
                                   description: `File "${file.name}" uploaded successfully`,
@@ -600,9 +594,19 @@ export default function GateReviewValidation() {
                                   duration: 3000
                                 });
 
-                                // Force refresh of deliverables data
+                                // Update the local state
+                                setDeliverables(prevDeliverables => 
+                                  prevDeliverables.map(d =>
+                                    d.id === deliverable.id ? {
+                                      ...d,
+                                      attachmentUrl: data.url,
+                                      attachmentName: file.name
+                                    } : d
+                                  )
+                                );
+
+                                // Refresh the data
                                 await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-                                await queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
                               } catch (error) {
                                 console.error('Upload error:', error);
                                 toast({
