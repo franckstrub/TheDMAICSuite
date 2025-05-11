@@ -2,6 +2,30 @@
 import { Express, Request, Response } from 'express';
 import { z } from 'zod';
 import { insertGateReviewDeliverableSchema, insertGateReviewValidatorSchema } from '@shared/schema';
+
+const defaultDefineDeliverables = [
+  {
+    name: "Project Charter",
+    description: "Complete project charter with all required sections",
+    phase: "define",
+    isRequired: true,
+    isCompleted: false
+  },
+  {
+    name: "SIPOC Diagram",
+    description: "Suppliers, Inputs, Process, Outputs, Customers diagram",
+    phase: "define", 
+    isRequired: true,
+    isCompleted: false
+  },
+  {
+    name: "Customer Requirements",
+    description: "Voice of Customer and Critical to Quality requirements",
+    phase: "define",
+    isRequired: true,
+    isCompleted: false
+  }
+];
 import multer from 'multer';
 import { Client } from '@replit/object-storage';
 
