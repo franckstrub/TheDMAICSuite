@@ -181,3 +181,32 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
     }
   });
 }
+import multer from 'multer';
+import { ObjectStorage } from '@replit/object-storage';
+
+const storage = new ObjectStorage();
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Add this route to handle file uploads
+app.post("/api/projects/:projectId/gate-review-attachments", upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: "Invalid project ID" });
+    }
+
+    const fileName = `gate-review-attachments/${projectId}/${Date.now()}-${req.file.originalname}`;
+    
+    await storage.upload(fileName, req.file.buffer);
+    const url = await storage.getUrl(fileName);
+
+    res.json({ url });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    res.status(500).json({ error: "Failed to upload file" });
+  }
+});
