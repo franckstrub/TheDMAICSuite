@@ -541,18 +541,74 @@ export default function GateReviewValidation() {
                         />
                       </TableCell>
                       <TableCell className="font-medium">
-                    {deliverable.name}
-                    {deliverable.attachmentUrl && (
-                      <a 
-                        href={deliverable.attachmentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-2 text-blue-500 hover:text-blue-700"
-                        title={deliverable.attachmentName}
-                      >
-                        <i className="fas fa-paperclip"></i>
-                      </a>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span>{deliverable.name}</span>
+                      {deliverable.attachmentUrl ? (
+                        <a 
+                          href={deliverable.attachmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-700"
+                          title={deliverable.attachmentName}
+                        >
+                          <i className="fas fa-paperclip"></i>
+                        </a>
+                      ) : (
+                        <label className="cursor-pointer">
+                          <input 
+                            type="file"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              
+                              try {
+                                const response = await fetch(`/api/projects/${projectId}/gate-review-attachments`, {
+                                  method: 'POST',
+                                  body: formData
+                                });
+                                
+                                if (!response.ok) throw new Error('Upload failed');
+                                
+                                const data = await response.json();
+                                
+                                // Update deliverable with attachment info
+                                const updatedDeliverable = {
+                                  ...deliverable,
+                                  attachmentUrl: data.url,
+                                  attachmentName: file.name
+                                };
+                                
+                                // Update the deliverable
+                                await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, updatedDeliverable);
+                                
+                                // Refresh deliverables
+                                queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+                                
+                                toast({
+                                  title: "Success",
+                                  description: "File uploaded successfully",
+                                });
+                              } catch (error) {
+                                console.error('Upload error:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to upload file",
+                                  variant: "destructive"
+                                });
+                              }
+                            }}
+                          />
+                          <Button variant="ghost" size="sm">
+                            <i className="fas fa-upload mr-1"></i>
+                            Upload
+                          </Button>
+                        </label>
+                      )}
+                    </div>
                   </TableCell>
                       <TableCell>{deliverable.description}</TableCell>
                       <TableCell>
