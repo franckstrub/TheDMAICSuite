@@ -67,11 +67,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <p className="mb-2">
               Copyright © {new Date().getFullYear()} <a href="https://equable.fr" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Equable</a>
               &nbsp;&nbsp;|&nbsp;&nbsp;The Lean Six Sigma DMAIC Suite™ is edited by <a href="https://equable.fr" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Equable</a>
-            &nbsp;&nbsp;|&nbsp;&nbsp;
+            </p>
             <a href="https://www.linkedin.com/in/franckstrubequable/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:text-primary-dark">
               <i className="fab fa-linkedin text-lg"></i>
             </a>
-            </p>
           </footer>
         </main>
       </div>

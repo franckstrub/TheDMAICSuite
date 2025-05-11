@@ -150,7 +150,7 @@ export default function GateReviewValidation() {
   const [newDeliverableDescription, setNewDeliverableDescription] = useState('');
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
-  const [newValidatorComments, setNewValidatorComments] = useState('');
+  
   // Fetch the project charter to get validators
   const { data: charter } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
@@ -376,10 +376,10 @@ export default function GateReviewValidation() {
   };
 
   // Add a new deliverable
-  const addDeliverable = async () => {
+  const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
     
-    const newDeliverableObj: Omit<Deliverable, 'id'> = {
+    const newDeliverableObj: Deliverable = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
       name: newDeliverable,
@@ -387,28 +387,11 @@ export default function GateReviewValidation() {
       isRequired: false,
       isCompleted: false
     };
-
-    try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, newDeliverableObj);
-      if (response?.deliverable) {
-        setDeliverables([...deliverables, response.deliverable]);
-        setNewDeliverable('');
-        setNewDeliverableDescription('');
-        setIsAddingDeliverable(false);
-        
-        toast({
-          title: "Success",
-          description: "New deliverable added successfully",
-        });
-      }
-    } catch (error) {
-      console.error("Error adding deliverable:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add new deliverable",
-        variant: "destructive"
-      });
-    }
+    
+    setDeliverables([...deliverables, newDeliverableObj]);
+    setNewDeliverable('');
+    setNewDeliverableDescription('');
+    setIsAddingDeliverable(false);
   };
 
   // Add a new validator
@@ -420,14 +403,12 @@ export default function GateReviewValidation() {
       phase: "define",
       validatorName: newValidatorName,
       validatorRole: newValidatorRole,
-      status: "Pending",
-      comments : newValidatorComments
+      status: "Pending"
     };
     
     setValidators([...validators, newValidatorObj]);
     setNewValidatorName('');
     setNewValidatorRole('');
-    setNewValidatorComments('');
     setIsAddingValidator(false);
   };
 
@@ -620,22 +601,20 @@ export default function GateReviewValidation() {
                         <Badge variant="outline" className="bg-gray-50">Optional</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={addDeliverable}
-                            className="h-7 px-2 text-green-600 hover:text-green-800 border-green-600 hover:bg-green-50"
-                            >
-                              <Check className="w-4 h-4" />
-                          </Button>
+                        <div className="flex justify-end gap-1">
                           <Button 
                             variant="ghost" 
                             size="sm"
                             onClick={() => setIsAddingDeliverable(false)}
-                            className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
-                            >
-                              <i className="fas fa-trash"></i>
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={addDeliverable}
+                          >
+                            Add Deliverable
                           </Button>
                         </div>
                       </TableCell>
@@ -764,10 +743,8 @@ export default function GateReviewValidation() {
                       </TableCell>
                       <TableCell>
                         <Textarea
-                          
-                          placeholder="Add comments"
-                          value={newValidatorComments}
-                          onChange={(e) => setNewValidatorComments(e.target.value)}
+                          disabled
+                          placeholder="Add comments after creation"
                           className="min-h-[80px] resize-none"
                         />
                       </TableCell>
@@ -777,12 +754,16 @@ export default function GateReviewValidation() {
                             variant="ghost" 
                             size="sm"
                             onClick={() => setIsAddingValidator(false)}
-                          
-                            className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
-                            >
-                              <i className="fas fa-trash"></i>
+                          >
+                            Cancel
                           </Button>
-                          
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={addValidator}
+                          >
+                            Add
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
