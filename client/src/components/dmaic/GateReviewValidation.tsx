@@ -602,7 +602,11 @@ export default function GateReviewValidation() {
                               }
                             }}
                           />
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => {
+                            // Trigger file input click
+                            const fileInput = document.querySelector(`input[type="file"]`) as HTMLInputElement;
+                            if (fileInput) fileInput.click();
+                          }}>
                             <i className="fas fa-upload mr-1"></i>
                             Upload
                           </Button>
