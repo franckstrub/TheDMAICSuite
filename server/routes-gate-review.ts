@@ -182,7 +182,7 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
   });
 }
 import multer from 'multer';
-import { ObjectStorage } from '@replit/object-storage';
+import ObjectStorage from '@replit/object-storage';
 
 const storage = new ObjectStorage();
 const upload = multer({ storage: multer.memoryStorage() });
