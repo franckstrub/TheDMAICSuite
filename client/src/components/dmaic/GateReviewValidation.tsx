@@ -566,6 +566,14 @@ export default function GateReviewValidation() {
                               formData.append('file', file);
 
                               try {
+                                // Show upload started toast
+                                toast({
+                                  title: "Upload Started",
+                                  description: `Uploading file "${file.name}"...`,
+                                  variant: "default",
+                                  duration: 3000
+                                });
+
                                 const response = await fetch(`/api/projects/${projectId}/gate-review-attachments`, {
                                   method: 'POST',
                                   body: formData
@@ -586,12 +594,12 @@ export default function GateReviewValidation() {
 
                                 if (!response2) throw new Error('Failed to update deliverable');
 
-                                // Show success message first
+                                // Show upload completed toast
                                 toast({
-                                  title: "Success",
-                                  description: `File "${file.name}" uploaded successfully`,
+                                  title: "Upload Complete",
+                                  description: `File "${file.name}" uploaded successfully. Click the attachment icon to view.`,
                                   variant: "default",
-                                  duration: 3000
+                                  duration: 5000
                                 });
 
                                 // Update the local state
