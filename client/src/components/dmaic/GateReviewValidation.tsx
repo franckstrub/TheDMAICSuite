@@ -620,17 +620,23 @@ export default function GateReviewValidation() {
                         <Badge variant="outline" className="bg-gray-50">Optional</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={addDeliverable}
+                            className="h-7 px-2 text-green-600 hover:text-green-800 border-green-600 hover:bg-green-50"
+                            >
+                              <Check className="w-4 h-4" />
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
                             onClick={() => setIsAddingDeliverable(false)}
-                          
                             className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
                             >
                               <i className="fas fa-trash"></i>
                           </Button>
-
                         </div>
                       </TableCell>
                     </TableRow>
