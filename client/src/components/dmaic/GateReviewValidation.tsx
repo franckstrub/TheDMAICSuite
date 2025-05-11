@@ -150,7 +150,7 @@ export default function GateReviewValidation() {
   const [newDeliverableDescription, setNewDeliverableDescription] = useState('');
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
-  
+  const [newValidatorComments, setNewValidatorComments] = useState('');
   // Fetch the project charter to get validators
   const { data: charter } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
@@ -403,12 +403,14 @@ export default function GateReviewValidation() {
       phase: "define",
       validatorName: newValidatorName,
       validatorRole: newValidatorRole,
-      status: "Pending"
+      status: "Pending",
+      comments : newValidatorComments
     };
     
     setValidators([...validators, newValidatorObj]);
     setNewValidatorName('');
     setNewValidatorRole('');
+    setNewValidatorComments('');
     setIsAddingValidator(false);
   };
 
@@ -606,16 +608,12 @@ export default function GateReviewValidation() {
                             variant="ghost" 
                             size="sm"
                             onClick={() => setIsAddingDeliverable(false)}
-                          >
-                            Cancel
+                          
+                            className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
+                            >
+                              <i className="fas fa-trash"></i>
                           </Button>
-                          <Button 
-                            variant="default" 
-                            size="sm"
-                            onClick={addDeliverable}
-                          >
-                            Add Deliverable
-                          </Button>
+
                         </div>
                       </TableCell>
                     </TableRow>
@@ -743,8 +741,10 @@ export default function GateReviewValidation() {
                       </TableCell>
                       <TableCell>
                         <Textarea
-                          disabled
-                          placeholder="Add comments after creation"
+                          
+                          placeholder="Add comments"
+                          value={newValidatorComments}
+                          onChange={(e) => setNewValidatorComments(e.target.value)}
                           className="min-h-[80px] resize-none"
                         />
                       </TableCell>
@@ -754,16 +754,12 @@ export default function GateReviewValidation() {
                             variant="ghost" 
                             size="sm"
                             onClick={() => setIsAddingValidator(false)}
-                          >
-                            Cancel
+                          
+                            className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
+                            >
+                              <i className="fas fa-trash"></i>
                           </Button>
-                          <Button 
-                            variant="default" 
-                            size="sm"
-                            onClick={addValidator}
-                          >
-                            Add
-                          </Button>
+                          
                         </div>
                       </TableCell>
                     </TableRow>
