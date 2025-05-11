@@ -62,6 +62,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
+          {/* Copyright Footer */}
+          <footer className="text-center text-sm text-gray-600 py-4 border-t border-gray-200 mt-auto">
+            <p>
+              Copyright © {new Date().getFullYear()} <a href="https://equable.fr" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Equable</a>
+              &nbsp;&nbsp;|&nbsp;&nbsp;The Lean Six Sigma DMAIC Suite™ is edited by <a href="https://equable.fr" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Equable</a>
+            </p>
+          </footer>
         </main>
       </div>
     </div>
