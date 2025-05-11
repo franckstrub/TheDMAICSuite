@@ -199,12 +199,13 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
 
     const fileName = `gate-review-attachments/${projectId}/${Date.now()}-${req.file.originalname}`;
     
-    await storage.upload(fileName, req.file.buffer);
-    const url = await storage.getUrl(fileName);
+    await objectStorage.put(fileName, req.file.buffer);
+    const url = await objectStorage.getUrl(fileName);
 
     res.json({ url });
   } catch (error) {
     console.error("Error uploading file:", error);
     res.status(500).json({ error: "Failed to upload file" });
   }
+  });
 });
