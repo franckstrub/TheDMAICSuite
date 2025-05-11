@@ -712,8 +712,6 @@ export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
   description: text("description"),
   isRequired: boolean("is_required").notNull().default(true),
   isCompleted: boolean("is_completed").notNull().default(false),
-  attachmentUrl: text("attachment_url"),
-  attachmentName: text("attachment_name"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
