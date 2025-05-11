@@ -561,42 +561,41 @@ export default function GateReviewValidation() {
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
-                              
+
                               const formData = new FormData();
                               formData.append('file', file);
-                              
+
                               try {
                                 const response = await fetch(`/api/projects/${projectId}/gate-review-attachments`, {
                                   method: 'POST',
                                   body: formData
                                 });
-                                
+
                                 if (!response.ok) throw new Error('Upload failed');
-                                
+
                                 const data = await response.json();
-                                
-                                // Update deliverable with attachment info
+
                                 const updatedDeliverable = {
                                   ...deliverable,
                                   attachmentUrl: data.url,
                                   attachmentName: file.name
                                 };
-                                
+
                                 // Update the deliverable in database
                                 const response2 = await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, updatedDeliverable);
-                                
+
                                 if (!response2) throw new Error('Failed to update deliverable');
-                                
-                                // Update the local state
+
+                                // Update the local state only after successful DB update
                                 setDeliverables(prevDeliverables =>
                                   prevDeliverables.map(d =>
                                     d.id === deliverable.id ? updatedDeliverable : d
                                   )
                                 );
-                                
+
                                 // Refresh deliverables
                                 queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-                                
+
                                 toast({
                                   title: "Success",
                                   description: "File uploaded successfully",
