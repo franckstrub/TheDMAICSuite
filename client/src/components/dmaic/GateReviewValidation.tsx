@@ -376,7 +376,7 @@ export default function GateReviewValidation() {
   };
 
   // Add a new deliverable
-  const addDeliverable = () => {
+  const addDeliverable = async () => {
     if (!newDeliverable.trim()) return;
     
     const newDeliverableObj: Omit<Deliverable, 'id'> = {
@@ -387,11 +387,28 @@ export default function GateReviewValidation() {
       isRequired: false,
       isCompleted: false
     };
-    
-    setDeliverables([...deliverables, newDeliverableObj as Deliverable]);
-    setNewDeliverable('');
-    setNewDeliverableDescription('');
-    setIsAddingDeliverable(false);
+
+    try {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, newDeliverableObj);
+      if (response?.deliverable) {
+        setDeliverables([...deliverables, response.deliverable]);
+        setNewDeliverable('');
+        setNewDeliverableDescription('');
+        setIsAddingDeliverable(false);
+        
+        toast({
+          title: "Success",
+          description: "New deliverable added successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding deliverable:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add new deliverable",
+        variant: "destructive"
+      });
+    }
   };
 
   // Add a new validator
