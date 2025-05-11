@@ -379,7 +379,7 @@ export default function GateReviewValidation() {
   const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
     
-    const newDeliverableObj: Deliverable = {
+    const newDeliverableObj: Omit<Deliverable, 'id'> = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
       name: newDeliverable,
@@ -388,7 +388,7 @@ export default function GateReviewValidation() {
       isCompleted: false
     };
     
-    setDeliverables([...deliverables, newDeliverableObj]);
+    setDeliverables([...deliverables, newDeliverableObj as Deliverable]);
     setNewDeliverable('');
     setNewDeliverableDescription('');
     setIsAddingDeliverable(false);
