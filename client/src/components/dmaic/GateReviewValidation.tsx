@@ -582,16 +582,10 @@ export default function GateReviewValidation() {
                                   attachmentName: file.name
                                 };
                                 
-                                // Save the updated deliverable to the database
-                                const response2 = await fetch(`/api/gate-review-deliverables/${deliverable.id}`, {
-                                  method: 'PUT',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify(updatedDeliverable)
-                                });
+                                // Update the deliverable in database
+                                const response2 = await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, updatedDeliverable);
                                 
-                                if (!response2.ok) throw new Error('Failed to update deliverable');
+                                if (!response2) throw new Error('Failed to update deliverable');
                                 
                                 // Update the local state
                                 setDeliverables(prevDeliverables =>
@@ -599,9 +593,6 @@ export default function GateReviewValidation() {
                                     d.id === deliverable.id ? updatedDeliverable : d
                                   )
                                 );
-                                
-                                // Update the deliverable
-                                await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, updatedDeliverable);
                                 
                                 // Refresh deliverables
                                 queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
