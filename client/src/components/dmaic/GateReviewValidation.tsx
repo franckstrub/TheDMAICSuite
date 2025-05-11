@@ -248,20 +248,23 @@ export default function GateReviewValidation() {
           deliverableMap.set(deliverable.name, deliverable);
         });
         
-        // Get all existing names from database and default list
-        const existingNames = new Set<string>([
-          ...deliverablesData.deliverables.map((d: Deliverable) => d.name),
-          ...defaultDefineDeliverables.map((d) => d.name)
-        ]);
+        // Prepare all ordered deliverables - start with default ones
+        const orderedDeliverables: Deliverable[] = [];
         
         // First, add all default deliverables in their original order
-        const orderedDeliverables: Deliverable[] = [];
+        // Make sure all default deliverables are always included
         defaultDefineDeliverables.forEach(defaultDeliverable => {
-          if (existingNames.has(defaultDeliverable.name) && deliverableMap.has(defaultDeliverable.name)) {
+          if (deliverableMap.has(defaultDeliverable.name)) {
             // Add existing deliverable with this name
             orderedDeliverables.push(deliverableMap.get(defaultDeliverable.name)!);
             // Remove from map to track what we've already added
             deliverableMap.delete(defaultDeliverable.name);
+          } else {
+            // Default deliverable doesn't exist in database, add it
+            orderedDeliverables.push({
+              ...defaultDeliverable,
+              projectId: parseInt(projectId || "0")
+            });
           }
         });
         
