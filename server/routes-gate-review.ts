@@ -8,7 +8,13 @@ import { Client } from '@replit/object-storage';
 export function registerGateReviewRoutes(app: Express, storage: any) {
   let objectStorage: Client | null = null;
   try {
-    objectStorage = new Client();
+    const bucketName = process.env.REPLIT_BUCKET_ID;
+    if (!bucketName) {
+      console.warn("No bucket ID found. Please create a bucket in the Object Storage tool.");
+      objectStorage = null;
+    } else {
+      objectStorage = new Client({ bucketId: bucketName });
+    }
   } catch (error) {
     console.warn("Failed to initialize object storage client:", error);
   }
