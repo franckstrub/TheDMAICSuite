@@ -1,8 +1,11 @@
 import { Express, Request, Response } from 'express';
 import { z } from 'zod';
 import { insertGateReviewDeliverableSchema, insertGateReviewValidatorSchema } from '@shared/schema';
+import multer from 'multer';
+import { Client } from '@replit/object-storage';
 
 export function registerGateReviewRoutes(app: Express, storage: any) {
+  const objectStorage = new Client();
   // Gate Review Deliverables Routes
   app.get("/api/projects/:projectId/gate-review-deliverables", async (req: Request, res: Response) => {
     try {
@@ -180,15 +183,10 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
       res.status(500).json({ error: "Failed to delete gate review validator" });
     }
   });
-}
-import multer from 'multer';
-import { Client } from '@replit/object-storage';
 
-const storage = new Client();
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Add this route to handle file uploads
-app.post("/api/projects/:projectId/gate-review-attachments", upload.single('file'), async (req: Request, res: Response) => {
+  // Add this route to handle file uploads
+  const upload = multer({ storage: multer.memoryStorage() });
+  app.post("/api/projects/:projectId/gate-review-attachments", upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
