@@ -565,15 +565,14 @@ export default function GateReviewValidation() {
                               const formData = new FormData();
                               formData.append('file', file);
 
-                              try {
-                                // Show upload started toast
-                                toast({
-                                  title: "Upload Started",
-                                  description: `Uploading file "${file.name}"...`,
-                                  variant: "default",
-                                  duration: 3000
-                                });
+                              // Show upload started toast
+                              toast({
+                                title: "Upload Started",
+                                description: `Uploading file "${file.name}"...`,
+                                duration: 3000,
+                              });
 
+                              try {
                                 const response = await fetch(`/api/projects/${projectId}/gate-review-attachments`, {
                                   method: 'POST',
                                   body: formData
