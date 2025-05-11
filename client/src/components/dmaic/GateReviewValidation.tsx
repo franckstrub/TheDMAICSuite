@@ -565,7 +565,7 @@ export default function GateReviewValidation() {
                               const formData = new FormData();
                               formData.append('file', file);
 
-                              // Show upload started toast
+                              // Show upload started toast immediately
                               toast({
                                 title: "Upload Started",
                                 description: `Uploading file "${file.name}"...`,
@@ -593,27 +593,27 @@ export default function GateReviewValidation() {
 
                                 if (!response2) throw new Error('Failed to update deliverable');
 
-                                // Show upload completed toast
+                                // Update the local state first
+                                const newDeliverables = deliverables.map(d =>
+                                  d.id === deliverable.id ? {
+                                    ...d,
+                                    attachmentUrl: data.url,
+                                    attachmentName: file.name
+                                  } : d
+                                );
+                                setDeliverables(newDeliverables);
+
+                                // Show success toast
                                 toast({
                                   title: "Upload Complete",
-                                  description: `File "${file.name}" uploaded successfully. Click the attachment icon to view.`,
+                                  description: `File "${file.name}" uploaded successfully`,
                                   variant: "default",
                                   duration: 5000
                                 });
 
-                                // Update the local state
-                                setDeliverables(prevDeliverables => 
-                                  prevDeliverables.map(d =>
-                                    d.id === deliverable.id ? {
-                                      ...d,
-                                      attachmentUrl: data.url,
-                                      attachmentName: file.name
-                                    } : d
-                                  )
-                                );
-
-                                // Refresh the data
+                                // Force refresh to update UI
                                 await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+                                await queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
                               } catch (error) {
                                 console.error('Upload error:', error);
                                 toast({
