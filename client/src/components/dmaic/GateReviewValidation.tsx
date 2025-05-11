@@ -58,8 +58,6 @@ interface Deliverable {
   description?: string | null;
   isRequired: boolean;
   isCompleted: boolean;
-  attachmentUrl?: string | null;
-  attachmentName?: string | null;
 }
 
 // Default deliverables for the Define phase
@@ -92,7 +90,7 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
     isRequired: true,
     isCompleted: false
   },
-
+  
   {
     phase: "define",
     name: "Risk Assessment",
@@ -142,7 +140,7 @@ export default function GateReviewValidation() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const phase = "define"; // This component is for the Define phase
-
+  
   // States for form handling
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [validators, setValidators] = useState<Validator[]>([]);
@@ -152,7 +150,7 @@ export default function GateReviewValidation() {
   const [newDeliverableDescription, setNewDeliverableDescription] = useState('');
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
-
+  
   // Fetch the project charter to get validators
   const { data: charter } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
@@ -198,7 +196,7 @@ export default function GateReviewValidation() {
           await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
         }
       }
-
+      
       // Process all validators
       for (const validator of validators) {
         if (validator.id) {
@@ -209,11 +207,11 @@ export default function GateReviewValidation() {
           await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
-
+      
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
-
+      
       toast({
         title: "Success",
         description: "Gate review data saved successfully",
@@ -243,19 +241,19 @@ export default function GateReviewValidation() {
         );
       } else if (deliverablesData.deliverables) {
         console.log("Setting deliverables from data:", deliverablesData.deliverables);
-
+        
         // Create a map to organize deliverables by name to match the original order
         const deliverableMap = new Map<string, Deliverable>();
         deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
           deliverableMap.set(deliverable.name, deliverable);
         });
-
+        
         // Get all existing names from database and default list
         const existingNames = new Set<string>([
           ...deliverablesData.deliverables.map((d: Deliverable) => d.name),
           ...defaultDefineDeliverables.map((d) => d.name)
         ]);
-
+        
         // First, add all default deliverables in their original order
         const orderedDeliverables: Deliverable[] = [];
         defaultDefineDeliverables.forEach(defaultDeliverable => {
@@ -266,12 +264,12 @@ export default function GateReviewValidation() {
             deliverableMap.delete(defaultDeliverable.name);
           }
         });
-
+        
         // Then add any custom deliverables that aren't in the default list
         deliverableMap.forEach((deliverable: Deliverable) => {
           orderedDeliverables.push(deliverable);
         });
-
+        
         console.log("Ordered deliverables:", orderedDeliverables);
         setDeliverables(orderedDeliverables);
       } else {
@@ -284,17 +282,17 @@ export default function GateReviewValidation() {
   useEffect(() => {
     console.log("Validators data received:", validatorsData);
     console.log("Charter data:", charter);
-
+    
     if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
       console.log("Setting validators from data:", validatorsData.validators);
-
+      
       // Define the default validator roles in the preferred order
       const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Coach"];
-
+      
       // Create a map of validators by role
       const validatorsByRole = new Map<string, Validator>();
       const customValidators: Validator[] = [];
-
+      
       // Categorize validators into standard vs custom
       validatorsData.validators.forEach((validator: Validator) => {
         if (standardRoles.includes(validator.validatorRole)) {
@@ -303,7 +301,7 @@ export default function GateReviewValidation() {
           customValidators.push(validator);
         }
       });
-
+      
       // Reorder validators: first standard roles in preferred order, then custom validators
       const orderedValidators: Validator[] = [];
       standardRoles.forEach(role => {
@@ -311,10 +309,10 @@ export default function GateReviewValidation() {
           orderedValidators.push(validatorsByRole.get(role)!);
         }
       });
-
+      
       // Add custom validators 
       orderedValidators.push(...customValidators);
-
+      
       console.log("Ordered validators:", orderedValidators);
       setValidators(orderedValidators);
     } else if (charter && charter.charter) {
@@ -322,7 +320,7 @@ export default function GateReviewValidation() {
       // If no validators exist yet but we have charter data, create default validators
       // from the project charter's key stakeholders
       const defaultValidators: Validator[] = [];
-
+      
       if (charter.charter.sponsor) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
@@ -377,7 +375,7 @@ export default function GateReviewValidation() {
   // Add a new deliverable
   const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
-
+    
     const newDeliverableObj: Deliverable = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
@@ -386,7 +384,7 @@ export default function GateReviewValidation() {
       isRequired: false,
       isCompleted: false
     };
-
+    
     setDeliverables([...deliverables, newDeliverableObj]);
     setNewDeliverable('');
     setNewDeliverableDescription('');
@@ -396,7 +394,7 @@ export default function GateReviewValidation() {
   // Add a new validator
   const addValidator = () => {
     if (!newValidatorName.trim() || !newValidatorRole.trim()) return;
-
+    
     const newValidatorObj: Validator = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
@@ -404,7 +402,7 @@ export default function GateReviewValidation() {
       validatorRole: newValidatorRole,
       status: "Pending"
     };
-
+    
     setValidators([...validators, newValidatorObj]);
     setNewValidatorName('');
     setNewValidatorRole('');
@@ -520,7 +518,7 @@ export default function GateReviewValidation() {
                   </div>
                 </div>
               </div>
-
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -540,115 +538,7 @@ export default function GateReviewValidation() {
                           onCheckedChange={() => toggleDeliverableCompletion(index)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <span>{deliverable.name}</span>
-                      {deliverable.attachmentUrl ? (
-                        <a 
-                          href={deliverable.attachmentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-700"
-                          title={deliverable.attachmentName}
-                        >
-                          <i className="fas fa-paperclip"></i>
-                        </a>
-                      ) : !deliverable.isRequired && (
-                        <label className="cursor-pointer">
-                          <input 
-                            type="file"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-
-                              // Show upload started toast immediately
-                              toast({
-                                title: "Upload Started",
-                                description: `Uploading file "${file.name}"...`,
-                                duration: 3000,
-                              });
-
-                              const formData = new FormData();
-                              formData.append('file', file);
-
-                              try {
-                                const response = await fetch(`/api/projects/${projectId}/gate-review-attachments`, {
-                                  method: 'POST',
-                                  body: formData
-                                });
-
-                                if (!response.ok) throw new Error('Upload failed');
-
-                                const data = await response.json();
-
-                                const updatedDeliverable = {
-                                  ...deliverable,
-                                  attachmentUrl: data.url,
-                                  attachmentName: file.name
-                                };
-
-                                // Update the deliverable in database
-                                const response2 = await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, updatedDeliverable);
-
-                                if (!response2) throw new Error('Failed to update deliverable');
-
-                                // Update the local state first
-                                const newDeliverables = deliverables.map(d =>
-                                  d.id === deliverable.id ? {
-                                    ...d,
-                                    attachmentUrl: data.url,
-                                    attachmentName: file.name
-                                  } : d
-                                );
-                                setDeliverables(newDeliverables);
-
-                                // Show success toast
-                                toast({
-                                  title: "Upload Complete",
-                                  description: `File "${file.name}" uploaded successfully`,
-                                  variant: "default",
-                                  duration: 5000
-                                });
-
-                                // Force refresh to update UI
-                                await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-                                await queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-                              } catch (error) {
-                                console.error('Upload error:', error);
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to upload file",
-                                  variant: "destructive"
-                                });
-                              }
-                            }}
-                          />
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => {
-                              // Trigger file input click
-                              const fileInput = document.querySelector(`input[type="file"]`) as HTMLInputElement;
-                              if (fileInput) fileInput.click();
-                            }}>
-                              <i className="fas fa-upload mr-1"></i>
-                              Upload
-                            </Button>
-                            {deliverable.attachmentName && (
-                              <a 
-                                href={deliverable.attachmentUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                              >
-                                <i className="fas fa-paperclip"></i>
-                                {deliverable.attachmentName}
-                              </a>
-                            )}
-                          </div>
-                        </label>
-                      )}
-                    </div>
-                  </TableCell>
+                      <TableCell className="font-medium">{deliverable.name}</TableCell>
                       <TableCell>{deliverable.description}</TableCell>
                       <TableCell>
                         {deliverable.isRequired ? (
@@ -681,7 +571,7 @@ export default function GateReviewValidation() {
                       </TableCell>
                     </TableRow>
                   ))}
-
+                  
                   {/* Add new deliverable row */}
                   {isAddingDeliverable && (
                     <TableRow>
@@ -729,7 +619,7 @@ export default function GateReviewValidation() {
                   )}
                 </TableBody>
               </Table>
-
+              
               {/* Add Deliverable button moved to below the table */}
               <div className="mt-4 mb-4 flex justify-start">
                 <Button 
@@ -743,13 +633,13 @@ export default function GateReviewValidation() {
                 </Button>
               </div>
             </div>
-
+            
             {/* Validators Section */}
             <div>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-medium">Approvers</h3>
               </div>
-
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -825,7 +715,7 @@ export default function GateReviewValidation() {
                       </TableCell>
                     </TableRow>
                   ))}
-
+                  
                   {/* Add new validator row */}
                   {isAddingValidator && (
                     <TableRow>
@@ -889,7 +779,7 @@ export default function GateReviewValidation() {
                 </Button>
               </div>
             </div>
-
+            
             {/* Save Button */}
             <div className="flex justify-start mt-6">
               <Button 

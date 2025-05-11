@@ -1,47 +1,8 @@
-
 import { Express, Request, Response } from 'express';
 import { z } from 'zod';
 import { insertGateReviewDeliverableSchema, insertGateReviewValidatorSchema } from '@shared/schema';
 
-const defaultDefineDeliverables = [
-  {
-    name: "Project Charter",
-    description: "Complete project charter with all required sections",
-    phase: "define",
-    isRequired: true,
-    isCompleted: false
-  },
-  {
-    name: "SIPOC Diagram",
-    description: "Suppliers, Inputs, Process, Outputs, Customers diagram",
-    phase: "define", 
-    isRequired: true,
-    isCompleted: false
-  },
-  {
-    name: "Customer Requirements",
-    description: "Voice of Customer and Critical to Quality requirements",
-    phase: "define",
-    isRequired: true,
-    isCompleted: false
-  }
-];
-import multer from 'multer';
-import { Client } from '@replit/object-storage';
-
 export function registerGateReviewRoutes(app: Express, storage: any) {
-  let objectStorage: Client | null = null;
-  try {
-    const bucketName = process.env.REPLIT_BUCKET_ID;
-    if (!bucketName) {
-      console.warn("No bucket ID found. Please create a bucket in the Object Storage tool.");
-      objectStorage = null;
-    } else {
-      objectStorage = new Client({ bucketId: bucketName });
-    }
-  } catch (error) {
-    console.warn("Failed to initialize object storage client:", error);
-  }
   // Gate Review Deliverables Routes
   app.get("/api/projects/:projectId/gate-review-deliverables", async (req: Request, res: Response) => {
     try {
@@ -217,39 +178,6 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
     } catch (error) {
       console.error("Error deleting gate review validator:", error);
       res.status(500).json({ error: "Failed to delete gate review validator" });
-    }
-  });
-
-  // Add this route to handle file uploads
-  const upload = multer({ storage: multer.memoryStorage() });
-  app.post("/api/projects/:projectId/gate-review-attachments", upload.single('file'), async (req: Request, res: Response) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-
-      const projectId = parseInt(req.params.projectId);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ error: "Invalid project ID" });
-      }
-
-      if (!objectStorage) {
-        return res.status(503).json({ error: "Object storage is not available" });
-      }
-
-      const fileName = `gate-review-attachments/${projectId}/${Date.now()}-${req.file.originalname}`;
-      
-      try {
-        await objectStorage.put(fileName, req.file.buffer);
-        const url = await objectStorage.getUrl(fileName);
-        res.json({ url });
-      } catch (error) {
-        console.error("Error interacting with object storage:", error);
-        res.status(503).json({ error: "Failed to store file" });
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      res.status(500).json({ error: "Failed to upload file" });
     }
   });
 }
