@@ -586,12 +586,18 @@ export default function GateReviewValidation() {
 
                                 if (!response2) throw new Error('Failed to update deliverable');
 
-                                // Update the local state only after successful DB update
-                                setDeliverables(prevDeliverables =>
-                                  prevDeliverables.map(d =>
-                                    d.id === deliverable.id ? updatedDeliverable : d
-                                  )
+                                // Update the local state immediately after successful DB update
+                                const newDeliverables = deliverables.map(d =>
+                                  d.id === deliverable.id ? updatedDeliverable : d
                                 );
+                                setDeliverables(newDeliverables);
+
+                                // Show success message
+                                toast({
+                                  title: "Success",
+                                  description: `File "${file.name}" uploaded successfully`,
+                                  variant: "default"
+                                });
 
                                 // Refresh deliverables
                                 queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
@@ -610,14 +616,27 @@ export default function GateReviewValidation() {
                               }
                             }}
                           />
-                          <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => {
-                            // Trigger file input click
-                            const fileInput = document.querySelector(`input[type="file"]`) as HTMLInputElement;
-                            if (fileInput) fileInput.click();
-                          }}>
-                            <i className="fas fa-upload mr-1"></i>
-                            Upload
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" className="cursor-pointer" onClick={() => {
+                              // Trigger file input click
+                              const fileInput = document.querySelector(`input[type="file"]`) as HTMLInputElement;
+                              if (fileInput) fileInput.click();
+                            }}>
+                              <i className="fas fa-upload mr-1"></i>
+                              Upload
+                            </Button>
+                            {deliverable.attachmentName && (
+                              <a 
+                                href={deliverable.attachmentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                              >
+                                <i className="fas fa-paperclip"></i>
+                                {deliverable.attachmentName}
+                              </a>
+                            )}
+                          </div>
                         </label>
                       )}
                     </div>
