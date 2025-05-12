@@ -343,31 +343,44 @@ export default function GateReviewValidation() {
       // Define the default validator roles in the preferred order
       const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Coach"];
       
-      // Create a map of validators by role
-      const validatorsByRole = new Map<string, Validator>();
+      // Keep track of all existing validators by role or ID
+      const existingStandardByRole = new Map<string, Validator>();
       const customValidators: Validator[] = [];
       
-      // Categorize validators into standard vs custom
+      // First identify standard vs custom validators
       validatorsData.validators.forEach((validator: Validator) => {
         if (standardRoles.includes(validator.validatorRole)) {
-          validatorsByRole.set(validator.validatorRole, validator);
+          existingStandardByRole.set(validator.validatorRole, validator);
         } else {
           customValidators.push(validator);
         }
       });
       
-      // Reorder validators: first standard roles in preferred order, then custom validators
+      // Start building our ordered list with standard validators first
       const orderedValidators: Validator[] = [];
+      
+      // Add standard validators in their predefined order
       standardRoles.forEach(role => {
-        if (validatorsByRole.has(role)) {
-          orderedValidators.push(validatorsByRole.get(role)!);
+        if (existingStandardByRole.has(role)) {
+          orderedValidators.push(existingStandardByRole.get(role)!);
         }
       });
       
-      // Add custom validators 
+      // Sort custom validators by ID to preserve their order of addition
+      // This maintains consistent ordering even when navigating between pages
+      customValidators.sort((a, b) => {
+        // If IDs are available, use them to determine insertion order
+        if (a.id && b.id) {
+          return a.id - b.id;
+        }
+        // Otherwise, preserve the order from the API response
+        return 0;
+      });
+      
+      // Add the custom validators to our ordered list
       orderedValidators.push(...customValidators);
       
-      console.log("Ordered validators:", orderedValidators);
+      console.log("Ordered validators with preserved custom order:", orderedValidators);
       setValidators(orderedValidators);
     } else if (charter && 'charter' in charter) {
       console.log("No validators found, creating defaults from charter");
