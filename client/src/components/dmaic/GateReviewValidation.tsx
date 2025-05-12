@@ -64,7 +64,7 @@ interface Validator {
   validatorRole: string;
   status: ValidationStatus;
   comments?: string | null;
-  validatedDate?: Date | null;
+  validatedDate?: string | null; // ISO string format for database compatibility
 }
 
 interface Deliverable {
@@ -522,9 +522,16 @@ export default function GateReviewValidation() {
   const updateValidatorStatus = (index: number, status: ValidationStatus) => {
     const updatedValidators = [...validators];
     updatedValidators[index].status = status;
+    
     // Set validated date only for Approved or Rejected
-    updatedValidators[index].validatedDate = 
-      status !== "Pending" ? new Date() : null;
+    // Make sure to pass the date as an ISO string which the database can handle
+    if (status !== "Pending") {
+      const now = new Date();
+      updatedValidators[index].validatedDate = now.toISOString();
+    } else {
+      updatedValidators[index].validatedDate = null;
+    }
+    
     setValidators(updatedValidators);
   };
 
