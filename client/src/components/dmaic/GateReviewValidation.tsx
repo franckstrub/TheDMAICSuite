@@ -224,6 +224,10 @@ export default function GateReviewValidation() {
       }
       
       // Process all validators
+      toast({
+        title: "In progress",
+        description: "Saving Gate review data",
+      });
       for (const validator of validators) {
         if (validator.id) {
           // Update existing validator
@@ -440,19 +444,9 @@ export default function GateReviewValidation() {
     setDeliverables(updatedDeliverables);
   };
 
-  // Track when a new deliverable is added for auto-save
-  const [newDeliverableAdded, setNewDeliverableAdded] = useState<boolean>(false);
+  // No auto-save for deliverables - they're saved with other data when the save button is clicked
   
-  // Auto-save when a new deliverable is added
-  useEffect(() => {
-    if (newDeliverableAdded) {
-      console.log("Auto-saving after new deliverable was added");
-      saveData();
-      setNewDeliverableAdded(false);
-    }
-  }, [newDeliverableAdded]);
-  
-  // Add a new deliverable
+  // Add a new deliverable to state only - it will be saved with other data
   const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
     
@@ -465,13 +459,13 @@ export default function GateReviewValidation() {
       isCompleted: false
     };
     
+    // Add to state but don't save to database immediately
     setDeliverables([...deliverables, newDeliverableObj]);
+    
+    // Clear the form and hide it
     setNewDeliverable('');
     setNewDeliverableDescription('');
     setIsAddingDeliverable(false);
-    
-    // Trigger auto-save
-    setNewDeliverableAdded(true);
   };
 
   // Add a new validator
@@ -543,14 +537,14 @@ export default function GateReviewValidation() {
       if (validatorToRemove.id) {
         // If the validator has an ID, it exists in the database and must be deleted
         console.log("Deleting validator from database:", validatorToRemove);
-        await apiRequest('DELETE', `/api/gate-review-validators/${validatorToRemove.id}`, {});
+                await apiRequest('DELETE', `/api/gate-review-validators/${validatorToRemove.id}`, {});
         
         // After successful deletion from database, refresh the data
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
         
         toast({
           title: "Success",
-          description: "Validator removed successfully",
+          description: "Approver removed successfully",
         });
       } else {
         // Validator only exists in local state, just remove it from state
@@ -559,10 +553,10 @@ export default function GateReviewValidation() {
         setValidators(updatedValidators);
       }
     } catch (error) {
-      console.error("Error removing validator:", error);
+      console.error("Error removing approver:", error);
       toast({
         title: "Error",
-        description: "Failed to remove validator",
+        description: "Failed to remove approver",
         variant: "destructive"
       });
     }
@@ -763,9 +757,10 @@ export default function GateReviewValidation() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button 
-                            variant="ghost" 
+                            variant="outline" 
                             size="sm"
                             onClick={() => setIsAddingDeliverable(false)}
+                            className="px-5 py-2"
                           >
                             Cancel
                           </Button>
@@ -773,6 +768,7 @@ export default function GateReviewValidation() {
                             variant="default" 
                             size="sm"
                             onClick={addDeliverable}
+                            className="px-5 py-2 bg-blue-500 hover:bg-blue-600"
                           >
                             Add Deliverable
                           </Button>
