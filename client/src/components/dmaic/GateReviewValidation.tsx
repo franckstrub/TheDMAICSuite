@@ -799,10 +799,14 @@ export default function GateReviewValidation() {
               {/* Add Deliverable button moved to below the table */}
               <div className="mt-4 mb-4 flex justify-start">
                 <Button 
-                  variant="outline" 
+                  variant={isAddingDeliverable ? "secondary" : "outline"}
                   size="sm"
                   onClick={() => setIsAddingDeliverable(true)}
-                  className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                  disabled={isAddingDeliverable}
+                  className={isAddingDeliverable 
+                    ? "mt-4 bg-gray-200 text-gray-500 px-4 py-2 rounded cursor-not-allowed" 
+                    : "mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                  }
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Deliverable
