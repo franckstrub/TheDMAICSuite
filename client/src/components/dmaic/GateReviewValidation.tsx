@@ -169,13 +169,22 @@ export default function GateReviewValidation() {
   const [isAddingValidator, setIsAddingValidator] = useState(false);
   
   // Fetch the project charter to get validators
-  const { data: charter } = useQuery({
+  const { data: charter } = useQuery<CharterResponse>({
     queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!projectId
   });
 
+  // Interfaces for API responses
+  interface DeliverablesResponse {
+    deliverables: Deliverable[];
+  }
+  
+  interface ValidatorsResponse {
+    validators: Validator[];
+  }
+  
   // Fetch existing deliverables
-  const { data: deliverablesData, isLoading: isLoadingDeliverables } = useQuery({
+  const { data: deliverablesData, isLoading: isLoadingDeliverables } = useQuery<DeliverablesResponse>({
     queryKey: [`/api/projects/${projectId}/gate-review-deliverables`],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/gate-review-deliverables?phase=${phase}`);
@@ -188,7 +197,7 @@ export default function GateReviewValidation() {
   });
 
   // Fetch existing validators
-  const { data: validatorsData, isLoading: isLoadingValidators } = useQuery({
+  const { data: validatorsData, isLoading: isLoadingValidators } = useQuery<ValidatorsResponse>({
     queryKey: [`/api/projects/${projectId}/gate-review-validators`],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/gate-review-validators?phase=${phase}`);
@@ -335,47 +344,48 @@ export default function GateReviewValidation() {
       
       console.log("Ordered validators:", orderedValidators);
       setValidators(orderedValidators);
-    } else if (charter && charter.charter) {
+    } else if (charter && 'charter' in charter) {
       console.log("No validators found, creating defaults from charter");
       // If no validators exist yet but we have charter data, create default validators
       // from the project charter's key stakeholders
       const defaultValidators: Validator[] = [];
+      const charterData = charter.charter;
       
-      if (charter.charter.sponsor) {
+      if (charterData.sponsor) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
           phase: "define",
-          validatorName: charter.charter.sponsor,
+          validatorName: charterData.sponsor,
           validatorRole: "Sponsor",
           status: "Pending"
         });
       }
 
-      if (charter.charter.projectLeader) {
+      if (charterData.projectLeader) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
           phase: "define",
-          validatorName: charter.charter.projectLeader,
+          validatorName: charterData.projectLeader,
           validatorRole: "Project Leader",
           status: "Pending"
         });
       }
 
-      if (charter.charter.financialController) {
+      if (charterData.financialController) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
           phase: "define",
-          validatorName: charter.charter.financialController,
+          validatorName: charterData.financialController,
           validatorRole: "Financial Controller",
           status: "Pending"
         });
       }
 
-      if (charter.charter.projectCoach) {
+      if (charterData.projectCoach) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
           phase: "define",
-          validatorName: charter.charter.projectCoach,
+          validatorName: charterData.projectCoach,
           validatorRole: "Coach",
           status: "Pending"
         });
