@@ -440,10 +440,20 @@ export default function GateReviewValidation() {
     setDeliverables(updatedDeliverables);
   };
 
-  // Removed auto-save functionality as deliverables are now saved directly to the database
+  // Track when a new deliverable is added for auto-save
+  const [newDeliverableAdded, setNewDeliverableAdded] = useState<boolean>(false);
   
-  // Add a new deliverable directly to the database
-  const addDeliverable = async () => {
+  // Auto-save when a new deliverable is added
+  useEffect(() => {
+    if (newDeliverableAdded) {
+      console.log("Auto-saving after new deliverable was added");
+      saveData();
+      setNewDeliverableAdded(false);
+    }
+  }, [newDeliverableAdded]);
+  
+  // Add a new deliverable
+  const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
     
     const newDeliverableObj: Deliverable = {
@@ -455,34 +465,13 @@ export default function GateReviewValidation() {
       isCompleted: false
     };
     
-    try {
-      console.log("Creating new deliverable:", newDeliverableObj);
-      
-      // Create the new deliverable directly via API
-      const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, newDeliverableObj);
-      
-      console.log("New deliverable created:", response);
-      
-      // Invalidate query to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-      
-      // Clear the form
-      setNewDeliverable('');
-      setNewDeliverableDescription('');
-      setIsAddingDeliverable(false);
-      
-      toast({
-        title: "Success",
-        description: "New deliverable added successfully",
-      });
-    } catch (error) {
-      console.error("Error adding deliverable:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add deliverable",
-        variant: "destructive"
-      });
-    }
+    setDeliverables([...deliverables, newDeliverableObj]);
+    setNewDeliverable('');
+    setNewDeliverableDescription('');
+    setIsAddingDeliverable(false);
+    
+    // Trigger auto-save
+    setNewDeliverableAdded(true);
   };
 
   // Add a new validator
@@ -794,7 +783,18 @@ export default function GateReviewValidation() {
                 </TableBody>
               </Table>
               
-              {/* Add Deliverable button removed as requested */}
+              {/* Add Deliverable button moved to below the table */}
+              <div className="mt-4 mb-4 flex justify-start">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsAddingDeliverable(true)}
+                  className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Deliverable
+                </Button>
+              </div>
             </div>
             {/* Save Button */}
             <div className="flex justify-start mt-6">
