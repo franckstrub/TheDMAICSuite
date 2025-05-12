@@ -957,14 +957,18 @@ export default function GateReviewValidation() {
               </Table>
               <div className="flex justify-start items-center mb-3">
                 <Button 
-                  variant="outline" 
+                  variant={isAddingValidator? "secondary" : "outline"}
                   size="sm"
                   onClick={() => setIsAddingValidator(true)}
-                  className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                  disabled={isAddingValidator}
+                  className={isAddingValidator 
+                    ? "mt-4 bg-gray-200 text-gray-500 px-4 py-2 rounded cursor-not-allowed" 
+                    : "mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                  }
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Approver
-                </Button>
+                </Button>  
               </div>
             </div>
             
