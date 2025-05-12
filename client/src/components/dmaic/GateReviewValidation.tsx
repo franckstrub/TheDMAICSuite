@@ -39,6 +39,23 @@ import { CheckCircle, XCircle, Clock, Plus, Trash2 } from 'lucide-react';
 // Types for our validators and deliverables
 type ValidationStatus = "Pending" | "Approved" | "Rejected";
 
+// Interface for the charter object structure
+interface Charter {
+  id: number;
+  projectId: number;
+  projectTitle?: string;
+  projectLeader?: string;
+  sponsor?: string;
+  financialController?: string;
+  projectCoach?: string;
+  // Add other fields as needed
+}
+
+// Interface for the charter API response
+interface CharterResponse {
+  charter: Charter;
+}
+
 interface Validator {
   id?: number;
   projectId: number;
@@ -375,6 +392,18 @@ export default function GateReviewValidation() {
     setDeliverables(updatedDeliverables);
   };
 
+  // Track when a new deliverable is added for auto-save
+  const [newDeliverableAdded, setNewDeliverableAdded] = useState<boolean>(false);
+  
+  // Auto-save when a new deliverable is added
+  useEffect(() => {
+    if (newDeliverableAdded) {
+      console.log("Auto-saving after new deliverable was added");
+      saveData();
+      setNewDeliverableAdded(false);
+    }
+  }, [newDeliverableAdded]);
+  
   // Add a new deliverable
   const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
@@ -392,8 +421,23 @@ export default function GateReviewValidation() {
     setNewDeliverable('');
     setNewDeliverableDescription('');
     setIsAddingDeliverable(false);
+    
+    // Trigger auto-save
+    setNewDeliverableAdded(true);
   };
 
+  // Track when a new validator is added for auto-save
+  const [newValidatorAdded, setNewValidatorAdded] = useState<boolean>(false);
+  
+  // Auto-save when a new validator is added
+  useEffect(() => {
+    if (newValidatorAdded) {
+      console.log("Auto-saving after new validator was added");
+      saveData();
+      setNewValidatorAdded(false);
+    }
+  }, [newValidatorAdded]);
+  
   // Add a new validator
   const addValidator = () => {
     if (!newValidatorName.trim() || !newValidatorRole.trim()) return;
@@ -410,6 +454,9 @@ export default function GateReviewValidation() {
     setNewValidatorName('');
     setNewValidatorRole('');
     setIsAddingValidator(false);
+    
+    // Trigger auto-save
+    setNewValidatorAdded(true);
   };
 
   // Update validator status
@@ -636,7 +683,15 @@ export default function GateReviewValidation() {
                 </Button>
               </div>
             </div>
-            
+            {/* Save Button */}
+            <div className="flex justify-start mt-6">
+              <Button 
+                onClick={saveData}
+                className="bg-primary text-white hover:bg-primary/90"
+              >
+                Save Deliverables
+              </Button>
+            </div>
             {/* Validators Section */}
             <div>
               <div className="flex justify-between items-center mb-3">
