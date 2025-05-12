@@ -209,44 +209,29 @@ export default function GateReviewValidation() {
     enabled: !!projectId
   });
 
-  // Save data to backend
-  const saveData = async () => {
+  // Save validator status changes to database
+  const saveValidatorChanges = async () => {
     try {
-      // Process all deliverables
-      for (const deliverable of deliverables) {
-        if (deliverable.id) {
-          // Update existing deliverable
-          await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
-        } else {
-          // Create new deliverable
-          await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
-        }
-      }
-      
       // Process all validators
       for (const validator of validators) {
         if (validator.id) {
           // Update existing validator
           await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
-        } else {
-          // Create new validator
-          await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
       
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
       
       toast({
         title: "Success",
-        description: "Gate review data saved successfully",
+        description: "Validator status changes saved successfully",
       });
     } catch (error) {
-      console.error("Error saving gate review data:", error);
+      console.error("Error saving validator status changes:", error);
       toast({
         title: "Error",
-        description: "Failed to save gate review data",
+        description: "Failed to save validator status changes",
         variant: "destructive"
       });
     }
