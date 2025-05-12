@@ -1174,10 +1174,23 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined> {
+    // Create a copy of the validator data to avoid modifying the original
+    const validatorData = { ...validator };
+    
+    // If validatedDate is a string and not null, convert it to a Date object
+    if (validatorData.validatedDate && typeof validatorData.validatedDate === 'string') {
+      try {
+        validatorData.validatedDate = new Date(validatorData.validatedDate);
+      } catch (error) {
+        console.error("Error converting validatedDate string to Date:", error);
+        validatorData.validatedDate = null; // Fallback to null on error
+      }
+    }
+    
     const [updatedValidator] = await db
       .update(gateReviewValidators)
       .set({
-        ...validator,
+        ...validatorData,
         lastUpdated: new Date()
       })
       .where(eq(gateReviewValidators.id, id))
