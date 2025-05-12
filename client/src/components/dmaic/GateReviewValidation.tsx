@@ -434,10 +434,33 @@ export default function GateReviewValidation() {
   }, [validatorsData, charter, projectId]);
 
   // Toggle completion status of a deliverable
-  const toggleDeliverableCompletion = (index: number) => {
-    const updatedDeliverables = [...deliverables];
-    updatedDeliverables[index].isCompleted = !updatedDeliverables[index].isCompleted;
-    setDeliverables(updatedDeliverables);
+  const toggleDeliverableCompletion = async (index: number) => {
+    try {
+      const updatedDeliverables = [...deliverables];
+      const deliverable = updatedDeliverables[index];
+      deliverable.isCompleted = !deliverable.isCompleted;
+      
+      // Update in UI immediately for better user experience
+      setDeliverables(updatedDeliverables);
+      
+      if (deliverable.id) {
+        // If the deliverable has an ID, update it in the database
+        console.log("Updating deliverable completion status:", deliverable);
+        await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
+      }
+    } catch (error) {
+      console.error("Error toggling deliverable completion:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update deliverable status",
+        variant: "destructive"
+      });
+      
+      // Revert the UI change in case of error
+      const revertedDeliverables = [...deliverables];
+      revertedDeliverables[index].isCompleted = !revertedDeliverables[index].isCompleted;
+      setDeliverables(revertedDeliverables);
+    }
   };
 
   // Add a new deliverable directly to the database
