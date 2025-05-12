@@ -165,6 +165,7 @@ export default function GateReviewValidation() {
   const [newValidatorRole, setNewValidatorRole] = useState('');
   const [newDeliverable, setNewDeliverable] = useState('');
   const [newDeliverableDescription, setNewDeliverableDescription] = useState('');
+  const [newDeliverableRequired, setNewDeliverableRequired] = useState<boolean>(false); // Default to Optional
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
   
@@ -461,13 +462,14 @@ export default function GateReviewValidation() {
       phase: "define",
       name: newDeliverable,
       description: newDeliverableDescription || null,
-      isRequired: false,
+      isRequired: newDeliverableRequired,
       isCompleted: false
     };
     
     setDeliverables([...deliverables, newDeliverableObj]);
     setNewDeliverable('');
     setNewDeliverableDescription('');
+    setNewDeliverableRequired(false); // Reset back to default (Optional)
     setIsAddingDeliverable(false);
     
     // Trigger auto-save
@@ -758,7 +760,18 @@ export default function GateReviewValidation() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="bg-gray-50">Optional</Badge>
+                        <Select 
+                          value={newDeliverableRequired ? "required" : "optional"} 
+                          onValueChange={(value) => setNewDeliverableRequired(value === "required")}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="optional">Optional</SelectItem>
+                            <SelectItem value="required">Required</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
