@@ -209,29 +209,44 @@ export default function GateReviewValidation() {
     enabled: !!projectId
   });
 
-  // Save validator status changes to database
-  const saveValidatorChanges = async () => {
+  // Save data to backend
+  const saveData = async () => {
     try {
+      // Process all deliverables
+      for (const deliverable of deliverables) {
+        if (deliverable.id) {
+          // Update existing deliverable
+          await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
+        } else {
+          // Create new deliverable
+          await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
+        }
+      }
+      
       // Process all validators
       for (const validator of validators) {
         if (validator.id) {
           // Update existing validator
           await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
+        } else {
+          // Create new validator
+          await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
       
       // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
       
       toast({
         title: "Success",
-        description: "Validator status changes saved successfully",
+        description: "Gate review data saved successfully",
       });
     } catch (error) {
-      console.error("Error saving validator status changes:", error);
+      console.error("Error saving gate review data:", error);
       toast({
         title: "Error",
-        description: "Failed to save validator status changes",
+        description: "Failed to save gate review data",
         variant: "destructive"
       });
     }
@@ -419,74 +434,44 @@ export default function GateReviewValidation() {
   }, [validatorsData, charter, projectId]);
 
   // Toggle completion status of a deliverable
-  const toggleDeliverableCompletion = async (index: number) => {
-    try {
-      const updatedDeliverables = [...deliverables];
-      const deliverable = updatedDeliverables[index];
-      deliverable.isCompleted = !deliverable.isCompleted;
-      
-      // Update in UI immediately for better user experience
-      setDeliverables(updatedDeliverables);
-      
-      if (deliverable.id) {
-        // If the deliverable has an ID, update it in the database
-        console.log("Updating deliverable completion status:", deliverable);
-        await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
-      }
-    } catch (error) {
-      console.error("Error toggling deliverable completion:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update deliverable status",
-        variant: "destructive"
-      });
-      
-      // Revert the UI change in case of error
-      const revertedDeliverables = [...deliverables];
-      revertedDeliverables[index].isCompleted = !revertedDeliverables[index].isCompleted;
-      setDeliverables(revertedDeliverables);
-    }
+  const toggleDeliverableCompletion = (index: number) => {
+    const updatedDeliverables = [...deliverables];
+    updatedDeliverables[index].isCompleted = !updatedDeliverables[index].isCompleted;
+    setDeliverables(updatedDeliverables);
   };
 
-  // Add a new deliverable directly to the database
-  const addDeliverable = async () => {
+  // Track when a new deliverable is added for auto-save
+  const [newDeliverableAdded, setNewDeliverableAdded] = useState<boolean>(false);
+  
+  // Auto-save when a new deliverable is added
+  useEffect(() => {
+    if (newDeliverableAdded) {
+      console.log("Auto-saving after new deliverable was added");
+      saveData();
+      setNewDeliverableAdded(false);
+    }
+  }, [newDeliverableAdded]);
+  
+  // Add a new deliverable
+  const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
     
-    try {
-      const newDeliverableObj: Deliverable = {
-        projectId: parseInt(projectId || "0"),
-        phase: "define",
-        name: newDeliverable,
-        description: newDeliverableDescription || null,
-        isRequired: false,
-        isCompleted: false
-      };
-      
-      console.log("Creating new deliverable:", newDeliverableObj);
-      
-      // Create the new deliverable directly via API
-      await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, newDeliverableObj);
-      
-      // Invalidate query to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-      
-      // Clear the form
-      setNewDeliverable('');
-      setNewDeliverableDescription('');
-      setIsAddingDeliverable(false);
-      
-      toast({
-        title: "Success",
-        description: "New deliverable added successfully",
-      });
-    } catch (error) {
-      console.error("Error adding deliverable:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add deliverable",
-        variant: "destructive"
-      });
-    }
+    const newDeliverableObj: Deliverable = {
+      projectId: parseInt(projectId || "0"),
+      phase: "define",
+      name: newDeliverable,
+      description: newDeliverableDescription || null,
+      isRequired: false,
+      isCompleted: false
+    };
+    
+    setDeliverables([...deliverables, newDeliverableObj]);
+    setNewDeliverable('');
+    setNewDeliverableDescription('');
+    setIsAddingDeliverable(false);
+    
+    // Trigger auto-save
+    setNewDeliverableAdded(true);
   };
 
   // Add a new validator
@@ -532,76 +517,20 @@ export default function GateReviewValidation() {
   };
 
   // Update validator status
-  const updateValidatorStatus = async (index: number, status: ValidationStatus) => {
-    try {
-      // Update in local state
-      const updatedValidators = [...validators];
-      const validator = updatedValidators[index];
-      validator.status = status;
-      
-      // Set validated date only for Approved or Rejected
-      validator.validatedDate = status !== "Pending" ? new Date() : null;
-      
-      // Update UI immediately
-      setValidators(updatedValidators);
-      
-      // If validator has an ID, update in database directly
-      if (validator.id) {
-        await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
-        
-        // Display success toast
-        toast({
-          title: "Success",
-          description: `${validator.validatorRole} status updated to ${status}`,
-        });
-      }
-    } catch (error) {
-      console.error("Error updating validator status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update validator status",
-        variant: "destructive"
-      });
-      
-      // Revert UI in case of error
-      const revertedValidators = [...validators];
-      revertedValidators[index].status = validators[index].status;
-      revertedValidators[index].validatedDate = validators[index].validatedDate;
-      setValidators(revertedValidators);
-    }
+  const updateValidatorStatus = (index: number, status: ValidationStatus) => {
+    const updatedValidators = [...validators];
+    updatedValidators[index].status = status;
+    // Set validated date only for Approved or Rejected
+    updatedValidators[index].validatedDate = 
+      status !== "Pending" ? new Date() : null;
+    setValidators(updatedValidators);
   };
 
   // Update validator comments
-  const updateValidatorComments = async (index: number, comments: string) => {
-    try {
-      // Update in UI immediately
-      const updatedValidators = [...validators];
-      const validator = updatedValidators[index];
-      validator.comments = comments;
-      setValidators(updatedValidators);
-      
-      // If validator has an ID, update in database after a short debounce
-      if (validator.id) {
-        // Storing the original comment for comparison
-        const originalComment = comments;
-        
-        // Debounce the API call to avoid too many requests
-        setTimeout(async () => {
-          // Only proceed if the comment hasn't changed again
-          if (validators[index]?.comments === originalComment) {
-            await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
-            console.log("Validator comments saved");
-          }
-        }, 500); // 500ms debounce
-      }
-    } catch (error) {
-      console.error("Error updating validator comments:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update comments",
-        variant: "destructive"
-      });
-    }
+  const updateValidatorComments = (index: number, comments: string) => {
+    const updatedValidators = [...validators];
+    updatedValidators[index].comments = comments;
+    setValidators(updatedValidators);
   };
 
   // Remove a validator
@@ -867,13 +796,13 @@ export default function GateReviewValidation() {
                 </Button>
               </div>
             </div>
-            {/* Note: Save button no longer needed since changes auto-save */}
+            {/* Save Button */}
             <div className="flex justify-start mt-6">
               <Button 
-                onClick={() => toast({title: "Information", description: "Deliverables are now saved automatically when added or modified"})}
-                className="bg-blue-100 text-blue-800 hover:bg-blue-200"
+                onClick={saveData}
+                className="bg-primary text-white hover:bg-primary/90"
               >
-                ✓ Deliverables Auto-Saved
+                Save Deliverables
               </Button>
             </div>
             {/* Validators Section */}
@@ -1022,13 +951,13 @@ export default function GateReviewValidation() {
               </div>
             </div>
             
-            {/* Save Button for validator status */}
+            {/* Save Button */}
             <div className="flex justify-start mt-6">
               <Button 
-                onClick={saveValidatorChanges}
+                onClick={saveData}
                 className="bg-primary text-white hover:bg-primary/90"
               >
-                Save Validator Status Changes
+                Save Gate Review
               </Button>
             </div>
           </div>
