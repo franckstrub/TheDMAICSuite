@@ -163,6 +163,7 @@ export default function GateReviewValidation() {
   const [validators, setValidators] = useState<Validator[]>([]);
   const [newValidatorName, setNewValidatorName] = useState('');
   const [newValidatorRole, setNewValidatorRole] = useState('');
+  const [newValidatorComments, setNewValidatorComments] = useState('');
   const [newDeliverable, setNewDeliverable] = useState('');
   const [newDeliverableDescription, setNewDeliverableDescription] = useState('');
   const [newDeliverableRequired, setNewDeliverableRequired] = useState<boolean>(false); // Default to Optional
@@ -485,7 +486,8 @@ export default function GateReviewValidation() {
       phase: "define",
       validatorName: newValidatorName,
       validatorRole: newValidatorRole,
-      status: "Pending"
+      status: "Pending",
+      comments: newValidatorComments
     };
     
     try {
@@ -502,6 +504,7 @@ export default function GateReviewValidation() {
       // Clear the form
       setNewValidatorName('');
       setNewValidatorRole('');
+      setNewValidatorComments('');
       setIsAddingValidator(false);
       
       toast({
@@ -813,15 +816,6 @@ export default function GateReviewValidation() {
                 </Button>
               </div>
             </div>
-            {/* Save Button */}
-            <div className="flex justify-start mt-6">
-              <Button 
-                onClick={saveData}
-                className="bg-primary text-white hover:bg-primary/90"
-              >
-                Save Deliverables
-              </Button>
-            </div>
             {/* Validators Section */}
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -928,8 +922,10 @@ export default function GateReviewValidation() {
                       </TableCell>
                       <TableCell>
                         <Textarea
-                          disabled
+                          
                           placeholder="Add comments after creation"
+                          value={newValidatorComments}
+                          onChange={(e) => setNewValidatorComments(e.target.value)}
                           className="min-h-[80px] resize-none"
                         />
                       </TableCell>
