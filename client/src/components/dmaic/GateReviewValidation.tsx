@@ -461,20 +461,8 @@ export default function GateReviewValidation() {
     setNewDeliverableAdded(true);
   };
 
-  // Track when a new validator is added for auto-save
-  const [newValidatorAdded, setNewValidatorAdded] = useState<boolean>(false);
-  
-  // Auto-save when a new validator is added
-  useEffect(() => {
-    if (newValidatorAdded) {
-      console.log("Auto-saving after new validator was added");
-      saveData();
-      setNewValidatorAdded(false);
-    }
-  }, [newValidatorAdded]);
-  
   // Add a new validator
-  const addValidator = () => {
+  const addValidator = async () => {
     if (!newValidatorName.trim() || !newValidatorRole.trim()) return;
     
     const newValidatorObj: Validator = {
@@ -485,13 +473,34 @@ export default function GateReviewValidation() {
       status: "Pending"
     };
     
-    setValidators([...validators, newValidatorObj]);
-    setNewValidatorName('');
-    setNewValidatorRole('');
-    setIsAddingValidator(false);
-    
-    // Trigger auto-save
-    setNewValidatorAdded(true);
+    try {
+      console.log("Creating new validator:", newValidatorObj);
+      
+      // Create the new validator directly via API
+      const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, newValidatorObj);
+      
+      console.log("New validator created:", response);
+      
+      // Invalidate query to refresh data
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
+      
+      // Clear the form
+      setNewValidatorName('');
+      setNewValidatorRole('');
+      setIsAddingValidator(false);
+      
+      toast({
+        title: "Success",
+        description: "New validator added successfully",
+      });
+    } catch (error) {
+      console.error("Error adding validator:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add validator",
+        variant: "destructive"
+      });
+    }
   };
 
   // Update validator status
