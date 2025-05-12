@@ -841,6 +841,7 @@ export default function GateReviewValidation() {
                     <TableHead>Name</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="min-w-[120px]">Validation Date</TableHead>
                     <TableHead>Comments</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -891,6 +892,19 @@ export default function GateReviewValidation() {
                         </Select>
                       </TableCell>
                       <TableCell>
+                        {validator.status !== "Pending" && validator.validatedDate ? (
+                          <span className="text-sm">
+                            {new Date(validator.validatedDate).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Textarea
                           placeholder="Add comments"
                           value={validator.comments || ""}
@@ -932,6 +946,9 @@ export default function GateReviewValidation() {
                       </TableCell>
                       <TableCell>
                         {getStatusBadge("Pending")}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-gray-400 text-sm">—</span>
                       </TableCell>
                       <TableCell>
                         <Textarea
