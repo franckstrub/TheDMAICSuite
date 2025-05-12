@@ -440,38 +440,45 @@ export default function GateReviewValidation() {
     setDeliverables(updatedDeliverables);
   };
 
-  // Track when a new deliverable is added for auto-save
-  const [newDeliverableAdded, setNewDeliverableAdded] = useState<boolean>(false);
-  
-  // Auto-save when a new deliverable is added
-  useEffect(() => {
-    if (newDeliverableAdded) {
-      console.log("Auto-saving after new deliverable was added");
-      saveData();
-      setNewDeliverableAdded(false);
-    }
-  }, [newDeliverableAdded]);
-  
-  // Add a new deliverable
-  const addDeliverable = () => {
+  // Add a new deliverable directly to the database
+  const addDeliverable = async () => {
     if (!newDeliverable.trim()) return;
     
-    const newDeliverableObj: Deliverable = {
-      projectId: parseInt(projectId || "0"),
-      phase: "define",
-      name: newDeliverable,
-      description: newDeliverableDescription || null,
-      isRequired: false,
-      isCompleted: false
-    };
-    
-    setDeliverables([...deliverables, newDeliverableObj]);
-    setNewDeliverable('');
-    setNewDeliverableDescription('');
-    setIsAddingDeliverable(false);
-    
-    // Trigger auto-save
-    setNewDeliverableAdded(true);
+    try {
+      const newDeliverableObj: Deliverable = {
+        projectId: parseInt(projectId || "0"),
+        phase: "define",
+        name: newDeliverable,
+        description: newDeliverableDescription || null,
+        isRequired: false,
+        isCompleted: false
+      };
+      
+      console.log("Creating new deliverable:", newDeliverableObj);
+      
+      // Create the new deliverable directly via API
+      await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, newDeliverableObj);
+      
+      // Invalidate query to refresh data
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+      
+      // Clear the form
+      setNewDeliverable('');
+      setNewDeliverableDescription('');
+      setIsAddingDeliverable(false);
+      
+      toast({
+        title: "Success",
+        description: "New deliverable added successfully",
+      });
+    } catch (error) {
+      console.error("Error adding deliverable:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add deliverable",
+        variant: "destructive"
+      });
+    }
   };
 
   // Add a new validator
