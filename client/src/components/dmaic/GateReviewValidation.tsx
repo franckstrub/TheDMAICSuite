@@ -268,25 +268,41 @@ export default function GateReviewValidation() {
       } else if (deliverablesData.deliverables) {
         console.log("Setting deliverables from data:", deliverablesData.deliverables);
         
-        // Create a map to organize deliverables by name to match the original order
-        const deliverableMap = new Map<string, Deliverable>();
+        // Keep track of what default deliverables exist in the database
+        const existingDefaultNames = new Set<string>();
+        const customDeliverables: Deliverable[] = [];
+        
+        // First identify existing default deliverables and custom deliverables
         deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
-          deliverableMap.set(deliverable.name, deliverable);
+          // Check if this is a default deliverable by name
+          const isDefault = defaultDefineDeliverables.some(
+            def => def.name === deliverable.name
+          );
+          
+          if (isDefault) {
+            existingDefaultNames.add(deliverable.name);
+          } else {
+            // This is a custom deliverable, preserve it for later
+            customDeliverables.push(deliverable);
+          }
         });
         
-        // Prepare all ordered deliverables - start with default ones
+        // Start building our ordered list
         const orderedDeliverables: Deliverable[] = [];
         
-        // First, add all default deliverables in their original order
-        // Make sure all default deliverables are always included
+        // First add all default deliverables, either from DB or default template
         defaultDefineDeliverables.forEach(defaultDeliverable => {
-          if (deliverableMap.has(defaultDeliverable.name)) {
-            // Add existing deliverable with this name
-            orderedDeliverables.push(deliverableMap.get(defaultDeliverable.name)!);
-            // Remove from map to track what we've already added
-            deliverableMap.delete(defaultDeliverable.name);
+          if (existingDefaultNames.has(defaultDeliverable.name)) {
+            // Find the existing default deliverable in the database data
+            const existingDeliverable = deliverablesData.deliverables.find(
+              d => d.name === defaultDeliverable.name
+            );
+            
+            if (existingDeliverable) {
+              orderedDeliverables.push(existingDeliverable);
+            }
           } else {
-            // Default deliverable doesn't exist in database, add it
+            // Default deliverable doesn't exist in database, add it from template
             orderedDeliverables.push({
               ...defaultDeliverable,
               projectId: parseInt(projectId || "0")
@@ -294,12 +310,21 @@ export default function GateReviewValidation() {
           }
         });
         
-        // Then add any custom deliverables that aren't in the default list
-        deliverableMap.forEach((deliverable: Deliverable) => {
-          orderedDeliverables.push(deliverable);
+        // Then add custom deliverables in their ORIGINAL order from the database
+        // This preserves the insertion order of custom deliverables
+        customDeliverables.sort((a, b) => {
+          // If IDs are available, use them to determine insertion order
+          if (a.id && b.id) {
+            return a.id - b.id;
+          }
+          // Otherwise, preserve the order from the API response
+          return 0;
         });
         
-        console.log("Ordered deliverables:", orderedDeliverables);
+        // Add the custom deliverables to the ordered list
+        orderedDeliverables.push(...customDeliverables);
+        
+        console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
         setDeliverables(orderedDeliverables);
       } else {
         console.log("Deliverables data structure is unexpected:", deliverablesData);
