@@ -720,26 +720,45 @@ export default function GateReviewValidation() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => removeDeliverable(index)}
-                                disabled={deliverable.isRequired}
-                                className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {deliverable.isRequired 
-                                ? "Required deliverables cannot be removed" 
-                                : "Remove deliverable"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex justify-end space-x-1">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => editDeliverable(index)}
+                                  className="h-7 w-7 text-gray-500 hover:text-blue-700 p-1"
+                                >
+                                  <i className="fas fa-edit"></i>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Edit deliverable
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => removeDeliverable(index)}
+                                  disabled={deliverable.isRequired}
+                                  className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {deliverable.isRequired 
+                                  ? "Required deliverables cannot be removed" 
+                                  : "Remove deliverable"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
