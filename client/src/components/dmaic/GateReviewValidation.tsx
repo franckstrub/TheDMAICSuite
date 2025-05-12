@@ -534,17 +534,73 @@ export default function GateReviewValidation() {
   };
 
   // Remove a validator
-  const removeValidator = (index: number) => {
-    const updatedValidators = [...validators];
-    updatedValidators.splice(index, 1);
-    setValidators(updatedValidators);
+  const removeValidator = async (index: number) => {
+    const validatorToRemove = validators[index];
+    
+    if (!validatorToRemove) return;
+    
+    try {
+      if (validatorToRemove.id) {
+        // If the validator has an ID, it exists in the database and must be deleted
+        console.log("Deleting validator from database:", validatorToRemove);
+        await apiRequest('DELETE', `/api/gate-review-validators/${validatorToRemove.id}`, {});
+        
+        // After successful deletion from database, refresh the data
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
+        
+        toast({
+          title: "Success",
+          description: "Validator removed successfully",
+        });
+      } else {
+        // Validator only exists in local state, just remove it from state
+        const updatedValidators = [...validators];
+        updatedValidators.splice(index, 1);
+        setValidators(updatedValidators);
+      }
+    } catch (error) {
+      console.error("Error removing validator:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove validator",
+        variant: "destructive"
+      });
+    }
   };
 
   // Remove a deliverable
-  const removeDeliverable = (index: number) => {
-    const updatedDeliverables = [...deliverables];
-    updatedDeliverables.splice(index, 1);
-    setDeliverables(updatedDeliverables);
+  const removeDeliverable = async (index: number) => {
+    const deliverableToRemove = deliverables[index];
+    
+    if (!deliverableToRemove) return;
+    
+    try {
+      if (deliverableToRemove.id) {
+        // If the deliverable has an ID, it exists in the database and must be deleted
+        console.log("Deleting deliverable from database:", deliverableToRemove);
+        await apiRequest('DELETE', `/api/gate-review-deliverables/${deliverableToRemove.id}`, {});
+        
+        // After successful deletion from database, refresh the data
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+        
+        toast({
+          title: "Success",
+          description: "Deliverable removed successfully",
+        });
+      } else {
+        // Deliverable only exists in local state, just remove it from state
+        const updatedDeliverables = [...deliverables];
+        updatedDeliverables.splice(index, 1);
+        setDeliverables(updatedDeliverables);
+      }
+    } catch (error) {
+      console.error("Error removing deliverable:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove deliverable",
+        variant: "destructive"
+      });
+    }
   };
 
   // Function to get status icon
