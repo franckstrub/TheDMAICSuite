@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from '@/lib/queryClient';
 import { CheckCircle, XCircle, Clock, Plus, Trash2 } from 'lucide-react';
+import { Project } from '@shared/schema';
 
 // Types for our validators and deliverables
 type ValidationStatus = "Pending" | "Approved" | "Rejected";
@@ -44,6 +45,7 @@ interface Charter {
   id: number;
   projectId: number;
   projectTitle?: string;
+  projectType?: string | null;
   projectLeader?: string;
   sponsor?: string;
   financialController?: string;
@@ -77,8 +79,11 @@ interface Deliverable {
   isCompleted: boolean;
 }
 
-// Default deliverables for the Define phase
-const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
+// Function to get default deliverables based on project type
+const getDefaultDefineDeliverables = (projectType?: string): Omit<Deliverable, "id" | "projectId">[] => {
+  // Base deliverables that apply to all project types
+  // Default deliverables for the Define phase
+ const baseDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
   {
     phase: "define",
     name: "Project Charter",
@@ -107,42 +112,6 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
     isRequired: true,
     isCompleted: false
   },
-  
-  {
-    phase: "define",
-    name: "Risk Assessment",
-    description: "Initial project risk analysis and mitigation plans",
-    isRequired: true,
-    isCompleted: false
-  },
-  {
-    phase: "define",
-    name: "RACI Matrix",
-    description: "Project RACI (Responsible, Accountable, Consulted, Informed) matrix",
-    isRequired: true,
-    isCompleted: false
-  },
-  {
-    phase: "define",
-    name: "Stakeholder Analysis",
-    description: "Project Stakeholder Analysis Matrix",
-    isRequired: true,
-    isCompleted: false
-  },
-  {
-    phase: "define",
-    name: "Gantt Plan",
-    description: "Project Gantt Plan",
-    isRequired: true,
-    isCompleted: false
-  },
-  {
-    phase: "define",
-    name: "Elevator Speech",
-    description: "Project Elevator Speech",
-    isRequired: true,
-    isCompleted: false
-  },
   {
     phase: "define",
     name: "Gate Review and Validation",
@@ -150,10 +119,63 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
     isRequired: true,
     isCompleted: false
   }
-];
+ ];
+ // Add Green Belt and Black Belt specific deliverables
+  if (projectType === "Green Belt" || projectType === "Black Belt") {
+    const greenBeltDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
+        {
+          phase: "define",
+          name: "Risk Assessment",
+          description: "Initial project risk analysis and mitigation plans",
+          isRequired: true,
+          isCompleted: false
+        },
+        {
+          phase: "define",
+          name: "RACI Matrix",
+          description: "Project RACI (Responsible, Accountable, Consulted, Informed) matrix",
+          isRequired: true,
+          isCompleted: false
+        },
+        {
+          phase: "define",
+          name: "Stakeholder Analysis",
+          description: "Project Stakeholder Analysis Matrix",
+          isRequired: true,
+          isCompleted: false
+        },
+        {
+          phase: "define",
+          name: "Gantt Plan",
+          description: "Project Gantt Plan",
+          isRequired: true,
+          isCompleted: false
+        },
+        {
+          phase: "define",
+          name: "Elevator Speech",
+          description: "Project Elevator Speech",
+          isRequired: false,
+          isCompleted: false
+        }
+    ];
+    
+    // Insert Green Belt and Black Belt specific deliverables before the Gate Review
+    // This keeps the Gate Review as the last item
+    const insertIndex = baseDeliverables.length - 1;
+    return [
+      ...baseDeliverables.slice(0, insertIndex),
+      ...greenBeltDeliverables,
+      baseDeliverables[insertIndex]
+    ];
+  }
+  
+  return baseDeliverables;
+};
 
 export default function GateReviewValidation() {
   const { projectId } = useParams();
+  const { project_type_in_project } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const phase = "define"; // This component is for the Define phase
@@ -168,13 +190,26 @@ export default function GateReviewValidation() {
   const [newDeliverableRequired, setNewDeliverableRequired] = useState<boolean>(false); // Default to Optional
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
+  const [defaultDefineDeliverables, setDefaultDefineDeliverables] = useState<Omit<Deliverable, "id" | "projectId">[]>([]);
   
-  // Fetch the project charter to get validators
+  // Fetch the project charter to get validators and project type
   const { data: charter } = useQuery<CharterResponse>({
     queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!projectId
   });
-
+  // Set default deliverables based on charter data
+  useEffect(() => {
+    if (charter?.charter) {
+      const projectType = charter.charter.projectType;  
+      setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
+    }
+    else {
+      const projectType_inproject= project_type_in_project;
+      console.log("Project type from params:", projectType_inproject);
+      setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType_inproject));
+    }
+  }, [charter]);
+  
   // Interfaces for API responses
   interface DeliverablesResponse {
     deliverables: Deliverable[];

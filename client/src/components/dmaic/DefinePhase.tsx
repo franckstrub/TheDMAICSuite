@@ -152,6 +152,7 @@ export default function DefinePhase() {
   const charterForm = useForm({
     defaultValues: {
       projectTitle: "",
+      projectReferenceNumber: "",
       projectLeader: "",
       sponsor: "",
       sponsorFunction: "",
@@ -161,7 +162,7 @@ export default function DefinePhase() {
       projectCoach: "",
       beltLevel: "Green Belt", 
       coachBeltLevel: "Master Black Belt",
-      projectType: "Green Belt",
+      projectType: "",
       projectCategory: "Process Improvement",
       businessCase: "",
       problemStatement: "",
@@ -888,7 +889,7 @@ export default function DefinePhase() {
         projectCoach: charter.charter.projectCoach || "",
         beltLevel: charter.charter.beltLevel || "Black Belt",
         coachBeltLevel: charter.charter.coachBeltLevel || "Master Black Belt",
-        projectType: charter.charter.projectType || "Green Belt",
+        projectType: currentProject?.projectType || "",
         projectCategory: charter.charter.projectCategory || "Process Improvement",
         businessCase: charter.charter.businessCase || "",
         problemStatement: charter.charter.problemStatement || "",
@@ -979,7 +980,7 @@ export default function DefinePhase() {
         projectCoach: "",
         beltLevel: "Green Belt",
         coachBeltLevel: "Master Black Belt",
-        projectType: "Green Belt",
+        projectType: currentProject?.projectType || "",
         projectCategory: "Process Improvement",
         businessCase: "",
         problemStatement: "",
@@ -2724,7 +2725,7 @@ export default function DefinePhase() {
                     <Label htmlFor="projectTitle">Project Title</Label>
                     <Input
                       id="projectTitle"
-                      placeholder="Order Processing Optimization"
+                      placeholder="Project Title"
                       {...charterForm.register("projectTitle")}
                     />
                   </div>
@@ -2732,8 +2733,8 @@ export default function DefinePhase() {
                     <Label htmlFor="projectReferenceNumber">Project Reference Number</Label>
                     <Input
                       id="projectReferenceNumber"
-                      placeholder="LSS-2025-001"
-                      {...charterForm.register("projectReferenceNumber")}
+                      placeholder="Enter a Project Reference Number"
+                    {...charterForm.register("projectReferenceNumber")}
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
