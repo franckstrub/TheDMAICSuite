@@ -817,6 +817,15 @@ export default function GateReviewValidation() {
 
   return (
     <div className="space-y-6">
+      {/* Hidden file input for document uploads */}
+      <input 
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+        accept="*/*" // Allow all file types
+      />
+      
       <Card>
         <CardHeader>
           <CardTitle className="text-xl flex items-center justify-between">
@@ -1037,7 +1046,7 @@ export default function GateReviewValidation() {
                 onClick={saveData}
                 className="bg-primary text-white hover:bg-primary/90"
               >
-                Save Deliverables
+                Save Gate Review
               </Button>
             </div>
             {/* Validators Section */}
