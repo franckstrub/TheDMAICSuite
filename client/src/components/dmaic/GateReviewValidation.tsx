@@ -883,26 +883,74 @@ export default function GateReviewValidation() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => removeDeliverable(index)}
-                                disabled={deliverable.isRequired}
-                                className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {deliverable.isRequired 
-                                ? "Required deliverables cannot be removed" 
-                                : "Remove deliverable"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex justify-end space-x-2">
+                          {/* File upload/download buttons - only show if deliverable has an ID (is saved) */}
+                          {deliverable.id && (
+                            <>
+                              {/* If file exists, show download button */}
+                              {deliverable.fileAttachment ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
+                                        onClick={() => downloadFile(deliverable.id!)}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Download {deliverable.fileOriginalName || 'file'}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
+                                        onClick={() => handleFileUpload(deliverable.id!)}
+                                        disabled={isUploading}
+                                      >
+                                        <Paperclip className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Attach document (10MB limit)</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </>
+                          )}
+                          
+                          {/* Remove button */}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => removeDeliverable(index)}
+                                  disabled={deliverable.isRequired}
+                                  className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {deliverable.isRequired 
+                                  ? "Required deliverables cannot be removed" 
+                                  : "Remove deliverable"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
