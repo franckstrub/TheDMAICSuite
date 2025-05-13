@@ -112,35 +112,35 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
     phase: "define",
     name: "Risk Assessment",
     description: "Initial project risk analysis and mitigation plans",
-    isRequired: true,
+    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
     isCompleted: false
   },
   {
     phase: "define",
     name: "RACI Matrix",
     description: "Project RACI (Responsible, Accountable, Consulted, Informed) matrix",
-    isRequired: true,
+    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
     isCompleted: false
   },
   {
     phase: "define",
     name: "Stakeholder Analysis",
     description: "Project Stakeholder Analysis Matrix",
-    isRequired: true,
+    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
     isCompleted: false
   },
   {
     phase: "define",
     name: "Gantt Plan",
     description: "Project Gantt Plan",
-    isRequired: true,
+    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
     isCompleted: false
   },
   {
     phase: "define",
     name: "Elevator Speech",
     description: "Project Elevator Speech",
-    isRequired: true,
+    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
     isCompleted: false
   },
   {
