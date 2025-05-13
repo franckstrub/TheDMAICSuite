@@ -154,7 +154,7 @@ const StakeholderManagement: React.FC<StakeholderManagementProps> = ({
               <tr key={index}>
                 <td className="px-4 py-2">
                   <Input
-                    placeholder="Enter stakeholder name"
+                    placeholder="Enter Stakeholder name"
                     value={stakeholder.name}
                     onChange={(e) => updateStakeholder(index, 'name', e.target.value)}
                     className="h-8"
