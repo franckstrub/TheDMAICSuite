@@ -213,8 +213,17 @@ export default function GateReviewValidation() {
       projectType = project.project.projectType;
     }
     console.log("Using project type for deliverables:", projectType);
-    setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
-  }, [charter, project]);
+    
+    // Always have at least base deliverables, never empty
+    if (defaultDefineDeliverables.length === 0) {
+      // Use null-safe call to get default deliverables
+      const safeProjectType = projectType || undefined;
+      setDefaultDefineDeliverables(getDefaultDefineDeliverables(safeProjectType));
+    } else if (projectType) {
+      // If we already have some deliverables but now have project type info, update them
+      setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
+    }
+  }, [charter, project, defaultDefineDeliverables]);
 
   // Interfaces for API responses
   interface DeliverablesResponse {
@@ -297,82 +306,102 @@ export default function GateReviewValidation() {
   // Initialize with default deliverables if none exist
   useEffect(() => {
     console.log("Deliverables data received:", deliverablesData);
-    if (deliverablesData) {
-      if (deliverablesData.deliverables && deliverablesData.deliverables.length === 0) {
-        console.log("No deliverables found, using defaults");
-        // If no deliverables exist yet, use the defaults
-        setDeliverables(
-          defaultDefineDeliverables.map(deliverable => ({
-            ...deliverable,
-            projectId: parseInt(projectId || "0")
-          }))
-        );
-      } else if (deliverablesData.deliverables) {
-        console.log("Setting deliverables from data:", deliverablesData.deliverables);
+    console.log("Default deliverables available:", defaultDefineDeliverables.length);
 
-        // Keep track of what default deliverables exist in the database
-        const existingDefaultNames = new Set<string>();
-        const customDeliverables: Deliverable[] = [];
-
-        // First identify existing default deliverables and custom deliverables
-        deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
-          // Check if this is a default deliverable by name
-          const isDefault = defaultDefineDeliverables.some(
-            def => def.name === deliverable.name
-          );
-
-          if (isDefault) {
-            existingDefaultNames.add(deliverable.name);
-          } else {
-            // This is a custom deliverable, preserve it for later
-            customDeliverables.push(deliverable);
-          }
-        });
-
-        // Start building our ordered list
-        const orderedDeliverables: Deliverable[] = [];
-
-        // First add all default deliverables, either from DB or default template
-        defaultDefineDeliverables.forEach(defaultDeliverable => {
-          if (existingDefaultNames.has(defaultDeliverable.name)) {
-            // Find the existing default deliverable in the database data
-            const existingDeliverable = deliverablesData.deliverables.find(
-              d => d.name === defaultDeliverable.name
-            );
-
-            if (existingDeliverable) {
-              orderedDeliverables.push(existingDeliverable);
-            }
-          } else {
-            // Default deliverable doesn't exist in database, add it from template
-            orderedDeliverables.push({
-              ...defaultDeliverable,
-              projectId: parseInt(projectId || "0")
-            });
-          }
-        });
-
-        // Then add custom deliverables in their ORIGINAL order from the database
-        // This preserves the insertion order of custom deliverables
-        customDeliverables.sort((a, b) => {
-          // If IDs are available, use them to determine insertion order
-          if (a.id && b.id) {
-            return a.id - b.id;
-          }
-          // Otherwise, preserve the order from the API response
-          return 0;
-        });
-
-        // Add the custom deliverables to the ordered list
-        orderedDeliverables.push(...customDeliverables);
-
-        console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
-        setDeliverables(orderedDeliverables);
-      } else {
-        console.log("Deliverables data structure is unexpected:", deliverablesData);
-      }
+    // Make sure we have default deliverables to work with
+    if (defaultDefineDeliverables.length === 0) {
+      console.log("No default deliverables template available yet, waiting for project data");
+      return;
     }
-  }, [deliverablesData, projectId]);
+
+    // Helper function to create default deliverables with project ID
+    const createDefaultDeliverables = () => {
+      console.log("Creating default deliverables");
+      return defaultDefineDeliverables.map(deliverable => ({
+        ...deliverable,
+        projectId: parseInt(projectId || "0")
+      }));
+    };
+
+    if (!deliverablesData) {
+      console.log("No deliverables data yet");
+      return;
+    }
+
+    if (!deliverablesData.deliverables || !Array.isArray(deliverablesData.deliverables)) {
+      console.log("Deliverables data structure is unexpected:", deliverablesData);
+      return;
+    }
+
+    if (deliverablesData.deliverables.length === 0) {
+      console.log("No deliverables found, using defaults");
+      // If no deliverables exist yet, use the defaults
+      const defaultsWithProjectId = createDefaultDeliverables();
+      setDeliverables(defaultsWithProjectId);
+      return;
+    }
+
+    console.log("Setting deliverables from data:", deliverablesData.deliverables);
+
+    // Keep track of what default deliverables exist in the database
+    const existingDefaultNames = new Set<string>();
+    const customDeliverables: Deliverable[] = [];
+
+    // First identify existing default deliverables and custom deliverables
+    deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
+      // Check if this is a default deliverable by name
+      const isDefault = defaultDefineDeliverables.some(
+        def => def.name === deliverable.name
+      );
+
+      if (isDefault) {
+        existingDefaultNames.add(deliverable.name);
+      } else {
+        // This is a custom deliverable, preserve it for later
+        customDeliverables.push(deliverable);
+      }
+    });
+
+    // Start building our ordered list
+    const orderedDeliverables: Deliverable[] = [];
+
+    // First add all default deliverables, either from DB or default template
+    defaultDefineDeliverables.forEach(defaultDeliverable => {
+      if (existingDefaultNames.has(defaultDeliverable.name)) {
+        // Find the existing default deliverable in the database data
+        const existingDeliverable = deliverablesData.deliverables.find(
+          d => d.name === defaultDeliverable.name
+        );
+
+        if (existingDeliverable) {
+          orderedDeliverables.push(existingDeliverable);
+        }
+      } else {
+        // Default deliverable doesn't exist in database, add it from template
+        orderedDeliverables.push({
+          ...defaultDeliverable,
+          projectId: parseInt(projectId || "0")
+        });
+      }
+    });
+
+    // Then add custom deliverables in their ORIGINAL order from the database
+    // This preserves the insertion order of custom deliverables
+    customDeliverables.sort((a, b) => {
+      // If IDs are available, use them to determine insertion order
+      if (a.id && b.id) {
+        return a.id - b.id;
+      }
+      // Otherwise, preserve the order from the API response
+      return 0;
+    });
+
+    // Add the custom deliverables to the ordered list
+    orderedDeliverables.push(...customDeliverables);
+
+    console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
+    setDeliverables(orderedDeliverables);
+  }, [deliverablesData, projectId, defaultDefineDeliverables]);
 
   // Initialize validators from charter if none exist
   useEffect(() => {
