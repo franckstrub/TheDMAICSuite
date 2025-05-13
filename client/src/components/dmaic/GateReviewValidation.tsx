@@ -195,6 +195,9 @@ export default function GateReviewValidation() {
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
   const [defaultDefineDeliverables, setDefaultDefineDeliverables] = useState<Omit<Deliverable, "id" | "projectId">[]>([]);
+  const [uploadingFor, setUploadingFor] = useState<number | null>(null); // Track deliverable ID for which file is being uploaded
+  const [isUploading, setIsUploading] = useState(false); // Track upload state
+  const fileInputRef = React.useRef<HTMLInputElement>(null); // Hidden file input reference
 
   // Fetch both project and charter data
   const { data: project } = useQuery<{ project: Project }>({
@@ -646,6 +649,92 @@ export default function GateReviewValidation() {
       toast({
         title: "Error",
         description: "Failed to remove validator",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = (deliverableId: number) => {
+    setUploadingFor(deliverableId);
+    fileInputRef.current?.click();
+  };
+
+  // Handle file change from input
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    
+    // Check file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size exceeds 10MB limit",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      if (uploadingFor) {
+        formData.append('deliverableId', uploadingFor.toString());
+      }
+      
+      // Upload file
+      const response = await fetch(`/api/projects/${projectId}/deliverable-file-upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('File upload failed');
+      }
+      
+      const result = await response.json();
+      
+      // Update UI after successful upload
+      if (result.success && uploadingFor) {
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+        
+        toast({
+          title: "Success",
+          description: "File uploaded successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadingFor(null);
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+  
+  // Download attached file
+  const downloadFile = async (deliverableId: number) => {
+    try {
+      window.open(`/api/deliverable-file/${deliverableId}`, '_blank');
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download file",
         variant: "destructive"
       });
     }
