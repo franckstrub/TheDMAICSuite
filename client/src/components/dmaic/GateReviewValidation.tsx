@@ -45,7 +45,7 @@ interface Charter {
   id: number;
   projectId: number;
   projectTitle?: string;
-  projectType?: string | null;
+  projectType?: string;
   projectLeader?: string;
   sponsor?: string;
   financialController?: string;
