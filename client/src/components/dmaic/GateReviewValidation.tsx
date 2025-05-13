@@ -44,7 +44,6 @@ interface Charter {
   id: number;
   projectId: number;
   projectTitle?: string;
-  projectType?: string;
   projectLeader?: string;
   sponsor?: string;
   financialController?: string;
@@ -107,40 +106,41 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
     description: "Voice of Business (VOB) Requirements, needs and CTQs documentation",
     isRequired: true,
     isCompleted: false
-  },    
+  },
+  
   {
     phase: "define",
     name: "Risk Assessment",
     description: "Initial project risk analysis and mitigation plans",
-    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
+    isRequired: true,
     isCompleted: false
   },
   {
     phase: "define",
     name: "RACI Matrix",
     description: "Project RACI (Responsible, Accountable, Consulted, Informed) matrix",
-    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
+    isRequired: true,
     isCompleted: false
   },
   {
     phase: "define",
     name: "Stakeholder Analysis",
     description: "Project Stakeholder Analysis Matrix",
-    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
+    isRequired: true,
     isCompleted: false
   },
   {
     phase: "define",
     name: "Gantt Plan",
     description: "Project Gantt Plan",
-    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
+    isRequired: true,
     isCompleted: false
   },
   {
     phase: "define",
     name: "Elevator Speech",
     description: "Project Elevator Speech",
-    isRequired: (projectType === "Green Belt" || projectType === "Black Belt"),
+    isRequired: true,
     isCompleted: false
   },
   {
@@ -157,7 +157,7 @@ export default function GateReviewValidation() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const phase = "define"; // This component is for the Define phase
-
+  
   // States for form handling
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [validators, setValidators] = useState<Validator[]>([]);
@@ -168,7 +168,7 @@ export default function GateReviewValidation() {
   const [newDeliverableRequired, setNewDeliverableRequired] = useState<boolean>(false); // Default to Optional
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
-
+  
   // Fetch the project charter to get validators
   const { data: charter } = useQuery<CharterResponse>({
     queryKey: [`/api/projects/${projectId}/charter`],
@@ -179,11 +179,11 @@ export default function GateReviewValidation() {
   interface DeliverablesResponse {
     deliverables: Deliverable[];
   }
-
+  
   interface ValidatorsResponse {
     validators: Validator[];
   }
-
+  
   // Fetch existing deliverables
   const { data: deliverablesData, isLoading: isLoadingDeliverables } = useQuery<DeliverablesResponse>({
     queryKey: [`/api/projects/${projectId}/gate-review-deliverables`],
@@ -223,7 +223,7 @@ export default function GateReviewValidation() {
           await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
         }
       }
-
+      
       // Process all validators
       for (const validator of validators) {
         if (validator.id) {
@@ -234,11 +234,11 @@ export default function GateReviewValidation() {
           await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
-
+      
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
-
+      
       toast({
         title: "Success",
         description: "Gate review data saved successfully",
@@ -268,18 +268,18 @@ export default function GateReviewValidation() {
         );
       } else if (deliverablesData.deliverables) {
         console.log("Setting deliverables from data:", deliverablesData.deliverables);
-
+        
         // Keep track of what default deliverables exist in the database
         const existingDefaultNames = new Set<string>();
         const customDeliverables: Deliverable[] = [];
-
+        
         // First identify existing default deliverables and custom deliverables
         deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
           // Check if this is a default deliverable by name
           const isDefault = defaultDefineDeliverables.some(
             def => def.name === deliverable.name
           );
-
+          
           if (isDefault) {
             existingDefaultNames.add(deliverable.name);
           } else {
@@ -287,10 +287,10 @@ export default function GateReviewValidation() {
             customDeliverables.push(deliverable);
           }
         });
-
+        
         // Start building our ordered list
         const orderedDeliverables: Deliverable[] = [];
-
+        
         // First add all default deliverables, either from DB or default template
         defaultDefineDeliverables.forEach(defaultDeliverable => {
           if (existingDefaultNames.has(defaultDeliverable.name)) {
@@ -298,7 +298,7 @@ export default function GateReviewValidation() {
             const existingDeliverable = deliverablesData.deliverables.find(
               d => d.name === defaultDeliverable.name
             );
-
+            
             if (existingDeliverable) {
               orderedDeliverables.push(existingDeliverable);
             }
@@ -310,7 +310,7 @@ export default function GateReviewValidation() {
             });
           }
         });
-
+        
         // Then add custom deliverables in their ORIGINAL order from the database
         // This preserves the insertion order of custom deliverables
         customDeliverables.sort((a, b) => {
@@ -321,10 +321,10 @@ export default function GateReviewValidation() {
           // Otherwise, preserve the order from the API response
           return 0;
         });
-
+        
         // Add the custom deliverables to the ordered list
         orderedDeliverables.push(...customDeliverables);
-
+        
         console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
         setDeliverables(orderedDeliverables);
       } else {
@@ -337,17 +337,17 @@ export default function GateReviewValidation() {
   useEffect(() => {
     console.log("Validators data received:", validatorsData);
     console.log("Charter data:", charter);
-
+    
     if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
       console.log("Setting validators from data:", validatorsData.validators);
-
+      
       // Define the default validator roles in the preferred order
-      const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Project Coach"];
-
+      const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Coach"];
+      
       // Keep track of all existing validators by role or ID
       const existingStandardByRole = new Map<string, Validator>();
       const customValidators: Validator[] = [];
-
+      
       // First identify standard vs custom validators
       validatorsData.validators.forEach((validator: Validator) => {
         if (standardRoles.includes(validator.validatorRole)) {
@@ -356,17 +356,17 @@ export default function GateReviewValidation() {
           customValidators.push(validator);
         }
       });
-
+      
       // Start building our ordered list with standard validators first
       const orderedValidators: Validator[] = [];
-
+      
       // Add standard validators in their predefined order
       standardRoles.forEach(role => {
         if (existingStandardByRole.has(role)) {
           orderedValidators.push(existingStandardByRole.get(role)!);
         }
       });
-
+      
       // Sort custom validators by ID to preserve their order of addition
       // This maintains consistent ordering even when navigating between pages
       customValidators.sort((a, b) => {
@@ -377,10 +377,10 @@ export default function GateReviewValidation() {
         // Otherwise, preserve the order from the API response
         return 0;
       });
-
+      
       // Add the custom validators to our ordered list
       orderedValidators.push(...customValidators);
-
+      
       console.log("Ordered validators with preserved custom order:", orderedValidators);
       setValidators(orderedValidators);
     } else if (charter && 'charter' in charter) {
@@ -389,7 +389,7 @@ export default function GateReviewValidation() {
       // from the project charter's key stakeholders
       const defaultValidators: Validator[] = [];
       const charterData = charter.charter;
-
+      
       if (charterData.sponsor) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
@@ -425,7 +425,7 @@ export default function GateReviewValidation() {
           projectId: parseInt(projectId || "0"),
           phase: "define",
           validatorName: charterData.projectCoach,
-          validatorRole: "Project Coach",
+          validatorRole: "Coach",
           status: "Pending"
         });
       }
@@ -443,7 +443,7 @@ export default function GateReviewValidation() {
 
   // Track when a new deliverable is added for auto-save
   const [newDeliverableAdded, setNewDeliverableAdded] = useState<boolean>(false);
-
+  
   // Auto-save when a new deliverable is added
   useEffect(() => {
     if (newDeliverableAdded) {
@@ -452,11 +452,11 @@ export default function GateReviewValidation() {
       setNewDeliverableAdded(false);
     }
   }, [newDeliverableAdded]);
-
+  
   // Add a new deliverable
   const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
-
+    
     const newDeliverableObj: Deliverable = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
@@ -465,13 +465,13 @@ export default function GateReviewValidation() {
       isRequired: newDeliverableRequired,
       isCompleted: false
     };
-
+    
     setDeliverables([...deliverables, newDeliverableObj]);
     setNewDeliverable('');
     setNewDeliverableDescription('');
     setNewDeliverableRequired(false); // Reset back to default (Optional)
     setIsAddingDeliverable(false);
-
+    
     // Trigger auto-save
     setNewDeliverableAdded(true);
   };
@@ -479,7 +479,7 @@ export default function GateReviewValidation() {
   // Add a new validator
   const addValidator = async () => {
     if (!newValidatorName.trim() || !newValidatorRole.trim()) return;
-
+    
     const newValidatorObj: Validator = {
       projectId: parseInt(projectId || "0"),
       phase: "define",
@@ -487,23 +487,23 @@ export default function GateReviewValidation() {
       validatorRole: newValidatorRole,
       status: "Pending"
     };
-
+    
     try {
       console.log("Creating new validator:", newValidatorObj);
-
+      
       // Create the new validator directly via API
       const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, newValidatorObj);
-
+      
       console.log("New validator created:", response);
-
+      
       // Invalidate query to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
-
+      
       // Clear the form
       setNewValidatorName('');
       setNewValidatorRole('');
       setIsAddingValidator(false);
-
+      
       toast({
         title: "Success",
         description: "New validator added successfully",
@@ -522,7 +522,7 @@ export default function GateReviewValidation() {
   const updateValidatorStatus = (index: number, status: ValidationStatus) => {
     const updatedValidators = [...validators];
     updatedValidators[index].status = status;
-
+    
     // Set validated date only for Approved or Rejected
     // Make sure to pass the date as an ISO string which the database can handle
     if (status !== "Pending") {
@@ -531,7 +531,7 @@ export default function GateReviewValidation() {
     } else {
       updatedValidators[index].validatedDate = null;
     }
-
+    
     setValidators(updatedValidators);
   };
 
@@ -545,18 +545,18 @@ export default function GateReviewValidation() {
   // Remove a validator
   const removeValidator = async (index: number) => {
     const validatorToRemove = validators[index];
-
+    
     if (!validatorToRemove) return;
-
+    
     try {
       if (validatorToRemove.id) {
         // If the validator has an ID, it exists in the database and must be deleted
         console.log("Deleting validator from database:", validatorToRemove);
         await apiRequest('DELETE', `/api/gate-review-validators/${validatorToRemove.id}`, {});
-
+        
         // After successful deletion from database, refresh the data
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
-
+        
         toast({
           title: "Success",
           description: "Validator removed successfully",
@@ -580,18 +580,18 @@ export default function GateReviewValidation() {
   // Remove a deliverable
   const removeDeliverable = async (index: number) => {
     const deliverableToRemove = deliverables[index];
-
+    
     if (!deliverableToRemove) return;
-
+    
     try {
       if (deliverableToRemove.id) {
         // If the deliverable has an ID, it exists in the database and must be deleted
         console.log("Deleting deliverable from database:", deliverableToRemove);
         await apiRequest('DELETE', `/api/gate-review-deliverables/${deliverableToRemove.id}`, {});
-
+        
         // After successful deletion from database, refresh the data
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-
+        
         toast({
           title: "Success",
           description: "Deliverable removed successfully",
@@ -690,7 +690,7 @@ export default function GateReviewValidation() {
                   </div>
                 </div>
               </div>
-
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -743,7 +743,7 @@ export default function GateReviewValidation() {
                       </TableCell>
                     </TableRow>
                   ))}
-
+                  
                   {/* Add new deliverable row */}
                   {isAddingDeliverable && (
                     <TableRow>
@@ -802,7 +802,7 @@ export default function GateReviewValidation() {
                   )}
                 </TableBody>
               </Table>
-
+              
               {/* Add Deliverable button moved to below the table */}
               <div className="mt-4 mb-4 flex justify-start">
                 <Button 
@@ -834,7 +834,7 @@ export default function GateReviewValidation() {
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-medium">Approvers</h3>
               </div>
-
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -924,7 +924,7 @@ export default function GateReviewValidation() {
                       </TableCell>
                     </TableRow>
                   ))}
-
+                  
                   {/* Add new validator row */}
                   {isAddingValidator && (
                     <TableRow>
@@ -995,7 +995,7 @@ export default function GateReviewValidation() {
                 </Button>  
               </div>
             </div>
-
+            
             {/* Save Button */}
             <div className="flex justify-start mt-6">
               <Button 
