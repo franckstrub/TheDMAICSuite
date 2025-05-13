@@ -963,7 +963,8 @@ export default function GateReviewValidation() {
                           <i className="fas fa-trash"></i>
                         </Button>
                       </TableCell>
-                    </TableRow                  ))}
+                    </TableRow>
+                  ))}
 
                   {/* Add new validator row */}
                   {isAddingValidator && (
