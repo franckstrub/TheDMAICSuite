@@ -712,6 +712,10 @@ export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
   description: text("description"),
   isRequired: boolean("is_required").notNull().default(true),
   isCompleted: boolean("is_completed").notNull().default(false),
+  fileAttachment: text("file_attachment"), // Path/filename for the attached document
+  fileOriginalName: text("file_original_name"), // Original filename before upload
+  fileSize: integer("file_size"), // File size in bytes
+  fileType: text("file_type"), // MIME type of the file
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 

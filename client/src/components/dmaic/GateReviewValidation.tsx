@@ -77,6 +77,10 @@ interface Deliverable {
   description?: string | null;
   isRequired: boolean;
   isCompleted: boolean;
+  fileAttachment?: string | null;
+  fileOriginalName?: string | null;
+  fileSize?: number | null;
+  fileType?: string | null;
 }
 
 // Function to get default deliverables based on project type
