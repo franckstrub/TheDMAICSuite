@@ -44,6 +44,7 @@ interface Charter {
   id: number;
   projectId: number;
   projectTitle?: string;
+  projectType?: string;
   projectLeader?: string;
   sponsor?: string;
   financialController?: string;
@@ -106,8 +107,7 @@ const defaultDefineDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
     description: "Voice of Business (VOB) Requirements, needs and CTQs documentation",
     isRequired: true,
     isCompleted: false
-  },
-  
+  },    
   {
     phase: "define",
     name: "Risk Assessment",
@@ -342,7 +342,7 @@ export default function GateReviewValidation() {
       console.log("Setting validators from data:", validatorsData.validators);
       
       // Define the default validator roles in the preferred order
-      const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Coach"];
+      const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Project Coach"];
       
       // Keep track of all existing validators by role or ID
       const existingStandardByRole = new Map<string, Validator>();
@@ -425,7 +425,7 @@ export default function GateReviewValidation() {
           projectId: parseInt(projectId || "0"),
           phase: "define",
           validatorName: charterData.projectCoach,
-          validatorRole: "Coach",
+          validatorRole: "Project Coach",
           status: "Pending"
         });
       }
