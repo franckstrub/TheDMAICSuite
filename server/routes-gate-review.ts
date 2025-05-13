@@ -1,8 +1,33 @@
 import { Express, Request, Response } from 'express';
 import { z } from 'zod';
 import { insertGateReviewDeliverableSchema, insertGateReviewValidatorSchema } from '@shared/schema';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs-extra';
 
-export function registerGateReviewRoutes(app: Express, storage: any) {
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Create uploads directory if it doesn't exist
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    fs.ensureDirSync(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Create a unique filename with timestamp and original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `file-${uniqueSuffix}${ext}`);
+  }
+});
+
+// Create upload middleware with size limit of 10MB
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+export function registerGateReviewRoutes(app: Express, dbStorage: any) {
   // Gate Review Deliverables Routes
   app.get("/api/projects/:projectId/gate-review-deliverables", async (req: Request, res: Response) => {
     try {
@@ -13,7 +38,7 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
-      const deliverables = await storage.getGateReviewDeliverables(projectId, phase);
+      const deliverables = await dbStorage.getGateReviewDeliverables(projectId, phase);
       res.json({ deliverables });
     } catch (error) {
       console.error("Error getting gate review deliverables:", error);
@@ -34,7 +59,7 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         projectId
       });
       
-      const deliverable = await storage.createGateReviewDeliverable(validatedData);
+      const deliverable = await dbStorage.createGateReviewDeliverable(validatedData);
       res.status(201).json({ deliverable });
     } catch (error) {
       console.error("Error creating gate review deliverable:", error);
@@ -53,12 +78,12 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         return res.status(400).json({ error: "Invalid deliverable ID" });
       }
       
-      const deliverable = await storage.getGateReviewDeliverable(id);
+      const deliverable = await dbStorage.getGateReviewDeliverable(id);
       if (!deliverable) {
         return res.status(404).json({ error: "Deliverable not found" });
       }
       
-      const updatedDeliverable = await storage.updateGateReviewDeliverable(id, req.body);
+      const updatedDeliverable = await dbStorage.updateGateReviewDeliverable(id, req.body);
       res.json({ deliverable: updatedDeliverable });
     } catch (error) {
       console.error("Error updating gate review deliverable:", error);
@@ -74,12 +99,12 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         return res.status(400).json({ error: "Invalid deliverable ID" });
       }
       
-      const deliverable = await storage.getGateReviewDeliverable(id);
+      const deliverable = await dbStorage.getGateReviewDeliverable(id);
       if (!deliverable) {
         return res.status(404).json({ error: "Deliverable not found" });
       }
       
-      const success = await storage.deleteGateReviewDeliverable(id);
+      const success = await dbStorage.deleteGateReviewDeliverable(id);
       
       if (success) {
         res.json({ success: true });
@@ -102,7 +127,7 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
-      const validators = await storage.getGateReviewValidators(projectId, phase);
+      const validators = await dbStorage.getGateReviewValidators(projectId, phase);
       res.json({ validators });
     } catch (error) {
       console.error("Error getting gate review validators:", error);
@@ -123,7 +148,7 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         projectId
       });
       
-      const validator = await storage.createGateReviewValidator(validatedData);
+      const validator = await dbStorage.createGateReviewValidator(validatedData);
       res.status(201).json({ validator });
     } catch (error) {
       console.error("Error creating gate review validator:", error);
@@ -142,12 +167,12 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         return res.status(400).json({ error: "Invalid validator ID" });
       }
       
-      const validator = await storage.getGateReviewValidator(id);
+      const validator = await dbStorage.getGateReviewValidator(id);
       if (!validator) {
         return res.status(404).json({ error: "Validator not found" });
       }
       
-      const updatedValidator = await storage.updateGateReviewValidator(id, req.body);
+      const updatedValidator = await dbStorage.updateGateReviewValidator(id, req.body);
       res.json({ validator: updatedValidator });
     } catch (error) {
       console.error("Error updating gate review validator:", error);
@@ -163,12 +188,12 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
         return res.status(400).json({ error: "Invalid validator ID" });
       }
       
-      const validator = await storage.getGateReviewValidator(id);
+      const validator = await dbStorage.getGateReviewValidator(id);
       if (!validator) {
         return res.status(404).json({ error: "Validator not found" });
       }
       
-      const success = await storage.deleteGateReviewValidator(id);
+      const success = await dbStorage.deleteGateReviewValidator(id);
       
       if (success) {
         res.json({ success: true });
@@ -178,6 +203,89 @@ export function registerGateReviewRoutes(app: Express, storage: any) {
     } catch (error) {
       console.error("Error deleting gate review validator:", error);
       res.status(500).json({ error: "Failed to delete gate review validator" });
+    }
+  });
+
+  // File upload endpoint for gate review deliverables
+  app.post("/api/projects/:projectId/deliverable-file-upload", upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ error: "No file was uploaded" });
+      }
+      
+      const projectId = parseInt(req.params.projectId);
+      const deliverableId = req.body.deliverableId ? parseInt(req.body.deliverableId) : null;
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
+      
+      // If deliverableId is provided, this is an update to an existing deliverable
+      if (deliverableId && !isNaN(deliverableId)) {
+        const deliverable = await dbStorage.getGateReviewDeliverable(deliverableId);
+        
+        if (!deliverable) {
+          return res.status(404).json({ error: "Deliverable not found" });
+        }
+        
+        // Update the deliverable with file information
+        const updatedDeliverable = await dbStorage.updateGateReviewDeliverable(deliverableId, {
+          fileAttachment: req.file.path,
+          fileOriginalName: req.file.originalname,
+          fileSize: req.file.size,
+          fileType: req.file.mimetype
+        });
+        
+        res.json({ 
+          success: true, 
+          deliverable: updatedDeliverable,
+          file: {
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+          }
+        });
+      } else {
+        // This is just uploading a file without attaching to a deliverable yet
+        res.json({ 
+          success: true, 
+          file: {
+            path: req.file.path,
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  // File download endpoint
+  app.get("/api/deliverable-file/:deliverableId", async (req: Request, res: Response) => {
+    try {
+      const deliverableId = parseInt(req.params.deliverableId);
+      
+      if (isNaN(deliverableId)) {
+        return res.status(400).json({ error: "Invalid deliverable ID" });
+      }
+      
+      const deliverable = await dbStorage.getGateReviewDeliverable(deliverableId);
+      
+      if (!deliverable || !deliverable.fileAttachment) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Send the file
+      res.download(deliverable.fileAttachment, deliverable.fileOriginalName || 'download');
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      res.status(500).json({ error: "Failed to download file" });
     }
   });
 }

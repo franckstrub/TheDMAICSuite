@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from '@/lib/queryClient';
-import { CheckCircle, XCircle, Clock, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Plus, Trash2, Paperclip, File, Download } from 'lucide-react';
 import { Project } from '@shared/schema';
 
 // Types for our validators and deliverables
