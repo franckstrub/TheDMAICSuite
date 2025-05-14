@@ -753,3 +753,30 @@ export const insertGateReviewValidatorSchema = createInsertSchema(gateReviewVali
 
 export type InsertGateReviewValidator = z.infer<typeof insertGateReviewValidatorSchema>;
 export type GateReviewValidator = typeof gateReviewValidators.$inferSelect;
+
+// Gantt Tasks for Work Breakdown Structure
+export const ganttTasks = pgTable("gantt_tasks", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+  progress: integer("progress").notNull().default(0),
+  dependencies: text("dependencies"),
+  assignee: text("assignee"),
+  priority: text("priority").default("medium"),
+  phase: text("phase").notNull(),
+  status: text("status").default("not-started"),
+  parentId: integer("parent_id"),
+  sequence: integer("sequence").default(0),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertGanttTaskSchema = createInsertSchema(ganttTasks).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertGanttTask = z.infer<typeof insertGanttTaskSchema>;
+export type GanttTask = typeof ganttTasks.$inferSelect;
