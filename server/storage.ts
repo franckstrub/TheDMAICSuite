@@ -108,6 +108,14 @@ export interface IStorage {
   createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator>;
   updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined>;
   deleteGateReviewValidator(id: number): Promise<boolean>;
+  
+  // Gantt Task operations
+  getGanttTasks(projectId: number): Promise<GanttTask[]>;
+  getGanttTask(id: number): Promise<GanttTask | undefined>;
+  createGanttTask(task: InsertGanttTask): Promise<GanttTask>;
+  updateGanttTask(id: number, task: Partial<GanttTask>): Promise<GanttTask | undefined>;
+  deleteGanttTask(id: number): Promise<boolean>;
+  updateGanttTaskSequence(projectId: number, taskIds: number[]): Promise<boolean>;
 }
 
 // In-memory storage implementation
@@ -1204,6 +1212,94 @@ export class DatabaseStorage implements IStorage {
       .delete(gateReviewValidators)
       .where(eq(gateReviewValidators.id, id));
     return result.rowCount > 0;
+  }
+  
+  // Gantt Task operations
+  async getGanttTasks(projectId: number): Promise<GanttTask[]> {
+    try {
+      const tasks = await db.select().from(ganttTasks).where(eq(ganttTasks.projectId, projectId)).orderBy(ganttTasks.sequence);
+      return tasks;
+    } catch (error) {
+      console.error(`Error fetching gantt tasks for project ${projectId}:`, error);
+      return [];
+    }
+  }
+
+  async getGanttTask(id: number): Promise<GanttTask | undefined> {
+    try {
+      const [task] = await db.select().from(ganttTasks).where(eq(ganttTasks.id, id));
+      return task;
+    } catch (error) {
+      console.error(`Error fetching gantt task with ID ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async createGanttTask(task: InsertGanttTask): Promise<GanttTask> {
+    try {
+      // Add the current date as lastUpdated
+      const taskData = { ...task, lastUpdated: new Date() };
+      
+      // Insert the new task
+      const [newTask] = await db
+        .insert(ganttTasks)
+        .values(taskData)
+        .returning();
+      return newTask;
+    } catch (error) {
+      console.error('Error creating gantt task:', error);
+      throw error;
+    }
+  }
+
+  async updateGanttTask(id: number, task: Partial<GanttTask>): Promise<GanttTask | undefined> {
+    try {
+      // Add the current date as lastUpdated
+      const taskData = { ...task, lastUpdated: new Date() };
+      
+      // Update the task
+      const [updatedTask] = await db
+        .update(ganttTasks)
+        .set(taskData)
+        .where(eq(ganttTasks.id, id))
+        .returning();
+      
+      return updatedTask;
+    } catch (error) {
+      console.error(`Error updating gantt task with ID ${id}:`, error);
+      return undefined;
+    }
+  }
+
+  async deleteGanttTask(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(ganttTasks)
+        .where(eq(ganttTasks.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Error deleting gantt task with ID ${id}:`, error);
+      return false;
+    }
+  }
+
+  async updateGanttTaskSequence(projectId: number, taskIds: number[]): Promise<boolean> {
+    try {
+      // Update each task's sequence based on its position in the taskIds array
+      for (let i = 0; i < taskIds.length; i++) {
+        await db
+          .update(ganttTasks)
+          .set({ sequence: i })
+          .where(and(
+            eq(ganttTasks.id, taskIds[i]),
+            eq(ganttTasks.projectId, projectId)
+          ));
+      }
+      return true;
+    } catch (error) {
+      console.error(`Error updating gantt task sequence for project ${projectId}:`, error);
+      return false;
+    }
   }
 }
 
