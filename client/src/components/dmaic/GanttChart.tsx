@@ -129,10 +129,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   useEffect(() => {
     const fetchTasks = async () => {
       try {
+        console.log(`Fetching tasks for project ${projectId}...`);
         const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
         if (response.ok) {
           const data = await response.json();
+          console.log(`Received ${data.tasks?.length || 0} tasks:`, data.tasks);
           setTasks(data.tasks || []);
+        } else {
+          console.error(`Failed to fetch tasks: ${response.status}`);
+          toast({
+            title: 'Error',
+            description: 'Failed to load Gantt tasks',
+            variant: 'destructive',
+          });
         }
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -145,6 +154,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     };
 
     fetchTasks();
+    
+    // Set up an interval to periodically check for tasks (every 3 seconds)
+    const intervalId = setInterval(fetchTasks, 3000);
+    
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
   }, [projectId, toast]);
 
   // Update date range based on project dates
@@ -260,6 +275,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       id: editingTaskId || undefined,
     };
     
+    console.log("Submitting task:", taskToSave);
     saveTaskMutation.mutate(taskToSave);
   };
 
