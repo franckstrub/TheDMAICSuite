@@ -26,6 +26,9 @@ export type SupportLevel = typeof supportLevels[number];
 export const validationStatusTypes = ["Pending", "Approved", "Rejected"] as const;
 export type ValidationStatus = typeof validationStatusTypes[number];
 
+export const deliverableRequirementTypes = ["Required", "Optional", "Added by User"] as const;
+export type DeliverableRequirementType = typeof deliverableRequirementTypes[number];
+
 // Users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -710,7 +713,7 @@ export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
   phase: text("phase").notNull(), // define, measure, analyze, improve, control
   name: text("name").notNull(),
   description: text("description"),
-  isRequired: boolean("is_required").notNull().default(true),
+  isRequired: text("is_required").$type<DeliverableRequirementType>().notNull().default("Required"),
   isCompleted: boolean("is_completed").notNull().default(false),
   fileAttachment: text("file_attachment"), // Path/filename for the attached document
   fileOriginalName: text("file_original_name"), // Original filename before upload
