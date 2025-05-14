@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay } from 'date-fns';
+import React, { useState, useEffect, useMemo } from 'react';
+import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay, startOfWeek, endOfWeek, getWeek } from 'date-fns';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Calendar } from "../../components/ui/calendar";
@@ -87,6 +87,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
+  const [timelineView, setTimelineView] = useState<'weeks' | 'months'>('weeks');
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
@@ -99,6 +100,62 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   
   // Generate all dates within the range
   const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
+  
+  // Group dates by weeks or months based on view mode
+  const groupedDates = useMemo(() => {
+    if (timelineView === 'weeks') {
+      // Group by weeks (Sunday to Saturday)
+      const weeks: Date[][] = [];
+      let currentWeek: Date[] = [];
+      let currentWeekStartDate: Date | null = null;
+      
+      allDates.forEach(date => {
+        // Start a new week on Sunday or first date
+        if (currentWeekStartDate === null || date.getDay() === 0) {
+          if (currentWeek.length > 0) {
+            weeks.push(currentWeek);
+          }
+          currentWeek = [date];
+          currentWeekStartDate = date;
+        } else {
+          currentWeek.push(date);
+        }
+      });
+      
+      // Add the last week if it exists
+      if (currentWeek.length > 0) {
+        weeks.push(currentWeek);
+      }
+      
+      return weeks;
+    } else {
+      // Group by months
+      const months: Date[][] = [];
+      let currentMonth: Date[] = [];
+      let currentMonthNumber: number | null = null;
+      
+      allDates.forEach(date => {
+        const monthNumber = date.getMonth();
+        // Start a new month when month changes
+        if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
+          if (currentMonth.length > 0) {
+            months.push(currentMonth);
+          }
+          currentMonth = [date];
+          currentMonthNumber = monthNumber;
+        } else {
+          currentMonth.push(date);
+        }
+      });
+      
+      // Add the last month if it exists
+      if (currentMonth.length > 0) {
+        months.push(currentMonth);
+      }
+      
+      return months;
+    }
+  }, [allDates, timelineView]);
 
   // Get current milestone dates as Date objects
   const milestones = {
@@ -435,6 +492,21 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       <div className="flex justify-between mb-4">
         <h3 className="text-lg font-semibold">Project Timeline</h3>
         <div className="flex space-x-2">
+          <div className="flex items-center border rounded-md overflow-hidden mr-2">
+            <button
+              onClick={() => setTimelineView('weeks')}
+              className={`px-3 py-1 text-sm ${timelineView === 'weeks' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+            >
+              Weeks
+            </button>
+            <button
+              onClick={() => setTimelineView('months')}
+              className={`px-3 py-1 text-sm ${timelineView === 'months' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+            >
+              Months
+            </button>
+          </div>
+          
           <Button
             onClick={() => {
               setIsGeneratingWBS(true);
@@ -721,23 +793,75 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               Task
             </div>
             <div className="gantt-timeline w-3/4 flex">
-              {allDates.map((date, index) => (
-                <div 
-                  key={index} 
-                  className={cn(
-                    "gantt-day flex-1 min-w-[35px] text-center text-xs p-1 border-r",
-                    isMilestoneDate(date) ? "bg-amber-100" : (index % 2 === 0 ? "bg-gray-50" : "bg-white")
-                  )}
-                >
-                  {format(date, 'd')}
-                  <div className="text-[10px]">{format(date, 'MMM')}</div>
-                  {isMilestoneDate(date) && (
-                    <div className="text-[9px] font-semibold text-amber-700 truncate">
-                      {getMilestoneLabel(date)}
+              {timelineView === 'weeks' ? (
+                // Week view
+                groupedDates.map((week, weekIndex) => (
+                  <div 
+                    key={`week-${weekIndex}`}
+                    className="flex flex-col flex-grow border-r"
+                  >
+                    {/* Week header */}
+                    <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium">
+                      Week {getWeek(week[0])}
+                      <div className="text-[10px]">
+                        {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d, yyyy')}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                    {/* Days in week */}
+                    <div className="flex">
+                      {week.map((date, dateIndex) => (
+                        <div 
+                          key={`day-${weekIndex}-${dateIndex}`} 
+                          className={cn(
+                            "flex-1 min-w-[35px] text-center text-xs p-1 border-r",
+                            isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
+                          )}
+                        >
+                          {format(date, 'd')}
+                          {isMilestoneDate(date) && (
+                            <div className="text-[9px] font-semibold text-amber-700 truncate">
+                              {getMilestoneLabel(date)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                // Month view
+                groupedDates.map((month, monthIndex) => (
+                  <div 
+                    key={`month-${monthIndex}`}
+                    className="flex flex-col flex-grow border-r"
+                  >
+                    {/* Month header */}
+                    <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium">
+                      {format(month[0], 'MMMM yyyy')}
+                    </div>
+                    {/* Days in month */}
+                    <div className="flex flex-wrap">
+                      {month.map((date, dateIndex) => (
+                        <div 
+                          key={`day-${monthIndex}-${dateIndex}`} 
+                          className={cn(
+                            "min-w-[35px] text-center text-xs p-1 border-r border-b",
+                            isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
+                          )}
+                          style={{width: `${100 / Math.min(7, month.length)}%`}}
+                        >
+                          {format(date, 'd')}
+                          {isMilestoneDate(date) && (
+                            <div className="text-[9px] font-semibold text-amber-700 truncate">
+                              {getMilestoneLabel(date)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
