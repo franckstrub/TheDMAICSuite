@@ -86,6 +86,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
@@ -222,6 +223,52 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         description: 'Failed to save task',
         variant: 'destructive',
       });
+    }
+  });
+
+  // Generate DMAIC WBS mutation
+  const generateDMAICWBSMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Success',
+        description: `Default DMAIC WBS created with ${data?.tasks?.length || 0} tasks`,
+      });
+      
+      // Immediately refetch tasks to update the UI
+      const fetchTasks = async () => {
+        try {
+          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
+          if (response.ok) {
+            const data = await response.json();
+            setTasks(data.tasks || []);
+            console.log("Tasks reloaded after WBS generation:", data.tasks);
+          } else {
+            console.error("Failed to reload tasks after WBS generation:", response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching tasks after WBS generation:', error);
+        }
+      };
+      
+      fetchTasks();
+      
+      // Also invalidate the query cache for future requests
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
+      
+      // Reset generating state
+      setIsGeneratingWBS(false);
+    },
+    onError: (error) => {
+      console.error('Error generating DMAIC WBS:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate default DMAIC WBS',
+        variant: 'destructive',
+      });
+      setIsGeneratingWBS(false);
     }
   });
 
@@ -387,17 +434,41 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     <div className="gantt-chart-container">
       <div className="flex justify-between mb-4">
         <h3 className="text-lg font-semibold">Project Timeline</h3>
-        <Button 
-          onClick={() => {
-            form.reset(); // Reset form to defaults
-            setEditingTaskId(null);
-            setShowAddTask(!showAddTask);
-          }}
-          variant="outline"
-          size="sm"
-        >
-          {showAddTask ? 'Cancel' : 'Add Task'}
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => {
+              setIsGeneratingWBS(true);
+              generateDMAICWBSMutation.mutate();
+            }}
+            disabled={isGeneratingWBS || generateDMAICWBSMutation.isPending}
+            variant="outline"
+            size="sm"
+            className="whitespace-nowrap"
+          >
+            {isGeneratingWBS || generateDMAICWBSMutation.isPending ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...
+              </>
+            ) : (
+              <>Generate Default DMAIC WBS</>
+            )}
+          </Button>
+          <Button 
+            onClick={() => {
+              form.reset(); // Reset form to defaults
+              setEditingTaskId(null);
+              setShowAddTask(!showAddTask);
+            }}
+            variant="outline"
+            size="sm"
+          >
+            {showAddTask ? 'Cancel' : 'Add Task'}
+          </Button>
+        </div>
       </div>
 
       {/* Task Form */}
