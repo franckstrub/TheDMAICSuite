@@ -1337,13 +1337,13 @@ export default function DefinePhase() {
     mutationFn: async (businessRequirements: any[]) => {
       // Filter business requirements where either requirement or business requirement is filled
       const validBusinessRequirements = businessRequirements.filter(r => 
-        r.businessRequirement.trim() !== "" || r.requirement.trim() !== ""
+        r.businessNeed.trim() !== "" || r.requirement.trim() !== ""
       );
       
       // Always include at least one row even if empty, to ensure we always have a row in the database
       const businessRequirementsToSave = validBusinessRequirements.length > 0 ? 
         validBusinessRequirements : 
-        [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+        [{ requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }];
       
       console.log("Saving business requirements:", businessRequirementsToSave);
       
@@ -1368,7 +1368,7 @@ export default function DefinePhase() {
           const payload = {
             projectId,
             requirement: r.requirement,
-            businessRequirement: r.businessRequirement || "",
+            businessNeed: r.businessNeed || "",
             importance: r.importance,
             impact: r.criticalToQuality, // Map the criticalToQuality field to impact for storage
             userId: user?.id,
