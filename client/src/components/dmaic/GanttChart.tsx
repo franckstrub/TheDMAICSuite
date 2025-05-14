@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay } from 'date-fns';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Calendar } from "../../components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
 import { Trash2, PlusCircle, Calendar as CalendarIcon, GripVertical } from "lucide-react";
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../components/ui/form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { apiRequest } from '../../lib/queryClient';
+import { useToast } from '../../hooks/use-toast';
+import { cn } from '../../lib/utils';
 
 // Define the task interface
 export interface GanttTask {
