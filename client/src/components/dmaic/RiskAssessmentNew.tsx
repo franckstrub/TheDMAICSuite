@@ -65,7 +65,7 @@ export default function RiskAssessmentNew() {
   // Get project ID from params
   const params = useParams();
   const projectId = params.projectId || '';
-
+  
   // Get user from context
   const { user } = useAppContext();
   

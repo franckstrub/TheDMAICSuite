@@ -4321,14 +4321,10 @@ export default function DefinePhase() {
         </CardContent>
       </Card>
       
-      {/* Project Risk Assessment Section - Only shown for Green/Black Belt projects */}
-      {/* Project RACI Matrix Section  - Only shown for Green/Black Belt projects */}
-      {/* Stakeholder Analysis Matrix Section  - Only shown for Green/Black Belt projects */}
-      {/* Gantt Plan Section - Only shown for Green/Black Belt projects */}
-      {/* Elevator Speech Section - Only shown for Green/Black Belt projects */}
-      {currentProject?.projectType !== "White Belt" && currentProject?.projectType !== "Yellow Belt" && (
-        <RiskAssessmentNew />
-      ) && (
+      {/* Project Risk Assessment Section */}
+      <RiskAssessmentNew />
+      
+      {/* Project RACI Matrix Section */}
       <RaciMatrixNew 
         projectId={Number(projectId)}
         sponsor={charter?.sponsor}
@@ -4338,13 +4334,14 @@ export default function DefinePhase() {
         projectLeader={charter?.projectLeader}
         projectCoach={charter?.projectCoach}
       />
-      ) && (
+      
+      {/* Stakeholder Analysis Matrix Section */}
       <StakeholderAnalysisMatrix 
         projectId={Number(projectId)}
         userId={user?.id}
       />
-      ) && (
-      
+
+      {/* Gantt Plan Section */}
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Gantt Plan</CardTitle>
@@ -4355,8 +4352,8 @@ export default function DefinePhase() {
           </div>
         </CardContent>
       </Card>
-      ) && (
 
+      {/* Elevator Speech Section */}
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Elevator Speech</CardTitle>
@@ -4442,7 +4439,7 @@ export default function DefinePhase() {
           </div>
         </CardContent>
       </Card>
-      )}
+
       {/* Gate Review and Validation Section */}
       <div className="mt-6">
         <GateReviewValidation />

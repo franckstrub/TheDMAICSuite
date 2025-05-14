@@ -77,7 +77,6 @@ interface Deliverable {
   description?: string | null;
   isRequired: boolean;
   isCompleted: boolean;
-  addedByUser?: boolean;
   fileAttachment?: string | null;
   fileOriginalName?: string | null;
   fileSize?: number | null;
@@ -327,8 +326,7 @@ export default function GateReviewValidation() {
       console.log("Creating default deliverables");
       return defaultDefineDeliverables.map(deliverable => ({
         ...deliverable,
-        projectId: parseInt(projectId || "0"),
-        addedByUser: false // Explicitly mark as not user-added
+        projectId: parseInt(projectId || "0")
       }));
     };
 
@@ -389,8 +387,7 @@ export default function GateReviewValidation() {
         // Default deliverable doesn't exist in database, add it from template
         orderedDeliverables.push({
           ...defaultDeliverable,
-          projectId: parseInt(projectId || "0"),
-          addedByUser: false // Explicitly mark as not user-added
+          projectId: parseInt(projectId || "0")
         });
       }
     });
@@ -543,8 +540,7 @@ export default function GateReviewValidation() {
       name: newDeliverable,
       description: newDeliverableDescription || null,
       isRequired: newDeliverableRequired,
-      isCompleted: false,
-      addedByUser: true // User-added deliverable
+      isCompleted: false
     };
 
     setDeliverables([...deliverables, newDeliverableObj]);
@@ -856,7 +852,7 @@ export default function GateReviewValidation() {
                 <h3 className="text-lg font-medium">Deliverables</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500">
-                    {deliverableCompletionPercentage}% Completed Review
+                    {deliverableCompletionPercentage}% Complete
                   </span>
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
@@ -911,8 +907,7 @@ export default function GateReviewValidation() {
                                         className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
                                         onClick={() => downloadFile(deliverable.id!)}
                                       >
-                                        <i className="fas fa-file-download"></i>
-                                        {/* <Download className="h-4 w-4" /> */}
+                                        <Download className="h-4 w-4" />
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
