@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from '@/lib/queryClient';
 import { CheckCircle, XCircle, Clock, Plus, Trash2, Paperclip, File, Download } from 'lucide-react';
-import { Project } from '@shared/schema';
+import { Project, DeliverableRequirementType, deliverableRequirementTypes } from '@shared/schema';
 
 // Types for our validators and deliverables
 type ValidationStatus = "Pending" | "Approved" | "Rejected";
@@ -75,7 +75,7 @@ interface Deliverable {
   phase: string;
   name: string;
   description?: string | null;
-  isRequired: boolean;
+  isRequired: DeliverableRequirementType;
   isCompleted: boolean;
   fileAttachment?: string | null;
   fileOriginalName?: string | null;
@@ -92,35 +92,35 @@ const getDefaultDefineDeliverables = (projectType?: string): Omit<Deliverable, "
     phase: "define",
     name: "Project Charter",
     description: "Comprehensive project definition document",
-    isRequired: true,
+    isRequired: "Required",
     isCompleted: false
   },
   {
     phase: "define",
     name: "SIPOC Diagram",
     description: "High Level Process mapping from Suppliers to Customers",
-    isRequired: true,
+    isRequired: "Required",
     isCompleted: false
   },
   {
     phase: "define",
     name: "Voice of Customer",
     description: "Voice of Customer (VOC) Requirements, needs and CTQs documentation",
-    isRequired: true,
+    isRequired: "Required",
     isCompleted: false
   },
   {
     phase: "define",
     name: "Voice of Business",
     description: "Voice of Business (VOB) Requirements, needs and CTQs documentation",
-    isRequired: true,
+    isRequired: "Required",
     isCompleted: false
   },
   {
     phase: "define",
     name: "Gate Review and Validation",
     description: "Project Gate Review and Validation by Sponsor & Key Stakeholders",
-    isRequired: true,
+    isRequired: "Required",
     isCompleted: false
   }
  ];
@@ -131,35 +131,35 @@ const getDefaultDefineDeliverables = (projectType?: string): Omit<Deliverable, "
           phase: "define",
           name: "Risk Assessment",
           description: "Initial project risk analysis and mitigation plans",
-          isRequired: true,
+          isRequired: "Required",
           isCompleted: false
         },
         {
           phase: "define",
           name: "RACI Matrix",
           description: "Project RACI (Responsible, Accountable, Consulted, Informed) matrix",
-          isRequired: true,
+          isRequired: "Required",
           isCompleted: false
         },
         {
           phase: "define",
           name: "Stakeholder Analysis",
           description: "Project Stakeholder Analysis Matrix",
-          isRequired: true,
+          isRequired: "Required",
           isCompleted: false
         },
         {
           phase: "define",
           name: "Gantt Plan",
           description: "Project Gantt Plan",
-          isRequired: true,
+          isRequired: "Required",
           isCompleted: false
         },
         {
           phase: "define",
           name: "Elevator Speech",
           description: "Project Elevator Speech",
-          isRequired: false,
+          isRequired: "Optional",
           isCompleted: false
         }
     ];
