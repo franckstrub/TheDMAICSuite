@@ -539,14 +539,14 @@ export default function GateReviewValidation() {
       phase: "define",
       name: newDeliverable,
       description: newDeliverableDescription || null,
-      isRequired: newDeliverableRequired,
+      isRequired: "Added by User", // All user-added deliverables have this status
       isCompleted: false
     };
 
     setDeliverables([...deliverables, newDeliverableObj]);
     setNewDeliverable('');
     setNewDeliverableDescription('');
-    setNewDeliverableRequired(false); // Reset back to default (Optional)
+    setNewDeliverableRequired(false); // Keep this for form reset but ignore the value
     setIsAddingDeliverable(false);
 
     // Trigger auto-save
@@ -885,18 +885,22 @@ export default function GateReviewValidation() {
                       <TableCell className="font-medium">{deliverable.name}</TableCell>
                       <TableCell>{deliverable.description}</TableCell>
                       <TableCell>
-                        {deliverable.isRequired ? (
+                        {deliverable.isRequired === "Required" && (
                           <Badge variant="outline" className="bg-blue-50">Required</Badge>
-                        ) : (
+                        )}
+                        {deliverable.isRequired === "Optional" && (
                           <Badge variant="outline" className="bg-gray-50">Optional</Badge>
+                        )}
+                        {deliverable.isRequired === "Added by User" && (
+                          <Badge variant="outline" className="bg-green-50 text-green-800">Added by User</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
-                          {/* File upload/download buttons - only show if deliverable has an ID (is saved) */}
+                          {/* File upload/download buttons - only show for user-added deliverables or if file already exists */}
                           {deliverable.id && (
                             <>
-                              {/* If file exists, show download button */}
+                              {/* If file exists, always show download button */}
                               {deliverable.fileAttachment ? (
                                 <TooltipProvider>
                                   <Tooltip>
@@ -916,29 +920,32 @@ export default function GateReviewValidation() {
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon"
-                                        className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
-                                        onClick={() => handleFileUpload(deliverable.id!)}
-                                        disabled={isUploading}
-                                      >
-                                        <Paperclip className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Attach document (10MB limit)</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
+                                /* Only show paperclip for user-added deliverables if no file exists */
+                                deliverable.isRequired === "Added by User" && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon"
+                                          className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
+                                          onClick={() => handleFileUpload(deliverable.id!)}
+                                          disabled={isUploading}
+                                        >
+                                          <Paperclip className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Attach document (10MB limit)</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )
                               )}
                             </>
                           )}
                           
-                          {/* Remove button */}
+                          {/* Remove button - only enabled for Added by User deliverables */}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -946,15 +953,15 @@ export default function GateReviewValidation() {
                                   variant="ghost" 
                                   size="icon"
                                   onClick={() => removeDeliverable(index)}
-                                  disabled={deliverable.isRequired}
+                                  disabled={deliverable.isRequired !== "Added by User"}
                                   className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
                                 >
                                   <i className="fas fa-trash"></i>
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                {deliverable.isRequired 
-                                  ? "Required deliverables cannot be removed" 
+                                {deliverable.isRequired !== "Added by User"
+                                  ? "Only user-added deliverables can be removed" 
                                   : "Remove deliverable"}
                               </TooltipContent>
                             </Tooltip>
@@ -987,18 +994,7 @@ export default function GateReviewValidation() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Select 
-                          value={newDeliverableRequired ? "required" : "optional"} 
-                          onValueChange={(value) => setNewDeliverableRequired(value === "required")}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="optional">Optional</SelectItem>
-                            <SelectItem value="required">Required</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Badge variant="outline" className="bg-green-50 text-green-800">Added by User</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">

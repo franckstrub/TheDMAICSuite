@@ -5,8 +5,9 @@
  * Run with: node migrate_deliverable_requirement_type.js
  */
 
-const { Pool } = require('pg');
-require('dotenv').config();
+import pkg from 'pg';
+const { Pool } = pkg;
+import 'dotenv/config';
 
 async function migrateDeliverableRequirementType() {
   console.log('Starting migration of deliverable requirement type...');
@@ -101,4 +102,6 @@ async function migrateDeliverableRequirementType() {
 }
 
 // Run the migration
-migrateDeliverableRequirementType();
+migrateDeliverableRequirementType()
+  .then(() => console.log('Migration completed.'))
+  .catch(err => console.error('Migration failed:', err));
