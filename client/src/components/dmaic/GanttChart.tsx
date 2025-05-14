@@ -456,11 +456,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     
     // Calculate start position and width as percentages
     const startPercent = (startOffset / totalDays) * 100;
-    const widthPercent = (duration / totalDays) * 100;
+    // Set a minimum width for very short tasks for better visibility
+    const widthPercent = Math.max((duration / totalDays) * 100, 3);
     
     return {
       left: `${startPercent}%`,
       width: `${widthPercent}%`,
+      zIndex: 10, // Ensure task bar appears above the background grid
     };
   };
 
@@ -914,15 +916,44 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   </div>
                 </div>
                 <div className="gantt-timeline w-3/4 relative flex">
-                  {allDates.map((date, dateIndex) => (
-                    <div 
-                      key={dateIndex} 
-                      className={cn(
-                        "gantt-day flex-1 min-w-[35px] h-full border-r",
-                        isMilestoneDate(date) ? "bg-amber-50" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
-                      )}
-                    ></div>
-                  ))}
+                  {timelineView === 'weeks' ? (
+                    // Week view background
+                    groupedDates.map((week, weekIndex) => (
+                      <div key={`task-week-bg-${weekIndex}`} className="flex flex-col flex-grow">
+                        <div className="h-2 bg-transparent"></div> {/* Space for week header */}
+                        <div className="flex flex-grow">
+                          {week.map((date, dateIndex) => (
+                            <div 
+                              key={`task-day-bg-${weekIndex}-${dateIndex}`}
+                              className={cn(
+                                "flex-1 min-w-[35px] h-full border-r",
+                                isMilestoneDate(date) ? "bg-amber-50" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
+                              )}
+                            ></div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    // Month view background
+                    groupedDates.map((month, monthIndex) => (
+                      <div key={`task-month-bg-${monthIndex}`} className="flex flex-col flex-grow">
+                        <div className="h-2 bg-transparent"></div> {/* Space for month header */}
+                        <div className="flex flex-wrap flex-grow">
+                          {month.map((date, dateIndex) => (
+                            <div 
+                              key={`task-day-bg-${monthIndex}-${dateIndex}`}
+                              className={cn(
+                                "min-w-[35px] h-full border-r",
+                                isMilestoneDate(date) ? "bg-amber-50" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
+                              )}
+                              style={{width: `${100 / Math.min(7, month.length)}%`}}
+                            ></div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
                   
                   {/* Task Bar */}
                   <div 
