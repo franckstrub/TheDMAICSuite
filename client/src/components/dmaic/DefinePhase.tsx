@@ -55,7 +55,7 @@ export default function DefinePhase() {
   
   // Business Requirements state - always include at least one empty row for new entries
   const [businessRequirements, setBusinessRequirements] = useState([
-    { requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }
+    { requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }
   ]);
   
   // State for project image handling
@@ -1063,7 +1063,7 @@ export default function DefinePhase() {
       
       // Map and set to state, preserving the ID for later reference
       const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
-        businessRequirement: r.businessRequirement || "",
+        businessNeed: r.businessNeed || "",
         requirement: r.requirement || "",
         importance: r.importance || 3,
         criticalToQuality: r.impact || "", // Use impact field but rename to criticalToQuality
@@ -1944,7 +1944,7 @@ export default function DefinePhase() {
     if (businessRequirements.length < 6) {
       setBusinessRequirements([
         ...businessRequirements,
-        { requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }
+        { requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }
       ]);
     } else {
       toast({
@@ -1972,7 +1972,7 @@ export default function DefinePhase() {
     
     // If we're about to remove all rows, make sure we keep at least one empty row
     if (updatedRequirements.length === 0) {
-      updatedRequirements.push({ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" });
+      updatedRequirements.push({ requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" });
     }
     
     setBusinessRequirements(updatedRequirements);
@@ -4248,8 +4248,8 @@ export default function DefinePhase() {
               <div className="col-span-4 border border-emerald-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
-                  value={req.businessRequirement}
-                  onChange={(e) => updateBusinessRequirement(index, "businessRequirement", e.target.value)}
+                  value={req.businessNeed}
+                  onChange={(e) => updateBusinessRequirement(index, "businessNeed", e.target.value)}
                   placeholder="Enter business need"
                 />
               </div>
@@ -4298,7 +4298,7 @@ export default function DefinePhase() {
               onClick={addBusinessRequirement}
               disabled={businessRequirements.length > 0 && 
                         !businessRequirements[businessRequirements.length - 1].requirement && 
-                        !businessRequirements[businessRequirements.length - 1].businessRequirement}
+                        !businessRequirements[businessRequirements.length - 1].businessNeed}
             >
               <PlusCircle className="h-4 w-4" />
               Add Business Requirement
