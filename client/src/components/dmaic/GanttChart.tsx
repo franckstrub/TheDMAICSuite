@@ -791,8 +791,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         <div className="min-w-full">
           {/* Date Headers */}
           <div className="flex border-b">
-            <div className="gantt-task-info w-1/4 min-w-[250px] border-r p-2 bg-gray-100 font-medium">
-              Task
+            <div className="w-1/4 flex">
+              <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
+                Task
+              </div>
+              <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2 bg-gray-100 font-medium">
+                Assignee
+              </div>
             </div>
             <div className="gantt-timeline w-3/4 flex">
               {timelineView === 'weeks' ? (
@@ -920,34 +925,40 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   setDropTargetIndex(null);
                 }}
               >
-                <div className="gantt-task-info w-1/4 min-w-[250px] border-r p-2 flex items-center">
-                  <div className="mr-2 cursor-move">
-                    <GripVertical size={16} className="text-gray-400" />
-                  </div>
-                  <div className="flex-grow">
-                    <div className="font-medium">{task.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {task.assignee && <span>Assignee: {task.assignee}</span>}
+                <div className="w-1/4 flex">
+                  <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 flex items-center">
+                    <div className="mr-2 cursor-move">
+                      <GripVertical size={16} className="text-gray-400" />
+                    </div>
+                    <div className="flex-grow">
+                      <div className="font-medium">{task.name}</div>
+                    </div>
+                    <div className="flex space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full"
+                        onClick={() => handleEditTask(task)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => task.id && deleteTaskMutation.mutate(task.id)}
+                        disabled={deleteTaskMutation.isPending}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-full"
-                      onClick={() => handleEditTask(task)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => task.id && deleteTaskMutation.mutate(task.id)}
-                      disabled={deleteTaskMutation.isPending}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
+                  <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2">
+                    {task.assignee ? (
+                      <div className="text-sm">{task.assignee}</div>
+                    ) : (
+                      <div className="text-sm text-gray-400">Not assigned</div>
+                    )}
                   </div>
                 </div>
                 <div className="gantt-timeline w-3/4 relative flex">
