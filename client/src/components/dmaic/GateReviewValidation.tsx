@@ -77,6 +77,7 @@ interface Deliverable {
   description?: string | null;
   isRequired: boolean;
   isCompleted: boolean;
+  addedByUser?: boolean;
   fileAttachment?: string | null;
   fileOriginalName?: string | null;
   fileSize?: number | null;
@@ -540,7 +541,8 @@ export default function GateReviewValidation() {
       name: newDeliverable,
       description: newDeliverableDescription || null,
       isRequired: newDeliverableRequired,
-      isCompleted: false
+      isCompleted: false,
+      addedByUser: true // User-added deliverable
     };
 
     setDeliverables([...deliverables, newDeliverableObj]);
