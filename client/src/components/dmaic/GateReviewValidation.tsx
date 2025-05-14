@@ -105,14 +105,14 @@ const getDefaultDefineDeliverables = (projectType?: string): Omit<Deliverable, "
   {
     phase: "define",
     name: "Voice of Customer",
-    description: "Voice of Customer (VOC) Requirements, needs and CTQs documentation",
+    description: "Voice of Customer (VOC) Requirements, needs and CTS documentation",
     isRequired: "Required",
     isCompleted: false
   },
   {
     phase: "define",
     name: "Voice of Business",
-    description: "Voice of Business (VOB) Requirements, needs and CTQs documentation",
+    description: "Voice of Business (VOB) Requirements, needs and CTS documentation",
     isRequired: "Required",
     isCompleted: false
   },
@@ -800,9 +800,13 @@ export default function GateReviewValidation() {
   };
 
   // Calculate completion percentage
+  // const deliverableCompletionPercentage = deliverables.length
+  //   ? Math.round((deliverables.filter(d => d.isCompleted).length / deliverables.length) * 100)
+  //   : 0;
+// Calculate completion percentage
   const deliverableCompletionPercentage = deliverables.length
-    ? Math.round((deliverables.filter(d => d.isCompleted).length / deliverables.length) * 100)
-    : 0;
+    ? Math.round((deliverables.filter(d => (d.isCompleted && d.isRequired !== "Optional")).length / 
+    deliverables.filter(d => d.isRequired !== "Optional").length) * 100) : 0;
 
   // Overall validation status
   const overallApproved = validators.length > 0 && 
@@ -852,7 +856,7 @@ export default function GateReviewValidation() {
                 <h3 className="text-lg font-medium">Deliverables</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500">
-                    {deliverableCompletionPercentage}% Complete
+                    {deliverableCompletionPercentage}% Completed Review
                   </span>
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
@@ -867,8 +871,8 @@ export default function GateReviewValidation() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">Status</TableHead>
-                    <TableHead>Deliverable</TableHead>
-                    <TableHead>Description</TableHead>
+                    <TableHead className="w-40">Deliverable</TableHead>
+                    <TableHead className="w-80">Description</TableHead>
                     <TableHead className="w-24">Required</TableHead>
                     <TableHead className="w-24 text-right">Actions</TableHead>
                   </TableRow>
@@ -911,7 +915,7 @@ export default function GateReviewValidation() {
                                         className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
                                         onClick={() => downloadFile(deliverable.id!)}
                                       >
-                                        <Download className="h-4 w-4" />
+                                        <i class="fas fa-file-download"></i>
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
