@@ -327,7 +327,8 @@ export default function GateReviewValidation() {
       console.log("Creating default deliverables");
       return defaultDefineDeliverables.map(deliverable => ({
         ...deliverable,
-        projectId: parseInt(projectId || "0")
+        projectId: parseInt(projectId || "0"),
+        addedByUser: false // Explicitly mark as not user-added
       }));
     };
 
@@ -388,7 +389,8 @@ export default function GateReviewValidation() {
         // Default deliverable doesn't exist in database, add it from template
         orderedDeliverables.push({
           ...defaultDeliverable,
-          projectId: parseInt(projectId || "0")
+          projectId: parseInt(projectId || "0"),
+          addedByUser: false // Explicitly mark as not user-added
         });
       }
     });
