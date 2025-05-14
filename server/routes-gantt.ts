@@ -3,6 +3,9 @@ import { storage } from "./storage";
 import { insertGanttTaskSchema, GanttTask, InsertGanttTask } from "@shared/schema";
 import { ZodError } from "zod";
 
+// Import the debughelper to get project charter details
+import { debugGetCharter } from "./debughelper";
+
 export function registerGanttRoutes(app: Express, dbStorage: any = null) {
   // If dbStorage is provided, use it instead of the imported storage
   const storageToUse = dbStorage || storage;
@@ -139,6 +142,146 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
     } catch (error) {
       console.error("Error updating Gantt task sequence:", error);
       return res.status(500).json({ error: "Failed to update task sequence" });
+    }
+  });
+
+  // Generate default DMAIC WBS tasks
+  app.post("/api/projects/:projectId/gantt-tasks/generate-dmaic-wbs", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
+      
+      // Get project charter for dates and project leader
+      const charter = await debugGetCharter(projectId);
+      if (!charter) {
+        return res.status(404).json({ error: "Project charter not found" });
+      }
+
+      // Get project dates from charter
+      const startDate = charter.startDate || new Date().toISOString().split('T')[0];
+      const endDate = charter.targetEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // Get milestone dates or calculate based on project duration
+      const kickOffDate = charter.kick_off_date || startDate;
+      const defineDate = charter.define_phase_date || startDate;
+      const measureDate = charter.measure_phase_date || '';
+      const analyzeDate = charter.analyze_phase_date || '';
+      const improveDate = charter.improve_phase_date || '';
+      const controlDate = charter.control_phase_date || endDate;
+
+      // Get assignee from project leader
+      const assignee = charter.projectLeader || '';
+
+      // Default DMAIC WBS tasks
+      const tasks = [
+        // Define Phase
+        {
+          projectId,
+          name: "Define Phase",
+          startDate,
+          endDate: defineDate || startDate,
+          progress: 0,
+          dependencies: "",
+          assignee,
+          priority: "medium" as const,
+          phase: "define" as const,
+          status: "not-started" as const,
+          sequence: 1
+        },
+        // Project Kick-Off (sub-task in Define)
+        {
+          projectId,
+          name: "Project Kick-Off Meeting",
+          startDate: kickOffDate || startDate,
+          endDate: kickOffDate || startDate,
+          progress: 0,
+          dependencies: "",
+          assignee,
+          priority: "high" as const,
+          phase: "define" as const,
+          status: "not-started" as const,
+          sequence: 2
+        },
+        // Measure Phase
+        {
+          projectId,
+          name: "Measure Phase",
+          startDate: defineDate || startDate,
+          endDate: measureDate || "",
+          progress: 0,
+          dependencies: "Define Phase",
+          assignee,
+          priority: "medium" as const,
+          phase: "measure" as const,
+          status: "not-started" as const,
+          sequence: 3
+        },
+        // Analyze Phase
+        {
+          projectId,
+          name: "Analyze Phase",
+          startDate: measureDate || "",
+          endDate: analyzeDate || "",
+          progress: 0,
+          dependencies: "Measure Phase",
+          assignee,
+          priority: "medium" as const,
+          phase: "analyze" as const,
+          status: "not-started" as const,
+          sequence: 4
+        },
+        // Improve Phase
+        {
+          projectId,
+          name: "Improve Phase",
+          startDate: analyzeDate || "",
+          endDate: improveDate || "",
+          progress: 0,
+          dependencies: "Analyze Phase",
+          assignee,
+          priority: "medium" as const,
+          phase: "improve" as const,
+          status: "not-started" as const,
+          sequence: 5
+        },
+        // Control Phase
+        {
+          projectId,
+          name: "Control Phase",
+          startDate: improveDate || "",
+          endDate: controlDate || endDate,
+          progress: 0,
+          dependencies: "Improve Phase",
+          assignee,
+          priority: "medium" as const,
+          phase: "control" as const,
+          status: "not-started" as const,
+          sequence: 6
+        }
+      ];
+
+      // Create all tasks
+      const createdTasks = [];
+      for (const task of tasks) {
+        if (task.startDate && task.endDate) {
+          try {
+            const newTask = await storageToUse.createGanttTask(task);
+            createdTasks.push(newTask);
+          } catch (err) {
+            console.error(`Error creating task ${task.name}:`, err);
+          }
+        }
+      }
+      
+      return res.status(201).json({ 
+        message: `Created ${createdTasks.length} default DMAIC WBS tasks`, 
+        tasks: createdTasks 
+      });
+    } catch (error) {
+      console.error("Error generating DMAIC WBS tasks:", error);
+      return res.status(500).json({ error: "Failed to generate DMAIC WBS tasks" });
     }
   });
 }
