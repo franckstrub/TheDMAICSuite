@@ -173,6 +173,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         title: 'Success',
         description: 'Task saved successfully',
       });
+      
+      // Immediately refetch tasks to update the UI
+      const fetchTasks = async () => {
+        try {
+          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
+          if (response.ok) {
+            const data = await response.json();
+            setTasks(data.tasks || []);
+            console.log("Tasks reloaded:", data.tasks);
+          } else {
+            console.error("Failed to reload tasks:", response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching tasks:', error);
+        }
+      };
+      
+      fetchTasks();
+      
+      // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
       
       // Reset form and UI state
@@ -200,6 +220,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         title: 'Success',
         description: 'Task deleted successfully',
       });
+      
+      // Immediately refetch tasks to update the UI
+      const fetchTasks = async () => {
+        try {
+          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
+          if (response.ok) {
+            const data = await response.json();
+            setTasks(data.tasks || []);
+            console.log("Tasks reloaded after delete:", data.tasks);
+          } else {
+            console.error("Failed to reload tasks after delete:", response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching tasks after delete:', error);
+        }
+      };
+      
+      fetchTasks();
+      
+      // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
     },
     onError: (error) => {
