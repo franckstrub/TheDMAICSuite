@@ -4321,8 +4321,10 @@ export default function DefinePhase() {
         </CardContent>
       </Card>
       
-      {/* Project Risk Assessment Section */}
-      <RiskAssessmentNew />
+      {/* Project Risk Assessment Section - Only shown for Green/Black Belt projects */}
+      {currentProject?.projectType !== "White Belt" && currentProject?.projectType !== "Yellow Belt" && (
+        <RiskAssessmentNew />
+      )}
       {/* Project RACI Matrix Section */}
       <RaciMatrixNew 
         projectId={Number(projectId)}
