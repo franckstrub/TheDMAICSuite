@@ -27,6 +27,7 @@ import { generateMitigationPlan } from "./googleai";
 // Import the Claude API for generating elevator speeches
 import { generateElevatorSpeech } from "./anthropic";
 import { registerGateReviewRoutes } from "./routes-gate-review";
+import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
 
 // Utility function to sync project benefits and costs from charter data
@@ -1957,6 +1958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
+  registerGanttRoutes(app);
   
   const httpServer = createServer(app);
   return httpServer;
