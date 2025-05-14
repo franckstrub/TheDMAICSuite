@@ -915,7 +915,7 @@ export default function GateReviewValidation() {
                                         className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
                                         onClick={() => downloadFile(deliverable.id!)}
                                       >
-                                        <i class="fas fa-file-download"></i>
+                                        <i className="fas fa-file-download"></i>
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>

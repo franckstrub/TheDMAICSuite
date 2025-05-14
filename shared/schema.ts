@@ -346,7 +346,7 @@ export const businessRequirements = pgTable("business_requirements", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
   requirement: text("requirement").notNull(),
-  businessRequirement: text("business_requirement"),
+  businessNeed: text("business_need"),
   importance: integer("importance").notNull(),
   impact: text("impact").notNull().default(""), // Critical to Satisfaction field for business requirements
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
@@ -355,7 +355,7 @@ export const businessRequirements = pgTable("business_requirements", {
 export const insertBusinessRequirementSchema = createInsertSchema(businessRequirements).pick({
   projectId: true,
   requirement: true,
-  businessRequirement: true,
+  businessNeed: true,
   importance: true,
   impact: true,
 });
