@@ -3,7 +3,9 @@ import { storage } from "./storage";
 import { insertGanttTaskSchema, GanttTask, InsertGanttTask } from "@shared/schema";
 import { ZodError } from "zod";
 
-export function registerGanttRoutes(app: Express) {
+export function registerGanttRoutes(app: Express, dbStorage: any = null) {
+  // If dbStorage is provided, use it instead of the imported storage
+  const storageToUse = dbStorage || storage;
   // Get all Gantt tasks for a project
   app.get("/api/projects/:projectId/gantt-tasks", async (req: Request, res: Response) => {
     try {
@@ -12,7 +14,7 @@ export function registerGanttRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
-      const tasks = await storage.getGanttTasks(projectId);
+      const tasks = await storageToUse.getGanttTasks(projectId);
       return res.json({ tasks });
     } catch (error) {
       console.error("Error fetching Gantt tasks:", error);
@@ -28,7 +30,7 @@ export function registerGanttRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid task ID" });
       }
       
-      const task = await storage.getGanttTask(id);
+      const task = await storageToUse.getGanttTask(id);
       if (!task) {
         return res.status(404).json({ error: "Task not found" });
       }
@@ -54,7 +56,7 @@ export function registerGanttRoutes(app: Express) {
         projectId
       });
       
-      const task = await storage.createGanttTask(taskData);
+      const task = await storageToUse.createGanttTask(taskData);
       return res.status(201).json({ task });
     } catch (error) {
       console.error("Error creating Gantt task:", error);
@@ -77,13 +79,13 @@ export function registerGanttRoutes(app: Express) {
       }
       
       // Get the existing task
-      const existingTask = await storage.getGanttTask(id);
+      const existingTask = await storageToUse.getGanttTask(id);
       if (!existingTask) {
         return res.status(404).json({ error: "Task not found" });
       }
       
       // Update the task
-      const updatedTask = await storage.updateGanttTask(id, req.body);
+      const updatedTask = await storageToUse.updateGanttTask(id, req.body);
       if (!updatedTask) {
         return res.status(500).json({ error: "Failed to update task" });
       }
@@ -103,7 +105,7 @@ export function registerGanttRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid task ID" });
       }
       
-      const success = await storage.deleteGanttTask(id);
+      const success = await storageToUse.deleteGanttTask(id);
       if (!success) {
         return res.status(404).json({ error: "Task not found or could not be deleted" });
       }
@@ -128,7 +130,7 @@ export function registerGanttRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid task IDs array" });
       }
       
-      const success = await storage.updateGanttTaskSequence(projectId, taskIds);
+      const success = await storageToUse.updateGanttTaskSequence(projectId, taskIds);
       if (!success) {
         return res.status(500).json({ error: "Failed to update task sequence" });
       }

@@ -1958,7 +1958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
-  registerGanttRoutes(app);
+  registerGanttRoutes(app, storage);
   
   const httpServer = createServer(app);
   return httpServer;
