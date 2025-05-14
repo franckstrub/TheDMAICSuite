@@ -852,7 +852,7 @@ export default function GateReviewValidation() {
                 <h3 className="text-lg font-medium">Deliverables</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500">
-                    {deliverableCompletionPercentage}% Complete
+                    {deliverableCompletionPercentage}% Completed Review
                   </span>
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
@@ -907,7 +907,8 @@ export default function GateReviewValidation() {
                                         className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
                                         onClick={() => downloadFile(deliverable.id!)}
                                       >
-                                        <Download className="h-4 w-4" />
+                                        <i className="fas fa-file-download"></i>
+                                        {/* <Download className="h-4 w-4" /> */}
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>

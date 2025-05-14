@@ -4323,7 +4323,6 @@ export default function DefinePhase() {
       
       {/* Project Risk Assessment Section */}
       <RiskAssessmentNew />
-      
       {/* Project RACI Matrix Section */}
       <RaciMatrixNew 
         projectId={Number(projectId)}
