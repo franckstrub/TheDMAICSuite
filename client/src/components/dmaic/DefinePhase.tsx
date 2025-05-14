@@ -486,7 +486,7 @@ export default function DefinePhase() {
 
   // Customer Requirements state - always include at least one empty row for new entries
   const [requirements, setRequirements] = useState([
-    { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" },
+    { requirement: "", customerRequirement: "", importance: 3, CTS: "" },
   ]);
   
   // FTE calculation state
@@ -1168,7 +1168,7 @@ export default function DefinePhase() {
         requirement: r.requirement || "",
         customerRequirement: r.customerRequirement || "",
         importance: r.importance || 3,
-        satisfaction: r.satisfaction || "",
+        CTS: r.CTS || "",
         id: r.id, // Include ID to help with sorting
       }));
       
@@ -1183,7 +1183,7 @@ export default function DefinePhase() {
       // If we got data but no requirements, ensure we have at least one empty row
       console.log("No requirements found in data change, setting default empty row");
       setRequirements([
-        { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }
+        { requirement: "", customerRequirement: "", importance: 3, CTS: "" }
       ]);
     }
   }, [requirementsData, projectId]);
@@ -1416,7 +1416,7 @@ export default function DefinePhase() {
       // Always include at least one row even if empty, to ensure we always have a row in the database
       const requirementsToSave = validRequirements.length > 0 ? 
         validRequirements : 
-        [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+        [{ requirement: "", customerRequirement: "", importance: 3, CTS: "" }];
       
       console.log("Saving requirements:", requirementsToSave);
       
@@ -1443,7 +1443,7 @@ export default function DefinePhase() {
             requirement: r.requirement,
             customerRequirement: r.customerRequirement || "",
             importance: r.importance,
-            satisfaction: r.satisfaction, // This is now the CTQ field
+            CTS: r.CTS, // This is now the CTS field
             userId: user?.id,
           };
           
@@ -1482,7 +1482,7 @@ export default function DefinePhase() {
             requirement: r.requirement || "",
             customerRequirement: r.customerRequirement || "",
             importance: r.importance || 3,
-            satisfaction: r.satisfaction || "",
+            CTS: r.CTS || "",
             id: r.id, // Store ID for consistency and sorting
           }));
           
@@ -1820,7 +1820,7 @@ export default function DefinePhase() {
           requirement: r.requirement || "",
           customerRequirement: r.customerRequirement || "",
           importance: r.importance || 3, 
-          satisfaction: r.satisfaction || "",
+          CTS: r.CTS || "",
           id: r.id, // Store the ID to help with sorting
         }));
         
@@ -1842,7 +1842,7 @@ export default function DefinePhase() {
       } else {
         // If no requirements found in the API response, ensure we have at least one empty row
         console.log("No requirements found in database, setting default empty row");
-        const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+        const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, CTS: "" }];
         setRequirements(defaultRow);
         return defaultRow;
       }
@@ -1857,7 +1857,7 @@ export default function DefinePhase() {
       }
       
       // Ensure we have at least one empty row even on error
-      const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+      const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, CTS: "" }];
       setRequirements(defaultRow);
       return defaultRow;
     }
@@ -1870,7 +1870,7 @@ export default function DefinePhase() {
       // Ensure we always have at least one row (even if empty) before saving
       let requirementsToSave = requirements;
       if (requirements.length === 0) {
-        requirementsToSave = [{ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }];
+        requirementsToSave = [{ requirement: "", customerRequirement: "", importance: 3, CTS: "" }];
         setRequirements(requirementsToSave);
       }
       
@@ -1917,7 +1917,7 @@ export default function DefinePhase() {
   const addRequirement = () => {
     const lastReq = requirements[requirements.length - 1];
     if (lastReq.requirement.trim() !== "" || lastReq.customerRequirement.trim() !== "") {
-      setRequirements([...requirements, { requirement: "", customerRequirement: "", importance: 3, satisfaction: "" }]);
+      setRequirements([...requirements, { requirement: "", customerRequirement: "", importance: 3, CTS: "" }]);
     }
   };
 
@@ -1932,7 +1932,7 @@ export default function DefinePhase() {
     
     // If we're about to remove all rows, make sure we keep at least one empty row
     if (newRequirements.length === 0) {
-      newRequirements.push({ requirement: "", customerRequirement: "", importance: 3, satisfaction: "" });
+      newRequirements.push({ requirement: "", customerRequirement: "", importance: 3, CTS: "" });
     }
     
     setRequirements(newRequirements);
@@ -4117,7 +4117,7 @@ export default function DefinePhase() {
               <h4 className="font-small text-amber-800 text-sm">Importance</h4>
             </div>
             <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
+              <h4 className="font-medium text-purple-800 text-sm">Critical to Satisfaction (CTS)</h4>
             </div>
           </div>
           
@@ -4154,14 +4154,14 @@ export default function DefinePhase() {
               <div className="col-span-3 border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
-                  value={req.satisfaction ? req.satisfaction.toString() : ""}
+                  value={req.CTS ? req.CTS.toString() : ""}
                   onChange={(e) => {
                     // Allow empty string or convert to number for backward compatibility
                     const value = e.target.value === "" ? 0 : e.target.value;
-                    updateRequirement(index, "satisfaction", value);
+                    updateRequirement(index, "CTS", value);
                   }}
-                  placeholder={index === requirements.length - 1 ? "Add CTQ specification..." : ""}
-                  title="Critical to Quality (CTQ) specification"
+                  placeholder={index === requirements.length - 1 ? "Add CTS (CTQ, CTD, CTC) specification..." : ""}
+                  title="Critical to Satisfaction (CTS) specification"
                 />
               </div>
               {index !== 0 && (
@@ -4230,7 +4230,7 @@ export default function DefinePhase() {
               <h4 className="font-small text-amber-800 text-sm">Importance</h4>
             </div>
             <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
-              <h4 className="font-medium text-purple-800 text-sm">Critical to Quality (CTQ)</h4>
+              <h4 className="font-medium text-purple-800 text-sm">Critical to Satisfaction (CTS)</h4>
             </div>
           </div>
           
@@ -4269,7 +4269,7 @@ export default function DefinePhase() {
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.criticalToQuality}
                   onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
-                  placeholder="Enter critical to quality factors"
+                  placeholder="Add CTS (CTQ, CTD, CTC) specification..."
                 />
               </div>
               {index !== 0 && (
@@ -4322,14 +4322,12 @@ export default function DefinePhase() {
       </Card>
       
       {/* Project Risk Assessment Section - Only shown for Green/Black Belt projects */}
-      {/* Project RACI Matrix Section  - Only shown for Green/Black Belt projects */}
-      {/* Stakeholder Analysis Matrix Section - Only shown for Green/Black Belt projects */}
-      {/* Gantt Plan Section - Only shown for Green/Black Belt projects */}
-      {/* Elevator Speech Section - Only shown for Green/Black Belt projects */}
       {currentProject?.projectType !== "White Belt" && currentProject?.projectType !== "Yellow Belt" && (
         <RiskAssessmentNew />
-      ) && (   
-      <RaciMatrixNew 
+      )}
+      {/* Project RACI Matrix Section  - Only shown for Green/Black Belt projects */}
+      {currentProject?.projectType !== "White Belt" && currentProject?.projectType !== "Yellow Belt" && (
+        <RaciMatrixNew 
         projectId={Number(projectId)}
         sponsor={charter?.sponsor}
         stakeholder={charter?.stakeholder}
@@ -4338,14 +4336,16 @@ export default function DefinePhase() {
         projectLeader={charter?.projectLeader}
         projectCoach={charter?.projectCoach}
       />
-      ) && (
-      
+      )}
+      {/* Stakeholder Analysis Matrix Section - Only shown for Green/Black Belt projects */}
+      {currentProject?.projectType !== "White Belt" && currentProject?.projectType !== "Yellow Belt" && (
       <StakeholderAnalysisMatrix 
         projectId={Number(projectId)}
         userId={user?.id}
       />
-      ) && (
-     
+      )}
+      {/* Gantt Plan Section - Only shown for Green/Black Belt projects */}
+      {currentProject?.projectType !== "White Belt" && currentProject?.projectType !== "Yellow Belt" && (
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Gantt Plan</CardTitle>
@@ -4356,7 +4356,10 @@ export default function DefinePhase() {
           </div>
         </CardContent>
       </Card>
-      ) && (
+      )}
+
+      {/* Elevator Speech Section - Only shown for Green/Black Belt projects */}
+      {currentProject?.projectType !== "White Belt" && currentProject?.projectType !== "Yellow Belt" && (
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Elevator Speech</CardTitle>

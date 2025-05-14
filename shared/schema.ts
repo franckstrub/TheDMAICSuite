@@ -327,7 +327,8 @@ export const customerRequirements = pgTable("customer_requirements", {
   requirement: text("requirement").notNull(),
   customerRequirement: text("customer_requirement"),
   importance: integer("importance").notNull(),
-  satisfaction: text("satisfaction").notNull().default(""), // Changed from integer to text for CTQ
+  CTS: text("CTS").notNull().default(""), // Changed from integer to text for CTS
+  ctq: text("ctq").default(""),  // Critical to Quality field
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -336,7 +337,8 @@ export const insertRequirementSchema = createInsertSchema(customerRequirements).
   requirement: true,
   customerRequirement: true,
   importance: true,
-  satisfaction: true,
+  CTS: true,
+  ctq: true,
 });
 
 // Business Requirements
@@ -346,7 +348,7 @@ export const businessRequirements = pgTable("business_requirements", {
   requirement: text("requirement").notNull(),
   businessRequirement: text("business_requirement"),
   importance: integer("importance").notNull(),
-  impact: text("impact").notNull().default(""), // Critical to Quality field for business requirements
+  impact: text("impact").notNull().default(""), // Critical to Satisfaction field for business requirements
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
