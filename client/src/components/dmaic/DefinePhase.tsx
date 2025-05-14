@@ -21,6 +21,7 @@ import RiskAssessmentNew from "./RiskAssessmentNew";
 import RaciMatrixNew from "./RaciMatrixNew";
 import StakeholderAnalysisMatrix from "./StakeholderAnalysisMatrix";
 import GateReviewValidation from "./GateReviewValidation";
+import GanttChart from "./GanttChart";
 import {
   Card,
   CardContent,
@@ -4351,9 +4352,19 @@ export default function DefinePhase() {
           <CardTitle>Gantt Plan</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center p-10 bg-gray-50 border border-dashed border-gray-300 rounded-md">
-            <p className="text-gray-500">Gantt Plan section will be implemented here</p>
-          </div>
+          <GanttChart 
+            projectId={projectId}
+            projectStartDate={currentProject?.startDate}
+            projectEndDate={currentProject?.targetEndDate}
+            milestoneDates={{
+              kickOff: currentProject?.charter?.kick_off_date,
+              define: currentProject?.charter?.define_phase_date,
+              measure: currentProject?.charter?.measure_phase_date,
+              analyze: currentProject?.charter?.analyze_phase_date,
+              improve: currentProject?.charter?.improve_phase_date,
+              control: currentProject?.charter?.control_phase_date
+            }}
+          />
         </CardContent>
       </Card>
       )}
