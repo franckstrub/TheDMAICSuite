@@ -831,38 +831,73 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   </div>
                 ))
               ) : (
-                // Month view
-                groupedDates.map((month, monthIndex) => (
-                  <div 
-                    key={`month-${monthIndex}`}
-                    className="flex flex-col flex-grow border-r"
-                  >
-                    {/* Month header */}
-                    <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium">
-                      {format(month[0], 'MMMM yyyy')}
-                    </div>
-                    {/* Days in month */}
-                    <div className="flex flex-wrap">
-                      {month.map((date, dateIndex) => (
-                        <div 
-                          key={`day-${monthIndex}-${dateIndex}`} 
-                          className={cn(
-                            "min-w-[35px] text-center text-xs p-1 border-r border-b",
-                            isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
-                          )}
-                          style={{width: `${100 / Math.min(7, month.length)}%`}}
-                        >
-                          {format(date, 'd')}
-                          {isMilestoneDate(date) && (
-                            <div className="text-[9px] font-semibold text-amber-700 truncate">
-                              {getMilestoneLabel(date)}
+                // Month view with weeks
+                groupedDates.map((month, monthIndex) => {
+                  // Group days into weeks for each month
+                  const weeksInMonth: Date[][] = [];
+                  let currentWeek: Date[] = [];
+                  let currentWeekNumber: number | null = null;
+                  
+                  month.forEach(date => {
+                    const weekNumber = getWeek(date);
+                    if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                      if (currentWeek.length > 0) {
+                        weeksInMonth.push(currentWeek);
+                      }
+                      currentWeek = [date];
+                      currentWeekNumber = weekNumber;
+                    } else {
+                      currentWeek.push(date);
+                    }
+                  });
+                  
+                  // Add the last week if it exists
+                  if (currentWeek.length > 0) {
+                    weeksInMonth.push(currentWeek);
+                  }
+                  
+                  return (
+                    <div 
+                      key={`month-${monthIndex}`}
+                      className="flex flex-col flex-grow border-r"
+                    >
+                      {/* Month header */}
+                      <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium">
+                        {format(month[0], 'MMMM yyyy')}
+                      </div>
+                      {/* Weeks in month */}
+                      <div className="flex flex-col">
+                        {weeksInMonth.map((week, weekIndex) => (
+                          <div 
+                            key={`month-${monthIndex}-week-${weekIndex}`}
+                            className="flex border-b"
+                          >
+                            <div
+                              className={cn(
+                                "flex-grow min-w-[50px] text-center text-xs p-1 border-r",
+                                weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white"
+                              )}
+                            >
+                              <div className="font-medium">Week {getWeek(week[0])}</div>
+                              <div className="text-[10px]">
+                                {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d')}
+                              </div>
+                              {week.some(date => isMilestoneDate(date)) && (
+                                <div className="text-[9px] font-semibold text-amber-700 mt-1">
+                                  {week.filter(date => isMilestoneDate(date)).map(date => 
+                                    <span key={date.toISOString()} className="mr-1 px-1 bg-amber-100 rounded">
+                                      {getMilestoneLabel(date)} ({format(date, 'd')})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -935,24 +970,50 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : (
-                    // Month view background
-                    groupedDates.map((month, monthIndex) => (
-                      <div key={`task-month-bg-${monthIndex}`} className="flex flex-col flex-grow">
-                        <div className="h-2 bg-transparent"></div> {/* Space for month header */}
-                        <div className="flex flex-wrap flex-grow">
-                          {month.map((date, dateIndex) => (
-                            <div 
-                              key={`task-day-bg-${monthIndex}-${dateIndex}`}
-                              className={cn(
-                                "min-w-[35px] h-full border-r",
-                                isMilestoneDate(date) ? "bg-amber-50" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
-                              )}
-                              style={{width: `${100 / Math.min(7, month.length)}%`}}
-                            ></div>
-                          ))}
+                    // Month view background with weeks
+                    groupedDates.map((month, monthIndex) => {
+                      // Group days into weeks for each month
+                      const weeksInMonth: Date[][] = [];
+                      let currentWeek: Date[] = [];
+                      let currentWeekNumber: number | null = null;
+                      
+                      month.forEach(date => {
+                        const weekNumber = getWeek(date);
+                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                          if (currentWeek.length > 0) {
+                            weeksInMonth.push(currentWeek);
+                          }
+                          currentWeek = [date];
+                          currentWeekNumber = weekNumber;
+                        } else {
+                          currentWeek.push(date);
+                        }
+                      });
+                      
+                      // Add the last week if it exists
+                      if (currentWeek.length > 0) {
+                        weeksInMonth.push(currentWeek);
+                      }
+                      
+                      return (
+                        <div key={`task-month-bg-${monthIndex}`} className="flex flex-col flex-grow">
+                          <div className="h-2 bg-transparent"></div> {/* Space for month header */}
+                          <div className="flex flex-col flex-grow">
+                            {weeksInMonth.map((week, weekIndex) => (
+                              <div 
+                                key={`task-month-week-bg-${monthIndex}-${weekIndex}`}
+                                className={cn(
+                                  "flex-grow border-b",
+                                  weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
+                                  week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                                )}
+                                style={{ minHeight: "40px" }}
+                              ></div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                   
                   {/* Task Bar */}
