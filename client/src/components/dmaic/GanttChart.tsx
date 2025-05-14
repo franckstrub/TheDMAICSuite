@@ -1,0 +1,751 @@
+import React, { useState, useEffect } from 'react';
+import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay } from 'date-fns';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Trash2, PlusCircle, Calendar as CalendarIcon, GripVertical } from "lucide-react";
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
+// Define the task interface
+export interface GanttTask {
+  id?: number;
+  projectId: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  progress: number;
+  dependencies?: string;
+  assignee?: string;
+  priority?: 'low' | 'medium' | 'high';
+  phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control';
+  status?: 'not-started' | 'in-progress' | 'completed' | 'on-hold';
+  lastUpdated?: string;
+}
+
+// Define form validation schema
+const taskSchema = z.object({
+  name: z.string().min(1, { message: "Task name is required" }),
+  startDate: z.string(),
+  endDate: z.string(),
+  progress: z.number().min(0).max(100),
+  dependencies: z.string().optional(),
+  assignee: z.string().optional(),
+  priority: z.enum(['low', 'medium', 'high']).optional(),
+  phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control']),
+  status: z.enum(['not-started', 'in-progress', 'completed', 'on-hold']).optional(),
+});
+
+type TaskFormValues = z.infer<typeof taskSchema>;
+
+interface GanttChartProps {
+  projectId: number;
+  projectStartDate?: string;
+  projectEndDate?: string;
+  milestoneDates?: {
+    kickOff?: string;
+    define?: string;
+    measure?: string;
+    analyze?: string;
+    improve?: string;
+    control?: string;
+  };
+}
+
+const phaseColors = {
+  define: 'bg-blue-500',
+  measure: 'bg-green-500',
+  analyze: 'bg-yellow-500',
+  improve: 'bg-purple-500',
+  control: 'bg-red-500',
+};
+
+const priorityColors = {
+  low: 'border-l-blue-400',
+  medium: 'border-l-amber-400',
+  high: 'border-l-red-500',
+}
+
+const statusColors = {
+  'not-started': 'bg-gray-200',
+  'in-progress': 'bg-blue-200',
+  'completed': 'bg-green-200',
+  'on-hold': 'bg-amber-200',
+}
+
+export default function GanttChart({ projectId, projectStartDate, projectEndDate, milestoneDates }: GanttChartProps) {
+  const [tasks, setTasks] = useState<GanttTask[]>([]);
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [dateRange, setDateRange] = useState({
+    start: projectStartDate ? parseISO(projectStartDate) : new Date(),
+    end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Calculate number of days in the range
+  const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
+  
+  // Generate all dates within the range
+  const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
+
+  // Get current milestone dates as Date objects
+  const milestones = {
+    kickOff: milestoneDates?.kickOff ? parseISO(milestoneDates.kickOff) : null,
+    define: milestoneDates?.define ? parseISO(milestoneDates.define) : null,
+    measure: milestoneDates?.measure ? parseISO(milestoneDates.measure) : null,
+    analyze: milestoneDates?.analyze ? parseISO(milestoneDates.analyze) : null,
+    improve: milestoneDates?.improve ? parseISO(milestoneDates.improve) : null,
+    control: milestoneDates?.control ? parseISO(milestoneDates.control) : null,
+  };
+
+  // Initialize form with default values
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      name: '',
+      startDate: format(new Date(), 'yyyy-MM-dd'),
+      endDate: format(addDays(new Date(), 5), 'yyyy-MM-dd'),
+      progress: 0,
+      dependencies: '',
+      assignee: '',
+      priority: 'medium',
+      phase: 'define',
+      status: 'not-started',
+    },
+  });
+
+  // Fetch tasks on component mount
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
+        if (response.ok) {
+          const data = await response.json();
+          setTasks(data.tasks || []);
+        }
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load Gantt tasks',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    fetchTasks();
+  }, [projectId, toast]);
+
+  // Update date range based on project dates
+  useEffect(() => {
+    if (projectStartDate && projectEndDate) {
+      setDateRange({
+        start: parseISO(projectStartDate),
+        end: parseISO(projectEndDate)
+      });
+    }
+  }, [projectStartDate, projectEndDate]);
+
+  // Save task mutation
+  const saveTaskMutation = useMutation({
+    mutationFn: async (task: GanttTask) => {
+      if (task.id) {
+        // Update existing task
+        return apiRequest("PUT", `/api/gantt-tasks/${task.id}`, task);
+      } else {
+        // Create new task
+        return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks`, task);
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Task saved successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
+      
+      // Reset form and UI state
+      form.reset();
+      setShowAddTask(false);
+      setEditingTaskId(null);
+    },
+    onError: (error) => {
+      console.error('Error saving task:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save task',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Delete task mutation
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      return apiRequest("DELETE", `/api/gantt-tasks/${taskId}`, { projectId });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Task deleted successfully',
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
+    },
+    onError: (error) => {
+      console.error('Error deleting task:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete task',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Form submission handler
+  const onSubmit = (values: TaskFormValues) => {
+    const taskToSave: GanttTask = {
+      ...values,
+      projectId,
+      id: editingTaskId || undefined,
+    };
+    
+    saveTaskMutation.mutate(taskToSave);
+  };
+
+  // Handle edit task
+  const handleEditTask = (task: GanttTask) => {
+    // Populate form with task data
+    form.reset({
+      name: task.name,
+      startDate: task.startDate,
+      endDate: task.endDate,
+      progress: task.progress,
+      dependencies: task.dependencies || '',
+      assignee: task.assignee || '',
+      priority: task.priority || 'medium',
+      phase: task.phase,
+      status: task.status || 'not-started',
+    });
+    
+    setEditingTaskId(task.id || null);
+    setShowAddTask(true);
+  };
+
+  // Handle drag start
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDropTargetIndex(index);
+  };
+
+  // Handle drop to reorder tasks
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (draggedIndex !== null && dropTargetIndex !== null && draggedIndex !== dropTargetIndex) {
+      // Create a new array with the reordered tasks
+      const newTasks = [...tasks];
+      const [movedTask] = newTasks.splice(draggedIndex, 1);
+      newTasks.splice(dropTargetIndex, 0, movedTask);
+      
+      // Update the task order in the UI immediately
+      setTasks(newTasks);
+      
+      // Reset drag state
+      setDraggedIndex(null);
+      setDropTargetIndex(null);
+      
+      // TODO: Implement API to update task order on the server
+      try {
+        // This would be the API call to update task order
+        // await apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/reorder`, { taskIds: newTasks.map(t => t.id) });
+      } catch (error) {
+        console.error('Error updating task order:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to update task order',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  // Calculate the position and width of a task bar
+  const getTaskBarStyle = (task: GanttTask) => {
+    const taskStart = parseISO(task.startDate);
+    const taskEnd = parseISO(task.endDate);
+    
+    // Calculate distance from the start date as a percentage
+    const startOffset = Math.max(0, differenceInDays(taskStart, dateRange.start));
+    const duration = differenceInDays(taskEnd, taskStart) + 1;
+    
+    // Calculate start position and width as percentages
+    const startPercent = (startOffset / totalDays) * 100;
+    const widthPercent = (duration / totalDays) * 100;
+    
+    return {
+      left: `${startPercent}%`,
+      width: `${widthPercent}%`,
+    };
+  };
+
+  // Check if a date is a milestone
+  const isMilestoneDate = (date: Date) => {
+    return Object.values(milestones).some(milestone => 
+      milestone && isSameDay(date, milestone)
+    );
+  };
+
+  // Get milestone label for a date
+  const getMilestoneLabel = (date: Date) => {
+    if (milestones.kickOff && isSameDay(date, milestones.kickOff)) return 'Kick-off';
+    if (milestones.define && isSameDay(date, milestones.define)) return 'Define';
+    if (milestones.measure && isSameDay(date, milestones.measure)) return 'Measure';
+    if (milestones.analyze && isSameDay(date, milestones.analyze)) return 'Analyze';
+    if (milestones.improve && isSameDay(date, milestones.improve)) return 'Improve';
+    if (milestones.control && isSameDay(date, milestones.control)) return 'Control';
+    return '';
+  };
+
+  // Determine if the task is late based on its end date and status
+  const isTaskLate = (task: GanttTask) => {
+    return task.status !== 'completed' && isAfter(new Date(), parseISO(task.endDate));
+  };
+
+  return (
+    <div className="gantt-chart-container">
+      <div className="flex justify-between mb-4">
+        <h3 className="text-lg font-semibold">Project Timeline</h3>
+        <Button 
+          onClick={() => {
+            form.reset(); // Reset form to defaults
+            setEditingTaskId(null);
+            setShowAddTask(!showAddTask);
+          }}
+          variant="outline"
+          size="sm"
+        >
+          {showAddTask ? 'Cancel' : 'Add Task'}
+        </Button>
+      </div>
+
+      {/* Task Form */}
+      {showAddTask && (
+        <div className="p-4 border border-gray-200 rounded-md mb-6 bg-gray-50">
+          <h4 className="text-md font-medium mb-4">{editingTaskId ? 'Edit Task' : 'Add New Task'}</h4>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Task Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter task name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="phase"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phase</FormLabel>
+                      <FormControl>
+                        <select
+                          className="w-full p-2 border rounded-md"
+                          {...field}
+                        >
+                          <option value="define">Define</option>
+                          <option value="measure">Measure</option>
+                          <option value="analyze">Analyze</option>
+                          <option value="improve">Improve</option>
+                          <option value="control">Control</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Start Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? format(parseISO(field.value), "PPP") : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? parseISO(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                            disabled={(date) => isBefore(date, dateRange.start) || isAfter(date, dateRange.end)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>End Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? format(parseISO(field.value), "PPP") : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? parseISO(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                            disabled={(date) => 
+                              isBefore(date, form.getValues().startDate ? parseISO(form.getValues().startDate) : dateRange.start) || 
+                              isAfter(date, dateRange.end)
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="progress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Progress (%)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          max="100" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <FormControl>
+                        <select
+                          className="w-full p-2 border rounded-md"
+                          {...field}
+                        >
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <select
+                          className="w-full p-2 border rounded-md"
+                          {...field}
+                        >
+                          <option value="not-started">Not Started</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                          <option value="on-hold">On Hold</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="assignee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assignee</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter assignee name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="dependencies"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dependencies (comma separated task IDs)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 1,3,5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    form.reset();
+                    setShowAddTask(false);
+                    setEditingTaskId(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={saveTaskMutation.isPending}
+                >
+                  {saveTaskMutation.isPending ? 'Saving...' : (editingTaskId ? 'Update Task' : 'Add Task')}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      )}
+
+      {/* Gantt Chart */}
+      <div className="gantt-wrapper overflow-x-auto">
+        <div className="min-w-full">
+          {/* Date Headers */}
+          <div className="flex border-b">
+            <div className="gantt-task-info w-1/4 min-w-[250px] border-r p-2 bg-gray-100 font-medium">
+              Task
+            </div>
+            <div className="gantt-timeline w-3/4 flex">
+              {allDates.map((date, index) => (
+                <div 
+                  key={index} 
+                  className={cn(
+                    "gantt-day flex-1 min-w-[35px] text-center text-xs p-1 border-r",
+                    isMilestoneDate(date) ? "bg-amber-100" : (index % 2 === 0 ? "bg-gray-50" : "bg-white")
+                  )}
+                >
+                  {format(date, 'd')}
+                  <div className="text-[10px]">{format(date, 'MMM')}</div>
+                  {isMilestoneDate(date) && (
+                    <div className="text-[9px] font-semibold text-amber-700 truncate">
+                      {getMilestoneLabel(date)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Task Rows */}
+          {tasks.length > 0 ? (
+            tasks.map((task, index) => (
+              <div 
+                key={task.id || index}
+                className={cn(
+                  "flex border-b hover:bg-gray-50 transition-colors",
+                  dropTargetIndex === index ? "bg-blue-50" : ""
+                )}
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={handleDrop}
+                onDragEnd={() => {
+                  setDraggedIndex(null);
+                  setDropTargetIndex(null);
+                }}
+              >
+                <div className="gantt-task-info w-1/4 min-w-[250px] border-r p-2 flex items-center">
+                  <div className="mr-2 cursor-move">
+                    <GripVertical size={16} className="text-gray-400" />
+                  </div>
+                  <div className="flex-grow">
+                    <div className="font-medium">{task.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {task.assignee && <span>Assignee: {task.assignee}</span>}
+                    </div>
+                  </div>
+                  <div className="flex space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-full"
+                      onClick={() => handleEditTask(task)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => task.id && deleteTaskMutation.mutate(task.id)}
+                      disabled={deleteTaskMutation.isPending}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                </div>
+                <div className="gantt-timeline w-3/4 relative flex">
+                  {allDates.map((date, dateIndex) => (
+                    <div 
+                      key={dateIndex} 
+                      className={cn(
+                        "gantt-day flex-1 min-w-[35px] h-full border-r",
+                        isMilestoneDate(date) ? "bg-amber-50" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
+                      )}
+                    ></div>
+                  ))}
+                  
+                  {/* Task Bar */}
+                  <div 
+                    className={cn(
+                      "absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
+                      phaseColors[task.phase] || 'bg-gray-500',
+                      priorityColors[task.priority || 'medium'],
+                      isTaskLate(task) ? 'border border-red-500' : ''
+                    )}
+                    style={getTaskBarStyle(task)}
+                  >
+                    <div className="truncate max-w-full">
+                      {task.name} ({task.progress}%)
+                    </div>
+                    
+                    {/* Progress Overlay */}
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 bg-black bg-opacity-20 rounded-l"
+                      style={{ width: `${task.progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex border-b py-8">
+              <div className="w-full text-center text-gray-500">
+                No tasks added yet. Click "Add Task" to create your first task.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-6 flex flex-wrap gap-4">
+        <div className="text-sm font-medium">Phases:</div>
+        <div className="flex gap-4">
+          {Object.entries(phaseColors).map(([phase, color]) => (
+            <div key={phase} className="flex items-center">
+              <div className={`w-4 h-4 rounded ${color} mr-1`}></div>
+              <span className="text-sm capitalize">{phase}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-4">
+        <div className="text-sm font-medium">Priorities:</div>
+        <div className="flex gap-4">
+          {Object.entries(priorityColors).map(([priority, color]) => (
+            <div key={priority} className="flex items-center">
+              <div className={`w-4 h-4 border-l-4 ${color} mr-1`}></div>
+              <span className="text-sm capitalize">{priority}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-4">
+        <div className="text-sm font-medium">Status:</div>
+        <div className="flex gap-4">
+          {Object.entries(statusColors).map(([status, color]) => (
+            <div key={status} className="flex items-center">
+              <div className={`w-4 h-4 ${color} mr-1 rounded`}></div>
+              <span className="text-sm capitalize">{status.replace('-', ' ')}</span>
+            </div>
+          ))}
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-200 border border-red-500 mr-1 rounded"></div>
+            <span className="text-sm">Late</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
