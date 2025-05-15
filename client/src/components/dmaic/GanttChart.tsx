@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay, startOfWeek, endOfWeek, getWeek } from 'date-fns';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Calendar } from "../../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
-import { Trash2, PlusCircle, Calendar as CalendarIcon, GripVertical } from "lucide-react";
+import { Trash2, PlusCircle, Calendar as CalendarIcon, GripVertical, GripHorizontal } from "lucide-react";
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../../lib/queryClient';
 import { useToast } from '../../hooks/use-toast';
 import { cn } from '../../lib/utils';
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "../../components/ui/resizable";
 
 // Define the task interface
 export interface GanttTask {
@@ -88,304 +89,296 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
   const [timelineView, setTimelineView] = useState<'weeks' | 'months'>('weeks');
+  const [taskColumnSize, setTaskColumnSize] = useState<number>(30); // Default 30% of available width
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Handle resizing the task column
+  const handleColumnResize = (sizes: number[]) => {
+    // Store the size of the task column (first panel)
+    if (sizes.length > 0) {
+      setTaskColumnSize(sizes[0]);
+      // Save preference to localStorage for persistence
+      localStorage.setItem('ganttTaskColumnSize', sizes[0].toString());
+    }
+  };
+  
+  // Load saved task column size from localStorage on component mount
+  useEffect(() => {
+    const savedSize = localStorage.getItem('ganttTaskColumnSize');
+    if (savedSize) {
+      setTaskColumnSize(Number(savedSize));
+    }
+  }, []);
 
   // Calculate number of days in the range
   const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
   
-  // Generate all dates within the range
-  const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
-  
-  // Group dates by weeks or months based on view mode
+  // Generate dates for the Gantt chart timeline
+  const dates = useMemo(() => {
+    const result = [];
+    let currentDate = new Date(dateRange.start);
+    for (let i = 0; i < totalDays; i++) {
+      result.push(new Date(currentDate));
+      currentDate = addDays(currentDate, 1);
+    }
+    return result;
+  }, [dateRange, totalDays]);
+
+  // Group dates by week
   const groupedDates = useMemo(() => {
     if (timelineView === 'weeks') {
-      // Group by weeks (Sunday to Saturday)
+      // For weeks view, group dates by week
       const weeks: Date[][] = [];
       let currentWeek: Date[] = [];
-      let currentWeekStartDate: Date | null = null;
+      let currentWeekStart: Date | null = null;
       
-      allDates.forEach(date => {
-        // Start a new week on Sunday or first date
-        if (currentWeekStartDate === null || date.getDay() === 0) {
+      dates.forEach(date => {
+        const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Monday as week start
+        if (!currentWeekStart || !isSameDay(weekStart, currentWeekStart)) {
           if (currentWeek.length > 0) {
             weeks.push(currentWeek);
           }
           currentWeek = [date];
-          currentWeekStartDate = date;
+          currentWeekStart = weekStart;
         } else {
           currentWeek.push(date);
         }
       });
       
-      // Add the last week if it exists
       if (currentWeek.length > 0) {
         weeks.push(currentWeek);
       }
       
       return weeks;
     } else {
-      // Group by months
+      // For months view, group dates by month
       const months: Date[][] = [];
       let currentMonth: Date[] = [];
-      let currentMonthNumber: number | null = null;
+      let currentMonthValue: number | null = null;
       
-      allDates.forEach(date => {
-        const monthNumber = date.getMonth();
-        // Start a new month when month changes
-        if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
+      dates.forEach(date => {
+        const monthValue = date.getMonth();
+        if (currentMonthValue === null || monthValue !== currentMonthValue) {
           if (currentMonth.length > 0) {
             months.push(currentMonth);
           }
           currentMonth = [date];
-          currentMonthNumber = monthNumber;
+          currentMonthValue = monthValue;
         } else {
           currentMonth.push(date);
         }
       });
       
-      // Add the last month if it exists
       if (currentMonth.length > 0) {
         months.push(currentMonth);
       }
       
       return months;
     }
-  }, [allDates, timelineView]);
+  }, [dates, timelineView]);
 
-  // Get current milestone dates as Date objects
-  const milestones = {
-    kickOff: milestoneDates?.kickOff ? parseISO(milestoneDates.kickOff) : null,
-    define: milestoneDates?.define ? parseISO(milestoneDates.define) : null,
-    measure: milestoneDates?.measure ? parseISO(milestoneDates.measure) : null,
-    analyze: milestoneDates?.analyze ? parseISO(milestoneDates.analyze) : null,
-    improve: milestoneDates?.improve ? parseISO(milestoneDates.improve) : null,
-    control: milestoneDates?.control ? parseISO(milestoneDates.control) : null,
+  // Check if a date is a milestone date
+  const isMilestoneDate = (date: Date) => {
+    if (!milestoneDates) return false;
+    
+    return Object.entries(milestoneDates).some(([_, milestoneDate]) => 
+      milestoneDate && isSameDay(date, parseISO(milestoneDate))
+    );
   };
 
-  // Initialize form with default values
+  // Get the milestone label for a date
+  const getMilestoneLabel = (date: Date) => {
+    if (!milestoneDates) return '';
+    
+    const milestone = Object.entries(milestoneDates).find(([_, milestoneDate]) => 
+      milestoneDate && isSameDay(date, parseISO(milestoneDate))
+    );
+    
+    if (!milestone) return '';
+    
+    const [type] = milestone;
+    const formatMap: Record<string, string> = {
+      kickOff: 'Kick-Off',
+      define: 'Define',
+      measure: 'Measure',
+      analyze: 'Analyze',
+      improve: 'Improve',
+      control: 'Control'
+    };
+    
+    return formatMap[type] || type;
+  };
+
+  // Check if a task is late (end date is before today and progress < 100%)
+  const isTaskLate = (task: GanttTask) => {
+    const today = new Date();
+    return task.progress < 100 && isBefore(parseISO(task.endDate), today);
+  };
+
+  // Get the style for a task bar in the timeline
+  const getTaskBarStyle = (task: GanttTask) => {
+    const taskStart = parseISO(task.startDate);
+    const taskEnd = parseISO(task.endDate);
+    
+    // Calculate position and width
+    const daysFromStart = Math.max(0, differenceInDays(taskStart, dateRange.start));
+    const taskDuration = Math.max(1, differenceInDays(taskEnd, taskStart) + 1);
+    
+    const left = `${(daysFromStart / totalDays) * 100}%`;
+    const width = `${(taskDuration / totalDays) * 100}%`;
+    
+    return {
+      left,
+      width,
+      backgroundColor: isTaskLate(task) ? '#FCA5A5' : statusColors[task.status || 'not-started'].replace('bg-', ''),
+      borderLeftColor: priorityColors[task.priority || 'medium'].replace('border-l-', '')
+    };
+  };
+
+  // Fetch the tasks
+  useEffect(() => {
+    if (!projectId) return;
+    
+    const fetchTasks = async () => {
+      try {
+        console.log("Fetching tasks for project", projectId);
+        const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch tasks');
+        }
+        const data = await response.json();
+        console.log("Received tasks:", data.tasks);
+        setTasks(data.tasks || []);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load tasks',
+          variant: 'destructive'
+        });
+      }
+    };
+    
+    fetchTasks();
+    
+    // Set up polling to refresh tasks every 3 seconds
+    const intervalId = setInterval(fetchTasks, 3000);
+    
+    return () => clearInterval(intervalId);
+  }, [projectId, toast]);
+
+  // Set up form for adding/editing tasks
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       name: '',
-      startDate: format(new Date(), 'yyyy-MM-dd'),
-      endDate: format(addDays(new Date(), 5), 'yyyy-MM-dd'),
+      startDate: dateRange.start.toISOString().split('T')[0],
+      endDate: addDays(dateRange.start, 7).toISOString().split('T')[0],
       progress: 0,
       dependencies: '',
       assignee: '',
       priority: 'medium',
       phase: 'define',
-      status: 'not-started',
-    },
+      status: 'not-started'
+    }
   });
 
-  // Fetch tasks on component mount
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        console.log(`Fetching tasks for project ${projectId}...`);
-        const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Received ${data.tasks?.length || 0} tasks:`, data.tasks);
-          setTasks(data.tasks || []);
-        } else {
-          console.error(`Failed to fetch tasks: ${response.status}`);
-          toast({
-            title: 'Error',
-            description: 'Failed to load Gantt tasks',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load Gantt tasks',
-          variant: 'destructive',
-        });
-      }
-    };
-
-    fetchTasks();
-    
-    // Set up an interval to periodically check for tasks (every 3 seconds)
-    const intervalId = setInterval(fetchTasks, 3000);
-    
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, [projectId, toast]);
-
-  // Update date range based on project dates
-  useEffect(() => {
-    if (projectStartDate && projectEndDate) {
-      setDateRange({
-        start: parseISO(projectStartDate),
-        end: parseISO(projectEndDate)
-      });
-    }
-  }, [projectStartDate, projectEndDate]);
-
-  // Save task mutation
+  // Mutation for saving tasks
   const saveTaskMutation = useMutation({
     mutationFn: async (task: GanttTask) => {
-      if (task.id) {
-        // Update existing task
-        return apiRequest("PUT", `/api/gantt-tasks/${task.id}`, task);
-      } else {
-        // Create new task
-        return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks`, task);
-      }
+      const isEditMode = !!task.id;
+      const url = isEditMode 
+        ? `/api/gantt-tasks/${task.id}` 
+        : `/api/projects/${projectId}/gantt-tasks`;
+      const method = isEditMode ? 'PUT' : 'POST';
+      
+      return apiRequest(url, method, task);
     },
     onSuccess: () => {
-      toast({
-        title: 'Success',
-        description: 'Task saved successfully',
-      });
-      
-      // Immediately refetch tasks to update the UI
-      const fetchTasks = async () => {
-        try {
-          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-          if (response.ok) {
-            const data = await response.json();
-            setTasks(data.tasks || []);
-            console.log("Tasks reloaded:", data.tasks);
-          } else {
-            console.error("Failed to reload tasks:", response.status);
-          }
-        } catch (error) {
-          console.error('Error fetching tasks:', error);
-        }
-      };
-      
-      fetchTasks();
-      
-      // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
-      
-      // Reset form and UI state
       form.reset();
       setShowAddTask(false);
       setEditingTaskId(null);
+      toast({
+        title: 'Success',
+        description: editingTaskId ? 'Task updated successfully' : 'Task added successfully'
+      });
     },
     onError: (error) => {
       console.error('Error saving task:', error);
       toast({
         title: 'Error',
         description: 'Failed to save task',
-        variant: 'destructive',
+        variant: 'destructive'
       });
     }
   });
 
-  // Generate DMAIC WBS mutation
-  const generateDMAICWBSMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
-    },
-    onSuccess: (data) => {
-      toast({
-        title: 'Success',
-        description: `Default DMAIC WBS created with ${data?.tasks?.length || 0} tasks`,
-      });
-      
-      // Immediately refetch tasks to update the UI
-      const fetchTasks = async () => {
-        try {
-          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-          if (response.ok) {
-            const data = await response.json();
-            setTasks(data.tasks || []);
-            console.log("Tasks reloaded after WBS generation:", data.tasks);
-          } else {
-            console.error("Failed to reload tasks after WBS generation:", response.status);
-          }
-        } catch (error) {
-          console.error('Error fetching tasks after WBS generation:', error);
-        }
-      };
-      
-      fetchTasks();
-      
-      // Also invalidate the query cache for future requests
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
-      
-      // Reset generating state
-      setIsGeneratingWBS(false);
-    },
-    onError: (error) => {
-      console.error('Error generating DMAIC WBS:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to generate default DMAIC WBS',
-        variant: 'destructive',
-      });
-      setIsGeneratingWBS(false);
-    }
-  });
-
-  // Delete task mutation
+  // Mutation for deleting tasks
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: number) => {
-      return apiRequest("DELETE", `/api/gantt-tasks/${taskId}`, { projectId });
+      return apiRequest(`/api/gantt-tasks/${taskId}`, 'DELETE');
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
       toast({
         title: 'Success',
-        description: 'Task deleted successfully',
+        description: 'Task deleted successfully'
       });
-      
-      // Immediately refetch tasks to update the UI
-      const fetchTasks = async () => {
-        try {
-          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-          if (response.ok) {
-            const data = await response.json();
-            setTasks(data.tasks || []);
-            console.log("Tasks reloaded after delete:", data.tasks);
-          } else {
-            console.error("Failed to reload tasks after delete:", response.status);
-          }
-        } catch (error) {
-          console.error('Error fetching tasks after delete:', error);
-        }
-      };
-      
-      fetchTasks();
-      
-      // Also invalidate the query cache for future requests
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
     },
     onError: (error) => {
       console.error('Error deleting task:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete task',
-        variant: 'destructive',
+        variant: 'destructive'
       });
     }
   });
 
-  // Form submission handler
+  // Mutation for generating WBS tasks
+  const generateWbsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(`/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, 'POST');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
+      setIsGeneratingWBS(false);
+      toast({
+        title: 'Success',
+        description: 'Default DMAIC WBS generated successfully'
+      });
+    },
+    onError: (error) => {
+      console.error('Error generating WBS:', error);
+      setIsGeneratingWBS(false);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate WBS',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Handler for form submission
   const onSubmit = (values: TaskFormValues) => {
     const taskToSave: GanttTask = {
       ...values,
       projectId,
-      id: editingTaskId || undefined,
+      id: editingTaskId || undefined
     };
     
-    console.log("Submitting task:", taskToSave);
     saveTaskMutation.mutate(taskToSave);
   };
 
-  // Handle edit task
+  // Handler for editing a task
   const handleEditTask = (task: GanttTask) => {
-    // Populate form with task data
+    setEditingTaskId(task.id || null);
     form.reset({
       name: task.name,
       startDate: task.startDate,
@@ -395,163 +388,102 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       assignee: task.assignee || '',
       priority: task.priority || 'medium',
       phase: task.phase,
-      status: task.status || 'not-started',
+      status: task.status || 'not-started'
     });
-    
-    setEditingTaskId(task.id || null);
     setShowAddTask(true);
   };
 
-  // Handle drag start
+  // Handlers for drag and drop
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
   };
 
-  // Handle drag over
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    if (draggedIndex === null) return;
+    
     setDropTargetIndex(index);
   };
 
-  // Handle drop to reorder tasks
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDrop = async () => {
+    if (draggedIndex === null || dropTargetIndex === null) return;
     
-    if (draggedIndex !== null && dropTargetIndex !== null && draggedIndex !== dropTargetIndex) {
-      // Create a new array with the reordered tasks
-      const newTasks = [...tasks];
-      const [movedTask] = newTasks.splice(draggedIndex, 1);
-      newTasks.splice(dropTargetIndex, 0, movedTask);
-      
-      // Update the task order in the UI immediately
-      setTasks(newTasks);
-      
-      // Reset drag state
-      setDraggedIndex(null);
-      setDropTargetIndex(null);
-      
-      // TODO: Implement API to update task order on the server
-      try {
-        // This would be the API call to update task order
-        // await apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/reorder`, { taskIds: newTasks.map(t => t.id) });
-      } catch (error) {
-        console.error('Error updating task order:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to update task order',
-          variant: 'destructive',
-        });
-      }
+    // Reorder tasks
+    const newTasks = [...tasks];
+    const [removed] = newTasks.splice(draggedIndex, 1);
+    newTasks.splice(dropTargetIndex, 0, removed);
+    
+    setTasks(newTasks);
+    setDraggedIndex(null);
+    setDropTargetIndex(null);
+    
+    // Update order in the backend
+    try {
+      await apiRequest(`/api/projects/${projectId}/gantt-tasks/reorder`, 'POST', {
+        taskIds: newTasks.map(task => task.id)
+      });
+    } catch (error) {
+      console.error('Error reordering tasks:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update task order',
+        variant: 'destructive'
+      });
     }
   };
 
-  // Calculate the position and width of a task bar
-  const getTaskBarStyle = (task: GanttTask) => {
-    const taskStart = parseISO(task.startDate);
-    const taskEnd = parseISO(task.endDate);
-    
-    // Calculate distance from the start date as a percentage
-    const startOffset = Math.max(0, differenceInDays(taskStart, dateRange.start));
-    const duration = differenceInDays(taskEnd, taskStart) + 1;
-    
-    // Calculate start position and width as percentages
-    const startPercent = (startOffset / totalDays) * 100;
-    // Set a minimum width for very short tasks for better visibility
-    const widthPercent = Math.max((duration / totalDays) * 100, 3);
-    
-    return {
-      left: `${startPercent}%`,
-      width: `${widthPercent}%`,
-      zIndex: 10, // Ensure task bar appears above the background grid
-    };
-  };
-
-  // Check if a date is a milestone
-  const isMilestoneDate = (date: Date) => {
-    return Object.values(milestones).some(milestone => 
-      milestone && isSameDay(date, milestone)
-    );
-  };
-
-  // Get milestone label for a date
-  const getMilestoneLabel = (date: Date) => {
-    if (milestones.kickOff && isSameDay(date, milestones.kickOff)) return 'Kick-off';
-    if (milestones.define && isSameDay(date, milestones.define)) return 'Define';
-    if (milestones.measure && isSameDay(date, milestones.measure)) return 'Measure';
-    if (milestones.analyze && isSameDay(date, milestones.analyze)) return 'Analyze';
-    if (milestones.improve && isSameDay(date, milestones.improve)) return 'Improve';
-    if (milestones.control && isSameDay(date, milestones.control)) return 'Control';
-    return '';
-  };
-
-  // Determine if the task is late based on its end date and status
-  const isTaskLate = (task: GanttTask) => {
-    return task.status !== 'completed' && isAfter(new Date(), parseISO(task.endDate));
-  };
-
   return (
-    <div className="gantt-chart-container">
-      <div className="flex justify-between mb-4">
-        <h3 className="text-lg font-semibold">Project Timeline</h3>
-        <div className="flex space-x-2">
-          <div className="flex items-center border rounded-md overflow-hidden mr-2">
-            <button
-              onClick={() => setTimelineView('weeks')}
-              className={`px-3 py-1 text-sm ${timelineView === 'weeks' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-            >
-              Weeks
-            </button>
-            <button
-              onClick={() => setTimelineView('months')}
-              className={`px-3 py-1 text-sm ${timelineView === 'months' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-            >
-              Months
-            </button>
-          </div>
-          
-          <Button
-            onClick={() => {
-              setIsGeneratingWBS(true);
-              generateDMAICWBSMutation.mutate();
-            }}
-            disabled={isGeneratingWBS || generateDMAICWBSMutation.isPending}
-            variant="outline"
+    <div className="gantt-chart space-y-4 pb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start mb-4 space-y-2 md:space-y-0">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Project Gantt Chart and Work Breakdown Structure</h3>
+          <p className="text-muted-foreground text-sm">Manage and track project tasks and timelines</p>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="outline" 
             size="sm"
-            className="whitespace-nowrap"
+            className={cn(timelineView === 'weeks' ? 'bg-blue-100' : '')}
+            onClick={() => setTimelineView('weeks')}
           >
-            {isGeneratingWBS || generateDMAICWBSMutation.isPending ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Generating...
-              </>
-            ) : (
-              <>Generate Default DMAIC WBS</>
-            )}
+            Week View
           </Button>
           <Button 
-            onClick={() => {
-              form.reset(); // Reset form to defaults
-              setEditingTaskId(null);
-              setShowAddTask(!showAddTask);
-            }}
+            variant="outline" 
+            size="sm"
+            className={cn(timelineView === 'months' ? 'bg-blue-100' : '')}
+            onClick={() => setTimelineView('months')}
+          >
+            Month View
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowAddTask(true)}
+          >
+            <PlusCircle size={16} className="mr-1" /> Add Task
+          </Button>
+          <Button
             variant="outline"
             size="sm"
+            onClick={() => {
+              setIsGeneratingWBS(true);
+              generateWbsMutation.mutate();
+            }}
+            disabled={isGeneratingWBS}
           >
-            {showAddTask ? 'Cancel' : 'Add Task'}
+            {isGeneratingWBS ? 'Generating...' : 'Generate Default DMAIC WBS'}
           </Button>
         </div>
       </div>
-
-      {/* Task Form */}
+      
       {showAddTask && (
-        <div className="p-4 border border-gray-200 rounded-md mb-6 bg-gray-50">
-          <h4 className="text-md font-medium mb-4">{editingTaskId ? 'Edit Task' : 'Add New Task'}</h4>
+        <div className="bg-gray-50 border rounded-md p-4 mb-4">
+          <h4 className="font-medium mb-3">{editingTaskId ? 'Edit Task' : 'Add New Task'}</h4>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="name"
@@ -588,6 +520,20 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={form.control}
+                  name="dependencies"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dependencies (Task IDs, comma separated)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 1,2,3" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -617,7 +563,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                             mode="single"
                             selected={field.value ? parseISO(field.value) : undefined}
                             onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-                            disabled={(date) => isBefore(date, dateRange.start) || isAfter(date, dateRange.end)}
+                            disabled={(date) => isBefore(date, dateRange.start)}
                             initialFocus
                           />
                         </PopoverContent>
@@ -679,8 +625,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           type="number" 
                           min="0" 
                           max="100" 
-                          {...field} 
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          {...field}
+                          onChange={e => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -746,20 +692,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="dependencies"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dependencies (comma separated task IDs)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. 1,3,5" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
               
               <div className="flex justify-end space-x-2">
@@ -789,17 +721,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       {/* Gantt Chart */}
       <div className="gantt-wrapper overflow-x-auto">
         <div className="min-w-full">
-          {/* Date Headers */}
-          <div className="flex border-b">
-            <div className="w-1/4 flex">
+          <ResizablePanelGroup 
+            direction="horizontal" 
+            onLayout={handleColumnResize}
+            className="border-b"
+          >
+            <ResizablePanel 
+              defaultSize={taskColumnSize} 
+              minSize={20} 
+              maxSize={50}
+              className="flex"
+            >
               <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
                 Task
               </div>
-              <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2 bg-gray-100 font-medium">
+              <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 bg-gray-100 font-medium">
                 Assignee
               </div>
-            </div>
-            <div className="gantt-timeline w-3/4 flex">
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={100 - taskColumnSize} className="gantt-timeline flex">
               {timelineView === 'weeks' ? (
                 // Week view
                 groupedDates.map((week, weekIndex) => (
@@ -809,24 +750,22 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   >
                     {/* Week header */}
                     <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium">
-                      Week {getWeek(week[0])}
-                      <div className="text-[10px]">
-                        {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d, yyyy')}
-                      </div>
+                      Week {getWeek(week[0])} ({format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d')})
                     </div>
                     {/* Days in week */}
-                    <div className="flex">
+                    <div className="flex border-b">
                       {week.map((date, dateIndex) => (
                         <div 
-                          key={`day-${weekIndex}-${dateIndex}`} 
+                          key={`day-${weekIndex}-${dateIndex}`}
                           className={cn(
                             "flex-1 min-w-[35px] text-center text-xs p-1 border-r",
-                            isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
+                            dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
+                            isMilestoneDate(date) ? "bg-amber-50" : ""
                           )}
                         >
                           {format(date, 'd')}
                           {isMilestoneDate(date) && (
-                            <div className="text-[9px] font-semibold text-amber-700 truncate">
+                            <div className="text-[9px] font-semibold text-amber-700">
                               {getMilestoneLabel(date)}
                             </div>
                           )}
@@ -904,34 +843,44 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   );
                 })
               )}
-            </div>
-          </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
 
           {/* Task Rows */}
           {tasks.length > 0 ? (
             tasks.map((task, index) => (
-              <div 
+              <ResizablePanelGroup
                 key={task.id || index}
+                direction="horizontal"
                 className={cn(
-                  "flex border-b hover:bg-gray-50 transition-colors",
+                  "border-b hover:bg-gray-50 transition-colors",
                   dropTargetIndex === index ? "bg-blue-50" : ""
                 )}
-                draggable
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDrop={handleDrop}
-                onDragEnd={() => {
-                  setDraggedIndex(null);
-                  setDropTargetIndex(null);
-                }}
               >
-                <div className="w-1/4 flex">
+                <div 
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={handleDrop}
+                  onDragEnd={() => {
+                    setDraggedIndex(null);
+                    setDropTargetIndex(null);
+                  }}
+                  className="absolute inset-0 z-10 opacity-0 cursor-move"
+                >
+                </div>
+                <ResizablePanel 
+                  defaultSize={taskColumnSize} 
+                  minSize={20} 
+                  maxSize={50}
+                  className="flex"
+                >
                   <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 flex items-center">
                     <div className="mr-2 cursor-move">
                       <GripVertical size={16} className="text-gray-400" />
                     </div>
                     <div className="flex-grow">
-                      <div className="font-medium">{task.name}</div>
+                      <div className="text-[14px]">{task.name}</div>
                     </div>
                     <div className="flex space-x-1">
                       <Button
@@ -953,15 +902,34 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </Button>
                     </div>
                   </div>
-                  <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2">
+                  <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2">
                     {task.assignee ? (
                       <div className="text-sm">{task.assignee}</div>
                     ) : (
                       <div className="text-sm text-gray-400">Not assigned</div>
                     )}
                   </div>
-                </div>
-                <div className="gantt-timeline w-3/4 relative flex">
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={100 - taskColumnSize} className="gantt-timeline relative flex">
+                  {/* Task Bar */}
+                  <div 
+                    className={cn(
+                      "absolute h-5 top-2 rounded-sm border-l-2",
+                      `border-l-${priorityColors[task.priority || 'medium'].replace('border-l-', '')}`
+                    )}
+                    style={getTaskBarStyle(task)}
+                  >
+                    <div className="absolute inset-0 flex items-center px-2">
+                      <div 
+                        className="h-3 bg-blue-500 rounded-sm" 
+                        style={{ width: `${task.progress}%` }}
+                      ></div>
+                      <span className="ml-1 text-xs">{task.progress}%</span>
+                    </div>
+                  </div>
+                  
+                  {/* Timeline background cells */}
                   {timelineView === 'weeks' ? (
                     // Week view background
                     groupedDates.map((week, weekIndex) => (
@@ -1014,11 +982,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                               <div 
                                 key={`task-month-week-bg-${monthIndex}-${weekIndex}`}
                                 className={cn(
-                                  "flex-grow border-b",
+                                  "flex-1 border-r",
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                                   week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                                 )}
-                                style={{ minHeight: "40px" }}
                               ></div>
                             ))}
                           </div>
@@ -1026,78 +993,14 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       );
                     })
                   )}
-                  
-                  {/* Task Bar */}
-                  <div 
-                    className={cn(
-                      "absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
-                      phaseColors[task.phase] || 'bg-gray-500',
-                      priorityColors[task.priority || 'medium'],
-                      isTaskLate(task) ? 'border border-red-500' : ''
-                    )}
-                    style={getTaskBarStyle(task)}
-                  >
-                    <div className="truncate max-w-full">
-                      {task.name} ({task.progress}%)
-                    </div>
-                    
-                    {/* Progress Overlay */}
-                    <div 
-                      className="absolute left-0 top-0 bottom-0 bg-black bg-opacity-20 rounded-l"
-                      style={{ width: `${task.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
             ))
           ) : (
-            <div className="flex border-b py-8">
-              <div className="w-full text-center text-gray-500">
-                No tasks added yet. Click "Add Task" to create your first task.
-              </div>
+            <div className="text-center py-8 text-gray-500">
+              No tasks yet. Click "Add Task" to create a new task, or "Generate Default DMAIC WBS" to create a standard work breakdown structure.
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="mt-6 flex flex-wrap gap-4">
-        <div className="text-sm font-medium">Phases:</div>
-        <div className="flex gap-4">
-          {Object.entries(phaseColors).map(([phase, color]) => (
-            <div key={phase} className="flex items-center">
-              <div className={`w-4 h-4 rounded ${color} mr-1`}></div>
-              <span className="text-sm capitalize">{phase}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap gap-4">
-        <div className="text-sm font-medium">Priorities:</div>
-        <div className="flex gap-4">
-          {Object.entries(priorityColors).map(([priority, color]) => (
-            <div key={priority} className="flex items-center">
-              <div className={`w-4 h-4 border-l-4 ${color} mr-1`}></div>
-              <span className="text-sm capitalize">{priority}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap gap-4">
-        <div className="text-sm font-medium">Status:</div>
-        <div className="flex gap-4">
-          {Object.entries(statusColors).map(([status, color]) => (
-            <div key={status} className="flex items-center">
-              <div className={`w-4 h-4 ${color} mr-1 rounded`}></div>
-              <span className="text-sm capitalize">{status.replace('-', ' ')}</span>
-            </div>
-          ))}
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-gray-200 border border-red-500 mr-1 rounded"></div>
-            <span className="text-sm">Late</span>
-          </div>
         </div>
       </div>
     </div>
