@@ -87,7 +87,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
-  const [timelineView, setTimelineView] = useState<'weeks' | 'months'>('weeks');
+  const [timelineView, setTimelineView] = useState<'weeks' | 'months' | 'years'>('weeks');
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
@@ -101,7 +101,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Generate all dates within the range
   const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
   
-  // Group dates by weeks or months based on view mode
+  // Group dates by weeks, months, or years based on view mode
   const groupedDates = useMemo(() => {
     if (timelineView === 'weeks') {
       // Group by weeks (Sunday to Saturday)
@@ -128,21 +128,24 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       }
       
       return weeks;
-    } else {
+    } else if (timelineView === 'months') {
       // Group by months
       const months: Date[][] = [];
       let currentMonth: Date[] = [];
       let currentMonthNumber: number | null = null;
+      let currentYear: number | null = null;
       
       allDates.forEach(date => {
         const monthNumber = date.getMonth();
-        // Start a new month when month changes
-        if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
+        const year = date.getFullYear();
+        // Start a new month when month changes or year changes
+        if (currentMonthNumber === null || monthNumber !== currentMonthNumber || year !== currentYear) {
           if (currentMonth.length > 0) {
             months.push(currentMonth);
           }
           currentMonth = [date];
           currentMonthNumber = monthNumber;
+          currentYear = year;
         } else {
           currentMonth.push(date);
         }
@@ -154,6 +157,32 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       }
       
       return months;
+    } else {
+      // Group by years
+      const years: Date[][] = [];
+      let currentYear: Date[] = [];
+      let currentYearNumber: number | null = null;
+      
+      allDates.forEach(date => {
+        const yearNumber = date.getFullYear();
+        // Start a new year when year changes
+        if (currentYearNumber === null || yearNumber !== currentYearNumber) {
+          if (currentYear.length > 0) {
+            years.push(currentYear);
+          }
+          currentYear = [date];
+          currentYearNumber = yearNumber;
+        } else {
+          currentYear.push(date);
+        }
+      });
+      
+      // Add the last year if it exists
+      if (currentYear.length > 0) {
+        years.push(currentYear);
+      }
+      
+      return years;
     }
   }, [allDates, timelineView]);
 
@@ -506,6 +535,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               className={`px-3 py-1 text-sm ${timelineView === 'months' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
               Months
+            </button>
+            <button
+              onClick={() => setTimelineView('years')}
+              className={`px-3 py-1 text-sm ${timelineView === 'years' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+            >
+              Years
             </button>
           </div>
           
