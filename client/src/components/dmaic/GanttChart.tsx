@@ -831,7 +831,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                 Task
               </div>
               <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 bg-gray-100 font-medium">
-                Assignee
+                Owner
               </div>
             </div>
             <div className="gantt-timeline w-3/4 flex">
@@ -1024,35 +1024,36 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               >
                 <div className="w-1/4 flex">
                   <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 flex items-center">
-                    <div className="mr-2 cursor-move">
-                      <GripVertical size={16} className="text-gray-400" />
+                    <div className="mr-1 cursor-move">
+                      <GripVertical size={12} className="text-gray-400" />
                     </div>
                     <div className="flex-grow">
-                      <div className="text-[14px]">{task.name}</div>
+                      <div className="text-[12px]">{task.name}</div>
                     </div>
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-1 flex-col gap-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 rounded-full"
+                        className="h-7 w-4 rounded-full"
                         onClick={() => handleEditTask(task)}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                        {/* <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg> */}
+                        <i className="fa fa-pencil" style={{ color: 'gray' }}></i>
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="h-7 w-4 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
                         onClick={() => task.id && deleteTaskMutation.mutate(task.id)}
                         disabled={deleteTaskMutation.isPending}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={12} />
                       </Button>
                     </div>
                   </div>
                   <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2">
                     {task.assignee ? (
-                      <div className="text-sm">{task.assignee}</div>
+                      <div className="text-[12px]">{task.assignee}</div>
                     ) : (
                       <div className="text-sm text-gray-400">Not assigned</div>
                     )}
