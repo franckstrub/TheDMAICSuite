@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../components/ui/form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../../lib/queryClient';
 import { useToast } from '../../hooks/use-toast';
 import { cn } from '../../lib/utils';
@@ -81,7 +81,6 @@ const statusColors = {
 }
 
 export default function GanttChart({ projectId, projectStartDate, projectEndDate, milestoneDates }: GanttChartProps) {
-  const [tasks, setTasks] = useState<GanttTask[]>([]);
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -94,6 +93,18 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use React Query to fetch tasks
+  const { data: tasksData, isLoading, isError } = useQuery({
+    queryKey: [`/api/projects/${projectId}/gantt-tasks`],
+    refetchInterval: 3000, // Refetch every 3 seconds
+    staleTime: 0, // Consider data stale immediately so we always refetch
+  });
+  
+  // Extract tasks from query data
+  const tasks = useMemo(() => {
+    return ((tasksData as any)?.tasks || []) as GanttTask[];
+  }, [tasksData]);
 
   // Calculate number of days in the range
   const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
@@ -212,42 +223,16 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     },
   });
 
-  // Fetch tasks on component mount
+  // Display toast if there's an error loading tasks
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        console.log(`Fetching tasks for project ${projectId}...`);
-        const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Received ${data.tasks?.length || 0} tasks:`, data.tasks);
-          setTasks(data.tasks || []);
-        } else {
-          console.error(`Failed to fetch tasks: ${response.status}`);
-          toast({
-            title: 'Error',
-            description: 'Failed to load Gantt tasks',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load Gantt tasks',
-          variant: 'destructive',
-        });
-      }
-    };
-
-    fetchTasks();
-    
-    // Set up an interval to periodically check for tasks (every 3 seconds)
-    const intervalId = setInterval(fetchTasks, 3000);
-    
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, [projectId, toast]);
+    if (isError) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load Gantt tasks',
+        variant: 'destructive',
+      });
+    }
+  }, [isError, toast]);
 
   // Update date range based on project dates
   useEffect(() => {
@@ -276,25 +261,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         description: 'Task saved successfully',
       });
       
-      // Immediately refetch tasks to update the UI
-      const fetchTasks = async () => {
-        try {
-          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-          if (response.ok) {
-            const data = await response.json();
-            setTasks(data.tasks || []);
-            console.log("Tasks reloaded:", data.tasks);
-          } else {
-            console.error("Failed to reload tasks:", response.status);
-          }
-        } catch (error) {
-          console.error('Error fetching tasks:', error);
-        }
-      };
-      
-      fetchTasks();
-      
-      // Also invalidate the query cache for future requests
+      // Invalidate the query cache to trigger an automatic refetch
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
       
       // Reset form and UI state
@@ -323,25 +290,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         description: `Default DMAIC WBS created with ${data?.tasks?.length || 0} tasks`,
       });
       
-      // Immediately refetch tasks to update the UI
-      const fetchTasks = async () => {
-        try {
-          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-          if (response.ok) {
-            const data = await response.json();
-            setTasks(data.tasks || []);
-            console.log("Tasks reloaded after WBS generation:", data.tasks);
-          } else {
-            console.error("Failed to reload tasks after WBS generation:", response.status);
-          }
-        } catch (error) {
-          console.error('Error fetching tasks after WBS generation:', error);
-        }
-      };
-      
-      fetchTasks();
-      
-      // Also invalidate the query cache for future requests
+      // Invalidate the query cache to trigger an automatic refetch
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
       
       // Reset generating state
@@ -369,25 +318,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         description: 'Task deleted successfully',
       });
       
-      // Immediately refetch tasks to update the UI
-      const fetchTasks = async () => {
-        try {
-          const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-          if (response.ok) {
-            const data = await response.json();
-            setTasks(data.tasks || []);
-            console.log("Tasks reloaded after delete:", data.tasks);
-          } else {
-            console.error("Failed to reload tasks after delete:", response.status);
-          }
-        } catch (error) {
-          console.error('Error fetching tasks after delete:', error);
-        }
-      };
-      
-      fetchTasks();
-      
-      // Also invalidate the query cache for future requests
+      // Invalidate the query cache to trigger an automatic refetch
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
     },
     onError: (error) => {
@@ -452,9 +383,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       const [movedTask] = newTasks.splice(draggedIndex, 1);
       newTasks.splice(dropTargetIndex, 0, movedTask);
       
-      // Update the task order in the UI immediately
-      setTasks(newTasks);
-      
       // Reset drag state
       setDraggedIndex(null);
       setDropTargetIndex(null);
@@ -463,6 +391,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       try {
         // This would be the API call to update task order
         // await apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/reorder`, { taskIds: newTasks.map(t => t.id) });
+        // queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
       } catch (error) {
         console.error('Error updating task order:', error);
         toast({
