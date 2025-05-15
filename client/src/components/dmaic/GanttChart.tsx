@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay, startOfWeek, endOfWeek, getWeek } from 'date-fns';
 import { Button } from "../../components/ui/button";
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "../../components/ui/resizable";
 import { Input } from "../../components/ui/input";
 import { Calendar } from "../../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
@@ -791,14 +792,15 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         <div className="min-w-full">
           {/* Date Headers */}
           <div className="flex border-b">
-            <div className="w-1/4 flex">
-              <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-small">
+            <ResizablePanelGroup direction="horizontal" className="w-1/4 flex">
+              <ResizablePanel defaultSize={75} minSize={30} className="gantt-task-info border-r p-2 bg-gray-100 font-small">
                 Task
-              </div>
-              <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 bg-gray-100 font-small">
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={25} minSize={15} className="gantt-assignee border-r p-2 bg-gray-100 font-small">
                 Assignee
-              </div>
-            </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
             <div className="gantt-timeline w-3/4 flex">
               {timelineView === 'weeks' ? (
                 // Week view
@@ -925,8 +927,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   setDropTargetIndex(null);
                 }}
               >
-                <div className="w-1/4 flex">
-                  <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 flex items-center">
+                <ResizablePanelGroup direction="horizontal" className="w-1/4 flex">
+                  <ResizablePanel defaultSize={75} minSize={30} className="gantt-task-info border-r p-2 flex items-center">
                     <div className="mr-2 cursor-move">
                       <GripVertical size={16} className="text-gray-400" />
                     </div>
@@ -952,15 +954,16 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         <Trash2 size={16} />
                       </Button>
                     </div>
-                  </div>
-                  <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2">
+                  </ResizablePanel>
+                  <ResizableHandle />
+                  <ResizablePanel defaultSize={25} minSize={15} className="gantt-assignee border-r p-2">
                     {task.assignee ? (
                       <div className="text-sm">{task.assignee}</div>
                     ) : (
                       <div className="text-sm text-gray-400">Not assigned</div>
                     )}
-                  </div>
-                </div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
                 <div className="gantt-timeline w-3/4 relative flex">
                   {timelineView === 'weeks' ? (
                     // Week view background
