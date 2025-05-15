@@ -795,7 +795,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
                 Task
               </div>
-              <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2 bg-gray-100 font-medium">
+              <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 bg-gray-100 font-medium">
                 Assignee
               </div>
             </div>
@@ -871,32 +871,29 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         {format(month[0], 'MMMM yyyy')}
                       </div>
                       {/* Weeks in month */}
-                      <div className="flex flex-col">
+                      <div className="flex">
                         {weeksInMonth.map((week, weekIndex) => (
                           <div 
                             key={`month-${monthIndex}-week-${weekIndex}`}
-                            className="flex border-b"
+                            className={cn(
+                              "flex-grow min-w-[50px] text-center text-xs p-1 border-r",
+                              weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
+                              week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                            )}
                           >
-                            <div
-                              className={cn(
-                                "flex-grow min-w-[50px] text-center text-xs p-1 border-r",
-                                weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white"
-                              )}
-                            >
-                              <div className="font-medium">Week {getWeek(week[0])}</div>
-                              <div className="text-[10px]">
-                                {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d')}
-                              </div>
-                              {week.some(date => isMilestoneDate(date)) && (
-                                <div className="text-[9px] font-semibold text-amber-700 mt-1">
-                                  {week.filter(date => isMilestoneDate(date)).map(date => 
-                                    <span key={date.toISOString()} className="mr-1 px-1 bg-amber-100 rounded">
-                                      {getMilestoneLabel(date)} ({format(date, 'd')})
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                            <div className="font-medium">W{getWeek(week[0])}</div>
+                            <div className="text-[10px]">
+                              {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d')}
                             </div>
+                            {week.some(date => isMilestoneDate(date)) && (
+                              <div className="text-[9px] font-semibold text-amber-700 mt-1">
+                                {week.filter(date => isMilestoneDate(date)).map(date => 
+                                  <span key={date.toISOString()} className="mr-1 px-1 bg-amber-100 rounded">
+                                    {getMilestoneLabel(date)} ({format(date, 'd')})
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -931,7 +928,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       <GripVertical size={16} className="text-gray-400" />
                     </div>
                     <div className="flex-grow">
-                      <div className="font-medium">{task.name}</div>
+                      <div className="text-[14px]">{task.name}</div>
                     </div>
                     <div className="flex space-x-1">
                       <Button
@@ -953,7 +950,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </Button>
                     </div>
                   </div>
-                  <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2">
+                  <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2">
                     {task.assignee ? (
                       <div className="text-sm">{task.assignee}</div>
                     ) : (
@@ -1009,16 +1006,15 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       return (
                         <div key={`task-month-bg-${monthIndex}`} className="flex flex-col flex-grow">
                           <div className="h-2 bg-transparent"></div> {/* Space for month header */}
-                          <div className="flex flex-col flex-grow">
+                          <div className="flex flex-grow">
                             {weeksInMonth.map((week, weekIndex) => (
                               <div 
                                 key={`task-month-week-bg-${monthIndex}-${weekIndex}`}
                                 className={cn(
-                                  "flex-grow border-b",
+                                  "flex-grow border-r",
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                                   week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                                 )}
-                                style={{ minHeight: "40px" }}
                               ></div>
                             ))}
                           </div>
