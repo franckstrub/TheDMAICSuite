@@ -870,7 +870,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </div>
                   </div>
                 ))
-              ) : (
+              ) : timelineView === 'months' ? (
                 // Month view with weeks
                 groupedDates.map((month, monthIndex) => {
                   // Group days into weeks for each month
@@ -925,6 +925,71 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                                 {week.filter(date => isMilestoneDate(date)).map(date => 
                                   <span key={date.toISOString()} className="mr-1 px-1 bg-amber-100 rounded">
                                     {getMilestoneLabel(date)} ({format(date, 'd')})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                // Years view with months
+                groupedDates.map((year, yearIndex) => {
+                  // Group days into months for each year
+                  const monthsInYear: Date[][] = [];
+                  let currentMonth: Date[] = [];
+                  let currentMonthNumber: number | null = null;
+                  
+                  year.forEach(date => {
+                    const monthNumber = date.getMonth();
+                    if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
+                      if (currentMonth.length > 0) {
+                        monthsInYear.push(currentMonth);
+                      }
+                      currentMonth = [date];
+                      currentMonthNumber = monthNumber;
+                    } else {
+                      currentMonth.push(date);
+                    }
+                  });
+                  
+                  // Add the last month if it exists
+                  if (currentMonth.length > 0) {
+                    monthsInYear.push(currentMonth);
+                  }
+                  
+                  return (
+                    <div 
+                      key={`year-${yearIndex}`}
+                      className="flex flex-col flex-grow border-r"
+                    >
+                      {/* Year header */}
+                      <div className="bg-blue-100 text-center p-1 border-b text-xs font-medium">
+                        {format(year[0], 'yyyy')}
+                      </div>
+                      {/* Months in year */}
+                      <div className="flex">
+                        {monthsInYear.map((month, monthIndex) => (
+                          <div 
+                            key={`year-${yearIndex}-month-${monthIndex}`}
+                            className={cn(
+                              "flex-grow min-w-[60px] text-center text-xs p-1 border-r",
+                              monthIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
+                              month.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                            )}
+                          >
+                            <div className="font-medium">{format(month[0], 'MMM')}</div>
+                            <div className="text-[10px]">
+                              {format(month[0], 'd')} - {format(month[month.length - 1], 'd')}
+                            </div>
+                            {month.some(date => isMilestoneDate(date)) && (
+                              <div className="text-[9px] font-semibold text-amber-700 mt-1">
+                                {month.filter(date => isMilestoneDate(date)).map(date => 
+                                  <span key={date.toISOString()} className="mr-1 px-1 bg-amber-100 rounded">
+                                    {getMilestoneLabel(date)}
                                   </span>
                                 )}
                               </div>
@@ -1012,7 +1077,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         </div>
                       </div>
                     ))
-                  ) : (
+                  ) : timelineView === 'months' ? (
                     // Month view background with weeks
                     groupedDates.map((month, monthIndex) => {
                       // Group days into weeks for each month
@@ -1049,6 +1114,50 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                                   "flex-grow border-r",
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                                   week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                                )}
+                              ></div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Years view background with months
+                    groupedDates.map((year, yearIndex) => {
+                      // Group days into months for each year
+                      const monthsInYear: Date[][] = [];
+                      let currentMonth: Date[] = [];
+                      let currentMonthNumber: number | null = null;
+                      
+                      year.forEach(date => {
+                        const monthNumber = date.getMonth();
+                        if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
+                          if (currentMonth.length > 0) {
+                            monthsInYear.push(currentMonth);
+                          }
+                          currentMonth = [date];
+                          currentMonthNumber = monthNumber;
+                        } else {
+                          currentMonth.push(date);
+                        }
+                      });
+                      
+                      // Add the last month if it exists
+                      if (currentMonth.length > 0) {
+                        monthsInYear.push(currentMonth);
+                      }
+                      
+                      return (
+                        <div key={`task-year-bg-${yearIndex}`} className="flex flex-col flex-grow">
+                          <div className="h-2 bg-transparent"></div> {/* Space for year header */}
+                          <div className="flex flex-grow">
+                            {monthsInYear.map((month, monthIndex) => (
+                              <div 
+                                key={`task-year-month-bg-${yearIndex}-${monthIndex}`}
+                                className={cn(
+                                  "flex-grow border-r",
+                                  monthIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
+                                  month.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                                 )}
                               ></div>
                             ))}
