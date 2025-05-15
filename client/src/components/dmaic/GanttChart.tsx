@@ -792,10 +792,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           {/* Date Headers */}
           <div className="flex border-b">
             <div className="w-1/4 flex">
-              <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
+              <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-small">
                 Task
               </div>
-              <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2 bg-gray-100 font-medium">
+              <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 bg-gray-100 font-small">
                 Assignee
               </div>
             </div>
@@ -931,7 +931,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       <GripVertical size={16} className="text-gray-400" />
                     </div>
                     <div className="flex-grow">
-                      <div className="font-medium">{task.name}</div>
+                      <div className="text-[14px]">{task.name}</div>
                     </div>
                     <div className="flex space-x-1">
                       <Button
@@ -953,7 +953,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </Button>
                     </div>
                   </div>
-                  <div className="gantt-assignee w-1/3 min-w-[100px] border-r p-2">
+                  <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2">
                     {task.assignee ? (
                       <div className="text-sm">{task.assignee}</div>
                     ) : (
