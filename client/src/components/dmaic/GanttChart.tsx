@@ -792,15 +792,22 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         <div className="min-w-full">
           {/* Date Headers */}
           <div className="flex border-b">
-            <ResizablePanelGroup direction="horizontal" className="w-1/4 flex">
-              <ResizablePanel defaultSize={75} minSize={30} className="gantt-task-info border-r p-2 bg-gray-100 font-small">
-                Task
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel defaultSize={25} minSize={15} className="gantt-assignee border-r p-2 bg-gray-100 font-small">
-                Assignee
-              </ResizablePanel>
-            </ResizablePanelGroup>
+            <div className="w-1/4 border-r bg-gray-100">
+              <div className="p-2 font-medium text-center">
+                Task & Assignee
+              </div>
+              <div className="flex border-t">
+                <ResizablePanelGroup direction="horizontal" className="w-full flex">
+                  <ResizablePanel defaultSize={75} minSize={30} className="gantt-task-info border-r p-1 bg-gray-50 text-sm">
+                    Description
+                  </ResizablePanel>
+                  <ResizableHandle />
+                  <ResizablePanel defaultSize={25} minSize={15} className="gantt-assignee p-1 bg-gray-50 text-sm">
+                    Owner
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </div>
+            </div>
             <div className="gantt-timeline w-3/4 flex">
               {timelineView === 'weeks' ? (
                 // Week view
