@@ -13,7 +13,8 @@ import {
   projectRisks,
   stakeholderAnalysisItems,
   gateReviewDeliverables,
-  gateReviewValidators
+  gateReviewValidators,
+  ganttTasks
 } from '@shared/schema';
 
 /**
@@ -118,6 +119,14 @@ export async function permanentlyDeleteProject(projectId: number): Promise<numbe
     deletionCount += sipocResult.length > 0 ? 1 : 0;
     console.log(`Deleted ${sipocResult.length} SIPOC diagrams`);
 
+    // Delete Gantt tasks
+    const ganttTasksResult = await db.delete(ganttTasks)
+      .where(eq(ganttTasks.projectId, projectId))
+      .returning();
+    results['ganttTasks'] = ganttTasksResult.length;
+    deletionCount += ganttTasksResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${ganttTasksResult.length} Gantt tasks`);
+
     // Delete project charter
     const charterResult = await db.delete(projectCharters)
       .where(eq(projectCharters.projectId, projectId))
@@ -167,6 +176,7 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
       { name: 'businessRequirements', table: businessRequirements },
       { name: 'customerRequirements', table: customerRequirements },
       { name: 'sipocDiagrams', table: sipocDiagrams },
+      { name: 'ganttTasks', table: ganttTasks },
       { name: 'projectCharters', table: projectCharters }
     ];
     
