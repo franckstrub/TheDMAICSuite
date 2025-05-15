@@ -27,24 +27,40 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
           // Get project charter for dates and project leader
           const charter = await debugGetCharter(projectId);
           
-          if (charter) {
-            // Get project dates from charter
-            const startDate = charter.startDate || new Date().toISOString().split('T')[0];
-            const endDate = charter.targetEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            
-            // Get milestone dates or calculate based on project duration
-            const kickOffDate = charter.kick_off_date || startDate;
-            const defineDate = charter.define_phase_date || startDate;
-            const measureDate = charter.measure_phase_date || '';
-            const analyzeDate = charter.analyze_phase_date || '';
-            const improveDate = charter.improve_phase_date || '';
-            const controlDate = charter.control_phase_date || endDate;
+          // Create default dates even if no charter exists
+          const today = new Date();
+          const startDate = charter?.startDate || today.toISOString().split('T')[0];
+          
+          // Default end date is 6 months after start date
+          const defaultEndDate = new Date();
+          defaultEndDate.setMonth(today.getMonth() + 6);
+          const endDate = charter?.targetEndDate || defaultEndDate.toISOString().split('T')[0];
+          
+          // Calculate default milestone dates - spread evenly through the project
+          const todayPlus1Month = new Date(today);
+          todayPlus1Month.setMonth(today.getMonth() + 1);
+          const todayPlus2Months = new Date(today);
+          todayPlus2Months.setMonth(today.getMonth() + 2);
+          const todayPlus3Months = new Date(today);
+          todayPlus3Months.setMonth(today.getMonth() + 3);
+          const todayPlus4Months = new Date(today);
+          todayPlus4Months.setMonth(today.getMonth() + 4);
+          const todayPlus5Months = new Date(today);
+          todayPlus5Months.setMonth(today.getMonth() + 5);
+          
+          // Get milestone dates - use charter if available, otherwise use default dates
+          const kickOffDate = charter?.kick_off_date || startDate;
+          const defineDate = charter?.define_phase_date || todayPlus1Month.toISOString().split('T')[0];
+          const measureDate = charter?.measure_phase_date || todayPlus2Months.toISOString().split('T')[0];
+          const analyzeDate = charter?.analyze_phase_date || todayPlus3Months.toISOString().split('T')[0];
+          const improveDate = charter?.improve_phase_date || todayPlus4Months.toISOString().split('T')[0];
+          const controlDate = charter?.control_phase_date || todayPlus5Months.toISOString().split('T')[0];
 
-            // Get assignee from project leader
-            const assignee = charter.projectLeader || '';
+          // Get assignee from project leader or default to empty
+          const assignee = charter?.projectLeader || '';
 
-            // Default DMAIC WBS tasks
-            const defaultTasks = [
+          // Default DMAIC WBS tasks
+          const defaultTasks = [
               // Define Phase
               {
                 projectId,
@@ -133,20 +149,15 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
 
             // Create all tasks
             for (const task of defaultTasks) {
-              if (task.startDate && task.endDate) {
-                try {
-                  const newTask = await storageToUse.createGanttTask(task);
-                  tasks.push(newTask);
-                } catch (err) {
-                  console.error(`Error creating default task ${task.name}:`, err);
-                }
+              try {
+                const newTask = await storageToUse.createGanttTask(task);
+                tasks.push(newTask);
+              } catch (err) {
+                console.error(`Error creating default task ${task.name}:`, err);
               }
             }
             
             console.log(`Auto-generated ${tasks.length} default DMAIC WBS tasks for project ${projectId}`);
-          } else {
-            console.log(`No charter found for project ${projectId}, cannot generate DMAIC WBS`);
-          }
         } catch (err) {
           console.error(`Error auto-generating DMAIC WBS for project ${projectId}:`, err);
           // Don't throw - we'll just return empty tasks if auto-generation fails
