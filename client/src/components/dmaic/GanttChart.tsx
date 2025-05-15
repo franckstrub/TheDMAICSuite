@@ -97,6 +97,16 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Use React Query to fetch tasks
   const { data: tasksData, isLoading, isError } = useQuery({
     queryKey: [`/api/projects/${projectId}/gantt-tasks`],
+    queryFn: async () => {
+      console.log(`Fetching tasks for project ${projectId} via React Query...`);
+      const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch tasks: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log(`Received ${data.tasks?.length || 0} tasks via React Query:`, data.tasks);
+      return data;
+    },
     refetchInterval: 3000, // Refetch every 3 seconds
     staleTime: 0, // Consider data stale immediately so we always refetch
   });
@@ -284,10 +294,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     mutationFn: async () => {
       return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
     },
-    onSuccess: (data) => {
+    onSuccess: (response: any) => {
+      const tasksCount = (response?.tasks || []).length;
       toast({
         title: 'Success',
-        description: `Default DMAIC WBS created with ${data?.tasks?.length || 0} tasks`,
+        description: `Default DMAIC WBS created with ${tasksCount} tasks`,
       });
       
       // Invalidate the query cache to trigger an automatic refetch
@@ -478,10 +489,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               setIsGeneratingWBS(true);
               generateDMAICWBSMutation.mutate();
             }}
-            disabled={isGeneratingWBS || generateDMAICWBSMutation.isPending}
+            disabled={isGeneratingWBS || generateDMAICWBSMutation.isPending || tasks.length > 0}
             variant="outline"
             size="sm"
-            className="whitespace-nowrap"
+            className="whitespace-nowrap mr-2"
           >
             {isGeneratingWBS || generateDMAICWBSMutation.isPending ? (
               <>
@@ -494,6 +505,20 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             ) : (
               <>Generate Default DMAIC WBS</>
             )}
+          </Button>
+          <Button 
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
+              console.log("Manually refreshing tasks data");
+            }}
+            variant="ghost"
+            size="sm"
+            className="whitespace-nowrap"
+          >
+            <svg className="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
           </Button>
           <Button 
             onClick={() => {
