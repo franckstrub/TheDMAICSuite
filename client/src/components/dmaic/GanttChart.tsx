@@ -371,8 +371,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     mutationFn: async () => {
       return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
     },
-    onSuccess: (data: any) => {
-      const tasksCount = data?.tasks?.length || 0;
+    onSuccess: (response: any) => {
+      // Safely extract tasks count from response
+      let tasksCount = 0;
+      if (response && typeof response === 'object' && Array.isArray(response.tasks)) {
+        tasksCount = response.tasks.length;
+      }
       toast({
         title: 'Success',
         description: `DMAIC WBS created with ${tasksCount} tasks`,
