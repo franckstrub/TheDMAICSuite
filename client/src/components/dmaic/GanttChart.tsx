@@ -922,7 +922,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       <div className="gantt-wrapper overflow-x-auto">
         <div className="min-w-full">
           {/* Date Headers */}
-          <div className="flex border-b">
+          <div className="flex border-b sticky top-0 z-30 bg-white">
             <div className="w-1/4 flex sticky left-0 z-20 bg-white">
               <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
                 Task
@@ -931,7 +931,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                 Owner
               </div>
             </div>
-            <div className="gantt-timeline w-3/4 flex">
+            <div className="gantt-timeline w-3/4 flex sticky top-0 z-20">
               {timelineView === 'weeks' ? (
                 // Week view
                 groupedDates.map((week, weekIndex) => (
