@@ -95,6 +95,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     mutationFn: async (viewMode: 'weeks' | 'months' | 'years') => {
       return await apiRequest("POST", `/api/projects/${projectId}/gantt-view-mode`, { viewMode });
     },
+    onSuccess: () => {
+      // Invalidate the project query to force a refresh of project data
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+      console.log("View preference saved, invalidated project cache");
+    }
   });
   
   // Fetch project details to get the saved view preference
@@ -106,12 +111,34 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   });
   
   // Load saved view preference when project data is loaded
-  // Force initial timeline view to 'weeks' when component mounts
+  // Load saved timeline view preference from the database
   useEffect(() => {
-    // Set initial view to 'weeks'
-    setTimelineView('weeks');
-    console.log("Initial timeline view set to 'weeks'");
-  }, []);
+    // First check if project data is available
+    if (projectData && typeof projectData === 'object' && 'project' in projectData) {
+      const project = projectData.project;
+      console.log("Loading view preference, project data:", project);
+            
+      // If we have a saved preference, use it
+      if (project && typeof project === 'object' && project.ganttViewMode) {
+        const savedMode = project.ganttViewMode;
+        console.log("Found saved ganttViewMode:", savedMode);
+        
+        // Only apply if it's a valid view mode
+        if (savedMode === 'weeks' || savedMode === 'months' || savedMode === 'years') {
+          console.log("Setting timeline view to saved preference:", savedMode);
+          setTimelineView(savedMode);
+        }
+      } else {
+        // Otherwise default to 'weeks'
+        console.log("No saved preference found, defaulting to 'weeks'");
+        setTimelineView('weeks');
+      }
+    } else {
+      // If no project data available yet, default to 'weeks'
+      console.log("No project data available, defaulting to 'weeks'");
+      setTimelineView('weeks');
+    }
+  }, [projectData]);
   
   // Fetch tasks when component mounts or projectId changes
   useEffect(() => {
