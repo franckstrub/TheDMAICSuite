@@ -39,19 +39,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Run database migrations - making this optional to avoid blocking server startup
-  const SKIP_MIGRATIONS = true; // Set to true to skip migrations during development
-  
-  if (!SKIP_MIGRATIONS) {
-    try {
-      await migrateRaciRolesToFunction();
-      console.log("RACI roles migration completed successfully");
-    } catch (error) {
-      console.error("RACI roles migration failed:", error);
-      // Continue with server startup even if migration fails
-    }
-  } else {
-    console.log("Skipping RACI roles migration (development mode)");
+  // Run database migrations
+  try {
+    await migrateRaciRolesToFunction();
+    console.log("RACI roles migration completed successfully");
+  } catch (error) {
+    console.error("RACI roles migration failed:", error);
+    // Continue with server startup even if migration fails
   }
   
   const server = await registerRoutes(app);

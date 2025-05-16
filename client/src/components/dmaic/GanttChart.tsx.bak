@@ -36,7 +36,23 @@ interface ProjectData {
   ganttViewMode?: 'weeks' | 'months' | 'years';
   // Other project properties as needed
 }
+// Interface for the charter object structure
+interface Charter {
+  id: number;
+  projectId: number;
+  projectTitle?: string;
+  projectType?: string;
+  projectLeader?: string;
+  projectStartDate?: string;
+  projectEndDate?: string;
+  projectTimeline?: string;
+  // Add other fields as needed
+}
 
+// Interface for the charter API response
+interface CharterResponse {
+  charter: Charter;
+}
 // Define form validation schema
 const taskSchema = z.object({
   name: z.string().min(1, { message: "Task name is required" }),
@@ -107,6 +123,31 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const { data: projectData } = useQuery({
     queryKey: ['/api/projects', projectId],
     enabled: !!projectId
+  });
+  
+  // Define the charter data interface
+  interface CharterData {
+    charter?: {
+      id?: number;
+      projectId?: number;
+      startDate?: string;
+      targetEndDate?: string;
+      kick_off_date?: string;
+      define_phase_date?: string;
+      measure_phase_date?: string;
+      analyze_phase_date?: string;
+      improve_phase_date?: string;
+      control_phase_date?: string;
+      projectLeader?: string;
+      [key: string]: any;
+    };
+  }
+  
+  // Fetch project charter to get milestone dates
+  const { data: charterData } = useQuery<CharterData>({
+    queryKey: [`/api/projects/${projectId}/charter`],
+    enabled: !!projectId,
+    refetchOnWindowFocus: false
   });
 
   // Load saved view preference when project data is loaded
@@ -403,7 +444,22 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Generate DMAIC WBS mutation
   const generateDMAICWBSMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
+      // Get charter dates if available
+      const chartDates = charterData?.charter ? {
+        startDate: charterData.charter.startDate,
+        targetEndDate: charterData.charter.targetEndDate,
+        kickOffDate: charterData.charter.kick_off_date,
+        defineDate: charterData.charter.define_phase_date,
+        measureDate: charterData.charter.measure_phase_date,
+        analyzeDate: charterData.charter.analyze_phase_date,
+        improveDate: charterData.charter.improve_phase_date,
+        controlDate: charterData.charter.control_phase_date,
+        projectLeader: charterData.charter.projectLeader
+      } : {};
+
+      console.log("Using charter dates for WBS generation:", chartDates);
+      
+      return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, chartDates);
     },
     onSuccess: (response: any) => {
       // Safely extract tasks count from response
