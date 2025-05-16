@@ -180,16 +180,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
   });
-
-  // Update date range when project dates change
-  useEffect(() => {
-    if (projectStartDate && projectEndDate) {
-      setDateRange({
-        start: parseISO(projectStartDate),
-        end: parseISO(projectEndDate)
-      });
-    }
-  }, [projectStartDate, projectEndDate]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
