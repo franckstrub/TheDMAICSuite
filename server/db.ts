@@ -8,5 +8,17 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Set a longer connection timeout and more robust connection settings
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 10
+});
+
+// Add connection error handling
+pool.on('error', (err) => {
+  console.error('Unexpected PostgreSQL database error:', err);
+});
+
 export const db = drizzle(pool, { schema });
