@@ -92,12 +92,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Save view mode preference when it changes
   const saveViewModeMutation = useMutation({
     mutationFn: async (viewMode: 'weeks' | 'months' | 'years') => {
-      return await apiRequest(`/api/projects/${projectId}/gantt-view-mode`, {
-        method: 'POST',
-        body: JSON.stringify({ viewMode }),
-      });
+      return await apiRequest("POST", `/api/projects/${projectId}/gantt-view-mode`, { viewMode });
     },
   });
+  
+  // Load saved view preference when project data is loaded
+  useEffect(() => {
+    if (projectData?.project?.ganttViewMode) {
+      const savedMode = projectData.project.ganttViewMode;
+      if (['weeks', 'months', 'years'].includes(savedMode)) {
+        setTimelineView(savedMode as 'weeks' | 'months' | 'years');
+      }
+    }
+  }, [projectData]);
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
@@ -535,19 +542,31 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         <div className="flex space-x-2">
           <div className="flex items-center border rounded-md overflow-hidden mr-2">
             <button
-              onClick={() => setTimelineView('weeks')}
+              onClick={() => {
+                setTimelineView('weeks');
+                // Save preference
+                saveViewModeMutation.mutate('weeks');
+              }}
               className={`px-3 py-1 text-sm ${timelineView === 'weeks' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
               Weeks
             </button>
             <button
-              onClick={() => setTimelineView('months')}
+              onClick={() => {
+                setTimelineView('months');
+                // Save preference
+                saveViewModeMutation.mutate('months');
+              }}
               className={`px-3 py-1 text-sm ${timelineView === 'months' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
               Months
             </button>
             <button
-              onClick={() => setTimelineView('years')}
+              onClick={() => {
+                setTimelineView('years');
+                // Save preference
+                saveViewModeMutation.mutate('years');
+              }}
               className={`px-3 py-1 text-sm ${timelineView === 'years' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
               Years
