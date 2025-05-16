@@ -115,7 +115,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     let savedMode: 'weeks' | 'months' | 'years' = 'months';
 
     // Add debugging to verify projectData structure
-    console.log(`Project data received:`, projectData);
+    //console.log(`Project data received:`, projectData);
 
     // Check if projectData contains the project object
     if (projectData && typeof projectData === 'object') {
@@ -123,7 +123,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       if ('project' in projectData && projectData.project) {
         // Single project object in { project: {...} } format
         const project = projectData.project as ProjectData;
-        console.log(`Found project in projectData.project:`, project);
+        console.log(`Found single project in projectData.project:`, project);
 
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
           savedMode = project.ganttViewMode;
