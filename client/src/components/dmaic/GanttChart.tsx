@@ -104,22 +104,37 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   
   // Load saved view preference when project data is loaded
   useEffect(() => {
+    console.log('Project data received:', projectData);
+    
     // Check if project data exists and has a project property
     if (projectData && typeof projectData === 'object' && 'project' in projectData) {
       // Get the gantt view mode, or default to 'months' if not set
       const project = projectData.project;
+      console.log('Project object from API:', project);
+      
       let savedMode: 'weeks' | 'months' | 'years' = 'months'; // Default value
       
-      if (project && typeof project === 'object' && 'ganttViewMode' in project) {
-        const viewMode = project.ganttViewMode;
-        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
-          savedMode = viewMode;
+      if (project && typeof project === 'object') {
+        console.log('ganttViewMode in project object:', project.ganttViewMode);
+        
+        if ('ganttViewMode' in project) {
+          const viewMode = project.ganttViewMode;
+          console.log('Raw viewMode value from DB:', viewMode);
+          
+          if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
+            savedMode = viewMode;
+            console.log('Using saved view mode from database:', savedMode);
+          } else {
+            console.log('Invalid view mode value, using default:', savedMode);
+          }
+        } else {
+          console.log('No ganttViewMode field found in project, using default:', savedMode);
         }
       }
         
       if (['weeks', 'months', 'years'].includes(savedMode)) {
         setTimelineView(savedMode as 'weeks' | 'months' | 'years');
-        console.log(`Loaded saved Gantt view mode: ${savedMode}`);
+        console.log(`Setting timeline view to: ${savedMode}`);
       }
     }
   }, [projectData]);
