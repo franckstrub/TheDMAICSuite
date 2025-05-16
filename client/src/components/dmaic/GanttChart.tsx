@@ -30,6 +30,13 @@ export interface GanttTask {
   lastUpdated?: string;
 }
 
+interface ProjectData {
+  id: number;
+  title: string;
+  ganttViewMode?: 'weeks' | 'months' | 'years';
+  // Other project properties as needed
+}
+
 // Define form validation schema
 const taskSchema = z.object({
   name: z.string().min(1, { message: "Task name is required" }),
@@ -115,32 +122,33 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       // Check different possible API response structures
       if ('project' in projectData && projectData.project) {
         // Single project object in { project: {...} } format
-        const project = projectData.project;
+        const project = projectData.project as ProjectData;
         console.log(`Found project in projectData.project:`, project);
 
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
-          savedMode = project.ganttViewMode as 'weeks' | 'months' | 'years';
+          savedMode = project.ganttViewMode;
           console.log(`Using saved view mode from projectData.project: ${savedMode}`);
         }
       } else if ('projects' in projectData && Array.isArray(projectData.projects)) {
         // Array of projects in { projects: [...] } format
         console.log(`Found projects array, looking for project ID: ${projectId}`);
-        const project = projectData.projects.find(p => p.id === Number(projectId));
+        const project = projectData.projects.find(p => p.id === Number(projectId)) as ProjectData | undefined;
 
         if (project) {
           console.log(`Found matching project in array:`, project);
 
           if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
-            savedMode = project.ganttViewMode as 'weeks' | 'months' | 'years';
+            savedMode = project.ganttViewMode;
             console.log(`Using saved view mode from projects array: ${savedMode}`);
           }
         }
       } else if ('id' in projectData && projectData.id === Number(projectId)) {
         // Direct project object
         console.log(`Found direct project object:`, projectData);
-
-        if (projectData.ganttViewMode && ['weeks', 'months', 'years'].includes(projectData.ganttViewMode)) {
-          savedMode = projectData.ganttViewMode as 'weeks' | 'months' | 'years';
+        const project = projectData as ProjectData;
+        
+        if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
+          savedMode = project.ganttViewMode;
           console.log(`Using saved view mode from direct project object: ${savedMode}`);
         }
       }
