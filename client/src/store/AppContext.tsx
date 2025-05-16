@@ -45,7 +45,16 @@ export const saveRouteToStorage = (route: string) => {
 
 // Function to get stored route from localStorage
 export const getStoredRoute = (): string | null => {
-  return localStorage.getItem('currentRoute');
+  const storedRoute = localStorage.getItem('currentRoute');
+  
+  // Fix for incorrect "/apps" route - replace with "/app"
+  if (storedRoute === '/apps') {
+    console.log('Fixing incorrect route /apps to /app');
+    localStorage.setItem('currentRoute', '/app');
+    return '/app';
+  }
+  
+  return storedRoute;
 };
 
 type AppContextType = {
