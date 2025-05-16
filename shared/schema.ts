@@ -351,7 +351,7 @@ export const businessRequirements = pgTable("business_requirements", {
   requirement: text("requirement").notNull(),
   businessNeed: text("business_need"),
   importance: integer("importance").notNull(),
-  impact: text("impact").notNull().default(""), // Critical to Satisfaction field for business requirements
+  ctq: text("ctq").notNull().default(""), // Critical to Quality field for business requirements
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -360,7 +360,7 @@ export const insertBusinessRequirementSchema = createInsertSchema(businessRequir
   requirement: true,
   businessNeed: true,
   importance: true,
-  impact: true,
+  ctq: true,
 });
 
 // Datasets
