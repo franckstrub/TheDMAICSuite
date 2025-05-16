@@ -80,6 +80,7 @@ export const insertProjectSchema = createInsertSchema(projects).pick({
   targetEndDate: true,
   createdBy: true,
   elevatorSpeech: true,
+  ganttViewMode: true,
 });
 
 // Stakeholder schema
