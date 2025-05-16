@@ -1,32 +1,24 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from 'ws';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/pg-pool';
 import * as schema from "@shared/schema";
 
-// Configure neon to use websockets (required for serverless environments)
-neonConfig.webSocketConstructor = ws;
+// Direct connection string for Neon PostgreSQL
+const DATABASE_URL = 'postgresql://neondb_owner:npg_1OteSyUrukD9@ep-jolly-union-a4anqqse.us-east-1.aws.neon.tech/neondb?sslmode=require';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
-
-// Create a connection pool specifically for Neon PostgreSQL
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL 
+// Create a more reliable connection pool with better error handling
+export const pool = new Pool({
+  connectionString: DATABASE_URL,
+  max: 2, // Keep connection pool small
+  idleTimeoutMillis: 5000, // Release idle connections quicker
+  connectionTimeoutMillis: 10000, // Longer connection timeout
+  // Add request logging to help debug issues
+  query_timeout: 10000 // Set query timeout to avoid hanging 
 });
 
-// Add connection error handling
+// Add error handler to the pool
 pool.on('error', (err) => {
-  console.error('Unexpected PostgreSQL database error:', err);
-  console.error('Connection details:', {
-    host: process.env.PGHOST,
-    database: process.env.PGDATABASE,
-    user: process.env.PGUSER,
-    port: process.env.PGPORT
-  });
+  console.error('Database pool error:', err);
 });
 
-// Use the Neon-specific Drizzle client
+// Export Drizzle instance for database operations
 export const db = drizzle(pool, { schema });
