@@ -1,6 +1,12 @@
 import { Express, Request, Response } from "express";
 import { storage } from "./storage";
-import { insertGanttTaskSchema, GanttTask, InsertGanttTask } from "@shared/schema";
+import { 
+  insertGanttTaskSchema, 
+  GanttTask, 
+  InsertGanttTask,
+  insertGanttSettingsSchema,
+  GanttSettings
+} from "@shared/schema";
 import { ZodError } from "zod";
 
 // Import the debughelper to get project charter details
@@ -282,6 +288,49 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
     } catch (error) {
       console.error("Error generating DMAIC WBS tasks:", error);
       return res.status(500).json({ error: "Failed to generate DMAIC WBS tasks" });
+    }
+  });
+
+  // Get Gantt settings for a project (including view mode)
+  app.get("/api/projects/:projectId/gantt-settings", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
+      
+      const settings = await storageToUse.getGanttSettings(projectId);
+      return res.json({ settings });
+    } catch (error) {
+      console.error("Error fetching Gantt settings:", error);
+      return res.status(500).json({ error: "Failed to fetch Gantt settings" });
+    }
+  });
+
+  // Save Gantt settings for a project
+  app.post("/api/projects/:projectId/gantt-settings", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ error: "Invalid project ID" });
+      }
+      
+      // Validate settings data
+      const settingsData = insertGanttSettingsSchema.parse({
+        ...req.body,
+        projectId
+      });
+      
+      // Save settings
+      const settings = await storageToUse.saveGanttSettings(settingsData);
+      
+      return res.status(201).json({ settings });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error saving Gantt settings:", error);
+      return res.status(500).json({ error: "Failed to save Gantt settings" });
     }
   });
 }

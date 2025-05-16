@@ -780,3 +780,18 @@ export const insertGanttTaskSchema = createInsertSchema(ganttTasks).omit({
 
 export type InsertGanttTask = z.infer<typeof insertGanttTaskSchema>;
 export type GanttTask = typeof ganttTasks.$inferSelect;
+
+export const ganttSettings = pgTable("gantt_settings", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().unique(),
+  viewMode: text("view_mode").notNull().default("months"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertGanttSettingsSchema = createInsertSchema(ganttSettings).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertGanttSettings = z.infer<typeof insertGanttSettingsSchema>;
+export type GanttSettings = typeof ganttSettings.$inferSelect;
