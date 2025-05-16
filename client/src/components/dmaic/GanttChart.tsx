@@ -296,8 +296,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
     fetchTasks();
     
-    // No need for continuous polling - tasks will update when user interactions occur
-    // We'll rely on React Query's cache invalidation instead
+    // Set up an interval to periodically check for tasks (every 3 seconds)
+    const intervalId = setInterval(fetchTasks, 60000);
+    
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
   }, [projectId, toast]);
 
   // Update date range based on project dates
