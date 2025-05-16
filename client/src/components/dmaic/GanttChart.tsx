@@ -97,7 +97,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   });
   
   // Fetch project details to get the saved view preference
-  const { data: projectData } = useQuery<{ project: { ganttViewMode?: string } }>({
+  const { data: projectData } = useQuery({
     queryKey: ['/api/projects', projectId],
     enabled: !!projectId
   });
@@ -110,30 +110,43 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     // Add debugging to verify projectData structure
     console.log(`Project data received:`, projectData);
     
-    // Only try to use saved preference if projectData exists and has the right structure
-    if (projectData && projectData.project) {
-      console.log(`Project from API:`, projectData.project);
-      
-      // Check if this is the correct project
-      if (projectData.project.id === projectId) {
-        // Check for ganttViewMode
-        if (projectData.project.ganttViewMode) {
-          const viewMode = projectData.project.ganttViewMode;
-          if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
-            savedMode = viewMode;
-            console.log(`Loaded saved Gantt view mode: ${savedMode} for project ${projectId}`);
-          }
-        } else {
-          console.log(`Project ${projectId} has no saved ganttViewMode, using default: ${savedMode}`);
+    // Check if projectData contains the project object
+    if (projectData && typeof projectData === 'object') {
+      // Check different possible API response structures
+      if ('project' in projectData && projectData.project) {
+        // Single project object in { project: {...} } format
+        const project = projectData.project;
+        console.log(`Found project in projectData.project:`, project);
+        
+        if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
+          savedMode = project.ganttViewMode as 'weeks' | 'months' | 'years';
+          console.log(`Using saved view mode from projectData.project: ${savedMode}`);
         }
-      } else {
-        console.warn(`Project ID mismatch: expected ${projectId}, got ${projectData.project.id}`);
+      } else if ('projects' in projectData && Array.isArray(projectData.projects)) {
+        // Array of projects in { projects: [...] } format
+        console.log(`Found projects array, looking for project ID: ${projectId}`);
+        const project = projectData.projects.find(p => p.id === Number(projectId));
+        
+        if (project) {
+          console.log(`Found matching project in array:`, project);
+          
+          if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
+            savedMode = project.ganttViewMode as 'weeks' | 'months' | 'years';
+            console.log(`Using saved view mode from projects array: ${savedMode}`);
+          }
+        }
+      } else if ('id' in projectData && projectData.id === Number(projectId)) {
+        // Direct project object
+        console.log(`Found direct project object:`, projectData);
+        
+        if (projectData.ganttViewMode && ['weeks', 'months', 'years'].includes(projectData.ganttViewMode)) {
+          savedMode = projectData.ganttViewMode as 'weeks' | 'months' | 'years';
+          console.log(`Using saved view mode from direct project object: ${savedMode}`);
+        }
       }
-    } else {
-      console.log(`No valid project data received, using default view mode: ${savedMode}`);
     }
     
-    // Always set a view mode, whether from saved preference or default
+    console.log(`Setting timeline view to: ${savedMode}`);
     setTimelineView(savedMode);
   }, [projectData, projectId]);
   
