@@ -1,17 +1,6 @@
-import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-
-// Session storage table for Replit Auth
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
 
 // RACI role types
 export const raciRoleTypes = ["R", "A", "C", "I"] as const;
@@ -42,25 +31,20 @@ export type DeliverableRequirementType = typeof deliverableRequirementTypes[numb
 
 // Users
 export const users = pgTable("users", {
-  id: text("id").primaryKey().notNull(),
-  email: text("email").unique(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  profileImageUrl: text("profile_image_url"),
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  fullName: text("full_name").notNull(),
   role: text("role").notNull().default("user"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  // Legacy fields for backward compatibility
-  username: text("username").unique(),
-  password: text("password"),
-  fullName: text("full_name"),
   lastLogin: timestamp("last_login"),
 });
 
-export const insertUserSchema = createInsertSchema(users);
-
-export type User = typeof users.$inferSelect;
-export type UpsertUser = typeof users.$inferInsert;
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  fullName: true,
+  role: true,
+});
 
 // Projects
 export const projects = pgTable("projects", {
