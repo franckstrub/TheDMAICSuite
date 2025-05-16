@@ -118,14 +118,29 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         console.log('ganttViewMode in project object:', project.ganttViewMode);
         
         if ('ganttViewMode' in project) {
+          // Get the raw value from the database
           const viewMode = project.ganttViewMode;
-          console.log('Raw viewMode value from DB:', viewMode);
+          console.log('Raw viewMode value from DB:', viewMode, 'Type:', typeof viewMode);
           
-          if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
-            savedMode = viewMode;
-            console.log('Using saved view mode from database:', savedMode);
+          // Check if it's a valid string value
+          if (typeof viewMode === 'string') {
+            // Normalize to lowercase for case-insensitive comparison
+            const normalizedViewMode = viewMode.toLowerCase().trim();
+            console.log('Normalized viewMode:', normalizedViewMode);
+            
+            if (normalizedViewMode === 'weeks') {
+              savedMode = 'weeks';
+            } else if (normalizedViewMode === 'months') {
+              savedMode = 'months';
+            } else if (normalizedViewMode === 'years') {
+              savedMode = 'years';
+            } else {
+              console.log('Value from DB not matching any valid option, using default:', savedMode);
+            }
+            
+            console.log('Final selected view mode:', savedMode);
           } else {
-            console.log('Invalid view mode value, using default:', savedMode);
+            console.log('View mode from DB is not a string, using default:', savedMode);
           }
         } else {
           console.log('No ganttViewMode field found in project, using default:', savedMode);
@@ -601,8 +616,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             <button
               onClick={() => {
                 setTimelineView('weeks');
-                // Save preference
+                // Save preference to database
                 saveViewModeMutation.mutate('weeks');
+                console.log('Saving weeks view preference to database');
               }}
               className={`px-3 py-1 text-sm ${timelineView === 'weeks' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
@@ -611,8 +627,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             <button
               onClick={() => {
                 setTimelineView('months');
-                // Save preference
+                // Save preference to database
                 saveViewModeMutation.mutate('months');
+                console.log('Saving months view preference to database');
               }}
               className={`px-3 py-1 text-sm ${timelineView === 'months' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
@@ -621,8 +638,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             <button
               onClick={() => {
                 setTimelineView('years');
-                // Save preference
+                // Save preference to database
                 saveViewModeMutation.mutate('years');
+                console.log('Saving years view preference to database');
               }}
               className={`px-3 py-1 text-sm ${timelineView === 'years' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
