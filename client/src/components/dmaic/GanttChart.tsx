@@ -104,24 +104,22 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   
   // Load saved view preference when project data is loaded
   useEffect(() => {
-    // Check if project data exists and has a project property
-    if (projectData && typeof projectData === 'object' && 'project' in projectData) {
-      // Get the gantt view mode, or default to 'months' if not set
-      const project = projectData.project;
-      let savedMode: 'weeks' | 'months' | 'years' = 'months'; // Default value
-      
-      if (project && typeof project === 'object' && 'ganttViewMode' in project) {
-        const viewMode = project.ganttViewMode;
-        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
-          savedMode = viewMode;
-        }
-      }
-        
-      if (['weeks', 'months', 'years'].includes(savedMode)) {
-        setTimelineView(savedMode as 'weeks' | 'months' | 'years');
+    // Default to 'months' if no saved preference exists
+    let savedMode: 'weeks' | 'months' | 'years' = 'months';
+    
+    // Only try to use saved preference if projectData exists and has the right structure
+    if (projectData && projectData.project && projectData.project.ganttViewMode) {
+      const viewMode = projectData.project.ganttViewMode;
+      if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
+        savedMode = viewMode;
         console.log(`Loaded saved Gantt view mode: ${savedMode}`);
       }
+    } else {
+      console.log(`Using default Gantt view mode: ${savedMode}`);
     }
+    
+    // Always set a view mode, whether from saved preference or default
+    setTimelineView(savedMode);
   }, [projectData]);
   
   // Fetch tasks when component mounts or projectId changes
