@@ -291,46 +291,33 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
     }
   });
 
-  // Get Gantt settings for a project (including view mode)
-  app.get("/api/projects/:projectId/gantt-settings", async (req: Request, res: Response) => {
+  // Save Gantt view mode preference
+  app.post("/api/projects/:projectId/gantt-view-mode", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
       if (isNaN(projectId)) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
-      const settings = await storageToUse.getGanttSettings(projectId);
-      return res.json({ settings });
-    } catch (error) {
-      console.error("Error fetching Gantt settings:", error);
-      return res.status(500).json({ error: "Failed to fetch Gantt settings" });
-    }
-  });
-
-  // Save Gantt settings for a project
-  app.post("/api/projects/:projectId/gantt-settings", async (req: Request, res: Response) => {
-    try {
-      const projectId = parseInt(req.params.projectId);
-      if (isNaN(projectId)) {
-        return res.status(400).json({ error: "Invalid project ID" });
+      const { viewMode } = req.body;
+      
+      if (!viewMode || !['weeks', 'months', 'years'].includes(viewMode)) {
+        return res.status(400).json({ error: "Invalid view mode. Must be 'weeks', 'months', or 'years'" });
       }
       
-      // Validate settings data
-      const settingsData = insertGanttSettingsSchema.parse({
-        ...req.body,
-        projectId
+      // Update the project with the gantt view mode
+      const updatedProject = await storageToUse.updateProject(projectId, { 
+        ganttViewMode: viewMode 
       });
       
-      // Save settings
-      const settings = await storageToUse.saveGanttSettings(settingsData);
-      
-      return res.status(201).json({ settings });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ error: error.errors });
+      if (!updatedProject) {
+        return res.status(404).json({ error: "Project not found" });
       }
-      console.error("Error saving Gantt settings:", error);
-      return res.status(500).json({ error: "Failed to save Gantt settings" });
+      
+      return res.json({ success: true, ganttViewMode: updatedProject.ganttViewMode });
+    } catch (error) {
+      console.error("Error saving Gantt view mode:", error);
+      return res.status(500).json({ error: "Failed to save Gantt view mode" });
     }
   });
 }

@@ -88,6 +88,16 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
   const [timelineView, setTimelineView] = useState<'weeks' | 'months' | 'years'>('months');
+  
+  // Save view mode preference when it changes
+  const saveViewModeMutation = useMutation({
+    mutationFn: async (viewMode: 'weeks' | 'months' | 'years') => {
+      return await apiRequest(`/api/projects/${projectId}/gantt-view-mode`, {
+        method: 'POST',
+        body: JSON.stringify({ viewMode }),
+      });
+    },
+  });
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)

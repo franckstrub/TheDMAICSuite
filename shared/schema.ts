@@ -65,6 +65,7 @@ export const projects = pgTable("projects", {
   costs: jsonb("costs"),
   softBenefits: jsonb("soft_benefits"),
   elevatorSpeech: text("elevator_speech"),
+  ganttViewMode: text("gantt_view_mode").default("months"),
 });
 
 export const insertProjectSchema = createInsertSchema(projects).pick({
