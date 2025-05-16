@@ -39,7 +39,7 @@ export default function MeasurePhase() {
   
   // Business Requirements state - always include at least one empty row for new entries
   const [businessRequirements, setBusinessRequirements] = useState([
-    { requirement: "", businessRequirement: "", importance: 3, impact: "" },
+    { requirement: "", businessRequirement: "", importance: 3, ctq: "" },
   ]);
   
   // Reference for tracking if form is initialized
@@ -247,7 +247,7 @@ export default function MeasurePhase() {
         businessRequirement: r.businessRequirement || "",
         requirement: r.requirement || "",
         importance: r.importance || 3,
-        impact: r.impact || "",
+        ctq: r.ctq || "",
         id: r.id,
       }));
       

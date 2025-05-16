@@ -1098,7 +1098,7 @@ export default function DefinePhase() {
           requirement: r.requirement || "",
           businessRequirement: r.businessRequirement || "",
           importance: r.importance || 3, 
-          criticalToQuality: r.impact || "", // Use impact field but rename to criticalToQuality
+          criticalToQuality: r.ctq || "", // Use ctq field for Critical to Quality
           id: r.id, // Store the ID to help with sorting
         }));
         
@@ -1120,7 +1120,7 @@ export default function DefinePhase() {
       } else {
         // If no business requirements found in the API response, ensure we have at least one empty row
         console.log("No business requirements found in database, setting default empty row");
-        const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+        const defaultRow = [{ requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }];
         setBusinessRequirements(defaultRow);
         return defaultRow;
       }
@@ -1371,7 +1371,7 @@ export default function DefinePhase() {
             requirement: r.requirement,
             businessNeed: r.businessNeed || "",
             importance: r.importance,
-            impact: r.criticalToQuality, // Map the criticalToQuality field to impact for storage
+            ctq: r.criticalToQuality, // Map the criticalToQuality field to ctq for storage
             userId: user?.id,
           };
           
