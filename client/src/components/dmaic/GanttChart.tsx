@@ -100,7 +100,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Fetch project details to get the saved view preference
   const { data: projectData } = useQuery<{ project: { ganttViewMode?: string } }>({
     queryKey: ['/api/projects', projectId],
-    enabled: !!projectId
+    enabled: !!projectId,
+    // Force a refetch when the component mounts to ensure we get fresh data
+    refetchOnMount: true
   });
   
   // Load saved view preference when project data is loaded
@@ -121,6 +123,25 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
           console.log("Setting timeline view to:", viewMode);
           setTimelineView(viewMode);
+          
+          // Force UI update by directly updating button classes
+          setTimeout(() => {
+            const selectedClass = 'bg-blue-500 text-white';
+            const unselectedClass = 'bg-gray-100';
+            
+            // Reset all buttons
+            document.querySelectorAll('.gantt-chart-container button').forEach(btn => {
+              btn.className = btn.className.replace(selectedClass, unselectedClass);
+            });
+            
+            // Set the active button
+            const buttonText = viewMode.charAt(0).toUpperCase() + viewMode.slice(1); // Capitalize first letter
+            document.querySelectorAll('.gantt-chart-container button').forEach(btn => {
+              if (btn.textContent?.trim() === buttonText) {
+                btn.className = btn.className.replace(unselectedClass, selectedClass);
+              }
+            });
+          }, 100);
         }
       } else {
         console.log("No ganttViewMode found in project data, defaulting to months");
