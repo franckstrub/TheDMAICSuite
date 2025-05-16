@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../../components/ui/form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../../lib/queryClient';
 import { useToast } from '../../hooks/use-toast';
 import { cn } from '../../lib/utils';
@@ -96,10 +96,17 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     },
   });
   
+  // Fetch project details to get the saved view preference
+  const { data: projectData } = useQuery({
+    queryKey: ['/api/projects', projectId],
+    enabled: !!projectId
+  });
+  
   // Load saved view preference when project data is loaded
   useEffect(() => {
-    if (projectData?.project?.ganttViewMode) {
-      const savedMode = projectData.project.ganttViewMode;
+    // Check if project data exists and has a ganttViewMode property
+    if (projectData && typeof projectData === 'object') {
+      const savedMode = projectData.ganttViewMode || 'months'; // Default to months if not set
       if (['weeks', 'months', 'years'].includes(savedMode)) {
         setTimelineView(savedMode as 'weeks' | 'months' | 'years');
       }
