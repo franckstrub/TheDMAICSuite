@@ -159,26 +159,41 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
+      // Log incoming request body with dates
+      console.log("Received WBS generation request with body:", req.body);
+      
       // Get project charter for dates and project leader
       const charter = await debugGetCharter(projectId);
       if (!charter) {
         return res.status(404).json({ error: "Project charter not found" });
       }
 
-      // Get project dates from charter
-      const startDate = charter.startDate || new Date().toISOString().split('T')[0];
-      const endDate = charter.targetEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      // Get project dates from request body (client-side) or fallback to charter
+      const startDate = req.body.startDate || charter.startDate || new Date().toISOString().split('T')[0];
+      const endDate = req.body.targetEndDate || charter.targetEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       
-      // Get milestone dates or calculate based on project duration
-      const kickOffDate = charter.kick_off_date || startDate;
-      const defineDate = charter.define_phase_date || startDate;
-      const measureDate = charter.measure_phase_date || '';
-      const analyzeDate = charter.analyze_phase_date || '';
-      const improveDate = charter.improve_phase_date || '';
-      const controlDate = charter.control_phase_date || endDate;
+      // Get milestone dates from request body (client-side) or fallback to charter
+      const kickOffDate = req.body.kickOffDate || charter.kick_off_date || startDate;
+      const defineDate = req.body.defineDate || charter.define_phase_date || startDate;
+      const measureDate = req.body.measureDate || charter.measure_phase_date || '';
+      const analyzeDate = req.body.analyzeDate || charter.analyze_phase_date || '';
+      const improveDate = req.body.improveDate || charter.improve_phase_date || '';
+      const controlDate = req.body.controlDate || charter.control_phase_date || endDate;
 
-      // Get assignee from project leader
-      const assignee = charter.projectLeader || '';
+      // Get assignee from request body (client-side) or fallback to charter
+      const assignee = req.body.projectLeader || charter.projectLeader || '';
+      
+      console.log("Using the following dates for WBS generation:", {
+        startDate, 
+        endDate, 
+        kickOffDate, 
+        defineDate, 
+        measureDate, 
+        analyzeDate, 
+        improveDate, 
+        controlDate,
+        assignee
+      });
 
       // Default DMAIC WBS tasks
       const tasks = [
