@@ -923,11 +923,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         <div className="min-w-full">
           {/* Date Headers */}
           <div className="flex border-b">
-            <div className="w-1/4 flex sticky left-0 z-20 bg-white">
-              <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
+            <div className="w-1/4 flex sticky left-0 z-30 bg-white shadow-sm">
+              <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium sticky left-0">
                 Task
               </div>
-              <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 bg-gray-100 font-medium">
+              <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 bg-gray-100 font-medium sticky left-[180px]">
                 Owner
               </div>
             </div>
@@ -1119,8 +1119,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   setDropTargetIndex(null);
                 }}
               >
-                <div className="w-1/4 flex sticky left-0 z-20 bg-white">
-                  <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 flex items-center">
+                <div className="w-1/4 flex sticky left-0 z-20 bg-white shadow-sm">
+                  <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 flex items-center sticky left-0">
                     <div className="mr-1 cursor-move">
                       <GripVertical size={12} className="text-gray-400" />
                     </div>
@@ -1148,7 +1148,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </Button>
                     </div>
                   </div>
-                  <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2">
+                  <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2 sticky left-[180px]">
                     {task.assignee ? (
                       <div className="text-[12px]">{task.assignee}</div>
                     ) : (
