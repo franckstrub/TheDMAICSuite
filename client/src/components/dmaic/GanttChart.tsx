@@ -87,7 +87,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
-  const [timelineView, setTimelineView] = useState<'weeks' | 'months' | 'years'>('weeks');
+  const [timelineView, setTimelineView] = useState<'weeks' | 'months' | 'years'>('months');
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
@@ -320,7 +320,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     onSuccess: (data) => {
       toast({
         title: 'Success',
-        description: `Default DMAIC WBS created with ${data?.tasks?.length || 0} tasks`,
+        description: `DMAIC WBS created with ${data?.tasks?.length || 0} tasks`,
       });
       
       // Immediately refetch tasks to update the UI
@@ -351,7 +351,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       console.error('Error generating DMAIC WBS:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate default DMAIC WBS',
+        description: 'Failed to generate DMAIC WBS',
         variant: 'destructive',
       });
       setIsGeneratingWBS(false);
@@ -563,7 +563,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                 Generating...
               </>
             ) : (
-              <>Generate Default DMAIC WBS</>
+              <>Generate DMAIC WBS</>
             )}
           </Button>
           <Button 
@@ -1194,13 +1194,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           ) : (
             <div className="flex border-b py-8">
               <div className="w-full text-center text-gray-500">
-                No tasks added yet. Click "Add Task" to create your first task.
+                No tasks added yet. Click "Add Task" to create your first task.<br />
+                Click "Generate DMAIC WBS" to generate a DMAIC WBS (Work Breakdown Structure) from Project Charter.
               </div>
-              <p>
-                <div className="w-full text-center text-gray-500">
-                Click Generate DMAIC WBS to generate a Work Breakdown Structure from Charter.
-              </div>
-              </p>
             </div>
           )}
         </div>
