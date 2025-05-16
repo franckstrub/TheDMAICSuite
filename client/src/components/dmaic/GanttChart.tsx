@@ -104,52 +104,22 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   
   // Load saved view preference when project data is loaded
   useEffect(() => {
-    console.log('Project data received:', projectData);
-    
     // Check if project data exists and has a project property
     if (projectData && typeof projectData === 'object' && 'project' in projectData) {
       // Get the gantt view mode, or default to 'months' if not set
       const project = projectData.project;
-      console.log('Project object from API:', project);
-      
       let savedMode: 'weeks' | 'months' | 'years' = 'months'; // Default value
       
-      if (project && typeof project === 'object') {
-        console.log('ganttViewMode in project object:', project.ganttViewMode);
-        
-        if ('ganttViewMode' in project) {
-          // Get the raw value from the database
-          const viewMode = project.ganttViewMode;
-          console.log('Raw viewMode value from DB:', viewMode, 'Type:', typeof viewMode);
-          
-          // Check if it's a valid string value
-          if (typeof viewMode === 'string') {
-            // Normalize to lowercase for case-insensitive comparison
-            const normalizedViewMode = viewMode.toLowerCase().trim();
-            console.log('Normalized viewMode:', normalizedViewMode);
-            
-            if (normalizedViewMode === 'weeks') {
-              savedMode = 'weeks';
-            } else if (normalizedViewMode === 'months') {
-              savedMode = 'months';
-            } else if (normalizedViewMode === 'years') {
-              savedMode = 'years';
-            } else {
-              console.log('Value from DB not matching any valid option, using default:', savedMode);
-            }
-            
-            console.log('Final selected view mode:', savedMode);
-          } else {
-            console.log('View mode from DB is not a string, using default:', savedMode);
-          }
-        } else {
-          console.log('No ganttViewMode field found in project, using default:', savedMode);
+      if (project && typeof project === 'object' && 'ganttViewMode' in project) {
+        const viewMode = project.ganttViewMode;
+        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
+          savedMode = viewMode;
         }
       }
         
       if (['weeks', 'months', 'years'].includes(savedMode)) {
         setTimelineView(savedMode as 'weeks' | 'months' | 'years');
-        console.log(`Setting timeline view to: ${savedMode}`);
+        console.log(`Loaded saved Gantt view mode: ${savedMode}`);
       }
     }
   }, [projectData]);
@@ -616,9 +586,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             <button
               onClick={() => {
                 setTimelineView('weeks');
-                // Save preference to database
+                // Save preference
                 saveViewModeMutation.mutate('weeks');
-                console.log('Saving weeks view preference to database');
               }}
               className={`px-3 py-1 text-sm ${timelineView === 'weeks' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
@@ -627,9 +596,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             <button
               onClick={() => {
                 setTimelineView('months');
-                // Save preference to database
+                // Save preference
                 saveViewModeMutation.mutate('months');
-                console.log('Saving months view preference to database');
               }}
               className={`px-3 py-1 text-sm ${timelineView === 'months' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
@@ -638,9 +606,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             <button
               onClick={() => {
                 setTimelineView('years');
-                // Save preference to database
+                // Save preference
                 saveViewModeMutation.mutate('years');
-                console.log('Saving years view preference to database');
               }}
               className={`px-3 py-1 text-sm ${timelineView === 'years' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
             >
