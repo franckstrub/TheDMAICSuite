@@ -195,8 +195,9 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
   projectImage: true,
   elevatorSpeech: true,
   // Project dates
-  startDate: true,
+  startDate: true, 
   targetEndDate: true,
+  ganttViewMode: true,
   savingsPerYear: true,
   workingCapitalGains: true,
   waccPercentage: true,
