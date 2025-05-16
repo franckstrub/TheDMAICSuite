@@ -289,19 +289,38 @@ export default function GateReviewValidation() {
     }
   };
 
-  // Initialize gate review with deliverables if they exist else create default delievrables
-  // based on project type
+  // Initialize with default deliverables if none exist
   useEffect(() => {
+    // Set default deliverables based on charter or project data
+  
     let projectType;
-    //Get project  type from charter or Project
     if (charter?.charter) {
       projectType = charter.charter.projectType;
     } else if (project?.project) {
       projectType = project.project.projectType;
     }
-    console.log("projectType for deliverables:", projectType);
+    console.log("Using project type for deliverables:", projectType);
+    
+    // Always have at least base deliverables, never empty
+    // if (defaultDefineDeliverables.length === 0) {
+      // Use null-safe call to get default deliverables
+      
+     //  setDefaultDefineDeliverables(getDefaultDefineDeliverables(SafeprojectType));
+    // } else if (projectType) {
+      // If we already have some deliverables but now have project type info, update them
+    setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
+   // }
   
-    // function to create default deliverables with project ID
+    // console.log("Deliverables data received:", deliverablesData);
+    console.log("Default deliverables available:", defaultDefineDeliverables.length);
+
+    // Make sure we have default deliverables to work with
+    if (defaultDefineDeliverables.length === 0) {
+      console.log("No default deliverables template available yet, waiting for project data");
+      return;
+    }
+
+    // Helper function to create default deliverables with project ID
     const createDefaultDeliverables = () => {
       console.log("Creating default deliverables");
       return defaultDefineDeliverables.map(deliverable => ({
@@ -321,16 +340,13 @@ export default function GateReviewValidation() {
     }
 
     if (deliverablesData.deliverables.length === 0) {
-      console.log("No deliverables found, create & using defaults based on project type");
-      // If no deliverables exist yet, use & create the defaults
-      setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
+      console.log("No deliverables found, using defaults");
+      // If no deliverables exist yet, use the defaults
       const defaultsWithProjectId = createDefaultDeliverables();
       setDeliverables(defaultsWithProjectId);
-      // console.log("Default deliverables available:", defaultDefineDeliverables.length);
       return;
     }
 
-    console.log("Deliverables available:        ", deliverablesData.deliverables.length);
     console.log("Setting deliverables from data:", deliverablesData.deliverables);
 
     // Keep track of what default deliverables exist in the database
