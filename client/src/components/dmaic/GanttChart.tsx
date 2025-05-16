@@ -105,13 +105,34 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Load saved view preference when project data is loaded
   useEffect(() => {
     // Check if project data exists and has a ganttViewMode property
-    if (projectData && typeof projectData === 'object') {
-      const savedMode = projectData.ganttViewMode || 'months'; // Default to months if not set
+    if (projectData && 'project' in projectData) {
+      const project = projectData.project;
+      const savedMode = project?.ganttViewMode || 'months'; // Default to months if not set
       if (['weeks', 'months', 'years'].includes(savedMode)) {
         setTimelineView(savedMode as 'weeks' | 'months' | 'years');
+        console.log(`Loaded saved Gantt view mode: ${savedMode}`);
       }
     }
   }, [projectData]);
+  
+  // Fetch tasks when component mounts or projectId changes
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!projectId) return;
+      
+      try {
+        const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
+        if (response.ok) {
+          const data = await response.json();
+          setTasks(data.tasks || []);
+        }
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+    
+    fetchTasks();
+  }, [projectId]);
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
@@ -342,9 +363,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
     },
     onSuccess: (data) => {
+      const tasksCount = data && typeof data === 'object' && 'tasks' in data ? data.tasks.length : 0;
       toast({
         title: 'Success',
-        description: `DMAIC WBS created with ${data?.tasks?.length || 0} tasks`,
+        description: `DMAIC WBS created with ${tasksCount} tasks`,
       });
       
       // Immediately refetch tasks to update the UI
