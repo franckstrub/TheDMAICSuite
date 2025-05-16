@@ -15,6 +15,15 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 36017
+
+[[ports]]
+localPort = 37311
+
+[[ports]]
+localPort = 45817
+
 [workflows]
 runButton = "Start application"
 
