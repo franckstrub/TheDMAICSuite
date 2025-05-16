@@ -24,10 +24,11 @@ import { eq, and, desc } from "drizzle-orm";
 // Interface for all storage operations
 export interface IStorage {
   // User operations
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string | number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUserLastLogin(id: number): Promise<void>;
+  updateUserLastLogin(id: string | number): Promise<void>;
+  upsertUser(userData: any): Promise<User>;
 
   // Project operations
   getProjects(): Promise<Project[]>;
