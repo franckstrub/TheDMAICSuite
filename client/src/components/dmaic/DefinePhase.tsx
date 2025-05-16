@@ -56,7 +56,7 @@ export default function DefinePhase() {
   
   // Business Requirements state - always include at least one empty row for new entries
   const [businessRequirements, setBusinessRequirements] = useState([
-    { requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }
+    { requirement: "", businessNeed: "", importance: 3, ctq: "" }
   ]);
   
   // State for project image handling
@@ -1120,7 +1120,7 @@ export default function DefinePhase() {
       } else {
         // If no business requirements found in the API response, ensure we have at least one empty row
         console.log("No business requirements found in database, setting default empty row");
-        const defaultRow = [{ requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }];
+        const defaultRow = [{ requirement: "", businessNeed: "", importance: 3, ctq: "" }];
         setBusinessRequirements(defaultRow);
         return defaultRow;
       }
@@ -1135,7 +1135,7 @@ export default function DefinePhase() {
       }
       
       // Ensure we have at least one empty row even on error
-      const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, criticalToQuality: "" }];
+      const defaultRow = [{ requirement: "", businessNeed: "", importance: 3, ctq: "" }];
       setBusinessRequirements(defaultRow);
       return defaultRow;
     }
@@ -1945,7 +1945,7 @@ export default function DefinePhase() {
     if (businessRequirements.length < 6) {
       setBusinessRequirements([
         ...businessRequirements,
-        { requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }
+        { requirement: "", businessNeed: "", importance: 3, ctq: "" }
       ]);
     } else {
       toast({
@@ -1973,7 +1973,7 @@ export default function DefinePhase() {
     
     // If we're about to remove all rows, make sure we keep at least one empty row
     if (updatedRequirements.length === 0) {
-      updatedRequirements.push({ requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" });
+      updatedRequirements.push({ requirement: "", businessNeed: "", importance: 3, ctq: "" });
     }
     
     setBusinessRequirements(updatedRequirements);
