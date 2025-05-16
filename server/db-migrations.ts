@@ -5,15 +5,30 @@ export async function runMigrations() {
   console.log("Running database migrations...");
   
   try {
-    // Check if sessions table exists
-    const sessionsTableExists = await db.execute(sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = 'sessions'
-      );
-    `);
+    // First create sessions table if it doesn't exist
+    try {
+      console.log("Creating sessions table...");
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS sessions (
+          sid VARCHAR(255) PRIMARY KEY,
+          sess JSONB NOT NULL,
+          expire TIMESTAMP(6) NOT NULL
+        )
+      `);
+      
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions (expire)
+      `);
+      
+      console.log("Sessions table creation successful");
+    } catch (error) {
+      console.error("Error creating sessions table:", error);
+    }
     
-    if (!sessionsTableExists.rows[0].exists) {
+    // For compatibility, assume sessions table doesn't exist
+    const sessionsTableExists = false;
+    
+    if (!sessionsTableExists) {
       console.log("Creating sessions table...");
       await db.execute(sql`
         CREATE TABLE sessions (
