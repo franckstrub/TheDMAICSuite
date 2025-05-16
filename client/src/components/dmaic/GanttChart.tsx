@@ -88,28 +88,28 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
   const [timelineView, setTimelineView] = useState<'weeks' | 'months' | 'years'>('months');
-  
+
   // Save view mode preference when it changes
   const saveViewModeMutation = useMutation({
     mutationFn: async (viewMode: 'weeks' | 'months' | 'years') => {
       return await apiRequest("POST", `/api/projects/${projectId}/gantt-view-mode`, { viewMode });
     },
   });
-  
+
   // Fetch project details to get the saved view preference
   const { data: projectData } = useQuery({
     queryKey: ['/api/projects', projectId],
     enabled: !!projectId
   });
-  
+
   // Load saved view preference when project data is loaded
   useEffect(() => {
     // Default to 'months' if no saved preference exists
     let savedMode: 'weeks' | 'months' | 'years' = 'months';
-    
+
     // Add debugging to verify projectData structure
     console.log(`Project data received:`, projectData);
-    
+
     // Check if projectData contains the project object
     if (projectData && typeof projectData === 'object') {
       // Check different possible API response structures
@@ -117,7 +117,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         // Single project object in { project: {...} } format
         const project = projectData.project;
         console.log(`Found project in projectData.project:`, project);
-        
+
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
           savedMode = project.ganttViewMode as 'weeks' | 'months' | 'years';
           console.log(`Using saved view mode from projectData.project: ${savedMode}`);
@@ -126,10 +126,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         // Array of projects in { projects: [...] } format
         console.log(`Found projects array, looking for project ID: ${projectId}`);
         const project = projectData.projects.find(p => p.id === Number(projectId));
-        
+
         if (project) {
           console.log(`Found matching project in array:`, project);
-          
+
           if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
             savedMode = project.ganttViewMode as 'weeks' | 'months' | 'years';
             console.log(`Using saved view mode from projects array: ${savedMode}`);
@@ -138,23 +138,23 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       } else if ('id' in projectData && projectData.id === Number(projectId)) {
         // Direct project object
         console.log(`Found direct project object:`, projectData);
-        
+
         if (projectData.ganttViewMode && ['weeks', 'months', 'years'].includes(projectData.ganttViewMode)) {
           savedMode = projectData.ganttViewMode as 'weeks' | 'months' | 'years';
           console.log(`Using saved view mode from direct project object: ${savedMode}`);
         }
       }
     }
-    
+
     console.log(`Setting timeline view to: ${savedMode}`);
     setTimelineView(savedMode);
   }, [projectData, projectId]);
-  
+
   // Fetch tasks when component mounts or projectId changes
   useEffect(() => {
     const fetchTasks = async () => {
       if (!projectId) return;
-      
+
       try {
         const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
         if (response.ok) {
@@ -165,7 +165,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         console.error('Error fetching tasks:', error);
       }
     };
-    
+
     fetchTasks();
   }, [projectId]);
   const [dateRange, setDateRange] = useState({
@@ -177,10 +177,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   // Calculate number of days in the range
   const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
-  
+
   // Generate all dates within the range
   const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
-  
+
   // Group dates by weeks, months, or years based on view mode
   const groupedDates = useMemo(() => {
     if (timelineView === 'weeks') {
@@ -188,7 +188,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       const weeks: Date[][] = [];
       let currentWeek: Date[] = [];
       let currentWeekStartDate: Date | null = null;
-      
+
       allDates.forEach(date => {
         // Start a new week on Sunday or first date
         if (currentWeekStartDate === null || date.getDay() === 0) {
@@ -201,12 +201,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           currentWeek.push(date);
         }
       });
-      
+
       // Add the last week if it exists
       if (currentWeek.length > 0) {
         weeks.push(currentWeek);
       }
-      
+
       return weeks;
     } else if (timelineView === 'months') {
       // Group by months
@@ -214,7 +214,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       let currentMonth: Date[] = [];
       let currentMonthNumber: number | null = null;
       let currentYear: number | null = null;
-      
+
       allDates.forEach(date => {
         const monthNumber = date.getMonth();
         const year = date.getFullYear();
@@ -230,19 +230,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           currentMonth.push(date);
         }
       });
-      
+
       // Add the last month if it exists
       if (currentMonth.length > 0) {
         months.push(currentMonth);
       }
-      
+
       return months;
     } else {
       // Group by years
       const years: Date[][] = [];
       let currentYear: Date[] = [];
       let currentYearNumber: number | null = null;
-      
+
       allDates.forEach(date => {
         const yearNumber = date.getFullYear();
         // Start a new year when year changes
@@ -256,12 +256,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           currentYear.push(date);
         }
       });
-      
+
       // Add the last year if it exists
       if (currentYear.length > 0) {
         years.push(currentYear);
       }
-      
+
       return years;
     }
   }, [allDates, timelineView]);
@@ -321,10 +321,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     };
 
     fetchTasks();
-    
+
     // Set up an interval to periodically check for tasks (every 3 seconds)
     const intervalId = setInterval(fetchTasks, 60000);
-    
+
     // Clean up the interval when the component unmounts
     return () => clearInterval(intervalId);
   }, [projectId, toast]);
@@ -355,7 +355,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         title: 'Success',
         description: 'Task saved successfully',
       });
-      
+
       // Immediately refetch tasks to update the UI
       const fetchTasks = async () => {
         try {
@@ -371,12 +371,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           console.error('Error fetching tasks:', error);
         }
       };
-      
+
       fetchTasks();
-      
+
       // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
-      
+
       // Reset form and UI state
       form.reset();
       setShowAddTask(false);
@@ -407,7 +407,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         title: 'Success',
         description: `DMAIC WBS created with ${tasksCount} tasks`,
       });
-      
+
       // Immediately refetch tasks to update the UI
       const fetchTasks = async () => {
         try {
@@ -423,12 +423,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           console.error('Error fetching tasks after WBS generation:', error);
         }
       };
-      
+
       fetchTasks();
-      
+
       // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
-      
+
       // Reset generating state
       setIsGeneratingWBS(false);
     },
@@ -453,7 +453,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         title: 'Success',
         description: 'Task deleted successfully',
       });
-      
+
       // Immediately refetch tasks to update the UI
       const fetchTasks = async () => {
         try {
@@ -469,9 +469,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           console.error('Error fetching tasks after delete:', error);
         }
       };
-      
+
       fetchTasks();
-      
+
       // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
     },
@@ -492,7 +492,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       projectId,
       id: editingTaskId || undefined,
     };
-    
+
     console.log("Submitting task:", taskToSave);
     saveTaskMutation.mutate(taskToSave);
   };
@@ -511,7 +511,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       phase: task.phase,
       status: task.status || 'not-started',
     });
-    
+
     setEditingTaskId(task.id || null);
     setShowAddTask(true);
   };
@@ -530,20 +530,20 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Handle drop to reorder tasks
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
-    
+
     if (draggedIndex !== null && dropTargetIndex !== null && draggedIndex !== dropTargetIndex) {
       // Create a new array with the reordered tasks
       const newTasks = [...tasks];
       const [movedTask] = newTasks.splice(draggedIndex, 1);
       newTasks.splice(dropTargetIndex, 0, movedTask);
-      
+
       // Update the task order in the UI immediately
       setTasks(newTasks);
-      
+
       // Reset drag state
       setDraggedIndex(null);
       setDropTargetIndex(null);
-      
+
       // TODO: Implement API to update task order on the server
       try {
         // This would be the API call to update task order
@@ -563,16 +563,16 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const getTaskBarStyle = (task: GanttTask) => {
     const taskStart = parseISO(task.startDate);
     const taskEnd = parseISO(task.endDate);
-    
+
     // Calculate distance from the start date as a percentage
     const startOffset = Math.max(0, differenceInDays(taskStart, dateRange.start));
     const duration = differenceInDays(taskEnd, taskStart) + 1;
-    
+
     // Calculate start position and width as percentages
     const startPercent = (startOffset / totalDays) * 100;
     // Set a minimum width for very short tasks for better visibility
     const widthPercent = Math.max((duration / totalDays) * 100, 3);
-    
+
     return {
       left: `${startPercent}%`,
       width: `${widthPercent}%`,
@@ -640,7 +640,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               Years
             </button>
           </div>
-          
+
           <Button
             onClick={() => {
               setIsGeneratingWBS(true);
@@ -697,7 +697,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="phase"
@@ -721,7 +721,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   )}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -758,7 +758,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="endDate"
@@ -798,7 +798,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   )}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -819,7 +819,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="priority"
@@ -840,7 +840,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="status"
@@ -863,7 +863,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   )}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -878,7 +878,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="dependencies"
@@ -893,7 +893,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   )}
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"
@@ -923,7 +923,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         <div className="min-w-full">
           {/* Date Headers */}
           <div className="flex border-b">
-            <div className="w-1/4 flex">
+            <div className="w-1/4 flex sticky left-0 z-20 bg-white">
               <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
                 Task
               </div>
@@ -974,7 +974,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   const weeksInMonth: Date[][] = [];
                   let currentWeek: Date[] = [];
                   let currentWeekNumber: number | null = null;
-                  
+
                   month.forEach(date => {
                     const weekNumber = getWeek(date);
                     if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
@@ -987,12 +987,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       currentWeek.push(date);
                     }
                   });
-                  
+
                   // Add the last week if it exists
                   if (currentWeek.length > 0) {
                     weeksInMonth.push(currentWeek);
                   }
-                  
+
                   return (
                     <div 
                       key={`month-${monthIndex}`}
@@ -1039,7 +1039,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   const monthsInYear: Date[][] = [];
                   let currentMonth: Date[] = [];
                   let currentMonthNumber: number | null = null;
-                  
+
                   year.forEach(date => {
                     const monthNumber = date.getMonth();
                     if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
@@ -1052,12 +1052,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       currentMonth.push(date);
                     }
                   });
-                  
+
                   // Add the last month if it exists
                   if (currentMonth.length > 0) {
                     monthsInYear.push(currentMonth);
                   }
-                  
+
                   return (
                     <div 
                       key={`year-${yearIndex}`}
@@ -1119,7 +1119,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   setDropTargetIndex(null);
                 }}
               >
-                <div className="w-1/4 flex">
+                <div className="w-1/4 flex sticky left-0 z-20 bg-white">
                   <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 flex items-center">
                     <div className="mr-1 cursor-move">
                       <GripVertical size={12} className="text-gray-400" />
@@ -1182,7 +1182,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       const weeksInMonth: Date[][] = [];
                       let currentWeek: Date[] = [];
                       let currentWeekNumber: number | null = null;
-                      
+
                       month.forEach(date => {
                         const weekNumber = getWeek(date);
                         if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
@@ -1195,12 +1195,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           currentWeek.push(date);
                         }
                       });
-                      
+
                       // Add the last week if it exists
                       if (currentWeek.length > 0) {
                         weeksInMonth.push(currentWeek);
                       }
-                      
+
                       return (
                         <div key={`task-month-bg-${monthIndex}`} className="flex flex-col flex-grow">
                           <div className="h-2 bg-transparent"></div> {/* Space for month header */}
@@ -1226,7 +1226,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       const monthsInYear: Date[][] = [];
                       let currentMonth: Date[] = [];
                       let currentMonthNumber: number | null = null;
-                      
+
                       year.forEach(date => {
                         const monthNumber = date.getMonth();
                         if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
@@ -1239,12 +1239,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           currentMonth.push(date);
                         }
                       });
-                      
+
                       // Add the last month if it exists
                       if (currentMonth.length > 0) {
                         monthsInYear.push(currentMonth);
                       }
-                      
+
                       return (
                         <div key={`task-year-bg-${yearIndex}`} className="flex flex-col flex-grow">
                           <div className="h-2 bg-transparent"></div> {/* Space for year header */}
@@ -1264,7 +1264,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       );
                     })
                   )}
-                  
+
                   {/* Task Bar */}
                   <div 
                     className={cn(
@@ -1278,7 +1278,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     <div className="truncate max-w-full">
                       {task.name} ({task.progress}%)
                     </div>
-                    
+
                     {/* Progress Overlay */}
                     <div 
                       className="absolute left-0 top-0 bottom-0 bg-black bg-opacity-20 rounded-l"
