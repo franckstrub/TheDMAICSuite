@@ -107,20 +107,35 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     // Default to 'months' if no saved preference exists
     let savedMode: 'weeks' | 'months' | 'years' = 'months';
     
+    // Add debugging to verify projectData structure
+    console.log(`Project data received:`, projectData);
+    
     // Only try to use saved preference if projectData exists and has the right structure
-    if (projectData && projectData.project && projectData.project.ganttViewMode) {
-      const viewMode = projectData.project.ganttViewMode;
-      if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
-        savedMode = viewMode;
-        console.log(`Loaded saved Gantt view mode: ${savedMode}`);
+    if (projectData && projectData.project) {
+      console.log(`Project from API:`, projectData.project);
+      
+      // Check if this is the correct project
+      if (projectData.project.id === projectId) {
+        // Check for ganttViewMode
+        if (projectData.project.ganttViewMode) {
+          const viewMode = projectData.project.ganttViewMode;
+          if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
+            savedMode = viewMode;
+            console.log(`Loaded saved Gantt view mode: ${savedMode} for project ${projectId}`);
+          }
+        } else {
+          console.log(`Project ${projectId} has no saved ganttViewMode, using default: ${savedMode}`);
+        }
+      } else {
+        console.warn(`Project ID mismatch: expected ${projectId}, got ${projectData.project.id}`);
       }
     } else {
-      console.log(`Using default Gantt view mode: ${savedMode}`);
+      console.log(`No valid project data received, using default view mode: ${savedMode}`);
     }
     
     // Always set a view mode, whether from saved preference or default
     setTimelineView(savedMode);
-  }, [projectData]);
+  }, [projectData, projectId]);
   
   // Fetch tasks when component mounts or projectId changes
   useEffect(() => {
