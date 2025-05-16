@@ -243,7 +243,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     fetchTasks();
     
     // Set up an interval to periodically check for tasks (every 3 seconds)
-    const intervalId = setInterval(fetchTasks, 3000);
+    const intervalId = setInterval(fetchTasks, 60000);
     
     // Clean up the interval when the component unmounts
     return () => clearInterval(intervalId);
@@ -1196,6 +1196,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               <div className="w-full text-center text-gray-500">
                 No tasks added yet. Click "Add Task" to create your first task.
               </div>
+              <p>
+                <div className="w-full text-center text-gray-500">
+                Click Generate DMAIC WBS to generate a Work Breakdown Structure from Charter.
+              </div>
+              </p>
             </div>
           )}
         </div>
