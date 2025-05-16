@@ -106,57 +106,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   });
   
   // Load saved view preference when project data is loaded
+  // Force initial timeline view to 'weeks' when component mounts
   useEffect(() => {
-    console.log("Project data received:", projectData);
-    
-    // Check if project data exists and has a project property
-    if (projectData && typeof projectData === 'object' && 'project' in projectData) {
-      // Get the gantt view mode, or default to 'months' if not set
-      const project = projectData.project;
-      console.log("Project object:", project);
-      
-      try {
-        if (project && typeof project === 'object') {
-          // Hard-code the viewMode to 'weeks' for testing
-          const forcedMode = 'weeks';
-          console.log("Forcing timeline view to:", forcedMode);
-          
-          // Update state
-          setTimelineView(forcedMode);
-          
-          // Force UI update for timeline buttons
-          setTimeout(() => {
-            try {
-              // Get the first, second, and third button in the timeline view container
-              const buttons = document.querySelectorAll('.gantt-chart-container .flex.items-center.border.rounded-md button');
-              
-              if (buttons.length >= 3) {
-                const weeksButton = buttons[0] as HTMLElement;
-                const monthsButton = buttons[1] as HTMLElement;
-                const yearsButton = buttons[2] as HTMLElement;
-                
-                // Remove active class from all buttons
-                weeksButton.className = weeksButton.className.replace('bg-blue-500 text-white', 'bg-gray-100');
-                monthsButton.className = monthsButton.className.replace('bg-blue-500 text-white', 'bg-gray-100');
-                yearsButton.className = yearsButton.className.replace('bg-blue-500 text-white', 'bg-gray-100');
-                
-                // Add active class to weeks button
-                weeksButton.className = weeksButton.className.replace('bg-gray-100', 'bg-blue-500 text-white');
-                
-                console.log("Updated button classes for weeks view");
-              } else {
-                console.log("Could not find timeline view buttons, found:", buttons.length);
-              }
-            } catch (err) {
-              console.error("Error updating button classes:", err);
-            }
-          }, 200);
-        }
-      } catch (error) {
-        console.error("Error setting timeline view:", error);
-      }
-    }
-  }, [projectData]);
+    // Set initial view to 'weeks'
+    setTimelineView('weeks');
+    console.log("Initial timeline view set to 'weeks'");
+  }, []);
   
   // Fetch tasks when component mounts or projectId changes
   useEffect(() => {
