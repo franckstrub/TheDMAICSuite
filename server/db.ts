@@ -1,24 +1,30 @@
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/pg-pool';
+import { neon, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import ws from 'ws';
 import * as schema from "@shared/schema";
 
-// Direct connection string for Neon PostgreSQL
-const DATABASE_URL = 'postgresql://neondb_owner:npg_1OteSyUrukD9@ep-jolly-union-a4anqqse.us-east-1.aws.neon.tech/neondb?sslmode=require';
+// Configure Neon to use websockets in a serverless environment
+neonConfig.webSocketConstructor = ws;
 
-// Create a more reliable connection pool with better error handling
-export const pool = new Pool({
-  connectionString: DATABASE_URL,
-  max: 2, // Keep connection pool small
-  idleTimeoutMillis: 5000, // Release idle connections quicker
-  connectionTimeoutMillis: 10000, // Longer connection timeout
-  // Add request logging to help debug issues
-  query_timeout: 10000 // Set query timeout to avoid hanging 
-});
+// Use the DATABASE_URL from environment variables
+const DATABASE_URL = process.env.DATABASE_URL;
 
-// Add error handler to the pool
-pool.on('error', (err) => {
-  console.error('Database pool error:', err);
-});
+if (!DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
 
-// Export Drizzle instance for database operations
-export const db = drizzle(pool, { schema });
+// Create a Neon SQL client
+const sql = neon(DATABASE_URL);
+
+// Create a Drizzle ORM instance with our schema
+export const db = drizzle(sql, { schema });
+
+// For backward compatibility with code that expects pool
+export const pool = {
+  query: async (text, params) => {
+    const result = await sql(text, params);
+    return { rows: result, rowCount: result.length };
+  }
+};
