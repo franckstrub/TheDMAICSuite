@@ -115,36 +115,45 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       const project = projectData.project;
       console.log("Project object:", project);
       
-      if (project && typeof project === 'object' && project.ganttViewMode) {
-        const viewMode = project.ganttViewMode;
-        console.log("Found ganttViewMode:", viewMode);
-        
-        // Only set if it's a valid view mode
-        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
-          console.log("Setting timeline view to:", viewMode);
-          setTimelineView(viewMode);
+      try {
+        if (project && typeof project === 'object') {
+          // Hard-code the viewMode to 'weeks' for testing
+          const forcedMode = 'weeks';
+          console.log("Forcing timeline view to:", forcedMode);
           
-          // Force UI update by directly updating button classes
+          // Update state
+          setTimelineView(forcedMode);
+          
+          // Force UI update for timeline buttons
           setTimeout(() => {
-            const selectedClass = 'bg-blue-500 text-white';
-            const unselectedClass = 'bg-gray-100';
-            
-            // Reset all buttons
-            document.querySelectorAll('.gantt-chart-container button').forEach(btn => {
-              btn.className = btn.className.replace(selectedClass, unselectedClass);
-            });
-            
-            // Set the active button
-            const buttonText = viewMode.charAt(0).toUpperCase() + viewMode.slice(1); // Capitalize first letter
-            document.querySelectorAll('.gantt-chart-container button').forEach(btn => {
-              if (btn.textContent?.trim() === buttonText) {
-                btn.className = btn.className.replace(unselectedClass, selectedClass);
+            try {
+              // Get the first, second, and third button in the timeline view container
+              const buttons = document.querySelectorAll('.gantt-chart-container .flex.items-center.border.rounded-md button');
+              
+              if (buttons.length >= 3) {
+                const weeksButton = buttons[0] as HTMLElement;
+                const monthsButton = buttons[1] as HTMLElement;
+                const yearsButton = buttons[2] as HTMLElement;
+                
+                // Remove active class from all buttons
+                weeksButton.className = weeksButton.className.replace('bg-blue-500 text-white', 'bg-gray-100');
+                monthsButton.className = monthsButton.className.replace('bg-blue-500 text-white', 'bg-gray-100');
+                yearsButton.className = yearsButton.className.replace('bg-blue-500 text-white', 'bg-gray-100');
+                
+                // Add active class to weeks button
+                weeksButton.className = weeksButton.className.replace('bg-gray-100', 'bg-blue-500 text-white');
+                
+                console.log("Updated button classes for weeks view");
+              } else {
+                console.log("Could not find timeline view buttons, found:", buttons.length);
               }
-            });
-          }, 100);
+            } catch (err) {
+              console.error("Error updating button classes:", err);
+            }
+          }, 200);
         }
-      } else {
-        console.log("No ganttViewMode found in project data, defaulting to months");
+      } catch (error) {
+        console.error("Error setting timeline view:", error);
       }
     }
   }, [projectData]);
