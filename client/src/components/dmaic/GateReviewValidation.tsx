@@ -219,7 +219,10 @@ export default function GateReviewValidation() {
     } else if (project?.project) {
       projectType = project.project.projectType;
     }
-    console.log("Using project type for deliverables:", projectType);
+    // Reduced logging - only log this once when needed
+    if (projectType && defaultDefineDeliverables.length === 0) {
+      console.log("Using project type for deliverables:", projectType);
+    }
     
     // Always have at least base deliverables, never empty
     if (defaultDefineDeliverables.length === 0) {
@@ -251,7 +254,9 @@ export default function GateReviewValidation() {
       }
       return response.json();
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity // Only refetch when explicitly invalidated
   });
 
   // Fetch existing validators
@@ -264,7 +269,9 @@ export default function GateReviewValidation() {
       }
       return response.json();
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity // Only refetch when explicitly invalidated
   });
 
   // Save data to backend
@@ -312,12 +319,15 @@ export default function GateReviewValidation() {
 
   // Initialize with default deliverables if none exist
   useEffect(() => {
-    console.log("Deliverables data received:", deliverablesData);
-    console.log("Default deliverables available:", defaultDefineDeliverables.length);
-
+    // Reduced logging - log only when there's a significant change or first-time load
+    const isFirstLoad = !deliverablesData || !Array.isArray(deliverablesData.deliverables);
+    
     // Make sure we have default deliverables to work with
     if (defaultDefineDeliverables.length === 0) {
-      console.log("No default deliverables template available yet, waiting for project data");
+      // Only log once during initial setup
+      if (isFirstLoad) {
+        console.log("No default deliverables template available yet, waiting for project data");
+      }
       return;
     }
 
@@ -412,8 +422,7 @@ export default function GateReviewValidation() {
 
   // Initialize validators from charter if none exist
   useEffect(() => {
-    console.log("Validators data received:", validatorsData);
-    console.log("Charter data:", charter);
+    // Removed excessive logging to clean up the console
 
     if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
       console.log("Setting validators from data:", validatorsData.validators);
