@@ -97,17 +97,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   });
   
   // Fetch project details to get the saved view preference
-  const { data: projectData } = useQuery({
+  const { data: projectData } = useQuery<{ project: { ganttViewMode?: string } }>({
     queryKey: ['/api/projects', projectId],
     enabled: !!projectId
   });
   
   // Load saved view preference when project data is loaded
   useEffect(() => {
-    // Check if project data exists and has a ganttViewMode property
-    if (projectData && 'project' in projectData) {
+    // Check if project data exists and has a project property
+    if (projectData && typeof projectData === 'object' && 'project' in projectData) {
+      // Get the gantt view mode, or default to 'months' if not set
       const project = projectData.project;
-      const savedMode = project?.ganttViewMode || 'months'; // Default to months if not set
+      let savedMode: 'weeks' | 'months' | 'years' = 'months'; // Default value
+      
+      if (project && typeof project === 'object' && 'ganttViewMode' in project) {
+        const viewMode = project.ganttViewMode;
+        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
+          savedMode = viewMode;
+        }
+      }
+        
       if (['weeks', 'months', 'years'].includes(savedMode)) {
         setTimelineView(savedMode as 'weeks' | 'months' | 'years');
         console.log(`Loaded saved Gantt view mode: ${savedMode}`);
@@ -362,8 +371,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     mutationFn: async () => {
       return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
     },
-    onSuccess: (data) => {
-      const tasksCount = data && typeof data === 'object' && 'tasks' in data ? data.tasks.length : 0;
+    onSuccess: (data: any) => {
+      const tasksCount = data?.tasks?.length || 0;
       toast({
         title: 'Success',
         description: `DMAIC WBS created with ${tasksCount} tasks`,
