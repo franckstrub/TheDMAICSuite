@@ -1067,7 +1067,7 @@ export default function DefinePhase() {
         businessNeed: r.businessNeed || "",
         requirement: r.requirement || "",
         importance: r.importance || 3,
-        criticalToQuality: r.ctq || "", // Use ctq field for Critical to Quality
+        ctq: r.ctq || "", // Use ctq field for Critical to Quality
         id: r.id,
       }));
       
@@ -1096,9 +1096,9 @@ export default function DefinePhase() {
         
         const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
           requirement: r.requirement || "",
-          businessRequirement: r.businessRequirement || "",
+          businessNeed: r.businessNeed || "",
           importance: r.importance || 3, 
-          criticalToQuality: r.ctq || "", // Use ctq field for Critical to Quality
+          ctq: r.ctq || "", // Use ctq field for Critical to Quality
           id: r.id, // Store the ID to help with sorting
         }));
         
@@ -4268,9 +4268,9 @@ export default function DefinePhase() {
               <div className="col-span-3 border border-purple-100 rounded-md p-2 bg-white w-[95%]">
                 <Textarea
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
-                  value={req.criticalToQuality}
-                  onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
-                  placeholder="Add CTS (CTQ, CTD, CTC) specification..."
+                  value={req.ctq}
+                  onChange={(e) => updateBusinessRequirement(index, "ctq", e.target.value)}
+                  placeholder="Add Critical To Quality (CTQ) specification..."
                 />
               </div>
               {index !== 0 && (
