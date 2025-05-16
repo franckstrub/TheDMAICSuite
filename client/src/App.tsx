@@ -45,6 +45,11 @@ function Router() {
       <Route path="/app/:tab" component={HomePage}/>
       <Route path="/app/:tab/:phase" component={HomePage}/>
       <Route path="/app/:tab/:phase/:projectId" component={HomePage}/>
+      <Route path="/apps" component={() => {
+        // Redirect from "/apps" to "/app"
+        navigate("/app");
+        return null;
+      }}/>
       <Route path="/mockup" component={MockupPage} />
       <Route component={NotFound} />
     </Switch>
