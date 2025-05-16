@@ -278,7 +278,7 @@ export default function MeasurePhase() {
           requirement: r.requirement || "",
           businessRequirement: r.businessRequirement || "",
           importance: r.importance || 3, 
-          impact: r.impact || "",
+          ctq: r.ctq || "",
           id: r.id, // Store the ID to help with sorting
         }));
         
@@ -300,7 +300,7 @@ export default function MeasurePhase() {
       } else {
         // If no business requirements found in the API response, ensure we have at least one empty row
         console.log("No business requirements found in database, setting default empty row");
-        const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, impact: "" }];
+        const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, ctq: "" }];
         setBusinessRequirements(defaultRow);
         return defaultRow;
       }
@@ -315,7 +315,7 @@ export default function MeasurePhase() {
       }
       
       // Ensure we have at least one empty row even on error
-      const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, impact: "" }];
+      const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, ctq: "" }];
       setBusinessRequirements(defaultRow);
       return defaultRow;
     }
@@ -331,7 +331,7 @@ export default function MeasurePhase() {
   const addBusinessRequirement = () => {
     const lastReq = businessRequirements[businessRequirements.length - 1];
     if (lastReq.requirement.trim() !== "" || lastReq.businessRequirement.trim() !== "") {
-      setBusinessRequirements([...businessRequirements, { requirement: "", businessRequirement: "", importance: 3, impact: "" }]);
+      setBusinessRequirements([...businessRequirements, { requirement: "", businessRequirement: "", importance: 3, ctq: "" }]);
     }
   };
 
@@ -346,7 +346,7 @@ export default function MeasurePhase() {
     
     // If we're about to remove all rows, make sure we keep at least one empty row
     if (newBusinessRequirements.length === 0) {
-      newBusinessRequirements.push({ requirement: "", businessRequirement: "", importance: 3, impact: "" });
+      newBusinessRequirements.push({ requirement: "", businessRequirement: "", importance: 3, ctq: "" });
     }
     
     setBusinessRequirements(newBusinessRequirements);
@@ -363,7 +363,7 @@ export default function MeasurePhase() {
       // Always include at least one row even if empty, to ensure we always have a row in the database
       const businessRequirementsToSave = validBusinessRequirements.length > 0 ? 
         validBusinessRequirements : 
-        [{ requirement: "", businessRequirement: "", importance: 3, impact: "" }];
+        [{ requirement: "", businessRequirement: "", importance: 3, ctq: "" }];
       
       console.log("Saving business requirements:", businessRequirementsToSave);
       
@@ -391,7 +391,7 @@ export default function MeasurePhase() {
             requirement: req.requirement || "", // Ensure we don't send undefined values
             businessRequirement: req.businessRequirement || "",
             importance: req.importance || 3,
-            impact: req.impact || "",
+            ctq: req.ctq || "",
           })
         );
         
