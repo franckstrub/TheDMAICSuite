@@ -919,11 +919,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       )}
 
       {/* Gantt Chart */}
-      <div className="gantt-wrapper overflow-x-auto">
-        <div className="min-w-full">
-          {/* Date Headers */}
-          <div className="flex border-b">
-            <div className="w-1/4 flex sticky left-0 z-20 bg-white">
+      <div className="gantt-wrapper overflow-x-auto overflow-y-auto max-h-[600px]">
+        <div className="min-w-full relative">
+          {/* Date Headers - First Two Rows are Frozen */}
+          <div className="flex border-b sticky top-0 z-30 bg-white">
+            <div className="w-1/4 flex sticky left-0 z-40 bg-white">
               <div className="gantt-task-info w-2/3 min-w-[180px] border-r p-2 bg-gray-100 font-medium">
                 Task
               </div>
@@ -939,15 +939,15 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     key={`week-${weekIndex}`}
                     className="flex flex-col flex-grow border-r"
                   >
-                    {/* Week header */}
-                    <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium">
+                    {/* Week header - First row (always visible) */}
+                    <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
                       Week {getWeek(week[0])}
                       <div className="text-[10px]">
                         {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d, yyyy')}
                       </div>
                     </div>
-                    {/* Days in week */}
-                    <div className="flex">
+                    {/* Days in week - Second row (also frozen) */}
+                    <div className="flex sticky top-10 z-20 bg-white">
                       {week.map((date, dateIndex) => (
                         <div 
                           key={`day-${weekIndex}-${dateIndex}`} 
@@ -998,12 +998,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       key={`month-${monthIndex}`}
                       className="flex flex-col flex-grow border-r"
                     >
-                      {/* Month header */}
-                      <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium">
+                      {/* Month header - First row (always visible) */}
+                      <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
                         {format(month[0], 'MMMM yyyy')}
                       </div>
-                      {/* Weeks in month */}
-                      <div className="flex">
+                      {/* Weeks in month - Second row (also frozen) */}
+                      <div className="flex sticky top-10 z-20 bg-white">
                         {weeksInMonth.map((week, weekIndex) => (
                           <div 
                             key={`month-${monthIndex}-week-${weekIndex}`}
@@ -1063,12 +1063,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       key={`year-${yearIndex}`}
                       className="flex flex-col flex-grow border-r"
                     >
-                      {/* Year header */}
-                      <div className="bg-blue-100 text-center p-1 border-b text-xs font-medium">
+                      {/* Year header - First row (always visible) */}
+                      <div className="bg-blue-100 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
                         {format(year[0], 'yyyy')}
                       </div>
-                      {/* Months in year */}
-                      <div className="flex">
+                      {/* Months in year - Second row (also frozen) */}
+                      <div className="flex sticky top-10 z-20 bg-white">
                         {monthsInYear.map((month, monthIndex) => (
                           <div 
                             key={`year-${yearIndex}-month-${monthIndex}`}
