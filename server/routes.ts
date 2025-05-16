@@ -204,27 +204,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
       
-      console.log(`Login attempt for username: ${username}`);
       const user = await storage.getUserByUsername(username);
-      
-      if (!user) {
-        console.log(`User not found: ${username}`);
+      if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
-      if (user.password !== password) {
-        console.log(`Password mismatch for user: ${username}`);
-        return res.status(401).json({ message: "Invalid username or password" });
-      }
-      
-      console.log(`Successful login for user: ${username}`);
       await storage.updateUserLastLogin(user.id);
       
       // For simplicity, just return the user (in a real app, you'd use JWT tokens)
       const { password: _, ...userWithoutPassword } = user;
       return res.status(200).json({ user: userWithoutPassword });
     } catch (err) {
-      console.error("Login error:", err);
       return handleErrors(err, res);
     }
   });
