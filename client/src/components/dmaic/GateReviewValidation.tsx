@@ -256,7 +256,9 @@ export default function GateReviewValidation() {
     },
     enabled: !!projectId,
     refetchOnWindowFocus: false,
-    staleTime: Infinity // Only refetch when explicitly invalidated
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 100 * 1000, // 100 seconds
+    gcTime: 10 * 60 * 1000 // 10 minutes
   });
 
   // Fetch existing validators
@@ -271,7 +273,9 @@ export default function GateReviewValidation() {
     },
     enabled: !!projectId,
     refetchOnWindowFocus: false,
-    staleTime: Infinity // Only refetch when explicitly invalidated
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 100 * 1000, // 100 seconds
+    gcTime: 10 * 60 * 1000 // 10 minutes
   });
 
   // Save data to backend
