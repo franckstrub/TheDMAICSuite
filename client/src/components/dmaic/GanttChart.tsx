@@ -87,7 +87,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
-  // Default to 'months' but this will be updated when project data loads
   const [timelineView, setTimelineView] = useState<'weeks' | 'months' | 'years'>('months');
   
   // Save view mode preference when it changes
@@ -95,48 +94,33 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     mutationFn: async (viewMode: 'weeks' | 'months' | 'years') => {
       return await apiRequest("POST", `/api/projects/${projectId}/gantt-view-mode`, { viewMode });
     },
-    onSuccess: () => {
-      // Invalidate the project query to force a refresh of project data
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
-      console.log("View preference saved, invalidated project cache");
-    }
   });
   
   // Fetch project details to get the saved view preference
   const { data: projectData } = useQuery<{ project: { ganttViewMode?: string } }>({
     queryKey: ['/api/projects', projectId],
-    enabled: !!projectId,
-    // Force a refetch when the component mounts to ensure we get fresh data
-    refetchOnMount: true
+    enabled: !!projectId
   });
   
   // Load saved view preference when project data is loaded
-  // Load saved timeline view preference from the database
   useEffect(() => {
-    // First check if project data is available
+    // Check if project data exists and has a project property
     if (projectData && typeof projectData === 'object' && 'project' in projectData) {
+      // Get the gantt view mode, or default to 'months' if not set
       const project = projectData.project;
-      console.log("Loading view preference, project data:", project);
-            
-      // If we have a saved preference, use it
-      if (project && typeof project === 'object' && project.ganttViewMode) {
-        const savedMode = project.ganttViewMode;
-        console.log("Found saved ganttViewMode:", savedMode);
-        
-        // Only apply if it's a valid view mode
-        if (savedMode === 'weeks' || savedMode === 'months' || savedMode === 'years') {
-          console.log("Setting timeline view to saved preference:", savedMode);
-          setTimelineView(savedMode);
+      let savedMode: 'weeks' | 'months' | 'years' = 'months'; // Default value
+      
+      if (project && typeof project === 'object' && 'ganttViewMode' in project) {
+        const viewMode = project.ganttViewMode;
+        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
+          savedMode = viewMode;
         }
-      } else {
-        // Otherwise default to 'weeks'
-        console.log("No saved preference found, defaulting to 'weeks'");
-        setTimelineView('weeks');
       }
-    } else {
-      // If no project data available yet, default to 'weeks'
-      console.log("No project data available, defaulting to 'weeks'");
-      setTimelineView('weeks');
+        
+      if (['weeks', 'months', 'years'].includes(savedMode)) {
+        setTimelineView(savedMode as 'weeks' | 'months' | 'years');
+        console.log(`Loaded saved Gantt view mode: ${savedMode}`);
+      }
     }
   }, [projectData]);
   
