@@ -46,9 +46,12 @@ function Router() {
       <Route path="/app/:tab/:phase" component={HomePage}/>
       <Route path="/app/:tab/:phase/:projectId" component={HomePage}/>
       <Route path="/apps" component={() => {
-        // Redirect from "/apps" to "/app"
-        navigate("/app");
-        return null;
+        // Use useEffect to ensure redirect happens after render
+        useEffect(() => {
+          // Redirect from "/apps" to "/app"
+          window.location.href = '/app';
+        }, []);
+        return <div>Redirecting...</div>;
       }}/>
       <Route path="/mockup" component={MockupPage} />
       <Route component={NotFound} />
