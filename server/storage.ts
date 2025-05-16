@@ -181,13 +181,41 @@ export class MemStorage implements IStorage {
     this.currentGateReviewDeliverableId = 1;
     this.currentGateReviewValidatorId = 1;
     
+    // Create default data synchronously
+    this.setupDefaultData();
+  }
+
+  // Setup default data for the app
+  private setupDefaultData() {
     // Create a default admin user
-    this.createUser({
+    const admin = {
+      id: this.currentUserId++,
       username: 'admin',
       password: 'admin123',
       fullName: 'John Doe',
-      role: 'admin'
-    });
+      role: 'admin',
+      lastLogin: new Date()
+    };
+    this.users.set(admin.id, admin);
+    
+    // Create a sample project
+    const project = {
+      id: this.currentProjectId++,
+      title: 'Sample Six Sigma Project',
+      description: 'A demonstration project for the Six Sigma platform',
+      projectType: 'Green Belt',
+      projectCategory: 'Process Improvement',
+      currentPhase: 'define',
+      status: 'active',
+      progress: 15,
+      startDate: new Date('2023-01-15'),
+      targetEndDate: new Date('2023-06-30'),
+      createdBy: admin.id,
+      lastUpdated: new Date(),
+      ganttViewMode: 'months',
+      elevatorSpeech: 'This project aims to improve customer satisfaction by reducing delivery times.'
+    };
+    this.projects.set(project.id, project);
   }
 
   // User operations
@@ -1303,5 +1331,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Using DatabaseStorage for persistent database storage
-export const storage = new DatabaseStorage();
+// Using MemStorage for development/demo
+export const storage = new MemStorage();
