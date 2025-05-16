@@ -87,6 +87,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isGeneratingWBS, setIsGeneratingWBS] = useState(false);
+  // Default to 'months' but this will be updated when project data loads
   const [timelineView, setTimelineView] = useState<'weeks' | 'months' | 'years'>('months');
   
   // Save view mode preference when it changes
@@ -104,22 +105,25 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   
   // Load saved view preference when project data is loaded
   useEffect(() => {
+    console.log("Project data received:", projectData);
+    
     // Check if project data exists and has a project property
     if (projectData && typeof projectData === 'object' && 'project' in projectData) {
       // Get the gantt view mode, or default to 'months' if not set
       const project = projectData.project;
-      let savedMode: 'weeks' | 'months' | 'years' = 'months'; // Default value
+      console.log("Project object:", project);
       
-      if (project && typeof project === 'object' && 'ganttViewMode' in project) {
+      if (project && typeof project === 'object' && project.ganttViewMode) {
         const viewMode = project.ganttViewMode;
-        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
-          savedMode = viewMode;
-        }
-      }
+        console.log("Found ganttViewMode:", viewMode);
         
-      if (['weeks', 'months', 'years'].includes(savedMode)) {
-        setTimelineView(savedMode as 'weeks' | 'months' | 'years');
-        console.log(`Loaded saved Gantt view mode: ${savedMode}`);
+        // Only set if it's a valid view mode
+        if (viewMode === 'weeks' || viewMode === 'months' || viewMode === 'years') {
+          console.log("Setting timeline view to:", viewMode);
+          setTimelineView(viewMode);
+        }
+      } else {
+        console.log("No ganttViewMode found in project data, defaulting to months");
       }
     }
   }, [projectData]);
