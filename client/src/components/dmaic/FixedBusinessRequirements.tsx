@@ -25,7 +25,7 @@ export default function BusinessRequirementsSection({
           <h4 className="font-medium text-amber-800 text-sm">Imp.</h4>
         </div>
         <div className="col-span-3 p-3 bg-purple-50 rounded-md text-center w-[95%]">
-          <h4 className="font-medium text-purple-800 text-sm">Critical to Satisfaction (CTS)</h4>
+          <h4 className="font-medium text-purple-800 text-sm">Critical To Quality (CTQ)</h4>
         </div>
       </div>
       
@@ -62,9 +62,9 @@ export default function BusinessRequirementsSection({
           <div className="col-span-3 border border-purple-100 rounded-md p-2 bg-white w-[95%]">
             <Textarea
               className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
-              value={req.criticalToQuality}
-              onChange={(e) => updateBusinessRequirement(index, "criticalToQuality", e.target.value)}
-              placeholder="Add CTS (CTQ, CTD, CTC) specification..."
+              value={req.ctq}
+              onChange={(e) => updateBusinessRequirement(index, "ctq", e.target.value)}
+              placeholder="Add Critical To Quality (CTQ) specification..."
             />
           </div>
           {index !== 0 && (
