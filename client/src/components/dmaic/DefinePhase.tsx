@@ -1067,7 +1067,7 @@ export default function DefinePhase() {
         businessNeed: r.businessNeed || "",
         requirement: r.requirement || "",
         importance: r.importance || 3,
-        criticalToQuality: r.impact || "", // Use impact field but rename to criticalToQuality
+        criticalToQuality: r.ctq || "", // Use ctq field for Critical to Quality
         id: r.id,
       }));
       
