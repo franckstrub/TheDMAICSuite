@@ -25,7 +25,7 @@ export interface GanttTask {
   dependencies?: string;
   assignee?: string;
   priority?: 'low' | 'medium' | 'high';
-  phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control';
+  phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control' | 'closure';
   status?: 'not-started' | 'in-progress' | 'completed' | 'on-hold';
   lastUpdated?: string;
 }
@@ -46,7 +46,7 @@ const taskSchema = z.object({
   dependencies: z.string().optional(),
   assignee: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
-  phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control']),
+  phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control', 'closure']),
   status: z.enum(['not-started', 'in-progress', 'completed', 'on-hold']).optional(),
 });
 
@@ -72,6 +72,7 @@ const phaseColors = {
   analyze: 'bg-yellow-500',
   improve: 'bg-purple-500',
   control: 'bg-red-500',
+  closure: 'bg-gray-500',
 };
 
 const priorityColors = {
@@ -790,6 +791,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <option value="analyze">Analyze</option>
                           <option value="improve">Improve</option>
                           <option value="control">Control</option>
+                          <option value="closure">Closure</option>
                         </select>
                       </FormControl>
                       <FormMessage />
