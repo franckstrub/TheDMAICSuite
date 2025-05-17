@@ -585,11 +585,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   };
 
   // Calculate the position and width of a task bar based on its start and end dates
-  const getTaskBarStyle = (task: GanttTask) => {
+  const getTaskBarStyle = (task: GanttTask): React.CSSProperties => {
     // Handle missing dates
     if (!task.startDate || !task.endDate) {
       console.error(`Missing dates for task ${task.name}:`, task.startDate, task.endDate);
-      return { left: '0%', width: '3%', display: 'block' };
+      return { left: '0%', width: '3%', display: 'block' } as React.CSSProperties;
     }
     
     // Parse the task start and end dates
@@ -600,13 +600,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     if (!(taskStart instanceof Date) || !(taskEnd instanceof Date) || 
         taskStart.toString() === 'Invalid Date' || taskEnd.toString() === 'Invalid Date') {
       console.error(`Invalid dates for task ${task.name}:`, task.startDate, task.endDate);
-      return { left: '0%', width: '3%', display: 'block' };
+      return { left: '0%', width: '3%', display: 'block' } as React.CSSProperties;
     }
     
     // Make sure start date is before end date
     if (isAfter(taskStart, taskEnd)) {
       console.error(`Task ${task.name} has start date after end date:`, task.startDate, task.endDate);
-      return { left: '0%', width: '3%', display: 'block' };
+      return { left: '0%', width: '3%', display: 'block' } as React.CSSProperties;
     }
     
     // Get the visible range start and end dates
@@ -626,19 +626,32 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     
     // Calculate width as percentage of total width
     const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
-    // Ensure minimum width for better visibility (especially for single-day tasks)
-    const widthPercentage = Math.max((taskDuration / totalDays) * 100, 1);
+    
+    // Scale the width based on timeline view mode for better visibility
+    let widthPercentage = (taskDuration / totalDays) * 100;
+    
+    // Ensure minimum width for better visibility based on view
+    if (timelineView === 'weeks') {
+      // In week view, ensure single-day tasks are more visible
+      widthPercentage = Math.max(widthPercentage, 2);
+    } else if (timelineView === 'months') {
+      // In month view, ensure tasks have moderate visibility
+      widthPercentage = Math.max(widthPercentage, 1.5);
+    } else if (timelineView === 'years') {
+      // In year view, ensure even small tasks are visible
+      widthPercentage = Math.max(widthPercentage, 1);
+    }
     
     // Logging for debugging
-    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, Position: ${leftPos}%, Width: ${widthPercentage}%`);
+    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, View: ${timelineView}, Position: ${leftPos}%, Width: ${widthPercentage}%`);
     
     return {
       left: `${leftPos}%`,
       width: `${widthPercentage}%`,
       zIndex: 10,
-      position: 'absolute',  // Ensure absolute positioning
-      overflow: 'hidden',    // Prevent text overflow
-      height: '2rem'         // Consistent height
+      position: 'absolute',
+      overflow: 'hidden',
+      height: '2rem'
     };
   };
 
