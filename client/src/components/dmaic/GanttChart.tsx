@@ -584,47 +584,61 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     const taskStart = parseISO(task.startDate);
     const taskEnd = parseISO(task.endDate);
     
-    // For weekly view, we need to handle tasks that span multiple weeks
+    if (!isValid(taskStart) || !isValid(taskEnd) || !task.startDate || !task.endDate) {
+      console.error(`Invalid dates for task ${task.name}:`, task.startDate, task.endDate);
+      return { left: '0%', width: '3%', display: 'block' };
+    }
+    
+    if (isAfter(taskStart, taskEnd)) {
+      console.error(`Task ${task.name} has start date after end date:`, task.startDate, task.endDate);
+      return { left: '0%', width: '3%', display: 'block' };
+    }
+    
+    // For weekly view, calculate width based on days in visible range
     if (timelineView === 'weeks') {
       // Get the visible start and end dates from the grouped dates
       let visibleStartDate = dateRange.start;
       let visibleEndDate = dateRange.end;
       
-      if (groupedDates.length > 0) {
-        // If we have grouped dates, use them to determine the visible range
-        const firstWeek = groupedDates[0];
-        const lastWeek = groupedDates[groupedDates.length - 1];
-        
-        if (firstWeek && lastWeek) {
-          visibleStartDate = firstWeek[0];
-          visibleEndDate = lastWeek[lastWeek.length - 1];
-        }
+      // Get all days in the visible range
+      let allDays: Date[] = [];
+      groupedDates.forEach(week => {
+        week.forEach(day => {
+          allDays.push(day);
+        });
+      });
+      
+      if (allDays.length > 0) {
+        visibleStartDate = allDays[0];
+        visibleEndDate = allDays[allDays.length - 1];
       }
       
-      // Find where the task starts and ends relative to the visible range
-      // If task starts before visible range, clamp to visible start
-      const effectiveStart = isBefore(taskStart, visibleStartDate) ? visibleStartDate : taskStart;
-      // If task ends after visible range, clamp to visible end
-      const effectiveEnd = isAfter(taskEnd, visibleEndDate) ? visibleEndDate : taskEnd;
+      // Total days in the visible range
+      const totalVisibleDays = differenceInDays(visibleEndDate, visibleStartDate) + 1;
       
-      // Total visible days in the timeline
-      const visibleDuration = differenceInDays(visibleEndDate, visibleStartDate) + 1;
+      // Check if task is in the visible range
+      if (isAfter(taskStart, visibleEndDate) || isAfter(visibleStartDate, taskEnd)) {
+        return { left: '0%', width: '0%', display: 'none' };
+      }
       
-      // Calculate distance from the visible start date
-      const startOffset = Math.max(0, differenceInDays(effectiveStart, visibleStartDate));
+      // Determine visible portion of the task
+      const visibleStart = isAfter(taskStart, visibleStartDate) ? taskStart : visibleStartDate;
+      const visibleEnd = isBefore(taskEnd, visibleEndDate) ? taskEnd : visibleEndDate;
       
-      // Calculate the task's visible duration
-      const taskVisibleDuration = Math.max(1, differenceInDays(effectiveEnd, effectiveStart) + 1);
+      // Calculate offset from visible start and visible task duration
+      const startOffset = differenceInDays(visibleStart, visibleStartDate);
+      const visibleDuration = differenceInDays(visibleEnd, visibleStart) + 1;
       
-      // Calculate start position and width as percentages of the visible range
-      const startPercent = (startOffset / visibleDuration) * 100;
-      // Ensure the width is proportional to the task duration, but has a minimum size for visibility
-      const widthPercent = Math.max((taskVisibleDuration / visibleDuration) * 100, 3);
+      // Calculate percentage positions
+      const startPercent = (startOffset / totalVisibleDays) * 100;
+      const widthPercent = (visibleDuration / totalVisibleDays) * 100;
+      
+      console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, Position: ${startPercent}%, Width: ${widthPercent}%`);
       
       return {
         left: `${startPercent}%`,
         width: `${widthPercent}%`,
-        zIndex: 10, // Ensure task bar appears above the background grid
+        zIndex: 10, 
       };
     } else {
       // Original calculation for months and years views
