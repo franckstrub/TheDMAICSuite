@@ -178,7 +178,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
       const measureDate = milestoneDates.measure || charter.measure_phase_date || '';
       const analyzeDate = milestoneDates.analyze || charter.analyze_phase_date || '';
       const improveDate = milestoneDates.improve || charter.improve_phase_date || '';
-      const controlDate = milestoneDates.control || charter.control_phase_date || endDate;
+      const controlDate = milestoneDates.control || charter.control_phase_date || '';
 
       // Get assignee from project leader
       const assignee = charter.projectLeader || '';
@@ -280,19 +280,40 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
           phase: "control" as const,
           status: "not-started" as const,
           sequence: 6
+        },
+        // Closure Phase
+        {
+          projectId,
+          name: "Closure Phase",
+          startDate: controlDate || improveDate || analyzeDate || measureDate || defineDate || startDate,
+          endDate: endDate || controlDate,
+          progress: 0,
+          dependencies: "Control Phase",
+          assignee,
+          priority: "medium" as const,
+          phase: "closure" as const,
+          status: "not-started" as const,
+          sequence: 7
         }
       ];
 
       // Create all tasks
       const createdTasks = [];
       for (const task of tasks) {
-        if (task.startDate && task.endDate) {
-          try {
-            const newTask = await storageToUse.createGanttTask(task);
-            createdTasks.push(newTask);
-          } catch (err) {
-            console.error(`Error creating task ${task.name}:`, err);
-          }
+        // Make sure all tasks have valid dates, using fallbacks if needed
+        if (!task.startDate) {
+          task.startDate = startDate;
+        }
+        if (!task.endDate) {
+          task.endDate = endDate;
+        }
+        
+        try {
+          const newTask = await storageToUse.createGanttTask(task);
+          createdTasks.push(newTask);
+          console.log(`Created task: ${task.name}, Phase: ${task.phase}, Dates: ${task.startDate} - ${task.endDate}`);
+        } catch (err) {
+          console.error(`Error creating task ${task.name}:`, err);
         }
       }
       
