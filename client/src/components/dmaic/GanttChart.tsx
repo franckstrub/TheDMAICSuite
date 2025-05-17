@@ -1341,96 +1341,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     })
                   )}
 
-                  {/* Task Bar - Handle task bars in weekly view differently */}
-                  {timelineView === 'weeks' ? (
-                    // For weekly view, we need one bar per visible week if task spans multiple weeks
-                    (() => {
-                      const taskStart = parseISO(task.startDate);
-                      const taskEnd = parseISO(task.endDate);
-                      
-                      // Get all days in the visible range
-                      const visibleWeeks = groupedDates;
-                      
-                      if (!visibleWeeks.length) return null;
-                      
-                      return visibleWeeks.map((week, weekIndex) => {
-                        if (!week.length) return null;
-                        
-                        const weekStart = week[0];
-                        const weekEnd = week[week.length - 1];
-                        
-                        // If task doesn't overlap with this week at all, don't render
-                        if (isAfter(weekStart, taskEnd) || isBefore(weekEnd, taskStart)) {
-                          return null;
-                        }
-                        
-                        // Calculate which portion of the task is in this week
-                        const weekTaskStart = isAfter(taskStart, weekStart) ? taskStart : weekStart;
-                        const weekTaskEnd = isBefore(taskEnd, weekEnd) ? taskEnd : weekEnd;
-                        
-                        // Calculate start position within the week
-                        const daysFromWeekStart = differenceInDays(weekTaskStart, weekStart);
-                        const weekDays = differenceInDays(weekEnd, weekStart) + 1;
-                        
-                        // Duration of task in this week
-                        const weekTaskDuration = differenceInDays(weekTaskEnd, weekTaskStart) + 1;
-                        
-                        // Calculate position and width as percentages
-                        const leftPercent = (daysFromWeekStart / weekDays) * 100;
-                        const widthPercent = (weekTaskDuration / weekDays) * 100;
-                        
-                        return (
-                          <div 
-                            key={`task-bar-week-${weekIndex}`}
-                            className={cn(
-                              "absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
-                              phaseColors[task.phase] || 'bg-gray-500',
-                              priorityColors[task.priority || 'medium'],
-                              isTaskLate(task) ? 'border border-red-500' : ''
-                            )}
-                            style={{
-                              left: `${leftPercent}%`,
-                              width: `${widthPercent}%`,
-                              zIndex: 15,
-                              // Position this week's task part to be in the correct week container
-                              transform: `translateX(${weekIndex * 100}%)`
-                            }}
-                          >
-                            <div className="truncate max-w-full">
-                              {task.name} ({task.progress}%)
-                            </div>
-
-                            {/* Progress Overlay */}
-                            <div 
-                              className="absolute left-0 top-0 bottom-0 bg-black bg-opacity-20 rounded-l"
-                              style={{ width: `${task.progress}%` }}
-                            ></div>
-                          </div>
-                        );
-                      })
-                    })()
-                  ) : (
-                    // For month and year views, use the original single task bar
-                    <div 
-                      className={cn(
-                        "absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
-                        phaseColors[task.phase] || 'bg-gray-500',
-                        priorityColors[task.priority || 'medium'],
-                        isTaskLate(task) ? 'border border-red-500' : ''
-                      )}
-                      style={getTaskBarStyle(task)}
-                    >
-                      <div className="truncate max-w-full">
-                        {task.name} ({task.progress}%)
-                      </div>
-
-                      {/* Progress Overlay */}
-                      <div 
-                        className="absolute left-0 top-0 bottom-0 bg-black bg-opacity-20 rounded-l"
-                        style={{ width: `${task.progress}%` }}
-                      ></div>
+                  {/* Task Bar */}
+                  <div 
+                    className={cn(
+                      "absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
+                      phaseColors[task.phase] || 'bg-gray-500',
+                      priorityColors[task.priority || 'medium'],
+                      isTaskLate(task) ? 'border border-red-500' : ''
+                    )}
+                    style={getTaskBarStyle(task)}
+                  >
+                    <div className="truncate max-w-full">
+                      {task.name} ({task.progress}%)
                     </div>
-                  )}
+
+                    {/* Progress Overlay */}
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 bg-black bg-opacity-20 rounded-l"
+                      style={{ width: `${task.progress}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             ))
