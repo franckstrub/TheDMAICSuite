@@ -281,17 +281,17 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
           status: "not-started" as const,
           sequence: 6
         },
-        // Closure Phase
+        // Project Closure (still part of Control Phase)
         {
           projectId,
-          name: "Closure Phase",
+          name: "Project Closure",
           startDate: controlDate,
           endDate: endDate,
           progress: 0,
           dependencies: "Control Phase",
           assignee,
           priority: "medium" as const,
-          phase: "closure" as const,
+          phase: "control" as const,  // Changed to control phase since that's how our system is set up
           status: "not-started" as const,
           sequence: 7
         }
