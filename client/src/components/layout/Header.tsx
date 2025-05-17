@@ -65,7 +65,7 @@ export default function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2 focus:outline-none">
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" />
+                  <AvatarImage src="/FRANCK-PHOTO-BUSINESS-COLOR.png" />
                   <AvatarFallback>{getInitials(user?.fullName)}</AvatarFallback>
                 </Avatar>
                 <span className="hidden md:block text-sm font-medium">{user?.fullName || "User"}</span>
