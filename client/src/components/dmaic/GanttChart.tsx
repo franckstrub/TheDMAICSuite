@@ -571,21 +571,55 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const getTaskBarStyle = (task: GanttTask) => {
     const taskStart = parseISO(task.startDate);
     const taskEnd = parseISO(task.endDate);
+    
+    // For weekly view, we need to handle tasks that span multiple weeks
+    if (timelineView === 'weeks') {
+      // Get the visible start and end dates from the grouped dates
+      let visibleStartDate = dateRange.start;
+      let visibleEndDate = dateRange.end;
+      
+      if (groupedDates.length > 0) {
+        // If we have grouped dates, use them to determine the visible range
+        const firstWeek = groupedDates[0];
+        const lastWeek = groupedDates[groupedDates.length - 1];
+        
+        if (firstWeek && lastWeek) {
+          visibleStartDate = firstWeek[0];
+          visibleEndDate = lastWeek[lastWeek.length - 1];
+        }
+      }
+      
+      // Calculate distance from the visible start date
+      const startOffset = Math.max(0, differenceInDays(taskStart, visibleStartDate));
+      const visibleDuration = differenceInDays(visibleEndDate, visibleStartDate) + 1;
+      const taskDuration = differenceInDays(taskEnd, taskStart) + 1;
+      
+      // Calculate start position and width as percentages of the visible range
+      const startPercent = (startOffset / visibleDuration) * 100;
+      const widthPercent = Math.max((taskDuration / visibleDuration) * 100, 3);
+      
+      return {
+        left: `${startPercent}%`,
+        width: `${widthPercent}%`,
+        zIndex: 10, // Ensure task bar appears above the background grid
+      };
+    } else {
+      // Original calculation for months and years views
+      // Calculate distance from the start date as a percentage
+      const startOffset = Math.max(0, differenceInDays(taskStart, dateRange.start));
+      const duration = differenceInDays(taskEnd, taskStart) + 1;
 
-    // Calculate distance from the start date as a percentage
-    const startOffset = Math.max(0, differenceInDays(taskStart, dateRange.start));
-    const duration = differenceInDays(taskEnd, taskStart) + 1;
+      // Calculate start position and width as percentages
+      const startPercent = (startOffset / totalDays) * 100;
+      // Set a minimum width for very short tasks for better visibility
+      const widthPercent = Math.max((duration / totalDays) * 100, 3);
 
-    // Calculate start position and width as percentages
-    const startPercent = (startOffset / totalDays) * 100;
-    // Set a minimum width for very short tasks for better visibility
-    const widthPercent = Math.max((duration / totalDays) * 100, 3);
-
-    return {
-      left: `${startPercent}%`,
-      width: `${widthPercent}%`,
-      zIndex: 10, // Ensure task bar appears above the background grid
-    };
+      return {
+        left: `${startPercent}%`,
+        width: `${widthPercent}%`,
+        zIndex: 10, // Ensure task bar appears above the background grid
+      };
+    }
   };
 
   // Check if a date is a milestone
