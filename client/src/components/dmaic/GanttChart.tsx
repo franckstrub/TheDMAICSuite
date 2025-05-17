@@ -651,11 +651,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       widthPercentage = Math.max(widthPercentage, 2);
     } 
     else if (timelineView === 'years') {
-      // Year view - least detailed
-      widthPercentage = basePercentage;
+      // Year view - in this view we need to calculate column-based widths
+      // For year view, we need to adjust width calculation to match month boundaries
+      
+      // Get month proportion of the task duration
+      const startMonth = effectiveTaskStart.getMonth();
+      const endMonth = effectiveTaskEnd.getMonth();
+      const monthsCount = (endMonth - startMonth) + (effectiveTaskEnd.getFullYear() - effectiveTaskStart.getFullYear()) * 12;
+      
+      // In year view, each month is approximately 1/12 of total width, adjusted for visible range
+      const visibleMonths = (visibleEndDate.getMonth() - visibleStartDate.getMonth()) + 
+                           (visibleEndDate.getFullYear() - visibleStartDate.getFullYear()) * 12 + 1;
+      
+      // Adjust for month span (a task spanning 2 months should be about 2/visibleMonths of the width)
+      const monthSpanWidth = (monthsCount + 1) / visibleMonths * 100;
+      
+      // For very short tasks (less than a month), ensure they're at least one month wide in the view
+      widthPercentage = Math.max(basePercentage, monthSpanWidth);
       
       // Ensure minimum visibility
-      widthPercentage = Math.max(widthPercentage, 1);
+      widthPercentage = Math.max(widthPercentage, 8);
     } 
     else {
       // Default fallback
