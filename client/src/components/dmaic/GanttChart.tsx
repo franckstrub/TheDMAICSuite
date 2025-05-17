@@ -176,6 +176,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
     fetchTasks();
   }, [projectId]);
+  
+  // Convert milestone dates into Date objects for easy comparison
+  const milestones = useMemo(() => {
+    return {
+      kickOff: milestoneDates?.kickOff ? parseISO(milestoneDates.kickOff) : null,
+      define: milestoneDates?.define ? parseISO(milestoneDates.define) : null,
+      measure: milestoneDates?.measure ? parseISO(milestoneDates.measure) : null,
+      analyze: milestoneDates?.analyze ? parseISO(milestoneDates.analyze) : null,
+      improve: milestoneDates?.improve ? parseISO(milestoneDates.improve) : null,
+      control: milestoneDates?.control ? parseISO(milestoneDates.control) : null,
+    };
+  }, [milestoneDates]);
+  
   const [dateRange, setDateRange] = useState({
     start: projectStartDate ? parseISO(projectStartDate) : new Date(),
     end: projectEndDate ? parseISO(projectEndDate) : addDays(new Date(), 30)
@@ -274,15 +287,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     }
   }, [allDates, timelineView]);
 
-  // Get current milestone dates as Date objects
-  const milestones = {
-    kickOff: milestoneDates?.kickOff ? parseISO(milestoneDates.kickOff) : null,
-    define: milestoneDates?.define ? parseISO(milestoneDates.define) : null,
-    measure: milestoneDates?.measure ? parseISO(milestoneDates.measure) : null,
-    analyze: milestoneDates?.analyze ? parseISO(milestoneDates.analyze) : null,
-    improve: milestoneDates?.improve ? parseISO(milestoneDates.improve) : null,
-    control: milestoneDates?.control ? parseISO(milestoneDates.control) : null,
-  };
+  // Milestones were defined earlier, so no need to redefine here
 
   // Initialize form with default values
   const form = useForm<TaskFormValues>({
