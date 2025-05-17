@@ -601,14 +601,25 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         }
       }
       
-      // Calculate distance from the visible start date
-      const startOffset = Math.max(0, differenceInDays(taskStart, visibleStartDate));
+      // Find where the task starts and ends relative to the visible range
+      // If task starts before visible range, clamp to visible start
+      const effectiveStart = isBefore(taskStart, visibleStartDate) ? visibleStartDate : taskStart;
+      // If task ends after visible range, clamp to visible end
+      const effectiveEnd = isAfter(taskEnd, visibleEndDate) ? visibleEndDate : taskEnd;
+      
+      // Total visible days in the timeline
       const visibleDuration = differenceInDays(visibleEndDate, visibleStartDate) + 1;
-      const taskDuration = differenceInDays(taskEnd, taskStart) + 1;
+      
+      // Calculate distance from the visible start date
+      const startOffset = Math.max(0, differenceInDays(effectiveStart, visibleStartDate));
+      
+      // Calculate the task's visible duration
+      const taskVisibleDuration = Math.max(1, differenceInDays(effectiveEnd, effectiveStart) + 1);
       
       // Calculate start position and width as percentages of the visible range
       const startPercent = (startOffset / visibleDuration) * 100;
-      const widthPercent = Math.max((taskDuration / visibleDuration) * 100, 3);
+      // Ensure the width is proportional to the task duration, but has a minimum size for visibility
+      const widthPercent = Math.max((taskVisibleDuration / visibleDuration) * 100, 3);
       
       return {
         left: `${startPercent}%`,
