@@ -581,10 +581,17 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   // Calculate the position and width of a task bar
   const getTaskBarStyle = (task: GanttTask) => {
+    if (!task.startDate || !task.endDate) {
+      console.error(`Missing dates for task ${task.name}:`, task.startDate, task.endDate);
+      return { left: '0%', width: '3%', display: 'block' };
+    }
+    
     const taskStart = parseISO(task.startDate);
     const taskEnd = parseISO(task.endDate);
     
-    if (!isValid(taskStart) || !isValid(taskEnd) || !task.startDate || !task.endDate) {
+    // Simple validation for dates
+    if (!(taskStart instanceof Date) || !(taskEnd instanceof Date) || 
+        taskStart.toString() === 'Invalid Date' || taskEnd.toString() === 'Invalid Date') {
       console.error(`Invalid dates for task ${task.name}:`, task.startDate, task.endDate);
       return { left: '0%', width: '3%', display: 'block' };
     }
@@ -596,48 +603,38 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     
     // For weekly view, calculate width based on days in visible range
     if (timelineView === 'weeks') {
-      // Get the visible start and end dates from the grouped dates
-      let visibleStartDate = dateRange.start;
-      let visibleEndDate = dateRange.end;
+      // Get the visible start and end dates from the timeline
+      const visibleStartDate = new Date(dateRange.start);
+      const visibleEndDate = new Date(dateRange.end);
       
-      // Get all days in the visible range
-      let allDays: Date[] = [];
-      groupedDates.forEach(week => {
-        week.forEach(day => {
-          allDays.push(day);
-        });
-      });
+      // Calculate total width in days for the entire visible timeline
+      const totalDays = differenceInDays(visibleEndDate, visibleStartDate) + 1;
       
-      if (allDays.length > 0) {
-        visibleStartDate = allDays[0];
-        visibleEndDate = allDays[allDays.length - 1];
-      }
+      // Calculate relative positions of this task within the timeline
+      // For tasks that start before visible range, clamp to the start of visible range
+      const effectiveTaskStart = isBefore(taskStart, visibleStartDate) ? visibleStartDate : taskStart;
       
-      // Total days in the visible range
-      const totalVisibleDays = differenceInDays(visibleEndDate, visibleStartDate) + 1;
+      // For tasks that end after visible range, clamp to the end of visible range
+      const effectiveTaskEnd = isAfter(taskEnd, visibleEndDate) ? visibleEndDate : taskEnd;
       
-      // Check if task is in the visible range
-      if (isAfter(taskStart, visibleEndDate) || isAfter(visibleStartDate, taskEnd)) {
-        return { left: '0%', width: '0%', display: 'none' };
-      }
+      // Calculate the start position as days from visible start
+      const daysFromStart = differenceInDays(effectiveTaskStart, visibleStartDate);
       
-      // Determine visible portion of the task
-      const visibleStart = isAfter(taskStart, visibleStartDate) ? taskStart : visibleStartDate;
-      const visibleEnd = isBefore(taskEnd, visibleEndDate) ? taskEnd : visibleEndDate;
+      // Calculate start position as percentage of total width
+      const leftPos = (daysFromStart / totalDays) * 100;
       
-      // Calculate offset from visible start and visible task duration
-      const startOffset = differenceInDays(visibleStart, visibleStartDate);
-      const visibleDuration = differenceInDays(visibleEnd, visibleStart) + 1;
+      // Calculate task duration in days (capped to visible range)
+      const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
       
-      // Calculate percentage positions
-      const startPercent = (startOffset / totalVisibleDays) * 100;
-      const widthPercent = (visibleDuration / totalVisibleDays) * 100;
+      // Calculate width as percentage of total width
+      const widthPercentage = (taskDuration / totalDays) * 100;
       
-      console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, Position: ${startPercent}%, Width: ${widthPercent}%`);
+      // Logging for debugging
+      console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, Position: ${leftPos}%, Width: ${widthPercentage}%`);
       
       return {
-        left: `${startPercent}%`,
-        width: `${widthPercent}%`,
+        left: `${leftPos}%`,
+        width: `${widthPercentage}%`,
         zIndex: 10, 
       };
     } else {
