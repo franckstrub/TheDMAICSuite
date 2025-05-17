@@ -627,18 +627,39 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     // Calculate width as percentage of total width
     const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
     
-    // Scale the width based on timeline view mode for better visibility
-    let widthPercentage = (taskDuration / totalDays) * 100;
+    // For different view modes, we need to adjust the calculation to ensure proper scaling
+    let widthPercentage;
     
-    // Ensure minimum width for better visibility based on view
+    // Basic calculation - percentage of total timeline
+    const basePercentage = (taskDuration / totalDays) * 100;
+    
     if (timelineView === 'weeks') {
-      // In week view, ensure single-day tasks are more visible
+      // Week view - most detailed view
+      // For week view, make sure even single-day tasks are clearly visible
+      const dayWidth = 100 / totalDays; // Width of a single day
+      widthPercentage = taskDuration * dayWidth;
+      
+      // Minimum width for single-day tasks to ensure visibility
+      widthPercentage = Math.max(widthPercentage, 4);
+    } 
+    else if (timelineView === 'months') {
+      // Month view - medium detail
+      // In month view, adjust for better visibility while maintaining relative proportions
+      widthPercentage = basePercentage;
+      
+      // Ensure minimum width for short tasks
       widthPercentage = Math.max(widthPercentage, 2);
-    } else if (timelineView === 'months') {
-      // In month view, ensure tasks have moderate visibility
-      widthPercentage = Math.max(widthPercentage, 1.5);
-    } else if (timelineView === 'years') {
-      // In year view, ensure even small tasks are visible
+    } 
+    else if (timelineView === 'years') {
+      // Year view - least detailed
+      widthPercentage = basePercentage;
+      
+      // Ensure minimum visibility
+      widthPercentage = Math.max(widthPercentage, 1);
+    } 
+    else {
+      // Default fallback
+      widthPercentage = basePercentage;
       widthPercentage = Math.max(widthPercentage, 1);
     }
     
