@@ -622,7 +622,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     
     // Calculate position (left offset) as percentage of total width
     const daysFromStart = differenceInDays(effectiveTaskStart, visibleStartDate);
-    const leftPos = (daysFromStart / totalDays) * 100;
+    const leftPos = Math.max((daysFromStart / totalDays) * 100, 0); // Ensure minimum of 0%
     
     // Calculate width as percentage of total width
     const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
@@ -635,7 +635,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     return {
       left: `${leftPos}%`,
       width: `${widthPercentage}%`,
-      zIndex: 10
+      zIndex: 10,
+      position: 'absolute',  // Ensure absolute positioning
+      overflow: 'hidden',    // Prevent text overflow
+      height: '2rem'         // Consistent height
     };
   };
 
