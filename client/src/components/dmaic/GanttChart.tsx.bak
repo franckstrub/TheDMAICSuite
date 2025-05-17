@@ -632,6 +632,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       width: `${widthPercentage}%`,
       zIndex: 10
     };
+  }
   };
 
   // Check if a date is a milestone
