@@ -15,7 +15,7 @@ interface Stakeholder {
 const StakeholderManagement = () => {
   // Sample initial stakeholders
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([
-    { id: "1", name: "John Doe", function: "Department Head" },
+    { id: "1", name: "Franck Strub", function: "Department Head" },
     { id: "2", name: "Jane Smith", function: "Process Owner" },
   ]);
 

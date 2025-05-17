@@ -192,7 +192,7 @@ export class MemStorage implements IStorage {
       id: this.currentUserId++,
       username: 'admin',
       password: 'admin123',
-      fullName: 'John Doe',
+      fullName: 'Franck Strub',
       role: 'admin',
       lastLogin: new Date()
     };
@@ -208,8 +208,8 @@ export class MemStorage implements IStorage {
       currentPhase: 'define',
       status: 'active',
       progress: 15,
-      startDate: new Date('2023-01-15'),
-      targetEndDate: new Date('2023-06-30'),
+      startDate: new Date('2025-01-15'),
+      targetEndDate: new Date('2025-07-30'),
       createdBy: admin.id,
       lastUpdated: new Date(),
       ganttViewMode: 'months',
