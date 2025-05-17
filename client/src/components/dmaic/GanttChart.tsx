@@ -25,7 +25,7 @@ export interface GanttTask {
   dependencies?: string;
   assignee?: string;
   priority?: 'low' | 'medium' | 'high';
-  phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control' | 'closure';
+  phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control';
   status?: 'not-started' | 'in-progress' | 'completed' | 'on-hold';
   lastUpdated?: string;
 }
@@ -46,7 +46,7 @@ const taskSchema = z.object({
   dependencies: z.string().optional(),
   assignee: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
-  phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control', 'closure']),
+  phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control']),
   status: z.enum(['not-started', 'in-progress', 'completed', 'on-hold']).optional(),
 });
 
@@ -72,7 +72,6 @@ const phaseColors = {
   analyze: 'bg-yellow-500',
   improve: 'bg-purple-500',
   control: 'bg-red-500',
-  closure: 'bg-gray-500',
 };
 
 const priorityColors = {
@@ -580,81 +579,60 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     }
   };
 
-  // Calculate the position and width of a task bar
+  // Calculate the position and width of a task bar based on its start and end dates
   const getTaskBarStyle = (task: GanttTask) => {
+    // Handle missing dates
     if (!task.startDate || !task.endDate) {
       console.error(`Missing dates for task ${task.name}:`, task.startDate, task.endDate);
       return { left: '0%', width: '3%', display: 'block' };
     }
     
+    // Parse the task start and end dates
     const taskStart = parseISO(task.startDate);
     const taskEnd = parseISO(task.endDate);
     
-    // Simple validation for dates
+    // Validate the parsed dates
     if (!(taskStart instanceof Date) || !(taskEnd instanceof Date) || 
         taskStart.toString() === 'Invalid Date' || taskEnd.toString() === 'Invalid Date') {
       console.error(`Invalid dates for task ${task.name}:`, task.startDate, task.endDate);
       return { left: '0%', width: '3%', display: 'block' };
     }
     
+    // Make sure start date is before end date
     if (isAfter(taskStart, taskEnd)) {
       console.error(`Task ${task.name} has start date after end date:`, task.startDate, task.endDate);
       return { left: '0%', width: '3%', display: 'block' };
     }
     
-    // For weekly view, calculate width based on days in visible range
-    if (timelineView === 'weeks') {
-      // Get the visible start and end dates from the timeline
-      const visibleStartDate = new Date(dateRange.start);
-      const visibleEndDate = new Date(dateRange.end);
-      
-      // Calculate total width in days for the entire visible timeline
-      const totalDays = differenceInDays(visibleEndDate, visibleStartDate) + 1;
-      
-      // Calculate relative positions of this task within the timeline
-      // For tasks that start before visible range, clamp to the start of visible range
-      const effectiveTaskStart = isBefore(taskStart, visibleStartDate) ? visibleStartDate : taskStart;
-      
-      // For tasks that end after visible range, clamp to the end of visible range
-      const effectiveTaskEnd = isAfter(taskEnd, visibleEndDate) ? visibleEndDate : taskEnd;
-      
-      // Calculate the start position as days from visible start
-      const daysFromStart = differenceInDays(effectiveTaskStart, visibleStartDate);
-      
-      // Calculate start position as percentage of total width
-      const leftPos = (daysFromStart / totalDays) * 100;
-      
-      // Calculate task duration in days (capped to visible range)
-      const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
-      
-      // Calculate width as percentage of total width
-      const widthPercentage = (taskDuration / totalDays) * 100;
-      
-      // Logging for debugging
-      console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, Position: ${leftPos}%, Width: ${widthPercentage}%`);
-      
-      return {
-        left: `${leftPos}%`,
-        width: `${widthPercentage}%`,
-        zIndex: 10, 
-      };
-    } else {
-      // Original calculation for months and years views
-      // Calculate distance from the start date as a percentage
-      const startOffset = Math.max(0, differenceInDays(taskStart, dateRange.start));
-      const duration = differenceInDays(taskEnd, taskStart) + 1;
-
-      // Calculate start position and width as percentages
-      const startPercent = (startOffset / totalDays) * 100;
-      // Set a minimum width for very short tasks for better visibility
-      const widthPercent = Math.max((duration / totalDays) * 100, 3);
-
-      return {
-        left: `${startPercent}%`,
-        width: `${widthPercent}%`,
-        zIndex: 10, // Ensure task bar appears above the background grid
-      };
-    }
+    // Get the visible range start and end dates
+    const visibleStartDate = new Date(dateRange.start);
+    const visibleEndDate = new Date(dateRange.end);
+    
+    // Calculate total days in the visible timeline
+    const totalDays = differenceInDays(visibleEndDate, visibleStartDate) + 1;
+    
+    // Handle tasks that start before or end after the visible range
+    const effectiveTaskStart = isBefore(taskStart, visibleStartDate) ? visibleStartDate : taskStart;
+    const effectiveTaskEnd = isAfter(taskEnd, visibleEndDate) ? visibleEndDate : taskEnd;
+    
+    // Calculate position (left offset) as percentage of total width
+    const daysFromStart = differenceInDays(effectiveTaskStart, visibleStartDate);
+    const leftPos = (daysFromStart / totalDays) * 100;
+    
+    // Calculate width as percentage of total width
+    const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
+    // Ensure minimum width for better visibility (especially for single-day tasks)
+    const widthPercentage = Math.max((taskDuration / totalDays) * 100, 1);
+    
+    // Logging for debugging
+    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, Position: ${leftPos}%, Width: ${widthPercentage}%`);
+    
+    return {
+      left: `${leftPos}%`,
+      width: `${widthPercentage}%`,
+      zIndex: 10
+    };
+  }
   };
 
   // Check if a date is a milestone
@@ -791,7 +769,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <option value="analyze">Analyze</option>
                           <option value="improve">Improve</option>
                           <option value="control">Control</option>
-                          <option value="closure">Closure</option>
                         </select>
                       </FormControl>
                       <FormMessage />
