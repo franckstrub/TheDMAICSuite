@@ -285,8 +285,8 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         {
           projectId,
           name: "Closure Phase",
-          startDate: controlDate || improveDate || analyzeDate || measureDate || defineDate || startDate,
-          endDate: endDate || controlDate,
+          startDate: controlDate,
+          endDate: endDate,
           progress: 0,
           dependencies: "Control Phase",
           assignee,
@@ -299,6 +299,19 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
 
       // Create all tasks
       const createdTasks = [];
+      
+      console.log("Generating DMAIC WBS with milestone dates:", {
+        projectId,
+        startDate,
+        endDate,
+        kickOffDate,
+        defineDate,
+        measureDate,
+        analyzeDate,
+        improveDate,
+        controlDate
+      });
+      
       for (const task of tasks) {
         // Make sure all tasks have valid dates, using fallbacks if needed
         if (!task.startDate) {
@@ -311,7 +324,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         try {
           const newTask = await storageToUse.createGanttTask(task);
           createdTasks.push(newTask);
-          console.log(`Created task: ${task.name}, Phase: ${task.phase}, Dates: ${task.startDate} - ${task.endDate}`);
+          console.log(`Created task: ${task.name}, Phase: ${task.phase}, Dates: ${task.startDate} - ${task.endDate}, Sequence: ${task.sequence}`);
         } catch (err) {
           console.error(`Error creating task ${task.name}:`, err);
         }
