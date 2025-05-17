@@ -287,7 +287,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     }
   }, [allDates, timelineView]);
 
-  // Milestones were defined earlier, so no need to redefine here
+  // Using the milestones defined earlier
 
   // Initialize form with default values
   const form = useForm<TaskFormValues>({
