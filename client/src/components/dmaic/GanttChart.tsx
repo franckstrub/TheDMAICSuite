@@ -403,7 +403,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Generate DMAIC WBS mutation
   const generateDMAICWBSMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {});
+      // Pass milestone dates from the project charter to ensure proper phase dates
+      return apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/generate-dmaic-wbs`, {
+        milestoneDates: {
+          projectStart: projectStartDate,
+          kickOff: milestoneDates?.kickOff,
+          define: milestoneDates?.define,
+          measure: milestoneDates?.measure,
+          analyze: milestoneDates?.analyze,
+          improve: milestoneDates?.improve,
+          control: milestoneDates?.control,
+          projectEnd: projectEndDate
+        }
+      });
     },
     onSuccess: (response: any) => {
       // Safely extract tasks count from response
