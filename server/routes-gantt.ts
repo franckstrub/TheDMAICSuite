@@ -165,29 +165,44 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         return res.status(404).json({ error: "Project charter not found" });
       }
 
-      // Get project dates from charter
-      const startDate = charter.startDate || new Date().toISOString().split('T')[0];
-      const endDate = charter.targetEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      // Check if milestone dates were passed in the request
+      const milestoneDates = req.body.milestoneDates || {};
       
-      // Get milestone dates or calculate based on project duration
-      const kickOffDate = charter.kick_off_date || startDate;
-      const defineDate = charter.define_phase_date || startDate;
-      const measureDate = charter.measure_phase_date || '';
-      const analyzeDate = charter.analyze_phase_date || '';
-      const improveDate = charter.improve_phase_date || '';
-      const controlDate = charter.control_phase_date || endDate;
+      // Get project dates from charter or request
+      const startDate = milestoneDates.projectStart || charter.startDate || new Date().toISOString().split('T')[0];
+      const endDate = milestoneDates.projectEnd || charter.targetEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // Get milestone dates from request or charter
+      const kickOffDate = milestoneDates.kickOff || charter.kick_off_date || startDate;
+      const defineDate = milestoneDates.define || charter.define_phase_date || '';
+      const measureDate = milestoneDates.measure || charter.measure_phase_date || '';
+      const analyzeDate = milestoneDates.analyze || charter.analyze_phase_date || '';
+      const improveDate = milestoneDates.improve || charter.improve_phase_date || '';
+      const controlDate = milestoneDates.control || charter.control_phase_date || endDate;
 
       // Get assignee from project leader
       const assignee = charter.projectLeader || '';
+      
+      console.log("Generating DMAIC WBS with milestone dates:", {
+        projectId,
+        startDate,
+        endDate,
+        kickOffDate,
+        defineDate,
+        measureDate,
+        analyzeDate,
+        improveDate,
+        controlDate
+      });
 
       // Default DMAIC WBS tasks
       const tasks = [
-        // Define Phase
+        // Define Phase - Start at project start, end at define milestone
         {
           projectId,
           name: "Define Phase",
           startDate,
-          endDate: defineDate || startDate,
+          endDate: defineDate || measureDate || analyzeDate || improveDate || controlDate || endDate,
           progress: 0,
           dependencies: "",
           assignee,
@@ -215,7 +230,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
           projectId,
           name: "Measure Phase",
           startDate: defineDate || startDate,
-          endDate: measureDate || "",
+          endDate: measureDate || analyzeDate || improveDate || controlDate || endDate,
           progress: 0,
           dependencies: "Define Phase",
           assignee,
@@ -228,8 +243,8 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         {
           projectId,
           name: "Analyze Phase",
-          startDate: measureDate || "",
-          endDate: analyzeDate || "",
+          startDate: measureDate || defineDate || startDate,
+          endDate: analyzeDate || improveDate || controlDate || endDate,
           progress: 0,
           dependencies: "Measure Phase",
           assignee,
@@ -242,8 +257,8 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         {
           projectId,
           name: "Improve Phase",
-          startDate: analyzeDate || "",
-          endDate: improveDate || "",
+          startDate: analyzeDate || measureDate || defineDate || startDate,
+          endDate: improveDate || controlDate || endDate,
           progress: 0,
           dependencies: "Analyze Phase",
           assignee,
@@ -256,7 +271,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         {
           projectId,
           name: "Control Phase",
-          startDate: improveDate || "",
+          startDate: improveDate || analyzeDate || measureDate || defineDate || startDate,
           endDate: controlDate || endDate,
           progress: 0,
           dependencies: "Improve Phase",
