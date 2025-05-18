@@ -1190,11 +1190,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                             key={`year-${yearIndex}-month-${monthIndex}`}
                             className={cn(
                               "flex-grow text-center text-xs p-1 border-r",
-                            )}
-                            style={{ width: `${calculateMonthWidth(monthsInYear)}%` }}
                               monthIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                               month.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                             )}
+                            style={{ width: `${calculateMonthWidth(monthsInYear)}%` }}
                           >
                             <div className="font-medium">{format(month[0], 'MMM')}</div>
                             <div className="text-[10px]">
