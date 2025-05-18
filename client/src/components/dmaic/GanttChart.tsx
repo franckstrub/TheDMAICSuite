@@ -123,19 +123,23 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
           savedMode = project.ganttViewMode;
+          console.log('1st useEFFECT Loaded saved Gantt view mode from Project:', savedMode);
         }
-      } else if ('id' in projectData && projectData.id === Number(projectId)) {
+      // } else if ('id' in projectData && projectData.id === Number(projectId)) {
         // Direct project object
-        const project = projectData as ProjectData;
+      //  const project = projectData as ProjectData;
         
-        if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
-          savedMode = project.ganttViewMode;
-        }
+      //  if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
+      //    savedMode = project.ganttViewMode;
+      //  }
       }
     }
 
-    // Set the timeline view
+    // Set the timeline view with project.ganttViewMode from database
+   
     setTimelineView(savedMode);
+    console.log('1st useEffect timelineView =', timelineView);
+
   }, [projectData, projectId]);
 
   // Fetch tasks using React Query for better caching and error handling
@@ -284,7 +288,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        console.log(`Fetching tasks for project ${projectId}...`);
+        console.log(`2nd useEffect Fetching tasks for project ${projectId}...`);
+        console.log('2nd useEffect timelineView =', timelineView);
         const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
         if (response.ok) {
           const data = await response.json();
@@ -319,6 +324,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   // Update date range based on project dates
   useEffect(() => {
+    console.log('in 3rd useffect Project start date:', projectStartDate);
     if (projectStartDate && projectEndDate) {
       setDateRange({
         start: parseISO(projectStartDate),
@@ -361,6 +367,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       };
 
       fetchTasks();
+      console.log("in 3rd useEffect after fetchtasks:");
 
       // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
