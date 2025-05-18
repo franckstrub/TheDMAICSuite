@@ -1169,12 +1169,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   // Add the last month if it exists
                   if (currentMonth.length > 0) {
                     monthsInYear.push(currentMonth);
-                  // Define a function that returns the appropriate class based on the width
-                  // const mywidth = 100 / monthsInYear.length;
-                  const mywidth = () => {
-                  const monthsCount = Date.length;
-                  let width = (4/3)*0.010/monthsCount;
-                  return width > 0 ? width : 84;
+                  const calculateMonthWidth = (monthsInYear: Date[][]) => {
+                    return 100 / monthsInYear.length; // Evenly distribute width across months
                   };
                   }
                   
@@ -1193,7 +1189,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <div 
                             key={`year-${yearIndex}-month-${monthIndex}`}
                             className={cn(
-                              "flex-grow style={{ width: `${mywidth}%` }} text-center text-xs p-1 border-r",
+                              "flex-grow text-center text-xs p-1 border-r",
+                            )}
+                            style={{ width: `${calculateMonthWidth(monthsInYear)}%` }}
                               monthIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                               month.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                             )}
