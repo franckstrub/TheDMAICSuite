@@ -1166,12 +1166,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     }
                   });
 
-                  // Add the last month if it exists
-                  if (currentMonth.length > 0) {
-                    monthsInYear.push(currentMonth);
                   const calculateMonthWidth = (monthsInYear: Date[][]) => {
                     return 100 / monthsInYear.length; // Evenly distribute width across months
                   };
+
+                  // Add the last month if it exists
+                  if (currentMonth.length > 0) {
+                    monthsInYear.push(currentMonth);
                   }
                   
                   return (
