@@ -103,9 +103,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     },
   });
 
-  // Fetch project details to get the saved view preference
+  // Fetch the specific project data directly instead of all projects
   const { data: projectData } = useQuery({
-    queryKey: ['/api/projects', projectId],
+    queryKey: [`/api/projects/${projectId}`],
     enabled: !!projectId
   });
 
@@ -114,68 +114,42 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     // Default to 'months' if no saved preference exists
     let savedMode: 'weeks' | 'months' | 'years' = 'months';
 
-    // Add debugging to verify projectData structure
-    console.log(`Project data received:`, projectData);
-
-    // Check if projectData contains the project object
+    // Check if we have valid project data
     if (projectData && typeof projectData === 'object') {
-      // Check different possible API response structures
+      // Handle the project object structure
       if ('project' in projectData && projectData.project) {
         // Single project object in { project: {...} } format
         const project = projectData.project as ProjectData;
-        console.log(`Found project in projectData.project:`, project);
-
+        
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
           savedMode = project.ganttViewMode;
-          console.log(`Using saved view mode from projectData.project: ${savedMode}`);
-        }
-      } else if ('projects' in projectData && Array.isArray(projectData.projects)) {
-        // Array of projects in { projects: [...] } format
-        console.log(`Found projects array, looking for project ID: ${projectId}`);
-        const project = projectData.projects.find(p => p.id === Number(projectId)) as ProjectData | undefined;
-
-        if (project) {
-          console.log(`Found matching project in array:`, project);
-
-          if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
-            savedMode = project.ganttViewMode;
-            console.log(`Using saved view mode from projects array: ${savedMode}`);
-          }
         }
       } else if ('id' in projectData && projectData.id === Number(projectId)) {
         // Direct project object
-        console.log(`Found direct project object:`, projectData);
         const project = projectData as ProjectData;
         
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
           savedMode = project.ganttViewMode;
-          console.log(`Using saved view mode from direct project object: ${savedMode}`);
         }
       }
     }
 
-    console.log(`Setting timeline view to: ${savedMode}`);
+    // Set the timeline view
     setTimelineView(savedMode);
   }, [projectData, projectId]);
 
-  // Fetch tasks when component mounts or projectId changes
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!projectId) return;
-
-      try {
-        const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
-        if (response.ok) {
-          const data = await response.json();
-          setTasks(data.tasks || []);
-        }
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      }
-    };
-
-    fetchTasks();
-  }, [projectId]);
+  // Fetch tasks using React Query for better caching and error handling
+  const { data: tasksData } = useQuery({
+    queryKey: [`/api/projects/${projectId}/gantt-tasks`],
+    enabled: !!projectId,
+    onSuccess: (data) => {
+      console.log('Received tasks:', data.tasks);
+      setTasks(data.tasks || []);
+    },
+    onError: (error) => {
+      console.error('Error fetching tasks:', error);
+    }
+  });
   
   // Convert milestone dates into Date objects for easy comparison
   const milestones = useMemo(() => {
@@ -198,6 +172,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   // Calculate number of days in the range of project start and end dates
   const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
+  const monthsinRange = Math.round(totalDays / 29)+1;
 
   // Generate all dates within the range: days scale below a  selected week scale
   const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
@@ -666,13 +641,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                            (visibleEndDate.getFullYear() - visibleStartDate.getFullYear()) * 12 + 1;
       
       // Adjust for month span (a task spanning 2 months should be about 2/visibleMonths of the width)
-      const monthSpanWidth = 2*(monthsCount + 1) / visibleMonths * 100;
+      const monthSpanWidth = (monthsCount + 1) / visibleMonths * 100;
       
-      // For very short tasks (less than a month), ensure they're at least one month wide in the view
-      // widthPercentage = Math.max(basePercentage, monthSpanWidth);
+      // The width should be proportional to the number of months the task spans
+      widthPercentage = monthSpanWidth;
       
-      // Ensure minimum visibility
-      // widthPercentage = Math.max(widthPercentage, 8);
+      // Ensure minimum visibility for short tasks
+      widthPercentage = Math.max(widthPercentage, 6);
     } 
     else {
       // Default fallback
@@ -1152,7 +1127,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   const monthsInYear: Date[][] = [];
                   let currentMonth: Date[] = [];
                   let currentMonthNumber: number | null = null;
-
                   year.forEach(date => {
                     const monthNumber = date.getMonth();
                     if (currentMonthNumber === null || monthNumber !== currentMonthNumber) {
@@ -1165,16 +1139,17 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       currentMonth.push(date);
                     }
                   });
-
-                  const calculateMonthWidth = (monthsInYear: Date[][]) => {
-                    return 100 / monthsInYear.length; // Evenly distribute width across months
-                  };
-
+                  
                   // Add the last month if it exists
                   if (currentMonth.length > 0) {
                     monthsInYear.push(currentMonth);
                   }
-                  
+
+                  const calculateMonthWidth = (monthsInYear: Date[][]) => {
+                    // monthsinRange=monthsinRange+monthsInYear.length;
+                    return 100 / monthsinRange; // Evenly distribute width across months
+                  };
+
                   return (
                     <div 
                       key={`year-${yearIndex}`}
