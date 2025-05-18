@@ -196,10 +196,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Calculate number of days in the range
+  // Calculate number of days in the range of project start and end dates
   const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
 
-  // Generate all dates within the range
+  // Generate all dates within the range: days scale below a  selected week scale
   const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
 
   // Group dates by weeks, months, or years based on view mode
@@ -629,6 +629,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     
     // For different view modes, we need to adjust the calculation to ensure proper scaling
     let widthPercentage;
+    widthPercentage = taskDuration/totalDays * 100;
+    widthPercentage = Math.max(widthPercentage, 2); // Ensure minimum width for visibility
     
     // Basic calculation - percentage of total timeline
     const basePercentage = (taskDuration / totalDays) * 100;
@@ -637,18 +639,18 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       // Week view - most detailed view
       // For week view, make sure even single-day tasks are clearly visible
       const dayWidth = 100 / totalDays; // Width of a single day
-      widthPercentage = taskDuration * dayWidth;
+      // widthPercentage = taskDuration * dayWidth;
       
       // Minimum width for single-day tasks to ensure visibility
-      widthPercentage = Math.max(widthPercentage, 4);
+      // widthPercentage = Math.max(widthPercentage, 4);
     } 
     else if (timelineView === 'months') {
       // Month view - medium detail
       // In month view, adjust for better visibility while maintaining relative proportions
-      widthPercentage = basePercentage;
+      // widthPercentage = basePercentage;
       
       // Ensure minimum width for short tasks
-      widthPercentage = Math.max(widthPercentage, 2);
+      // widthPercentage = Math.max(widthPercentage, 2);
     } 
     else if (timelineView === 'years') {
       // Year view - in this view we need to calculate column-based widths
@@ -664,13 +666,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                            (visibleEndDate.getFullYear() - visibleStartDate.getFullYear()) * 12 + 1;
       
       // Adjust for month span (a task spanning 2 months should be about 2/visibleMonths of the width)
-      const monthSpanWidth = (monthsCount + 1) / visibleMonths * 100;
+      const monthSpanWidth = 2*(monthsCount + 1) / visibleMonths * 100;
       
       // For very short tasks (less than a month), ensure they're at least one month wide in the view
-      widthPercentage = Math.max(basePercentage, monthSpanWidth);
+      // widthPercentage = Math.max(basePercentage, monthSpanWidth);
       
       // Ensure minimum visibility
-      widthPercentage = Math.max(widthPercentage, 8);
+      // widthPercentage = Math.max(widthPercentage, 8);
     } 
     else {
       // Default fallback
@@ -1167,8 +1169,15 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   // Add the last month if it exists
                   if (currentMonth.length > 0) {
                     monthsInYear.push(currentMonth);
+                  // Define a function that returns the appropriate class based on the width
+                  // const mywidth = 100 / monthsInYear.length;
+                  const mywidth = () => {
+                  const monthsCount = Date.length;
+                  let width = (4/3)*0.010/monthsCount;
+                  return width > 0 ? width : 84;
+                  };
                   }
-
+                  
                   return (
                     <div 
                       key={`year-${yearIndex}`}
@@ -1178,13 +1187,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       <div className="bg-blue-100 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
                         {format(year[0], 'yyyy')}
                       </div>
-                      {/* Months in year - Second row (also frozen) */}
+                      {/* Months in year - Second row (also frozen) min-w-[80px] */}
                       <div className="flex sticky top-10 z-20 bg-white">
                         {monthsInYear.map((month, monthIndex) => (
                           <div 
                             key={`year-${yearIndex}-month-${monthIndex}`}
                             className={cn(
-                              "flex-grow min-w-[60px] text-center text-xs p-1 border-r",
+                              "flex-grow style={{ width: `${mywidth}%` }} text-center text-xs p-1 border-r",
                               monthIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                               month.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                             )}
