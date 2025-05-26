@@ -1148,16 +1148,15 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   }
 
                   return (
-                    <>
+                    <div className="flex flex-col">
                       {/* Month headers - First row */}
                       <div className="flex sticky top-0 z-30">
                         {groupedDates.map((month, monthIndex) => (
                           <div 
                             key={`month-header-${monthIndex}`}
-                            className="bg-blue-50 text-center p-1 border-b border-r text-xs font-medium flex-grow"
+                            className="bg-blue-50 text-center p-1 border-b border-r text-xs font-medium"
                             style={{ 
-                              minWidth: `${(month.length / allDates.length) * 100}%`,
-                              maxWidth: `${(month.length / allDates.length) * 100}%`
+                              width: `${(month.length / allDates.length) * 100}%`
                             }}
                           >
                             {format(month[0], 'MMM yyyy')}
@@ -1170,12 +1169,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <div 
                             key={`week-header-${weekIndex}`}
                             className={cn(
-                              "text-center text-xs p-1 border-r bg-blue-100 flex-grow",
+                              "text-center text-xs p-1 border-r bg-blue-100",
                               week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                             )}
                             style={{ 
-                              minWidth: `${(week.length / allDates.length) * 100}%`,
-                              maxWidth: `${(week.length / allDates.length) * 100}%`
+                              width: `${(week.length / allDates.length) * 100}%`
                             }}
                           >
                             <div className="text-[10px] font-medium">
@@ -1194,7 +1192,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           </div>
                         ))}
                       </div>
-                    </>
+                    </div>
                   );
                 })()
               ) : (
