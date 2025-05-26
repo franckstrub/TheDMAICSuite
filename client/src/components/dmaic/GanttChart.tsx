@@ -1419,19 +1419,23 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         uniqueWeeks.push(currentWeek);
                       }
                       
-                      return uniqueWeeks.map((week, weekIndex) => (
-                        <div 
-                          key={`task-week-bg-${weekIndex}`}
-                          className={cn(
-                            "border-r h-full",
-                            week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
-                              weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
-                          )}
-                          style={{ 
-                            width: `${(week.length / allDates.length) * 100}%`
-                          }}
-                        />
-                      ));
+                      return (
+                        <div className="flex w-full h-full">
+                          {uniqueWeeks.map((week, weekIndex) => (
+                            <div 
+                              key={`task-week-bg-${weekIndex}`}
+                              className={cn(
+                                "border-r h-full",
+                                week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
+                                  weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                              )}
+                              style={{ 
+                                width: `${(week.length / allDates.length) * 100}%`
+                              }}
+                            />
+                          ))}
+                        </div>
+                      );
                     })()
                   ) : (
                     // Years view background with months
