@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay, startOfWeek, endOfWeek, getWeek } from 'date-fns';
+import { format, addDays, isBefore, parseISO, differenceInDays, isAfter, isSameDay, startOfWeek, endOfWeek, getWeek, startOfMonth, endOfMonth, getMonth, getDaysInMonth } from 'date-fns';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Calendar } from "../../components/ui/calendar";
@@ -70,7 +70,7 @@ const phaseColors = {
   define: 'bg-blue-500',
   measure: 'bg-green-500',
   analyze: 'bg-yellow-500',
-  improve: 'bg-purple-500',
+  improve: 'bg-purple-700',
   control: 'bg-red-500',
 };
 
@@ -81,9 +81,9 @@ const priorityColors = {
 }
 
 const statusColors = {
-  'not-started': 'bg-gray-200',
-  'in-progress': 'bg-blue-200',
-  'completed': 'bg-green-200',
+  // 'not-started': 'bg-gray-200',
+  // 'in-progress': 'bg-blue-200',
+  // 'completed': 'bg-green-200',
   'on-hold': 'bg-amber-200',
 }
 
@@ -124,6 +124,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
           savedMode = project.ganttViewMode;
           console.log('1st useEFFECT Loaded saved Gantt view mode from Project:', savedMode);
+          // Set the timeline view with project.ganttViewMode from database
+          setTimelineView(savedMode);
         }
       // } else if ('id' in projectData && projectData.id === Number(projectId)) {
         // Direct project object
@@ -135,9 +137,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       }
     }
 
-    // Set the timeline view with project.ganttViewMode from database
-   
-    setTimelineView(savedMode);
     console.log('1st useEffect timelineView =', timelineView);
 
   }, [projectData, projectId]);
@@ -176,7 +175,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   // Calculate number of days in the range of project start and end dates
   const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
-  const monthsinRange = Math.round(totalDays / 29)+1;
+  const monthsinRange = Math.round(totalDays / 29);
+  const weeksinRange = totalDays / 7;
+
 
   // Generate all dates within the range: days scale below a  selected week scale
   const allDates = Array.from({ length: totalDays }, (_, i) => addDays(dateRange.start, i));
@@ -190,8 +191,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       let currentWeekStartDate: Date | null = null;
 
       allDates.forEach(date => {
-        // Start a new week on Sunday or first date
-        if (currentWeekStartDate === null || date.getDay() === 0) {
+        // Start a new week on Monday or first date
+        if (currentWeekStartDate === null || date.getDay() === 1) {
           if (currentWeek.length > 0) {
             weeks.push(currentWeek);
           }
@@ -596,77 +597,68 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     const visibleEndDate = new Date(dateRange.end);
     
     // Calculate total days in the visible timeline
-    const totalDays = differenceInDays(visibleEndDate, visibleStartDate) + 1;
+    const totalvisibleDays = differenceInDays(visibleEndDate, visibleStartDate)+1;
     
     // Handle tasks that start before or end after the visible range
     const effectiveTaskStart = isBefore(taskStart, visibleStartDate) ? visibleStartDate : taskStart;
     const effectiveTaskEnd = isAfter(taskEnd, visibleEndDate) ? visibleEndDate : taskEnd;
     
-    // Calculate position (left offset) as percentage of total width
-    const daysFromStart = differenceInDays(effectiveTaskStart, visibleStartDate);
-    const leftPos = Math.max((daysFromStart / totalDays) * 100, 0); // Ensure minimum of 0%
-    
+    // Calculate left position (left offset) with days from start of task
+    const daysFromStart = Math.max(differenceInDays(effectiveTaskStart, visibleStartDate)); // Ensure minimum of 0 days
+    // Calculate left positiom as percentage of total days
+    let leftPosPercentage = Math.max((daysFromStart/totalvisibleDays) * 100,0); // Ensure minimum left position for visibility
+
     // Calculate width as percentage of total width
     const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
-    
-    // For different view modes, we need to adjust the calculation to ensure proper scaling
     let widthPercentage;
-    widthPercentage = taskDuration/totalDays * 100;
-    widthPercentage = Math.max(widthPercentage, 2); // Ensure minimum width for visibility
+    widthPercentage = (taskDuration/totalvisibleDays) * 100;
+    widthPercentage = Math.max(widthPercentage, 1); // Ensure minimum width for visibility
     
     // Basic calculation - percentage of total timeline
-    const basePercentage = (taskDuration / totalDays) * 100;
+    // const basePercentage = (taskDuration / totalDays) * 100;
     
     if (timelineView === 'weeks') {
       // Week view - most detailed view
       // For week view, make sure even single-day tasks are clearly visible
-      const dayWidth = 100 / totalDays; // Width of a single day
-      // widthPercentage = taskDuration * dayWidth;
       
       // Minimum width for single-day tasks to ensure visibility
-      // widthPercentage = Math.max(widthPercentage, 4);
+      // widthPercentage = Math.max(widthPercentage, 1);
     } 
     else if (timelineView === 'months') {
       // Month view - medium detail
       // In month view, adjust for better visibility while maintaining relative proportions
-      // widthPercentage = basePercentage;
-      
-      // Ensure minimum width for short tasks
-      // widthPercentage = Math.max(widthPercentage, 2);
+      // Get month proportion of the task duration
+      const taskDurationInWeeks = taskDuration/7;
+
+      widthPercentage = (taskDurationInWeeks/weeksinRange) * 100;
+      widthPercentage = Math.max(widthPercentage, 2);
     } 
     else if (timelineView === 'years') {
       // Year view - in this view we need to calculate column-based widths
       // For year view, we need to adjust width calculation to match month boundaries
-      
+      //Get days left from 01st of the month
+      const daysleft = differenceInDays(visibleStartDate, startOfMonth(visibleStartDate));
+      const leftPosinDays = Math.max((daysleft+daysFromStart), 0); // Ensure minimum of 0 days
       // Get month proportion of the task duration
-      const startMonth = effectiveTaskStart.getMonth();
-      const endMonth = effectiveTaskEnd.getMonth();
-      const monthsCount = (endMonth - startMonth) + (effectiveTaskEnd.getFullYear() - effectiveTaskStart.getFullYear()) * 12;
-      
-      // In year view, each month is approximately 1/12 of total width, adjusted for visible range
-      const visibleMonths = (visibleEndDate.getMonth() - visibleStartDate.getMonth()) + 
-                           (visibleEndDate.getFullYear() - visibleStartDate.getFullYear()) * 12 + 1;
-      
-      // Adjust for month span (a task spanning 2 months should be about 2/visibleMonths of the width)
-      const monthSpanWidth = (monthsCount + 1) / visibleMonths * 100;
-      
-      // The width should be proportional to the number of months the task spans
-      widthPercentage = monthSpanWidth;
-      
-      // Ensure minimum visibility for short tasks
-      widthPercentage = Math.max(widthPercentage, 6);
+      const leftPosInMonths = leftPosinDays/30.5; // given that a month has 30 or 31 days if not 28 or 29!!
+      const taskDurationInMonths = taskDuration/30.5;
+      const daysright = differenceInDays(endOfMonth(visibleEndDate), visibleEndDate);
+      const totalVisibleDays = daysleft+differenceInDays(visibleEndDate, visibleStartDate)+1+daysright;
+      const monthsinYRange = Math.round(totalVisibleDays / 29);
+
+      leftPosPercentage = (leftPosInMonths/monthsinYRange) * 100;
+      widthPercentage = (taskDurationInMonths/monthsinYRange) * 100;
+      widthPercentage = Math.max(widthPercentage, 1);
     } 
     else {
       // Default fallback
-      widthPercentage = basePercentage;
-      widthPercentage = Math.max(widthPercentage, 1);
     }
     
     // Logging for debugging
-    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, View: ${timelineView}, Position: ${leftPos}%, Width: ${widthPercentage}%`);
+    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, View: ${timelineView}, Position: ${leftPosPercentage}%, Width: ${widthPercentage}%`);
     
     return {
-      left: `${leftPos}%`,
+      left: `${leftPosPercentage}%`,
       width: `${widthPercentage}%`,
       zIndex: 10,
       position: 'absolute',
@@ -843,6 +835,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <Calendar
                             mode="single"
                             selected={field.value ? parseISO(field.value) : undefined}
+                            defaultMonth={field.value ? parseISO(field.value) : new Date()} // Show current month if no selection
                             onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
                             disabled={(date) => isBefore(date, dateRange.start) || isAfter(date, dateRange.end)}
                             initialFocus
@@ -879,6 +872,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <Calendar
                             mode="single"
                             selected={field.value ? parseISO(field.value) : undefined}
+                            defaultMonth={field.value ? parseISO(field.value) : new Date()} // Show current month if no selection
                             onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
                             disabled={(date) => 
                               isBefore(date, form.getValues().startDate ? parseISO(form.getValues().startDate) : dateRange.start) || 
@@ -1036,7 +1030,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   >
                     {/* Week header - First row (always visible) */}
                     <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
-                      Week {getWeek(week[0])}
+                      Week {getWeek(week[0], { weekStartsOn: 1 })}
                       <div className="text-[10px]">
                         {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d, yyyy')}
                       </div>
@@ -1071,7 +1065,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   let currentWeekNumber: number | null = null;
 
                   month.forEach(date => {
-                    const weekNumber = getWeek(date);
+                    const weekNumber = getWeek(date, { weekStartsOn: 1 });
                     if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
                       if (currentWeek.length > 0) {
                         weeksInMonth.push(currentWeek);
@@ -1086,16 +1080,43 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   // Add the last week if it exists
                   if (currentWeek.length > 0) {
                     weeksInMonth.push(currentWeek);
-                  }
+                  };
+                  
+                  groupedDates.map((week, weekIndex) => {});
+
+                  const monthsinRange = () => {
+                    return(totalDays / 30.5); // Assuming average month length of 30.5 days
+                  };
+
+                  const calculateWeekWidth = (weekIndex:number) => {
+                    // monthsinRange=monthsinRange+monthsInYear.length;
+                    if (weekIndex==0) {
+                      return (100*((weeksInMonth[0].length/7)/(weeksinRange))); // First month takes partial width
+                    }
+                    else {
+                    return (100 / (weeksinRange)); // Evenly distribute width across weeks
+                    }
+                  };
+                 const calculateMonthWidth = (monthIndex:number) => {
+                    // monthsinRange=monthsinRange+monthsInYear.length;
+                    if (monthIndex==0 || monthIndex == monthsinRange()-1){
+                      const daysInMonth = getDaysInMonth(month[monthIndex]); 
+                      return (100*((month.length/daysInMonth)/monthsinRange())); // First month takes partial width
+                    }
+                    else {
+                      return (100 / monthsinRange()); // Evenly distribute width across months
+                    }
+                  };
 
                   return (
                     <div 
                       key={`month-${monthIndex}`}
                       className="flex flex-col flex-grow border-r"
+                      style={{ width: `${calculateMonthWidth(monthIndex)}%` }}
                     >
                       {/* Month header - First row (always visible) */}
                       <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
-                        {format(month[0], 'MMMM yyyy')}
+                        {format(month[0], 'MMM yy')}
                       </div>
                       {/* Weeks in month - Second row (also frozen) */}
                       <div className="flex sticky top-10 z-20 bg-white">
@@ -1103,17 +1124,18 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <div 
                             key={`month-${monthIndex}-week-${weekIndex}`}
                             className={cn(
-                              "flex-grow min-w-[50px] text-center text-xs p-1 border-r",
+                              "flex-grow min-w-[6px] text-center text-xs p-1 border-r",
                               weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                               week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                             )}
+                            style={{ width: `${calculateWeekWidth(weekIndex)}%` }}
                           >
-                            <div className="font-medium">W{getWeek(week[0])}</div>
-                            <div className="text-[10px]">
-                              {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d')}
+                            <div className="text-[6px]">W{getWeek(week[0], { weekStartsOn: 1 })}</div>
+                            <div className="text-[6px]">
+                               {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d')}
                             </div>
                             {week.some(date => isMilestoneDate(date)) && (
-                              <div className="text-[9px] font-semibold text-amber-700 mt-1">
+                              <div className="text-[6px] font-semibold text-amber-700 mt-1">
                                 {week.filter(date => isMilestoneDate(date)).map(date => 
                                   <span key={date.toISOString()} className="mr-1 px-1 bg-amber-100 rounded">
                                     {getMilestoneLabel(date)} ({format(date, 'd')})
@@ -1152,21 +1174,40 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     monthsInYear.push(currentMonth);
                   }
 
-                  const calculateMonthWidth = (monthsInYear: Date[][]) => {
+                  const calculateYearWidth = () => {
                     // monthsinRange=monthsinRange+monthsInYear.length;
-                    return 100 / monthsinRange; // Evenly distribute width across months
+                    return (100*monthsInYear.length / monthsinRange); // Evenly distribute width across months
+                  };
+                 const calculateMonthWidth = (monthIndex:number) => {
+                    // monthsinRange=monthsinRange+monthsInYear.length;
+                    if (monthIndex > -1 && monthIndex < 12 && monthsinRange > 0){
+                      let factor = 1;
+                      const daysInMonth = getDaysInMonth(monthIndex+1); // monthIndex is 0-based, so add 1 for getDaysInMonth
+                      if (monthIndex+1 ===  2) {
+                        factor = daysInMonth/30;
+                      }
+                      else if (monthIndex+1 === 1 || monthIndex+1 === 3 || monthIndex+1 === 5 || monthIndex+1 === 7 || monthIndex+1 === 8 || monthIndex+1 === 10 || monthIndex+1 === 12) {
+                        factor = daysInMonth/30;
+                      }
+                      return (100*factor / monthsinRange); // Evenly distribute width across months
+                    }
+                    else {return(100)
+                    }
                   };
 
                   return (
                     <div 
                       key={`year-${yearIndex}`}
                       className="flex flex-col flex-grow border-r"
+                      style={{ width: `${calculateYearWidth()}%` }}
                     >
                       {/* Year header - First row (always visible) */}
-                      <div className="bg-blue-100 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
+                      <div className={`text-center p-1 border-b text-xs font-medium sticky top-0 z-30
+                        ${yearIndex === 0 ? "bg-blue-200" : "bg-blue-100"}`}
+                        >
                         {format(year[0], 'yyyy')}
                       </div>
-                      {/* Months in year - Second row (also frozen) min-w-[80px] */}
+                      {/* Months in year - Second row (also frozen)  */}
                       <div className="flex sticky top-10 z-20 bg-white">
                         {monthsInYear.map((month, monthIndex) => (
                           <div 
@@ -1176,11 +1217,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                               monthIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                               month.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                             )}
-                            style={{ width: `${calculateMonthWidth(monthsInYear)}%` }}
+                            style={{ width: `${calculateMonthWidth(getMonth(month[0]))}%` }}
                           >
                             <div className="font-medium">{format(month[0], 'MMM')}</div>
                             <div className="text-[10px]">
-                              {format(month[0], 'd')} - {format(month[month.length - 1], 'd')}
+                              {format("01", 'd')} - {format(endOfMonth(month[month.length - 1]), 'd')}
                             </div>
                             {month.some(date => isMilestoneDate(date)) && (
                               <div className="text-[9px] font-semibold text-amber-700 mt-1">
@@ -1284,7 +1325,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       let currentWeekNumber: number | null = null;
 
                       month.forEach(date => {
-                        const weekNumber = getWeek(date);
+                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
                         if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
                           if (currentWeek.length > 0) {
                             weeksInMonth.push(currentWeek);
@@ -1300,7 +1341,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       if (currentWeek.length > 0) {
                         weeksInMonth.push(currentWeek);
                       }
-
+                      
                       return (
                         <div key={`task-month-bg-${monthIndex}`} className="flex flex-col flex-grow">
                           <div className="h-2 bg-transparent"></div> {/* Space for month header */}
@@ -1312,7 +1353,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                                   "flex-grow border-r",
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                                   week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
-                                )}
+                                )}                              
                               ></div>
                             ))}
                           </div>
@@ -1344,11 +1385,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       if (currentMonth.length > 0) {
                         monthsInYear.push(currentMonth);
                       }
+                      const calculateYearWidth = () => {
+                      // monthsinRange=monthsinRange+monthsInYear.length;
+                        return (100*monthsInYear.length / monthsinRange); // Evenly distribute width across months
+                      };
+                      const calculateMonthWidth = () => {
+                        return (100 / monthsinRange); // Evenly distribute width across weeks
+                      };
 
                       return (
-                        <div key={`task-year-bg-${yearIndex}`} className="flex flex-col flex-grow">
-                          <div className="h-2 bg-transparent"></div> {/* Space for year header */}
-                          <div className="flex flex-grow">
+                        <div key={`task-year-bg-${yearIndex}`} className="flex flex-col flex-grow"
+                          style={{ width: `${calculateYearWidth()}%` }} >
+                          <div className="h-2 bg-transparent"  ></div> {/* Space for year header */}
+                          <div className="flex flex-grow" >
                             {monthsInYear.map((month, monthIndex) => (
                               <div 
                                 key={`task-year-month-bg-${yearIndex}-${monthIndex}`}
@@ -1357,6 +1406,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                                   monthIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
                                   month.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
                                 )}
+                                 style={{ width: `${calculateMonthWidth()}%` }}
                               ></div>
                             ))}
                           </div>
@@ -1371,19 +1421,40 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       "absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
                       phaseColors[task.phase] || 'bg-gray-500',
                       priorityColors[task.priority || 'medium'],
-                      isTaskLate(task) ? 'border border-red-500' : ''
+                      isTaskLate(task) ? 'border-2 border-red-500' : ''
                     )}
-                    style={getTaskBarStyle(task)}
+                    style={{...getTaskBarStyle(task), zIndex: 10}}
+                    title={`${task.name} (${task.progress}%) - ${task.status || 'No description'}
+                    ${isTaskLate(task) ? ' - Late' : ''} ${task.startDate} - ${task.endDate}`}
                   >
                     <div className="truncate max-w-full">
                       {task.name} ({task.progress}%)
                     </div>
+                    {/* Custom Tooltip */}
+  {/* <div className="absolute bottom-full left-0 mb-2 w-64 bg-gray-800 text-white text-sm rounded p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+    <div className="font-bold">{task.name}</div>
+    <div>Progress: {task.progress}%</div>
+    <div>Status: {task.status}</div>
+    <div>Phase: {task.phase}</div>
+    <div>Priority: {task.priority}</div> */}
+    {/* {task.description && <div className="mt-1 text-xs">{task.description}</div>} */}
+    
+    {/* Tooltip Arrow */}
+    {/* <div className="absolute top-full left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-gray-800"></div>
+  </div> */}
 
                     {/* Progress Overlay */}
                     <div 
                       className="absolute left-0 top-0 bottom-0 bg-black bg-opacity-20 rounded-l"
                       style={{ width: `${task.progress}%` }}
                     ></div>
+                    {/* On-hold Overlay */}
+                    {task.status === 'on-hold' ? (
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 bg-white bg-opacity-50 rounded-l"
+                      style={{width: '100%'}}
+                    />
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -1429,12 +1500,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         <div className="flex gap-4">
           {Object.entries(statusColors).map(([status, color]) => (
             <div key={status} className="flex items-center">
-              <div className={`w-4 h-4 ${color} mr-1 rounded`}></div>
+              <div className={`w-4 h-4 ${color} opacity-50 mr-1 rounded`}></div>
               <span className="text-sm capitalize">{status.replace('-', ' ')}</span>
             </div>
           ))}
           <div className="flex items-center">
-            <div className="w-4 h-4 bg-gray-200 border border-red-500 mr-1 rounded"></div>
+            <div className="w-4 h-4 bg-gray-200 border-2 border-red-500 mr-1 rounded"></div>
             <span className="text-sm">Late</span>
           </div>
         </div>
