@@ -28,6 +28,7 @@ export interface GanttTask {
   phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control';
   status?: 'not-started' | 'in-progress' | 'completed' | 'on-hold';
   sequence?: number;
+  comments?: string;
   lastUpdated?: string;
 }
 
@@ -286,6 +287,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       priority: 'medium',
       phase: 'define',
       status: 'not-started',
+      comments: '',
     },
   });
 
@@ -558,6 +560,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       priority: task.priority || 'medium',
       phase: task.phase,
       status: task.status || 'not-started',
+      comments: task.comments || '',
     });
 
     setEditingTaskId(task.id || null);
@@ -1047,6 +1050,24 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="comments"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Comments</FormLabel>
+                    <FormControl>
+                      <textarea
+                        className="w-full p-2 border rounded-md resize-vertical min-h-[80px]"
+                        placeholder="Add any additional notes or comments about this task..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="flex justify-end space-x-2">
                 <Button
