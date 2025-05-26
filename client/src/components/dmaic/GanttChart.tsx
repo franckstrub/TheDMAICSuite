@@ -1121,13 +1121,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   </div>
                 ))
               ) : timelineView === 'months' ? (
-                // Month view with unique weeks that can span across months
+                // Month view with months and independent weeks
                 (() => {
                   // Get all unique weeks across all months
                   const uniqueWeeks: Date[][] = [];
-                  const seenWeekNumbers = new Set<number>();
-                  
-                  // Flatten all dates and group by week number
                   const allDates = groupedDates.flat();
                   let currentWeek: Date[] = [];
                   let currentWeekNumber: number | null = null;
@@ -1150,40 +1147,55 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     uniqueWeeks.push(currentWeek);
                   }
 
-                  return uniqueWeeks.map((week, weekIndex) => (
-                    <div 
-                      key={`week-${weekIndex}`}
-                      className="flex flex-col flex-grow border-r"
-                    >
-                      {/* Month header - showing month of week start */}
-                      <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
-                        {format(week[0], 'MMM yyyy')}
+                  return (
+                    <>
+                      {/* Month headers - First row */}
+                      <div className="flex sticky top-0 z-30">
+                        {groupedDates.map((month, monthIndex) => (
+                          <div 
+                            key={`month-header-${monthIndex}`}
+                            className="bg-blue-50 text-center p-1 border-b border-r text-xs font-medium flex-grow"
+                            style={{ 
+                              minWidth: `${(month.length / allDates.length) * 100}%`,
+                              maxWidth: `${(month.length / allDates.length) * 100}%`
+                            }}
+                          >
+                            {format(month[0], 'MMM yyyy')}
+                          </div>
+                        ))}
                       </div>
-                      {/* Week header - Second row */}
-                      <div className="flex sticky top-6 z-20 bg-white">
-                        <div 
-                          className={cn(
-                            "flex-1 text-center text-xs p-1 border-r bg-blue-100",
-                            week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
-                          )}
-                        >
-                          <div className="text-[10px] font-medium">
-                            W{getWeek(week[0], { weekStartsOn: 1 })}
-                          </div>
-                          <div className="text-[9px]">
-                            {format(week[0], 'dd')} - {format(week[week.length - 1], 'dd')}
-                          </div>
-                          {week.some(date => isMilestoneDate(date)) && (
-                            <div className="text-[8px] font-semibold text-amber-700 truncate mt-1">
-                              {week.filter(date => isMilestoneDate(date)).map(date => 
-                                getMilestoneLabel(date)
-                              ).join(', ')}
+                      {/* Week headers - Second row */}
+                      <div className="flex sticky top-6 z-20">
+                        {uniqueWeeks.map((week, weekIndex) => (
+                          <div 
+                            key={`week-header-${weekIndex}`}
+                            className={cn(
+                              "text-center text-xs p-1 border-r bg-blue-100 flex-grow",
+                              week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                            )}
+                            style={{ 
+                              minWidth: `${(week.length / allDates.length) * 100}%`,
+                              maxWidth: `${(week.length / allDates.length) * 100}%`
+                            }}
+                          >
+                            <div className="text-[10px] font-medium">
+                              W{getWeek(week[0], { weekStartsOn: 1 })}
                             </div>
-                          )}
-                        </div>
+                            <div className="text-[9px]">
+                              {format(week[0], 'dd')} - {format(week[week.length - 1], 'dd')}
+                            </div>
+                            {week.some(date => isMilestoneDate(date)) && (
+                              <div className="text-[8px] font-semibold text-amber-700 truncate mt-1">
+                                {week.filter(date => isMilestoneDate(date)).map(date => 
+                                  getMilestoneLabel(date)
+                                ).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ));
+                    </>
+                  );
                 })()
               ) : (
                 // Years view with months
