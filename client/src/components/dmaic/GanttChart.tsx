@@ -1420,17 +1420,20 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       }
                       
                       return uniqueWeeks.map((week, weekIndex) => (
-                        <div 
+                        <div className="flex flex-grow"
+                          style={{ width: `1000px` }} >
+                          <div
                           key={`task-week-bg-${weekIndex}`}
                           className={cn(
-                            "border-r h-full",
+                            "overflow-x-auto w-full flex min-w-max border-r h-full flex-col flex-shrink-0",
                             week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
                               weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                           )}
                           style={{ 
                             width: `${(week.length / allDates.length) * 100}%`
                           }}
-                        />
+                          />
+                        </div>
                       ));
                     })()
                   ) : (
