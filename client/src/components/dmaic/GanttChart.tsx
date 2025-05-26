@@ -105,6 +105,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     mutationFn: async (viewMode: 'weeks' | 'months' | 'years') => {
       return await apiRequest("POST", `/api/projects/${projectId}/gantt-view-mode`, { viewMode });
     },
+    onSuccess: () => {
+      // Invalidate and refetch project data to get the updated view mode
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
+    },
   });
 
   // Fetch the specific project data directly instead of all projects
@@ -1492,8 +1496,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       isTaskLate(task) ? 'border-2 border-red-500' : ''
                     )}
                     style={{...getTaskBarStyle(task), zIndex: 10}}
-                    title={`${task.name} (${task.progress}%) - ${task.status || 'No description'}
-                    ${isTaskLate(task) ? ' - Late' : ''} ${task.startDate} - ${task.endDate}`}
+                    title={`${task.name} (${task.progress}%) - ${task.status || 'No description'} ${isTaskLate(task) ? ' - Late - ' : ''} ${task.startDate} - ${task.endDate}
+${task.comments ? ` ${task.comments}` : ''}`}
                   >
                     <div className="truncate max-w-full">
                       {task.name} ({task.progress}%)
