@@ -48,6 +48,7 @@ const taskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']).optional(),
   phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control']),
   status: z.enum(['not-started', 'in-progress', 'completed', 'on-hold']).optional(),
+  sequence: z.number().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -493,15 +494,51 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     }
   });
 
+  // Helper function to calculate sequence for phase-based positioning
+  const calculateSequenceForPhase = (phase: string): number => {
+    // Find the phase milestone task
+    const phaseMilestoneNames = {
+      'define': 'Define Phase',
+      'measure': 'Measure Phase', 
+      'analyze': 'Analyze Phase',
+      'improve': 'Improve Phase',
+      'control': 'Control Phase'
+    };
+    
+    const milestoneName = phaseMilestoneNames[phase as keyof typeof phaseMilestoneNames];
+    const milestoneTask = tasks.find(task => task.name === milestoneName);
+    
+    if (!milestoneTask) {
+      // If no milestone found, place at the end
+      return tasks.length + 1;
+    }
+    
+    // Find all tasks in the same phase
+    const phaseTasks = tasks.filter(task => 
+      task.phase === phase || task.name === milestoneName
+    );
+    
+    // Sort by sequence to find the last task in the phase
+    const sortedPhaseTasks = phaseTasks.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+    const lastPhaseTask = sortedPhaseTasks[sortedPhaseTasks.length - 1];
+    
+    // Position the new task right after the last task in the phase
+    return (lastPhaseTask?.sequence || 0) + 1;
+  };
+
   // Form submission handler
   const onSubmit = (values: TaskFormValues) => {
+    // Calculate sequence for positioning below phase milestone
+    const sequence = editingTaskId ? undefined : calculateSequenceForPhase(values.phase);
+    
     const taskToSave: GanttTask = {
       ...values,
       projectId,
       id: editingTaskId || undefined,
+      sequence: sequence,
     };
 
-    console.log("Submitting task:", taskToSave);
+    console.log("Submitting task with calculated sequence:", taskToSave);
     saveTaskMutation.mutate(taskToSave);
   };
 
