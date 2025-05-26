@@ -213,30 +213,34 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
       return weeks;
     } else if (timelineView === 'months') {
-      // Group by weeks (independent of months) - weeks can span across months
-      const weeks: Date[][] = [];
-      let currentWeek: Date[] = [];
-      let currentWeekStartDate: Date | null = null;
+      // Group by months
+      const months: Date[][] = [];
+      let currentMonth: Date[] = [];
+      let currentMonthNumber: number | null = null;
+      let currentYear: number | null = null;
 
       allDates.forEach(date => {
-        // Start a new week on Monday (day 1) or first date
-        if (currentWeekStartDate === null || date.getDay() === 1) {
-          if (currentWeek.length > 0) {
-            weeks.push(currentWeek);
+        const monthNumber = date.getMonth();
+        const year = date.getFullYear();
+        // Start a new month when month changes or year changes
+        if (currentMonthNumber === null || monthNumber !== currentMonthNumber || year !== currentYear) {
+          if (currentMonth.length > 0) {
+            months.push(currentMonth);
           }
-          currentWeek = [date];
-          currentWeekStartDate = date;
+          currentMonth = [date];
+          currentMonthNumber = monthNumber;
+          currentYear = year;
         } else {
-          currentWeek.push(date);
+          currentMonth.push(date);
         }
       });
 
-      // Add the last week if it exists
-      if (currentWeek.length > 0) {
-        weeks.push(currentWeek);
+      // Add the last month if it exists
+      if (currentMonth.length > 0) {
+        months.push(currentMonth);
       }
 
-      return weeks;
+      return months;
     } else {
       // Group by years
       const years: Date[][] = [];
@@ -1117,41 +1121,84 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   </div>
                 ))
               ) : timelineView === 'months' ? (
-                // Month view - showing independent weeks that can span across months
-                groupedDates.map((week, weekIndex) => (
-                  <div 
-                    key={`week-${weekIndex}`}
-                    className="flex flex-col flex-grow border-r"
-                  >
-                    {/* Week header */}
-                    <div className={`text-center p-1 border-b text-xs font-medium sticky top-0 z-30 bg-blue-100`}>
-                      Week {getWeek(week[0], { weekStartsOn: 1 })}
-                      <div className="text-[10px] font-normal">
-                        {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d')}
+                // Month view with weeks that can span across months
+                groupedDates.map((month, monthIndex) => {
+                  // Group days into weeks for each month
+                  const weeksInMonth: Date[][] = [];
+                  let currentWeek: Date[] = [];
+                  let currentWeekNumber: number | null = null;
+
+                  month.forEach(date => {
+                    const weekNumber = getWeek(date, { weekStartsOn: 1 });
+                    if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                      if (currentWeek.length > 0) {
+                        weeksInMonth.push(currentWeek);
+                      }
+                      currentWeek = [date];
+                      currentWeekNumber = weekNumber;
+                    } else {
+                      currentWeek.push(date);
+                    }
+                  });
+
+                  // Add the last week if it exists
+                  if (currentWeek.length > 0) {
+                    weeksInMonth.push(currentWeek);
+                  }
+
+                  return (
+                    <div 
+                      key={`month-${monthIndex}`}
+                      className="flex flex-col flex-grow border-r"
+                    >
+                      {/* Month header - First row (always visible) */}
+                      <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
+                        {format(month[0], 'MMM yyyy')}
+                      </div>
+                      {/* Weeks in month - Second row (also frozen) */}
+                      <div className="flex sticky top-6 z-20 bg-white">
+                        {weeksInMonth.map((week, weekIndex) => (
+                          <div 
+                            key={`month-${monthIndex}-week-${weekIndex}`}
+                            className={cn(
+                              "flex-1 text-center text-xs p-1 border-r bg-blue-100",
+                              week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                            )}
+                          >
+                            <div className="text-[10px] font-medium">
+                              W{getWeek(week[0], { weekStartsOn: 1 })}
+                            </div>
+                            <div className="text-[9px]">
+                              {format(week[0], 'd')}-{format(week[week.length - 1], 'd')}
+                            </div>
+                            {week.some(date => isMilestoneDate(date)) && (
+                              <div className="text-[8px] font-semibold text-amber-700 truncate mt-1">
+                                {week.filter(date => isMilestoneDate(date)).map(date => 
+                                  getMilestoneLabel(date)
+                                ).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Days - Third row */}
+                      <div className="flex sticky top-14 z-10 bg-white">
+                        {month.map((date, dateIndex) => (
+                          <div 
+                            key={`month-${monthIndex}-day-${dateIndex}`}
+                            className={cn(
+                              "flex-1 text-center text-xs p-1 border-r",
+                              isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
+                            )}
+                          >
+                            <div className="font-medium">{format(date, 'd')}</div>
+                            <div className="text-[9px]">{format(date, 'EEE')}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    {/* Days in week */}
-                    <div className="flex sticky top-10 z-20 bg-white">
-                      {week.map((date, dateIndex) => (
-                        <div 
-                          key={`week-${weekIndex}-day-${dateIndex}`}
-                          className={cn(
-                            "flex-1 text-center text-xs p-1 border-r",
-                            isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
-                          )}
-                        >
-                          <div className="font-medium">{format(date, 'd')}</div>
-                          <div className="text-[9px]">{format(date, 'EEE')}</div>
-                          {isMilestoneDate(date) && (
-                            <div className="text-[9px] font-semibold text-amber-700 truncate mt-1">
-                              {getMilestoneLabel(date)}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 // Years view with months
                 groupedDates.map((year, yearIndex) => {
