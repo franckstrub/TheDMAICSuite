@@ -27,6 +27,7 @@ export interface GanttTask {
   priority?: 'low' | 'medium' | 'high';
   phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control';
   status?: 'not-started' | 'in-progress' | 'completed' | 'on-hold';
+  sequence?: number;
   lastUpdated?: string;
 }
 
@@ -146,14 +147,15 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   const { data: tasksData } = useQuery({
     queryKey: [`/api/projects/${projectId}/gantt-tasks`],
     enabled: !!projectId,
-    onSuccess: (data) => {
-      console.log('Received tasks:', data.tasks);
-      setTasks(data.tasks || []);
-    },
-    onError: (error) => {
-      console.error('Error fetching tasks:', error);
-    }
   });
+
+  // Handle tasks data when it changes
+  useEffect(() => {
+    if (tasksData && tasksData.tasks) {
+      console.log('Received tasks:', tasksData.tasks);
+      setTasks(tasksData.tasks || []);
+    }
+  }, [tasksData]);
   
   // Convert milestone dates into Date objects for easy comparison
   const milestones = useMemo(() => {
@@ -589,12 +591,37 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       setDraggedIndex(null);
       setDropTargetIndex(null);
 
-      // TODO: Implement API to update task order on the server
+      // Update task sequence numbers and save to server
       try {
-        // This would be the API call to update task order
-        // await apiRequest("POST", `/api/projects/${projectId}/gantt-tasks/reorder`, { taskIds: newTasks.map(t => t.id) });
+        // Update sequence numbers for all tasks based on new order
+        const updatedTasks = newTasks.map((task, index) => ({
+          ...task,
+          sequence: index + 1
+        }));
+
+        // Update each task's sequence on the server
+        await Promise.all(
+          updatedTasks.map(async (task) => {
+            if (task.id) {
+              await apiRequest("PUT", `/api/gantt-tasks/${task.id}`, {
+                ...task,
+                projectId: task.projectId
+              });
+            }
+          })
+        );
+
+        // Update local state with new sequences
+        setTasks(updatedTasks);
+        
+        toast({
+          title: 'Success',
+          description: 'Task order updated successfully',
+        });
       } catch (error) {
         console.error('Error updating task order:', error);
+        // Revert to original order on error
+        setTasks(tasks);
         toast({
           title: 'Error',
           description: 'Failed to update task order',
