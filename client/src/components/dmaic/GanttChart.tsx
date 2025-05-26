@@ -1173,9 +1173,20 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     uniqueWeeks.push(currentWeek);
                   }
 
-                  // Store the weeks data for task background use
-                  window.ganttUniqueWeeks = uniqueWeeks;
-                  window.ganttAllDates = allDates;
+                  // Define the shared week calculation function
+                  const getWeekElements = () => uniqueWeeks.map((week, weekIndex) => (
+                    <div 
+                      key={`week-cell-${weekIndex}`}
+                      className={cn(
+                        "border-r",
+                        week.some(date => isMilestoneDate(date)) ? "bg-amber-100" : 
+                          weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                      )}
+                      style={{ 
+                        width: `${(week.length / allDates.length) * 100}%`
+                      }}
+                    />
+                  ));
 
                   return (
                     <div className="flex flex-col">
@@ -1226,6 +1237,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           </div>
                         ))}
                       </div>
+                      {/* Store the week elements for task backgrounds */}
+                      <div style={{ display: 'none' }} data-week-elements={JSON.stringify(uniqueWeeks.map(week => ({ length: week.length, totalDays: allDates.length })))} />
                     </div>
                   );
                 })()
@@ -1397,20 +1410,40 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view background - use exact same week data as header row 2
+                    // Month view background - calculate weeks exactly like header
                     (() => {
-                      // Use the shared week data from header calculation
-                      const uniqueWeeks = (window as any).ganttUniqueWeeks || [];
-                      const allDates = (window as any).ganttAllDates || [];
+                      // Replicate the EXACT same week calculation as header
+                      const uniqueWeeks: Date[][] = [];
+                      const allDates = groupedDates.flat();
+                      let currentWeek: Date[] = [];
+                      let currentWeekNumber: number | null = null;
+                      
+                      allDates.forEach(date => {
+                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
+                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                          if (currentWeek.length > 0) {
+                            uniqueWeeks.push(currentWeek);
+                          }
+                          currentWeek = [date];
+                          currentWeekNumber = weekNumber;
+                        } else {
+                          currentWeek.push(date);
+                        }
+                      });
+                      
+                      // Add the last week if it exists
+                      if (currentWeek.length > 0) {
+                        uniqueWeeks.push(currentWeek);
+                      }
                       
                       return (
                         <div className="flex w-full h-full">
-                          {uniqueWeeks.map((week: Date[], weekIndex: number) => (
+                          {uniqueWeeks.map((week, weekIndex) => (
                             <div 
                               key={`task-week-bg-${weekIndex}`}
                               className={cn(
                                 "border-r h-full",
-                                week.some((date: Date) => isMilestoneDate(date)) ? "bg-amber-50" : 
+                                week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                               )}
                               style={{ 
