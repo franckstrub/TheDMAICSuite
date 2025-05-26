@@ -1180,7 +1180,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         {groupedDates.map((month, monthIndex) => (
                           <div 
                             key={`month-header-${monthIndex}`}
-                            className="bg-blue-50 text-center p-1 border-b border-r text-xs font-medium"
+                            className={cn(
+                              "text-center p-1 border-b border-r text-xs font-medium",
+                              monthIndex % 2 === 0 ? "bg-blue-50" : "bg-blue-100"
+                            )}
                             style={{ 
                               width: `${(month.length / allDates.length) * 100}%`
                             }}
@@ -1195,8 +1198,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <div 
                             key={`week-header-${weekIndex}`}
                             className={cn(
-                              "text-center text-xs p-1 border-r bg-blue-100",
-                              week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                              "text-center text-xs p-1 border-r",
+                              week.some(date => isMilestoneDate(date)) ? "bg-amber-100" : 
+                                weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                             )}
                             style={{ 
                               width: `${(week.length / allDates.length) * 100}%`
@@ -1420,8 +1424,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           key={`task-week-bg-${weekIndex}`}
                           className={cn(
                             "border-r h-full",
-                            weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
-                            week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                            week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
+                              weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                           )}
                           style={{ 
                             width: `${(week.length / allDates.length) * 100}%`
