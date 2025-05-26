@@ -1341,9 +1341,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
               <div className="w-1/4"></div> {/* Space for task info */}
               <div className="w-3/4 flex">
                 {(() => {
-                  // Calculate weeks exactly like header
-                  const uniqueWeeks: Date[][] = [];
+                  // Use EXACT same logic as header: calculate weeks across ALL dates
                   const allDates = groupedDates.flat();
+                  const uniqueWeeks: Date[][] = [];
                   let currentWeek: Date[] = [];
                   let currentWeekNumber: number | null = null;
                   
@@ -1364,6 +1364,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     uniqueWeeks.push(currentWeek);
                   }
                   
+                  // Use EXACT same width calculation as header
                   return uniqueWeeks.map((week, weekIndex) => (
                     <div 
                       key={`week-grid-${weekIndex}`}
