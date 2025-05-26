@@ -1173,6 +1173,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     uniqueWeeks.push(currentWeek);
                   }
 
+                  // Store the weeks data for task background use
+                  window.ganttUniqueWeeks = uniqueWeeks;
+                  window.ganttAllDates = allDates;
+
                   return (
                     <div className="flex flex-col">
                       {/* Month headers - First row */}
@@ -1393,40 +1397,20 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view background - create week cells that align with header row 2
+                    // Month view background - use exact same week data as header row 2
                     (() => {
-                      // Get all unique weeks across all months (same logic as header row 2)
-                      const uniqueWeeks: Date[][] = [];
-                      const allDates = groupedDates.flat();
-                      let currentWeek: Date[] = [];
-                      let currentWeekNumber: number | null = null;
-                      
-                      allDates.forEach(date => {
-                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
-                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
-                          if (currentWeek.length > 0) {
-                            uniqueWeeks.push(currentWeek);
-                          }
-                          currentWeek = [date];
-                          currentWeekNumber = weekNumber;
-                        } else {
-                          currentWeek.push(date);
-                        }
-                      });
-                      
-                      // Add the last week if it exists
-                      if (currentWeek.length > 0) {
-                        uniqueWeeks.push(currentWeek);
-                      }
+                      // Use the shared week data from header calculation
+                      const uniqueWeeks = (window as any).ganttUniqueWeeks || [];
+                      const allDates = (window as any).ganttAllDates || [];
                       
                       return (
                         <div className="flex w-full h-full">
-                          {uniqueWeeks.map((week, weekIndex) => (
+                          {uniqueWeeks.map((week: Date[], weekIndex: number) => (
                             <div 
                               key={`task-week-bg-${weekIndex}`}
                               className={cn(
                                 "border-r h-full",
-                                week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
+                                week.some((date: Date) => isMilestoneDate(date)) ? "bg-amber-50" : 
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                               )}
                               style={{ 
