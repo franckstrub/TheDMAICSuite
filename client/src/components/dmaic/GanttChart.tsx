@@ -1412,49 +1412,52 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view - create week boundaries that match header exactly
-                    (() => {
-                      // Use EXACT same logic as header to calculate weeks
-                      const allDates = groupedDates.flat();
-                      const uniqueWeeks: Date[][] = [];
-                      let currentWeek: Date[] = [];
-                      let currentWeekNumber: number | null = null;
-                      
-                      allDates.forEach(date => {
-                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
-                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
-                          if (currentWeek.length > 0) {
-                            uniqueWeeks.push(currentWeek);
+                    // Month view - simplified approach with just vertical week lines
+                    <div className="w-full h-full bg-gray-50 relative">
+                      {(() => {
+                        // Calculate week positions using same logic as header
+                        const allDates = groupedDates.flat();
+                        const uniqueWeeks: Date[][] = [];
+                        let currentWeek: Date[] = [];
+                        let currentWeekNumber: number | null = null;
+                        
+                        allDates.forEach(date => {
+                          const weekNumber = getWeek(date, { weekStartsOn: 1 });
+                          if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                            if (currentWeek.length > 0) {
+                              uniqueWeeks.push(currentWeek);
+                            }
+                            currentWeek = [date];
+                            currentWeekNumber = weekNumber;
+                          } else {
+                            currentWeek.push(date);
                           }
-                          currentWeek = [date];
-                          currentWeekNumber = weekNumber;
-                        } else {
-                          currentWeek.push(date);
+                        });
+                        
+                        if (currentWeek.length > 0) {
+                          uniqueWeeks.push(currentWeek);
                         }
-                      });
-                      
-                      if (currentWeek.length > 0) {
-                        uniqueWeeks.push(currentWeek);
-                      }
-                      
-                      return (
-                        <div className="flex w-full h-full">
-                          {uniqueWeeks.map((week, weekIndex) => (
+                        
+                        // Calculate cumulative positions for week boundaries
+                        let cumulativePosition = 0;
+                        return uniqueWeeks.map((week, weekIndex) => {
+                          const weekWidth = (week.length / allDates.length) * 100;
+                          const position = cumulativePosition;
+                          cumulativePosition += weekWidth;
+                          
+                          return (
                             <div 
-                              key={`task-week-${weekIndex}`}
-                              className={cn(
-                                "border-r h-full",
-                                week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
-                                  weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
-                              )}
+                              key={`week-line-${weekIndex}`}
+                              className="absolute top-0 bottom-0 border-r border-gray-300"
                               style={{ 
-                                width: `${(week.length / allDates.length) * 100}%`
+                                left: `${position + weekWidth}%`,
+                                width: '1px'
                               }}
                             />
-                          ))}
-                        </div>
-                      );
-                    })()
+                          );
+                        });
+                      })()}
+                    </div>
                   ) : (
                     // Years view background with months
                     groupedDates.map((year, yearIndex) => {
