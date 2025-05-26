@@ -1173,6 +1173,21 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     uniqueWeeks.push(currentWeek);
                   }
 
+                  // Define the shared week calculation function
+                  const getWeekElements = () => uniqueWeeks.map((week, weekIndex) => (
+                    <div 
+                      key={`week-cell-${weekIndex}`}
+                      className={cn(
+                        "border-r",
+                        week.some(date => isMilestoneDate(date)) ? "bg-amber-100" : 
+                          weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                      )}
+                      style={{ 
+                        width: `${(week.length / allDates.length) * 100}%`
+                      }}
+                    />
+                  ));
+
                   return (
                     <div className="flex flex-col">
                       {/* Month headers - First row */}
@@ -1222,6 +1237,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           </div>
                         ))}
                       </div>
+                      {/* Store the week elements for task backgrounds */}
+                      <div style={{ display: 'none' }} data-week-elements={JSON.stringify(uniqueWeeks.map(week => ({ length: week.length, totalDays: allDates.length })))} />
                     </div>
                   );
                 })()
@@ -1318,13 +1335,15 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             </div>
           </div>
 
+
+
           {/* Task Rows */}
           {tasks.length > 0 ? (
             tasks.map((task, index) => (
               <div 
                 key={task.id || index}
                 className={cn(
-                  "flex border-b hover:bg-gray-50 transition-colors",
+                  "flex border-b hover:bg-gray-50 transition-colors relative z-10",
                   dropTargetIndex === index ? "bg-blue-50" : ""
                 )}
                 draggable
@@ -1373,7 +1392,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     )}
                   </div>
                 </div>
-                <div className="gantt-timeline w-3/4 relative flex">
+                <div className="gantt-timeline w-3/4 relative flex bg-transparent">
                   {timelineView === 'weeks' ? (
                     // Week view background
                     groupedDates.map((week, weekIndex) => (
@@ -1393,49 +1412,52 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view background - create week cells that align with header row 2
-                    (() => {
-                      // Get all unique weeks across all months (same logic as header row 2)
-                      const uniqueWeeks: Date[][] = [];
-                      const allDates = groupedDates.flat();
-                      let currentWeek: Date[] = [];
-                      let currentWeekNumber: number | null = null;
-                      
-                      allDates.forEach(date => {
-                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
-                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
-                          if (currentWeek.length > 0) {
-                            uniqueWeeks.push(currentWeek);
+                    // Month view - simplified approach with just vertical week lines
+                    <div className="w-full h-full bg-gray-50 relative">
+                      {(() => {
+                        // Calculate week positions using same logic as header
+                        const allDates = groupedDates.flat();
+                        const uniqueWeeks: Date[][] = [];
+                        let currentWeek: Date[] = [];
+                        let currentWeekNumber: number | null = null;
+                        
+                        allDates.forEach(date => {
+                          const weekNumber = getWeek(date, { weekStartsOn: 1 });
+                          if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                            if (currentWeek.length > 0) {
+                              uniqueWeeks.push(currentWeek);
+                            }
+                            currentWeek = [date];
+                            currentWeekNumber = weekNumber;
+                          } else {
+                            currentWeek.push(date);
                           }
-                          currentWeek = [date];
-                          currentWeekNumber = weekNumber;
-                        } else {
-                          currentWeek.push(date);
+                        });
+                        
+                        if (currentWeek.length > 0) {
+                          uniqueWeeks.push(currentWeek);
                         }
-                      });
-                      
-                      // Add the last week if it exists
-                      if (currentWeek.length > 0) {
-                        uniqueWeeks.push(currentWeek);
-                      }
-                      
-                      return uniqueWeeks.map((week, weekIndex) => (
-                        <div className="flex flex-grow"
-                          style={{ width: `1000px` }} >
-                          <div
-                          key={`task-week-bg-${weekIndex}`}
-                          className={cn(
-                            "overflow-x-auto w-full flex min-w-max border-r h-full flex-col flex-shrink-0",
-                            week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
-                              weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
-                          )}
-                          style={{ 
-                            width: `${(week.length / allDates.length) * 100}%`
-                          }}
-                          />
-                        </div>
-                      ));
-                    })()
+                        
+                        // Calculate cumulative positions for week boundaries
+                        let cumulativePosition = 0;
+                        return uniqueWeeks.map((week, weekIndex) => {
+                          const weekWidth = (week.length / allDates.length) * 100;
+                          const position = cumulativePosition;
+                          cumulativePosition += weekWidth;
+                          
+                          return (
+                            <div 
+                              key={`week-line-${weekIndex}`}
+                              className="absolute top-0 bottom-0 border-r border-gray-300"
+                              style={{ 
+                                left: `${position + weekWidth}%`,
+                                width: '1px'
+                              }}
+                            />
+                          );
+                        });
+                      })()}
+                    </div>
                   ) : (
                     // Years view background with months
                     groupedDates.map((year, yearIndex) => {
