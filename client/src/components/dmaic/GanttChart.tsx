@@ -1412,52 +1412,50 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view - simplified approach with just vertical week lines
-                    <div className="w-full h-full bg-gray-50 relative">
-                      {(() => {
-                        // Calculate week positions using same logic as header
-                        const allDates = groupedDates.flat();
-                        const uniqueWeeks: Date[][] = [];
-                        let currentWeek: Date[] = [];
-                        let currentWeekNumber: number | null = null;
-                        
-                        allDates.forEach(date => {
-                          const weekNumber = getWeek(date, { weekStartsOn: 1 });
-                          if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
-                            if (currentWeek.length > 0) {
-                              uniqueWeeks.push(currentWeek);
-                            }
-                            currentWeek = [date];
-                            currentWeekNumber = weekNumber;
-                          } else {
-                            currentWeek.push(date);
+                    // Month view - with alternating background colors for weeks like row #2
+                    (() => {
+                      // Calculate week positions using same logic as header
+                      const allDates = groupedDates.flat();
+                      const uniqueWeeks: Date[][] = [];
+                      let currentWeek: Date[] = [];
+                      let currentWeekNumber: number | null = null;
+                      
+                      allDates.forEach(date => {
+                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
+                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                          if (currentWeek.length > 0) {
+                            uniqueWeeks.push(currentWeek);
                           }
-                        });
-                        
-                        if (currentWeek.length > 0) {
-                          uniqueWeeks.push(currentWeek);
+                          currentWeek = [date];
+                          currentWeekNumber = weekNumber;
+                        } else {
+                          currentWeek.push(date);
                         }
-                        
-                        // Calculate cumulative positions for week boundaries
-                        let cumulativePosition = 0;
-                        return uniqueWeeks.map((week, weekIndex) => {
-                          const weekWidth = (week.length / allDates.length) * 100;
-                          const position = cumulativePosition;
-                          cumulativePosition += weekWidth;
-                          
-                          return (
+                      });
+                      
+                      if (currentWeek.length > 0) {
+                        uniqueWeeks.push(currentWeek);
+                      }
+                      
+                      return (
+                        <div className="w-full h-full relative flex">
+                          {uniqueWeeks.map((week, weekIndex) => (
                             <div 
-                              key={`week-line-${weekIndex}`}
-                              className="absolute top-0 bottom-0 border-r border-gray-300"
+                              key={`task-week-bg-${weekIndex}`}
+                              className={cn(
+                                "h-full border-r border-gray-300",
+                                week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
+                                  weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                              )}
                               style={{ 
-                                left: `${position + weekWidth}%`,
-                                width: '1px'
+                                width: `${(week.length / allDates.length) * 100}%`
                               }}
                             />
-                          );
-                        });
-                      })()}
-                    </div>
+                          ))}
+                        </div>
+                      );
+                    })()
+                  
                   ) : (
                     // Years view background with months
                     groupedDates.map((year, yearIndex) => {
