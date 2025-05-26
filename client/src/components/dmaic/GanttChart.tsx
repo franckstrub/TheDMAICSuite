@@ -1181,21 +1181,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           </div>
                         ))}
                       </div>
-                      {/* Days - Third row */}
-                      <div className="flex sticky top-14 z-10 bg-white">
-                        {month.map((date, dateIndex) => (
-                          <div 
-                            key={`month-${monthIndex}-day-${dateIndex}`}
-                            className={cn(
-                              "flex-1 text-center text-xs p-1 border-r",
-                              isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
-                            )}
-                          >
-                            <div className="font-medium">{format(date, 'd')}</div>
-                            <div className="text-[9px]">{format(date, 'EEE')}</div>
-                          </div>
-                        ))}
-                      </div>
+
                     </div>
                   );
                 })
