@@ -1497,7 +1497,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     )}
                     style={{...getTaskBarStyle(task), zIndex: 10}}
                     title={`${task.name} (${task.progress}%) - ${task.status || 'No description'} ${isTaskLate(task) ? ' - Late - ' : ''} ${task.startDate} - ${task.endDate}
-${task.comments ? ` ${task.comments}` : ''}`}
+  ${task.comments ? ` ${task.comments}` : ''}`}
                   >
                     <div className="truncate max-w-full">
                       {task.name} ({task.progress}%)
