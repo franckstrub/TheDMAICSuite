@@ -50,6 +50,7 @@ const taskSchema = z.object({
   phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control']),
   status: z.enum(['not-started', 'in-progress', 'completed', 'on-hold']).optional(),
   sequence: z.number().optional(),
+  comments: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;

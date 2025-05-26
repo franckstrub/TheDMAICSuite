@@ -773,6 +773,7 @@ export const ganttTasks = pgTable("gantt_tasks", {
   status: text("status").default("not-started"),
   parentId: integer("parent_id"),
   sequence: integer("sequence").default(0),
+  comments: text("comments"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
