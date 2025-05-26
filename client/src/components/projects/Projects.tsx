@@ -387,6 +387,8 @@ export default function Projects() {
                       <Input
                         id="targetEndDate"
                         type="date"
+                        //min="2025-06-01"
+                        min={newProject.startDate}
                         value={newProject.targetEndDate}
                         onChange={(e) => setNewProject({ ...newProject, targetEndDate: e.target.value })}
                       />

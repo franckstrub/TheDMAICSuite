@@ -46,8 +46,10 @@ export default function Header() {
           </Button>
           
           <div className="flex items-center">
-            <img src={logoImage} alt="Equable Solutions Logo" className="h-10 mr-3" />
-            <span className="text-primary font-bold text-xl">Lean Six Sigma DMAIC Suite™</span>
+            <a href="/app" target="_self" rel="noopener noreferrer" className="inline-flex items-center text-primary hover:text-primary-dark">
+              <img src={logoImage} alt="Equable Solutions Logo" className="h-10 mr-3" />
+              <span className="text-primary font-bold text-xl">Lean Six Sigma DMAIC Suite™</span>
+            </a>
           </div>
         </div>
         
