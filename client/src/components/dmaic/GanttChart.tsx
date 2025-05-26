@@ -1389,18 +1389,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view background with weeks
-                    groupedDates.map((month, monthIndex) => {
-                      // Group days into weeks for each month
-                      const weeksInMonth: Date[][] = [];
+                    // Month view background - create week cells that align with header row 2
+                    (() => {
+                      // Get all unique weeks across all months (same logic as header row 2)
+                      const uniqueWeeks: Date[][] = [];
+                      const allDates = groupedDates.flat();
                       let currentWeek: Date[] = [];
                       let currentWeekNumber: number | null = null;
-
-                      month.forEach(date => {
+                      
+                      allDates.forEach(date => {
                         const weekNumber = getWeek(date, { weekStartsOn: 1 });
                         if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
                           if (currentWeek.length > 0) {
-                            weeksInMonth.push(currentWeek);
+                            uniqueWeeks.push(currentWeek);
                           }
                           currentWeek = [date];
                           currentWeekNumber = weekNumber;
@@ -1408,30 +1409,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           currentWeek.push(date);
                         }
                       });
-
+                      
                       // Add the last week if it exists
                       if (currentWeek.length > 0) {
-                        weeksInMonth.push(currentWeek);
+                        uniqueWeeks.push(currentWeek);
                       }
                       
-                      return (
-                        <div key={`task-month-bg-${monthIndex}`} className="flex flex-col flex-grow">
-                          <div className="h-2 bg-transparent"></div> {/* Space for month header */}
-                          <div className="flex flex-grow">
-                            {weeksInMonth.map((week, weekIndex) => (
-                              <div 
-                                key={`task-month-week-bg-${monthIndex}-${weekIndex}`}
-                                className={cn(
-                                  "flex-grow border-r",
-                                  weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
-                                  week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
-                                )}                              
-                              ></div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })
+                      return uniqueWeeks.map((week, weekIndex) => (
+                        <div 
+                          key={`task-week-bg-${weekIndex}`}
+                          className={cn(
+                            "border-r h-full",
+                            weekIndex % 2 === 0 ? "bg-gray-50" : "bg-white",
+                            week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : ""
+                          )}
+                          style={{ 
+                            width: `${(week.length / allDates.length) * 100}%`
+                          }}
+                        />
+                      ));
+                    })()
                   ) : (
                     // Years view background with months
                     groupedDates.map((year, yearIndex) => {
