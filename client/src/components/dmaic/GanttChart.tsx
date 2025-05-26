@@ -1335,53 +1335,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             </div>
           </div>
 
-          {/* Week Grid Background for Month View */}
-          {timelineView === 'months' && (
-            <div className="absolute inset-0 flex pointer-events-none z-0">
-              <div className="w-1/4"></div> {/* Space for task info */}
-              <div className="w-3/4 flex">
-                {(() => {
-                  // Use EXACT same logic as header: calculate weeks across ALL dates
-                  const allDates = groupedDates.flat();
-                  const uniqueWeeks: Date[][] = [];
-                  let currentWeek: Date[] = [];
-                  let currentWeekNumber: number | null = null;
-                  
-                  allDates.forEach(date => {
-                    const weekNumber = getWeek(date, { weekStartsOn: 1 });
-                    if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
-                      if (currentWeek.length > 0) {
-                        uniqueWeeks.push(currentWeek);
-                      }
-                      currentWeek = [date];
-                      currentWeekNumber = weekNumber;
-                    } else {
-                      currentWeek.push(date);
-                    }
-                  });
-                  
-                  if (currentWeek.length > 0) {
-                    uniqueWeeks.push(currentWeek);
-                  }
-                  
-                  // Use EXACT same width calculation as header
-                  return uniqueWeeks.map((week, weekIndex) => (
-                    <div 
-                      key={`week-grid-${weekIndex}`}
-                      className={cn(
-                        "border-r",
-                        week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
-                          weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
-                      )}
-                      style={{ 
-                        width: `${(week.length / allDates.length) * 100}%`
-                      }}
-                    />
-                  ));
-                })()}
-              </div>
-            </div>
-          )}
+
 
           {/* Task Rows */}
           {tasks.length > 0 ? (
@@ -1458,8 +1412,49 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view - no background, use the global week grid
-                    <div className="w-full h-full bg-transparent"></div>
+                    // Month view - create week boundaries that match header exactly
+                    (() => {
+                      // Use EXACT same logic as header to calculate weeks
+                      const allDates = groupedDates.flat();
+                      const uniqueWeeks: Date[][] = [];
+                      let currentWeek: Date[] = [];
+                      let currentWeekNumber: number | null = null;
+                      
+                      allDates.forEach(date => {
+                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
+                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                          if (currentWeek.length > 0) {
+                            uniqueWeeks.push(currentWeek);
+                          }
+                          currentWeek = [date];
+                          currentWeekNumber = weekNumber;
+                        } else {
+                          currentWeek.push(date);
+                        }
+                      });
+                      
+                      if (currentWeek.length > 0) {
+                        uniqueWeeks.push(currentWeek);
+                      }
+                      
+                      return (
+                        <div className="flex w-full h-full">
+                          {uniqueWeeks.map((week, weekIndex) => (
+                            <div 
+                              key={`task-week-${weekIndex}`}
+                              className={cn(
+                                "border-r h-full",
+                                week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
+                                  weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                              )}
+                              style={{ 
+                                width: `${(week.length / allDates.length) * 100}%`
+                              }}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })()
                   ) : (
                     // Years view background with months
                     groupedDates.map((year, yearIndex) => {
