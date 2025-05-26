@@ -1335,13 +1335,60 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             </div>
           </div>
 
+          {/* Week Grid Background for Month View */}
+          {timelineView === 'months' && (
+            <div className="absolute inset-0 flex pointer-events-none z-0">
+              <div className="w-1/4"></div> {/* Space for task info */}
+              <div className="w-3/4 flex">
+                {(() => {
+                  // Calculate weeks exactly like header
+                  const uniqueWeeks: Date[][] = [];
+                  const allDates = groupedDates.flat();
+                  let currentWeek: Date[] = [];
+                  let currentWeekNumber: number | null = null;
+                  
+                  allDates.forEach(date => {
+                    const weekNumber = getWeek(date, { weekStartsOn: 1 });
+                    if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
+                      if (currentWeek.length > 0) {
+                        uniqueWeeks.push(currentWeek);
+                      }
+                      currentWeek = [date];
+                      currentWeekNumber = weekNumber;
+                    } else {
+                      currentWeek.push(date);
+                    }
+                  });
+                  
+                  if (currentWeek.length > 0) {
+                    uniqueWeeks.push(currentWeek);
+                  }
+                  
+                  return uniqueWeeks.map((week, weekIndex) => (
+                    <div 
+                      key={`week-grid-${weekIndex}`}
+                      className={cn(
+                        "border-r",
+                        week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
+                          weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                      )}
+                      style={{ 
+                        width: `${(week.length / allDates.length) * 100}%`
+                      }}
+                    />
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
+
           {/* Task Rows */}
           {tasks.length > 0 ? (
             tasks.map((task, index) => (
               <div 
                 key={task.id || index}
                 className={cn(
-                  "flex border-b hover:bg-gray-50 transition-colors",
+                  "flex border-b hover:bg-gray-50 transition-colors relative z-10",
                   dropTargetIndex === index ? "bg-blue-50" : ""
                 )}
                 draggable
@@ -1390,7 +1437,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     )}
                   </div>
                 </div>
-                <div className="gantt-timeline w-3/4 relative flex">
+                <div className="gantt-timeline w-3/4 relative flex bg-transparent">
                   {timelineView === 'weeks' ? (
                     // Week view background
                     groupedDates.map((week, weekIndex) => (
@@ -1410,50 +1457,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </div>
                     ))
                   ) : timelineView === 'months' ? (
-                    // Month view background - calculate weeks exactly like header
-                    (() => {
-                      // Replicate the EXACT same week calculation as header
-                      const uniqueWeeks: Date[][] = [];
-                      const allDates = groupedDates.flat();
-                      let currentWeek: Date[] = [];
-                      let currentWeekNumber: number | null = null;
-                      
-                      allDates.forEach(date => {
-                        const weekNumber = getWeek(date, { weekStartsOn: 1 });
-                        if (currentWeekNumber === null || weekNumber !== currentWeekNumber) {
-                          if (currentWeek.length > 0) {
-                            uniqueWeeks.push(currentWeek);
-                          }
-                          currentWeek = [date];
-                          currentWeekNumber = weekNumber;
-                        } else {
-                          currentWeek.push(date);
-                        }
-                      });
-                      
-                      // Add the last week if it exists
-                      if (currentWeek.length > 0) {
-                        uniqueWeeks.push(currentWeek);
-                      }
-                      
-                      return (
-                        <div className="flex w-full h-full">
-                          {uniqueWeeks.map((week, weekIndex) => (
-                            <div 
-                              key={`task-week-bg-${weekIndex}`}
-                              className={cn(
-                                "border-r h-full",
-                                week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
-                                  weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
-                              )}
-                              style={{ 
-                                width: `${(week.length / allDates.length) * 100}%`
-                              }}
-                            />
-                          ))}
-                        </div>
-                      );
-                    })()
+                    // Month view - no background, use the global week grid
+                    <div className="w-full h-full bg-transparent"></div>
                   ) : (
                     // Years view background with months
                     groupedDates.map((year, yearIndex) => {
