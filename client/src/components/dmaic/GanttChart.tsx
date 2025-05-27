@@ -1438,12 +1438,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       }
                       
                       return (
-                        <div className="min-w-full h-full relative flex flex-col">
+                        <div className="w-full h-full relative flex">
                           {uniqueWeeks.map((week, weekIndex) => (
                             <div 
                               key={`task-week-bg-${weekIndex}`}
                               className={cn(
-                                "h-full border-r p-1 border-gray-50",
+                                "h-full border-r border-gray-300",
                                 week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                               )}
