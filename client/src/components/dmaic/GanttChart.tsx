@@ -94,6 +94,7 @@ const statusColors = {
 export default function GanttChart({ projectId, projectStartDate, projectEndDate, milestoneDates }: GanttChartProps) {
   const [tasks, setTasks] = useState<GanttTask[]>([]);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [showAddTaskOverlay, setShowAddTaskOverlay] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
@@ -356,6 +357,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       }
     },
     onSuccess: () => {
+      // Close overlay and reset form
+      setShowAddTaskOverlay(false);
+      setEditingTaskId(null);
+      form.reset();
+      
       toast({
         title: 'Success',
         description: 'Task saved successfully',
@@ -551,6 +557,13 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     saveTaskMutation.mutate(taskToSave);
   };
 
+  // Handle closing overlay
+  const handleCloseOverlay = () => {
+    setShowAddTaskOverlay(false);
+    setEditingTaskId(null);
+    form.reset();
+  };
+
   // Handle edit task
   const handleEditTask = (task: GanttTask) => {
     // Populate form with task data
@@ -568,7 +581,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     });
 
     setEditingTaskId(task.id || null);
-    setShowAddTask(true);
+    setShowAddTaskOverlay(true);
   };
 
   // Handle drag start
@@ -684,7 +697,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     const taskDuration = differenceInDays(effectiveTaskEnd, effectiveTaskStart) + 1;
     let widthPercentage;
     widthPercentage = (taskDuration/totalvisibleDays) * 100;
-    widthPercentage = Math.max(widthPercentage, 1); // Ensure minimum width for visibility
+   // widthPercentage = Math.max(widthPercentage, 1); // Ensure minimum width for visibility
     
     // Basic calculation - percentage of total timeline
     // const basePercentage = (taskDuration / totalDays) * 100;
@@ -694,16 +707,16 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       // For week view, make sure even single-day tasks are clearly visible
       
       // Minimum width for single-day tasks to ensure visibility
-      // widthPercentage = Math.max(widthPercentage, 1);
+      widthPercentage = Math.max(widthPercentage, 0.5);
     } 
     else if (timelineView === 'months') {
       // Month view - medium detail
       // In month view, adjust for better visibility while maintaining relative proportions
       // Get month proportion of the task duration
-      const taskDurationInWeeks = taskDuration/7;
+      //const taskDurationInWeeks = taskDuration/7;
 
-      widthPercentage = (taskDurationInWeeks/weeksinRange) * 100;
-      widthPercentage = Math.max(widthPercentage, 2);
+      //widthPercentage = (taskDurationInWeeks/weeksinRange) * 100;
+      widthPercentage = Math.max(widthPercentage, 0.25);
     } 
     else if (timelineView === 'years') {
       // Year view - in this view we need to calculate column-based widths
@@ -727,7 +740,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     }
     
     // Logging for debugging
-    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, View: ${timelineView}, Position: ${leftPosPercentage}%, Width: ${widthPercentage}%`);
+    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, View: ${timelineView}, Left Position: ${leftPosPercentage}%, Width: ${widthPercentage}%`);
     
     return {
       left: `${leftPosPercentage}%`,
@@ -1119,10 +1132,10 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     className="flex flex-col flex-grow border-r"
                   >
                     {/* Week header - First row (always visible) */}
-                    <div className="bg-blue-50 text-center p-1 border-b text-xs font-medium sticky top-0 z-30">
+                    <div className="bg-blue-50 text-center pt-1 pb-1 border-b text-xs font-medium sticky top-0 z-30">
                       Week {getWeek(week[0], { weekStartsOn: 1 })}
-                      <div className="text-[10px]">
-                        {format(week[0], 'MMM d')} - {format(week[week.length - 1], 'MMM d, yyyy')}
+                      <div className="text-[8px]">
+                        {format(week[0], 'MMM d')}-{format(week[week.length - 1], 'MMM d, yyyy')}
                       </div>
                     </div>
                     {/* Days in week - Second row (also frozen) */}
@@ -1131,7 +1144,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         <div 
                           key={`day-${weekIndex}-${dateIndex}`} 
                           className={cn(
-                            "flex-1 min-w-[35px] text-center text-xs p-1 border-r",
+                            "flex-1 min-w-[25px] text-center text-xs pt-1 pb-1 border-r",
+                            //"flex-1 min-w-[35px] text-center text-xs p-1 border-r",
                             isMilestoneDate(date) ? "bg-amber-100" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
                           )}
                         >
@@ -1144,7 +1158,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         </div>
                       ))}
                     </div>
-                  </div>
+                </div>
                 ))
               ) : timelineView === 'months' ? (
                 // Month view with months and independent weeks
@@ -1174,22 +1188,22 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   }
 
                   // Define the shared week calculation function
-                  const getWeekElements = () => uniqueWeeks.map((week, weekIndex) => (
-                    <div 
-                      key={`week-cell-${weekIndex}`}
-                      className={cn(
-                        "border-r",
-                        week.some(date => isMilestoneDate(date)) ? "bg-amber-100" : 
-                          weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
-                      )}
-                      style={{ 
-                        width: `${(week.length / allDates.length) * 100}%`
-                      }}
-                    />
-                  ));
+                  //const getWeekElements = () => uniqueWeeks.map((week, weekIndex) => (
+                    //<div 
+                    //  key={`week-cell-${weekIndex}`}
+                   //   className={cn(
+                    //    "border-r",
+                    //    week.some(date => isMilestoneDate(date)) ? "bg-amber-100" : 
+                    //      weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                    //  )}
+                    //  style={{ 
+                    //    width: `${(week.length / allDates.length) * 100}%`
+                    //  }}
+                    ///>
+                  // ));
 
                   return (
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-[1200px]">
                       {/* Month headers - First row */}
                       <div className="flex sticky top-0 z-30">
                         {groupedDates.map((month, monthIndex) => (
@@ -1213,7 +1227,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <div 
                             key={`week-header-${weekIndex}`}
                             className={cn(
-                              "text-center text-xs p-1 border-r",
+                              "text-center text-xs p-1 border-r border-b",
                               week.some(date => isMilestoneDate(date)) ? "bg-amber-100" : 
                                 weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                             )}
@@ -1221,11 +1235,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                               width: `${(week.length / allDates.length) * 100}%`
                             }}
                           >
-                            <div className="text-[10px] font-medium">
+                            <div className="text-[8px] font-medium truncate">
                               W{getWeek(week[0], { weekStartsOn: 1 })}
                             </div>
-                            <div className="text-[9px]">
-                              {format(week[0], 'dd')} - {format(week[week.length - 1], 'dd')}
+                            <div className="text-[6px] truncate">
+                              {format(week[0], 'dd')}-{format(week[week.length - 1], 'dd')}
                             </div>
                             {week.some(date => isMilestoneDate(date)) && (
                               <div className="text-[8px] font-semibold text-amber-700 truncate mt-1">
@@ -1238,7 +1252,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                         ))}
                       </div>
                       {/* Store the week elements for task backgrounds */}
-                      <div style={{ display: 'none' }} data-week-elements={JSON.stringify(uniqueWeeks.map(week => ({ length: week.length, totalDays: allDates.length })))} />
+                     {/* <div style={{ display: 'none' }} data-week-elements={JSON.stringify(uniqueWeeks.map(week => ({ length: week.length, totalDays: allDates.length })))} /> */}
                     </div>
                   );
                 })()
@@ -1335,8 +1349,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
             </div>
           </div>
 
-
-
           {/* Task Rows */}
           {tasks.length > 0 ? (
             tasks.map((task, index) => (
@@ -1384,7 +1396,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </Button>
                     </div>
                   </div>
-                  <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2">
+                  <div className="gantt-assignee w-1/3 min-w-[88px] border-r p-2">
+                  {/* <div className="gantt-assignee w-1/3 min-w-[80px] border-r p-2"> */}
                     {task.assignee ? (
                       <div className="text-[12px]">{task.assignee}</div>
                     ) : (
@@ -1392,18 +1405,24 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     )}
                   </div>
                 </div>
-                <div className="gantt-timeline w-3/4 relative flex bg-transparent">
+                <div 
+                  className={cn(
+                    "gantt-timeline w-3/4 relative flex bg-transparent",
+                    timelineView === 'months' || timelineView === 'weeks' ? "min-w-full" : "" // Only apply for months & weeks
+                  )}
+                >
+                {/* <div className="gantt-timeline w-3/4 relative flex bg-transparent"> */}
                   {timelineView === 'weeks' ? (
                     // Week view background
                     groupedDates.map((week, weekIndex) => (
-                      <div key={`task-week-bg-${weekIndex}`} className="flex flex-col flex-grow">
-                        <div className="h-2 bg-transparent"></div> {/* Space for week header */}
-                        <div className="flex flex-grow">
+                      <div key={`task-week-bg-${weekIndex}`} className="flex flex-col flex-grow border-b border-t">
+                        <div className="h-2 bg-transparent border-b"></div> {/* Space for week header */}
+                        <div className="flex flex-grow border-r">
                           {week.map((date, dateIndex) => (
                             <div 
                               key={`task-day-bg-${weekIndex}-${dateIndex}`}
                               className={cn(
-                                "flex-1 min-w-[35px] h-full border-r",
+                                "flex-1 min-w-[25px] h-full pt-1 pb-1 border-r",
                                 isMilestoneDate(date) ? "bg-amber-50" : (dateIndex % 2 === 0 ? "bg-gray-50" : "bg-white")
                               )}
                             ></div>
@@ -1438,12 +1457,14 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       }
                       
                       return (
-                        <div className="min-w-full h-full relative flex flex-col">
+                        <div className="min-w-[1200px] h-full pt-1 pb-1 relative flex border-b">
+                        {/* <div className="min-w-full h-full p-1 relative flex border-b"> */}
                           {uniqueWeeks.map((week, weekIndex) => (
                             <div 
                               key={`task-week-bg-${weekIndex}`}
                               className={cn(
-                                "h-full border-r p-1 border-gray-50",
+                                "h-full border-r p-1 flex flex-col",
+                                // "h-full border-r p-1 border-gray-50 flex flex-col",
                                 week.some(date => isMilestoneDate(date)) ? "bg-amber-50" : 
                                   weekIndex % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
                               )}
@@ -1512,9 +1533,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   )}
 
                   {/* Task Bar */}
-                  <div 
+                  <div
+                    className={
+                     timelineView === 'months' 
+                      ? 'min-w-[1200px] absolute flex' // only for months view
+                      : timelineView === 'weeks'      // only for weeks view
+                        ? 'min-w-[7200px] absolute flex'
+                        : ''
+                    }
+                  >
+                   <div 
                     className={cn(
-                      "absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
+                      "absolute top-5 h-8 rounded flex flex-col items-center px-2 border-l-4 text-white text-xs ",
+                      //"absolute top-1 h-8 rounded flex items-center px-2 border-l-4 text-white text-xs",
                       phaseColors[task.phase] || 'bg-gray-500',
                       priorityColors[task.priority || 'medium'],
                       isTaskLate(task) ? 'border-2 border-red-500' : ''
@@ -1551,6 +1582,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       style={{width: '100%'}}
                     />
                     ) : null}
+                   </div>
                   </div>
                 </div>
               </div>
