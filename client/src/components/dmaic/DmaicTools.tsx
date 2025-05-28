@@ -18,6 +18,7 @@ import {
   calculateDmaicProgress,
 } from "@/lib/utils";
 import DmaicProgressSteps from "./DmaicProgressSteps";
+import { usePhaseProgress } from "@/hooks/usePhaseProgress";
 
 // Helper function to format dates in a more compact and readable way
 const formatDate = (dateString: string): string => {
@@ -49,6 +50,9 @@ export default function DmaicTools() {
     queryKey: ["/api/projects"],
     enabled: true,
   });
+
+  // Get calculated phase progress data based on actual tasks
+  const phaseProgressData = usePhaseProgress(currentProject?.id || 0);
 
   // Ensure we have the correct project loaded
   useEffect(() => {
@@ -203,6 +207,7 @@ export default function DmaicTools() {
                   <DmaicProgressSteps
                     project={currentProject}
                     overallProgress={currentProject.progress || 0}
+                    phaseProgressData={phaseProgressData}
                     className="scale-90 transform origin-center"
                   />
                 </div>

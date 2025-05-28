@@ -3,13 +3,20 @@ import { cn } from "@/lib/utils";
 interface DmaicProgressStepsProps {
   project: any;
   overallProgress: number;
+  phaseProgressData?: {
+    define: number;
+    measure: number;
+    analyze: number;
+    improve: number;
+    control: number;
+  };
   className?: string;
 }
 
 /**
  * A component that displays DMAIC progress as a series of connected steps
  */
-export default function DmaicProgressSteps({ project, overallProgress, className }: DmaicProgressStepsProps) {
+export default function DmaicProgressSteps({ project, overallProgress, phaseProgressData, className }: DmaicProgressStepsProps) {
   // Get the current phase (handle case sensitivity and null values)
   const currentPhase = project?.currentPhase ? project.currentPhase.toLowerCase() : 'define';
   
@@ -28,14 +35,18 @@ export default function DmaicProgressSteps({ project, overallProgress, className
     }
   };
   
-  // Calculate phase progress percentage
+  // Calculate phase progress percentage using actual task data or fallback to status-based calculation
   const calculatePhaseProgress = (phaseName: string): number => {
+    // Use the actual calculated progress from tasks if available
+    if (phaseProgressData) {
+      return phaseProgressData[phaseName as keyof typeof phaseProgressData] || 0;
+    }
+    
+    // Fallback to the original logic if no task data is provided
     if (getPhaseStatus(phaseName) === 'completed') {
       return 100;
     } else if (getPhaseStatus(phaseName) === 'in-progress') {
-      // For the current phase, we'll use the overall progress
-      // Assuming that overall progress is from 0-100 and reflects the completion of the current phase
-      return Math.min(100, Math.max(0, overallProgress * 5));  // x5 to scale from overall to phase-specific
+      return Math.min(100, Math.max(0, overallProgress * 5));
     } else {
       return 0;
     }
