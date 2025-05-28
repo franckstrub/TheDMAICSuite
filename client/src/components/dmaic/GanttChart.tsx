@@ -797,30 +797,6 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   return (
     <div className="gantt-chart-container">
-      {/* Phase Progress Section */}
-      <div className="mb-4 p-4 bg-gray-50 rounded-lg border">
-        <h4 className="text-sm font-semibold mb-3 text-gray-700">DMAIC Phase Progress</h4>
-        <div className="grid grid-cols-5 gap-3">
-          {Object.entries(phaseProgressData).map(([phase, progress]) => (
-            <div key={phase} className="text-center">
-              <div className="text-xs font-medium text-gray-600 mb-1 capitalize">{phase}</div>
-              <div className="relative bg-gray-200 rounded-full h-2 mb-1">
-                <div 
-                  className={`absolute top-0 left-0 h-2 rounded-full transition-all duration-300 ${phaseColors[phase as keyof typeof phaseColors]}`}
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              <div className={`text-xs font-semibold ${progress === 100 ? 'text-green-600' : progress >= 50 ? 'text-blue-600' : 'text-gray-500'}`}>
-                {progress}%
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {tasks.filter(task => task.phase === phase).length} tasks
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="flex justify-between mb-4">
         <h3 className="text-lg font-semibold">Project Timeline</h3>
         <div className="flex space-x-2">
@@ -1643,16 +1619,30 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         </div>
       </div>
 
-      {/* Legend */}
+      {/* Legend with Phase Progress */}
       <div className="mt-6 flex flex-wrap gap-4">
         <div className="text-sm font-medium">Phases:</div>
         <div className="flex gap-4">
-          {Object.entries(phaseColors).map(([phase, color]) => (
-            <div key={phase} className="flex items-center">
-              <div className={`w-4 h-4 rounded ${color} mr-1`}></div>
-              <span className="text-sm capitalize">{phase}</span>
-            </div>
-          ))}
+          {Object.entries(phaseColors).map(([phase, color]) => {
+            const progress = phaseProgressData[phase as keyof typeof phaseProgressData];
+            const taskCount = tasks.filter(task => task.phase === phase).length;
+            return (
+              <div key={phase} className="flex items-center">
+                <div className={`w-4 h-4 rounded ${color} mr-1`}></div>
+                <span className="text-sm capitalize">{phase}</span>
+                <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
+                  progress === 100 ? 'bg-green-100 text-green-700' : 
+                  progress >= 50 ? 'bg-blue-100 text-blue-700' : 
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {progress}%
+                </span>
+                {taskCount > 0 && (
+                  <span className="ml-1 text-xs text-gray-500">({taskCount} tasks)</span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
