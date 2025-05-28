@@ -103,13 +103,17 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         
         {/* Connection between Define and Measure */}
         <div className="flex-grow mx-0.5 flex items-center">
-          <div className="h-0.5 w-full bg-gray-200 relative">
+          <div className="h-0.5 w-full bg-gray-200 relative group cursor-help">
             {defineProgress > 0 && (
               <div 
                 className={`absolute inset-0 ${defineProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
                 style={{ width: `${defineProgress}%` }}
               ></div>
             )}
+            {/* Tooltip */}
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Define: {defineProgress}%
+            </div>
           </div>
         </div>
         
@@ -127,13 +131,17 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         
         {/* Connection between Measure and Analyze */}
         <div className="flex-grow mx-0.5 flex items-center">
-          <div className="h-0.5 w-full bg-gray-200 relative">
+          <div className="h-0.5 w-full bg-gray-200 relative group cursor-help">
             {measureProgress > 0 && (
               <div 
                 className={`absolute inset-0 ${measureProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
                 style={{ width: `${measureProgress}%` }}
               ></div>
             )}
+            {/* Tooltip */}
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Measure: {measureProgress}%
+            </div>
           </div>
         </div>
         
@@ -151,13 +159,17 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         
         {/* Connection between Analyze and Improve */}
         <div className="flex-grow mx-0.5 flex items-center">
-          <div className="h-0.5 w-full bg-gray-200 relative">
+          <div className="h-0.5 w-full bg-gray-200 relative group cursor-help">
             {analyzeProgress > 0 && (
               <div 
                 className={`absolute inset-0 ${analyzeProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
                 style={{ width: `${analyzeProgress}%` }}
               ></div>
             )}
+            {/* Tooltip */}
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Analyze: {analyzeProgress}%
+            </div>
           </div>
         </div>
         
@@ -175,13 +187,17 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         
         {/* Connection between Improve and Control */}
         <div className="flex-grow mx-0.5 flex items-center">
-          <div className="h-0.5 w-full bg-gray-200 relative">
+          <div className="h-0.5 w-full bg-gray-200 relative group cursor-help">
             {improveProgress > 0 && (
               <div 
                 className={`absolute inset-0 ${improveProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
                 style={{ width: `${improveProgress}%` }}
               ></div>
             )}
+            {/* Tooltip */}
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Improve: {improveProgress}%
+            </div>
           </div>
         </div>
         
