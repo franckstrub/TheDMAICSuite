@@ -1640,77 +1640,81 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         </div>
       </div>
 
-      {/* Task Form Overlay */}
+      {/* Task Form Overlay - Compressed */}
       {showAddTaskOverlay && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-4 w-full max-w-3xl max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-base font-semibold">
                 {editingTaskId ? 'Edit Task' : 'Add New Task'}
               </h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleCloseOverlay}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 h-6 w-6 p-0"
               >
                 ✕
               </Button>
             </div>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Task Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter task name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                {/* Row 1: Task Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Task Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter task name" className="h-8" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                {/* Row 2: Dates */}
+                <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={form.control}
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel className="text-sm">Start Date</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" className="h-8" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Date</FormLabel>
+                        <FormLabel className="text-sm">End Date</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" className="h-8" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
 
+                {/* Row 3: Phase, Priority, Status, Progress */}
+                <div className="grid grid-cols-4 gap-3">
                   <FormField
                     control={form.control}
                     name="phase"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phase</FormLabel>
+                        <FormLabel className="text-sm">Phase</FormLabel>
                         <FormControl>
-                          <select {...field} className="w-full border rounded px-3 py-2">
+                          <select {...field} className="w-full border rounded px-2 py-1 h-8 text-sm">
                             <option value="define">Define</option>
                             <option value="measure">Measure</option>
                             <option value="analyze">Analyze</option>
@@ -1722,15 +1726,14 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Priority</FormLabel>
+                        <FormLabel className="text-sm">Priority</FormLabel>
                         <FormControl>
-                          <select {...field} className="w-full border rounded px-3 py-2">
+                          <select {...field} className="w-full border rounded px-2 py-1 h-8 text-sm">
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
@@ -1740,15 +1743,14 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel className="text-sm">Status</FormLabel>
                         <FormControl>
-                          <select {...field} className="w-full border rounded px-3 py-2">
+                          <select {...field} className="w-full border rounded px-2 py-1 h-8 text-sm">
                             <option value="not-started">Not Started</option>
                             <option value="in-progress">In Progress</option>
                             <option value="completed">Completed</option>
@@ -1759,19 +1761,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="progress"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Progress (%)</FormLabel>
+                        <FormLabel className="text-sm">Progress (%)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
                             min="0" 
                             max="100" 
                             placeholder="0" 
+                            className="h-8"
                             {...field}
                             onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                           />
@@ -1780,47 +1782,31 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       </FormItem>
                     )}
                   />
+                </div>
 
+                {/* Row 4: Assignee and Dependencies */}
+                <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={form.control}
                     name="assignee"
                     render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Assignee</FormLabel>
+                      <FormItem>
+                        <FormLabel className="text-sm">Assignee</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter assignee name" {...field} />
+                          <Input placeholder="Enter assignee name" className="h-8" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="dependencies"
                     render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Dependencies</FormLabel>
+                      <FormItem>
+                        <FormLabel className="text-sm">Dependencies</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter task dependencies" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="comments"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Comments</FormLabel>
-                        <FormControl>
-                          <textarea 
-                            className="w-full border rounded px-3 py-2 h-20 resize-none" 
-                            placeholder="Add any comments or notes about this task"
-                            {...field}
-                          />
+                          <Input placeholder="Enter task dependencies" className="h-8" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1828,28 +1814,52 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                   />
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
+                {/* Row 5: Comments */}
+                <FormField
+                  control={form.control}
+                  name="comments"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Comments</FormLabel>
+                      <FormControl>
+                        <textarea 
+                          className="w-full border rounded px-2 py-1 h-12 resize-none text-sm" 
+                          placeholder="Add any comments or notes about this task"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-2 pt-2">
                   <Button
                     type="button"
                     variant="outline"
+                    size="sm"
                     onClick={handleCloseOverlay}
+                    className="h-8"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
+                    size="sm"
                     disabled={saveTaskMutation.isPending}
+                    className="h-8"
                   >
                     {saveTaskMutation.isPending ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         Saving...
                       </>
                     ) : (
-                      editingTaskId ? 'Update Task' : 'Create Task'
+                      editingTaskId ? 'Update' : 'Create'
                     )}
                   </Button>
                 </div>
