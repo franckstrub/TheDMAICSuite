@@ -54,21 +54,14 @@ export default function DmaicTools() {
   // Get calculated phase progress data based on actual tasks
   const phaseProgressData = usePhaseProgress(currentProject?.id || 0);
 
-  // Fetch tasks to calculate overall progress consistently with Projects page
-  const { data: tasksData } = useQuery({
-    queryKey: [`/api/projects/${currentProject?.id || 0}/gantt-tasks`],
-    enabled: !!currentProject?.id,
-  });
-
-  // Calculate overall progress based on all tasks (same method as Projects page)
+  // Calculate overall progress based on DMAIC phase progress data
   const overallProgress = useMemo(() => {
-    const tasks = tasksData?.tasks || [];
-    if (tasks.length === 0) return 0;
+    if (!phaseProgressData) return 0;
     
-    // Calculate average progress across all tasks
-    const totalProgress = tasks.reduce((sum: number, task: any) => sum + (task.progress || 0), 0);
-    return Math.round(totalProgress / tasks.length);
-  }, [tasksData]);
+    const { define, measure, analyze, improve, control } = phaseProgressData;
+    const totalProgress = define + measure + analyze + improve + control;
+    return Math.round(totalProgress / 5); // Average of all 5 DMAIC phases
+  }, [phaseProgressData]);
 
   // Ensure we have the correct project loaded
   useEffect(() => {
