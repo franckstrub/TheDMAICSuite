@@ -752,6 +752,26 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     };
   };
 
+  // Calculate phase progress based on tasks
+  const calculatePhaseProgress = (phase: string) => {
+    const phaseTasks = tasks.filter(task => task.phase === phase);
+    if (phaseTasks.length === 0) return 0;
+    
+    const totalProgress = phaseTasks.reduce((sum, task) => sum + (task.progress || 0), 0);
+    return Math.round(totalProgress / phaseTasks.length);
+  };
+
+  // Get phase progress data
+  const phaseProgressData = useMemo(() => {
+    return {
+      define: calculatePhaseProgress('define'),
+      measure: calculatePhaseProgress('measure'),
+      analyze: calculatePhaseProgress('analyze'),
+      improve: calculatePhaseProgress('improve'),
+      control: calculatePhaseProgress('control'),
+    };
+  }, [tasks]);
+
   // Check if a date is a milestone
   const isMilestoneDate = (date: Date) => {
     return Object.values(milestones).some(milestone => 
@@ -762,11 +782,11 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Get milestone label for a date
   const getMilestoneLabel = (date: Date) => {
     if (milestones.kickOff && isSameDay(date, milestones.kickOff)) return 'Kick-off';
-    if (milestones.define && isSameDay(date, milestones.define)) return 'Define';
-    if (milestones.measure && isSameDay(date, milestones.measure)) return 'Measure';
-    if (milestones.analyze && isSameDay(date, milestones.analyze)) return 'Analyze';
-    if (milestones.improve && isSameDay(date, milestones.improve)) return 'Improve';
-    if (milestones.control && isSameDay(date, milestones.control)) return 'Control';
+    if (milestones.define && isSameDay(date, milestones.define)) return `Define (${phaseProgressData.define}%)`;
+    if (milestones.measure && isSameDay(date, milestones.measure)) return `Measure (${phaseProgressData.measure}%)`;
+    if (milestones.analyze && isSameDay(date, milestones.analyze)) return `Analyze (${phaseProgressData.analyze}%)`;
+    if (milestones.improve && isSameDay(date, milestones.improve)) return `Improve (${phaseProgressData.improve}%)`;
+    if (milestones.control && isSameDay(date, milestones.control)) return `Control (${phaseProgressData.control}%)`;
     return '';
   };
 
@@ -777,6 +797,30 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   return (
     <div className="gantt-chart-container">
+      {/* Phase Progress Section */}
+      <div className="mb-4 p-4 bg-gray-50 rounded-lg border">
+        <h4 className="text-sm font-semibold mb-3 text-gray-700">DMAIC Phase Progress</h4>
+        <div className="grid grid-cols-5 gap-3">
+          {Object.entries(phaseProgressData).map(([phase, progress]) => (
+            <div key={phase} className="text-center">
+              <div className="text-xs font-medium text-gray-600 mb-1 capitalize">{phase}</div>
+              <div className="relative bg-gray-200 rounded-full h-2 mb-1">
+                <div 
+                  className={`absolute top-0 left-0 h-2 rounded-full transition-all duration-300 ${phaseColors[phase as keyof typeof phaseColors]}`}
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <div className={`text-xs font-semibold ${progress === 100 ? 'text-green-600' : progress >= 50 ? 'text-blue-600' : 'text-gray-500'}`}>
+                {progress}%
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {tasks.filter(task => task.phase === phase).length} tasks
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex justify-between mb-4">
         <h3 className="text-lg font-semibold">Project Timeline</h3>
         <div className="flex space-x-2">
