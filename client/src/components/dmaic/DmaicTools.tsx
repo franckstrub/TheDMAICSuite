@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { useQuery } from "@tanstack/react-query";
@@ -54,16 +54,21 @@ export default function DmaicTools() {
   // Get calculated phase progress data based on actual tasks
   const phaseProgressData = usePhaseProgress(currentProject?.id || 0);
 
-  // Calculate overall progress based on phase progress data
-  const calculateOverallProgress = () => {
-    if (!phaseProgressData) return 0;
-    
-    const { define, measure, analyze, improve, control } = phaseProgressData;
-    const totalProgress = define + measure + analyze + improve + control;
-    return Math.round(totalProgress / 5); // Average of all 5 phases
-  };
+  // Fetch tasks to calculate overall progress consistently with Projects page
+  const { data: tasksData } = useQuery({
+    queryKey: [`/api/projects/${currentProject?.id || 0}/gantt-tasks`],
+    enabled: !!currentProject?.id,
+  });
 
-  const overallProgress = calculateOverallProgress();
+  // Calculate overall progress based on all tasks (same method as Projects page)
+  const overallProgress = useMemo(() => {
+    const tasks = tasksData?.tasks || [];
+    if (tasks.length === 0) return 0;
+    
+    // Calculate average progress across all tasks
+    const totalProgress = tasks.reduce((sum: number, task: any) => sum + (task.progress || 0), 0);
+    return Math.round(totalProgress / tasks.length);
+  }, [tasksData]);
 
   // Ensure we have the correct project loaded
   useEffect(() => {
