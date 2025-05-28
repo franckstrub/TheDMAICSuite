@@ -212,6 +212,22 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
           </div>
           <span className="text-xs mt-0.5">Control</span>
         </div>
+        
+        {/* Final Control Progress Bar */}
+        <div className="flex-grow mx-0.5 flex items-center">
+          <div className="h-0.5 w-full bg-gray-200 relative group cursor-help">
+            {controlProgress > 0 && (
+              <div 
+                className={`absolute inset-0 ${controlProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
+                style={{ width: `${controlProgress}%` }}
+              ></div>
+            )}
+            {/* Tooltip */}
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+              Control: {controlProgress}%
+            </div>
+          </div>
+        </div>
       </div>
       
       <div className="flex justify-between mt-1.5">
