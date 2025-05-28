@@ -20,21 +20,6 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
   // Get the current phase (handle case sensitivity and null values)
   const currentPhase = project?.currentPhase ? project.currentPhase.toLowerCase() : 'define';
   
-  // Helper function to determine if a phase is complete, in progress, or not started
-  const getPhaseStatus = (phaseName: string): 'completed' | 'in-progress' | 'not-started' => {
-    const phaseOrder = ['define', 'measure', 'analyze', 'improve', 'control'];
-    const currentPhaseIndex = phaseOrder.indexOf(currentPhase);
-    const phaseIndex = phaseOrder.indexOf(phaseName.toLowerCase());
-    
-    if (phaseIndex < currentPhaseIndex) {
-      return 'completed';
-    } else if (phaseIndex === currentPhaseIndex) {
-      return 'in-progress';
-    } else {
-      return 'not-started';
-    }
-  };
-  
   // Calculate phase progress percentage using actual task data or fallback to status-based calculation
   const calculatePhaseProgress = (phaseName: string): number => {
     // Use the actual calculated progress from tasks if available
@@ -43,12 +28,29 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
     }
     
     // Fallback to the original logic if no task data is provided
-    if (getPhaseStatus(phaseName) === 'completed') {
+    const phaseOrder = ['define', 'measure', 'analyze', 'improve', 'control'];
+    const currentPhaseIndex = phaseOrder.indexOf(currentPhase);
+    const phaseIndex = phaseOrder.indexOf(phaseName.toLowerCase());
+    
+    if (phaseIndex < currentPhaseIndex) {
       return 100;
-    } else if (getPhaseStatus(phaseName) === 'in-progress') {
+    } else if (phaseIndex === currentPhaseIndex) {
       return Math.min(100, Math.max(0, overallProgress * 5));
     } else {
       return 0;
+    }
+  };
+
+  // Helper function to determine if a phase is complete, in progress, or not started based on actual task progress
+  const getPhaseStatus = (phaseName: string): 'completed' | 'in-progress' | 'not-started' => {
+    const progress = calculatePhaseProgress(phaseName);
+    
+    if (progress === 100) {
+      return 'completed';
+    } else if (progress > 0) {
+      return 'in-progress';
+    } else {
+      return 'not-started';
     }
   };
   
