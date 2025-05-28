@@ -52,23 +52,29 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
     }
   };
   
-  // Helper function to determine the color for each phase based on its status
-  const getPhaseColor = (status: string): string => {
-    switch (status) {
-      case "completed": return "bg-green-500";
-      case "in-progress": return "bg-blue-500";
-      case "not-started": return "bg-gray-300";
-      default: return "bg-gray-300";
+  // Helper function to determine the color for each phase based on progress and current phase
+  const getPhaseColor = (phaseName: string, progress: number): string => {
+    const isCurrentPhase = currentPhase === phaseName;
+    
+    if (progress === 100) {
+      return "bg-green-500";
+    } else if (isCurrentPhase) {
+      return "bg-blue-500";
+    } else {
+      return "bg-gray-300";
     }
   };
   
-  // Helper function to determine the text color for each phase based on its status
-  const getPhaseTextColor = (status: string): string => {
-    switch (status) {
-      case "completed": return "text-white";
-      case "in-progress": return "text-white";
-      case "not-started": return "text-gray-600";
-      default: return "text-gray-600";
+  // Helper function to determine the text color for each phase based on progress and current phase
+  const getPhaseTextColor = (phaseName: string, progress: number): string => {
+    const isCurrentPhase = currentPhase === phaseName;
+    
+    if (progress === 100) {
+      return "text-white";
+    } else if (isCurrentPhase) {
+      return "text-white";
+    } else {
+      return "text-gray-600";
     }
   };
   
@@ -93,8 +99,8 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
-            getPhaseTextColor(defineStatus),
-            getPhaseColor(defineStatus)
+            getPhaseTextColor('define', defineProgress),
+            getPhaseColor('define', defineProgress)
           )}>
             D
           </div>
@@ -121,8 +127,8 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
-            getPhaseTextColor(measureStatus),
-            getPhaseColor(measureStatus)
+            getPhaseTextColor('measure', measureProgress),
+            getPhaseColor('measure', measureProgress)
           )}>
             M
           </div>
@@ -149,8 +155,8 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
-            getPhaseTextColor(analyzeStatus),
-            getPhaseColor(analyzeStatus)
+            getPhaseTextColor('analyze', analyzeProgress),
+            getPhaseColor('analyze', analyzeProgress)
           )}>
             A
           </div>
@@ -177,8 +183,8 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
-            getPhaseTextColor(improveStatus),
-            getPhaseColor(improveStatus)
+            getPhaseTextColor('improve', improveProgress),
+            getPhaseColor('improve', improveProgress)
           )}>
             I
           </div>
@@ -205,8 +211,8 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         <div className="flex flex-col items-center">
           <div className={cn(
             "w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs",
-            getPhaseTextColor(controlStatus),
-            getPhaseColor(controlStatus)
+            getPhaseTextColor('control', controlProgress),
+            getPhaseColor('control', controlProgress)
           )}>
             C
           </div>
