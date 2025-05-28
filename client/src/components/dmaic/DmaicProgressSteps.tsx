@@ -84,6 +84,7 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
   const measureProgress = calculatePhaseProgress('measure');
   const analyzeProgress = calculatePhaseProgress('analyze');
   const improveProgress = calculatePhaseProgress('improve');
+  const controlProgress = calculatePhaseProgress('control');
   
   return (
     <div className={cn("w-full", className)}>
@@ -103,11 +104,11 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         {/* Connection between Define and Measure */}
         <div className="flex-grow mx-0.5 flex items-center">
           <div className="h-0.5 w-full bg-gray-200 relative">
-            {defineStatus === "completed" && (
-              <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
-            )}
-            {defineStatus === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${defineProgress}%` }}></div>
+            {defineProgress > 0 && (
+              <div 
+                className={`absolute inset-0 ${defineProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
+                style={{ width: `${defineProgress}%` }}
+              ></div>
             )}
           </div>
         </div>
@@ -127,11 +128,11 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         {/* Connection between Measure and Analyze */}
         <div className="flex-grow mx-0.5 flex items-center">
           <div className="h-0.5 w-full bg-gray-200 relative">
-            {measureStatus === "completed" && (
-              <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
-            )}
-            {measureStatus === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${measureProgress}%` }}></div>
+            {measureProgress > 0 && (
+              <div 
+                className={`absolute inset-0 ${measureProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
+                style={{ width: `${measureProgress}%` }}
+              ></div>
             )}
           </div>
         </div>
@@ -151,11 +152,11 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         {/* Connection between Analyze and Improve */}
         <div className="flex-grow mx-0.5 flex items-center">
           <div className="h-0.5 w-full bg-gray-200 relative">
-            {analyzeStatus === "completed" && (
-              <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
-            )}
-            {analyzeStatus === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${analyzeProgress}%` }}></div>
+            {analyzeProgress > 0 && (
+              <div 
+                className={`absolute inset-0 ${analyzeProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
+                style={{ width: `${analyzeProgress}%` }}
+              ></div>
             )}
           </div>
         </div>
@@ -175,11 +176,11 @@ export default function DmaicProgressSteps({ project, overallProgress, phaseProg
         {/* Connection between Improve and Control */}
         <div className="flex-grow mx-0.5 flex items-center">
           <div className="h-0.5 w-full bg-gray-200 relative">
-            {improveStatus === "completed" && (
-              <div className="absolute inset-0 bg-green-500" style={{ width: "100%" }}></div>
-            )}
-            {improveStatus === "in-progress" && (
-              <div className="absolute inset-0 bg-blue-500" style={{ width: `${improveProgress}%` }}></div>
+            {improveProgress > 0 && (
+              <div 
+                className={`absolute inset-0 ${improveProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`} 
+                style={{ width: `${improveProgress}%` }}
+              ></div>
             )}
           </div>
         </div>
