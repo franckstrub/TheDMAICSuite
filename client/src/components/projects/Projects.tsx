@@ -13,6 +13,7 @@ import {
   calculateTimelineProgress,
   getTimelineColor 
 } from "@/lib/utils";
+import ProjectProgressBar from "./ProjectProgressBar";
 import {
   Card,
   CardContent,
@@ -585,10 +586,10 @@ export default function Projects() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className={`${getProgressColor(project.progress)} h-2 rounded-full`} style={{ width: `${project.progress}%` }}></div>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">{project.progress}% Complete</div>
+                        <ProjectProgressBar 
+                          projectId={project.id} 
+                          fallbackProgress={project.progress} 
+                        />
                       </TableCell>
                       <TableCell>
                         {/* Timeline dates */}
