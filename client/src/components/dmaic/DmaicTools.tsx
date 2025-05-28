@@ -54,6 +54,17 @@ export default function DmaicTools() {
   // Get calculated phase progress data based on actual tasks
   const phaseProgressData = usePhaseProgress(currentProject?.id || 0);
 
+  // Calculate overall progress based on phase progress data
+  const calculateOverallProgress = () => {
+    if (!phaseProgressData) return 0;
+    
+    const { define, measure, analyze, improve, control } = phaseProgressData;
+    const totalProgress = define + measure + analyze + improve + control;
+    return Math.round(totalProgress / 5); // Average of all 5 phases
+  };
+
+  const overallProgress = calculateOverallProgress();
+
   // Ensure we have the correct project loaded
   useEffect(() => {
     // Load from URL params if available
@@ -206,7 +217,7 @@ export default function DmaicTools() {
                 <div className="p-2 border border-gray-200 rounded-md shadow-sm">
                   <DmaicProgressSteps
                     project={currentProject}
-                    overallProgress={currentProject.progress || 0}
+                    overallProgress={overallProgress}
                     phaseProgressData={phaseProgressData}
                     className="scale-90 transform origin-center"
                   />
