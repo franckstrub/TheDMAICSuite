@@ -1,4 +1,4 @@
-import { users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements, datasets, dataCollectionPlans, storageConfigs, projectRaciMatrix, activityLogs, processData, projectRisks, stakeholderAnalysis, gateReviewDeliverables, gateReviewValidators, ganttTasks, type User, type UpsertUser, type Project, type Charter, type SipocDiagram, type CustomerRequirement, type BusinessRequirement, type Dataset, type DataCollectionPlan, type StorageConfig, type RaciMatrix, type ActivityLog, type ProcessData, type Risk, type StakeholderAnalysisItem, type GateReviewDeliverable, type GateReviewValidator, type GanttTask } from "@shared/schema";
+import { users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements, datasets, dataCollectionPlans, storageConfigs, projectRaciMatrix, activityLogs, processData, projectRisks, stakeholderAnalysisItems, gateReviewDeliverables, gateReviewValidators, ganttTasks, type User, type UpsertUser, type Project, type Charter, type SipocDiagram, type CustomerRequirement, type BusinessRequirement, type Dataset, type DataCollectionPlan, type StorageConfig, type RaciMatrix, type ActivityLog, type ProcessData, type Risk, type StakeholderAnalysisItem, type GateReviewDeliverable, type GateReviewValidator, type GanttTask } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and } from "drizzle-orm";
 import type { Request, Response } from "express";
@@ -439,27 +439,27 @@ export class DatabaseStorage implements IStorage {
   async getStakeholderAnalysis(projectId: number): Promise<StakeholderAnalysisItem[]> {
     return await db
       .select()
-      .from(stakeholderAnalysis)
-      .where(eq(stakeholderAnalysis.projectId, projectId))
-      .orderBy(asc(stakeholderAnalysis.id));
+      .from(stakeholderAnalysisItems)
+      .where(eq(stakeholderAnalysisItems.projectId, projectId))
+      .orderBy(asc(stakeholderAnalysisItems.id));
   }
 
   async createStakeholderAnalysisItem(item: any): Promise<StakeholderAnalysisItem> {
-    const [newItem] = await db.insert(stakeholderAnalysis).values(item).returning();
+    const [newItem] = await db.insert(stakeholderAnalysisItems).values(item).returning();
     return newItem;
   }
 
   async updateStakeholderAnalysisItem(id: number, item: any): Promise<StakeholderAnalysisItem> {
     const [updatedItem] = await db
-      .update(stakeholderAnalysis)
+      .update(stakeholderAnalysisItems)
       .set({ ...item, lastUpdated: new Date() })
-      .where(eq(stakeholderAnalysis.id, id))
+      .where(eq(stakeholderAnalysisItems.id, id))
       .returning();
     return updatedItem;
   }
 
   async deleteStakeholderAnalysisItem(id: number): Promise<void> {
-    await db.delete(stakeholderAnalysis).where(eq(stakeholderAnalysis.id, id));
+    await db.delete(stakeholderAnalysisItems).where(eq(stakeholderAnalysisItems.id, id));
   }
 
   // Gate review operations
