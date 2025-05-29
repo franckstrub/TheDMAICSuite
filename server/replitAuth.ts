@@ -59,12 +59,18 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  // Check if user already exists and has a custom profile image
+  const existingUser = await storage.getUser(claims["sub"]);
+  const hasCustomProfileImage = existingUser?.profileImageUrl && 
+    existingUser.profileImageUrl.startsWith('/uploads/');
+  
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
+    // Only use OAuth profile image if user doesn't have a custom uploaded image
+    profileImageUrl: hasCustomProfileImage ? existingUser.profileImageUrl : claims["profile_image_url"],
   });
 }
 
