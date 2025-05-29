@@ -162,7 +162,8 @@ export default function DmaicTools() {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="w-full">
-          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
+            {/* Project Title - Left */}
             <h1 className="text-2xl font-semibold text-gray-900">
               {currentProject?.title ? (
                 <>
@@ -176,10 +177,10 @@ export default function DmaicTools() {
               )}
             </h1>
 
-            {/* Project Timeline */}
+            {/* Project Timeline - Center */}
             {currentProject?.startDate && currentProject?.targetEndDate && (
-              <div className="flex flex-col md:ml-4">
-                <div className="flex items-start gap-2">
+              <div className="flex flex-col md:flex-1 md:flex justify-center">
+                <div className="flex items-start gap-2 justify-center">
                   <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center">
                     <div className="flex items-center">
                       <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
@@ -209,9 +210,9 @@ export default function DmaicTools() {
               </div>
             )}
 
-            {/* DMAIC Progress Visualization - Moved here from below */}
+            {/* DMAIC Progress Visualization - Right */}
             {currentProject && (
-              <div className="md:ml-4" style={{ width: "40%" }}>
+              <div className="md:ml-auto" style={{ width: "40%" }}>
                 <div className="p-2 border border-gray-200 rounded-md shadow-sm">
                   <DmaicProgressSteps
                     project={currentProject}
