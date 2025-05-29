@@ -60,51 +60,58 @@ export default function UserDropdown() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2 h-10 px-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage 
-              src={user?.profileImageUrl || undefined} 
-              alt={getDisplayName()}
-              className="object-cover"
-            />
-            <AvatarFallback className="text-sm bg-blue-100 text-blue-700">
-              {getInitials()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="hidden md:inline text-sm font-medium text-gray-700">
-            {getDisplayName()}
-          </span>
-          <ChevronDown className="h-4 w-4 text-gray-500" />
-        </Button>
-      </DropdownMenuTrigger>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex items-center gap-2 h-10 px-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage 
+                src={user?.profileImageUrl || undefined} 
+                alt={getDisplayName()}
+                className="object-cover"
+              />
+              <AvatarFallback className="text-sm bg-blue-100 text-blue-700">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="hidden md:inline text-sm font-medium text-gray-700">
+              {getDisplayName()}
+            </span>
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+          </Button>
+        </DropdownMenuTrigger>
+        
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="px-3 py-2 border-b">
+            <p className="text-sm font-medium text-gray-900">{getDisplayName()}</p>
+            {user.email && (
+              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+            )}
+          </div>
+          
+          <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+            <User className="mr-2 h-4 w-4" />
+            Your Profile
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       
-      <DropdownMenuContent align="end" className="w-56">
-        <div className="px-3 py-2 border-b">
-          <p className="text-sm font-medium text-gray-900">{getDisplayName()}</p>
-          {user.email && (
-            <p className="text-xs text-gray-500 truncate">{user.email}</p>
-          )}
-        </div>
-        
-        <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
-          <User className="mr-2 h-4 w-4" />
-          Your Profile
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
-          <Settings className="mr-2 h-4 w-4" />
-          Settings
-        </DropdownMenuItem>
-        
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      <ProfileOverlay 
+        open={profileOpen} 
+        onClose={() => setProfileOpen(false)} 
+      />
+    </>
   );
 }

@@ -194,7 +194,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                       alt={getDisplayName()}
                       className="object-cover"
                     />
-                    <AvatarFallback className="text-xl bg-blue-100 text-blue-700">
+                    <AvatarFallback className="text-xl bg-primary/10 text-primary">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
@@ -490,7 +490,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                         Your preferred belt level for new projects
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-green-600 border-green-600">
+                    <Badge variant="outline" className="text-primary border-primary">
                       Green Belt
                     </Badge>
                   </div>
@@ -504,7 +504,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                         Your current access level in the DMAIC Suite
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-blue-600 border-blue-600">
+                    <Badge variant="outline" className="text-primary border-primary">
                       Active User
                     </Badge>
                   </div>
