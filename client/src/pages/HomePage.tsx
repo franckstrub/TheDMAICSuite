@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { useAppContext } from "@/store/AppContext";
 import MainLayout from "@/components/layout/MainLayout";
 import Dashboard from "@/components/dashboard/Dashboard";
@@ -17,16 +18,17 @@ type HomeParams = {
 };
 
 export default function HomePage() {
-  const { user, currentProject, setCurrentTab, setActivePhase, setCurrentProject } = useAppContext();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { currentProject, setCurrentTab, setActivePhase, setCurrentProject } = useAppContext();
   const [location, navigate] = useLocation();
   const params = useParams<HomeParams>();
   
-  // Redirect to landing page if not logged in
+  // Redirect to landing page if not authenticated
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !isAuthenticated) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
   // Update currentTab and activePhase based on URL params
   useEffect(() => {
