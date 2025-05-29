@@ -42,7 +42,7 @@ const upload = multer({
       cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.claims?.sub || 'user';
       const ext = path.extname(file.originalname);
       cb(null, `profile-${userId}-${Date.now()}${ext}`);
     }
@@ -270,13 +270,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/upload-profile-image', isAuthenticated, upload.single('profileImage'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log("Upload debug - User object:", req.user);
+      console.log("Upload debug - User ID:", userId);
+      console.log("Upload debug - File info:", req.file);
       
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
       }
       
-      // Generate the URL for the uploaded file
-      const imageUrl = `/uploads/profile-pictures/${req.file.filename}`;
+      // Generate the URL for the uploaded file with timestamp to force cache refresh
+      const imageUrl = `/uploads/profile-pictures/${req.file.filename}?t=${Date.now()}`;
       
       // Update user's profile image URL in the database
       const updatedUser = await storage.updateUser(userId, { 
