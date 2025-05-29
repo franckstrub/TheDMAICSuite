@@ -135,7 +135,7 @@ export class DatabaseStorage implements IStorage {
 
   async getProjectsByCreatedBy(createdBy: string): Promise<Project[]> {
     return await db.select().from(projects)
-      .where(eq(projects.createdBy, parseInt(createdBy)))
+      .where(eq(projects.createdBy, createdBy))
       .orderBy(desc(projects.lastUpdated));
   }
 
