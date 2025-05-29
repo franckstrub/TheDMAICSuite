@@ -199,12 +199,12 @@ export default function DmaicTools() {
                         % Timeline
                       </span>
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-36">
+                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-56">
                       <span>{formatDate(currentProject.startDate)}</span>
                       <span>{formatDate(currentProject.targetEndDate)}</span>
                     </div>
                     {/* Additional empty space for vertical alignment */}
-                    <div className="my-4"></div>
+                    <div className="my-[26px]"></div>
                   </div>
                 </div>
               </div>
