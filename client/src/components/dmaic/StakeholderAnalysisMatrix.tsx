@@ -771,16 +771,21 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                     });
 
                                     console.log("AI strategy result:", result);
+                                    console.log("Result type:", typeof result);
+                                    console.log("Result keys:", result ? Object.keys(result) : 'null');
 
                                     // Update the engagement strategy with AI-generated content
-                                    if (result && result.engagementStrategy) {
-                                      updateItem(index, 'engagementStrategy', result.engagementStrategy);
+                                    const strategy = result?.engagementStrategy;
+                                    if (strategy) {
+                                      console.log("Using AI-generated strategy:", strategy);
+                                      updateItem(index, 'engagementStrategy', strategy);
 
                                       toast({
                                         title: result.isGenerated === false ? "Fallback Strategy Applied" : "AI Strategy Generated",
                                         description: result.message || "Strategy generated successfully using Google AI",
                                       });
                                     } else {
+                                      console.log("No engagementStrategy found in result, throwing error");
                                       throw new Error("No strategy content received from API");
                                     }
 
