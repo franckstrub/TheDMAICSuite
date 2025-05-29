@@ -162,67 +162,63 @@ export default function DmaicTools() {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="w-full">
-          {/* Project Title */}
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">
-            {currentProject?.title ? (
-              <>
-                <span className="text-primary">{currentProject.title}</span>
-                <span className="text-gray-500 text-sm font-normal ml-1">
-                  - DMAIC
-                </span>
-              </>
-            ) : (
-              "DMAIC Methodology"
-            )}
-          </h1>
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {currentProject?.title ? (
+                <>
+                  <span className="text-primary">{currentProject.title}</span>
+                  <span className="text-gray-500 text-sm font-normal ml-1">
+                    - DMAIC
+                  </span>
+                </>
+              ) : (
+                "DMAIC Methodology"
+              )}
+            </h1>
 
-          {/* Layout with centered timeline and left-justified DMAIC progress */}
-          <div className="flex flex-col md:flex-row md:items-start gap-4">
-            {/* DMAIC Progress Visualization - Left side */}
+            {/* Project Timeline */}
+            {currentProject?.startDate && currentProject?.targetEndDate && (
+              <div className="flex flex-col md:ml-4">
+                <div className="flex items-start gap-2">
+                  <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center">
+                    <div className="flex items-center">
+                      <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
+                        <div
+                          className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`}
+                          style={{
+                            width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                        {calculateTimelineProgress(
+                          currentProject.startDate,
+                          currentProject.targetEndDate,
+                        )}
+                        % Timeline
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-36">
+                      <span>{formatDate(currentProject.startDate)}</span>
+                      <span>{formatDate(currentProject.targetEndDate)}</span>
+                    </div>
+                    {/* Additional empty space for vertical alignment */}
+                    <div className="my-4"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* DMAIC Progress Visualization - Moved here from below */}
             {currentProject && (
-              <div className="flex-shrink-0">
+              <div className="md:ml-4" style={{ width: "40%" }}>
                 <div className="p-2 border border-gray-200 rounded-md shadow-sm">
                   <DmaicProgressSteps
                     project={currentProject}
                     overallProgress={overallProgress}
                     phaseProgressData={phaseProgressData}
-                    className="scale-90 transform origin-left"
+                    className="scale-90 transform origin-center"
                   />
-                </div>
-              </div>
-            )}
-
-            {/* Project Timeline - Centered */}
-            {currentProject?.startDate && currentProject?.targetEndDate && (
-              <div className="flex-1 flex justify-center">
-                <div className="flex flex-col">
-                  <div className="flex items-start gap-2">
-                    <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center">
-                      <div className="flex items-center">
-                        <div className="w-24 md:w-36 bg-gray-200 rounded-full h-2 flex-shrink-0">
-                          <div
-                            className={`${getTimelineColor(calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate))} h-2 rounded-full`}
-                            style={{
-                              width: `${calculateTimelineProgress(currentProject.startDate, currentProject.targetEndDate)}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                          {calculateTimelineProgress(
-                            currentProject.startDate,
-                            currentProject.targetEndDate,
-                          )}
-                          % Timeline
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500 mt-1 w-24 md:w-36">
-                        <span>{formatDate(currentProject.startDate)}</span>
-                        <span>{formatDate(currentProject.targetEndDate)}</span>
-                      </div>
-                      {/* Additional empty space for vertical alignment */}
-                      <div className="my-4"></div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
