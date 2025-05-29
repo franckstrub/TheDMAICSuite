@@ -11,13 +11,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, User, Settings, LogOut, HelpCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import ProfileOverlay from "./ProfileOverlay";
 
 export default function UserDropdown() {
   const { user, isAuthenticated } = useAuth();
   const [location, navigate] = useLocation();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleProfileClick = () => {
-    navigate('/app/profile');
+    setProfileOpen(true);
   };
 
   const handleSettingsClick = () => {

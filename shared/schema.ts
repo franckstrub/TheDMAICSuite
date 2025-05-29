@@ -49,12 +49,31 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   profileImageUrl: text("profile_image_url"),
+  phone: text("phone"),
+  companyName: text("company_name"),
+  billingAddress: jsonb("billing_address").$type<{
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  }>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+export const updateUserProfileSchema = createInsertSchema(users).pick({
+  firstName: true,
+  lastName: true,
+  phone: true,
+  companyName: true,
+  billingAddress: true,
+});
+
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 
 // Projects
 export const projects = pgTable("projects", {
