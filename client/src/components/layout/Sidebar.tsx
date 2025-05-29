@@ -4,6 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
@@ -16,7 +23,10 @@ import {
   SlidersHorizontal, 
   ServerCog, 
   Settings, 
-  X 
+  X,
+  User,
+  LogOut,
+  ChevronUp
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -69,6 +79,18 @@ export default function Sidebar() {
       return user.email.split('@')[0];
     }
     return 'User';
+  };
+
+  const handleProfileClick = () => {
+    navigate('/app/profile');
+  };
+
+  const handleSettingsClick = () => {
+    navigate('/app/settings');
+  };
+
+  const handleSignOut = () => {
+    window.location.href = '/api/logout';
   };
 
   const sidebarClasses = cn(
