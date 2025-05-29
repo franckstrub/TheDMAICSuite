@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Profile update request:", { userId, updateData });
       
       // Validate the update data
-      const allowedFields = ['firstName', 'lastName', 'phone', 'companyName', 'billingAddress'];
+      const allowedFields = ['firstName', 'lastName', 'phone', 'phoneCountryCode', 'companyName', 'billingAddress'];
       const filteredData: any = {};
       
       for (const field of allowedFields) {
