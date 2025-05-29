@@ -709,7 +709,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                       )}
                     </TableCell>
                     <TableCell className="p-1">
-                      <div className="relative">
+                      <div className="relative border border-gray-200 rounded-md p-2">
                         <div className="flex flex-col gap-2">
                           {/* Position Badge at the top */}
                           <div className={`px-2 py-1 rounded-md text-xs font-medium inline-block w-fit ${
@@ -732,7 +732,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                               // Auto-adjust height when user types
                               adjustTextareaHeight(index);
                             }}
-                            className="min-h-[60px] text-xs w-full resize-y p-1 pr-8 whitespace-pre-wrap"
+                            className="min-h-[60px] text-xs w-full resize-y p-1 pr-8 whitespace-pre-wrap border-0 focus:ring-0 focus:outline-none"
                             placeholder="Strategy to engage and manage this stakeholder"
                           />
                         </div>
