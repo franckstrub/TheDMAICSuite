@@ -606,13 +606,13 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
               <TableHeader>
                 <TableRow className="py-0">
                   <TableHead className="w-1/5 py-1">Stakeholder Name</TableHead>
-                  <TableHead className="w-1/5 py-1">Role/Function</TableHead>
+                  <TableHead className="w-[12%] py-1">Role/Function</TableHead>
                   <TableHead className="w-[5%] py-1">Interest</TableHead>
                   <TableHead className="w-[5%] py-1">Influence</TableHead>
                   <TableHead className="w-[5%] py-1">Support</TableHead>
                   <TableHead className="w-[6%] py-1">Resistance</TableHead>
                   <TableHead className="w-[9%] py-1">Position</TableHead>
-                  <TableHead className="w-1/5 py-1">Engagement Strategy</TableHead>
+                  <TableHead className="w-[28%] py-1">Engagement Strategy</TableHead>
                   <TableHead className="w-[5%] py-1">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -641,7 +641,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                           // Auto-adjust height when user types
                           adjustTextareaHeight(`role-${index}`);
                         }}
-                        className="min-h-[60px] text-sm w-full resize-y p-1"
+                        className="min-h-[60px] text-xs w-full resize-y p-1"
                         placeholder="Role/Function"
                       />
                     </TableCell>
