@@ -219,7 +219,9 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         userId
       };
       
-      return apiRequest("POST", "/api/generate-engagement-strategy", payload);
+      const response = await apiRequest("POST", "/api/generate-engagement-strategy", payload);
+      console.log("Raw API response:", response);
+      return response;
     },
     onSuccess: (data) => {
       console.log("AI engagement strategy generated successfully:", data);
@@ -771,12 +773,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                     console.log("AI strategy result:", result);
 
                                     // Update the engagement strategy with AI-generated content
-                                    if (result && (result as any).engagementStrategy) {
-                                      updateItem(index, 'engagementStrategy', (result as any).engagementStrategy);
+                                    if (result && result.engagementStrategy) {
+                                      updateItem(index, 'engagementStrategy', result.engagementStrategy);
 
                                       toast({
-                                        title: (result as any).isGenerated === false ? "Fallback Strategy Applied" : "AI Strategy Generated",
-                                        description: (result as any).message || "Strategy generated successfully using Google AI",
+                                        title: result.isGenerated === false ? "Fallback Strategy Applied" : "AI Strategy Generated",
+                                        description: result.message || "Strategy generated successfully using Google AI",
                                       });
                                     } else {
                                       throw new Error("No strategy content received from API");
