@@ -263,13 +263,11 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
             <div className="border rounded-lg p-6">
               <div className="flex flex-col items-center text-center">
                 <div className="relative">
-                  <Avatar className="h-24 w-24 mb-4" key={user.profileImageUrl}>
+                  <Avatar className="h-24 w-24 mb-4" key={`${user.profileImageUrl}-${Date.now()}`}>
                     <AvatarImage 
                       src={user.profileImageUrl || undefined} 
                       alt={getDisplayName()}
                       className="object-cover"
-                      onError={() => console.log('Failed to load image:', user.profileImageUrl)}
-                      onLoad={() => console.log('Image loaded successfully:', user.profileImageUrl)}
                     />
                     <AvatarFallback className="text-xl bg-primary/10 text-primary">
                       {getInitials()}
