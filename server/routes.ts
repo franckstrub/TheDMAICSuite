@@ -213,6 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const updateData = req.body;
       
+      console.log("Profile update request:", { userId, updateData });
+      
       // Validate the update data
       const allowedFields = ['firstName', 'lastName', 'phone', 'companyName', 'billingAddress'];
       const filteredData: any = {};
@@ -223,7 +225,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      console.log("Filtered data for update:", filteredData);
+      
       const updatedUser = await storage.updateUser(userId, filteredData);
+      console.log("Update result:", updatedUser);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
