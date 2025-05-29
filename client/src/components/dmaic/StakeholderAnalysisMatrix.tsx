@@ -192,6 +192,48 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
     }
   };
 
+  // Mutation for generating AI engagement strategy
+  const generateStrategyMutation = useMutation({
+    mutationFn: async ({ 
+      stakeholderName, 
+      stakeholderRole, 
+      interestLevel, 
+      influenceLevel, 
+      supportLevel, 
+      resistanceType 
+    }: {
+      stakeholderName: string;
+      stakeholderRole: string;
+      interestLevel: string;
+      influenceLevel: string;
+      supportLevel: string;
+      resistanceType?: string;
+    }) => {
+      const payload = {
+        stakeholderName,
+        stakeholderRole,
+        interestLevel,
+        influenceLevel,
+        supportLevel,
+        resistanceType,
+        userId
+      };
+      
+      return apiRequest("POST", "/api/generate-engagement-strategy", payload);
+    },
+    onSuccess: (data) => {
+      console.log("AI engagement strategy generated successfully:", data);
+    },
+    onError: (error) => {
+      console.error("Error generating engagement strategy:", error);
+      toast({
+        title: "Generation Failed",
+        description: "Could not generate AI strategy. Using fallback approach.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Mutation for saving analysis
   const saveAnalysisMutation = useMutation({
     mutationFn: async (items: StakeholderAnalysisItem[]) => {
@@ -698,22 +740,58 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                 size="icon"
                                 variant="ghost"
                                 className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
-                                onClick={() => {
-                                  const suggestion = generateEngagementStrategy(
-                                    item.interestLevel,
-                                    item.influenceLevel,
-                                    item.supportLevel,
-                                    item.supportLevel === 'Resistant' ? item.resistanceType : null
-                                  );
-                                  updateItem(index, 'engagementStrategy', suggestion);
+                                onClick={async () => {
+                                  // Validate required fields
+                                  if (!item.stakeholderName.trim() || !item.stakeholderRole.trim()) {
+                                    toast({
+                                      title: "Missing Information",
+                                      description: "Please enter stakeholder name and role before generating strategy",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
 
-                                  toast({
-                                    title: "AI Strategy Generated",
-                                    description: "The engagement strategy has been suggested based on stakeholder attributes",
-                                  });
+                                  try {
+                                    // Call the AI API to generate engagement strategy
+                                    const result = await generateStrategyMutation.mutateAsync({
+                                      stakeholderName: item.stakeholderName,
+                                      stakeholderRole: item.stakeholderRole,
+                                      interestLevel: item.interestLevel,
+                                      influenceLevel: item.influenceLevel,
+                                      supportLevel: item.supportLevel,
+                                      resistanceType: item.supportLevel === 'Resistant' ? item.resistanceType : undefined
+                                    });
 
-                                  // Auto-adjust height after content is set
-                                  setTimeout(() => adjustTextareaHeight(index), 50);
+                                    // Update the engagement strategy with AI-generated content
+                                    updateItem(index, 'engagementStrategy', result.engagementStrategy);
+
+                                    toast({
+                                      title: result.isGenerated === false ? "Fallback Strategy Applied" : "AI Strategy Generated",
+                                      description: result.message || "The engagement strategy has been generated using Google AI based on stakeholder attributes",
+                                    });
+
+                                    // Auto-adjust height after content is set
+                                    setTimeout(() => adjustTextareaHeight(index), 50);
+                                  } catch (error) {
+                                    console.error("Error generating engagement strategy:", error);
+                                    
+                                    // Use local fallback if AI generation fails
+                                    const fallbackSuggestion = generateEngagementStrategy(
+                                      item.interestLevel,
+                                      item.influenceLevel,
+                                      item.supportLevel,
+                                      item.supportLevel === 'Resistant' ? item.resistanceType : null
+                                    );
+                                    updateItem(index, 'engagementStrategy', fallbackSuggestion);
+
+                                    toast({
+                                      title: "Fallback Strategy Applied",
+                                      description: "Used local strategy generation due to service unavailability",
+                                    });
+
+                                    // Auto-adjust height after content is set
+                                    setTimeout(() => adjustTextareaHeight(index), 50);
+                                  }
                                 }}
                               >
                                 <Sparkles className="h-4 w-4" />
