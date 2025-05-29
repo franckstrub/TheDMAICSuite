@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +21,6 @@ import {
 
 export default function Sidebar() {
   const { 
-    user, 
     currentTab, 
     setCurrentTab, 
     activePhase, 
@@ -29,6 +29,7 @@ export default function Sidebar() {
     setSidebarOpen,
     currentProject
   } = useAppContext();
+  const { user } = useAuth();
   const [location, navigate] = useLocation();
 
   const navigateTo = (tab: string, phase?: string) => {
@@ -47,14 +48,27 @@ export default function Sidebar() {
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map(part => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
+  const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
+  const getDisplayName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user?.firstName) {
+      return user.firstName;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
   };
 
   const sidebarClasses = cn(
@@ -190,15 +204,19 @@ export default function Sidebar() {
           <div className="flex items-center">
             <Avatar className="h-8 w-8">
               <AvatarImage 
-                // src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
-                src="/FRANCK-PHOTO-BUSINESS-COLOR.png"
+                src={user?.profileImageUrl || undefined}
                 alt="User avatar" 
+                className="object-cover"
               />
-              <AvatarFallback>{getInitials(user?.fullName)}</AvatarFallback>
+              <AvatarFallback className="text-sm bg-blue-100 text-blue-700">
+                {getInitials()}
+              </AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-700">{user?.fullName || "User"}</p>
-              <p className="text-xs text-gray-500">{user?.role || "User"}</p>
+              <p className="text-sm font-medium text-gray-700">{getDisplayName()}</p>
+              {user?.email && (
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              )}
             </div>
           </div>
         </div>
