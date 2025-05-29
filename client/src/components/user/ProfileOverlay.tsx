@@ -190,8 +190,17 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
         return;
       }
       
+      // Show upload starting toast
+      toast({
+        title: "Uploading...",
+        description: "Your profile picture is being uploaded.",
+      });
+      
       uploadProfilePictureMutation.mutate(file);
     }
+    
+    // Reset the input value so the same file can be selected again if needed
+    event.target.value = '';
   };
 
   if (!isAuthenticated || !user) {
