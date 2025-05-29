@@ -63,14 +63,14 @@ function Router() {
         <Route path="/" component={Landing} />
       ) : (
         <>
-          <Route path="/app/profile" component={ProfilePage} />
-          <Route path="/app/settings" component={SettingsPage} />
-          <Route path="/mockup" component={MockupPage} />
           <Route path="/" component={HomePage} />
           <Route path="/app" component={HomePage} />
           <Route path="/app/:tab" component={HomePage} />
           <Route path="/app/:tab/:phase" component={HomePage} />
           <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
+          <Route path="/app/profile" component={ProfilePage} />
+          <Route path="/app/settings" component={SettingsPage} />
+          <Route path="/mockup" component={MockupPage} />
         </>
       )}
       <Route component={NotFound} />
