@@ -3,6 +3,8 @@ import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import { getProgressColor, getStatusColor, getPhaseLabel, getProjectTypeColor } from "@/lib/utils";
+import { usePhaseProgress } from "@/hooks/usePhaseProgress";
+import { useMemo } from "react";
 
 // Define the Project type for TypeScript
 interface Project {
@@ -18,6 +20,33 @@ interface Project {
   createdBy: number;
   lastUpdated: string;
   [key: string]: any; // For any additional properties
+}
+
+// Component to calculate and display dynamic progress for a project
+function ProjectProgressDisplay({ projectId, fallbackProgress }: { projectId: number, fallbackProgress: number }) {
+  // Get calculated phase progress data based on actual tasks
+  const phaseProgressData = usePhaseProgress(projectId);
+
+  // Calculate overall progress based on DMAIC phase progress data
+  const calculatedProgress = useMemo(() => {
+    if (!phaseProgressData) return fallbackProgress;
+    
+    const { define, measure, analyze, improve, control } = phaseProgressData;
+    const totalProgress = define + measure + analyze + improve + control;
+    return Math.round(totalProgress / 5); // Average of all 5 DMAIC phases
+  }, [phaseProgressData, fallbackProgress]);
+
+  return (
+    <>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div 
+          className={`${getProgressColor(calculatedProgress)} h-2 rounded-full`} 
+          style={{ width: `${calculatedProgress}%` }}
+        ></div>
+      </div>
+      <div className="text-xs text-gray-500 mt-1">{calculatedProgress}% Complete</div>
+    </>
+  );
 }
 
 export default function ProjectsTable() {
@@ -152,13 +181,10 @@ export default function ProjectsTable() {
                 {getPhaseLabel(project.currentPhase)}
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`${getProgressColor(project.progress)} h-2 rounded-full`} 
-                    style={{ width: `${project.progress}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">{project.progress}% Complete</div>
+                <ProjectProgressDisplay 
+                  projectId={project.id} 
+                  fallbackProgress={project.progress} 
+                />
               </td>
             </tr>
           ))}
