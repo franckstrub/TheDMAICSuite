@@ -610,10 +610,10 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                   <TableHead className="w-[5%] py-1">Interest</TableHead>
                   <TableHead className="w-[5%] py-1">Influence</TableHead>
                   <TableHead className="w-[5%] py-1">Support</TableHead>
-                  <TableHead className="w-[6%] py-1">Resistance</TableHead>
-                  <TableHead className="w-[9%] py-1">Position</TableHead>
-                  <TableHead className="w-[28%] py-1">Engagement Strategy</TableHead>
-                  <TableHead className="w-[5%] py-1">Action</TableHead>
+                  <TableHead className="w-[4%] py-1">Resistance</TableHead>
+                  <TableHead className="w-[7%] py-1">Position</TableHead>
+                  <TableHead className="w-[32%] py-1">Engagement Strategy</TableHead>
+                  <TableHead className="w-[4%] py-1">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
