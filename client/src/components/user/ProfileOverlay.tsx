@@ -25,6 +25,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -61,6 +68,31 @@ const profileFormSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
 
+// Common country codes for phone numbers
+const countryCodes = [
+  { code: "+33", country: "France" },
+  { code: "+1", country: "United States" },
+  { code: "+44", country: "United Kingdom" },
+  { code: "+49", country: "Germany" },
+  { code: "+39", country: "Italy" },
+  { code: "+34", country: "Spain" },
+  { code: "+31", country: "Netherlands" },
+  { code: "+32", country: "Belgium" },
+  { code: "+41", country: "Switzerland" },
+  { code: "+43", country: "Austria" },
+  { code: "+45", country: "Denmark" },
+  { code: "+46", country: "Sweden" },
+  { code: "+47", country: "Norway" },
+  { code: "+48", country: "Poland" },
+  { code: "+351", country: "Portugal" },
+  { code: "+86", country: "China" },
+  { code: "+81", country: "Japan" },
+  { code: "+82", country: "South Korea" },
+  { code: "+91", country: "India" },
+  { code: "+61", country: "Australia" },
+  { code: "+7", country: "Russia" },
+];
+
 interface ProfileOverlayProps {
   open: boolean;
   onClose: () => void;
@@ -79,6 +111,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
       firstName: "",
       lastName: "",
       phone: "",
+      phoneCountryCode: "+33",
       companyName: "",
       billingAddress: {
         street: "",
@@ -97,6 +130,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         phone: user.phone || "",
+        phoneCountryCode: user.phoneCountryCode || "+33",
         companyName: user.companyName || "",
         billingAddress: {
           street: user.billingAddress?.street || "",
@@ -322,7 +356,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                   {user.phone && (
                     <div className="flex items-center text-sm text-gray-600">
                       <Phone className="h-4 w-4 mr-2" />
-                      {user.phone}
+                      {user.phoneCountryCode || '+33'} {user.phone}
                     </div>
                   )}
                   {user.companyName && (
@@ -418,23 +452,52 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                         </p>
                       </div>
                       
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            {isEditing ? (
-                              <FormControl>
-                                <Input {...field} placeholder="Enter your phone number" />
-                              </FormControl>
-                            ) : (
-                              <p className="mt-1 text-sm text-gray-900">{user.phone || "Not provided"}</p>
-                            )}
-                            <FormMessage />
-                          </FormItem>
+                      <div className="space-y-2">
+                        <Label>Phone Number</Label>
+                        {isEditing ? (
+                          <div className="flex gap-2">
+                            <FormField
+                              control={form.control}
+                              name="phoneCountryCode"
+                              render={({ field }) => (
+                                <FormItem className="w-32">
+                                  <FormControl>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Code" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {countryCodes.map((country) => (
+                                          <SelectItem key={country.code} value={country.code}>
+                                            {country.code} {country.country}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="phone"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input {...field} placeholder="Enter your phone number" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        ) : (
+                          <p className="mt-1 text-sm text-gray-900">
+                            {user.phone ? `${user.phoneCountryCode || '+33'} ${user.phone}` : "Not provided"}
+                          </p>
                         )}
-                      />
+                      </div>
                     </div>
 
                     <Separator />
