@@ -133,6 +133,67 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
     },
   });
 
+  const uploadProfilePictureMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("profileImage", file);
+      
+      const response = await fetch("/api/auth/upload-profile-image", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profile Picture Updated",
+        description: "Your profile picture has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    },
+    onError: (error) => {
+      console.error("Image upload error:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload profile picture. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      uploadProfilePictureMutation.mutate(file);
+    }
+  };
+
   if (!isAuthenticated || !user) {
     return null;
   }
@@ -205,10 +266,22 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                     size="sm"
                     variant="outline"
                     className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0"
-                    disabled
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadProfilePictureMutation.isPending}
                   >
-                    <Camera className="h-4 w-4" />
+                    {uploadProfilePictureMutation.isPending ? (
+                      <Upload className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
                   </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
                 </div>
                 
                 <h2 className="text-xl font-semibold text-gray-900 mb-1">
