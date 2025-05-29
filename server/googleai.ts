@@ -248,20 +248,20 @@ export async function generateEngagementStrategy(
       ? ` They show ${resistanceType.toLowerCase()} resistance.` 
       : '';
 
-    const prompt = `Create a concise stakeholder engagement strategy for:
+    const prompt = `Create a very concise and specific stakeholder engagement strategy for:
 
-Stakeholder: ${stakeholderName}
 Role: ${stakeholderRole}
 Interest Level: ${interestLevel}
 Influence Level: ${influenceLevel}
-Support Level: ${supportLevel}${resistanceInfo}
-
-Provide a specific, actionable engagement strategy considering their level of interest, influence, and current support. Include:
-- Communication approach
-- Frequency of engagement
-- Key messages to emphasize
+Support Level: ${supportLevel}
+Resistance type: ${resistanceInfo}
 
 Keep it under 100 words and focus on practical actions.`;
+// Stakeholder: ${stakeholderName}
+// Provide a specific, actionable engagement strategy considering their level of interest, influence, and current support. Include:
+// - Communication approach
+// - Frequency of engagement
+// - Key messages to emphasize
 
     console.log("Sending request to Google AI API for engagement strategy...");
     
