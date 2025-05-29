@@ -572,20 +572,6 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Default Project Type</p>
-                      <p className="text-sm text-gray-500">
-                        Your preferred belt level for new projects
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="text-primary border-primary">
-                      Green Belt
-                    </Badge>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
                       <p className="font-medium">Account Status</p>
                       <p className="text-sm text-gray-500">
                         Your current access level in the DMAIC Suite
