@@ -23,11 +23,52 @@ import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { ZodError } from "zod";
-// Using Google AI for both mitigation plan and elevator speech generation
-import { generateMitigationPlan, generateElevatorSpeech } from "./googleai";
+// Using Google AI for mitigation plan, elevator speech, and engagement strategy generation
+import { generateMitigationPlan, generateElevatorSpeech, generateEngagementStrategy } from "./googleai";
 import { registerGateReviewRoutes } from "./routes-gate-review";
 import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
+
+// Fallback engagement strategy generator
+function generateFallbackEngagementStrategy(
+  interestLevel: string,
+  influenceLevel: string,
+  supportLevel: string,
+  resistanceType?: string
+): string {
+  const strategies = [];
+  
+  // Strategy based on influence and interest
+  if (influenceLevel === 'High' && interestLevel === 'High') {
+    strategies.push("• Schedule regular one-on-one meetings");
+    strategies.push("• Involve in key decision-making processes");
+    strategies.push("• Provide detailed progress updates");
+  } else if (influenceLevel === 'High' && interestLevel === 'Medium') {
+    strategies.push("• Keep informed with executive summaries");
+    strategies.push("• Schedule periodic check-ins");
+  } else if (influenceLevel === 'High' && interestLevel === 'Low') {
+    strategies.push("• Provide high-level status updates");
+    strategies.push("• Monitor for any concerns");
+  } else if (influenceLevel === 'Medium') {
+    strategies.push("• Include in team communications");
+    strategies.push("• Seek input on relevant decisions");
+  } else {
+    strategies.push("• Keep informed through regular updates");
+    strategies.push("• Monitor satisfaction levels");
+  }
+  
+  // Additional strategy based on support level
+  if (supportLevel === 'Supportive') {
+    strategies.push("• Leverage as project champion");
+    strategies.push("• Use for stakeholder advocacy");
+  } else if (supportLevel === 'Resistant') {
+    strategies.push(`• Address ${resistanceType?.toLowerCase() || 'resistance'} concerns directly`);
+    strategies.push("• Provide clear benefit explanations");
+    strategies.push("• Schedule focused discussion sessions");
+  }
+  
+  return strategies.join('\n');
+}
 
 // Configure multer for file uploads
 const upload = multer({
@@ -2033,6 +2074,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       return res.status(200).json({ message: "Stakeholder analysis item deleted successfully" });
     } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Generate engagement strategy for stakeholder analysis
+  app.post("/api/generate-engagement-strategy", async (req: Request, res: Response) => {
+    try {
+      const { stakeholderName, stakeholderRole, interestLevel, influenceLevel, supportLevel, resistanceType, userId } = req.body;
+      
+      // Validate required fields
+      if (!stakeholderName || !stakeholderRole || !interestLevel || !influenceLevel || !supportLevel) {
+        return res.status(400).json({ 
+          message: "Missing required fields: stakeholderName, stakeholderRole, interestLevel, influenceLevel, supportLevel" 
+        });
+      }
+      
+      console.log(`Generating engagement strategy for stakeholder: ${stakeholderName}`);
+      
+      // Generate the engagement strategy using Google AI
+      try {
+        const engagementStrategy = await generateEngagementStrategy(
+          stakeholderName,
+          stakeholderRole,
+          interestLevel,
+          influenceLevel,
+          supportLevel,
+          resistanceType
+        );
+        
+        // Log activity if userId provided
+        if (userId) {
+          await storage.createActivityLog({
+            userId,
+            projectId: null,
+            action: "generate_engagement_strategy",
+            details: `Generated engagement strategy for stakeholder: ${stakeholderName}`
+          });
+        }
+        
+        return res.status(200).json({ engagementStrategy });
+      } catch (apiError: any) {
+        console.error("Google AI API error:", apiError);
+        
+        // Provide fallback strategy based on stakeholder attributes
+        const fallbackStrategy = generateFallbackEngagementStrategy(
+          interestLevel, 
+          influenceLevel, 
+          supportLevel, 
+          resistanceType
+        );
+        
+        return res.status(200).json({ 
+          engagementStrategy: fallbackStrategy,
+          isGenerated: false,
+          message: "Used fallback strategy due to AI service unavailability"
+        });
+      }
+    } catch (err) {
+      console.error("Error generating engagement strategy:", err);
       return handleErrors(err, res);
     }
   });

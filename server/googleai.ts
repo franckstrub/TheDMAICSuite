@@ -193,3 +193,102 @@ Keep it under 150 words.`;
     }
   }
 }
+
+// Generate a stakeholder engagement strategy using Google Generative AI
+export async function generateEngagementStrategy(
+  stakeholderName: string,
+  stakeholderRole: string,
+  interestLevel: string,
+  influenceLevel: string,
+  supportLevel: string,
+  resistanceType?: string
+): Promise<string> {
+  try {
+    console.log(`Generating engagement strategy for stakeholder: "${stakeholderName}" (${stakeholderRole})`);
+    
+    // Check if API key is available
+    if (!process.env.GOOGLE_AI_API_KEY) {
+      console.error('GOOGLE_AI_API_KEY is not set in environment variables');
+      throw new Error('GOOGLE_AI_API_KEY is missing. Please make sure it is set in your environment variables.');
+    }
+    
+    // Check if Google AI client was initialized
+    if (!genAI) {
+      throw new Error('Google AI client not initialized. Check your API key.');
+    }
+    
+    console.log("Using Google AI API to generate engagement strategy");
+    
+    // Create a generative model instance
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ],
+    });
+
+    // Build the prompt based on stakeholder attributes
+    const resistanceInfo = supportLevel === 'Resistant' && resistanceType 
+      ? ` They show ${resistanceType.toLowerCase()} resistance.` 
+      : '';
+
+    const prompt = `Create a concise stakeholder engagement strategy for:
+
+Stakeholder: ${stakeholderName}
+Role: ${stakeholderRole}
+Interest Level: ${interestLevel}
+Influence Level: ${influenceLevel}
+Support Level: ${supportLevel}${resistanceInfo}
+
+Provide a specific, actionable engagement strategy considering their level of interest, influence, and current support. Include:
+- Communication approach
+- Frequency of engagement
+- Key messages to emphasize
+
+Keep it under 100 words and focus on practical actions.`;
+
+    console.log("Sending request to Google AI API for engagement strategy...");
+    
+    // Generate content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    console.log("Engagement strategy response received from Google AI API");
+    
+    return text;
+  } catch (error: any) {
+    console.error('Error generating engagement strategy with Google AI:', error);
+    
+    // Detailed error handling based on common API errors
+    if (error.status === 401 || error.status === 403) {
+      throw new Error('Authentication failed: Invalid API key. Please check your GOOGLE_AI_API_KEY environment variable.');
+    } else if (error.status === 400) {
+      throw new Error(`Bad request: ${error.message || 'Check if the model name is correct and the request format is valid.'}`);
+    } else if (error.status === 404) {
+      throw new Error('Resource not found: The specified model may not exist or be available.');
+    } else if (error.status === 429) {
+      throw new Error('Rate limit exceeded: Too many requests in a given amount of time.');
+    } else if (error.status >= 500) {
+      throw new Error('Server error: The API is experiencing issues. Please try again later.');
+    } else {
+      console.error('Full error details:', JSON.stringify(error, null, 2));
+      throw new Error(`Failed to generate engagement strategy: ${error.message || 'Unknown error'}`);
+    }
+  }
+}
