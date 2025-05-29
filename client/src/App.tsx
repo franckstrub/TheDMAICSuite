@@ -19,6 +19,8 @@ import Landing from "@/pages/Landing";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
 import MockupPage from "@/pages/MockupPage";
+import ProfilePage from "@/pages/ProfilePage";
+import SettingsPage from "@/pages/SettingsPage";
 
 function Router() {
   const [location, navigate] = useLocation();
@@ -66,6 +68,8 @@ function Router() {
           <Route path="/app/:tab" component={HomePage} />
           <Route path="/app/:tab/:phase" component={HomePage} />
           <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
+          <Route path="/app/profile" component={ProfilePage} />
+          <Route path="/app/settings" component={SettingsPage} />
           <Route path="/mockup" component={MockupPage} />
         </>
       )}
