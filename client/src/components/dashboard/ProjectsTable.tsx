@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAppContext } from "@/store/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import { getProgressColor, getStatusColor, getPhaseLabel, getProjectTypeColor } from "@/lib/utils";
 
 // Define the Project type for TypeScript
@@ -20,13 +21,14 @@ interface Project {
 }
 
 export default function ProjectsTable() {
-  const { user, setCurrentProject, setCurrentTab } = useAppContext();
+  const { setCurrentProject, setCurrentTab } = useAppContext();
+  const { isAuthenticated } = useAuth();
   const [location, navigate] = useLocation();
 
   // Fetch projects
   const { data: projectsData, isLoading } = useQuery({
     queryKey: ["/api/projects"],
-    enabled: !!user?.id,
+    enabled: isAuthenticated,
   });
 
   // Define projects with proper typing

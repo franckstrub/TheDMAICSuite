@@ -93,8 +93,8 @@ export default function Projects() {
 
   // Fetch projects - focus on ones created by current user if applicable
   const { data: projectsData, isLoading, isError } = useQuery({
-    queryKey: ["/api/projects", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["/api/projects"],
+    enabled: true,
   });
 
   // Mutation for creating a new project
