@@ -108,8 +108,8 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      return apiRequest("/api/user/profile", {
-        method: "PUT",
+      return apiRequest("/api/auth/user", {
+        method: "PATCH",
         body: JSON.stringify(data),
       });
     },
