@@ -35,11 +35,13 @@ export function getSession() {
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Allow session creation
+    rolling: true, // Reset session expiry on each request
     cookie: {
       httpOnly: true,
       secure: false, // Set to false for development
       maxAge: sessionTtl,
+      sameSite: 'lax', // Allow cross-site requests for OAuth
     },
   });
 }
