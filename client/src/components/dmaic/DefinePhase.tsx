@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +47,8 @@ import { Stakeholder } from "@shared/schema";
 import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
 
 export default function DefinePhase() {
-  const { user, currentProject, currency } = useAppContext();
+  const { currentProject, currency } = useAppContext();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const params = useParams<{ projectId?: string }>();
   const urlProjectId = params.projectId;
@@ -244,7 +246,7 @@ export default function DefinePhase() {
   // Fetch business requirements
   const { data: businessRequirementsData, isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/business-requirements`],
-    enabled: !!user?.id && !!projectId,
+    enabled: isAuthenticated && !!projectId,
     retry: 3,
     staleTime: 5000,
     refetchOnMount: true,
@@ -604,7 +606,7 @@ export default function DefinePhase() {
   // Fetch project charter if exists
   const { data: charter, isError: charterError } = useQuery({
     queryKey: [`/api/projects/${projectId}/charter`],
-    enabled: !!user?.id && !!projectId,
+    enabled: isAuthenticated && !!projectId,
     refetchOnWindowFocus: false
   });
 
@@ -1031,7 +1033,7 @@ export default function DefinePhase() {
   // Fetch customer requirements
   const { data: requirementsData, isLoading: isRequirementsLoading, refetch: refetchRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/requirements`],
-    enabled: !!user?.id && !!projectId,
+    enabled: isAuthenticated && !!projectId,
     // Retry failed queries and set a stale time to avoid too many refreshes
     retry: 3,
     staleTime: 5000,
