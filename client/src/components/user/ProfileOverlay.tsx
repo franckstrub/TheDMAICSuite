@@ -108,10 +108,13 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      return apiRequest("/api/auth/user", {
+      console.log("Sending profile update:", data);
+      const response = await apiRequest("/api/auth/user", {
         method: "PATCH",
         body: JSON.stringify(data),
       });
+      console.log("Profile update response:", response);
+      return response;
     },
     onSuccess: () => {
       toast({
@@ -121,7 +124,8 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
       setIsEditing(false);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Profile update error:", error);
       toast({
         title: "Update Failed",
         description: "Failed to update your profile. Please try again.",
