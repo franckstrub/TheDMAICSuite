@@ -75,6 +75,18 @@ export default function HomePage() {
     return null;
   }
 
+  // Redirect to dashboard if no tab is specified
+  useEffect(() => {
+    if (!params.tab && location === '/') {
+      navigate('/app/dashboard');
+    }
+  }, [params.tab, location, navigate]);
+
+  // If we're at the root and no tab, don't render anything yet (redirect is happening)
+  if (!params.tab && location === '/') {
+    return null;
+  }
+
   // Determine which component to render based on currentTab
   const renderContent = () => {
     switch (params.tab) {
