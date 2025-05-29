@@ -591,8 +591,8 @@ export default function Dashboard() {
   
   // Fetch projects - focus on ones created by current user
   const { data: allProjects, isLoading: isLoadingProjects } = useQuery<ProjectsData>({
-    queryKey: ["/api/projects", user?.id, effectiveTimeframe],
-    enabled: !!user?.id,
+    queryKey: ["/api/projects", effectiveTimeframe],
+    enabled: true,
   });
   
   // Create a function to extract soft benefits from project data
