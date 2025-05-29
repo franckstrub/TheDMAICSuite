@@ -11,6 +11,19 @@ app.use(express.urlencoded({ extended: false }));
 // Serve uploaded files statically
 app.use('/uploads', express.static('uploads'));
 
+// Debug route to test file access
+app.get('/test-uploads/:filename', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(process.cwd(), 'uploads', 'profile-pictures', req.params.filename);
+  
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'File not found', path: filePath });
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
