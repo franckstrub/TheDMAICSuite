@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAppContext } from "@/store/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 
@@ -8,7 +9,8 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const { sidebarOpen, setSidebarOpen, user } = useAppContext();
+  const { sidebarOpen, setSidebarOpen } = useAppContext();
+  const { user, isAuthenticated } = useAuth();
 
   // Close sidebar on Escape key press
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     };
   }, [sidebarOpen, setSidebarOpen]);
 
-  if (!user) {
+  if (!isAuthenticated) {
     return null;
   }
 
