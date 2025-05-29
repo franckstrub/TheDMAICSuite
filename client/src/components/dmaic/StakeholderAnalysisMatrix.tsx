@@ -742,7 +742,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                 className="absolute top-1 right-1 h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-full p-1"
                                 onClick={async () => {
                                   // Validate required fields
-                                  if (!item.stakeholderName.trim() || !item.stakeholderRole.trim()) {
+                                  if (!item.stakeholderName.trim() || !item.stakeholderRole?.trim()) {
                                     toast({
                                       title: "Missing Information",
                                       description: "Please enter stakeholder name and role before generating strategy",
@@ -751,27 +751,39 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                     return;
                                   }
 
+                                  // Show loading toast
+                                  toast({
+                                    title: "Generating Strategy...",
+                                    description: "AI is creating an engagement strategy based on stakeholder attributes",
+                                  });
+
                                   try {
                                     // Call the AI API to generate engagement strategy
                                     const result = await generateStrategyMutation.mutateAsync({
                                       stakeholderName: item.stakeholderName,
-                                      stakeholderRole: item.stakeholderRole,
+                                      stakeholderRole: item.stakeholderRole || '',
                                       interestLevel: item.interestLevel,
                                       influenceLevel: item.influenceLevel,
                                       supportLevel: item.supportLevel,
-                                      resistanceType: item.supportLevel === 'Resistant' ? item.resistanceType : undefined
+                                      resistanceType: item.supportLevel === 'Resistant' ? item.resistanceType || undefined : undefined
                                     });
+
+                                    console.log("AI strategy result:", result);
 
                                     // Update the engagement strategy with AI-generated content
-                                    updateItem(index, 'engagementStrategy', result.engagementStrategy);
+                                    if (result && (result as any).engagementStrategy) {
+                                      updateItem(index, 'engagementStrategy', (result as any).engagementStrategy);
 
-                                    toast({
-                                      title: result.isGenerated === false ? "Fallback Strategy Applied" : "AI Strategy Generated",
-                                      description: result.message || "The engagement strategy has been generated using Google AI based on stakeholder attributes",
-                                    });
+                                      toast({
+                                        title: (result as any).isGenerated === false ? "Fallback Strategy Applied" : "AI Strategy Generated",
+                                        description: (result as any).message || "Strategy generated successfully using Google AI",
+                                      });
+                                    } else {
+                                      throw new Error("No strategy content received from API");
+                                    }
 
                                     // Auto-adjust height after content is set
-                                    setTimeout(() => adjustTextareaHeight(index), 50);
+                                    setTimeout(() => adjustTextareaHeight(index), 100);
                                   } catch (error) {
                                     console.error("Error generating engagement strategy:", error);
                                     
@@ -790,7 +802,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                     });
 
                                     // Auto-adjust height after content is set
-                                    setTimeout(() => adjustTextareaHeight(index), 50);
+                                    setTimeout(() => adjustTextareaHeight(index), 100);
                                   }
                                 }}
                               >
