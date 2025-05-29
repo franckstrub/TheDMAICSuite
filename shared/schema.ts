@@ -50,6 +50,7 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   profileImageUrl: text("profile_image_url"),
   phone: text("phone"),
+  phoneCountryCode: text("phone_country_code"),
   companyName: text("company_name"),
   billingAddress: jsonb("billing_address").$type<{
     street?: string;
@@ -69,6 +70,7 @@ export const updateUserProfileSchema = createInsertSchema(users).pick({
   firstName: true,
   lastName: true,
   phone: true,
+  phoneCountryCode: true,
   companyName: true,
   billingAddress: true,
 });
