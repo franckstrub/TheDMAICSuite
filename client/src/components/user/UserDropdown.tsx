@@ -34,10 +34,10 @@ export default function UserDropdown() {
 
   // Get user initials for avatar fallback
   const getInitials = () => {
-    if (user.firstName && user.lastName) {
+    if (user?.firstName && user?.lastName) {
       return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
     }
-    if (user.email) {
+    if (user?.email) {
       return user.email.charAt(0).toUpperCase();
     }
     return 'U';
@@ -45,13 +45,13 @@ export default function UserDropdown() {
 
   // Get display name
   const getDisplayName = () => {
-    if (user.firstName && user.lastName) {
+    if (user?.firstName && user?.lastName) {
       return `${user.firstName} ${user.lastName}`;
     }
-    if (user.firstName) {
+    if (user?.firstName) {
       return user.firstName;
     }
-    if (user.email) {
+    if (user?.email) {
       return user.email.split('@')[0];
     }
     return 'User';
@@ -63,7 +63,7 @@ export default function UserDropdown() {
         <Button variant="ghost" className="flex items-center gap-2 h-10 px-3">
           <Avatar className="h-8 w-8">
             <AvatarImage 
-              src={user.profileImageUrl || undefined} 
+              src={user?.profileImageUrl || undefined} 
               alt={getDisplayName()}
               className="object-cover"
             />
