@@ -270,9 +270,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/upload-profile-image', isAuthenticated, upload.single('profileImage'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      console.log("Upload debug - User object:", req.user);
-      console.log("Upload debug - User ID:", userId);
-      console.log("Upload debug - File info:", req.file);
       
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
