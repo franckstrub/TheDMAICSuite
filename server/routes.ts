@@ -260,13 +260,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Project routes
-  app.get("/api/projects", async (req: Request, res: Response) => {
+  app.get("/api/projects", isAuthenticated, async (req: any, res: Response) => {
     try {
-      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
-      
-      const projects = userId 
-        ? await storage.getProjectsByUserId(userId) 
-        : await storage.getProjects();
+      const authenticatedUserId = req.user.claims.sub;
+      const projects = await storage.getProjectsByCreatedBy(authenticatedUserId);
         
       return res.status(200).json({ projects });
     } catch (err) {
