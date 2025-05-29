@@ -67,7 +67,11 @@ export default function HomePage() {
     }
   }, [projectsData, params, currentProject, setCurrentProject, navigate]);
 
-  if (!user) {
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
     return null;
   }
 
