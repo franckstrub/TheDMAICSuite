@@ -220,8 +220,9 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       };
       
       const response = await apiRequest("POST", "/api/generate-engagement-strategy", payload);
-      console.log("Raw API response:", response);
-      return response;
+      const data = await response.json();
+      console.log("Parsed API response data:", data);
+      return data;
     },
     onSuccess: (data) => {
       console.log("AI engagement strategy generated successfully:", data);
