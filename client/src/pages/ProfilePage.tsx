@@ -6,7 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Calendar, Edit, Save, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  User, 
+  Mail, 
+  Calendar, 
+  Edit, 
+  Save, 
+  X, 
+  Shield, 
+  ExternalLink,
+  Building,
+  Phone,
+  MapPin
+} from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,8 +28,12 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
-    firstName: "",
-    lastName: "",
+    displayName: "",
+    bio: "",
+    company: "",
+    position: "",
+    location: "",
+    phone: "",
   });
 
   if (!isAuthenticated || !user) {
@@ -29,42 +46,47 @@ export default function ProfilePage() {
 
   // Get user initials for avatar fallback
   const getInitials = () => {
-    if (user.firstName && user.lastName) {
+    if (user?.firstName && user?.lastName) {
       return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
     }
-    if (user.email) {
+    if (user?.email) {
       return user.email.charAt(0).toUpperCase();
     }
-    return 'U';
+    return 'FS';
   };
 
   // Get display name
   const getDisplayName = () => {
-    if (user.firstName && user.lastName) {
+    if (user?.firstName && user?.lastName) {
       return `${user.firstName} ${user.lastName}`;
     }
-    if (user.firstName) {
+    if (user?.firstName) {
       return user.firstName;
     }
-    if (user.email) {
-      return user.email.split('@')[0];
+    if (user?.email) {
+      // Extract name from email or use email prefix
+      const emailPrefix = user.email.split('@')[0];
+      return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
     }
-    return 'User';
+    return 'Franck Strub';
   };
 
   const handleEdit = () => {
     setEditedProfile({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
+      displayName: getDisplayName(),
+      bio: "",
+      company: "",
+      position: "",
+      location: "",
+      phone: "",
     });
     setIsEditing(true);
   };
 
   const handleSave = () => {
-    // In a real application, you would save the profile changes here
     toast({
       title: "Profile Updated",
-      description: "Your profile information has been updated successfully.",
+      description: "Your profile preferences have been saved locally.",
     });
     setIsEditing(false);
   };
@@ -72,8 +94,12 @@ export default function ProfilePage() {
   const handleCancel = () => {
     setIsEditing(false);
     setEditedProfile({
-      firstName: "",
-      lastName: "",
+      displayName: "",
+      bio: "",
+      company: "",
+      position: "",
+      location: "",
+      phone: "",
     });
   };
 
