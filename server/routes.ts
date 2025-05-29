@@ -1543,25 +1543,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Retrieve project charter data for context
-      const charter = await storage.getProjectCharter(projectId);
+      const charter = await storage.getCharter(projectId);
       if (!charter) {
         return res.status(404).json({ 
           message: "Project charter not found. Please complete the project charter first." 
         });
       }
       
-      // Retrieve customer requirements (Voice of Customer)
-      const customerRequirements = await storage.getRequirementsByProjectId(projectId);
-      
-      // Retrieve business requirements (Voice of Business)
-      const businessRequirements = await storage.getBusinessRequirementsByProjectId(projectId);
-      
-      // Generate the elevator speech using Claude AI
+      // Generate the elevator speech using Google AI
       try {
         const elevatorSpeech = await generateElevatorSpeech(
-          charter,
-          customerRequirements,
-          businessRequirements
+          charter.projectTitle || project.title,
+          charter.problemStatement || "No problem statement provided",
+          charter.goals || "No goals provided", 
+          charter.businessCase || "No business case provided"
         );
         
         // Save the elevator speech to the project (not charter)
@@ -1581,11 +1576,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.status(200).json({ elevatorSpeech });
       } catch (apiError: any) {
-        console.error("Claude AI API error:", apiError);
+        console.error("Google AI API error:", apiError);
         return res.status(500).json({ 
           error: true,
-          message: `Claude AI error: ${apiError.message || 'Unknown error'}`,
-          details: "Make sure you have a valid ANTHROPIC_API_KEY set in your environment"
+          message: `Google AI error: ${apiError.message || 'Unknown error'}`,
+          details: "Make sure you have a valid GOOGLE_AI_API_KEY set in your environment"
         });
       }
     } catch (err) {
