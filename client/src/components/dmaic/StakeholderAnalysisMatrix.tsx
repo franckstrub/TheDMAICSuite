@@ -611,8 +611,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                   <TableHead className="w-[5%] py-1">Influence</TableHead>
                   <TableHead className="w-[5%] py-1">Support</TableHead>
                   <TableHead className="w-[4%] py-1">Resistance</TableHead>
-                  <TableHead className="w-[7%] py-1">Position</TableHead>
-                  <TableHead className="w-[32%] py-1">Engagement Strategy</TableHead>
+                  <TableHead className="w-[39%] py-1">Engagement Strategy</TableHead>
                   <TableHead className="w-[4%] py-1">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -710,31 +709,33 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                       )}
                     </TableCell>
                     <TableCell className="p-1">
-                      <div className={`px-2 py-1 rounded-md text-xs font-medium ${
-                        item.interestLevel === 'High' && item.influenceLevel === 'High' 
-                          ? 'bg-red-100 text-red-800'
-                          : item.influenceLevel === 'High'
-                            ? 'bg-amber-100 text-amber-800'
-                            : item.interestLevel === 'High'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {getMatrixQuadrant(item.interestLevel, item.influenceLevel)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="p-1">
                       <div className="relative">
-                        <Textarea
-                          ref={(el) => textareaRefs.current[index] = el}
-                          value={item.engagementStrategy || ''}
-                          onChange={(e) => {
-                            updateItem(index, 'engagementStrategy', e.target.value);
-                            // Auto-adjust height when user types
-                            adjustTextareaHeight(index);
-                          }}
-                          className="min-h-[60px] text-xs w-full resize-y p-1 pr-8 whitespace-pre-wrap"
-                          placeholder="Strategy to engage and manage this stakeholder"
-                        />
+                        <div className="flex flex-col gap-2">
+                          {/* Position Badge at the top */}
+                          <div className={`px-2 py-1 rounded-md text-xs font-medium inline-block w-fit ${
+                            item.interestLevel === 'High' && item.influenceLevel === 'High' 
+                              ? 'bg-red-100 text-red-800'
+                              : item.influenceLevel === 'High'
+                                ? 'bg-amber-100 text-amber-800'
+                                : item.interestLevel === 'High'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {getMatrixQuadrant(item.interestLevel, item.influenceLevel)}
+                          </div>
+                          {/* Engagement Strategy Textarea */}
+                          <Textarea
+                            ref={(el) => textareaRefs.current[index] = el}
+                            value={item.engagementStrategy || ''}
+                            onChange={(e) => {
+                              updateItem(index, 'engagementStrategy', e.target.value);
+                              // Auto-adjust height when user types
+                              adjustTextareaHeight(index);
+                            }}
+                            className="min-h-[60px] text-xs w-full resize-y p-1 pr-8 whitespace-pre-wrap"
+                            placeholder="Strategy to engage and manage this stakeholder"
+                          />
+                        </div>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
