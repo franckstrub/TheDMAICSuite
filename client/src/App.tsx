@@ -57,18 +57,12 @@ function Router() {
   
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={HomePage} />
-          <Route path="/app" component={HomePage} />
-          <Route path="/app/:tab" component={HomePage} />
-          <Route path="/app/:tab/:phase" component={HomePage} />
-          <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
-          <Route path="/mockup" component={MockupPage} />
-        </>
-      )}
+      <Route path="/" component={LandingPage} />
+      <Route path="/app" component={HomePage} />
+      <Route path="/app/:tab" component={HomePage} />
+      <Route path="/app/:tab/:phase" component={HomePage} />
+      <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
+      <Route path="/mockup" component={MockupPage} />
       <Route component={NotFound} />
     </Switch>
   );
