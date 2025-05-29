@@ -13,13 +13,16 @@ import {
   saveRouteToStorage,
   getStoredRoute
 } from "@/store/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
+import Landing from "@/pages/Landing";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
 import MockupPage from "@/pages/MockupPage";
 
 function Router() {
   const [location, navigate] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
   
   // Save the current route to localStorage whenever it changes
   useEffect(() => {
@@ -31,21 +34,41 @@ function Router() {
   
   // On initial load, check if we have a stored route to navigate to
   useEffect(() => {
-    const storedRoute = getStoredRoute();
-    if (storedRoute && location === '/') {
-      console.log('Restoring route from localStorage:', storedRoute);
-      navigate(storedRoute);
+    if (isAuthenticated && !isLoading) {
+      const storedRoute = getStoredRoute();
+      if (storedRoute && location === '/') {
+        console.log('Restoring route from localStorage:', storedRoute);
+        navigate(storedRoute);
+      }
     }
-  }, []);
+  }, [isAuthenticated, isLoading]);
+  
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <Switch>
-      <Route path="/" component={LandingPage}/>
-      <Route path="/app" component={HomePage}/>
-      <Route path="/app/:tab" component={HomePage}/>
-      <Route path="/app/:tab/:phase" component={HomePage}/>
-      <Route path="/app/:tab/:phase/:projectId" component={HomePage}/>
-      <Route path="/mockup" component={MockupPage} />
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <>
+          <Route path="/" component={HomePage} />
+          <Route path="/app" component={HomePage} />
+          <Route path="/app/:tab" component={HomePage} />
+          <Route path="/app/:tab/:phase" component={HomePage} />
+          <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
+          <Route path="/mockup" component={MockupPage} />
+        </>
+      )}
       <Route component={NotFound} />
     </Switch>
   );

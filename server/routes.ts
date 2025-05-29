@@ -178,6 +178,9 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication middleware
+  await setupAuth(app);
+
   // Error handling middleware
   const handleErrors = (err: any, res: Response) => {
     if (err instanceof ZodError) {
@@ -193,20 +196,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   };
 
-  // Temporary: Return a mock user for development
-  app.get('/api/auth/user', async (req: any, res) => {
+  // Authentication routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      // Return a mock user for now - we'll implement proper auth later
-      const mockUser = {
-        id: "1",
-        email: "developer@example.com",
-        firstName: "Developer",
-        lastName: "User",
-        profileImageUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      res.json(mockUser);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
