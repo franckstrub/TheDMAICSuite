@@ -150,12 +150,14 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Profile Picture Updated",
         description: "Your profile picture has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Force refetch of user data to get the updated profile image URL
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
     },
     onError: (error) => {
       console.error("Image upload error:", error);
