@@ -23,10 +23,8 @@ import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { ZodError } from "zod";
-// Switching from Claude to Google AI for mitigation plan generation
-import { generateMitigationPlan } from "./googleai";
-// Import the Claude API for generating elevator speeches
-import { generateElevatorSpeech } from "./anthropic";
+// Using Google AI for both mitigation plan and elevator speech generation
+import { generateMitigationPlan, generateElevatorSpeech } from "./googleai";
 import { registerGateReviewRoutes } from "./routes-gate-review";
 import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
