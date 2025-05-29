@@ -57,17 +57,18 @@ export async function generateMitigationPlan(
     });
 
     // The prompt to send to Google AI - shortened to reduce token usage
-    const prompt = `Create a concise risk mitigation plan for:
+    const prompt = `Create a concise risk mitigation plan like you were writing an X (Twitter) post for this Risk: 
+    ${riskName}`;
 
-Risk: ${riskName}
-Probability: ${probability}
-Impact: ${impact}
+// Be specific and actionable. Keep it concise like you were writing an X (Twitter) post - brief`;
+// Risk: ${riskName}
+// Probability: ${probability}
+// Impact: ${impact}
 
-Provide:
-1. Mitigation Strategies
-2. Monitoring Procedures
+// Provide:
+// 1. Mitigation Strategies
 
-Be specific and actionable. Keep it concise like you were writing an X (Twitter) post - brief but informative.`;
+// Be specific and actionable. Keep it concise like you were writing an X (Twitter) post - brief`;
 
     console.log("Sending request to Google AI API...");
     

@@ -636,11 +636,23 @@ export default function RiskAssessmentNew() {
         adjustTextareaHeight(fieldNameAsString as string, true);
       }
       
-      toast({
-        title: "Mitigation plan generated",
-        description: "An AI-suggested mitigation plan has been created based on your risk details. Feel free to edit it as needed.",
-        variant: "default"
-      });
+      // Automatically save the updated data to the database
+      try {
+        await saveDataToServer(updatedRiskData);
+        sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
+        
+        toast({
+          title: "Mitigation plan generated and saved",
+          description: "An AI-suggested mitigation plan has been created and saved to your project. Feel free to edit it as needed.",
+        });
+      } catch (saveError) {
+        console.error('Error saving generated mitigation plan:', saveError);
+        toast({
+          title: "Mitigation plan generated",
+          description: "Plan created successfully, but there was an issue saving it. Please click 'Save Risk Assessment' to ensure it's stored.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error('Error generating mitigation plan:', error);
       toast({
