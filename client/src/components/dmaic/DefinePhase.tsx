@@ -48,7 +48,7 @@ import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
 
 export default function DefinePhase() {
   const { currentProject, currency } = useAppContext();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const params = useParams<{ projectId?: string }>();
   const urlProjectId = params.projectId;

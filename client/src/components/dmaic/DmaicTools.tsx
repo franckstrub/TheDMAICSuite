@@ -162,7 +162,7 @@ export default function DmaicTools() {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="w-full">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
             {/* Project Title - Left */}
             <h1 className="text-2xl font-semibold text-gray-900">
               {currentProject?.title ? (
