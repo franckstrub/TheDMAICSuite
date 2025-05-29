@@ -600,7 +600,7 @@ export default function RiskAssessmentNew() {
       const mitigationPlanField = `mitigationPlan${suffixProp}` as keyof RiskItem;
       const fieldNameAsString = `mitigationPlan${suffixProp}`;
       
-      // Call our API endpoint to generate a mitigation plan with Claude
+      // Call our API endpoint to generate a mitigation plan with Google Gemini
       const response = await fetch('/api/generate-mitigation-plan', {
         method: 'POST',
         headers: {

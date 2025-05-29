@@ -179,7 +179,7 @@ export default function DmaicTools() {
 
             {/* Project Timeline - Center */}
             {currentProject?.startDate && currentProject?.targetEndDate && (
-              <div className="flex flex-col md:flex-1 md:ml-24">
+              <div className="flex flex-col md:flex-1 md:ml-4">
                 <div className="flex items-start gap-2">
                   <div className="flex flex-col p-2 border border-gray-200 rounded-md shadow-sm h-full justify-center">
                     <div className="flex items-center">
