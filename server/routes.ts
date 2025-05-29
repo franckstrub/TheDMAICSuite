@@ -2,6 +2,9 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./databaseStorage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import { 
   insertProjectSchema, insertCharterSchema, 
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
@@ -27,6 +30,34 @@ import { generateElevatorSpeech } from "./anthropic";
 import { registerGateReviewRoutes } from "./routes-gate-review";
 import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = 'uploads/profile-pictures';
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const userId = (req as any).user?.id;
+      const ext = path.extname(file.originalname);
+      cb(null, `profile-${userId}-${Date.now()}${ext}`);
+    }
+  }),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
 
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: Project): Promise<void> {
@@ -233,6 +264,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.post('/api/auth/upload-profile-image', isAuthenticated, upload.single('profileImage'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+      
+      // Generate the URL for the uploaded file
+      const imageUrl = `/uploads/profile-pictures/${req.file.filename}`;
+      
+      // Update user's profile image URL in the database
+      const updatedUser = await storage.updateUser(userId, { 
+        profileImageUrl: imageUrl 
+      });
+      
+      console.log(`Profile image updated for user ${userId}: ${imageUrl}`);
+      res.json({ 
+        message: "Profile image updated successfully",
+        profileImageUrl: imageUrl,
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      res.status(500).json({ message: "Failed to upload profile image" });
     }
   });
 
