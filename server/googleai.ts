@@ -67,7 +67,7 @@ Provide:
 1. Mitigation Strategies
 2. Monitoring Procedures
 
-Be specific and actionable.`;
+Be specific and actionable. Keep it concise like you were writing an X (Twitter) post - brief but informative.`;
 
     console.log("Sending request to Google AI API...");
     
