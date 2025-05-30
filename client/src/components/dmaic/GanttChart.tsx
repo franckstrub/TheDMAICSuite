@@ -1008,7 +1008,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           min="0" 
                           max="100" 
                           {...field} 
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const newProgress = parseInt(e.target.value) || 0;
+                            const currentStatus = form.getValues('status');
+                            
+                            // Auto-update status based on progress
+                            if (newProgress > 0 && currentStatus === 'not-started') {
+                              form.setValue('status', 'in-progress');
+                            } else if (newProgress === 0 && currentStatus === 'in-progress') {
+                              form.setValue('status', 'not-started');
+                            }
+                            
+                            field.onChange(newProgress);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1820,7 +1832,19 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                             placeholder="0" 
                             className="h-8"
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            onChange={(e) => {
+                              const newProgress = parseInt(e.target.value) || 0;
+                              const currentStatus = form.getValues('status');
+                              
+                              // Auto-update status based on progress
+                              if (newProgress > 0 && currentStatus === 'not-started') {
+                                form.setValue('status', 'in-progress');
+                              } else if (newProgress === 0 && currentStatus === 'in-progress') {
+                                form.setValue('status', 'not-started');
+                              }
+                              
+                              field.onChange(newProgress);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
