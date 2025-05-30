@@ -607,11 +607,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                 <TableRow className="py-0">
                   <TableHead className="w-1/5 py-1">Stakeholder Name</TableHead>
                   <TableHead className="w-[12%] py-1">Role/Function</TableHead>
-                  <TableHead className="w-[5%] py-1">Interest</TableHead>
-                  <TableHead className="w-[5%] py-1">Influence</TableHead>
-                  <TableHead className="w-[5%] py-1">Support</TableHead>
-                  <TableHead className="w-[4%] py-1">Resistance</TableHead>
-                  <TableHead className="w-[39%] py-1">Engagement Strategy</TableHead>
+                  <TableHead className="min-w-[95px] py-1">Interest</TableHead>
+                  <TableHead className="w-[95px] py-1">Influence</TableHead>
+                  <TableHead className="w-[110px] py-1">Support</TableHead>
+                  <TableHead className="w-[105px] py-1">Resistance</TableHead>
+                  <TableHead className="w-[46%] py-1">Engagement Strategy</TableHead>
                   <TableHead className="w-[4%] py-1">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -644,12 +644,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         placeholder="Role/Function"
                       />
                     </TableCell>
-                    <TableCell className="p-1">
+                    <TableCell className="p-1 min-w-[95px]">
                       <Select
                         value={item.interestLevel}
                         onValueChange={(value) => updateItem(index, 'interestLevel', value)}
                       >
-                        <SelectTrigger className="w-20 text-xs">
+                        <SelectTrigger className="text-xs">
                           <SelectValue placeholder="Interest" />
                         </SelectTrigger>
                         <SelectContent>
@@ -659,12 +659,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="p-1">
+                    <TableCell className="p-1 min-w-[95px]">
                       <Select
                         value={item.influenceLevel}
                         onValueChange={(value) => updateItem(index, 'influenceLevel', value)}
                       >
-                        <SelectTrigger className="w-20 text-xs">
+                        <SelectTrigger className="w-22 text-xs">
                           <SelectValue placeholder="Influence" />
                         </SelectTrigger>
                         <SelectContent>
@@ -674,12 +674,12 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="p-1">
+                    <TableCell className="p-1 min-w-[110px]">
                       <Select
                         value={item.supportLevel}
                         onValueChange={(value) => updateItem(index, 'supportLevel', value)}
                       >
-                        <SelectTrigger className="w-20 text-xs">
+                        <SelectTrigger className="w-22 text-xs">
                           <SelectValue placeholder="Support" />
                         </SelectTrigger>
                         <SelectContent>
@@ -689,13 +689,13 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="p-1">
+                    <TableCell className="p-1 min-w-[105px]">
                       {item.supportLevel === 'Resistant' ? (
                         <Select
                           value={item.resistanceType || 'Technical'}
                           onValueChange={(value) => updateItem(index, 'resistanceType', value)}
                         >
-                          <SelectTrigger className="w-20 text-xs">
+                          <SelectTrigger className="w-23 text-xs">
                             <SelectValue placeholder="Type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -705,7 +705,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                           </SelectContent>
                         </Select>
                       ) : (
-                        <div className="text-gray-400 italic text-xs">N/A</div>
+                        <div className="text-gray-400 italic text-xs text-center">N/A</div>
                       )}
                     </TableCell>
                     <TableCell className="p-1">
