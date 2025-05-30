@@ -755,7 +755,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   // Calculate phase progress based on tasks
   const calculatePhaseProgress = (phase: string) => {
-    const phaseTasks = tasks.filter(task => task.phase === phase);
+    const phaseTasks = tasks.filter(task => task.phase === phase && task.status !== 'abandoned');
     if (phaseTasks.length === 0) return 0;
     
     const totalProgress = phaseTasks.reduce((sum, task) => sum + (task.progress || 0), 0);

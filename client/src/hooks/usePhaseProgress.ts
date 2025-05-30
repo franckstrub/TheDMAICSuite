@@ -21,7 +21,7 @@ export function usePhaseProgress(projectId: number): PhaseProgressData {
     const tasks = tasksData?.tasks || [];
     
     const calculatePhaseProgress = (phase: string) => {
-      const phaseTasks = tasks.filter((task: any) => task.phase === phase);
+      const phaseTasks = tasks.filter((task: any) => task.phase === phase && task.status !== 'abandoned');
       if (phaseTasks.length === 0) return 0;
       
       const totalProgress = phaseTasks.reduce((sum: number, task: any) => sum + (task.progress || 0), 0);
