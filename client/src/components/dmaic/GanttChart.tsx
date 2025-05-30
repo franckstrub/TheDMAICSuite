@@ -1799,6 +1799,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                             <option value="in-progress">In Progress</option>
                             <option value="completed">Completed</option>
                             <option value="on-hold">On Hold</option>
+                            <option value="abandoned">Abandoned</option>
                           </select>
                         </FormControl>
                         <FormMessage />
