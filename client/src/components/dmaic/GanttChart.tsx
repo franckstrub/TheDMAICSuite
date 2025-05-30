@@ -26,7 +26,7 @@ export interface GanttTask {
   assignee?: string;
   priority?: 'low' | 'medium' | 'high';
   phase: 'define' | 'measure' | 'analyze' | 'improve' | 'control';
-  status?: 'not-started' | 'in-progress' | 'completed' | 'on-hold';
+  status?: 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'abandoned';
   sequence?: number;
   comments?: string;
   lastUpdated?: string;
@@ -49,7 +49,7 @@ const taskSchema = z.object({
   assignee: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
   phase: z.enum(['define', 'measure', 'analyze', 'improve', 'control']),
-  status: z.enum(['not-started', 'in-progress', 'completed', 'on-hold']).optional(),
+  status: z.enum(['not-started', 'in-progress', 'completed', 'on-hold', 'abandoned']).optional(),
   sequence: z.number().optional(),
   comments: z.string().optional(),
 });
@@ -89,6 +89,7 @@ const statusColors = {
   // 'in-progress': 'bg-blue-200',
   // 'completed': 'bg-green-200',
   'on-hold': 'bg-amber-200',
+  'abandoned': 'bg-red-200',
 }
 
 export default function GanttChart({ projectId, projectStartDate, projectEndDate, milestoneDates }: GanttChartProps) {
@@ -1051,6 +1052,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                           <option value="in-progress">In Progress</option>
                           <option value="completed">Completed</option>
                           <option value="on-hold">On Hold</option>
+                          <option value="abandoned">Abandoned</option>
                         </select>
                       </FormControl>
                       <FormMessage />
@@ -1600,6 +1602,14 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                     {task.status === 'on-hold' ? (
                     <div 
                       className="absolute left-0 top-0 bottom-0 bg-white bg-opacity-50 rounded-l"
+                      style={{width: '100%'}}
+                    />
+                    ) : null}
+                    
+                    {/* Abandoned Overlay */}
+                    {task.status === 'abandoned' ? (
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 bg-red-500 bg-opacity-30 rounded-l"
                       style={{width: '100%'}}
                     />
                     ) : null}
