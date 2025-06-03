@@ -582,7 +582,7 @@ export default function RiskAssessmentNew() {
     if (!riskName) {
       toast({
         title: "Missing information",
-        description: "Please enter a risk name before generating a mitigation plan.",
+        description: "Please enter a risk name before generating an AI-powered mitigation plan.",
         variant: "default"
       });
       return;
@@ -590,7 +590,7 @@ export default function RiskAssessmentNew() {
     
     // Add loading toast
     const loadingToast = toast({
-      title: "Generating mitigation plan",
+      title: "Generating AI-powered mitigation plan",
       description: "Please wait while we generate an AI-powered mitigation plan for you...",
       variant: "default",
       duration: 10000
@@ -600,7 +600,7 @@ export default function RiskAssessmentNew() {
       const mitigationPlanField = `mitigationPlan${suffixProp}` as keyof RiskItem;
       const fieldNameAsString = `mitigationPlan${suffixProp}`;
       
-      // Call our API endpoint to generate a mitigation plan with Google Gemini
+      // Call our API endpoint to generate a AI-powered mitigation plan with Google Gemini
       const response = await fetch('/api/generate-mitigation-plan', {
         method: 'POST',
         headers: {
@@ -618,7 +618,7 @@ export default function RiskAssessmentNew() {
         if (response.status === 500 && errorData.message?.includes('authentication')) {
           throw new Error('API key authentication failed. Please contact your administrator to set up a valid Claude API key.');
         } else {
-          throw new Error(`Failed to generate mitigation plan: ${errorData.message || response.status}`);
+          throw new Error(`Failed to generate AI-powered mitigation plan: ${errorData.message || response.status}`);
         }
       }
       
@@ -642,22 +642,22 @@ export default function RiskAssessmentNew() {
         sessionStorage.setItem(`project_${projectId}_has_risk_assessment`, 'true');
         
         toast({
-          title: "Mitigation plan generated and saved",
-          description: "An AI-suggested mitigation plan has been created and saved to your project. Feel free to edit it as needed.",
+          title: "AI-powered Mitigation plan generated and saved",
+          description: "An AI-powered mitigation plan has been created and saved to your project. Feel free to edit it as needed.",
         });
       } catch (saveError) {
-        console.error('Error saving generated mitigation plan:', saveError);
+        console.error('Error saving AI-powered generated mitigation plan:', saveError);
         toast({
-          title: "Mitigation plan generated",
-          description: "Plan created successfully, but there was an issue saving it. Please click 'Save Risk Assessment' to ensure it's stored.",
+          title: "AI-powered Mitigation plan generated",
+          description: "AI-powered mitigation Plan created successfully, but there was an issue saving it. Please click 'Save Risk Assessment' to ensure it's stored.",
           variant: "destructive",
         });
       }
     } catch (error: any) {
-      console.error('Error generating mitigation plan:', error);
+      console.error('Error generating AI-powered mitigation plan:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to generate mitigation plan. Please try again or create one manually.",
+        description: error.message || "Failed to generate AI-powered mitigation plan. Please try again or create one manually.",
         variant: "destructive"
       });
     }
@@ -808,7 +808,7 @@ export default function RiskAssessmentNew() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    <p>Generate mitigation plan</p>
+                    <p>Generate AI-powered mitigation plan</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
