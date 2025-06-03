@@ -17,7 +17,8 @@ import {
   InsertConfig, InsertLog, InsertPlan, InsertProcessData, 
   InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertRisk,
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
-  projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems
+  projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
+  processMaps
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
