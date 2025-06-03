@@ -132,17 +132,17 @@ export default function DefinePhase() {
       if (data.elevatorSpeech) {
         setElevatorSpeech(data.elevatorSpeech);
         toast({
-          title: "Elevator Speech Generated",
+          title: "AI-powered Elevator Speech Generated",
           description: "AI has successfully created an elevator speech based on your project data.",
         });
       } else {
-        setElevatorSpeechError("Unable to generate elevator speech. Response contained no data.");
+        setElevatorSpeechError("Unable to generate AI-powered elevator speech. Response contained no data.");
       }
     } catch (error: any) {
-      console.error("Error generating elevator speech:", error);
-      setElevatorSpeechError(error.message || "Failed to generate elevator speech. Please try again later.");
+      console.error("Error generating AI-powered elevator speech:", error);
+      setElevatorSpeechError(error.message || "Failed to generate AI-powered elevator speech. Please try again later.");
       toast({
-        title: "Error Generating Elevator Speech",
+        title: "Error Generating AI-powered Elevator Speech",
         description: error.message || "An error occurred. Please make sure your project data is complete.",
         variant: "destructive",
       });
@@ -4402,7 +4402,7 @@ export default function DefinePhase() {
                       />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">AI-generated Elevator Speech</p>
+                      <p className="text-xs">Generate AI-powered Elevator Speech</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

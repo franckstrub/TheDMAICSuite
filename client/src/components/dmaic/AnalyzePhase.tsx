@@ -134,6 +134,83 @@ export default function AnalyzePhase() {
         {/* Space for milestone progress card */}
         <div className="w-1/2"></div>
       </div>
+      {/* Cause & Effect Analysis */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cause & Effect Analysis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Identify potential causes of a problem using a fishbone diagram.
+          </p>
+          
+          <div className="mb-4">
+            <Label htmlFor="problem-statement">Problem Statement</Label>
+            <Input
+              id="problem-statement"
+              value={problemStatement}
+              onChange={(e) => setProblemStatement(e.target.value)}
+              placeholder="High processing time for customer orders"
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label htmlFor="people-factors">People</Label>
+              <Textarea
+                id="people-factors"
+                rows={3}
+                value={peopleFactors}
+                onChange={(e) => setPeopleFactors(e.target.value)}
+                placeholder="Insufficient training&#10;Lack of motivation&#10;High turnover rate"
+              />
+            </div>
+            <div>
+              <Label htmlFor="methods-factors">Methods</Label>
+              <Textarea
+                id="methods-factors"
+                rows={3}
+                value={methodsFactors}
+                onChange={(e) => setMethodsFactors(e.target.value)}
+                placeholder="Complex procedures&#10;Manual data entry&#10;Redundant approvals"
+              />
+            </div>
+            <div>
+              <Label htmlFor="materials-factors">Materials</Label>
+              <Textarea
+                id="materials-factors"
+                rows={3}
+                value={materialsFactors}
+                onChange={(e) => setMaterialsFactors(e.target.value)}
+                placeholder="Poor quality forms&#10;Missing information&#10;Incorrect documentation"
+              />
+            </div>
+            <div>
+              <Label htmlFor="machines-factors">Machines</Label>
+              <Textarea
+                id="machines-factors"
+                rows={3}
+                value={machinesFactors}
+                onChange={(e) => setMachinesFactors(e.target.value)}
+                placeholder="System outages&#10;Slow computer performance&#10;Software bugs"
+              />
+            </div>
+          </div>
+          
+          <div className="border border-gray-200 rounded-md bg-gray-50 h-64 flex items-center justify-center mb-4">
+            <div className="text-center">
+              <i className="fas fa-sitemap text-4xl text-gray-300 mb-4"></i>
+              <p className="text-gray-500">Fishbone Diagram</p>
+            </div>
+          </div>
+          
+          <div>
+            <Button onClick={handleGenerateFishbone}>
+              Generate Fishbone Diagram
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pareto Analysis */}
@@ -309,84 +386,6 @@ export default function AnalyzePhase() {
           </CardContent>
         </Card>
       </div>
-      
-      {/* Cause & Effect Analysis */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cause & Effect Analysis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Identify potential causes of a problem using a fishbone diagram.
-          </p>
-          
-          <div className="mb-4">
-            <Label htmlFor="problem-statement">Problem Statement</Label>
-            <Input
-              id="problem-statement"
-              value={problemStatement}
-              onChange={(e) => setProblemStatement(e.target.value)}
-              placeholder="High processing time for customer orders"
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <Label htmlFor="people-factors">People</Label>
-              <Textarea
-                id="people-factors"
-                rows={3}
-                value={peopleFactors}
-                onChange={(e) => setPeopleFactors(e.target.value)}
-                placeholder="Insufficient training&#10;Lack of motivation&#10;High turnover rate"
-              />
-            </div>
-            <div>
-              <Label htmlFor="methods-factors">Methods</Label>
-              <Textarea
-                id="methods-factors"
-                rows={3}
-                value={methodsFactors}
-                onChange={(e) => setMethodsFactors(e.target.value)}
-                placeholder="Complex procedures&#10;Manual data entry&#10;Redundant approvals"
-              />
-            </div>
-            <div>
-              <Label htmlFor="materials-factors">Materials</Label>
-              <Textarea
-                id="materials-factors"
-                rows={3}
-                value={materialsFactors}
-                onChange={(e) => setMaterialsFactors(e.target.value)}
-                placeholder="Poor quality forms&#10;Missing information&#10;Incorrect documentation"
-              />
-            </div>
-            <div>
-              <Label htmlFor="machines-factors">Machines</Label>
-              <Textarea
-                id="machines-factors"
-                rows={3}
-                value={machinesFactors}
-                onChange={(e) => setMachinesFactors(e.target.value)}
-                placeholder="System outages&#10;Slow computer performance&#10;Software bugs"
-              />
-            </div>
-          </div>
-          
-          <div className="border border-gray-200 rounded-md bg-gray-50 h-64 flex items-center justify-center mb-4">
-            <div className="text-center">
-              <i className="fas fa-sitemap text-4xl text-gray-300 mb-4"></i>
-              <p className="text-gray-500">Fishbone Diagram</p>
-            </div>
-          </div>
-          
-          <div>
-            <Button onClick={handleGenerateFishbone}>
-              Generate Fishbone Diagram
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
       
       {/* Correlation Analysis */}
       <Card>

@@ -2154,6 +2154,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Process Map routes for DMAIC Measure Phase
+  app.get("/api/projects/:projectId/process-map", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      const [processMap] = await db
+        .select()
+        .from(processMaps)
+        .where(eq(processMaps.projectId, projectId));
+      
+      if (!processMap) {
+        return res.status(404).json({ message: "Process map not found" });
+      }
+      
+      return res.status(200).json(processMap);
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/process-map", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { diagramData } = req.body;
+      
+      // Check if process map already exists
+      const [existingMap] = await db
+        .select()
+        .from(processMaps)
+        .where(eq(processMaps.projectId, projectId));
+      
+      if (existingMap) {
+        // Update existing process map
+        const [updatedMap] = await db
+          .update(processMaps)
+          .set({
+            diagramData,
+            lastUpdated: new Date(),
+          })
+          .where(eq(processMaps.projectId, projectId))
+          .returning();
+        
+        return res.status(200).json(updatedMap);
+      } else {
+        // Create new process map
+        const [newMap] = await db
+          .insert(processMaps)
+          .values({
+            projectId,
+            diagramData,
+          })
+          .returning();
+        
+        return res.status(201).json(newMap);
+      }
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);

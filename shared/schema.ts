@@ -830,3 +830,19 @@ export const insertGanttSettingsSchema = createInsertSchema(ganttSettings).omit(
 
 export type InsertGanttSettings = z.infer<typeof insertGanttSettingsSchema>;
 export type GanttSettings = typeof ganttSettings.$inferSelect;
+
+// Process Maps for DMAIC Measure Phase
+export const processMaps = pgTable("process_maps", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  diagramData: text("diagram_data"), // Store draw.io XML data
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertProcessMapSchema = createInsertSchema(processMaps).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertProcessMap = z.infer<typeof insertProcessMapSchema>;
+export type ProcessMap = typeof processMaps.$inferSelect;

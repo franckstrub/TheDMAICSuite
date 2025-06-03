@@ -21,6 +21,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Cart
 import MilestoneTimeline from "./MilestoneTimeline";
 import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle } from "lucide-react";
+import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
@@ -497,6 +498,26 @@ export default function MeasurePhase() {
       </div>
       
 
+      {/* Process and Value Stream Map */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Process and/or Value Stream Map</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Map and Visualize the "AS IS" flow of actions, materials and information required to deliver your product or service.
+          </p>
+          <DrawIoProcessMap 
+            projectId={projectId}
+            onSave={(data) => {
+              toast({
+                title: "Success",
+                description: "Process map saved successfully",
+              });
+            }}
+          />
+        </CardContent>
+      </Card>
       
       {/* Data Collection Plan */}
       <Card>
@@ -604,76 +625,6 @@ export default function MeasurePhase() {
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Process Capability Analysis */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Process Capability Analysis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
-              Assess how well a process meets customer specifications.
-            </p>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="metric">Select Metric</Label>
-                <Select defaultValue={selectedMetric} onValueChange={setSelectedMetric}>
-                  <SelectTrigger id="metric">
-                    <SelectValue placeholder="Select metric" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Processing Time">Processing Time</SelectItem>
-                    <SelectItem value="Defect Rate">Defect Rate</SelectItem>
-                    <SelectItem value="Customer Wait Time">Customer Wait Time</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="lsl">Lower Specification Limit</Label>
-                  <Input
-                    id="lsl"
-                    type="number"
-                    placeholder="0"
-                    value={lsl}
-                    onChange={(e) => setLsl(parseFloat(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="usl">Upper Specification Limit</Label>
-                  <Input
-                    id="usl"
-                    type="number"
-                    placeholder="10"
-                    value={usl}
-                    onChange={(e) => setUsl(parseFloat(e.target.value))}
-                  />
-                </div>
-              </div>
-              <div className="h-64 border border-gray-200 rounded-md">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={histogramData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="value" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" name="Frequency" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm text-gray-700">Cp Index</p>
-                  <p className="text-xl font-semibold">{cp ? cp.toFixed(2) : "N/A"}</p>
-                </div>
-                <div className="text-center p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm text-gray-700">Cpk Index</p>
-                  <p className="text-xl font-semibold">{cpk ? cpk.toFixed(2) : "N/A"}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
         
         {/* Measurement System Analysis */}
         <Card>
@@ -758,53 +709,78 @@ export default function MeasurePhase() {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Process Capability Analysis */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Process Capability Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-4">
+              Assess how well a process meets customer specifications.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="metric">Select Metric</Label>
+                <Select defaultValue={selectedMetric} onValueChange={setSelectedMetric}>
+                  <SelectTrigger id="metric">
+                    <SelectValue placeholder="Select metric" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Processing Time">Processing Time</SelectItem>
+                    <SelectItem value="Defect Rate">Defect Rate</SelectItem>
+                    <SelectItem value="Customer Wait Time">Customer Wait Time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="lsl">Lower Specification Limit</Label>
+                  <Input
+                    id="lsl"
+                    type="number"
+                    placeholder="0"
+                    value={lsl}
+                    onChange={(e) => setLsl(parseFloat(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="usl">Upper Specification Limit</Label>
+                  <Input
+                    id="usl"
+                    type="number"
+                    placeholder="10"
+                    value={usl}
+                    onChange={(e) => setUsl(parseFloat(e.target.value))}
+                  />
+                </div>
+              </div>
+              <div className="h-64 border border-gray-200 rounded-md">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={histogramData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="value" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8" name="Frequency" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-700">Cp Index</p>
+                  <p className="text-xl font-semibold">{cp ? cp.toFixed(2) : "N/A"}</p>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-700">Cpk Index</p>
+                  <p className="text-xl font-semibold">{cpk ? cpk.toFixed(2) : "N/A"}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      
-      {/* Value Stream Map */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Value Stream Map</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Visualize the flow of materials and information required to deliver a product or service.
-          </p>
-          
-          <div className="flex justify-between mb-4">
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                <i className="fas fa-mouse-pointer mr-1"></i> Select
-              </Button>
-              <Button variant="outline" size="sm">
-                <i className="fas fa-square mr-1"></i> Process
-              </Button>
-              <Button variant="outline" size="sm">
-                <i className="fas fa-arrow-right mr-1"></i> Flow
-              </Button>
-              <Button variant="outline" size="sm">
-                <i className="fas fa-exclamation-triangle mr-1"></i> Waste
-              </Button>
-            </div>
-            <Button variant="outline" size="sm">
-              <i className="fas fa-download mr-1"></i> Export
-            </Button>
-          </div>
-          
-          <div className="border border-gray-200 rounded-md bg-gray-50 h-96 flex items-center justify-center">
-            <div className="text-center">
-              <i className="fas fa-project-diagram text-4xl text-gray-300 mb-4"></i>
-              <p className="text-gray-500">Value Stream Map Canvas</p>
-              <p className="text-gray-400 text-xs mt-2">Drag and drop elements to create your map</p>
-            </div>
-          </div>
-          
-          <div className="mt-4">
-            <Button>
-              Save Value Stream Map
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
