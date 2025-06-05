@@ -158,24 +158,23 @@ export default function MeasurePhase() {
     mutationFn: async (plans: any[]) => {
       const validPlans = plans.filter(p => p.ctq.trim() !== "");
       
-      // Clear existing plans first to avoid duplicates
-      try {
-        const existingPlans = await apiRequest("GET", `/api/projects/${projectId}/data-collection-plans`);
-        if (existingPlans?.plans && existingPlans.plans.length > 0) {
-          await Promise.all(
-            existingPlans.plans.map((plan: any) => 
-              apiRequest("DELETE", `/api/data-collection-plans/${plan.id}`, { 
-                userId: user?.id, 
-                projectId 
-              })
-            )
-          );
-        }
-      } catch (error) {
-        console.log("No existing plans to clear or error clearing:", error);
+      // Get existing plans
+      const existingPlans = await apiRequest("GET", `/api/projects/${projectId}/data-collection-plans`);
+      const existing = existingPlans?.plans || [];
+      
+      // Delete all existing plans first
+      if (existing.length > 0) {
+        await Promise.all(
+          existing.map((plan: any) => 
+            apiRequest("DELETE", `/api/data-collection-plans/${plan.id}`, { 
+              userId: user?.id, 
+              projectId 
+            })
+          )
+        );
       }
       
-      // Create new plans
+      // Create all new plans
       const promises = validPlans.map(p => {
         const payload = {
           projectId,
