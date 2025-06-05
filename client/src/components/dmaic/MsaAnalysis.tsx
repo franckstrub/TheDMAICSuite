@@ -43,21 +43,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [msaData, setMsaData] = useState<{ [ctq: string]: MsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
-  // Load CTS characteristics to get CTQs
-  const { data: ctsData, isLoading: ctsLoading } = useQuery({
+  // Load CTQs from centralized endpoint
+  const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctqs`],
+    enabled: !!projectId,
+  });
+
+  // Load CTS characteristics for additional data
+  const { data: ctsData } = useQuery({
     queryKey: [`/api/projects/${projectId}/cts-characteristics`],
-    enabled: !!projectId,
-  });
-
-  // Load customer requirements as fallback source for CTQs
-  const { data: requirementsData } = useQuery({
-    queryKey: [`/api/projects/${projectId}/requirements`],
-    enabled: !!projectId,
-  });
-
-  // Load business requirements as fallback source for CTQs
-  const { data: businessRequirementsData } = useQuery({
-    queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!projectId,
   });
 
@@ -97,32 +91,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     },
   });
 
-  // Get CTQs from multiple sources
+  // Get CTQs from centralized endpoint
   const getCTQs = () => {
-    // First priority: CTS characteristics
-    if (ctsData?.characteristics?.length > 0) {
-      return ctsData.characteristics.map((char: any) => char.ctq);
+    // Use centralized CTQs endpoint which aggregates from all sources
+    if ((ctqsData as any)?.ctqs?.length > 0) {
+      return (ctqsData as any).ctqs.map((item: any) => item.ctq);
     }
     
-    // Second priority: Customer and Business requirements
-    const allCTQs = [];
-    
-    if (requirementsData?.requirements) {
-      const customerCTQs = requirementsData.requirements
-        .filter((req: any) => req.ctq && req.ctq.trim())
-        .map((req: any) => req.ctq);
-      allCTQs.push(...customerCTQs);
-    }
-    
-    if (businessRequirementsData?.businessRequirements) {
-      const businessCTQs = businessRequirementsData.businessRequirements
-        .filter((req: any) => req.ctq && req.ctq.trim())
-        .map((req: any) => req.ctq);
-      allCTQs.push(...businessCTQs);
-    }
-    
-    // Remove duplicates
-    return [...new Set(allCTQs)];
+    return [];
   };
 
   // Initialize MSA data when CTQs and MSA data are loaded
@@ -160,7 +136,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         setActiveTab(ctqs[0]);
       }
     }
-  }, [ctsData, msaDataResponse, requirementsData, businessRequirementsData, activeTab]);
+  }, [ctqsData, msaDataResponse, ctsData, activeTab]);
 
   const updateMsaField = (ctq: string, field: keyof MsaData, value: any) => {
     setMsaData(prev => ({
