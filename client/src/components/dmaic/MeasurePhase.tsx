@@ -171,8 +171,8 @@ export default function MeasurePhase() {
       // First, delete all existing plans for this project
       await apiRequest("DELETE", `/api/projects/${projectId}/data-collection-plans`);
       
-      // Then create all new plans
-      const promises = validPlans.map(p => {
+      // Then create all new plans with display order
+      const promises = validPlans.map((p, index) => {
         const payload = {
           projectId,
           ctq: p.ctq,
@@ -181,6 +181,7 @@ export default function MeasurePhase() {
           collectionMethod: p.collectionMethod,
           sampleSize: p.sampleSize,
           responsible: p.responsible,
+          displayOrder: index,
           userId: user?.id,
         };
         
