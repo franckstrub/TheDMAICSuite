@@ -53,6 +53,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     enabled: !!projectId,
   });
 
+  // Load customer requirements as fallback source for CTQs
+  const { data: requirementsData } = useQuery({
+    queryKey: [`/api/projects/${projectId}/requirements`],
+    enabled: !!projectId,
+  });
+
+  // Load business requirements as fallback source for CTQs
+  const { data: businessRequirementsData } = useQuery({
+    queryKey: [`/api/projects/${projectId}/business-requirements`],
+    enabled: !!projectId,
+  });
+
   // Load existing Process Capability data
   const { data: capabilityDataResponse, isLoading: capabilityLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/process-capability`],
@@ -89,24 +101,55 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     },
   });
 
-  // Initialize Process Capability data when CTS characteristics and capability data are loaded
+  // Get CTQs from multiple sources
+  const getCTQs = () => {
+    // First priority: CTS characteristics
+    if (ctsData?.characteristics?.length > 0) {
+      return ctsData.characteristics.map((char: any) => char.ctq);
+    }
+    
+    // Second priority: Customer and Business requirements
+    const allCTQs = [];
+    
+    if (requirementsData?.requirements) {
+      const customerCTQs = requirementsData.requirements
+        .filter((req: any) => req.ctq && req.ctq.trim())
+        .map((req: any) => req.ctq);
+      allCTQs.push(...customerCTQs);
+    }
+    
+    if (businessRequirementsData?.businessRequirements) {
+      const businessCTQs = businessRequirementsData.businessRequirements
+        .filter((req: any) => req.ctq && req.ctq.trim())
+        .map((req: any) => req.ctq);
+      allCTQs.push(...businessCTQs);
+    }
+    
+    // Remove duplicates
+    return [...new Set(allCTQs)];
+  };
+
+  // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
-    if (ctsData?.characteristics && capabilityDataResponse?.processCapability) {
+    const ctqs = getCTQs();
+    if (ctqs.length > 0 && capabilityDataResponse?.processCapability) {
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
       
-      // Create Process Capability entry for each CTQ from CTS characteristics
-      ctsData.characteristics.forEach((char: any) => {
-        const existingCapability = capabilityDataResponse.processCapability.find((cap: any) => cap.ctq === char.ctq);
+      // Create Process Capability entry for each CTQ
+      ctqs.forEach((ctq: string) => {
+        const existingCapability = capabilityDataResponse.processCapability.find((cap: any) => cap.ctq === ctq);
         
-        // Auto-populate LSL, USL, and target from CTS characteristics
-        initialData[char.ctq] = existingCapability || {
-          ctq: char.ctq,
+        // Check if this CTQ comes from CTS characteristics to auto-populate LSL, USL, target
+        const ctsChar = ctsData?.characteristics?.find((char: any) => char.ctq === ctq);
+        
+        initialData[ctq] = existingCapability || {
+          ctq: ctq,
           sampleSize: null,
           mean: "",
           standardDeviation: "",
-          lsl: char.lsl || "",
-          usl: char.usl || "",
-          target: char.target || "",
+          lsl: ctsChar?.lsl || "",
+          usl: ctsChar?.usl || "",
+          target: ctsChar?.target || "",
           cp: "",
           cpk: "",
           pp: "",
@@ -115,7 +158,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           dpmo: "",
           yield: "",
           dataPoints: "",
-          controlChartType: char.ctqType === "Continuous" ? "X-bar R" : "P",
+          controlChartType: ctsChar?.ctqType === "Continuous" ? "X-bar R" : "P",
           conclusion: "",
           actionPlan: "",
         };
@@ -124,11 +167,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setCapabilityData(initialData);
       
       // Set active tab to first CTQ if not already set
-      if (!activeTab && ctsData.characteristics.length > 0) {
-        setActiveTab(ctsData.characteristics[0].ctq);
+      if (!activeTab && ctqs.length > 0) {
+        setActiveTab(ctqs[0]);
       }
     }
-  }, [ctsData, capabilityDataResponse, activeTab]);
+  }, [ctsData, capabilityDataResponse, requirementsData, businessRequirementsData, activeTab]);
 
   const updateCapabilityField = (ctq: string, field: keyof ProcessCapabilityData, value: any) => {
     setCapabilityData(prev => ({
