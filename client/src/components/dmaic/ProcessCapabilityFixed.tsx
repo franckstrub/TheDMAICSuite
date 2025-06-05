@@ -142,7 +142,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         setActiveTab(ctqs[0]);
       }
     }
-  }, [ctsData, capabilityDataResponse, requirementsData, businessRequirementsData, activeTab]);
+  }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
 
   const updateCapabilityField = (ctq: string, field: keyof ProcessCapabilityData, value: any) => {
     setCapabilityData(prev => ({
@@ -178,7 +178,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  if (ctsLoading || capabilityLoading) {
+  if (ctqsLoading || capabilityLoading) {
     return (
       <Card>
         <CardHeader>
