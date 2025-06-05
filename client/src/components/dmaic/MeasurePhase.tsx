@@ -166,9 +166,15 @@ export default function MeasurePhase() {
       if (existing.length > 0) {
         await Promise.all(
           existing.map((plan: any) => 
-            apiRequest("DELETE", `/api/data-collection-plans/${plan.id}`, { 
-              userId: user?.id, 
-              projectId 
+            fetch(`/api/data-collection-plans/${plan.id}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                userId: user?.id, 
+                projectId 
+              })
             })
           )
         );
