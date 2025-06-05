@@ -221,27 +221,27 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
-            {ctqList.map((char: any) => (
+            {ctqList.map((ctq: string) => (
               <TabsTrigger 
-                key={char.ctq} 
-                value={char.ctq}
+                key={ctq} 
+                value={ctq}
                 className="flex flex-col items-center gap-1 p-3"
               >
-                <span className="font-medium truncate max-w-[150px]">{char.ctq}</span>
-                {getMsaStatusBadge(char.ctq)}
+                <span className="font-medium truncate max-w-[150px]">{ctq}</span>
+                {getMsaStatusBadge(ctq)}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {ctqList.map((char: any) => (
-            <TabsContent key={char.ctq} value={char.ctq} className="mt-6">
+          {ctqList.map((ctq: string) => (
+            <TabsContent key={ctq} value={ctq} className="mt-6">
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">MSA Type</label>
                     <Select
-                      value={msaData[char.ctq]?.msaType || "Gage R&R"}
-                      onValueChange={(value) => updateMsaField(char.ctq, "msaType", value)}
+                      value={msaData[ctq]?.msaType || "Gage R&R"}
+                      onValueChange={(value) => updateMsaField(ctq, "msaType", value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -259,8 +259,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     <label className="block text-sm font-medium mb-2">Number of Distinct Categories (ndc)</label>
                     <Input
                       type="number"
-                      value={msaData[char.ctq]?.numberDistinctCategories || ""}
-                      onChange={(e) => updateMsaField(char.ctq, "numberDistinctCategories", e.target.value ? parseInt(e.target.value) : null)}
+                      value={msaData[ctq]?.numberDistinctCategories || ""}
+                      onChange={(e) => updateMsaField(ctq, "numberDistinctCategories", e.target.value ? parseInt(e.target.value) : null)}
                       placeholder="e.g., 5"
                     />
                   </div>
@@ -269,8 +269,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 <div>
                   <label className="block text-sm font-medium mb-2">Study Description</label>
                   <Textarea
-                    value={msaData[char.ctq]?.studyDescription || ""}
-                    onChange={(e) => updateMsaField(char.ctq, "studyDescription", e.target.value)}
+                    value={msaData[ctq]?.studyDescription || ""}
+                    onChange={(e) => updateMsaField(ctq, "studyDescription", e.target.value)}
                     placeholder="Describe the MSA study methodology and objectives..."
                     rows={3}
                   />
@@ -280,8 +280,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   <div>
                     <label className="block text-sm font-medium mb-2">Operators</label>
                     <Input
-                      value={msaData[char.ctq]?.operators || ""}
-                      onChange={(e) => updateMsaField(char.ctq, "operators", e.target.value)}
+                      value={msaData[ctq]?.operators || ""}
+                      onChange={(e) => updateMsaField(ctq, "operators", e.target.value)}
                       placeholder="e.g., Operator A, Operator B, Operator C"
                     />
                   </div>
@@ -289,8 +289,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   <div>
                     <label className="block text-sm font-medium mb-2">Parts/Samples</label>
                     <Input
-                      value={msaData[char.ctq]?.parts || ""}
-                      onChange={(e) => updateMsaField(char.ctq, "parts", e.target.value)}
+                      value={msaData[ctq]?.parts || ""}
+                      onChange={(e) => updateMsaField(ctq, "parts", e.target.value)}
                       placeholder="e.g., Part 1, Part 2, Part 3"
                     />
                   </div>
@@ -299,8 +299,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 <div>
                   <label className="block text-sm font-medium mb-2">Measurement Data</label>
                   <Textarea
-                    value={msaData[char.ctq]?.measurements || ""}
-                    onChange={(e) => updateMsaField(char.ctq, "measurements", e.target.value)}
+                    value={msaData[ctq]?.measurements || ""}
+                    onChange={(e) => updateMsaField(ctq, "measurements", e.target.value)}
                     placeholder="Enter measurement data (JSON format or structured text)..."
                     rows={4}
                   />
@@ -312,8 +312,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     <div>
                       <label className="block text-sm font-medium mb-2">Repeatability (%)</label>
                       <Input
-                        value={msaData[char.ctq]?.repeatability || ""}
-                        onChange={(e) => updateMsaField(char.ctq, "repeatability", e.target.value)}
+                        value={msaData[ctq]?.repeatability || ""}
+                        onChange={(e) => updateMsaField(ctq, "repeatability", e.target.value)}
                         placeholder="e.g., 15.2"
                       />
                     </div>
@@ -321,8 +321,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     <div>
                       <label className="block text-sm font-medium mb-2">Reproducibility (%)</label>
                       <Input
-                        value={msaData[char.ctq]?.reproducibility || ""}
-                        onChange={(e) => updateMsaField(char.ctq, "reproducibility", e.target.value)}
+                        value={msaData[ctq]?.reproducibility || ""}
+                        onChange={(e) => updateMsaField(ctq, "reproducibility", e.target.value)}
                         placeholder="e.g., 8.7"
                       />
                     </div>
@@ -330,8 +330,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     <div>
                       <label className="block text-sm font-medium mb-2">Part-to-Part (%)</label>
                       <Input
-                        value={msaData[char.ctq]?.partToPartVariation || ""}
-                        onChange={(e) => updateMsaField(char.ctq, "partToPartVariation", e.target.value)}
+                        value={msaData[ctq]?.partToPartVariation || ""}
+                        onChange={(e) => updateMsaField(ctq, "partToPartVariation", e.target.value)}
                         placeholder="e.g., 89.3"
                       />
                     </div>
@@ -339,13 +339,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     <div>
                       <label className="block text-sm font-medium mb-2">Total Gage R&R (%)</label>
                       <Input
-                        value={msaData[char.ctq]?.totalGageRR || ""}
-                        onChange={(e) => updateMsaField(char.ctq, "totalGageRR", e.target.value)}
+                        value={msaData[ctq]?.totalGageRR || ""}
+                        onChange={(e) => updateMsaField(ctq, "totalGageRR", e.target.value)}
                         placeholder="e.g., 17.5"
                         className={
-                          msaData[char.ctq]?.totalGageRR && parseFloat(msaData[char.ctq]?.totalGageRR) > 30
+                          msaData[ctq]?.totalGageRR && parseFloat(msaData[ctq]?.totalGageRR) > 30
                             ? "border-red-500"
-                            : msaData[char.ctq]?.totalGageRR && parseFloat(msaData[char.ctq]?.totalGageRR) <= 10
+                            : msaData[ctq]?.totalGageRR && parseFloat(msaData[ctq]?.totalGageRR) <= 10
                             ? "border-green-500"
                             : ""
                         }
@@ -357,8 +357,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 <div>
                   <label className="block text-sm font-medium mb-2">Acceptable Criteria</label>
                   <Textarea
-                    value={msaData[char.ctq]?.acceptableCriteria || ""}
-                    onChange={(e) => updateMsaField(char.ctq, "acceptableCriteria", e.target.value)}
+                    value={msaData[ctq]?.acceptableCriteria || ""}
+                    onChange={(e) => updateMsaField(ctq, "acceptableCriteria", e.target.value)}
                     placeholder="Define the pass/fail criteria for this MSA study..."
                     rows={2}
                   />
@@ -367,8 +367,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 <div>
                   <label className="block text-sm font-medium mb-2">Conclusion</label>
                   <Textarea
-                    value={msaData[char.ctq]?.conclusion || ""}
-                    onChange={(e) => updateMsaField(char.ctq, "conclusion", e.target.value)}
+                    value={msaData[ctq]?.conclusion || ""}
+                    onChange={(e) => updateMsaField(ctq, "conclusion", e.target.value)}
                     placeholder="Summarize the MSA study results and measurement system acceptability..."
                     rows={3}
                   />
@@ -377,8 +377,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 <div>
                   <label className="block text-sm font-medium mb-2">Action Plan</label>
                   <Textarea
-                    value={msaData[char.ctq]?.actionPlan || ""}
-                    onChange={(e) => updateMsaField(char.ctq, "actionPlan", e.target.value)}
+                    value={msaData[ctq]?.actionPlan || ""}
+                    onChange={(e) => updateMsaField(ctq, "actionPlan", e.target.value)}
                     placeholder="Define actions needed to improve the measurement system if required..."
                     rows={3}
                   />
@@ -386,7 +386,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
                 <div className="flex justify-end pt-4">
                   <Button
-                    onClick={() => handleSaveMsa(char.ctq)}
+                    onClick={() => handleSaveMsa(ctq)}
                     disabled={saveMsaMutation.isPending}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
