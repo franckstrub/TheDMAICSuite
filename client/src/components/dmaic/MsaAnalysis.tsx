@@ -211,7 +211,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     );
   }
 
-  const ctqList = ctsData?.characteristics || [];
+  const ctqList = getCTQs();
 
   if (ctqList.length === 0) {
     return (
@@ -224,7 +224,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No CTQs defined in CTS Characteristics. Please define CTQs first to create MSA studies.
+            No CTQs available. Please define CTS characteristics or requirements with CTQs to create MSA studies.
           </div>
         </CardContent>
       </Card>
