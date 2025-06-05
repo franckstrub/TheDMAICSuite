@@ -71,6 +71,13 @@ export default function MeasurePhase() {
     }
   }, [charter]);
 
+  // Fetch data collection plans
+  const { data: plans } = useQuery({
+    queryKey: [`/api/projects/${projectId}/data-collection-plans`],
+    enabled: !!user?.id && !!projectId,
+    refetchOnWindowFocus: false
+  });
+
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState([
     {
@@ -85,29 +92,32 @@ export default function MeasurePhase() {
 
   // Auto-populate data collection plan with CTQs from CTS characteristics
   useEffect(() => {
-    if (ctsData?.characteristics && ctsData.characteristics.length > 0 && dataCollectionPlans.length === 1 && !dataCollectionPlans[0].ctq && !plans?.plans?.length) {
-      const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
-        ctq: characteristic.ctq,
-        operationalDefinition: characteristic.operationalDefinition || "",
-        dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
-        collectionMethod: "",
-        sampleSize: "",
-        responsible: ""
-      }));
+    if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
+      // Only auto-populate if no existing plans and current state is empty
+      if ((!plans?.plans || plans.plans.length === 0) && dataCollectionPlans.length === 1 && dataCollectionPlans[0].ctq === "") {
+        const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
+          ctq: characteristic.ctq || "",
+          operationalDefinition: characteristic.operationalDefinition || "",
+          dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
+          collectionMethod: "",
+          sampleSize: "",
+          responsible: ""
+        }));
 
-      // Add an empty row for manual entry
-      autoPopulatedPlans.push({
-        ctq: "",
-        operationalDefinition: "",
-        dataType: "Discrete",
-        collectionMethod: "",
-        sampleSize: "",
-        responsible: ""
-      });
+        // Add an empty row for manual entry
+        autoPopulatedPlans.push({
+          ctq: "",
+          operationalDefinition: "",
+          dataType: "Discrete",
+          collectionMethod: "",
+          sampleSize: "",
+          responsible: ""
+        });
 
-      setDataCollectionPlans(autoPopulatedPlans);
+        setDataCollectionPlans(autoPopulatedPlans);
+      }
     }
-  }, [ctsData, dataCollectionPlans, plans]);
+  }, [ctsData, plans, dataCollectionPlans]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -148,13 +158,6 @@ export default function MeasurePhase() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
-  });
-  
-  // Fetch data collection plans
-  const { data: plans } = useQuery({
-    queryKey: [`/api/projects/${projectId}/data-collection-plans`],
-    enabled: !!user?.id && !!projectId,
-    refetchOnWindowFocus: false
   });
 
   // Load existing data collection plans
