@@ -1026,6 +1026,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk delete data collection plans for a project
+  app.delete("/api/projects/:projectId/data-collection-plans", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { userId } = req.body;
+      
+      // Get existing plans first
+      const existingPlans = await storage.getDataCollectionPlans(projectId);
+      
+      // Delete all plans for this project
+      for (const plan of existingPlans) {
+        await storage.deleteDataCollectionPlan(plan.id);
+      }
+      
+      // Log activity
+      if (userId) {
+        await storage.createActivityLog({
+          userId,
+          projectId,
+          action: "delete_data_plans",
+          details: `Deleted ${existingPlans.length} data collection plans`
+        });
+      }
+      
+      return res.status(200).json({ success: true, deleted: existingPlans.length });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   app.post("/api/projects/:projectId/data-collection-plans", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
