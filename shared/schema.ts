@@ -875,3 +875,65 @@ export const insertCtsCharacteristicsSchema = createInsertSchema(ctsCharacterist
 
 export type InsertCtsCharacteristics = z.infer<typeof insertCtsCharacteristicsSchema>;
 export type CtsCharacteristics = typeof ctsCharacteristics.$inferSelect;
+
+// MSA (Measurement System Analysis) for each CTQ
+export const msaAnalysis = pgTable("msa_analysis", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
+  msaType: text("msa_type").notNull().default("Gage R&R"), // "Gage R&R", "Attribute Agreement", "Bias Study"
+  studyDescription: text("study_description"),
+  operators: text("operators"), // JSON array of operator names
+  parts: text("parts"), // JSON array of part identifiers
+  measurements: text("measurements"), // JSON array of measurement data
+  repeatability: text("repeatability"), // %Study Variation
+  reproducibility: text("reproducibility"), // %Study Variation
+  partToPartVariation: text("part_to_part_variation"), // %Study Variation
+  totalGageRR: text("total_gage_rr"), // %Study Variation
+  numberDistinctCategories: integer("number_distinct_categories"), // ndc
+  acceptableCriteria: text("acceptable_criteria"), // Pass/Fail criteria
+  conclusion: text("conclusion"),
+  actionPlan: text("action_plan"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertMsaAnalysisSchema = createInsertSchema(msaAnalysis).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertMsaAnalysis = z.infer<typeof insertMsaAnalysisSchema>;
+export type MsaAnalysis = typeof msaAnalysis.$inferSelect;
+
+// Process Capability for each CTQ
+export const processCapability = pgTable("process_capability", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
+  sampleSize: integer("sample_size"),
+  mean: text("mean"), // Process mean
+  standardDeviation: text("standard_deviation"), // Process std dev
+  lsl: text("lsl"), // Lower Specification Limit
+  usl: text("usl"), // Upper Specification Limit
+  target: text("target"), // Target value
+  cp: text("cp"), // Process Capability Index
+  cpk: text("cpk"), // Process Capability Index (one-sided)
+  pp: text("pp"), // Process Performance Index
+  ppk: text("ppk"), // Process Performance Index (one-sided)
+  sigma: text("sigma"), // Sigma level
+  dpmo: text("dpmo"), // Defects Per Million Opportunities
+  yield: text("yield"), // Process yield percentage
+  dataPoints: text("data_points"), // JSON array of raw data
+  controlChartType: text("control_chart_type"), // "X-bar R", "I-MR", "P", "NP", "C", "U"
+  conclusion: text("conclusion"),
+  actionPlan: text("action_plan"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertProcessCapabilitySchema = createInsertSchema(processCapability).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertProcessCapability = z.infer<typeof insertProcessCapabilitySchema>;
+export type ProcessCapability = typeof processCapability.$inferSelect;
