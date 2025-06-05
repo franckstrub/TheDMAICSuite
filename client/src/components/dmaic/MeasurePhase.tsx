@@ -72,41 +72,31 @@ export default function MeasurePhase() {
   }, [charter]);
 
   // Fetch data collection plans
-  const { data: plans, refetch: refetchPlans } = useQuery({
+  const { data: plans } = useQuery({
     queryKey: [`/api/projects/${projectId}/data-collection-plans`],
     enabled: !!user?.id && !!projectId,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0
+    refetchOnWindowFocus: false
   });
 
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState<any[]>([]);
 
-  // Load existing data collection plans or auto-populate from CTS characteristics
+  // Auto-populate data collection plan with CTQs from CTS characteristics
   useEffect(() => {
-    if (plans?.plans && plans.plans.length > 0) {
-      // Load existing plans from database
-      setDataCollectionPlans(plans.plans.map((p: any) => ({
-        ctq: p.ctq,
-        operationalDefinition: p.operationalDefinition,
-        dataType: p.dataType,
-        collectionMethod: p.collectionMethod,
-        sampleSize: p.sampleSize,
-        responsible: p.responsible,
-      })));
-    } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
-      // Only auto-populate if no existing plans in database
-      const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
-        ctq: characteristic.ctq || "",
-        operationalDefinition: characteristic.operationalDefinition || "",
-        dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
-        collectionMethod: "",
-        sampleSize: "",
-        responsible: ""
-      }));
+    if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
+      // Only auto-populate if no existing plans and current state is empty
+      if ((!plans?.plans || plans.plans.length === 0) && dataCollectionPlans.length === 0) {
+        const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
+          ctq: characteristic.ctq || "",
+          operationalDefinition: characteristic.operationalDefinition || "",
+          dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
+          collectionMethod: "",
+          sampleSize: "",
+          responsible: ""
+        }));
 
-      setDataCollectionPlans(autoPopulatedPlans);
+        setDataCollectionPlans(autoPopulatedPlans);
+      }
     }
   }, [ctsData, plans]);
 
@@ -151,31 +141,26 @@ export default function MeasurePhase() {
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
 
-
+  // Load existing data collection plans
+  useEffect(() => {
+    if (plans?.plans && plans.plans.length > 0) {
+      setDataCollectionPlans(plans.plans.map((p: any) => ({
+        ctq: p.ctq,
+        operationalDefinition: p.operationalDefinition,
+        dataType: p.dataType,
+        collectionMethod: p.collectionMethod,
+        sampleSize: p.sampleSize,
+        responsible: p.responsible,
+      })));
+    }
+  }, [plans]);
 
   // Save data collection plan mutation
   const savePlansMutation = useMutation({
     mutationFn: async (plans: any[]) => {
       const validPlans = plans.filter(p => p.ctq.trim() !== "");
       
-      // Get existing plans
-      const existingPlans = await apiRequest("GET", `/api/projects/${projectId}/data-collection-plans`);
-      const existing = existingPlans?.plans || [];
-      
-      // Delete all existing plans first using bulk delete
-      if (existing.length > 0) {
-        await fetch(`/api/projects/${projectId}/data-collection-plans`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            userId: user?.id
-          })
-        });
-      }
-      
-      // Create all new plans
+      // For simplicity, just create/update each plan
       const promises = validPlans.map(p => {
         const payload = {
           projectId,
@@ -199,7 +184,6 @@ export default function MeasurePhase() {
         description: "Data collection plan saved successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
-      refetchPlans();
     },
     onError: (error) => {
       toast({
