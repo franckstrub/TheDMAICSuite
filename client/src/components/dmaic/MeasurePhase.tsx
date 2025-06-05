@@ -22,6 +22,7 @@ import MilestoneTimeline from "./MilestoneTimeline";
 import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle } from "lucide-react";
 import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
+import CtsCharacteristics from '@/components/dmaic/CtsCharacteristics';
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
@@ -519,6 +520,9 @@ export default function MeasurePhase() {
           />
         </CardContent>
       </Card>
+      
+      {/* CTS Characteristics */}
+      <CtsCharacteristics projectId={projectId} />
  
       {/* Data Collection Plan */}
       <Card>
