@@ -127,15 +127,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
     const ctqs = getCTQs();
-    if (ctqs.length > 0 && capabilityDataResponse?.processCapability) {
+    if (ctqs.length > 0) {
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
       
       // Create Process Capability entry for each CTQ
       ctqs.forEach((ctq: string) => {
-        const existingCapability = capabilityDataResponse.processCapability.find((cap: any) => cap.ctq === ctq);
+        const existingCapability = (capabilityDataResponse as any)?.processCapability?.find((cap: any) => cap.ctq === ctq);
         
         // Check if this CTQ comes from CTS characteristics to auto-populate LSL, USL, target
-        const ctsChar = ctsData?.characteristics?.find((char: any) => char.ctq === ctq);
+        const ctsChar = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === ctq);
         
         initialData[ctq] = existingCapability || {
           ctq: ctq,
