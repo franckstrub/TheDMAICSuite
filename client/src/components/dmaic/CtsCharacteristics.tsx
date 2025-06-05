@@ -153,10 +153,23 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
   };
 
   const removeCharacteristic = (index: number) => {
-    if (characteristics.length > 1) {
-      const newCharacteristics = characteristics.filter((_, i) => i !== index);
-      setCharacteristics(newCharacteristics);
+    const newCharacteristics = characteristics.filter((_, i) => i !== index);
+    
+    // If we're removing the last characteristic, add an empty one for manual entry
+    if (newCharacteristics.length === 0) {
+      newCharacteristics.push({
+        ctq: "",
+        operationalDefinition: "",
+        ctqType: "Continuous",
+        targetPercentDefects: "",
+        target: "",
+        lsl: "",
+        usl: "",
+        isAutoPopulated: false,
+      });
     }
+    
+    setCharacteristics(newCharacteristics);
   };
 
   const handleSave = () => {
