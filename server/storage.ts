@@ -78,6 +78,7 @@ export interface IStorage {
   createDataCollectionPlan(plan: InsertPlan): Promise<DataCollectionPlan>;
   updateDataCollectionPlan(id: number, plan: Partial<DataCollectionPlan>): Promise<DataCollectionPlan | undefined>;
   deleteDataCollectionPlan(id: number): Promise<boolean>;
+  deleteAllDataCollectionPlans(projectId: number): Promise<boolean>;
 
   // Storage Configuration operations
   getStorageConfig(userId: number): Promise<StorageConfig | undefined>;
@@ -522,6 +523,18 @@ export class MemStorage implements IStorage {
 
   async deleteDataCollectionPlan(id: number): Promise<boolean> {
     return this.dataCollectionPlans.delete(id);
+  }
+
+  async deleteAllDataCollectionPlans(projectId: number): Promise<boolean> {
+    const plans = Array.from(this.dataCollectionPlans.values()).filter(
+      (plan) => plan.projectId === projectId
+    );
+    
+    for (const plan of plans) {
+      this.dataCollectionPlans.delete(plan.id);
+    }
+    
+    return true;
   }
 
   // Storage Configuration operations
@@ -996,6 +1009,11 @@ export class DatabaseStorage implements IStorage {
   async deleteDataCollectionPlan(id: number): Promise<boolean> {
     const result = await db.delete(dataCollectionPlans).where(eq(dataCollectionPlans.id, id));
     return result.rowCount > 0;
+  }
+
+  async deleteAllDataCollectionPlans(projectId: number): Promise<boolean> {
+    const result = await db.delete(dataCollectionPlans).where(eq(dataCollectionPlans.projectId, projectId));
+    return true;
   }
 
   // Storage Configuration operations

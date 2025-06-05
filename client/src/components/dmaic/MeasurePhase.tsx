@@ -168,7 +168,10 @@ export default function MeasurePhase() {
     mutationFn: async (plans: any[]) => {
       const validPlans = plans.filter(p => p.ctq.trim() !== "");
       
-      // For simplicity, just create/update each plan
+      // First, delete all existing plans for this project
+      await apiRequest("DELETE", `/api/projects/${projectId}/data-collection-plans`);
+      
+      // Then create all new plans
       const promises = validPlans.map(p => {
         const payload = {
           projectId,
