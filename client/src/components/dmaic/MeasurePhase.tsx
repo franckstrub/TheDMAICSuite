@@ -525,7 +525,7 @@ export default function MeasurePhase() {
       // Ensure we always have at least one row (even if empty) before saving
       let businessRequirementsToSave = businessRequirements;
       if (businessRequirements.length === 0) {
-        businessRequirementsToSave = [{ requirement: "", businessRequirement: "", importance: 3, impact: "" }];
+        businessRequirementsToSave = [{ requirement: "", businessRequirement: "", importance: 3, ctq: "" }];
         setBusinessRequirements(businessRequirementsToSave);
       }
       
