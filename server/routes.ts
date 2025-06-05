@@ -10,7 +10,7 @@ import {
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
-  insertStakeholderAnalysisItemSchema
+  insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema
 } from "@shared/schema";
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
@@ -19,7 +19,7 @@ import {
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
-  customerRequirements, businessRequirements
+  customerRequirements, businessRequirements, msaAnalysis, processCapability
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2316,6 +2316,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.status(201).json(newMap);
       }
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // MSA Analysis routes
+  app.get("/api/projects/:projectId/msa-analysis", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const msaAnalysisData = await db
+        .select()
+        .from(msaAnalysis)
+        .where(eq(msaAnalysis.projectId, projectId));
+      
+      return res.status(200).json({ msaAnalysis: msaAnalysisData });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/msa-analysis", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const payload = insertMsaAnalysisSchema.parse({
+        ...req.body,
+        projectId,
+      });
+
+      const [newMsa] = await db
+        .insert(msaAnalysis)
+        .values(payload)
+        .returning();
+
+      return res.status(201).json({ msa: newMsa });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/projects/:projectId/msa-analysis/:id", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const id = parseInt(req.params.id);
+      
+      const payload = insertMsaAnalysisSchema.parse({
+        ...req.body,
+        projectId,
+      });
+
+      const [updatedMsa] = await db
+        .update(msaAnalysisTable)
+        .set({
+          ...payload,
+          lastUpdated: new Date(),
+        })
+        .where(and(eq(msaAnalysisTable.id, id), eq(msaAnalysisTable.projectId, projectId)))
+        .returning();
+
+      return res.status(200).json({ msa: updatedMsa });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Process Capability routes
+  app.get("/api/projects/:projectId/process-capability", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const processCapability = await db
+        .select()
+        .from(processCapabilityTable)
+        .where(eq(processCapabilityTable.projectId, projectId));
+      
+      return res.status(200).json({ processCapability });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/process-capability", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const payload = insertProcessCapabilitySchema.parse({
+        ...req.body,
+        projectId,
+      });
+
+      const [newCapability] = await db
+        .insert(processCapabilityTable)
+        .values(payload)
+        .returning();
+
+      return res.status(201).json({ capability: newCapability });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/projects/:projectId/process-capability/:id", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const id = parseInt(req.params.id);
+      
+      const payload = insertProcessCapabilitySchema.parse({
+        ...req.body,
+        projectId,
+      });
+
+      const [updatedCapability] = await db
+        .update(processCapabilityTable)
+        .set({
+          ...payload,
+          lastUpdated: new Date(),
+        })
+        .where(and(eq(processCapabilityTable.id, id), eq(processCapabilityTable.projectId, projectId)))
+        .returning();
+
+      return res.status(200).json({ capability: updatedCapability });
     } catch (err) {
       return handleErrors(err, res);
     }
