@@ -751,7 +751,7 @@ export default function MeasurePhase() {
           <div className="mt-4">
             <Button 
               onClick={handleSavePlans}
-              disabled={savePlansMutation.isPending || dataCollectionPlans.every(p => !p.ctq)}
+              disabled={savePlansMutation.isPending}
             >
               {savePlansMutation.isPending ? "Saving..." : "Save Data Collection Plan"}
             </Button>
