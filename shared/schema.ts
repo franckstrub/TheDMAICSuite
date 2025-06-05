@@ -858,6 +858,7 @@ export const ctsCharacteristics = pgTable("cts_characteristics", {
   ctq: text("ctq").notNull(),
   operationalDefinition: text("operational_definition"),
   ctqType: text("ctq_type").notNull().default("Continuous"), // "Attribute" or "Continuous"
+  unit: text("unit"), // Unit of measurement - Only for Continuous
   targetPercentDefects: text("target_percent_defects"),
   target: text("target"), // Only for Continuous
   lsl: text("lsl"), // Lower Specification Limit - Only for Continuous
