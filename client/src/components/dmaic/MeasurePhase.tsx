@@ -71,9 +71,21 @@ export default function MeasurePhase() {
     }
   }, [charter]);
 
+  // Data Collection Plan state
+  const [dataCollectionPlans, setDataCollectionPlans] = useState([
+    {
+      ctq: "",
+      operationalDefinition: "",
+      dataType: "Discrete",
+      collectionMethod: "",
+      sampleSize: "",
+      responsible: ""
+    }
+  ]);
+
   // Auto-populate data collection plan with CTQs from CTS characteristics
   useEffect(() => {
-    if (ctsData?.characteristics && ctsData.characteristics.length > 0 && dataCollectionPlans.length === 1 && !dataCollectionPlans[0].ctq) {
+    if (ctsData?.characteristics && ctsData.characteristics.length > 0 && dataCollectionPlans.length === 1 && !dataCollectionPlans[0].ctq && !plans?.plans?.length) {
       const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
         ctq: characteristic.ctq,
         operationalDefinition: characteristic.operationalDefinition || "",
@@ -95,19 +107,7 @@ export default function MeasurePhase() {
 
       setDataCollectionPlans(autoPopulatedPlans);
     }
-  }, [ctsData, dataCollectionPlans]);
-
-  // Data Collection Plan state
-  const [dataCollectionPlans, setDataCollectionPlans] = useState([
-    {
-      ctq: "",
-      operationalDefinition: "",
-      dataType: "Discrete",
-      collectionMethod: "",
-      sampleSize: "",
-      responsible: ""
-    }
-  ]);
+  }, [ctsData, dataCollectionPlans, plans]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -154,19 +154,22 @@ export default function MeasurePhase() {
   const { data: plans } = useQuery({
     queryKey: [`/api/projects/${projectId}/data-collection-plans`],
     enabled: !!user?.id && !!projectId,
-    onSuccess: (data: any) => {
-      if (data?.plans && data.plans.length > 0) {
-        setDataCollectionPlans(data.plans.map((p: any) => ({
-          metric: p.metric,
-          operationalDefinition: p.operationalDefinition,
-          dataType: p.dataType,
-          collectionMethod: p.collectionMethod,
-          sampleSize: p.sampleSize,
-          responsible: p.responsible,
-        })));
-      }
-    },
+    refetchOnWindowFocus: false
   });
+
+  // Load existing data collection plans
+  useEffect(() => {
+    if (plans?.plans && plans.plans.length > 0) {
+      setDataCollectionPlans(plans.plans.map((p: any) => ({
+        ctq: p.ctq,
+        operationalDefinition: p.operationalDefinition,
+        dataType: p.dataType,
+        collectionMethod: p.collectionMethod,
+        sampleSize: p.sampleSize,
+        responsible: p.responsible,
+      })));
+    }
+  }, [plans]);
 
   // Save data collection plan mutation
   const savePlansMutation = useMutation({
