@@ -81,8 +81,20 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
 
   // Initialize characteristics when data loads
   useEffect(() => {
-    if (ctsData?.characteristics) {
+    if (ctsData?.characteristics && ctsData.characteristics.length > 0) {
       setCharacteristics(ctsData.characteristics);
+    } else if (ctqsData?.ctqs && ctqsData.ctqs.length > 0) {
+      // Auto-populate with CTQs from requirements if no saved data exists
+      const autoPopulatedCharacteristics = ctqsData.ctqs.map((ctqItem: any) => ({
+        ctq: ctqItem.ctq,
+        operationalDefinition: "",
+        ctqType: "Continuous" as "Continuous",
+        targetPercentDefects: "",
+        target: "",
+        lsl: "",
+        usl: "",
+      }));
+      setCharacteristics(autoPopulatedCharacteristics);
     } else {
       // Initialize with empty characteristic if no data exists
       setCharacteristics([{
@@ -95,7 +107,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         usl: "",
       }]);
     }
-  }, [ctsData]);
+  }, [ctsData, ctqsData]);
 
   // Set available CTQs when data loads
   useEffect(() => {
@@ -149,9 +161,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
     saveMutation.mutate(validCharacteristics);
   };
 
-  const populateFromCtq = (index: number, selectedCtq: string) => {
-    updateCharacteristic(index, 'ctq', selectedCtq);
-  };
+
 
   if (ctsLoading || ctqsLoading) {
     return (
@@ -196,28 +206,8 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
               {characteristics.map((characteristic, index) => (
                 <tr key={index}>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="flex flex-col space-y-1">
-                      <Select
-                        value={characteristic.ctq}
-                        onValueChange={(value) => populateFromCtq(index, value)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select CTQ" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableCtqs.map((ctqItem, ctqIndex) => (
-                            <SelectItem key={ctqIndex} value={ctqItem.ctq}>
-                              {ctqItem.ctq}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        placeholder="Or enter custom CTQ"
-                        value={characteristic.ctq}
-                        onChange={(e) => updateCharacteristic(index, 'ctq', e.target.value)}
-                        className="text-sm"
-                      />
+                    <div className="font-medium text-sm bg-gray-50 p-2 rounded border">
+                      {characteristic.ctq || "No CTQ"}
                     </div>
                   </td>
                   <td className="px-4 py-3">
