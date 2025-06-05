@@ -81,22 +81,23 @@ export default function MeasurePhase() {
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState<any[]>([]);
 
-  // Auto-populate data collection plan with CTQs from CTS characteristics
+  // Load existing data collection plans or auto-populate from CTS characteristics
   useEffect(() => {
-    if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
-      // Only auto-populate if no existing plans and current state is empty
-      if ((!plans?.plans || plans.plans.length === 0) && dataCollectionPlans.length === 0) {
-        const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
-          ctq: characteristic.ctq || "",
-          operationalDefinition: characteristic.operationalDefinition || "",
-          dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
-          collectionMethod: "",
-          sampleSize: "",
-          responsible: ""
-        }));
+    if (plans?.plans && plans.plans.length > 0) {
+      // Load existing plans from database
+      setDataCollectionPlans(plans.plans);
+    } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
+      // Only auto-populate if no existing plans in database
+      const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
+        ctq: characteristic.ctq || "",
+        operationalDefinition: characteristic.operationalDefinition || "",
+        dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
+        collectionMethod: "",
+        sampleSize: "",
+        responsible: ""
+      }));
 
-        setDataCollectionPlans(autoPopulatedPlans);
-      }
+      setDataCollectionPlans(autoPopulatedPlans);
     }
   }, [ctsData, plans]);
 
