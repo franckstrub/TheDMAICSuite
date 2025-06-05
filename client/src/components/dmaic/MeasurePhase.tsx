@@ -71,6 +71,32 @@ export default function MeasurePhase() {
     }
   }, [charter]);
 
+  // Auto-populate data collection plan with CTQs from CTS characteristics
+  useEffect(() => {
+    if (ctsData?.characteristics && ctsData.characteristics.length > 0) {
+      const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
+        ctq: characteristic.ctq,
+        operationalDefinition: characteristic.operationalDefinition || "",
+        dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
+        collectionMethod: "",
+        sampleSize: "",
+        responsible: ""
+      }));
+
+      // Add an empty row for manual entry
+      autoPopulatedPlans.push({
+        ctq: "",
+        operationalDefinition: "",
+        dataType: "Discrete",
+        collectionMethod: "",
+        sampleSize: "",
+        responsible: ""
+      });
+
+      setDataCollectionPlans(autoPopulatedPlans);
+    }
+  }, [ctsData]);
+
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState([
     {
@@ -145,13 +171,13 @@ export default function MeasurePhase() {
   // Save data collection plan mutation
   const savePlansMutation = useMutation({
     mutationFn: async (plans: any[]) => {
-      const validPlans = plans.filter(p => p.metric.trim() !== "");
+      const validPlans = plans.filter(p => p.ctq.trim() !== "");
       
       // For simplicity, just create/update each plan
       const promises = validPlans.map(p => {
         const payload = {
           projectId,
-          metric: p.metric,
+          ctq: p.ctq,
           operationalDefinition: p.operationalDefinition,
           dataType: p.dataType,
           collectionMethod: p.collectionMethod,
@@ -188,11 +214,11 @@ export default function MeasurePhase() {
   };
 
   const addPlan = () => {
-    if (dataCollectionPlans[dataCollectionPlans.length - 1].metric.trim() !== "") {
+    if (dataCollectionPlans[dataCollectionPlans.length - 1].ctq.trim() !== "") {
       setDataCollectionPlans([
         ...dataCollectionPlans,
         {
-          metric: "",
+          ctq: "",
           operationalDefinition: "",
           dataType: "Discrete",
           collectionMethod: "",
@@ -529,7 +555,7 @@ export default function MeasurePhase() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection Method</th>
@@ -544,9 +570,9 @@ export default function MeasurePhase() {
                     <td className="px-4 py-2">
                       <Input
                         type="text"
-                        value={plan.metric}
-                        onChange={(e) => updatePlan(index, "metric", e.target.value)}
-                        placeholder={index === dataCollectionPlans.length - 1 ? "Add new metric..." : ""}
+                        value={plan.ctq}
+                        onChange={(e) => updatePlan(index, "ctq", e.target.value)}
+                        placeholder={index === dataCollectionPlans.length - 1 ? "Add new CTQ..." : ""}
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -589,7 +615,7 @@ export default function MeasurePhase() {
                       />
                     </td>
                     <td className="px-4 py-2">
-                      {index === dataCollectionPlans.length - 1 && plan.metric ? (
+                      {index === dataCollectionPlans.length - 1 && plan.ctq ? (
                         <Button variant="ghost" size="sm" onClick={addPlan}>
                           <i className="fas fa-plus"></i>
                         </Button>
@@ -612,7 +638,7 @@ export default function MeasurePhase() {
           <div className="mt-4">
             <Button 
               onClick={handleSavePlans}
-              disabled={savePlansMutation.isPending || dataCollectionPlans.every(p => !p.metric)}
+              disabled={savePlansMutation.isPending || dataCollectionPlans.every(p => !p.ctq)}
             >
               {savePlansMutation.isPending ? "Saving..." : "Save Data Collection Plan"}
             </Button>
