@@ -129,7 +129,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
   };
 
   // Draw.io embed URL with configuration
-  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=1&saveAndExit=1&noExitBtn=1';
+  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1';
 
   return (
     <div className="w-full">
@@ -173,6 +173,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           • Use the toolbar above to create process flows and value stream maps
           • Your diagram will be automatically saved when you use Ctrl+S or the save button
           • This editor supports standard process mapping symbols and value stream mapping notation
+          • You may use several pages to map your process. Just click on "+" to add a page to your diagram
         </p>
       </div>
     </div>

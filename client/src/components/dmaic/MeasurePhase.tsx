@@ -506,6 +506,7 @@ export default function MeasurePhase() {
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
             Map and Visualize the "AS IS" flow of actions, materials and information required to deliver your product or service.
+            You may start with your Define SIPOC.
           </p>
           <DrawIoProcessMap 
             projectId={projectId}
@@ -518,7 +519,7 @@ export default function MeasurePhase() {
           />
         </CardContent>
       </Card>
-      
+ 
       {/* Data Collection Plan */}
       <Card>
         <CardHeader>

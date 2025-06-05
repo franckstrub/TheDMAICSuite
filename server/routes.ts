@@ -18,7 +18,8 @@ import {
   InsertProject, InsertRequirement, InsertBusinessRequirement, InsertSipoc, InsertRisk,
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
-  processMaps
+  processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
+  customerRequirements, businessRequirements
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2151,6 +2152,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (err) {
       console.error("Error during orphaned data cleanup:", err);
+      return handleErrors(err, res);
+    }
+  });
+
+  // CTS Characteristics routes for DMAIC Measure Phase
+  app.get("/api/projects/:projectId/cts-characteristics", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      const characteristics = await db
+        .select()
+        .from(ctsCharacteristics)
+        .where(eq(ctsCharacteristics.projectId, projectId))
+        .orderBy(asc(ctsCharacteristics.id));
+      
+      return res.status(200).json({ characteristics });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/cts-characteristics", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const characteristicsData = req.body.characteristics;
+      
+      // Clear existing characteristics for this project
+      await db
+        .delete(ctsCharacteristics)
+        .where(eq(ctsCharacteristics.projectId, projectId));
+      
+      // Insert new characteristics
+      if (characteristicsData && characteristicsData.length > 0) {
+        const validatedCharacteristics = characteristicsData.map((char: any) => 
+          insertCtsCharacteristicsSchema.parse({
+            ...char,
+            projectId,
+          })
+        );
+        
+        const newCharacteristics = await db
+          .insert(ctsCharacteristics)
+          .values(validatedCharacteristics)
+          .returning();
+        
+        return res.status(201).json({ characteristics: newCharacteristics });
+      }
+      
+      return res.status(200).json({ characteristics: [] });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Get CTQs from customer requirements and business requirements for populating CTS table
+  app.get("/api/projects/:projectId/ctqs", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      // Get CTQs from customer requirements table
+      const customerCtqs = await db.execute(sql`
+        SELECT ctq, 'customer_requirements' as source 
+        FROM customer_requirements 
+        WHERE project_id = ${projectId} 
+        AND ctq IS NOT NULL 
+        AND ctq != ''
+      `);
+      
+      // Get CTQs from business requirements table
+      const businessCtqs = await db.execute(sql`
+        SELECT ctq, 'business_requirements' as source 
+        FROM business_requirements 
+        WHERE project_id = ${projectId} 
+        AND ctq IS NOT NULL 
+        AND ctq != ''
+      `);
+      
+      // Combine and deduplicate CTQs
+      const allCtqs = [...customerCtqs, ...businessCtqs];
+      const uniqueCtqs = Array.from(
+        new Map(allCtqs.map(item => [item.ctq, item])).values()
+      ).filter(item => item.ctq && item.ctq.trim() !== '');
+      
+      return res.status(200).json({ ctqs: uniqueCtqs });
+    } catch (err) {
       return handleErrors(err, res);
     }
   });
