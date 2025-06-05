@@ -141,7 +141,7 @@ export default function MeasurePhase() {
         
         console.log('Starting auto-population from requirements');
         console.log('Customer requirements data:', customerRequirementsData);
-        console.log('Business requirements form data:', businessRequirementsFormData);
+        console.log('Business requirements form data:', businessRequirementsAutoData);
         
         // Add CTQs from customer requirements
         if (customerRequirementsData?.requirements && Array.isArray(customerRequirementsData.requirements)) {
@@ -169,9 +169,9 @@ export default function MeasurePhase() {
         }
         
         // Add CTQs from business requirements
-        if (businessRequirementsFormData?.businessRequirements && Array.isArray(businessRequirementsFormData.businessRequirements)) {
-          console.log('Processing business requirements:', businessRequirementsFormData.businessRequirements);
-          businessRequirementsFormData.businessRequirements.forEach((req: any, index: number) => {
+        if (businessRequirementsAutoData?.businessRequirements && Array.isArray(businessRequirementsAutoData.businessRequirements)) {
+          console.log('Processing business requirements:', businessRequirementsAutoData.businessRequirements);
+          businessRequirementsAutoData.businessRequirements.forEach((req: any, index: number) => {
             console.log(`Business requirement ${index}:`, req);
             if (req.ctq && req.ctq.trim() !== "") {
               console.log(`Adding business CTQ: "${req.ctq}"`);
@@ -336,10 +336,10 @@ export default function MeasurePhase() {
   
   // Add a separate useEffect to process business requirements data when it changes
   useEffect(() => {
-    console.log("Business requirements data changed:", businessRequirementsFormData);
-    if (businessRequirementsFormData?.businessRequirements && businessRequirementsFormData.businessRequirements.length > 0) {
+    console.log("Business requirements data changed:", businessRequirementsAutoData);
+    if (businessRequirementsAutoData?.businessRequirements && businessRequirementsAutoData.businessRequirements.length > 0) {
       // Sort the business requirements data by ID to maintain consistency
-      const sortedBusinessRequirements = [...businessRequirementsFormData.businessRequirements].sort((a, b) => a.id - b.id);
+      const sortedBusinessRequirements = [...businessRequirementsAutoData.businessRequirements].sort((a, b) => a.id - b.id);
       console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
       
       // Map and set to state, preserving the ID for later reference
@@ -358,7 +358,7 @@ export default function MeasurePhase() {
         businessRequirementsInitialized.current = true;
       }
     }
-  }, [businessRequirementsFormData]);
+  }, [businessRequirementsAutoData]);
   
   // Function to load business requirements from the database
   const loadBusinessRequirementsFromDatabase = async (silent = false) => {
