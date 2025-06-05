@@ -303,7 +303,6 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                       variant="ghost"
                       size="sm"
                       onClick={() => removeCharacteristic(index)}
-                      disabled={characteristics.length === 1}
                       className="text-red-600 hover:text-red-800"
                     >
                       <Trash2 className="h-4 w-4" />
