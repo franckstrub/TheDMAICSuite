@@ -140,10 +140,12 @@ export default function MeasurePhase() {
           console.log('Processing customer requirements:', customerRequirementsData.requirements);
           customerRequirementsData.requirements.forEach((req: any, index: number) => {
             console.log(`Customer requirement ${index}:`, req);
-            if (req.ctq && req.ctq.trim() !== "") {
-              console.log(`Adding customer CTQ: "${req.ctq}"`);
+            // Check both CTQ and CTS fields for auto-population
+            const ctqValue = req.ctq && req.ctq.trim() !== "" ? req.ctq : (req.CTS && req.CTS.trim() !== "" ? req.CTS : null);
+            if (ctqValue) {
+              console.log(`Adding customer CTQ/CTS: "${ctqValue}"`);
               allCtqs.push({
-                ctq: req.ctq,
+                ctq: ctqValue,
                 operationalDefinition: "",
                 dataType: "Attribute",
                 collectionMethod: "",
@@ -151,7 +153,7 @@ export default function MeasurePhase() {
                 responsible: ""
               });
             } else {
-              console.log(`Skipping customer requirement ${index} - no CTQ or empty CTQ`);
+              console.log(`Skipping customer requirement ${index} - no CTQ or CTS value`);
             }
           });
         } else {
