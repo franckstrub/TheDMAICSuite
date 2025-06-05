@@ -23,6 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle } from "lucide-react";
 import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
 import CtsCharacteristics from '@/components/dmaic/CtsCharacteristics';
+import MsaAnalysis from '@/components/dmaic/MsaAnalysis';
+import ProcessCapability from '@/components/dmaic/ProcessCapability';
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
@@ -916,6 +918,12 @@ export default function MeasurePhase() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* MSA (Measurement System Analysis) - One tab per CTQ */}
+      <MsaAnalysis projectId={projectId} />
+      
+      {/* Process Capability - One tab per CTQ */}
+      <ProcessCapability projectId={projectId} />
     </div>
   );
 }
