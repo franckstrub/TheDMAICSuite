@@ -2230,7 +2230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
       
       // Combine and deduplicate CTQs
-      const allCtqs = [...customerCtqs, ...businessCtqs];
+      const allCtqs = [...customerCtqs.rows, ...businessCtqs.rows];
       const uniqueCtqs = Array.from(
         new Map(allCtqs.map(item => [item.ctq, item])).values()
       ).filter(item => item.ctq && item.ctq.trim() !== '');
