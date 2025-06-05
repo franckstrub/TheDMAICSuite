@@ -1079,6 +1079,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/projects/:projectId/data-collection-plans", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      
+      await storage.deleteAllDataCollectionPlans(projectId);
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   app.delete("/api/data-collection-plans/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
