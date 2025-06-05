@@ -85,8 +85,12 @@ export default function MeasurePhase() {
   const [hasInitialized, setHasInitialized] = useState(false);
   
   useEffect(() => {
-    if (!hasInitialized && plans && ctsData) {
+    // Wait for both API calls to complete before initializing
+    if (!hasInitialized && plans !== undefined && ctsData !== undefined) {
+      console.log('Initializing data collection plans:', { plans, ctsData });
+      
       if (plans?.plans && plans.plans.length > 0) {
+        console.log('Loading existing saved plans:', plans.plans);
         // Load existing saved plans
         setDataCollectionPlans(plans.plans.map((p: any) => ({
           ctq: p.ctq,
@@ -97,6 +101,7 @@ export default function MeasurePhase() {
           responsible: p.responsible,
         })));
       } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
+        console.log('Auto-populating from CTS characteristics:', ctsData.characteristics);
         // Auto-populate from CTS characteristics only if no existing plans
         const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
@@ -106,7 +111,10 @@ export default function MeasurePhase() {
           sampleSize: "",
           responsible: ""
         }));
+        console.log('Setting auto-populated plans:', autoPopulatedPlans);
         setDataCollectionPlans(autoPopulatedPlans);
+      } else {
+        console.log('No plans or CTS characteristics available for auto-population');
       }
       setHasInitialized(true);
     }
