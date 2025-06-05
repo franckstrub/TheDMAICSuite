@@ -51,6 +51,7 @@ export interface IStorage {
   createDataCollectionPlan(plan: any): Promise<DataCollectionPlan>;
   updateDataCollectionPlan(id: number, plan: any): Promise<DataCollectionPlan>;
   deleteDataCollectionPlan(id: number): Promise<void>;
+  deleteAllDataCollectionPlans(projectId: number): Promise<void>;
   
   // Storage config operations
   getStorageConfigs(userId: number): Promise<StorageConfig[]>;
@@ -350,6 +351,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDataCollectionPlan(id: number): Promise<void> {
     await db.delete(dataCollectionPlans).where(eq(dataCollectionPlans.id, id));
+  }
+
+  async deleteAllDataCollectionPlans(projectId: number): Promise<void> {
+    await db.delete(dataCollectionPlans).where(eq(dataCollectionPlans.projectId, projectId));
   }
 
   // Storage config operations
