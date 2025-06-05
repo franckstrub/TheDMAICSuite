@@ -99,9 +99,17 @@ export default function MeasurePhase() {
   const [hasInitialized, setHasInitialized] = useState(false);
   
   useEffect(() => {
+    console.log('useEffect triggered:', { 
+      hasInitialized, 
+      plansUndefined: plans === undefined, 
+      ctsDataUndefined: ctsData === undefined, 
+      customerRequirementsDataUndefined: customerRequirementsData === undefined, 
+      businessRequirementsFormDataUndefined: businessRequirementsFormData === undefined 
+    });
+    
     // Wait for all API calls to complete before initializing
     if (!hasInitialized && plans !== undefined && ctsData !== undefined && customerRequirementsData !== undefined && businessRequirementsFormData !== undefined) {
-      console.log('Initializing data collection plans:', { plans, ctsData, customerRequirementsData, businessRequirementsFormData });
+      console.log('All conditions met - Initializing data collection plans:', { plans, ctsData, customerRequirementsData, businessRequirementsFormData });
       
       if (plans?.plans && plans.plans.length > 0) {
         console.log('Loading existing saved plans:', plans.plans);
