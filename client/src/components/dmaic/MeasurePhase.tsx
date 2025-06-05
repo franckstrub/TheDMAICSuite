@@ -79,22 +79,13 @@ export default function MeasurePhase() {
   });
 
   // Data Collection Plan state
-  const [dataCollectionPlans, setDataCollectionPlans] = useState([
-    {
-      ctq: "",
-      operationalDefinition: "",
-      dataType: "Discrete",
-      collectionMethod: "",
-      sampleSize: "",
-      responsible: ""
-    }
-  ]);
+  const [dataCollectionPlans, setDataCollectionPlans] = useState<any[]>([]);
 
   // Auto-populate data collection plan with CTQs from CTS characteristics
   useEffect(() => {
     if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
       // Only auto-populate if no existing plans and current state is empty
-      if ((!plans?.plans || plans.plans.length === 0) && dataCollectionPlans.length === 1 && dataCollectionPlans[0].ctq === "") {
+      if ((!plans?.plans || plans.plans.length === 0) && dataCollectionPlans.length === 0) {
         const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
           operationalDefinition: characteristic.operationalDefinition || "",
@@ -104,20 +95,10 @@ export default function MeasurePhase() {
           responsible: ""
         }));
 
-        // Add an empty row for manual entry
-        autoPopulatedPlans.push({
-          ctq: "",
-          operationalDefinition: "",
-          dataType: "Discrete",
-          collectionMethod: "",
-          sampleSize: "",
-          responsible: ""
-        });
-
         setDataCollectionPlans(autoPopulatedPlans);
       }
     }
-  }, [ctsData, plans, dataCollectionPlans]);
+  }, [ctsData, plans]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -220,19 +201,17 @@ export default function MeasurePhase() {
   };
 
   const addPlan = () => {
-    if (dataCollectionPlans[dataCollectionPlans.length - 1].ctq.trim() !== "") {
-      setDataCollectionPlans([
-        ...dataCollectionPlans,
-        {
-          ctq: "",
-          operationalDefinition: "",
-          dataType: "Discrete",
-          collectionMethod: "",
-          sampleSize: "",
-          responsible: ""
-        }
-      ]);
-    }
+    setDataCollectionPlans([
+      ...dataCollectionPlans,
+      {
+        ctq: "",
+        operationalDefinition: "",
+        dataType: "Discrete",
+        collectionMethod: "",
+        sampleSize: "",
+        responsible: ""
+      }
+    ]);
   };
 
   const removePlan = (index: number) => {
@@ -571,74 +550,79 @@ export default function MeasurePhase() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {dataCollectionPlans.map((plan, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2">
-                      <Input
-                        type="text"
-                        value={plan.ctq}
-                        onChange={(e) => updatePlan(index, "ctq", e.target.value)}
-                        placeholder={index === dataCollectionPlans.length - 1 ? "Add new CTQ..." : ""}
-                      />
+                {dataCollectionPlans.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                      No CTQs have been added yet. Click "Add CTQ" to get started.
                     </td>
-                    <td className="px-4 py-2">
-                      <Input
-                        type="text"
-                        value={plan.operationalDefinition}
-                        onChange={(e) => updatePlan(index, "operationalDefinition", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <select
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        value={plan.dataType}
-                        onChange={(e) => updatePlan(index, "dataType", e.target.value)}
-                      >
-                        <option>Discrete</option>
-                        <option>Continuous</option>
-                        <option>Attribute</option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-2">
-                      <Input
-                        type="text"
-                        value={plan.collectionMethod}
-                        onChange={(e) => updatePlan(index, "collectionMethod", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <Input
-                        type="text"
-                        value={plan.sampleSize}
-                        onChange={(e) => updatePlan(index, "sampleSize", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <Input
-                        type="text"
-                        value={plan.responsible}
-                        onChange={(e) => updatePlan(index, "responsible", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      {index === dataCollectionPlans.length - 1 && plan.ctq ? (
-                        <Button variant="ghost" size="sm" onClick={addPlan}>
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : index === dataCollectionPlans.length - 1 ? (
-                        <Button variant="ghost" size="sm" disabled className="text-gray-400">
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : (
+                  </tr>
+                ) : (
+                  dataCollectionPlans.map((plan, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2">
+                        <Input
+                          type="text"
+                          value={plan.ctq}
+                          onChange={(e) => updatePlan(index, "ctq", e.target.value)}
+                          placeholder="Enter CTQ name..."
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <Input
+                          type="text"
+                          value={plan.operationalDefinition}
+                          onChange={(e) => updatePlan(index, "operationalDefinition", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <select
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                          value={plan.dataType}
+                          onChange={(e) => updatePlan(index, "dataType", e.target.value)}
+                        >
+                          <option>Discrete</option>
+                          <option>Continuous</option>
+                          <option>Attribute</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-2">
+                        <Input
+                          type="text"
+                          value={plan.collectionMethod}
+                          onChange={(e) => updatePlan(index, "collectionMethod", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <Input
+                          type="text"
+                          value={plan.sampleSize}
+                          onChange={(e) => updatePlan(index, "sampleSize", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <Input
+                          type="text"
+                          value={plan.responsible}
+                          onChange={(e) => updatePlan(index, "responsible", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2">
                         <Button variant="ghost" size="sm" onClick={() => removePlan(index)} className="text-red-500 hover:text-red-700">
                           <i className="fas fa-trash"></i>
                         </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+          </div>
+          
+          <div className="mt-4 flex justify-between items-center">
+            <Button onClick={addPlan} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <i className="fas fa-plus mr-2"></i>
+              Add CTQ
+            </Button>
           </div>
           
           <div className="mt-4">
