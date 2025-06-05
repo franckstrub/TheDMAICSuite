@@ -171,7 +171,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   };
 
-  if (ctsLoading || msaLoading) {
+  if (ctqsLoading || msaLoading) {
     return (
       <Card>
         <CardHeader>
