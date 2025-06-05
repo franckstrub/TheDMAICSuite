@@ -131,10 +131,17 @@ export default function MeasurePhase() {
         // Auto-populate from customer requirements and business requirements CTQs
         const allCtqs: any[] = [];
         
+        console.log('Starting auto-population from requirements');
+        console.log('Customer requirements data:', customerRequirementsData);
+        console.log('Business requirements form data:', businessRequirementsFormData);
+        
         // Add CTQs from customer requirements
         if (customerRequirementsData?.requirements && Array.isArray(customerRequirementsData.requirements)) {
-          customerRequirementsData.requirements.forEach((req: any) => {
+          console.log('Processing customer requirements:', customerRequirementsData.requirements);
+          customerRequirementsData.requirements.forEach((req: any, index: number) => {
+            console.log(`Customer requirement ${index}:`, req);
             if (req.ctq && req.ctq.trim() !== "") {
+              console.log(`Adding customer CTQ: "${req.ctq}"`);
               allCtqs.push({
                 ctq: req.ctq,
                 operationalDefinition: "",
@@ -143,14 +150,21 @@ export default function MeasurePhase() {
                 sampleSize: "",
                 responsible: ""
               });
+            } else {
+              console.log(`Skipping customer requirement ${index} - no CTQ or empty CTQ`);
             }
           });
+        } else {
+          console.log('No customer requirements data available');
         }
         
         // Add CTQs from business requirements
-        if (businessRequirementsData?.businessRequirements && Array.isArray(businessRequirementsData.businessRequirements)) {
-          businessRequirementsData.businessRequirements.forEach((req: any) => {
+        if (businessRequirementsFormData?.businessRequirements && Array.isArray(businessRequirementsFormData.businessRequirements)) {
+          console.log('Processing business requirements:', businessRequirementsFormData.businessRequirements);
+          businessRequirementsFormData.businessRequirements.forEach((req: any, index: number) => {
+            console.log(`Business requirement ${index}:`, req);
             if (req.ctq && req.ctq.trim() !== "") {
+              console.log(`Adding business CTQ: "${req.ctq}"`);
               allCtqs.push({
                 ctq: req.ctq,
                 operationalDefinition: "",
@@ -159,9 +173,15 @@ export default function MeasurePhase() {
                 sampleSize: "",
                 responsible: ""
               });
+            } else {
+              console.log(`Skipping business requirement ${index} - no CTQ or empty CTQ`);
             }
           });
+        } else {
+          console.log('No business requirements data available');
         }
+        
+        console.log('All collected CTQs:', allCtqs);
         
         if (allCtqs.length > 0) {
           console.log('Auto-populating from requirements CTQs:', allCtqs);
@@ -172,7 +192,7 @@ export default function MeasurePhase() {
       }
       setHasInitialized(true);
     }
-  }, [plans, ctsData, customerRequirementsData, businessRequirementsData, hasInitialized]);
+  }, [plans, ctsData, customerRequirementsData, businessRequirementsFormData, hasInitialized]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
