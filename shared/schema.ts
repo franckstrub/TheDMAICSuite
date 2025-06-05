@@ -846,3 +846,29 @@ export const insertProcessMapSchema = createInsertSchema(processMaps).omit({
 
 export type InsertProcessMap = z.infer<typeof insertProcessMapSchema>;
 export type ProcessMap = typeof processMaps.$inferSelect;
+
+// CTQ Type for CTS Characteristics
+export const ctqTypes = ["Attribute", "Continuous"] as const;
+export type CtqType = typeof ctqTypes[number];
+
+// CTS Characteristics for DMAIC Measure Phase
+export const ctsCharacteristics = pgTable("cts_characteristics", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  ctq: text("ctq").notNull(),
+  operationalDefinition: text("operational_definition"),
+  ctqType: text("ctq_type").notNull().default("Continuous"), // "Attribute" or "Continuous"
+  targetPercentDefects: text("target_percent_defects"),
+  target: text("target"), // Only for Continuous
+  lsl: text("lsl"), // Lower Specification Limit - Only for Continuous
+  usl: text("usl"), // Upper Specification Limit - Only for Continuous
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertCtsCharacteristicsSchema = createInsertSchema(ctsCharacteristics).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertCtsCharacteristics = z.infer<typeof insertCtsCharacteristicsSchema>;
+export type CtsCharacteristics = typeof ctsCharacteristics.$inferSelect;
