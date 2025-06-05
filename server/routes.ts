@@ -2211,13 +2211,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = parseInt(req.params.projectId);
       
-      // Get CTQs from customer requirements table
+      // Get CTQs from customer requirements table (check both ctq and CTS fields)
       const customerCtqs = await db.execute(sql`
-        SELECT ctq, 'customer_requirements' as source 
+        SELECT 
+          CASE 
+            WHEN ctq IS NOT NULL AND ctq != '' THEN ctq
+            WHEN "CTS" IS NOT NULL AND "CTS" != '' THEN "CTS"
+            ELSE NULL
+          END as ctq,
+          'customer_requirements' as source 
         FROM customer_requirements 
         WHERE project_id = ${projectId} 
-        AND ctq IS NOT NULL 
-        AND ctq != ''
+        AND (
+          (ctq IS NOT NULL AND ctq != '') OR 
+          ("CTS" IS NOT NULL AND "CTS" != '')
+        )
       `);
       
       // Get CTQs from business requirements table
