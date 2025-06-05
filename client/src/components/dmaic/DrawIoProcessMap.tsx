@@ -129,7 +129,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
   };
 
   // Draw.io embed URL with configuration
-  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=1&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1';
+  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=0&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1';
 
   return (
     <div className="w-full">

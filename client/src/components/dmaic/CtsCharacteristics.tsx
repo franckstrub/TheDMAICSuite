@@ -23,6 +23,7 @@ interface CtsCharacteristic {
   target: string;
   lsl: string; // Lower Specification Limit
   usl: string; // Upper Specification Limit
+  isAutoPopulated?: boolean; // Track if CTQ was auto-populated from Define phase
 }
 
 interface CtsCharacteristicsProps {
@@ -93,6 +94,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         target: "",
         lsl: "",
         usl: "",
+        isAutoPopulated: true,
       }));
       setCharacteristics(autoPopulatedCharacteristics);
     } else {
@@ -105,6 +107,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         target: "",
         lsl: "",
         usl: "",
+        isAutoPopulated: false,
       }]);
     }
   }, [ctsData, ctqsData]);
@@ -144,6 +147,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         target: "",
         lsl: "",
         usl: "",
+        isAutoPopulated: false,
       }
     ]);
   };
@@ -206,9 +210,18 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
               {characteristics.map((characteristic, index) => (
                 <tr key={index}>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="font-medium text-sm bg-gray-50 p-2 rounded border">
-                      {characteristic.ctq || "No CTQ"}
-                    </div>
+                    {characteristic.isAutoPopulated ? (
+                      <div className="font-medium text-sm bg-gray-50 p-2 rounded border">
+                        {characteristic.ctq || "No CTQ"}
+                      </div>
+                    ) : (
+                      <Input
+                        placeholder="Enter CTQ"
+                        value={characteristic.ctq}
+                        onChange={(e) => updateCharacteristic(index, 'ctq', e.target.value)}
+                        className="w-full"
+                      />
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <Textarea
