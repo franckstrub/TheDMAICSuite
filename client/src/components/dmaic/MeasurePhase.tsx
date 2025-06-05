@@ -69,7 +69,7 @@ export default function MeasurePhase() {
   });
 
   // Fetch business requirements for auto-population
-  const { data: businessRequirementsData } = useQuery({
+  const { data: businessRequirementsAutoData } = useQuery({
     queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!user?.id && !!projectId,
     refetchOnWindowFocus: false
@@ -104,12 +104,12 @@ export default function MeasurePhase() {
       plansUndefined: plans === undefined, 
       ctsDataUndefined: ctsData === undefined, 
       customerRequirementsDataUndefined: customerRequirementsData === undefined, 
-      businessRequirementsFormDataUndefined: businessRequirementsFormData === undefined 
+      businessRequirementsAutoDataUndefined: businessRequirementsAutoData === undefined 
     });
     
     // Wait for all API calls to complete before initializing
-    if (!hasInitialized && plans !== undefined && ctsData !== undefined && customerRequirementsData !== undefined && businessRequirementsFormData !== undefined) {
-      console.log('All conditions met - Initializing data collection plans:', { plans, ctsData, customerRequirementsData, businessRequirementsFormData });
+    if (!hasInitialized && plans !== undefined && ctsData !== undefined && customerRequirementsData !== undefined && businessRequirementsAutoData !== undefined) {
+      console.log('All conditions met - Initializing data collection plans:', { plans, ctsData, customerRequirementsData, businessRequirementsAutoData });
       
       if (plans?.plans && plans.plans.length > 0) {
         console.log('Loading existing saved plans:', plans.plans);
@@ -202,7 +202,7 @@ export default function MeasurePhase() {
       }
       setHasInitialized(true);
     }
-  }, [plans, ctsData, customerRequirementsData, businessRequirementsFormData, hasInitialized]);
+  }, [plans, ctsData, customerRequirementsData, businessRequirementsAutoData, hasInitialized]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -235,7 +235,7 @@ export default function MeasurePhase() {
   const [analysisType, setAnalysisType] = useState("Attribute Data (Kappa)");
 
   // Fetch business requirements
-  const { data: businessRequirementsFormData, isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
+  const { isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!user?.id && !!projectId,
     retry: 3,
