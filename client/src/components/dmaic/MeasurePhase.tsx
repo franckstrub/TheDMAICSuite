@@ -306,10 +306,10 @@ export default function MeasurePhase() {
   
   // Add a separate useEffect to process business requirements data when it changes
   useEffect(() => {
-    console.log("Business requirements data changed:", businessRequirementsData);
-    if (businessRequirementsData?.businessRequirements && businessRequirementsData.businessRequirements.length > 0) {
+    console.log("Business requirements data changed:", businessRequirementsFormData);
+    if (businessRequirementsFormData?.businessRequirements && businessRequirementsFormData.businessRequirements.length > 0) {
       // Sort the business requirements data by ID to maintain consistency
-      const sortedBusinessRequirements = [...businessRequirementsData.businessRequirements].sort((a, b) => a.id - b.id);
+      const sortedBusinessRequirements = [...businessRequirementsFormData.businessRequirements].sort((a, b) => a.id - b.id);
       console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
       
       // Map and set to state, preserving the ID for later reference
@@ -328,7 +328,7 @@ export default function MeasurePhase() {
         businessRequirementsInitialized.current = true;
       }
     }
-  }, [businessRequirementsData]);
+  }, [businessRequirementsFormData]);
   
   // Function to load business requirements from the database
   const loadBusinessRequirementsFromDatabase = async (silent = false) => {
