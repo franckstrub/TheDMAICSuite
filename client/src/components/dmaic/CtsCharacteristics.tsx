@@ -19,6 +19,7 @@ interface CtsCharacteristic {
   ctq: string;
   operationalDefinition: string;
   ctqType: "Attribute" | "Continuous";
+  unit: string;
   targetPercentDefects: string;
   target: string;
   lsl: string; // Lower Specification Limit
@@ -90,6 +91,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         ctq: ctqItem.ctq,
         operationalDefinition: "",
         ctqType: "Continuous" as "Continuous",
+        unit: "",
         targetPercentDefects: "",
         target: "",
         lsl: "",
@@ -103,6 +105,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         ctq: "",
         operationalDefinition: "",
         ctqType: "Continuous",
+        unit: "",
         targetPercentDefects: "",
         target: "",
         lsl: "",
@@ -143,6 +146,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         ctq: "",
         operationalDefinition: "",
         ctqType: "Continuous",
+        unit: "",
         targetPercentDefects: "",
         target: "",
         lsl: "",
@@ -161,6 +165,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         ctq: "",
         operationalDefinition: "",
         ctqType: "Continuous",
+        unit: "",
         targetPercentDefects: "",
         target: "",
         lsl: "",
@@ -212,8 +217,9 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ Type</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Targeted % of Defects</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target % of Defects</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mean target</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LSL</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">USL</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -259,11 +265,25 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                     </Select>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
+                    {characteristic.ctqType === "Continuous" ? (
+                      <Input
+                        placeholder="Enter unit"
+                        value={characteristic.unit}
+                        onChange={(e) => updateCharacteristic(index, 'unit', e.target.value)}
+                      />
+                    ) : (
+                      <div className="text-gray-400 text-center">n/a</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap"> 
                     <Input
                       placeholder="% defects"
                       value={characteristic.targetPercentDefects}
                       onChange={(e) => updateCharacteristic(index, 'targetPercentDefects', e.target.value)}
                     />
+                  </td>
+                  <td className="w-4 text-center text-gray-600">
+                  %
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     {characteristic.ctqType === "Continuous" ? (
