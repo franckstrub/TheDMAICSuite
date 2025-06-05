@@ -49,10 +49,19 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
   // Save CTS characteristics mutation
   const saveMutation = useMutation({
     mutationFn: async (data: CtsCharacteristic[]) => {
-      return apiRequest(`/api/projects/${projectId}/cts-characteristics`, {
+      const response = await fetch(`/api/projects/${projectId}/cts-characteristics`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ characteristics: data }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save CTS characteristics: ${response.statusText}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
