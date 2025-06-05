@@ -313,11 +313,38 @@ export default function MeasurePhase() {
   const removePlan = (index: number) => {
     const newPlans = [...dataCollectionPlans];
     newPlans.splice(index, 1);
+    
+    // If all plans are removed, ensure we keep at least one empty plan
+    if (newPlans.length === 0) {
+      newPlans.push({
+        ctq: "",
+        operationalDefinition: "",
+        dataType: "Discrete",
+        collectionMethod: "",
+        sampleSize: "",
+        responsible: ""
+      });
+    }
+    
     setDataCollectionPlans(newPlans);
   };
 
   const handleSavePlans = () => {
-    savePlansMutation.mutate(dataCollectionPlans);
+    // Ensure we always have at least one plan to save, even if empty
+    let plansToSave = dataCollectionPlans;
+    if (dataCollectionPlans.length === 0) {
+      plansToSave = [{
+        ctq: "",
+        operationalDefinition: "",
+        dataType: "Discrete",
+        collectionMethod: "",
+        sampleSize: "",
+        responsible: ""
+      }];
+      setDataCollectionPlans(plansToSave);
+    }
+    
+    savePlansMutation.mutate(plansToSave);
   };
 
   // Initial data load effect - triggered on mount and when returning to page
