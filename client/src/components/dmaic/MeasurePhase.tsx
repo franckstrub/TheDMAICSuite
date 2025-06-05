@@ -81,11 +81,23 @@ export default function MeasurePhase() {
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState<any[]>([]);
 
-  // Auto-populate data collection plan with CTQs from CTS characteristics
+  // Initialize data collection plans from existing data or auto-populate from CTS characteristics
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
   useEffect(() => {
-    if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
-      // Only auto-populate if no existing plans and current state is empty
-      if ((!plans?.plans || plans.plans.length === 0) && dataCollectionPlans.length === 0) {
+    if (!hasInitialized && plans && ctsData) {
+      if (plans?.plans && plans.plans.length > 0) {
+        // Load existing saved plans
+        setDataCollectionPlans(plans.plans.map((p: any) => ({
+          ctq: p.ctq,
+          operationalDefinition: p.operationalDefinition,
+          dataType: p.dataType,
+          collectionMethod: p.collectionMethod,
+          sampleSize: p.sampleSize,
+          responsible: p.responsible,
+        })));
+      } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
+        // Auto-populate from CTS characteristics only if no existing plans
         const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
           operationalDefinition: characteristic.operationalDefinition || "",
@@ -94,11 +106,11 @@ export default function MeasurePhase() {
           sampleSize: "",
           responsible: ""
         }));
-
         setDataCollectionPlans(autoPopulatedPlans);
       }
+      setHasInitialized(true);
     }
-  }, [ctsData, plans]);
+  }, [plans, ctsData, hasInitialized]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -141,19 +153,7 @@ export default function MeasurePhase() {
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
 
-  // Load existing data collection plans
-  useEffect(() => {
-    if (plans?.plans && plans.plans.length > 0) {
-      setDataCollectionPlans(plans.plans.map((p: any) => ({
-        ctq: p.ctq,
-        operationalDefinition: p.operationalDefinition,
-        dataType: p.dataType,
-        collectionMethod: p.collectionMethod,
-        sampleSize: p.sampleSize,
-        responsible: p.responsible,
-      })));
-    }
-  }, [plans]);
+
 
   // Save data collection plan mutation
   const savePlansMutation = useMutation({
