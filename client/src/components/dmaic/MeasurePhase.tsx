@@ -85,7 +85,14 @@ export default function MeasurePhase() {
   useEffect(() => {
     if (plans?.plans && plans.plans.length > 0) {
       // Load existing plans from database
-      setDataCollectionPlans(plans.plans);
+      setDataCollectionPlans(plans.plans.map((p: any) => ({
+        ctq: p.ctq,
+        operationalDefinition: p.operationalDefinition,
+        dataType: p.dataType,
+        collectionMethod: p.collectionMethod,
+        sampleSize: p.sampleSize,
+        responsible: p.responsible,
+      })));
     } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
       // Only auto-populate if no existing plans in database
       const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
@@ -142,19 +149,7 @@ export default function MeasurePhase() {
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
 
-  // Load existing data collection plans
-  useEffect(() => {
-    if (plans?.plans && plans.plans.length > 0) {
-      setDataCollectionPlans(plans.plans.map((p: any) => ({
-        ctq: p.ctq,
-        operationalDefinition: p.operationalDefinition,
-        dataType: p.dataType,
-        collectionMethod: p.collectionMethod,
-        sampleSize: p.sampleSize,
-        responsible: p.responsible,
-      })));
-    }
-  }, [plans]);
+
 
   // Save data collection plan mutation
   const savePlansMutation = useMutation({
