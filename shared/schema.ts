@@ -429,6 +429,7 @@ export const dataCollectionPlans = pgTable("data_collection_plans", {
   collectionMethod: text("collection_method"),
   sampleSize: text("sample_size"),
   responsible: text("responsible"),
+  displayOrder: integer("display_order").notNull().default(0),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -440,6 +441,7 @@ export const insertPlanSchema = createInsertSchema(dataCollectionPlans).pick({
   collectionMethod: true,
   sampleSize: true,
   responsible: true,
+  displayOrder: true,
 });
 
 // Storage Configuration

@@ -332,7 +332,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(dataCollectionPlans)
       .where(eq(dataCollectionPlans.projectId, projectId))
-      .orderBy(asc(dataCollectionPlans.id));
+      .orderBy(asc(dataCollectionPlans.displayOrder), asc(dataCollectionPlans.id));
   }
 
   async createDataCollectionPlan(plan: any): Promise<DataCollectionPlan> {
