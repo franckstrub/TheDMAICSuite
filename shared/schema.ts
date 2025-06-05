@@ -423,7 +423,7 @@ export const insertDatasetSchema = createInsertSchema(datasets).pick({
 export const dataCollectionPlans = pgTable("data_collection_plans", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
-  metric: text("metric").notNull(),
+  ctq: text("ctq").notNull(),
   operationalDefinition: text("operational_definition"),
   dataType: text("data_type"),
   collectionMethod: text("collection_method"),
@@ -434,7 +434,7 @@ export const dataCollectionPlans = pgTable("data_collection_plans", {
 
 export const insertPlanSchema = createInsertSchema(dataCollectionPlans).pick({
   projectId: true,
-  metric: true,
+  ctq: true,
   operationalDefinition: true,
   dataType: true,
   collectionMethod: true,

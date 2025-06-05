@@ -1043,7 +1043,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.body.userId,
           projectId,
           action: "create_data_plan",
-          details: `Created data collection plan for: ${plan.metric}`
+          details: `Created data collection plan for: ${plan.ctq}`
         });
       }
       
@@ -1069,7 +1069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.body.userId,
           projectId: plan.projectId,
           action: "update_data_plan",
-          details: `Updated data collection plan for: ${plan.metric}`
+          details: `Updated data collection plan for: ${plan.ctq}`
         });
       }
       

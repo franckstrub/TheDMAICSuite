@@ -53,6 +53,13 @@ export default function MeasurePhase() {
     enabled: !!user?.id && !!projectId,
     refetchOnWindowFocus: false
   });
+
+  // Fetch CTS characteristics to auto-populate data collection plan
+  const { data: ctsData } = useQuery({
+    queryKey: [`/api/projects/${projectId}/cts-characteristics`],
+    enabled: !!user?.id && !!projectId,
+    refetchOnWindowFocus: false
+  });
   
   // Set milestone dates when charter data is fetched
   useEffect(() => {
@@ -67,23 +74,7 @@ export default function MeasurePhase() {
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState([
     {
-      metric: "Processing Time",
-      operationalDefinition: "Time from order receipt to shipment",
-      dataType: "Continuous",
-      collectionMethod: "System extraction",
-      sampleSize: "100 orders",
-      responsible: "John Doe"
-    },
-    {
-      metric: "Defect Rate",
-      operationalDefinition: "% of orders with errors",
-      dataType: "Attribute",
-      collectionMethod: "Manual inspection",
-      sampleSize: "50 orders",
-      responsible: "Jane Smith"
-    },
-    {
-      metric: "",
+      ctq: "",
       operationalDefinition: "",
       dataType: "Discrete",
       collectionMethod: "",
