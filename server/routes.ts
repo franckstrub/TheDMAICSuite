@@ -2344,12 +2344,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId,
       });
 
-      const [newMsa] = await db
-        .insert(msaAnalysis)
-        .values(payload)
-        .returning();
+      // Check if MSA record already exists for this CTQ and project
+      const existingMsa = await db
+        .select()
+        .from(msaAnalysis)
+        .where(and(
+          eq(msaAnalysis.projectId, projectId),
+          eq(msaAnalysis.ctq, payload.ctq)
+        ))
+        .limit(1);
 
-      return res.status(201).json({ msa: newMsa });
+      if (existingMsa.length > 0) {
+        // Update existing record
+        const [updatedMsa] = await db
+          .update(msaAnalysis)
+          .set({
+            ...payload,
+            lastUpdated: new Date(),
+          })
+          .where(and(
+            eq(msaAnalysis.projectId, projectId),
+            eq(msaAnalysis.ctq, payload.ctq)
+          ))
+          .returning();
+
+        return res.status(200).json({ msa: updatedMsa });
+      } else {
+        // Create new record
+        const [newMsa] = await db
+          .insert(msaAnalysis)
+          .values(payload)
+          .returning();
+
+        return res.status(201).json({ msa: newMsa });
+      }
     } catch (err) {
       return handleErrors(err, res);
     }
