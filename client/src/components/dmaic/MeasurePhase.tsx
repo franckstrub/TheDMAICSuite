@@ -60,6 +60,20 @@ export default function MeasurePhase() {
     enabled: !!user?.id && !!projectId,
     refetchOnWindowFocus: false
   });
+
+  // Fetch customer requirements for auto-population
+  const { data: customerRequirementsData } = useQuery({
+    queryKey: [`/api/projects/${projectId}/requirements`],
+    enabled: !!user?.id && !!projectId,
+    refetchOnWindowFocus: false
+  });
+
+  // Fetch business requirements for auto-population
+  const { data: businessRequirementsData } = useQuery({
+    queryKey: [`/api/projects/${projectId}/business-requirements`],
+    enabled: !!user?.id && !!projectId,
+    refetchOnWindowFocus: false
+  });
   
   // Set milestone dates when charter data is fetched
   useEffect(() => {
@@ -85,9 +99,9 @@ export default function MeasurePhase() {
   const [hasInitialized, setHasInitialized] = useState(false);
   
   useEffect(() => {
-    // Wait for both API calls to complete before initializing
-    if (!hasInitialized && plans !== undefined && ctsData !== undefined) {
-      console.log('Initializing data collection plans:', { plans, ctsData });
+    // Wait for all API calls to complete before initializing
+    if (!hasInitialized && plans !== undefined && ctsData !== undefined && customerRequirementsData !== undefined && businessRequirementsData !== undefined) {
+      console.log('Initializing data collection plans:', { plans, ctsData, customerRequirementsData, businessRequirementsData });
       
       if (plans?.plans && plans.plans.length > 0) {
         console.log('Loading existing saved plans:', plans.plans);
@@ -114,11 +128,51 @@ export default function MeasurePhase() {
         console.log('Setting auto-populated plans:', autoPopulatedPlans);
         setDataCollectionPlans(autoPopulatedPlans);
       } else {
-        console.log('No plans or CTS characteristics available for auto-population');
+        // Auto-populate from customer requirements and business requirements CTQs
+        const allCtqs: any[] = [];
+        
+        // Add CTQs from customer requirements
+        if (customerRequirementsData?.requirements && Array.isArray(customerRequirementsData.requirements)) {
+          customerRequirementsData.requirements.forEach((req: any) => {
+            if (req.ctq && req.ctq.trim() !== "") {
+              allCtqs.push({
+                ctq: req.ctq,
+                operationalDefinition: "",
+                dataType: "Attribute",
+                collectionMethod: "",
+                sampleSize: "",
+                responsible: ""
+              });
+            }
+          });
+        }
+        
+        // Add CTQs from business requirements
+        if (businessRequirementsData?.businessRequirements && Array.isArray(businessRequirementsData.businessRequirements)) {
+          businessRequirementsData.businessRequirements.forEach((req: any) => {
+            if (req.ctq && req.ctq.trim() !== "") {
+              allCtqs.push({
+                ctq: req.ctq,
+                operationalDefinition: "",
+                dataType: "Attribute",
+                collectionMethod: "",
+                sampleSize: "",
+                responsible: ""
+              });
+            }
+          });
+        }
+        
+        if (allCtqs.length > 0) {
+          console.log('Auto-populating from requirements CTQs:', allCtqs);
+          setDataCollectionPlans(allCtqs);
+        } else {
+          console.log('No plans, CTS characteristics, or requirements CTQs available for auto-population');
+        }
       }
       setHasInitialized(true);
     }
-  }, [plans, ctsData, hasInitialized]);
+  }, [plans, ctsData, customerRequirementsData, businessRequirementsData, hasInitialized]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -151,7 +205,7 @@ export default function MeasurePhase() {
   const [analysisType, setAnalysisType] = useState("Attribute Data (Kappa)");
 
   // Fetch business requirements
-  const { data: businessRequirementsData, isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
+  const { data: businessRequirementsFormData, isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!user?.id && !!projectId,
     retry: 3,
