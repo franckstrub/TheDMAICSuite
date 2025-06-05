@@ -74,7 +74,7 @@ export default function MeasurePhase() {
   // Fetch data collection plans
   const { data: plans } = useQuery({
     queryKey: [`/api/projects/${projectId}/data-collection-plans`],
-    enabled: !!user?.id && !!projectId,
+    enabled: !!projectId,
     refetchOnWindowFocus: false
   });
 
