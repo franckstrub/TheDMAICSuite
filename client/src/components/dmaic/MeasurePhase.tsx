@@ -73,7 +73,7 @@ export default function MeasurePhase() {
 
   // Auto-populate data collection plan with CTQs from CTS characteristics
   useEffect(() => {
-    if (ctsData?.characteristics && ctsData.characteristics.length > 0) {
+    if (ctsData?.characteristics && ctsData.characteristics.length > 0 && dataCollectionPlans.length === 1 && !dataCollectionPlans[0].ctq) {
       const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
         ctq: characteristic.ctq,
         operationalDefinition: characteristic.operationalDefinition || "",
@@ -95,7 +95,7 @@ export default function MeasurePhase() {
 
       setDataCollectionPlans(autoPopulatedPlans);
     }
-  }, [ctsData]);
+  }, [ctsData, dataCollectionPlans]);
 
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState([
