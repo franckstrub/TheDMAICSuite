@@ -2366,12 +2366,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const [updatedMsa] = await db
-        .update(msaAnalysisTable)
+        .update(msaAnalysis)
         .set({
           ...payload,
           lastUpdated: new Date(),
         })
-        .where(and(eq(msaAnalysisTable.id, id), eq(msaAnalysisTable.projectId, projectId)))
+        .where(and(eq(msaAnalysis.id, id), eq(msaAnalysis.projectId, projectId)))
         .returning();
 
       return res.status(200).json({ msa: updatedMsa });
@@ -2384,12 +2384,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:projectId/process-capability", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const processCapability = await db
+      const processCapabilityData = await db
         .select()
-        .from(processCapabilityTable)
-        .where(eq(processCapabilityTable.projectId, projectId));
+        .from(processCapability)
+        .where(eq(processCapability.projectId, projectId));
       
-      return res.status(200).json({ processCapability });
+      return res.status(200).json({ processCapability: processCapabilityData });
     } catch (err) {
       return handleErrors(err, res);
     }
@@ -2404,7 +2404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const [newCapability] = await db
-        .insert(processCapabilityTable)
+        .insert(processCapability)
         .values(payload)
         .returning();
 
@@ -2425,12 +2425,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const [updatedCapability] = await db
-        .update(processCapabilityTable)
+        .update(processCapability)
         .set({
           ...payload,
           lastUpdated: new Date(),
         })
-        .where(and(eq(processCapabilityTable.id, id), eq(processCapabilityTable.projectId, projectId)))
+        .where(and(eq(processCapability.id, id), eq(processCapability.projectId, projectId)))
         .returning();
 
       return res.status(200).json({ capability: updatedCapability });
