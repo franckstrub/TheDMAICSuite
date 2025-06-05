@@ -72,10 +72,12 @@ export default function MeasurePhase() {
   }, [charter]);
 
   // Fetch data collection plans
-  const { data: plans } = useQuery({
+  const { data: plans, refetch: refetchPlans } = useQuery({
     queryKey: [`/api/projects/${projectId}/data-collection-plans`],
     enabled: !!user?.id && !!projectId,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0
   });
 
   // Data Collection Plan state
@@ -156,7 +158,24 @@ export default function MeasurePhase() {
     mutationFn: async (plans: any[]) => {
       const validPlans = plans.filter(p => p.ctq.trim() !== "");
       
-      // For simplicity, just create/update each plan
+      // Clear existing plans first to avoid duplicates
+      try {
+        const existingPlans = await apiRequest("GET", `/api/projects/${projectId}/data-collection-plans`);
+        if (existingPlans?.plans && existingPlans.plans.length > 0) {
+          await Promise.all(
+            existingPlans.plans.map((plan: any) => 
+              apiRequest("DELETE", `/api/data-collection-plans/${plan.id}`, { 
+                userId: user?.id, 
+                projectId 
+              })
+            )
+          );
+        }
+      } catch (error) {
+        console.log("No existing plans to clear or error clearing:", error);
+      }
+      
+      // Create new plans
       const promises = validPlans.map(p => {
         const payload = {
           projectId,
@@ -180,6 +199,7 @@ export default function MeasurePhase() {
         description: "Data collection plan saved successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
+      refetchPlans();
     },
     onError: (error) => {
       toast({
