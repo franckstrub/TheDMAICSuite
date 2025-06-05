@@ -162,22 +162,17 @@ export default function MeasurePhase() {
       const existingPlans = await apiRequest("GET", `/api/projects/${projectId}/data-collection-plans`);
       const existing = existingPlans?.plans || [];
       
-      // Delete all existing plans first
+      // Delete all existing plans first using bulk delete
       if (existing.length > 0) {
-        await Promise.all(
-          existing.map((plan: any) => 
-            fetch(`/api/data-collection-plans/${plan.id}`, {
-              method: 'DELETE',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                userId: user?.id, 
-                projectId 
-              })
-            })
-          )
-        );
+        await fetch(`/api/projects/${projectId}/data-collection-plans`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            userId: user?.id
+          })
+        });
       }
       
       // Create all new plans
