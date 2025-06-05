@@ -43,21 +43,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [capabilityData, setCapabilityData] = useState<{ [ctq: string]: ProcessCapabilityData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
-  // Load CTS characteristics to get CTQs
-  const { data: ctsData, isLoading: ctsLoading } = useQuery({
+  // Load CTQs from centralized endpoint
+  const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctqs`],
+    enabled: !!projectId,
+  });
+
+  // Load CTS characteristics for additional data
+  const { data: ctsData } = useQuery({
     queryKey: [`/api/projects/${projectId}/cts-characteristics`],
-    enabled: !!projectId,
-  });
-
-  // Load customer requirements as fallback source for CTQs
-  const { data: requirementsData } = useQuery({
-    queryKey: [`/api/projects/${projectId}/requirements`],
-    enabled: !!projectId,
-  });
-
-  // Load business requirements as fallback source for CTQs
-  const { data: businessRequirementsData } = useQuery({
-    queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!projectId,
   });
 
@@ -96,32 +90,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     },
   });
 
-  // Get CTQs from multiple sources
+  // Get CTQs from centralized endpoint
   const getCTQs = () => {
-    // First priority: CTS characteristics
-    if ((ctsData as any)?.characteristics?.length > 0) {
-      return (ctsData as any).characteristics.map((char: any) => char.ctq);
+    // Use centralized CTQs endpoint which aggregates from all sources
+    if ((ctqsData as any)?.ctqs?.length > 0) {
+      return (ctqsData as any).ctqs.map((item: any) => item.ctq);
     }
     
-    // Second priority: Customer and Business requirements
-    const allCTQs: string[] = [];
-    
-    if ((requirementsData as any)?.requirements) {
-      const customerCTQs = (requirementsData as any).requirements
-        .filter((req: any) => req.ctq && req.ctq.trim())
-        .map((req: any) => req.ctq);
-      allCTQs.push(...customerCTQs);
-    }
-    
-    if ((businessRequirementsData as any)?.businessRequirements) {
-      const businessCTQs = (businessRequirementsData as any).businessRequirements
-        .filter((req: any) => req.ctq && req.ctq.trim())
-        .map((req: any) => req.ctq);
-      allCTQs.push(...businessCTQs);
-    }
-    
-    // Remove duplicates
-    return Array.from(new Set(allCTQs));
+    return [];
   };
 
   // Initialize Process Capability data when CTQs and capability data are loaded
