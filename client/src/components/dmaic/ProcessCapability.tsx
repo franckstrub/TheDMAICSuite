@@ -291,7 +291,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     );
   }
 
-  const ctqList = ctsData?.characteristics || [];
+  const ctqList = getCTQs();
 
   if (ctqList.length === 0) {
     return (
@@ -304,7 +304,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No CTQs defined in CTS Characteristics. Please define CTQs first to create process capability studies.
+            No CTQs available. Please define CTS characteristics or requirements with CTQs to create process capability studies.
           </div>
         </CardContent>
       </Card>
@@ -325,28 +325,28 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
-            {ctqList.map((char: any) => (
+            {ctqList.map((ctq: string) => (
               <TabsTrigger 
-                key={char.ctq} 
-                value={char.ctq}
+                key={ctq} 
+                value={ctq}
                 className="flex flex-col items-center gap-1 p-3"
               >
-                <span className="font-medium truncate max-w-[150px]">{char.ctq}</span>
-                {getCapabilityStatusBadge(char.ctq)}
+                <span className="font-medium truncate max-w-[150px]">{ctq}</span>
+                {getCapabilityStatusBadge(ctq)}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {ctqList.map((char: any) => (
-            <TabsContent key={char.ctq} value={char.ctq} className="mt-6">
+          {ctqList.map((ctq: string) => (
+            <TabsContent key={ctq} value={ctq} className="mt-6">
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Sample Size</label>
                     <Input
                       type="number"
-                      value={capabilityData[char.ctq]?.sampleSize || ""}
-                      onChange={(e) => updateCapabilityField(char.ctq, "sampleSize", e.target.value ? parseInt(e.target.value) : null)}
+                      value={capabilityData[ctq]?.sampleSize || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "sampleSize", e.target.value ? parseInt(e.target.value) : null)}
                       placeholder="e.g., 100"
                     />
                   </div>
@@ -354,8 +354,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   <div>
                     <label className="block text-sm font-medium mb-2">Control Chart Type</label>
                     <Select
-                      value={capabilityData[char.ctq]?.controlChartType || "X-bar R"}
-                      onValueChange={(value) => updateCapabilityField(char.ctq, "controlChartType", value)}
+                      value={capabilityData[ctq]?.controlChartType || "X-bar R"}
+                      onValueChange={(value) => updateCapabilityField(ctq, "controlChartType", value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -376,8 +376,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     <Input
                       type="number"
                       step="any"
-                      value={capabilityData[char.ctq]?.mean || ""}
-                      onChange={(e) => updateCapabilityField(char.ctq, "mean", e.target.value)}
+                      value={capabilityData[ctq]?.mean || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "mean", e.target.value)}
                       placeholder="e.g., 10.5"
                     />
                   </div>
