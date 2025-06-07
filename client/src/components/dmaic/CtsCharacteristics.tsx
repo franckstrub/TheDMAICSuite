@@ -84,13 +84,21 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
   // Initialize characteristics when data loads
   useEffect(() => {
     if (ctsData?.characteristics && ctsData.characteristics.length > 0) {
-      setCharacteristics(ctsData.characteristics);
+      // Convert numeric values from database to strings for display
+      const convertedCharacteristics = ctsData.characteristics.map((char: any) => ({
+        ...char,
+        targetPercentDefects: char.targetPercentDefects?.toString() || "",
+        target: char.target?.toString() || "",
+        lsl: char.lsl?.toString() || "",
+        usl: char.usl?.toString() || "",
+      }));
+      setCharacteristics(convertedCharacteristics);
     } else if (ctqsData?.ctqs && ctqsData.ctqs.length > 0) {
       // Auto-populate with CTQs from requirements if no saved data exists
       const autoPopulatedCharacteristics = ctqsData.ctqs.map((ctqItem: any) => ({
         ctq: ctqItem.ctq,
         operationalDefinition: "",
-        ctqType: "Continuous" as "Continuous",
+        ctqType: "Attribute" as "Attribute",
         unit: "",
         targetPercentDefects: "",
         target: "",
@@ -104,7 +112,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       setCharacteristics([{
         ctq: "",
         operationalDefinition: "",
-        ctqType: "Continuous",
+        ctqType: "Attribute",
         unit: "",
         targetPercentDefects: "",
         target: "",
@@ -124,6 +132,33 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
 
   const updateCharacteristic = (index: number, field: keyof CtsCharacteristic, value: string) => {
     const newCharacteristics = [...characteristics];
+    
+    // Validate numeric fields
+    if (field === 'targetPercentDefects') {
+      const numValue = parseFloat(value);
+      if (value !== "" && (!isNaN(numValue) && numValue > 100)) {
+        toast({
+          title: "Validation Error",
+          description: "Target percent defects cannot exceed 100%",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    // Validate other numeric fields (target, lsl, usl) are valid numbers when not empty
+    if (['target', 'lsl', 'usl'].includes(field) && value !== "") {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter a valid number",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     newCharacteristics[index] = { 
       ...newCharacteristics[index], 
       [field]: value 
@@ -145,7 +180,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       {
         ctq: "",
         operationalDefinition: "",
-        ctqType: "Continuous",
+        ctqType: "Attribute",
         unit: "",
         targetPercentDefects: "",
         target: "",
@@ -164,7 +199,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       newCharacteristics.push({
         ctq: "",
         operationalDefinition: "",
-        ctqType: "Continuous",
+        ctqType: "Attribute",
         unit: "",
         targetPercentDefects: "",
         target: "",
@@ -178,8 +213,16 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
   };
 
   const handleSave = () => {
-    // Filter out empty characteristics
-    const validCharacteristics = characteristics.filter(char => char.ctq.trim() !== "");
+    // Filter out empty characteristics and convert numeric fields
+    const validCharacteristics = characteristics
+      .filter(char => char.ctq.trim() !== "")
+      .map(char => ({
+        ...char,
+        targetPercentDefects: char.targetPercentDefects === "" ? null : parseFloat(char.targetPercentDefects),
+        target: char.target === "" ? null : parseFloat(char.target),
+        lsl: char.lsl === "" ? null : parseFloat(char.lsl),
+        usl: char.usl === "" ? null : parseFloat(char.usl),
+      }));
     saveMutation.mutate(validCharacteristics);
   };
 
