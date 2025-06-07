@@ -265,6 +265,7 @@ export default function MeasurePhase() {
           collectionMethodComment: p.collectionMethodComment,
           sampleSize: p.sampleSize && p.sampleSize !== '' ? parseInt(p.sampleSize) : null,
           datesTimeFrequency: p.datesTimeFrequency,
+          measurementSystem: p.measurementSystem,
           dataSource: p.dataSource,
           responsible: p.responsible,
           displayOrder: index,
@@ -310,6 +311,7 @@ export default function MeasurePhase() {
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
+        measurementSystem: "",
         dataSource: "",
         responsible: ""
       }
@@ -331,6 +333,7 @@ export default function MeasurePhase() {
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
+        measurementSystem: "",
         dataSource: "",
         responsible: ""
       });
@@ -352,6 +355,7 @@ export default function MeasurePhase() {
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
+        measurementSystem: "",
         dataSource: "",
         responsible: ""
       }];
@@ -694,7 +698,7 @@ export default function MeasurePhase() {
               }}
               onScroll={handleTableScroll}
             >
-              <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1400px' }}>
+              <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1550px' }}>
               <thead>
                 <tr>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 border-r">CTQ/Variable</th>
