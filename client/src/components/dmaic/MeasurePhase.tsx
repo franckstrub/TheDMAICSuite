@@ -312,9 +312,13 @@ export default function MeasurePhase() {
       newPlans.push({
         ctq: "",
         operationalDefinition: "",
-        dataType: "Continuous",
-        collectionMethod: "",
+        dataType: "Attribute",
+        pointOfMeasure: "Output",
+        collectionMethod: "Random sampling",
+        collectionMethodComment: "",
         sampleSize: "",
+        datesTimeFrequency: "",
+        dataSource: "",
         responsible: ""
       });
     }
@@ -329,9 +333,13 @@ export default function MeasurePhase() {
       plansToSave = [{
         ctq: "",
         operationalDefinition: "",
-        dataType: "Continuous",
-        collectionMethod: "",
+        dataType: "Attribute",
+        pointOfMeasure: "Output",
+        collectionMethod: "Random sampling",
+        collectionMethodComment: "",
         sampleSize: "",
+        datesTimeFrequency: "",
+        dataSource: "",
         responsible: ""
       }];
       setDataCollectionPlans(plansToSave);
