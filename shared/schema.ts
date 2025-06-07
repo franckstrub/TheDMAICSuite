@@ -437,7 +437,7 @@ export const dataCollectionPlans = pgTable("data_collection_plans", {
   pointOfMeasure: text("point_of_measure").default("Output"),
   collectionMethod: text("collection_method").default("Random sampling"),
   collectionMethodComment: text("collection_method_comment"), // For "Others" option
-  sampleSize: text("sample_size"),
+  sampleSize: integer("sample_size"),
   datesTimeFrequency: text("dates_time_frequency"),
   dataSource: text("data_source"),
   responsible: text("responsible"),

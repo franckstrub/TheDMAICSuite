@@ -263,7 +263,7 @@ export default function MeasurePhase() {
           pointOfMeasure: p.pointOfMeasure,
           collectionMethod: p.collectionMethod,
           collectionMethodComment: p.collectionMethodComment,
-          sampleSize: p.sampleSize,
+          sampleSize: p.sampleSize && p.sampleSize !== '' ? parseInt(p.sampleSize) : null,
           datesTimeFrequency: p.datesTimeFrequency,
           dataSource: p.dataSource,
           responsible: p.responsible,
@@ -787,9 +787,22 @@ export default function MeasurePhase() {
                       <td className="px-1 py-2">
                         <Input
                           type="number"
+                          min="1"
+                          step="1"
                           placeholder="Enter Sample size to collect"
                           value={plan.sampleSize}
-                          onChange={(e) => updatePlan(index, "sampleSize", e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only allow positive integers or empty string
+                            if (value === '') {
+                              updatePlan(index, "sampleSize", '');
+                            } else {
+                              const numValue = parseInt(value);
+                              if (numValue > 0 && !isNaN(numValue)) {
+                                updatePlan(index, "sampleSize", value);
+                              }
+                            }
+                          }}
                         />
                       </td>
                       <td className="px-1 py-2">
