@@ -291,9 +291,13 @@ export default function MeasurePhase() {
       {
         ctq: "",
         operationalDefinition: "",
-        dataType: "Continuous",
-        collectionMethod: "",
+        dataType: "Attribute",
+        pointOfMeasure: "Output",
+        collectionMethod: "Random sampling",
+        collectionMethodComment: "",
         sampleSize: "",
+        datesTimeFrequency: "",
+        dataSource: "",
         responsible: ""
       }
     ]);
@@ -655,8 +659,11 @@ export default function MeasurePhase() {
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ/Variable</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point of Measure</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection Method</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Size</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates/Time/Frequency</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Source</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsible</th>
                   <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
@@ -664,7 +671,7 @@ export default function MeasurePhase() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {dataCollectionPlans.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                       No CTQs/Variables have been added yet. Click "Add CTQ/Variable" to get started.
                     </td>
                   </tr>
@@ -698,12 +705,40 @@ export default function MeasurePhase() {
                         </select>
                       </td>
                       <td className="px-1 py-2">
-                        <Input
-                          type="text"
-                          placeholder="Enter Data collection method. I.e., Random sampling, Randomized stratified sampling, Systematic sampling, Subgrouping sampling, 100% Inspection, etc."
-                          value={plan.collectionMethod}
-                          onChange={(e) => updatePlan(index, "collectionMethod", e.target.value)}
-                        />
+                        <select
+                          className="w-full p-2 border border-gray-300 rounded-md text-[11px]"
+                          value={plan.pointOfMeasure}
+                          onChange={(e) => updatePlan(index, "pointOfMeasure", e.target.value)}
+                        >
+                          <option value="Input">Input</option>
+                          <option value="Process">Process</option>
+                          <option value="Output">Output</option>
+                        </select>
+                      </td>
+                      <td className="px-1 py-2">
+                        <div className="space-y-2">
+                          <select
+                            className="w-full p-2 border border-gray-300 rounded-md text-[11px]"
+                            value={plan.collectionMethod}
+                            onChange={(e) => updatePlan(index, "collectionMethod", e.target.value)}
+                          >
+                            <option value="Random sampling">Random sampling</option>
+                            <option value="Random Stratified sampling">Random Stratified sampling</option>
+                            <option value="Systematic sampling">Systematic sampling</option>
+                            <option value="Subgrouping sampling">Subgrouping sampling</option>
+                            <option value="100% inspection">100% inspection</option>
+                            <option value="Others">Others</option>
+                          </select>
+                          {plan.collectionMethod === "Others" && (
+                            <Input
+                              type="text"
+                              placeholder="Please specify other collection method"
+                              value={plan.collectionMethodComment}
+                              onChange={(e) => updatePlan(index, "collectionMethodComment", e.target.value)}
+                              className="text-[11px]"
+                            />
+                          )}
+                        </div>
                       </td>
                       <td className="px-1 py-2">
                         <Input
@@ -711,6 +746,22 @@ export default function MeasurePhase() {
                           placeholder="Enter Sample size to collect"
                           value={plan.sampleSize}
                           onChange={(e) => updatePlan(index, "sampleSize", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-1 py-2">
+                        <Input
+                          type="text"
+                          placeholder="Enter dates, time, frequency"
+                          value={plan.datesTimeFrequency}
+                          onChange={(e) => updatePlan(index, "datesTimeFrequency", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-1 py-2">
+                        <Input
+                          type="text"
+                          placeholder="Enter data source"
+                          value={plan.dataSource}
+                          onChange={(e) => updatePlan(index, "dataSource", e.target.value)}
                         />
                       </td>
                       <td className="px-1 py-2">
