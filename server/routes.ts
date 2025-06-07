@@ -2201,6 +2201,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           insertCtsCharacteristicsSchema.parse({
             ...char,
             projectId,
+            // Convert string values to numeric types for database storage
+            targetPercentDefects: char.targetPercentDefects === "" || char.targetPercentDefects === null 
+              ? null 
+              : parseFloat(char.targetPercentDefects),
+            target: char.target === "" || char.target === null 
+              ? null 
+              : parseFloat(char.target),
+            lsl: char.lsl === "" || char.lsl === null 
+              ? null 
+              : parseFloat(char.lsl),
+            usl: char.usl === "" || char.usl === null 
+              ? null 
+              : parseFloat(char.usl),
           })
         );
         

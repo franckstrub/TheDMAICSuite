@@ -218,10 +218,11 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       .filter(char => char.ctq.trim() !== "")
       .map(char => ({
         ...char,
-        targetPercentDefects: char.targetPercentDefects === "" ? null : parseFloat(char.targetPercentDefects),
-        target: char.target === "" ? null : parseFloat(char.target),
-        lsl: char.lsl === "" ? null : parseFloat(char.lsl),
-        usl: char.usl === "" ? null : parseFloat(char.usl),
+        // Keep as strings for the mutation but ensure valid values
+        targetPercentDefects: char.targetPercentDefects === "" ? "" : char.targetPercentDefects,
+        target: char.target === "" ? "" : char.target,
+        lsl: char.lsl === "" ? "" : char.lsl,
+        usl: char.usl === "" ? "" : char.usl,
       }));
     saveMutation.mutate(validCharacteristics);
   };
@@ -340,6 +341,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                     {characteristic.ctqType === "Continuous" ? (
                       <Input
                         type="number"
+                        step="any"
                         className="placeholder:text-[12px]"
                         placeholder="Target value"
                         value={characteristic.target}
@@ -353,6 +355,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                     {characteristic.ctqType === "Continuous" ? (
                       <Input
                         type="number"
+                        step="any"
                         className="placeholder:text-[12px]"
                         placeholder="Lower Specification Limit"
                         value={characteristic.lsl}
@@ -366,6 +369,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                     {characteristic.ctqType === "Continuous" ? (
                       <Input
                         type="number"
+                        step="any"
                         className="text-[8px] placeholder:text-[12px]"
                         placeholder="Upper Specification Limit"
                         value={characteristic.usl}
