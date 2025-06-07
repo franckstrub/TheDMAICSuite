@@ -160,7 +160,7 @@ export default function MeasurePhase() {
         const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
           operationalDefinition: characteristic.operationalDefinition || `Specific measurement criteria and procedures for accurately measuring "${characteristic.ctq}"`,
-          dataType: "Attribute", // Default data type
+          dataType: "Continuous", // Default data type
           pointOfMeasure: "Output", // Default point of measure
           collectionMethod: "Random sampling", // Default collection method
           collectionMethodComment: "",
@@ -181,7 +181,7 @@ export default function MeasurePhase() {
           const autoPopulatedPlans = ctqs.map((ctq: string) => ({
             ctq: ctq,
             operationalDefinition: `Specific measurement criteria and procedures for accurately measuring "${ctq}"`,
-            dataType: "Attribute", // Default data type
+            dataType: "Continuous", // Default data type
             pointOfMeasure: "Output", // Default point of measure
             collectionMethod: "Random sampling", // Default collection method
             collectionMethodComment: "",
@@ -304,7 +304,7 @@ export default function MeasurePhase() {
       {
         ctq: "",
         operationalDefinition: "",
-        dataType: "Attribute",
+        dataType: "Continuous",
         pointOfMeasure: "Output",
         collectionMethod: "Random sampling",
         collectionMethodComment: "",
@@ -325,7 +325,7 @@ export default function MeasurePhase() {
       newPlans.push({
         ctq: "",
         operationalDefinition: "",
-        dataType: "Attribute",
+        dataType: "Continuous",
         pointOfMeasure: "Output",
         collectionMethod: "Random sampling",
         collectionMethodComment: "",
@@ -346,7 +346,7 @@ export default function MeasurePhase() {
       plansToSave = [{
         ctq: "",
         operationalDefinition: "",
-        dataType: "Attribute",
+        dataType: "Continuous",
         pointOfMeasure: "Output",
         collectionMethod: "Random sampling",
         collectionMethodComment: "",
@@ -697,7 +697,7 @@ export default function MeasurePhase() {
               <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1400px' }}>
               <thead>
                 <tr>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ/Variable</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 border-r">CTQ/Variable</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point of Measure</th>
@@ -712,18 +712,21 @@ export default function MeasurePhase() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {dataCollectionPlans.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
-                      No CTQs/Variables have been added yet. Click "Add CTQ/Variable" to get started.
+                    <td className="px-1 py-8 text-center text-gray-500 sticky left-0 bg-white z-10 border-r">
+                      No CTQs/Variables
+                    </td>
+                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                      Click "Add CTQ/Variable" to get started.
                     </td>
                   </tr>
                 ) : (
                   dataCollectionPlans.map((plan, index) => (
                     <tr key={index}>
-                      <td className="px-1 py-2">
+                      <td className="px-1 py-2 sticky left-0 bg-white z-10 border-r">
                         <Textarea
                           value={plan.ctq}
                           onChange={(e) => updatePlan(index, "ctq", e.target.value)}
-                          className="w-full min-w-[100px] max-w-[135px] min-h-[60px]"
+                          className="w-full min-w-[100px] max-w-[135px] min-h-[60px] bg-white"
                           placeholder="Enter CTQ/Variable name"
                         />
                       </td>
