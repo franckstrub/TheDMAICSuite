@@ -149,7 +149,7 @@ export default function MeasurePhase() {
           pointOfMeasure: p.pointOfMeasure || "Output",
           collectionMethod: p.collectionMethod || "Random sampling",
           collectionMethodComment: p.collectionMethodComment || "",
-          sampleSize: p.sampleSize,
+          sampleSize: p.sampleSize ? p.sampleSize.toString() : "",
           datesTimeFrequency: p.datesTimeFrequency || "",
           dataSource: p.dataSource || "",
           responsible: p.responsible,
