@@ -704,6 +704,7 @@ export default function MeasurePhase() {
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection Method</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Size</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates/Time/Frequency</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Measurement System</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Source</th>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsible</th>
                   <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
@@ -715,7 +716,7 @@ export default function MeasurePhase() {
                     <td className="px-1 py-8 text-center text-gray-500 sticky left-0 bg-white z-10 border-r">
                       No CTQs/Variables
                     </td>
-                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                       Click "Add CTQ/Variable" to get started.
                     </td>
                   </tr>
@@ -811,6 +812,14 @@ export default function MeasurePhase() {
                           placeholder="Enter dates, time, frequency"
                           value={plan.datesTimeFrequency}
                           onChange={(e) => updatePlan(index, "datesTimeFrequency", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-1 py-2">
+                        <Input
+                          type="text"
+                          placeholder="Enter measurement system"
+                          value={plan.measurementSystem}
+                          onChange={(e) => updatePlan(index, "measurementSystem", e.target.value)}
                         />
                       </td>
                       <td className="px-1 py-2">

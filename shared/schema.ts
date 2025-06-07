@@ -439,6 +439,7 @@ export const dataCollectionPlans = pgTable("data_collection_plans", {
   collectionMethodComment: text("collection_method_comment"), // For "Others" option
   sampleSize: integer("sample_size"),
   datesTimeFrequency: text("dates_time_frequency"),
+  measurementSystem: text("measurement_system"),
   dataSource: text("data_source"),
   responsible: text("responsible"),
   displayOrder: integer("display_order").notNull().default(0),
@@ -455,6 +456,7 @@ export const insertPlanSchema = createInsertSchema(dataCollectionPlans).pick({
   collectionMethodComment: true,
   sampleSize: true,
   datesTimeFrequency: true,
+  measurementSystem: true,
   dataSource: true,
   responsible: true,
   displayOrder: true,
