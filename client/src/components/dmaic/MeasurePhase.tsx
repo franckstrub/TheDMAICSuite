@@ -116,6 +116,19 @@ export default function MeasurePhase() {
   // Initialize data collection plans from existing data or auto-populate from CTQs
   const [hasInitialized, setHasInitialized] = useState(false);
   
+  // Scroll progress tracking for data collection plan table
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+
+  // Handle scroll progress for horizontal table scrolling
+  const handleTableScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const scrollLeft = element.scrollLeft;
+    const maxScrollLeft = element.scrollWidth - element.clientWidth;
+    const progress = maxScrollLeft > 0 ? (scrollLeft / maxScrollLeft) * 100 : 0;
+    setScrollProgress(progress);
+  };
+  
   useEffect(() => {
     // Wait for CTQs and plans data to be loaded
     if (!hasInitialized && plans !== undefined && ctqsData !== undefined && ctsData !== undefined && !ctqsLoading) {
@@ -660,8 +673,19 @@ export default function MeasurePhase() {
             Define what data needs to be collected (CTQs/Variables), how it will be collected, which sample size is needed, when will it be collected and who is responsible.
           </p>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="relative">
+            {/* Scroll indicator */}
+            <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+              ← Scroll horizontally →
+            </div>
+            <div 
+              className="overflow-x-auto cursor-grab active:cursor-grabbing border rounded-lg"
+              style={{ 
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#CBD5E0 #F7FAFC'
+              }}
+            >
+              <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1400px' }}>
               <thead>
                 <tr>
                   <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ/Variable</th>
@@ -789,7 +813,8 @@ export default function MeasurePhase() {
                   ))
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
           <div className="mt-4 text-xs text-gray-500">
           <p>• CTQs and Operational definitions are automatically populated from CTS characteristics defined above</p>
