@@ -133,8 +133,12 @@ export default function MeasurePhase() {
           ctq: p.ctq,
           operationalDefinition: p.operationalDefinition,
           dataType: p.dataType,
-          collectionMethod: p.collectionMethod,
+          pointOfMeasure: p.pointOfMeasure || "Output",
+          collectionMethod: p.collectionMethod || "Random sampling",
+          collectionMethodComment: p.collectionMethodComment || "",
           sampleSize: p.sampleSize,
+          datesTimeFrequency: p.datesTimeFrequency || "",
+          dataSource: p.dataSource || "",
           responsible: p.responsible,
         })));
       } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
@@ -144,8 +148,12 @@ export default function MeasurePhase() {
           ctq: characteristic.ctq || "",
           operationalDefinition: characteristic.operationalDefinition || `Specific measurement criteria and procedures for accurately measuring "${characteristic.ctq}"`,
           dataType: "Attribute", // Default data type
-          collectionMethod: "",
+          pointOfMeasure: "Output", // Default point of measure
+          collectionMethod: "Random sampling", // Default collection method
+          collectionMethodComment: "",
           sampleSize: "",
+          datesTimeFrequency: "",
+          dataSource: "",
           responsible: ""
         }));
         console.log('Setting auto-populated plans from CTS:', autoPopulatedPlans);
@@ -161,8 +169,12 @@ export default function MeasurePhase() {
             ctq: ctq,
             operationalDefinition: `Specific measurement criteria and procedures for accurately measuring "${ctq}"`,
             dataType: "Attribute", // Default data type
-            collectionMethod: "",
+            pointOfMeasure: "Output", // Default point of measure
+            collectionMethod: "Random sampling", // Default collection method
+            collectionMethodComment: "",
             sampleSize: "",
+            datesTimeFrequency: "",
+            dataSource: "",
             responsible: ""
           }));
           console.log('Setting auto-populated plans:', autoPopulatedPlans);
@@ -235,8 +247,12 @@ export default function MeasurePhase() {
           ctq: p.ctq,
           operationalDefinition: p.operationalDefinition,
           dataType: p.dataType,
+          pointOfMeasure: p.pointOfMeasure,
           collectionMethod: p.collectionMethod,
+          collectionMethodComment: p.collectionMethodComment,
           sampleSize: p.sampleSize,
+          datesTimeFrequency: p.datesTimeFrequency,
+          dataSource: p.dataSource,
           responsible: p.responsible,
           displayOrder: index,
           userId: user?.id,
@@ -717,8 +733,7 @@ export default function MeasurePhase() {
             </table>
           </div>
           <div className="mt-4 text-xs text-gray-500">
-          <p>• CTQs and Operational definitions are automatically populated from CTS characteristics or requirements tables</p>
-          <p>• This uses the same logic as MSA Analysis and Process Capability components for consistent data across all measurement tools</p>
+          <p>• CTQs and Operational definitions are automatically populated from CTS characteristics defined above</p>
           <p>• You can add additional CTQs/Variables manually or edit existing ones including operational definitions and data types</p>
           </div>
           
