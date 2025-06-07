@@ -419,6 +419,14 @@ export const insertDatasetSchema = createInsertSchema(datasets).pick({
   createdBy: true,
 });
 
+// Point of Measure types
+export const pointOfMeasureTypes = ["Input", "Process", "Output"] as const;
+export type PointOfMeasureType = typeof pointOfMeasureTypes[number];
+
+// Collection Method types
+export const collectionMethodTypes = ["Random sampling", "Random Stratified sampling", "Systematic sampling", "Subgrouping sampling", "100% inspection", "Others"] as const;
+export type CollectionMethodType = typeof collectionMethodTypes[number];
+
 // Data Collection Plans
 export const dataCollectionPlans = pgTable("data_collection_plans", {
   id: serial("id").primaryKey(),
@@ -426,8 +434,12 @@ export const dataCollectionPlans = pgTable("data_collection_plans", {
   ctq: text("ctq").notNull(),
   operationalDefinition: text("operational_definition"),
   dataType: text("data_type"),
-  collectionMethod: text("collection_method"),
+  pointOfMeasure: text("point_of_measure").default("Output"),
+  collectionMethod: text("collection_method").default("Random sampling"),
+  collectionMethodComment: text("collection_method_comment"), // For "Others" option
   sampleSize: text("sample_size"),
+  datesTimeFrequency: text("dates_time_frequency"),
+  dataSource: text("data_source"),
   responsible: text("responsible"),
   displayOrder: integer("display_order").notNull().default(0),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
@@ -438,8 +450,12 @@ export const insertPlanSchema = createInsertSchema(dataCollectionPlans).pick({
   ctq: true,
   operationalDefinition: true,
   dataType: true,
+  pointOfMeasure: true,
   collectionMethod: true,
+  collectionMethodComment: true,
   sampleSize: true,
+  datesTimeFrequency: true,
+  dataSource: true,
   responsible: true,
   displayOrder: true,
 });
