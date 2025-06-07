@@ -207,66 +207,70 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
-          Define the Critical to Quality (CTQ) characteristics from your requirements analysis and specify their measurement parameters.
+          Define the Critical to Satisfaction (CTS) characteristics defined in your Voice of Customer and Voice of Business and specify their measurement parameters.<br />
+          Note: a CTS can be a CTQ (Critical To Quality), a CTD (Critical To Delay), or a CTC (Critical To Cost).<br />
+          For simplicity, we will now refer to any CTS (CTQ, CTD, or CTC) as a CTQ in the Measure phase and in the following phases (ANALYZE, IMPROVE, and CONTROL).
         </p>
         
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ Type</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target % of Defects</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mean target</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LSL</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">USL</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ Type</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% of Defects (target)</th>
+                <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">&nbsp;</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mean target</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LSL</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">USL</th>
+                <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {characteristics.map((characteristic, index) => (
                 <tr key={index}>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-1 py-3 whitespace-nowrap">
                     {characteristic.isAutoPopulated ? (
                       <div className="font-medium text-sm bg-gray-50 p-2 rounded border">
                         {characteristic.ctq || "No CTQ"}
                       </div>
                     ) : (
-                      <Input
+                      <Textarea
                         placeholder="Enter CTQ"
                         value={characteristic.ctq}
                         onChange={(e) => updateCharacteristic(index, 'ctq', e.target.value)}
-                        className="w-full"
+                        className="w-full min-w-[100px] min-h-[60px]"
                       />
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-1 py-3">
                     <Textarea
                       placeholder="Operational definition"
                       value={characteristic.operationalDefinition}
                       onChange={(e) => updateCharacteristic(index, 'operationalDefinition', e.target.value)}
-                      className="min-h-[60px]"
+                      className="min-w-[260px] min-h-[60px]"
                     />
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-1 py-3 whitespace-nowrap">
                     <Select
                       value={characteristic.ctqType}
                       onValueChange={(value: "Attribute" | "Continuous") => updateCharacteristic(index, 'ctqType', value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="text-[12px]">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="text-[12px]">
                         <SelectItem value="Continuous">Continuous</SelectItem>
                         <SelectItem value="Attribute">Attribute</SelectItem>
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-1 py-3 whitespace-nowrap">
                     {characteristic.ctqType === "Continuous" ? (
                       <Input
+                        className="placeholder:text-[12px] min-w-[80px]"
                         placeholder="Enter unit"
                         value={characteristic.unit}
                         onChange={(e) => updateCharacteristic(index, 'unit', e.target.value)}
@@ -275,19 +279,25 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                       <div className="text-gray-400 text-center">n/a</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap"> 
+                  <td className="px-l-0 px-r-1 py-3 whitespace-nowrap"> 
                     <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      className="placeholder:text-[12px]"
                       placeholder="% defects"
                       value={characteristic.targetPercentDefects}
                       onChange={(e) => updateCharacteristic(index, 'targetPercentDefects', e.target.value)}
                     />
                   </td>
-                  <td className="w-4 text-center text-gray-600">
+                  <td className="w-1 text-center text-gray-600 text-[12px]">
                   %
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-1 py-3 whitespace-nowrap">
                     {characteristic.ctqType === "Continuous" ? (
                       <Input
+                        type="number"
+                        className="placeholder:text-[12px]"
                         placeholder="Target value"
                         value={characteristic.target}
                         onChange={(e) => updateCharacteristic(index, 'target', e.target.value)}
@@ -296,10 +306,12 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                       <div className="text-gray-400 text-center">n/a</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-1 py-3 whitespace-nowrap">
                     {characteristic.ctqType === "Continuous" ? (
                       <Input
-                        placeholder="Lower limit"
+                        type="number"
+                        className="placeholder:text-[12px]"
+                        placeholder="Lower Specification Limit"
                         value={characteristic.lsl}
                         onChange={(e) => updateCharacteristic(index, 'lsl', e.target.value)}
                       />
@@ -307,10 +319,12 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                       <div className="text-gray-400 text-center">n/a</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-1 py-3 whitespace-nowrap">
                     {characteristic.ctqType === "Continuous" ? (
                       <Input
-                        placeholder="Upper limit"
+                        type="number"
+                        className="text-[8px] placeholder:text-[12px]"
+                        placeholder="Upper Specification Limit"
                         value={characteristic.usl}
                         onChange={(e) => updateCharacteristic(index, 'usl', e.target.value)}
                       />
@@ -318,14 +332,15 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                       <div className="text-gray-400 text-center">n/a</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-0 py-3 whitespace-nowrap text-center">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeCharacteristic(index)}
                       className="text-red-600 hover:text-red-800"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <i className="fas fa-trash"></i>
+                      {/* <Trash2 className="h-4 w-4" /> */}
                     </Button>
                   </td>
                 </tr>
@@ -353,9 +368,9 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         </div>
         
         <div className="mt-4 text-xs text-gray-500">
-          <p>• CTQs are automatically populated from customer requirements and business requirements</p>
-          <p>• For Continuous CTQ types, specify Target, LSL (Lower Specification Limit), and USL (Upper Specification Limit)</p>
-          <p>• For Attribute CTQ types, only Targeted % of Defects is applicable</p>
+          <p>• CTQs are automatically populated from customer requirements and business requirements analysis</p>
+          <p>• For Continuous CTQs, specify Operational Definition, Unit of Measure, Targeted % of Defects, Mean Target, LSL (Lower Specification Limit), and USL (Upper Specification Limit)</p>
+          <p>• For Attribute CTQs, only Operational Definition and Targeted % of Defects are applicable</p>
         </div>
       </CardContent>
     </Card>

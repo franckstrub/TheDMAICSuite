@@ -76,6 +76,12 @@ export default function MeasurePhase() {
     enabled: !!user?.id && !!projectId,
     refetchOnWindowFocus: false
   });
+
+  // Load CTQs from centralized endpoint (same as MSA Analysis and Process Capability)
+  const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctqs`],
+    enabled: !!projectId,
+  });
   
   // Set milestone dates when charter data is fetched
   useEffect(() => {
@@ -97,21 +103,23 @@ export default function MeasurePhase() {
   // Data Collection Plan state
   const [dataCollectionPlans, setDataCollectionPlans] = useState<any[]>([]);
 
-  // Initialize data collection plans from existing data or auto-populate from CTS characteristics
+  // Get CTQs from centralized endpoint (same logic as MSA Analysis and Process Capability)
+  const getCTQs = () => {
+    // Use centralized CTQs endpoint which aggregates from all sources
+    if ((ctqsData as any)?.ctqs?.length > 0) {
+      return (ctqsData as any).ctqs.map((item: any) => item.ctq);
+    }
+    
+    return [];
+  };
+
+  // Initialize data collection plans from existing data or auto-populate from CTQs
   const [hasInitialized, setHasInitialized] = useState(false);
   
   useEffect(() => {
-    console.log('useEffect triggered:', { 
-      hasInitialized, 
-      plansUndefined: plans === undefined, 
-      ctsDataUndefined: ctsData === undefined, 
-      customerRequirementsDataUndefined: customerRequirementsData === undefined, 
-      businessRequirementsAutoDataUndefined: businessRequirementsAutoData === undefined 
-    });
-    
-    // Wait for all API calls to complete before initializing
-    if (!hasInitialized && plans !== undefined && ctsData !== undefined && customerRequirementsData !== undefined && businessRequirementsAutoData !== undefined) {
-      console.log('All conditions met - Initializing data collection plans:', { plans, ctsData, customerRequirementsData, businessRequirementsAutoData });
+    // Wait for CTQs and plans data to be loaded
+    if (!hasInitialized && plans !== undefined && ctqsData !== undefined && !ctqsLoading) {
+      console.log('Initializing data collection plans with CTQs logic');
       
       if (plans?.plans && plans.plans.length > 0) {
         console.log('Loading existing saved plans:', plans.plans);
@@ -124,87 +132,28 @@ export default function MeasurePhase() {
           sampleSize: p.sampleSize,
           responsible: p.responsible,
         })));
-      } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
-        console.log('Auto-populating from CTS characteristics:', ctsData.characteristics);
-        // Auto-populate from CTS characteristics only if no existing plans
-        const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
-          ctq: characteristic.ctq || "",
-          operationalDefinition: characteristic.operationalDefinition || "",
-          dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
-          collectionMethod: "",
-          sampleSize: "",
-          responsible: ""
-        }));
-        console.log('Setting auto-populated plans:', autoPopulatedPlans);
-        setDataCollectionPlans(autoPopulatedPlans);
       } else {
-        // Auto-populate from customer requirements and business requirements CTQs
-        const allCtqs: any[] = [];
+        // Auto-populate from centralized CTQs endpoint (same as MSA Analysis and Process Capability)
+        const ctqs = getCTQs();
         
-        console.log('Starting auto-population from requirements');
-        console.log('Customer requirements data:', customerRequirementsData);
-        console.log('Business requirements form data:', businessRequirementsAutoData);
-        
-        // Add CTQs from customer requirements
-        if (customerRequirementsData?.requirements && Array.isArray(customerRequirementsData.requirements)) {
-          console.log('Processing customer requirements:', customerRequirementsData.requirements);
-          customerRequirementsData.requirements.forEach((req: any, index: number) => {
-            console.log(`Customer requirement ${index}:`, req);
-            // Check both CTQ and CTS fields for auto-population
-            const ctqValue = req.ctq && req.ctq.trim() !== "" ? req.ctq : (req.CTS && req.CTS.trim() !== "" ? req.CTS : null);
-            if (ctqValue) {
-              console.log(`Adding customer CTQ/CTS: "${ctqValue}"`);
-              allCtqs.push({
-                ctq: ctqValue,
-                operationalDefinition: "",
-                dataType: "Attribute",
-                collectionMethod: "",
-                sampleSize: "",
-                responsible: ""
-              });
-            } else {
-              console.log(`Skipping customer requirement ${index} - no CTQ or CTS value`);
-            }
-          });
+        if (ctqs.length > 0) {
+          console.log('Auto-populating from centralized CTQs:', ctqs);
+          const autoPopulatedPlans = ctqs.map((ctq: string) => ({
+            ctq: ctq,
+            operationalDefinition: `Specific measurement criteria and procedures for accurately measuring "${ctq}"`,
+            dataType: ctq.toLowerCase().includes('time') || ctq.toLowerCase().includes('duration') || ctq.toLowerCase().includes('speed') ? "Continuous" : "Attribute",
+            collectionMethod: "",
+            sampleSize: "",
+            responsible: ""
+          }));
+          setDataCollectionPlans(autoPopulatedPlans);
         } else {
-          console.log('No customer requirements data available');
-        }
-        
-        // Add CTQs from business requirements
-        if (businessRequirementsAutoData?.businessRequirements && Array.isArray(businessRequirementsAutoData.businessRequirements)) {
-          console.log('Processing business requirements:', businessRequirementsAutoData.businessRequirements);
-          businessRequirementsAutoData.businessRequirements.forEach((req: any, index: number) => {
-            console.log(`Business requirement ${index}:`, req);
-            if (req.ctq && req.ctq.trim() !== "") {
-              console.log(`Adding business CTQ: "${req.ctq}"`);
-              allCtqs.push({
-                ctq: req.ctq,
-                operationalDefinition: "",
-                dataType: "Attribute",
-                collectionMethod: "",
-                sampleSize: "",
-                responsible: ""
-              });
-            } else {
-              console.log(`Skipping business requirement ${index} - no CTQ or empty CTQ`);
-            }
-          });
-        } else {
-          console.log('No business requirements data available');
-        }
-        
-        console.log('All collected CTQs:', allCtqs);
-        
-        if (allCtqs.length > 0) {
-          console.log('Auto-populating from requirements CTQs:', allCtqs);
-          setDataCollectionPlans(allCtqs);
-        } else {
-          console.log('No plans, CTS characteristics, or requirements CTQs available for auto-population');
+          console.log('No CTQs available from centralized endpoint for auto-population');
         }
       }
       setHasInitialized(true);
     }
-  }, [plans, ctsData, customerRequirementsData, businessRequirementsAutoData, hasInitialized]);
+  }, [plans, ctqsData, ctqsLoading, hasInitialized]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -304,7 +253,7 @@ export default function MeasurePhase() {
       {
         ctq: "",
         operationalDefinition: "",
-        dataType: "Discrete",
+        dataType: "Attribute",
         collectionMethod: "",
         sampleSize: "",
         responsible: ""
@@ -321,7 +270,7 @@ export default function MeasurePhase() {
       newPlans.push({
         ctq: "",
         operationalDefinition: "",
-        dataType: "Discrete",
+        dataType: "Attribute",
         collectionMethod: "",
         sampleSize: "",
         responsible: ""
@@ -338,7 +287,7 @@ export default function MeasurePhase() {
       plansToSave = [{
         ctq: "",
         operationalDefinition: "",
-        dataType: "Discrete",
+        dataType: "Attribute",
         collectionMethod: "",
         sampleSize: "",
         responsible: ""
@@ -658,80 +607,83 @@ export default function MeasurePhase() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            Define what data needs to be collected, how it will be collected, and who is responsible.
+            Define what data needs to be collected (CTQs/Variables), how it will be collected, which sample size is needed, when will it be collected and who is responsible.
           </p>
           
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection Method</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Size</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsible</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CTQ/Variable</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection Method</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Size</th>
+                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsible</th>
+                  <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {dataCollectionPlans.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                      No CTQs have been added yet. Click "Add CTQ" to get started.
+                      No CTQs/Variables have been added yet. Click "Add CTQ/Variable" to get started.
                     </td>
                   </tr>
                 ) : (
                   dataCollectionPlans.map((plan, index) => (
                     <tr key={index}>
-                      <td className="px-4 py-2">
-                        <Input
-                          type="text"
+                      <td className="px-1 py-2">
+                        <Textarea
                           value={plan.ctq}
                           onChange={(e) => updatePlan(index, "ctq", e.target.value)}
-                          placeholder="Enter CTQ name..."
+                          className="w-full min-w-[100px] max-w-[135px] min-h-[60px]"
+                          placeholder="Enter CTQ/Variable name"
                         />
                       </td>
-                      <td className="px-4 py-2">
-                        <Input
-                          type="text"
+                      <td className="px-1 py-2 min-w-[260px] min-h-[60-px]">
+                        <Textarea
                           value={plan.operationalDefinition}
                           onChange={(e) => updatePlan(index, "operationalDefinition", e.target.value)}
+                          className="w-full min-w-[260px] min-h-[60px]"
+                          placeholder="Enter CTQ/Variable Operational Definition"
                         />
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-1 py-2">
                         <select
-                          className="w-full p-2 border border-gray-300 rounded-md"
+                          className="w-full p-2 border border-gray-300 rounded-md text-[11px]"
                           value={plan.dataType}
                           onChange={(e) => updatePlan(index, "dataType", e.target.value)}
                         >
-                          <option>Discrete</option>
                           <option>Continuous</option>
                           <option>Attribute</option>
                         </select>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-1 py-2">
                         <Input
                           type="text"
+                          placeholder="Enter Data collection method. I.e., Random sampling, Randomized stratified sampling, Systematic sampling, Subgrouping sampling, 100% Inspection, etc."
                           value={plan.collectionMethod}
                           onChange={(e) => updatePlan(index, "collectionMethod", e.target.value)}
                         />
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-1 py-2">
                         <Input
-                          type="text"
+                          type="number"
+                          placeholder="Enter Sample size to collect"
                           value={plan.sampleSize}
                           onChange={(e) => updatePlan(index, "sampleSize", e.target.value)}
                         />
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-1 py-2">
                         <Input
                           type="text"
+                          placeholder="Enter Responsible Person"
                           value={plan.responsible}
                           onChange={(e) => updatePlan(index, "responsible", e.target.value)}
                         />
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-0 py-2 text-center">
                         <Button variant="ghost" size="sm" onClick={() => removePlan(index)} className="text-red-500 hover:text-red-700">
                           <i className="fas fa-trash"></i>
                         </Button>
@@ -742,15 +694,20 @@ export default function MeasurePhase() {
               </tbody>
             </table>
           </div>
-          
-          <div className="mt-4 flex justify-between items-center">
-            <Button onClick={addPlan} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <i className="fas fa-plus mr-2"></i>
-              Add CTQ
-            </Button>
+          <div className="mt-4 text-xs text-gray-500">
+          <p>• CTQs, Operational definitions, and Data types are automatically populated from requirements tables when CTS characteristics are empty</p>
+          <p>• This uses the same logic as MSA Analysis and Process Capability components for consistent data across all measurement tools</p>
+          <p>• You can add additional CTQs/Variables manually or edit existing ones including operational definitions and data types</p>
           </div>
           
-          <div className="mt-4">
+          <div className="mt-4 flex justify-between items-center">
+            <Button variant="outline" onClick={addPlan} className="hover:bg-gray-100 text-black">
+              <PlusCircle className="h-4 w-4" />
+              <span>Add CTQ/Variable</span>
+            </Button>
+          {/* </div>
+          
+          <div className="mt-4"> */}
             <Button 
               onClick={handleSavePlans}
               disabled={savePlansMutation.isPending}

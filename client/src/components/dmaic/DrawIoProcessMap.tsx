@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { PlusCircle } from "lucide-react";
 
 interface DrawIoProcessMapProps {
   projectId: number;
@@ -144,10 +145,11 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
             onClick={handleNew}
             disabled={!isLoaded}
           >
-            New Diagram
+            <PlusCircle className="h-4 w-4" />
+            <span>New Diagram</span>
           </Button>
           <Button
-            variant="outline"
+            //variant="outline"
             size="sm"
             onClick={handleSave}
             disabled={!isLoaded}
