@@ -20,10 +20,10 @@ interface CtsCharacteristic {
   operationalDefinition: string;
   ctqType: "Attribute" | "Continuous";
   unit: string;
-  targetPercentDefects: string;
-  target: string;
-  lsl: string; // Lower Specification Limit
-  usl: string; // Upper Specification Limit
+  targetPercentDefects: string; // Display as string but validate as number
+  target: string; // Display as string but validate as number
+  lsl: string; // Lower Specification Limit - Display as string but validate as number
+  usl: string; // Upper Specification Limit - Display as string but validate as number
   isAutoPopulated?: boolean; // Track if CTQ was auto-populated from Define phase
 }
 

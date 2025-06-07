@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb, index, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -877,10 +877,10 @@ export const ctsCharacteristics = pgTable("cts_characteristics", {
   operationalDefinition: text("operational_definition"),
   ctqType: text("ctq_type").notNull().default("Continuous"), // "Attribute" or "Continuous"
   unit: text("unit"), // Unit of measurement - Only for Continuous
-  targetPercentDefects: text("target_percent_defects"),
-  target: text("target"), // Only for Continuous
-  lsl: text("lsl"), // Lower Specification Limit - Only for Continuous
-  usl: text("usl"), // Upper Specification Limit - Only for Continuous
+  targetPercentDefects: real("target_percent_defects"),
+  target: real("target"), // Only for Continuous
+  lsl: real("lsl"), // Lower Specification Limit - Only for Continuous
+  usl: real("usl"), // Upper Specification Limit - Only for Continuous
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
