@@ -98,7 +98,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       const autoPopulatedCharacteristics = ctqsData.ctqs.map((ctqItem: any) => ({
         ctq: ctqItem.ctq,
         operationalDefinition: "",
-        ctqType: "Attribute" as "Attribute",
+        ctqType: "Continuous" as "Continuous",
         unit: "",
         targetPercentDefects: "",
         target: "",
@@ -112,7 +112,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       setCharacteristics([{
         ctq: "",
         operationalDefinition: "",
-        ctqType: "Attribute",
+        ctqType: "Continuous",
         unit: "",
         targetPercentDefects: "",
         target: "",
@@ -180,7 +180,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       {
         ctq: "",
         operationalDefinition: "",
-        ctqType: "Attribute",
+        ctqType: "Continuous",
         unit: "",
         targetPercentDefects: "",
         target: "",
@@ -199,7 +199,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       newCharacteristics.push({
         ctq: "",
         operationalDefinition: "",
-        ctqType: "Attribute",
+        ctqType: "Continuous",
         unit: "",
         targetPercentDefects: "",
         target: "",
