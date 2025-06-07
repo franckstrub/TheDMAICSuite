@@ -787,18 +787,18 @@ export default function MeasurePhase() {
                       <td className="px-1 py-2">
                         <Input
                           type="number"
-                          min="1"
+                          min="0"
                           step="1"
                           placeholder="Enter Sample size to collect"
                           value={plan.sampleSize}
                           onChange={(e) => {
                             const value = e.target.value;
-                            // Only allow positive integers or empty string
+                            // Only allow non-negative integers or empty string
                             if (value === '') {
                               updatePlan(index, "sampleSize", '');
                             } else {
                               const numValue = parseInt(value);
-                              if (numValue > 0 && !isNaN(numValue)) {
+                              if (numValue >= 0 && !isNaN(numValue)) {
                                 updatePlan(index, "sampleSize", value);
                               }
                             }
