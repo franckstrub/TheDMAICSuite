@@ -2728,7 +2728,7 @@ export default function DefinePhase() {
                     <Label htmlFor="projectTitle">Project Title</Label>
                     <Input
                       id="projectTitle"
-                      placeholder="Project Title"
+                      placeholder="Enter a Project Title"
                       {...charterForm.register("projectTitle")}
                     />
                   </div>
@@ -2980,7 +2980,7 @@ export default function DefinePhase() {
                   <Label htmlFor="businessCase">Business Case</Label>
                   <Textarea
                     id="businessCase"
-                    placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not do this project"
+                    placeholder="Describe the Business Reason of this project (Why this project?) Describe Why now? Describe What happens if we do not do this project..."
                     rows={3}
                     {...charterForm.register("businessCase")}
                   />
@@ -4163,7 +4163,7 @@ export default function DefinePhase() {
                     const value = e.target.value === "" ? 0 : e.target.value;
                     updateRequirement(index, "CTS", value);
                   }}
-                  placeholder={index === requirements.length - 1 ? "Add CTS (CTQ, CTD, CTC) specification..." : ""}
+                  placeholder={index === requirements.length - 1 ? "Add CTS (Critical To Satisfaction). Note: a CTS can be a CTQ (Critical To Quality), a CTD (Critical To Delay), or a CTC (Critical To Cost)" : ""}
                   title="Critical to Satisfaction (CTS) specification"
                 />
               </div>
@@ -4184,7 +4184,7 @@ export default function DefinePhase() {
           ))}
           
           {/* Add Customer Requirement Button */}
-          <div className="flex justify-start mt-4 mb-4">
+          <div className="flex justify-between mt-4 mb-4">
             <Button 
               type="button" 
               variant="outline" 
@@ -4198,9 +4198,9 @@ export default function DefinePhase() {
               <PlusCircle className="mr-1 h-4 w-4" />
               Add a Customer Requirement
             </Button>
-          </div>
+          {/* </div> */}
           
-          <div className="mt-4">
+          {/* <div className="mt-4"> */}
             <Button 
               onClick={handleSaveRequirements}
               disabled={saveRequirementsMutation.isPending}
@@ -4272,7 +4272,7 @@ export default function DefinePhase() {
                   className="w-full p-1 border-0 focus:ring-0 text-sm min-h-[60px]"
                   value={req.ctq}
                   onChange={(e) => updateBusinessRequirement(index, "ctq", e.target.value)}
-                  placeholder="Add Critical To Quality (CTQ) specification..."
+                  placeholder="Add CTS (Critical To Satisfaction). Note: a CTS can be a CTQ (Critical To Quality), a CTD (Critical To Delay), or a CTC (Critical To Cost)"
                 />
               </div>
               {index !== 0 && (
@@ -4292,7 +4292,7 @@ export default function DefinePhase() {
           ))}
           
           {/* Add Business Requirement Button */}
-          <div className="flex justify-start mt-4 mb-4">
+          <div className="flex justify-between mt-4 mb-4">
             <Button 
               type="button" 
               variant="outline" 
@@ -4306,10 +4306,10 @@ export default function DefinePhase() {
               <PlusCircle className="h-4 w-4" />
               Add Business Requirement
             </Button>
-          </div>
+          {/* </div> */}
           
           {/* Save Business Requirements Button */}
-          <div className="flex justify-start mt-4">
+          {/* <div className="flex justify-start mt-4"> */}
             <Button 
               type="button"
               onClick={() => saveBusinessRequirementsMutation.mutate(businessRequirements)}
