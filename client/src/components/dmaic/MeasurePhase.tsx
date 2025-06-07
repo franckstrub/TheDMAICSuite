@@ -678,12 +678,21 @@ export default function MeasurePhase() {
             <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
               ← Scroll horizontally →
             </div>
+            {/* Scroll progress bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b z-10">
+              <div 
+                className="h-full bg-blue-500 rounded-b transition-all duration-150"
+                style={{ width: `${scrollProgress}%` }}
+              />
+            </div>
             <div 
+              ref={tableScrollRef}
               className="overflow-x-auto cursor-grab active:cursor-grabbing border rounded-lg"
               style={{ 
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#CBD5E0 #F7FAFC'
               }}
+              onScroll={handleTableScroll}
             >
               <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1400px' }}>
               <thead>
