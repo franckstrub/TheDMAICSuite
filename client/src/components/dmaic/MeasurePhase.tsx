@@ -139,11 +139,11 @@ export default function MeasurePhase() {
         })));
       } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
         console.log('Auto-populating from CTS characteristics:', ctsData.characteristics);
-        // Auto-populate from CTS characteristics with operational definitions and data types
+        // Auto-populate from CTS characteristics with operational definitions
         const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
           operationalDefinition: characteristic.operationalDefinition || `Specific measurement criteria and procedures for accurately measuring "${characteristic.ctq}"`,
-          dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
+          dataType: "Attribute", // Default data type
           collectionMethod: "",
           sampleSize: "",
           responsible: ""
@@ -160,7 +160,7 @@ export default function MeasurePhase() {
           const autoPopulatedPlans = ctqs.map((ctq: string) => ({
             ctq: ctq,
             operationalDefinition: `Specific measurement criteria and procedures for accurately measuring "${ctq}"`,
-            dataType: ctq.toLowerCase().includes('time') || ctq.toLowerCase().includes('duration') || ctq.toLowerCase().includes('speed') ? "Continuous" : "Attribute",
+            dataType: "Attribute", // Default data type
             collectionMethod: "",
             sampleSize: "",
             responsible: ""
@@ -275,7 +275,7 @@ export default function MeasurePhase() {
       {
         ctq: "",
         operationalDefinition: "",
-        dataType: "Attribute",
+        dataType: "Continuous",
         collectionMethod: "",
         sampleSize: "",
         responsible: ""
@@ -292,7 +292,7 @@ export default function MeasurePhase() {
       newPlans.push({
         ctq: "",
         operationalDefinition: "",
-        dataType: "Attribute",
+        dataType: "Continuous",
         collectionMethod: "",
         sampleSize: "",
         responsible: ""
@@ -309,7 +309,7 @@ export default function MeasurePhase() {
       plansToSave = [{
         ctq: "",
         operationalDefinition: "",
-        dataType: "Attribute",
+        dataType: "Continuous",
         collectionMethod: "",
         sampleSize: "",
         responsible: ""
@@ -717,7 +717,7 @@ export default function MeasurePhase() {
             </table>
           </div>
           <div className="mt-4 text-xs text-gray-500">
-          <p>• CTQs, Operational definitions, and Data types are automatically populated from requirements tables when CTS characteristics are empty</p>
+          <p>• CTQs and Operational definitions are automatically populated from CTS characteristics or requirements tables</p>
           <p>• This uses the same logic as MSA Analysis and Process Capability components for consistent data across all measurement tools</p>
           <p>• You can add additional CTQs/Variables manually or edit existing ones including operational definitions and data types</p>
           </div>
