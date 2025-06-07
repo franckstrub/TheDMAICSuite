@@ -118,8 +118,13 @@ export default function MeasurePhase() {
   
   useEffect(() => {
     // Wait for CTQs and plans data to be loaded
-    if (!hasInitialized && plans !== undefined && ctqsData !== undefined && !ctqsLoading) {
-      console.log('Initializing data collection plans with CTQs logic');
+    if (!hasInitialized && plans !== undefined && ctqsData !== undefined && ctsData !== undefined && !ctqsLoading) {
+      console.log('=== Data Collection Plan Initialization ===');
+      console.log('Plans data:', plans);
+      console.log('CTQs data:', ctqsData);
+      console.log('CTS data:', ctsData);
+      console.log('Plans length:', plans?.plans?.length);
+      console.log('CTS characteristics length:', ctsData?.characteristics?.length);
       
       if (plans?.plans && plans.plans.length > 0) {
         console.log('Loading existing saved plans:', plans.plans);
@@ -132,9 +137,23 @@ export default function MeasurePhase() {
           sampleSize: p.sampleSize,
           responsible: p.responsible,
         })));
+      } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
+        console.log('Auto-populating from CTS characteristics:', ctsData.characteristics);
+        // Auto-populate from CTS characteristics with operational definitions and data types
+        const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
+          ctq: characteristic.ctq || "",
+          operationalDefinition: characteristic.operationalDefinition || `Specific measurement criteria and procedures for accurately measuring "${characteristic.ctq}"`,
+          dataType: characteristic.ctqType === "Continuous" ? "Continuous" : "Attribute",
+          collectionMethod: "",
+          sampleSize: "",
+          responsible: ""
+        }));
+        console.log('Setting auto-populated plans from CTS:', autoPopulatedPlans);
+        setDataCollectionPlans(autoPopulatedPlans);
       } else {
         // Auto-populate from centralized CTQs endpoint (same as MSA Analysis and Process Capability)
         const ctqs = getCTQs();
+        console.log('CTQs from getCTQs():', ctqs);
         
         if (ctqs.length > 0) {
           console.log('Auto-populating from centralized CTQs:', ctqs);
@@ -146,14 +165,17 @@ export default function MeasurePhase() {
             sampleSize: "",
             responsible: ""
           }));
+          console.log('Setting auto-populated plans:', autoPopulatedPlans);
           setDataCollectionPlans(autoPopulatedPlans);
         } else {
           console.log('No CTQs available from centralized endpoint for auto-population');
+          console.log('CTQs data structure:', ctqsData);
         }
       }
       setHasInitialized(true);
+      console.log('=== Data Collection Plan Initialization Complete ===');
     }
-  }, [plans, ctqsData, ctqsLoading, hasInitialized]);
+  }, [plans, ctqsData, ctqsLoading, ctsData, hasInitialized]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
