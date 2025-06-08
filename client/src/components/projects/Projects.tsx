@@ -326,7 +326,7 @@ export default function Projects() {
   
   // Use API data - NEVER use sample data for this feature
   // Sort projects by ID to maintain a stable order regardless of status changes
-  const sortedProjects = projectsData && 'projects' in projectsData 
+  const sortedProjects = projectsData && typeof projectsData === 'object' && 'projects' in projectsData 
     ? [...(projectsData.projects as any[])].sort((a, b) => a.id - b.id) 
     : [];
   const projects = filterProjects(sortedProjects);
