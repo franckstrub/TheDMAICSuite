@@ -300,7 +300,7 @@ export default function MeasurePhase() {
       
       // Delete any server plans that are no longer in the local plans
       const localPlanIds = validPlans.filter(p => p.id).map(p => p.id);
-      const plansToDelete = currentServerIds.filter(id => !localPlanIds.includes(id));
+      const plansToDelete = currentServerIds.filter((id: any) => !localPlanIds.includes(id));
       
       const deletePromises = plansToDelete.map((id: any) => 
         apiRequest("DELETE", `/api/data-collection-plans/${id}`)
@@ -415,9 +415,9 @@ export default function MeasurePhase() {
   // Add a separate useEffect to process business requirements data when it changes
   useEffect(() => {
     console.log("Business requirements data changed:", businessRequirementsAutoData);
-    if (businessRequirementsAutoData?.businessRequirements && businessRequirementsAutoData.businessRequirements.length > 0) {
+    if (businessRequirementsAutoData && typeof businessRequirementsAutoData === 'object' && 'businessRequirements' in businessRequirementsAutoData && Array.isArray((businessRequirementsAutoData as any).businessRequirements) && (businessRequirementsAutoData as any).businessRequirements.length > 0) {
       // Sort the business requirements data by ID to maintain consistency
-      const sortedBusinessRequirements = [...businessRequirementsAutoData.businessRequirements].sort((a, b) => a.id - b.id);
+      const sortedBusinessRequirements = [...(businessRequirementsAutoData as any).businessRequirements].sort((a: any, b: any) => a.id - b.id);
       console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
       
       // Map and set to state, preserving the ID for later reference
