@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useAppContext } from "@/store/AppContext";
+import { useAppContext, getProjectPhase } from "@/store/AppContext";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -206,7 +206,6 @@ export default function Projects() {
     setCurrentTab("dmaic");
     
     // Get the last visited phase for this project, or default to define
-    const { getProjectPhase } = require("@/store/AppContext");
     const lastPhase = getProjectPhase(project.id) || 'define';
     
     navigate(`/app/dmaic/${lastPhase}`);

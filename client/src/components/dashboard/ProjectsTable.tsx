@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useAppContext } from "@/store/AppContext";
+import { useAppContext, getProjectPhase } from "@/store/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import { getProgressColor, getStatusColor, getPhaseLabel, getProjectTypeColor } from "@/lib/utils";
 import { usePhaseProgress } from "@/hooks/usePhaseProgress";
@@ -72,7 +72,6 @@ export default function ProjectsTable() {
     setCurrentTab("dmaic");
     
     // Get the last visited phase for this project, or default to define
-    const { getProjectPhase } = require("@/store/AppContext");
     const lastPhase = getProjectPhase(project.id) || 'define';
     
     // Navigate to the last visited phase for this project
