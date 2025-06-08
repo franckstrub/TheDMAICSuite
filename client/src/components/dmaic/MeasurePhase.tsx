@@ -841,7 +841,7 @@ export default function MeasurePhase() {
                       </td>
                       <td className="px-1 py-2">
                         <Textarea
-                          placeholder="Enter dates, time, frequency"
+                          placeholder="Enter dates of collection, time, frequency, etc."
                           className="w-full min-w-[100px] min-h-[60px]"
                           value={plan.datesTimeFrequency}
                           onChange={(e) => updatePlan(index, "datesTimeFrequency", e.target.value)}
