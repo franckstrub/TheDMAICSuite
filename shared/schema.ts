@@ -424,7 +424,7 @@ export const pointOfMeasureTypes = ["Input", "Process", "Output"] as const;
 export type PointOfMeasureType = typeof pointOfMeasureTypes[number];
 
 // Collection Method types
-export const collectionMethodTypes = ["Random sampling", "Random Stratified sampling", "Systematic sampling", "Subgrouping sampling", "100% inspection", "Others"] as const;
+export const collectionMethodTypes = ["Random", "Stratified", "Systematic", "Time-based", "Rationale Subgrouping", "100% inspection", "Other"] as const;
 export type CollectionMethodType = typeof collectionMethodTypes[number];
 
 // Data Collection Plans
@@ -435,8 +435,8 @@ export const dataCollectionPlans = pgTable("data_collection_plans", {
   operationalDefinition: text("operational_definition"),
   dataType: text("data_type"),
   pointOfMeasure: text("point_of_measure").default("Output"),
-  collectionMethod: text("collection_method").default("Random sampling"),
-  collectionMethodComment: text("collection_method_comment"), // For "Others" option
+  collectionMethod: text("collection_method").default("Random"),
+  collectionMethodComment: text("collection_method_comment"), // For "Other" option
   sampleSize: integer("sample_size"),
   datesTimeFrequency: text("dates_time_frequency"),
   measurementSystem: text("measurement_system"),

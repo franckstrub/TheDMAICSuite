@@ -147,7 +147,7 @@ export default function MeasurePhase() {
           operationalDefinition: p.operationalDefinition,
           dataType: p.dataType,
           pointOfMeasure: p.pointOfMeasure || "Output",
-          collectionMethod: p.collectionMethod || "Random sampling",
+          collectionMethod: p.collectionMethod || "Random",
           collectionMethodComment: p.collectionMethodComment || "",
           sampleSize: p.sampleSize ? p.sampleSize.toString() : "",
           datesTimeFrequency: p.datesTimeFrequency || "",
@@ -162,7 +162,7 @@ export default function MeasurePhase() {
           operationalDefinition: characteristic.operationalDefinition || `Specific measurement criteria and procedures for accurately measuring "${characteristic.ctq}"`,
           dataType: "Continuous", // Default data type
           pointOfMeasure: "Output", // Default point of measure
-          collectionMethod: "Random sampling", // Default collection method
+          collectionMethod: "Random", // Default collection method
           collectionMethodComment: "",
           sampleSize: "",
           datesTimeFrequency: "",
@@ -183,7 +183,7 @@ export default function MeasurePhase() {
             operationalDefinition: `Specific measurement criteria and procedures for accurately measuring "${ctq}"`,
             dataType: "Continuous", // Default data type
             pointOfMeasure: "Output", // Default point of measure
-            collectionMethod: "Random sampling", // Default collection method
+            collectionMethod: "Random", // Default collection method
             collectionMethodComment: "",
             sampleSize: "",
             datesTimeFrequency: "",
@@ -307,7 +307,7 @@ export default function MeasurePhase() {
         operationalDefinition: "",
         dataType: "Continuous",
         pointOfMeasure: "Output",
-        collectionMethod: "Random sampling",
+        collectionMethod: "Random",
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
@@ -329,7 +329,7 @@ export default function MeasurePhase() {
         operationalDefinition: "",
         dataType: "Continuous",
         pointOfMeasure: "Output",
-        collectionMethod: "Random sampling",
+        collectionMethod: "Random",
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
@@ -351,7 +351,7 @@ export default function MeasurePhase() {
         operationalDefinition: "",
         dataType: "Continuous",
         pointOfMeasure: "Output",
-        collectionMethod: "Random sampling",
+        collectionMethod: "Random",
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
@@ -698,20 +698,20 @@ export default function MeasurePhase() {
               }}
               onScroll={handleTableScroll}
             >
-              <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1550px' }}>
+              <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '1660px' }}>
               <thead>
                 <tr>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 border-r">CTQ/Variable</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point of Measure</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection Method</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Size</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates/Time/Frequency</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Measurement System</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Source</th>
-                  <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsible</th>
-                  <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 border-r">CTQ/Variable</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operational Definition</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point of Measure</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Collection Method (Sampling)</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sample Size</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates/Time/Frequency</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Measurement System</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Source</th>
+                  <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsible</th>
+                  <th className="px-0 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -743,7 +743,7 @@ export default function MeasurePhase() {
                           placeholder="Enter CTQ/Variable Operational Definition"
                         />
                       </td>
-                      <td className="px-1 py-2">
+                      <td className="px-1 py-2 min-w-[104px]">
                         <select
                           className="w-full p-2 border border-gray-300 rounded-md text-[11px]"
                           value={plan.dataType}
@@ -755,7 +755,7 @@ export default function MeasurePhase() {
                       </td>
                       <td className="px-1 py-2">
                         <select
-                          className="w-full p-2 border border-gray-300 rounded-md text-[11px]"
+                          className="p-2 border border-gray-300 rounded-md text-[11px]"
                           value={plan.pointOfMeasure}
                           onChange={(e) => updatePlan(index, "pointOfMeasure", e.target.value)}
                         >
@@ -769,16 +769,24 @@ export default function MeasurePhase() {
                           <select
                             className="w-full p-2 border border-gray-300 rounded-md text-[11px]"
                             value={plan.collectionMethod}
-                            onChange={(e) => updatePlan(index, "collectionMethod", e.target.value)}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              updatePlan(index, "collectionMethod", newValue);
+                              // Clear comment if method is not "Other"
+                              if (newValue !== "Other") {
+                                updatePlan(index, "collectionMethodComment", "");
+                              }
+                            }}
                           >
-                            <option value="Random sampling">Random sampling</option>
-                            <option value="Random Stratified sampling">Random Stratified sampling</option>
-                            <option value="Systematic sampling">Systematic sampling</option>
-                            <option value="Subgrouping sampling">Subgrouping sampling</option>
+                            <option value="Random">Random</option>
+                            <option value="Stratified">Stratified</option>
+                            <option value="Systematic">Systematic</option>
+                            <option value="Time-based">Time-based</option>
+                            <option value="Rationale Subgrouping">Rationale Subgrouping</option>
                             <option value="100% inspection">100% inspection</option>
-                            <option value="Others">Others</option>
+                            <option value="Other">Other</option>
                           </select>
-                          {plan.collectionMethod === "Others" && (
+                          {plan.collectionMethod === "Other" && (
                             <Input
                               type="text"
                               placeholder="Please specify other collection method"
@@ -811,24 +819,24 @@ export default function MeasurePhase() {
                         />
                       </td>
                       <td className="px-1 py-2">
-                        <Input
-                          type="text"
+                        <Textarea
                           placeholder="Enter dates, time, frequency"
+                          className="w-full min-w-[100px] min-h-[60px]"
                           value={plan.datesTimeFrequency}
                           onChange={(e) => updatePlan(index, "datesTimeFrequency", e.target.value)}
                         />
                       </td>
                       <td className="px-1 py-2">
-                        <Input
-                          type="text"
+                        <Textarea
+                          className="w-full min-w-[100px] min-h-[60px]"
                           placeholder="Enter measurement system"
                           value={plan.measurementSystem}
                           onChange={(e) => updatePlan(index, "measurementSystem", e.target.value)}
                         />
                       </td>
                       <td className="px-1 py-2">
-                        <Input
-                          type="text"
+                        <Textarea
+                          className="w-full min-w-[100px] min-h-[60px]"
                           placeholder="Enter data source"
                           value={plan.dataSource}
                           onChange={(e) => updatePlan(index, "dataSource", e.target.value)}
@@ -837,7 +845,7 @@ export default function MeasurePhase() {
                       <td className="px-1 py-2">
                         <Input
                           type="text"
-                          placeholder="Enter Responsible Person"
+                          placeholder="Enter Responsible"
                           value={plan.responsible}
                           onChange={(e) => updatePlan(index, "responsible", e.target.value)}
                         />
@@ -877,9 +885,10 @@ export default function MeasurePhase() {
         </CardContent>
       </Card>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* </div><div className="grid grid-cols-1 md:grid-cols-2 gap-6">*/}
         
         {/* Measurement System Analysis */}
+        {/*}
         <Card>
           <CardHeader>
             <CardTitle>Measurement System Analysis</CardTitle>
@@ -962,9 +971,9 @@ export default function MeasurePhase() {
             </div>
           </CardContent>
         </Card>
-        
+        */}
         {/* Process Capability Analysis */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Process Capability Analysis</CardTitle>
           </CardHeader>
@@ -1034,7 +1043,7 @@ export default function MeasurePhase() {
           </CardContent>
         </Card>
       </div>
-      
+      */}
       {/* MSA (Measurement System Analysis) - One tab per CTQ */}
       <MsaAnalysis projectId={projectId} />
       
