@@ -214,33 +214,9 @@ export default function MeasurePhase() {
       setHasInitialized(true);
       console.log('=== Data Collection Plan Initialization Complete ===');
     }
-  }, [plans, ctqsData, ctqsLoading, ctsData, hasInitialized, hasLoadedFromServer]);
+  }, [plans, ctqsData, ctqsLoading, ctsData, hasInitialized]);
 
-  // Separate effect to handle only server data updates (not user changes)
-  useEffect(() => {
-    if (hasLoadedFromServer && plans?.plans && plans.plans.length > 0) {
-      // Only update if the server data is significantly different
-      const serverPlanIds = plans.plans.map((p: any) => p.id).sort();
-      const currentPlanIds = dataCollectionPlans.map((p: any) => p.id).filter(id => id).sort();
-      
-      if (JSON.stringify(serverPlanIds) !== JSON.stringify(currentPlanIds)) {
-        console.log('Server data changed significantly, updating plans');
-        setDataCollectionPlans(plans.plans.map((p: any) => ({
-          ctq: p.ctq,
-          operationalDefinition: p.operationalDefinition,
-          dataType: p.dataType,
-          pointOfMeasure: p.pointOfMeasure || "Output",
-          collectionMethod: p.collectionMethod || "Random",
-          collectionMethodComment: p.collectionMethodComment || "",
-          sampleSize: p.sampleSize ? p.sampleSize.toString() : "",
-          datesTimeFrequency: p.datesTimeFrequency || "",
-          measurementSystem: p.measurementSystem || "",
-          dataSource: p.dataSource || "",
-          responsible: p.responsible,
-        })));
-      }
-    }
-  }, [plans, hasLoadedFromServer]);
+
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -335,10 +311,13 @@ export default function MeasurePhase() {
 
   const updatePlan = (index: number, field: string, value: any) => {
     console.log(`Updating plan ${index}, field: ${field}, value: ${value}`);
-    const newPlans = [...dataCollectionPlans];
-    newPlans[index] = { ...newPlans[index], [field]: value };
-    console.log('Updated plan:', newPlans[index]);
-    setDataCollectionPlans(newPlans);
+    setDataCollectionPlans(currentPlans => {
+      const newPlans = [...currentPlans];
+      newPlans[index] = { ...newPlans[index], [field]: value };
+      console.log('Updated plan:', newPlans[index]);
+      console.log('All plans after update:', newPlans);
+      return newPlans;
+    });
   };
 
   const addPlan = () => {
@@ -813,6 +792,7 @@ export default function MeasurePhase() {
                             value={plan.collectionMethod}
                             onChange={(e) => {
                               const newValue = e.target.value;
+                              console.log(`Collection method change: ${plan.collectionMethod} -> ${newValue}`);
                               updatePlan(index, "collectionMethod", newValue);
                               // Clear comment if method is not "Other"
                               if (newValue !== "Other") {
