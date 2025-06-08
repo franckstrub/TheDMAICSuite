@@ -263,13 +263,13 @@ export default function MeasurePhase() {
 
   // Save data collection plan mutation
   const savePlansMutation = useMutation({
-    mutationFn: async (plans: any[]) => {
-      const validPlans = plans.filter(p => p.ctq.trim() !== "");
+    mutationFn: async (plansToSave: any[]) => {
+      const validPlans = plansToSave.filter(p => p.ctq.trim() !== "");
       
-      // First, delete all existing plans for this project
-      await apiRequest("DELETE", `/api/projects/${projectId}/data-collection-plans`);
+      // Get current server plans to compare
+      const currentServerPlans = plans?.plans || [];
+      const currentServerIds = currentServerPlans.map((p: any) => p.id);
       
-      // Then create all new plans with display order
       const promises = validPlans.map((p, index) => {
         const payload = {
           projectId,
@@ -288,10 +288,24 @@ export default function MeasurePhase() {
           userId: user?.id,
         };
         
-        return apiRequest("POST", `/api/projects/${projectId}/data-collection-plans`, payload);
+        // If plan has an ID and it exists on server, update it
+        if (p.id && currentServerIds.includes(p.id)) {
+          return apiRequest("PUT", `/api/data-collection-plans/${p.id}`, payload);
+        } else {
+          // Otherwise create a new plan
+          return apiRequest("POST", `/api/projects/${projectId}/data-collection-plans`, payload);
+        }
       });
       
-      return Promise.all(promises);
+      // Delete any server plans that are no longer in the local plans
+      const localPlanIds = validPlans.filter(p => p.id).map(p => p.id);
+      const plansToDelete = currentServerIds.filter(id => !localPlanIds.includes(id));
+      
+      const deletePromises = plansToDelete.map(id => 
+        apiRequest("DELETE", `/api/projects/${projectId}/data-collection-plans/${id}`)
+      );
+      
+      return Promise.all([...promises, ...deletePromises]);
     },
     onSuccess: () => {
       toast({
@@ -310,12 +324,9 @@ export default function MeasurePhase() {
   });
 
   const updatePlan = (index: number, field: string, value: any) => {
-    console.log(`Updating plan ${index}, field: ${field}, value: ${value}`);
     setDataCollectionPlans(currentPlans => {
       const newPlans = [...currentPlans];
       newPlans[index] = { ...newPlans[index], [field]: value };
-      console.log('Updated plan:', newPlans[index]);
-      console.log('All plans after update:', newPlans);
       return newPlans;
     });
   };
@@ -792,7 +803,6 @@ export default function MeasurePhase() {
                             value={plan.collectionMethod}
                             onChange={(e) => {
                               const newValue = e.target.value;
-                              console.log(`Collection method change: ${plan.collectionMethod} -> ${newValue}`);
                               updatePlan(index, "collectionMethod", newValue);
                               // Clear comment if method is not "Other"
                               if (newValue !== "Other") {
