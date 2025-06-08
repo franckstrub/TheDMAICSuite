@@ -151,6 +151,7 @@ export default function MeasurePhase() {
         console.log('Loading existing saved plans:', plans.plans);
         // Load existing saved plans
         setDataCollectionPlans(plans.plans.map((p: any) => ({
+          id: p.id, // Include the ID for proper updates
           ctq: p.ctq,
           operationalDefinition: p.operationalDefinition,
           dataType: p.dataType,
@@ -266,7 +267,7 @@ export default function MeasurePhase() {
     mutationFn: async (plansToSave: any[]) => {
       const validPlans = plansToSave.filter(p => p.ctq.trim() !== "");
       
-      // Get current server plans to compare
+      // Get current server plans to compare using the existing data
       const currentServerPlans = plans?.plans || [];
       const currentServerIds = currentServerPlans.map((p: any) => p.id);
       
@@ -301,8 +302,8 @@ export default function MeasurePhase() {
       const localPlanIds = validPlans.filter(p => p.id).map(p => p.id);
       const plansToDelete = currentServerIds.filter(id => !localPlanIds.includes(id));
       
-      const deletePromises = plansToDelete.map(id => 
-        apiRequest("DELETE", `/api/projects/${projectId}/data-collection-plans/${id}`)
+      const deletePromises = plansToDelete.map((id: any) => 
+        apiRequest("DELETE", `/api/data-collection-plans/${id}`)
       );
       
       return Promise.all([...promises, ...deletePromises]);
