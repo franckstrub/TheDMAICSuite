@@ -57,6 +57,43 @@ export const getStoredRoute = (): string | null => {
   return storedRoute;
 };
 
+// Function to save the last visited DMAIC phase for a specific project
+export const saveProjectPhase = (projectId: string | number, phase: string) => {
+  const projectPhases = getProjectPhases();
+  projectPhases[projectId.toString()] = phase;
+  localStorage.setItem('projectPhases', JSON.stringify(projectPhases));
+};
+
+// Function to get the last visited DMAIC phase for a specific project
+export const getProjectPhase = (projectId: string | number): string | null => {
+  const projectPhases = getProjectPhases();
+  return projectPhases[projectId.toString()] || null;
+};
+
+// Function to get all stored project phases
+export const getProjectPhases = (): Record<string, string> => {
+  const storedPhases = localStorage.getItem('projectPhases');
+  if (storedPhases) {
+    try {
+      return JSON.parse(storedPhases);
+    } catch (err) {
+      console.error('Error parsing stored project phases:', err);
+      localStorage.removeItem('projectPhases');
+    }
+  }
+  return {};
+};
+
+// Function to build the default route for a project (either last phase or define phase)
+export const getProjectDefaultRoute = (projectId: string | number): string => {
+  const lastPhase = getProjectPhase(projectId);
+  if (lastPhase) {
+    return `/projects/${projectId}/${lastPhase}`;
+  }
+  // Default to define phase if no previous phase is stored
+  return `/projects/${projectId}/define`;
+};
+
 type AppContextType = {
   user: any | null;
   setUser: (user: any) => void;

@@ -70,7 +70,13 @@ export default function ProjectsTable() {
   const handleProjectClick = (project: Project) => {
     setCurrentProject(project);
     setCurrentTab("dmaic");
-    navigate(`/app/dmaic/${project.currentPhase.toLowerCase()}`);
+    
+    // Get the last visited phase for this project, or default to define
+    const { getProjectPhase } = require("@/store/AppContext");
+    const lastPhase = getProjectPhase(project.id) || 'define';
+    
+    // Navigate to the last visited phase for this project
+    navigate(`/app/dmaic/${lastPhase}`);
   };
 
   if (isLoading) {
