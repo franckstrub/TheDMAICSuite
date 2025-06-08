@@ -204,7 +204,12 @@ export default function Projects() {
   const handleProjectClick = (project: any) => {
     setCurrentProject(project);
     setCurrentTab("dmaic");
-    navigate(`/app/dmaic/${project.currentPhase.toLowerCase()}`);
+    
+    // Get the last visited phase for this project, or default to define
+    const { getProjectPhase } = require("@/store/AppContext");
+    const lastPhase = getProjectPhase(project.id) || 'define';
+    
+    navigate(`/app/dmaic/${lastPhase}`);
   };
 
   const resetNewProjectForm = () => {

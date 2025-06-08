@@ -85,10 +85,11 @@ export default function MeasurePhase() {
   
   // Set milestone dates when charter data is fetched
   useEffect(() => {
-    if (charter?.charter) {
+    if (charter && typeof charter === 'object' && 'charter' in charter && charter.charter) {
+      const charterData = charter.charter as any;
       setMilestoneDates({
-        definePhaseDate: charter.charter.define_phase_date || null,
-        measurePhaseDate: charter.charter.measure_phase_date || null,
+        definePhaseDate: charterData.define_phase_date || null,
+        measurePhaseDate: charterData.measure_phase_date || null,
       });
     }
   }, [charter]);
@@ -144,13 +145,13 @@ export default function MeasurePhase() {
       console.log('Plans data:', plans);
       console.log('CTQs data:', ctqsData);
       console.log('CTS data:', ctsData);
-      console.log('Plans length:', plans?.plans?.length);
-      console.log('CTS characteristics length:', ctsData?.characteristics?.length);
+      console.log('Plans length:', plans && typeof plans === 'object' && 'plans' in plans ? (plans as any).plans?.length : 0);
+      console.log('CTS characteristics length:', ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData ? (ctsData as any).characteristics?.length : 0);
       
-      if (plans?.plans && plans.plans.length > 0) {
-        console.log('Loading existing saved plans:', plans.plans);
+      if (plans && typeof plans === 'object' && 'plans' in plans && (plans as any).plans && (plans as any).plans.length > 0) {
+        console.log('Loading existing saved plans:', (plans as any).plans);
         // Load existing saved plans
-        setDataCollectionPlans(plans.plans.map((p: any) => ({
+        setDataCollectionPlans((plans as any).plans.map((p: any) => ({
           id: p.id, // Include the ID for proper updates
           ctq: p.ctq,
           operationalDefinition: p.operationalDefinition,
@@ -165,10 +166,10 @@ export default function MeasurePhase() {
           responsible: p.responsible,
         })));
         setHasLoadedFromServer(true);
-      } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
-        console.log('Auto-populating from CTS characteristics:', ctsData.characteristics);
+      } else if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData && Array.isArray((ctsData as any).characteristics) && (ctsData as any).characteristics.length > 0) {
+        console.log('Auto-populating from CTS characteristics:', (ctsData as any).characteristics);
         // Auto-populate from CTS characteristics with operational definitions
-        const autoPopulatedPlans = ctsData.characteristics.map((characteristic: any) => ({
+        const autoPopulatedPlans = (ctsData as any).characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
           operationalDefinition: characteristic.operationalDefinition || `Specific measurement criteria and procedures for accurately measuring "${characteristic.ctq}"`,
           dataType: "Continuous", // Default data type
@@ -267,7 +268,7 @@ export default function MeasurePhase() {
       const validPlans = plansToSave.filter(p => p.ctq.trim() !== "");
       
       // Get current server plans to compare using the existing data
-      const currentServerPlans = plans?.plans || [];
+      const currentServerPlans = (plans && typeof plans === 'object' && 'plans' in plans) ? (plans as any).plans || [] : [];
       const currentServerIds = currentServerPlans.map((p: any) => p.id);
       
       const promises = validPlans.map((p, index) => {
