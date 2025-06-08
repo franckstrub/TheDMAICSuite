@@ -307,7 +307,7 @@ export default function MeasurePhase() {
         operationalDefinition: "",
         dataType: "Continuous",
         pointOfMeasure: "Output",
-        collectionMethod: "Random",
+        collectionMethod: "Random sampling",
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
@@ -329,7 +329,7 @@ export default function MeasurePhase() {
         operationalDefinition: "",
         dataType: "Continuous",
         pointOfMeasure: "Output",
-        collectionMethod: "Random",
+        collectionMethod: "Random sampling",
         collectionMethodComment: "",
         sampleSize: "",
         datesTimeFrequency: "",
@@ -772,21 +772,20 @@ export default function MeasurePhase() {
                             onChange={(e) => {
                               const newValue = e.target.value;
                               updatePlan(index, "collectionMethod", newValue);
-                              // Clear comment if method is not "Other"
-                              if (newValue !== "Other") {
+                              // Clear comment if method is not "Others"
+                              if (newValue !== "Others") {
                                 updatePlan(index, "collectionMethodComment", "");
                               }
                             }}
                           >
-                            <option value="Random">Random</option>
-                            <option value="Stratified">Stratified</option>
-                            <option value="Systematic">Systematic</option>
-                            <option value="Time-based">Time-based</option>
-                            <option value="Rationale Subgrouping">Rationale Subgrouping</option>
+                            <option value="Random sampling">Random sampling</option>
+                            <option value="Random Stratified sampling">Random Stratified sampling</option>
+                            <option value="Systematic sampling">Systematic sampling</option>
+                            <option value="Subgrouping sampling">Subgrouping sampling</option>
                             <option value="100% inspection">100% inspection</option>
-                            <option value="Other">Other</option>
+                            <option value="Others">Others</option>
                           </select>
-                          {plan.collectionMethod === "Other" && (
+                          {plan.collectionMethod === "Others" && (
                             <Input
                               type="text"
                               placeholder="Please specify other collection method"
