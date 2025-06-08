@@ -115,6 +115,7 @@ export default function MeasurePhase() {
 
   // Initialize data collection plans from existing data or auto-populate from CTQs
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [hasLoadedFromServer, setHasLoadedFromServer] = useState(false);
   
   // Scroll progress tracking for data collection plan table
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -132,6 +133,7 @@ export default function MeasurePhase() {
   // Reset initialization when project changes
   useEffect(() => {
     setHasInitialized(false);
+    setHasLoadedFromServer(false);
     setDataCollectionPlans([]);
   }, [projectId]);
 
@@ -161,6 +163,7 @@ export default function MeasurePhase() {
           dataSource: p.dataSource || "",
           responsible: p.responsible,
         })));
+        setHasLoadedFromServer(true);
       } else if (ctsData?.characteristics && Array.isArray(ctsData.characteristics) && ctsData.characteristics.length > 0) {
         console.log('Auto-populating from CTS characteristics:', ctsData.characteristics);
         // Auto-populate from CTS characteristics with operational definitions
@@ -211,7 +214,33 @@ export default function MeasurePhase() {
       setHasInitialized(true);
       console.log('=== Data Collection Plan Initialization Complete ===');
     }
-  }, [plans, ctqsData, ctqsLoading, ctsData, hasInitialized]);
+  }, [plans, ctqsData, ctqsLoading, ctsData, hasInitialized, hasLoadedFromServer]);
+
+  // Separate effect to handle only server data updates (not user changes)
+  useEffect(() => {
+    if (hasLoadedFromServer && plans?.plans && plans.plans.length > 0) {
+      // Only update if the server data is significantly different
+      const serverPlanIds = plans.plans.map((p: any) => p.id).sort();
+      const currentPlanIds = dataCollectionPlans.map((p: any) => p.id).filter(id => id).sort();
+      
+      if (JSON.stringify(serverPlanIds) !== JSON.stringify(currentPlanIds)) {
+        console.log('Server data changed significantly, updating plans');
+        setDataCollectionPlans(plans.plans.map((p: any) => ({
+          ctq: p.ctq,
+          operationalDefinition: p.operationalDefinition,
+          dataType: p.dataType,
+          pointOfMeasure: p.pointOfMeasure || "Output",
+          collectionMethod: p.collectionMethod || "Random",
+          collectionMethodComment: p.collectionMethodComment || "",
+          sampleSize: p.sampleSize ? p.sampleSize.toString() : "",
+          datesTimeFrequency: p.datesTimeFrequency || "",
+          measurementSystem: p.measurementSystem || "",
+          dataSource: p.dataSource || "",
+          responsible: p.responsible,
+        })));
+      }
+    }
+  }, [plans, hasLoadedFromServer]);
 
   // Process Capability Analysis state
   const [selectedMetric, setSelectedMetric] = useState("Processing Time");
@@ -305,8 +334,10 @@ export default function MeasurePhase() {
   });
 
   const updatePlan = (index: number, field: string, value: any) => {
+    console.log(`Updating plan ${index}, field: ${field}, value: ${value}`);
     const newPlans = [...dataCollectionPlans];
     newPlans[index] = { ...newPlans[index], [field]: value };
+    console.log('Updated plan:', newPlans[index]);
     setDataCollectionPlans(newPlans);
   };
 
