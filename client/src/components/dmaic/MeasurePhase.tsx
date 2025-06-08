@@ -24,7 +24,7 @@ import { PlusCircle } from "lucide-react";
 import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
 import CtsCharacteristics from '@/components/dmaic/CtsCharacteristics';
 import MsaAnalysis from '@/components/dmaic/MsaAnalysis';
-import ProcessCapability from '@/components/dmaic/ProcessCapabilityFixed';
+import ProcessCapability from '@/components/dmaic/ProcessCapability';
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
@@ -220,7 +220,8 @@ export default function MeasurePhase() {
 
 
   // Process Capability Analysis state
-  const [selectedMetric, setSelectedMetric] = useState("Processing Time");
+  {/*
+    const [selectedMetric, setSelectedMetric] = useState("Processing Time");
   const [lsl, setLsl] = useState(0);
   const [usl, setUsl] = useState(10);
   
@@ -248,7 +249,7 @@ export default function MeasurePhase() {
   const [numParts, setNumParts] = useState(10);
   const [numTrials, setNumTrials] = useState(2);
   const [analysisType, setAnalysisType] = useState("Attribute Data (Kappa)");
-
+*/}
   // Fetch business requirements
   const { isLoading: isBusinessRequirementsLoading, refetch: refetchBusinessRequirements } = useQuery({
     queryKey: [`/api/projects/${projectId}/business-requirements`],
@@ -259,8 +260,6 @@ export default function MeasurePhase() {
     refetchOnWindowFocus: true,
     refetchInterval: 10000, // Refetch every 10 seconds to ensure latest data
   });
-
-
 
   // Save data collection plan mutation
   const savePlansMutation = useMutation({
@@ -744,7 +743,7 @@ export default function MeasurePhase() {
                   <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Measurement System</th>
                   <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Source</th>
                   <th className="px-1 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsible</th>
-                  <th className="px-0 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th className="px-0 pt-6 pb-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action&nbsp;</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">

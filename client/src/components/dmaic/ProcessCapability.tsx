@@ -1,20 +1,15 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -43,25 +38,20 @@ interface ProcessCapabilityProps {
 }
 
 export default function ProcessCapability({ projectId }: ProcessCapabilityProps) {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [capabilityData, setCapabilityData] = useState<{ [ctq: string]: ProcessCapabilityData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
-  // Load CTS characteristics to get CTQs
-  const { data: ctsData, isLoading: ctsLoading } = useQuery({
+  // Load CTQs from centralized endpoint
+  const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctqs`],
+    enabled: !!projectId,
+  });
+
+  // Load CTS characteristics for additional data
+  const { data: ctsData } = useQuery({
     queryKey: [`/api/projects/${projectId}/cts-characteristics`],
-    enabled: !!projectId,
-  });
-
-  // Load customer requirements as fallback source for CTQs
-  const { data: requirementsData } = useQuery({
-    queryKey: [`/api/projects/${projectId}/requirements`],
-    enabled: !!projectId,
-  });
-
-  // Load business requirements as fallback source for CTQs
-  const { data: businessRequirementsData } = useQuery({
-    queryKey: [`/api/projects/${projectId}/business-requirements`],
     enabled: !!projectId,
   });
 
@@ -74,16 +64,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Save Process Capability mutation
   const saveCapabilityMutation = useMutation({
     mutationFn: async (data: ProcessCapabilityData) => {
-      const payload = {
-        projectId,
-        ...data,
-      };
-      
-      if (data.id) {
-        return apiRequest("PUT", `/api/projects/${projectId}/process-capability/${data.id}`, payload);
-      } else {
-        return apiRequest("POST", `/api/projects/${projectId}/process-capability`, payload);
-      }
+      const response = await fetch(`/api/projects/${projectId}/process-capability`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to save");
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -101,46 +90,28 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     },
   });
 
-  // Get CTQs from multiple sources
+  // Get CTQs from centralized endpoint
   const getCTQs = () => {
-    // First priority: CTS characteristics
-    if (ctsData?.characteristics?.length > 0) {
-      return ctsData.characteristics.map((char: any) => char.ctq);
+    // Use centralized CTQs endpoint which aggregates from all sources
+    if ((ctqsData as any)?.ctqs?.length > 0) {
+      return (ctqsData as any).ctqs.map((item: any) => item.ctq);
     }
     
-    // Second priority: Customer and Business requirements
-    const allCTQs = [];
-    
-    if (requirementsData?.requirements) {
-      const customerCTQs = requirementsData.requirements
-        .filter((req: any) => req.ctq && req.ctq.trim())
-        .map((req: any) => req.ctq);
-      allCTQs.push(...customerCTQs);
-    }
-    
-    if (businessRequirementsData?.businessRequirements) {
-      const businessCTQs = businessRequirementsData.businessRequirements
-        .filter((req: any) => req.ctq && req.ctq.trim())
-        .map((req: any) => req.ctq);
-      allCTQs.push(...businessCTQs);
-    }
-    
-    // Remove duplicates
-    return [...new Set(allCTQs)];
+    return [];
   };
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
     const ctqs = getCTQs();
-    if (ctqs.length > 0 && capabilityDataResponse?.processCapability) {
+    if (ctqs.length > 0) {
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
       
       // Create Process Capability entry for each CTQ
       ctqs.forEach((ctq: string) => {
-        const existingCapability = capabilityDataResponse.processCapability.find((cap: any) => cap.ctq === ctq);
+        const existingCapability = (capabilityDataResponse as any)?.processCapability?.find((cap: any) => cap.ctq === ctq);
         
         // Check if this CTQ comes from CTS characteristics to auto-populate LSL, USL, target
-        const ctsChar = ctsData?.characteristics?.find((char: any) => char.ctq === ctq);
+        const ctsChar = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === ctq);
         
         initialData[ctq] = existingCapability || {
           ctq: ctq,
@@ -171,7 +142,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         setActiveTab(ctqs[0]);
       }
     }
-  }, [ctsData, capabilityDataResponse, requirementsData, businessRequirementsData, activeTab]);
+  }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
 
   const updateCapabilityField = (ctq: string, field: keyof ProcessCapabilityData, value: any) => {
     setCapabilityData(prev => ({
@@ -179,103 +150,35 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       [ctq]: {
         ...prev[ctq],
         [field]: value,
-      }
+      },
     }));
-  };
-
-  const handleSaveCapability = (ctq: string) => {
-    const data = capabilityData[ctq];
-    if (data) {
-      saveCapabilityMutation.mutate(data);
-    }
   };
 
   const getCapabilityStatusBadge = (ctq: string) => {
     const data = capabilityData[ctq];
     if (!data) return <Badge variant="secondary">No Data</Badge>;
     
-    const hasBasicData = data.sampleSize && data.mean && data.standardDeviation;
-    const hasCapabilityIndices = data.cp || data.cpk || data.pp || data.ppk;
+    const hasBasicData = data.mean && data.standardDeviation;
+    const hasSpecs = data.lsl || data.usl;
+    const hasCapability = data.cp || data.cpk;
     
-    if (hasCapabilityIndices) {
+    if (hasCapability) {
       return <Badge variant="default" className="bg-green-600">Complete</Badge>;
-    } else if (hasBasicData) {
+    } else if (hasBasicData && hasSpecs) {
       return <Badge variant="outline">In Progress</Badge>;
     } else {
       return <Badge variant="secondary">Not Started</Badge>;
     }
   };
 
-  const calculateCapabilityIndices = (ctq: string) => {
+  const saveCapability = (ctq: string) => {
     const data = capabilityData[ctq];
-    if (!data || !data.mean || !data.standardDeviation || (!data.lsl && !data.usl)) {
-      return;
+    if (data) {
+      saveCapabilityMutation.mutate(data);
     }
-
-    const mean = parseFloat(data.mean);
-    const stdDev = parseFloat(data.standardDeviation);
-    const lsl = data.lsl ? parseFloat(data.lsl) : null;
-    const usl = data.usl ? parseFloat(data.usl) : null;
-    const target = data.target ? parseFloat(data.target) : null;
-
-    // Calculate Cp (Process Capability)
-    let cp = "";
-    if (lsl !== null && usl !== null) {
-      cp = ((usl - lsl) / (6 * stdDev)).toFixed(3);
-    }
-
-    // Calculate Cpk (Process Capability Index)
-    let cpk = "";
-    if (lsl !== null && usl !== null) {
-      const cpkLower = (mean - lsl) / (3 * stdDev);
-      const cpkUpper = (usl - mean) / (3 * stdDev);
-      cpk = Math.min(cpkLower, cpkUpper).toFixed(3);
-    } else if (lsl !== null) {
-      cpk = ((mean - lsl) / (3 * stdDev)).toFixed(3);
-    } else if (usl !== null) {
-      cpk = ((usl - mean) / (3 * stdDev)).toFixed(3);
-    }
-
-    // Calculate Sigma level from Cpk
-    let sigma = "";
-    if (cpk) {
-      const sigmaLevel = parseFloat(cpk) * 3 + 1.5;
-      sigma = sigmaLevel.toFixed(2);
-    }
-
-    // Calculate DPMO (Defects Per Million Opportunities)
-    let dpmo = "";
-    if (sigma) {
-      const sigmaLevel = parseFloat(sigma);
-      // Approximate DPMO calculation based on sigma level
-      const dpmoValue = Math.max(0, 1000000 * (1 - 0.5 * (1 + Math.erf((sigmaLevel - 1.5) / Math.sqrt(2)))));
-      dpmo = Math.round(dpmoValue).toString();
-    }
-
-    // Calculate Yield
-    let yieldValue = "";
-    if (dpmo) {
-      const dpmoNum = parseFloat(dpmo);
-      yieldValue = ((1000000 - dpmoNum) / 10000).toFixed(2);
-    }
-
-    // Update the data
-    setCapabilityData(prev => ({
-      ...prev,
-      [ctq]: {
-        ...prev[ctq],
-        cp,
-        cpk,
-        pp: cp, // Assuming Pp = Cp for simplification
-        ppk: cpk, // Assuming Ppk = Cpk for simplification
-        sigma,
-        dpmo,
-        yield: yieldValue,
-      }
-    }));
   };
 
-  if (ctsLoading || capabilityLoading) {
+  if (ctqsLoading || capabilityLoading) {
     return (
       <Card>
         <CardHeader>
@@ -304,7 +207,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No CTQs available. Please define CTS characteristics or requirements with CTQs to create process capability studies.
+            No CTQ available. Please define your CTQ(s) in CTS characteristics table to create Process capability study(ies).
           </div>
         </CardContent>
       </Card>
@@ -418,158 +321,137 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Target Value</label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={capabilityData[char.ctq]?.target || ""}
-                    onChange={(e) => updateCapabilityField(char.ctq, "target", e.target.value)}
-                    placeholder="e.g., 10.0"
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Target Value</label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={capabilityData[ctq]?.target || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "target", e.target.value)}
+                      placeholder="e.g., 10.0"
+                    />
+                  </div>
 
-                <div className="flex justify-center">
-                  <Button
-                    onClick={() => calculateCapabilityIndices(char.ctq)}
-                    variant="outline"
-                    className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
-                  >
-                    Calculate Capability Indices
-                  </Button>
-                </div>
-
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-4">Process Capability Indices</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Cp</label>
-                      <Input
-                        value={capabilityData[char.ctq]?.cp || ""}
-                        onChange={(e) => updateCapabilityField(char.ctq, "cp", e.target.value)}
-                        placeholder="e.g., 1.33"
-                        className={
-                          capabilityData[char.ctq]?.cp && parseFloat(capabilityData[char.ctq]?.cp) >= 1.33
-                            ? "border-green-500"
-                            : capabilityData[char.ctq]?.cp && parseFloat(capabilityData[char.ctq]?.cp) < 1.0
-                            ? "border-red-500"
-                            : ""
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Cpk</label>
-                      <Input
-                        value={capabilityData[char.ctq]?.cpk || ""}
-                        onChange={(e) => updateCapabilityField(char.ctq, "cpk", e.target.value)}
-                        placeholder="e.g., 1.25"
-                        className={
-                          capabilityData[char.ctq]?.cpk && parseFloat(capabilityData[char.ctq]?.cpk) >= 1.33
-                            ? "border-green-500"
-                            : capabilityData[char.ctq]?.cpk && parseFloat(capabilityData[char.ctq]?.cpk) < 1.0
-                            ? "border-red-500"
-                            : ""
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Pp</label>
-                      <Input
-                        value={capabilityData[char.ctq]?.pp || ""}
-                        onChange={(e) => updateCapabilityField(char.ctq, "pp", e.target.value)}
-                        placeholder="e.g., 1.30"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Ppk</label>
-                      <Input
-                        value={capabilityData[char.ctq]?.ppk || ""}
-                        onChange={(e) => updateCapabilityField(char.ctq, "ppk", e.target.value)}
-                        placeholder="e.g., 1.22"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Data Points</label>
+                    <Input
+                      value={capabilityData[ctq]?.dataPoints || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "dataPoints", e.target.value)}
+                      placeholder="Brief description of data source"
+                    />
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-4">Process Performance Metrics</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Sigma Level</label>
-                      <Input
-                        value={capabilityData[char.ctq]?.sigma || ""}
-                        onChange={(e) => updateCapabilityField(char.ctq, "sigma", e.target.value)}
-                        placeholder="e.g., 4.5"
-                        className={
-                          capabilityData[char.ctq]?.sigma && parseFloat(capabilityData[char.ctq]?.sigma) >= 6.0
-                            ? "border-green-500"
-                            : capabilityData[char.ctq]?.sigma && parseFloat(capabilityData[char.ctq]?.sigma) < 3.0
-                            ? "border-red-500"
-                            : ""
-                        }
-                      />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cp</label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={capabilityData[ctq]?.cp || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "cp", e.target.value)}
+                      placeholder="e.g., 1.33"
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2">DPMO</label>
-                      <Input
-                        value={capabilityData[char.ctq]?.dpmo || ""}
-                        onChange={(e) => updateCapabilityField(char.ctq, "dpmo", e.target.value)}
-                        placeholder="e.g., 233"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cpk</label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={capabilityData[ctq]?.cpk || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "cpk", e.target.value)}
+                      placeholder="e.g., 1.25"
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Yield (%)</label>
-                      <Input
-                        value={capabilityData[char.ctq]?.yield || ""}
-                        onChange={(e) => updateCapabilityField(char.ctq, "yield", e.target.value)}
-                        placeholder="e.g., 99.98"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Pp</label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={capabilityData[ctq]?.pp || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "pp", e.target.value)}
+                      placeholder="e.g., 1.20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Ppk</label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={capabilityData[ctq]?.ppk || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "ppk", e.target.value)}
+                      placeholder="e.g., 1.15"
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Raw Data Points</label>
-                  <Textarea
-                    value={capabilityData[char.ctq]?.dataPoints || ""}
-                    onChange={(e) => updateCapabilityField(char.ctq, "dataPoints", e.target.value)}
-                    placeholder="Enter raw measurement data (JSON format or comma-separated values)..."
-                    rows={4}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Sigma Level</label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={capabilityData[ctq]?.sigma || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "sigma", e.target.value)}
+                      placeholder="e.g., 4.2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">DPMO</label>
+                    <Input
+                      type="number"
+                      value={capabilityData[ctq]?.dpmo || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "dpmo", e.target.value)}
+                      placeholder="e.g., 3000"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Yield (%)</label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={capabilityData[ctq]?.yield || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "yield", e.target.value)}
+                      placeholder="e.g., 99.7"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Conclusion</label>
-                  <Textarea
-                    value={capabilityData[char.ctq]?.conclusion || ""}
-                    onChange={(e) => updateCapabilityField(char.ctq, "conclusion", e.target.value)}
-                    placeholder="Summarize the process capability analysis results and process performance..."
-                    rows={3}
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Conclusion</label>
+                    <Textarea
+                      value={capabilityData[ctq]?.conclusion || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "conclusion", e.target.value)}
+                      placeholder="Summary of process capability assessment..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Action Plan</label>
+                    <Textarea
+                      value={capabilityData[ctq]?.actionPlan || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "actionPlan", e.target.value)}
+                      placeholder="Actions needed to improve process capability..."
+                      rows={3}
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Action Plan</label>
-                  <Textarea
-                    value={capabilityData[char.ctq]?.actionPlan || ""}
-                    onChange={(e) => updateCapabilityField(char.ctq, "actionPlan", e.target.value)}
-                    placeholder="Define actions needed to improve process capability if required..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={() => handleSaveCapability(char.ctq)}
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={() => saveCapability(ctq)}
                     disabled={saveCapabilityMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="flex items-center gap-2"
                   >
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-4 w-4" />
                     {saveCapabilityMutation.isPending ? "Saving..." : "Save Process Capability"}
                   </Button>
                 </div>

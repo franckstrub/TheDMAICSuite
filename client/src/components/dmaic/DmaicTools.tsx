@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
-import { useAppContext } from "@/store/AppContext";
+import { useAppContext, saveProjectPhase } from "@/store/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -101,6 +101,11 @@ export default function DmaicTools() {
       )
     ) {
       setActivePhase(params.phase);
+
+      // Save the current phase for this project
+      if (currentProject?.id) {
+        saveProjectPhase(currentProject.id, params.phase);
+      }
 
       // Ensure we update the URL if we're missing a projectId but have currentProject
       if (!params.projectId && currentProject?.id) {

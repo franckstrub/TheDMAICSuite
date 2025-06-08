@@ -200,7 +200,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No CTQs available. Please define CTS characteristics or requirements with CTQs to create MSA studies.
+            No CTQ available. Please define your CTQ(s) in CTS characteristics table to create MSA study(ies).
           </div>
         </CardContent>
       </Card>
