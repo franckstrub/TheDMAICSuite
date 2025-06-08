@@ -129,6 +129,12 @@ export default function MeasurePhase() {
     setScrollProgress(progress);
   };
   
+  // Reset initialization when project changes
+  useEffect(() => {
+    setHasInitialized(false);
+    setDataCollectionPlans([]);
+  }, [projectId]);
+
   useEffect(() => {
     // Wait for CTQs and plans data to be loaded
     if (!hasInitialized && plans !== undefined && ctqsData !== undefined && ctsData !== undefined && !ctqsLoading) {
@@ -151,6 +157,7 @@ export default function MeasurePhase() {
           collectionMethodComment: p.collectionMethodComment || "",
           sampleSize: p.sampleSize ? p.sampleSize.toString() : "",
           datesTimeFrequency: p.datesTimeFrequency || "",
+          measurementSystem: p.measurementSystem || "",
           dataSource: p.dataSource || "",
           responsible: p.responsible,
         })));
@@ -166,6 +173,7 @@ export default function MeasurePhase() {
           collectionMethodComment: "",
           sampleSize: "",
           datesTimeFrequency: "",
+          measurementSystem: "",
           dataSource: "",
           responsible: ""
         }));
@@ -187,6 +195,7 @@ export default function MeasurePhase() {
             collectionMethodComment: "",
             sampleSize: "",
             datesTimeFrequency: "",
+            measurementSystem: "",
             dataSource: "",
             responsible: ""
           }));
@@ -195,6 +204,8 @@ export default function MeasurePhase() {
         } else {
           console.log('No CTQs available from centralized endpoint for auto-population');
           console.log('CTQs data structure:', ctqsData);
+          console.log('Setting empty data collection plans array');
+          setDataCollectionPlans([]);
         }
       }
       setHasInitialized(true);
