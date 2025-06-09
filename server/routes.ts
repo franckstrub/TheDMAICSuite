@@ -2357,9 +2357,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/attribute-msa", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const payload = {
-        ...req.body,
+      
+      // Clean and validate the payload
+      const cleanPayload = {
         projectId,
+        ctq: req.body.ctq,
+        msaType: req.body.msaType || "Attribute Agreement",
+        unitAppraisedType: req.body.unitAppraisedType || "Parts",
+        unitAppraisedTypeOther: req.body.unitAppraisedTypeOther || null,
+        appraiser1Name: req.body.appraiser1Name || null,
+        appraiser2Name: req.body.appraiser2Name || null,
+        appraiser3Name: req.body.appraiser3Name || null,
+        agreementAnalysisData: req.body.agreementAnalysisData || null,
+        studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
       };
 
       // Check if MSA record already exists for this CTQ and project
@@ -2368,7 +2378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(msaAnalysis)
         .where(and(
           eq(msaAnalysis.projectId, projectId),
-          eq(msaAnalysis.ctq, payload.ctq)
+          eq(msaAnalysis.ctq, cleanPayload.ctq)
         ))
         .limit(1);
 
@@ -2377,12 +2387,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [updatedMsa] = await db
           .update(msaAnalysis)
           .set({
-            ...payload,
+            ...cleanPayload,
             lastUpdated: new Date(),
           })
           .where(and(
             eq(msaAnalysis.projectId, projectId),
-            eq(msaAnalysis.ctq, payload.ctq)
+            eq(msaAnalysis.ctq, cleanPayload.ctq)
           ))
           .returning();
 
@@ -2391,7 +2401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create new record
         const [newMsa] = await db
           .insert(msaAnalysis)
-          .values(payload)
+          .values(cleanPayload)
           .returning();
 
         return res.status(201).json({ msa: newMsa });
@@ -2404,10 +2414,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/continuous-msa", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const payload = insertMsaAnalysisSchema.parse({
-        ...req.body,
+      
+      // Clean and validate the payload for continuous MSA
+      const cleanPayload = {
         projectId,
-      });
+        ctq: req.body.ctq,
+        msaType: req.body.msaType || "Gage R&R",
+        appraiser1Name: req.body.appraiser1Name || null,
+        appraiser2Name: req.body.appraiser2Name || null,
+        appraiser3Name: req.body.appraiser3Name || null,
+        measurements: req.body.measurements || null, // For continuous data
+        studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
+      };
 
       // Check if MSA record already exists for this CTQ and project
       const existingMsa = await db
@@ -2415,7 +2433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(msaAnalysis)
         .where(and(
           eq(msaAnalysis.projectId, projectId),
-          eq(msaAnalysis.ctq, payload.ctq)
+          eq(msaAnalysis.ctq, cleanPayload.ctq)
         ))
         .limit(1);
 
@@ -2424,12 +2442,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [updatedMsa] = await db
           .update(msaAnalysis)
           .set({
-            ...payload,
+            ...cleanPayload,
             lastUpdated: new Date(),
           })
           .where(and(
             eq(msaAnalysis.projectId, projectId),
-            eq(msaAnalysis.ctq, payload.ctq)
+            eq(msaAnalysis.ctq, cleanPayload.ctq)
           ))
           .returning();
 
@@ -2438,7 +2456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create new record
         const [newMsa] = await db
           .insert(msaAnalysis)
-          .values(payload)
+          .values(cleanPayload)
           .returning();
 
         return res.status(201).json({ msa: newMsa });
@@ -2453,17 +2471,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const id = parseInt(req.params.id);
       
-      const payload = insertMsaAnalysisSchema.parse({
-        ...req.body,
+      // Clean and validate the payload for attribute MSA update
+      const cleanPayload = {
         projectId,
-      });
+        ctq: req.body.ctq,
+        msaType: req.body.msaType || "Attribute Agreement",
+        unitAppraisedType: req.body.unitAppraisedType || "Parts",
+        unitAppraisedTypeOther: req.body.unitAppraisedTypeOther || null,
+        appraiser1Name: req.body.appraiser1Name || null,
+        appraiser2Name: req.body.appraiser2Name || null,
+        appraiser3Name: req.body.appraiser3Name || null,
+        agreementAnalysisData: req.body.agreementAnalysisData || null,
+        studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
+        lastUpdated: new Date(),
+      };
 
       const [updatedMsa] = await db
         .update(msaAnalysis)
-        .set({
-          ...payload,
-          lastUpdated: new Date(),
-        })
+        .set(cleanPayload)
         .where(and(eq(msaAnalysis.id, id), eq(msaAnalysis.projectId, projectId)))
         .returning();
 
@@ -2478,17 +2503,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const id = parseInt(req.params.id);
       
-      const payload = insertMsaAnalysisSchema.parse({
-        ...req.body,
+      // Clean and validate the payload for continuous MSA update
+      const cleanPayload = {
         projectId,
-      });
+        ctq: req.body.ctq,
+        msaType: req.body.msaType || "Gage R&R",
+        appraiser1Name: req.body.appraiser1Name || null,
+        appraiser2Name: req.body.appraiser2Name || null,
+        appraiser3Name: req.body.appraiser3Name || null,
+        measurements: req.body.measurements || null,
+        studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
+        lastUpdated: new Date(),
+      };
 
       const [updatedMsa] = await db
         .update(msaAnalysis)
-        .set({
-          ...payload,
-          lastUpdated: new Date(),
-        })
+        .set(cleanPayload)
         .where(and(eq(msaAnalysis.id, id), eq(msaAnalysis.projectId, projectId)))
         .returning();
 
