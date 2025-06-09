@@ -205,7 +205,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Initialize MSA data when CTQs and MSA data are loaded
   useEffect(() => {
     const ctqsWithTypes = getCtqsWithTypes();
-    if (ctqsWithTypes.length > 0 && msaDataResponse) {
+    if (ctqsWithTypes.length > 0) {
       const initialAttributeData: { [ctq: string]: AttributeMsaData } = {};
       const initialContinuousData: { [ctq: string]: ContinuousMsaData } = {};
       
@@ -213,7 +213,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         const { ctq, ctqType } = ctqItem;
         
         if (ctqType === "Attribute") {
-          const existingMsa = (msaDataResponse as any)?.attributeMsa?.find((msa: any) => msa.ctq === ctq);
+          const existingMsa = msaDataResponse && (msaDataResponse as any)?.attributeMsa?.find((msa: any) => msa.ctq === ctq);
           
           initialAttributeData[ctq] = existingMsa ? {
             ...existingMsa,
@@ -231,7 +231,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             studyDateTime: new Date().toISOString(),
           };
         } else {
-          const existingMsa = (msaDataResponse as any)?.continuousMsa?.find((msa: any) => msa.ctq === ctq);
+          const existingMsa = msaDataResponse && (msaDataResponse as any)?.continuousMsa?.find((msa: any) => msa.ctq === ctq);
           
           initialContinuousData[ctq] = existingMsa ? {
             ...existingMsa,
@@ -252,12 +252,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setAttributeMsaData(initialAttributeData);
       setContinuousMsaData(initialContinuousData);
       
-      // Always set first tab as active
-      if (ctqsWithTypes.length > 0) {
+      // Set first tab as active only if no tab is currently active
+      if (ctqsWithTypes.length > 0 && !activeTab) {
         setActiveTab(ctqsWithTypes[0].ctq);
       }
     }
-  }, [ctsData, msaDataResponse, activeTab]);
+  }, [ctsData, msaDataResponse]);
 
   // Helper functions for attribute MSA
   const updateAttributeMsaField = (ctq: string, field: keyof AttributeMsaData, value: any) => {
