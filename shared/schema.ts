@@ -23,7 +23,7 @@ export const supportLevels = ["Supporter", "Neutral", "Resistant"] as const;
 export type SupportLevel = typeof supportLevels[number];
 
 // Unit appraised type options for MSA
-export const unitAppraisedTypes = ["Parts", "Units", "Files", "Documents", "Other"] as const;
+export const unitAppraisedTypes = ["Part", "Unit", "File", "Document", "Other"] as const;
 export type UnitAppraisedType = typeof unitAppraisedTypes[number];
 
 // Gate Review Validation Status
@@ -922,7 +922,7 @@ export const msaAnalysis = pgTable("msa_analysis", {
   actionPlan: text("action_plan"),
   
   // Attribute Agreement Analysis fields
-  unitAppraisedType: text("unit_appraised_type").$type<UnitAppraisedType>().default("Parts"),
+  unitAppraisedType: text("unit_appraised_type").$type<UnitAppraisedType>().default("Part"),
   unitAppraisedTypeOther: text("unit_appraised_type_other"), // Comment for "Other" selection
   appraiser1Name: text("appraiser1_name"),
   appraiser2Name: text("appraiser2_name"),

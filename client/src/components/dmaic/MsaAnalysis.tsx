@@ -222,7 +222,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
               generateDefaultAttributeData(),
           } : {
             ctq: ctq,
-            unitAppraisedType: "Parts",
+            unitAppraisedType: "Part",
             unitAppraisedTypeOther: "",
             appraiser1Name: "",
             appraiser2Name: "",
@@ -538,17 +538,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     <div>
                       <label className="block text-sm font-medium mb-2">Appraised unit type</label>
                       <Select
-                        value={attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Parts"}
+                        value={attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Part"}
                         onValueChange={(value) => updateAttributeMsaField(ctqItem.ctq, "unitAppraisedType", value)}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Parts">Parts</SelectItem>
-                          <SelectItem value="Units">Units</SelectItem>
-                          <SelectItem value="Files">Files</SelectItem>
-                          <SelectItem value="Documents">Documents</SelectItem>
+                          <SelectItem value="Part">Part</SelectItem>
+                          <SelectItem value="Unit">Unit</SelectItem>
+                          <SelectItem value="File">File</SelectItem>
+                          <SelectItem value="Document">Document</SelectItem>
                           <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
@@ -621,7 +621,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-20">Unit #</TableHead>
+                            <TableHead className="w-20">
+                              {attributeMsaData[ctqItem.ctq]?.unitAppraisedType === "Other" 
+                                ? (attributeMsaData[ctqItem.ctq]?.unitAppraisedTypeOther || "Unit") + " #"
+                                : (attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Unit") + " #"}
+                            </TableHead>
                             <TableHead className="w-24">Reference (Standard)</TableHead>
                             <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 1</TableHead>
                             <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 2</TableHead>
@@ -650,7 +654,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             return (
                               <TableRow 
                                 key={index} 
-                                className={hasDisagreement ? "bg-red-50" : ""}
+                                className={hasDisagreement ? "bg-red-200" : ""}
                               >
                                 <TableCell className="font-medium">{row.unitNumber}</TableCell>
                                 {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
@@ -666,13 +670,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                   if (!hasReference) {
                                     // No reference available - bold and white text for all non-blank cells
                                     if (fieldValue !== "") {
-                                      cellStyling = "text-white font-bold";
-                                      triggerStyling = "text-white font-bold bg-transparent border-white";
+                                      cellStyling = "font-bold";
+                                      triggerStyling = "font-bold bg-transparent";
                                     }
                                   } else {
                                     // Reference available - white text for all cells, bold for disagreeing cells
-                                    cellStyling = "text-white";
-                                    triggerStyling = "text-white bg-transparent border-white";
+                                    cellStyling = "";
+                                    triggerStyling = "bg-transparent";
                                     
                                     if (fieldValue !== "" && fieldValue !== row.reference) {
                                       cellStyling += " font-bold";
@@ -709,7 +713,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                     size="sm"
                                     className="h-8 w-8 p-0"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    {/* <Trash2 className="h-4 w-4" /> */}
+                                    <i className="fas fa-trash h-4 w-4"></i>
                                   </Button>
                                 </TableCell>
                               </TableRow>
