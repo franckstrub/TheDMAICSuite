@@ -2357,32 +2357,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/attribute-msa", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const payload = insertAttributeMsaAnalysisSchema.parse({
+      const payload = {
         ...req.body,
         projectId,
-      });
+      };
 
-      // Check if attribute MSA record already exists for this CTQ and project
+      // Check if MSA record already exists for this CTQ and project
       const existingMsa = await db
         .select()
-        .from(attributeMsaAnalysis)
+        .from(msaAnalysis)
         .where(and(
-          eq(attributeMsaAnalysis.projectId, projectId),
-          eq(attributeMsaAnalysis.ctq, payload.ctq)
+          eq(msaAnalysis.projectId, projectId),
+          eq(msaAnalysis.ctq, payload.ctq)
         ))
         .limit(1);
 
       if (existingMsa.length > 0) {
         // Update existing record
         const [updatedMsa] = await db
-          .update(attributeMsaAnalysis)
+          .update(msaAnalysis)
           .set({
             ...payload,
             lastUpdated: new Date(),
           })
           .where(and(
-            eq(attributeMsaAnalysis.projectId, projectId),
-            eq(attributeMsaAnalysis.ctq, payload.ctq)
+            eq(msaAnalysis.projectId, projectId),
+            eq(msaAnalysis.ctq, payload.ctq)
           ))
           .returning();
 
@@ -2390,7 +2390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Create new record
         const [newMsa] = await db
-          .insert(attributeMsaAnalysis)
+          .insert(msaAnalysis)
           .values(payload)
           .returning();
 
@@ -2404,32 +2404,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/continuous-msa", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const payload = insertContinuousMsaAnalysisSchema.parse({
+      const payload = insertMsaAnalysisSchema.parse({
         ...req.body,
         projectId,
       });
 
-      // Check if continuous MSA record already exists for this CTQ and project
+      // Check if MSA record already exists for this CTQ and project
       const existingMsa = await db
         .select()
-        .from(continuousMsaAnalysis)
+        .from(msaAnalysis)
         .where(and(
-          eq(continuousMsaAnalysis.projectId, projectId),
-          eq(continuousMsaAnalysis.ctq, payload.ctq)
+          eq(msaAnalysis.projectId, projectId),
+          eq(msaAnalysis.ctq, payload.ctq)
         ))
         .limit(1);
 
       if (existingMsa.length > 0) {
         // Update existing record
         const [updatedMsa] = await db
-          .update(continuousMsaAnalysis)
+          .update(msaAnalysis)
           .set({
             ...payload,
             lastUpdated: new Date(),
           })
           .where(and(
-            eq(continuousMsaAnalysis.projectId, projectId),
-            eq(continuousMsaAnalysis.ctq, payload.ctq)
+            eq(msaAnalysis.projectId, projectId),
+            eq(msaAnalysis.ctq, payload.ctq)
           ))
           .returning();
 
@@ -2437,7 +2437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Create new record
         const [newMsa] = await db
-          .insert(continuousMsaAnalysis)
+          .insert(msaAnalysis)
           .values(payload)
           .returning();
 
@@ -2453,18 +2453,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const id = parseInt(req.params.id);
       
-      const payload = insertAttributeMsaAnalysisSchema.parse({
+      const payload = insertMsaAnalysisSchema.parse({
         ...req.body,
         projectId,
       });
 
       const [updatedMsa] = await db
-        .update(attributeMsaAnalysis)
+        .update(msaAnalysis)
         .set({
           ...payload,
           lastUpdated: new Date(),
         })
-        .where(and(eq(attributeMsaAnalysis.id, id), eq(attributeMsaAnalysis.projectId, projectId)))
+        .where(and(eq(msaAnalysis.id, id), eq(msaAnalysis.projectId, projectId)))
         .returning();
 
       return res.status(200).json({ msa: updatedMsa });
@@ -2478,18 +2478,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const id = parseInt(req.params.id);
       
-      const payload = insertContinuousMsaAnalysisSchema.parse({
+      const payload = insertMsaAnalysisSchema.parse({
         ...req.body,
         projectId,
       });
 
       const [updatedMsa] = await db
-        .update(continuousMsaAnalysis)
+        .update(msaAnalysis)
         .set({
           ...payload,
           lastUpdated: new Date(),
         })
-        .where(and(eq(continuousMsaAnalysis.id, id), eq(continuousMsaAnalysis.projectId, projectId)))
+        .where(and(eq(msaAnalysis.id, id), eq(msaAnalysis.projectId, projectId)))
         .returning();
 
       return res.status(200).json({ msa: updatedMsa });
