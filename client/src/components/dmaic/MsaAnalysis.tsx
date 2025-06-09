@@ -13,8 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Save, Plus, Trash2 } from "lucide-react";
+import { BarChart3, Save, Plus, Trash2, Calculator } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import MSAStatisticsDisplay from "./MSAStatisticsDisplay";
 
 // Interface for Attribute Agreement Analysis data (OK/KO values)
 interface AttributeAnalysisRow {
@@ -81,6 +82,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
+  const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
 
   // Generate default attribute analysis data with 20 rows
   const generateDefaultAttributeData = (): AttributeAnalysisRow[] => {
@@ -533,7 +535,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </p>
                   </div>
 
-                  {/* Appraised unit type and Study Information */}
+            {/* Appraised unit type and Study Information */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Appraised unit type</label>
@@ -607,17 +609,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="text-md font-semibold">Agreement Analysis Data (OK/KO)</h4>
-                      <Button
-                        onClick={() => addAttributeAnalysisRow(ctqItem.ctq)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Row
-                      </Button>
+                    </div>
+                    {/* Scroll indicator */}
+                    <div className="relative">
+                    <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+                    ← Scroll horizontally →
+                    </div>
                     </div>
 
-                    <div className="overflow-x-auto border rounded-lg">
+                    <div className="overflow-x-auto border rounded-lg pt-6">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -725,7 +725,26 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-between pt-4">
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => addAttributeAnalysisRow(ctqItem.ctq)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Row
+                      </Button>
+                      <Button
+                        onClick={() => setShowStatistics(prev => ({ ...prev, [ctqItem.ctq]: !prev[ctqItem.ctq] }))}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Calculator className="h-4 w-4" />
+                        {showStatistics[ctqItem.ctq] ? "Hide Statistics" : "Calculate Statistics"}
+                      </Button>
+                    </div>
                     <Button
                       onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
                       disabled={saveAttributeMsaMutation.isPending}
@@ -735,6 +754,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       {saveAttributeMsaMutation.isPending ? "Saving..." : "Save Attribute MSA Study"}
                     </Button>
                   </div>
+
+                  {/* Statistics Display */}
+                  {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
+                    <div className="mt-6">
+                      <MSAStatisticsDisplay
+                        data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
+                        appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
+                        appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
+                        appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 // Continuous Gage R&R Interface
@@ -790,14 +821,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="text-md font-semibold">Gage R&R Measurement Data</h4>
-                      <Button
-                        onClick={() => addContinuousAnalysisRow(ctqItem.ctq)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Row
-                      </Button>
                     </div>
 
                     <div className="overflow-x-auto border rounded-lg">
@@ -849,7 +872,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-between pt-4">
+                      <Button
+                        onClick={() => addAttributeAnalysisRow(ctqItem.ctq)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Row
+                      </Button>
+                  {/* </div >
+                  <div className="flex justify-end pt-4"> */}
                     <Button
                       onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
                       disabled={saveContinuousMsaMutation.isPending}
