@@ -19,16 +19,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 // Interface for Attribute Agreement Analysis data (OK/KO values)
 interface AttributeAnalysisRow {
   unitNumber: number;
-  reference: "OK" | "KO";
+  reference: "OK" | "KO" | "";
   app1_rep1: "OK" | "KO";
   app1_rep2: "OK" | "KO";
-  app1_rep3: "OK" | "KO";
+  app1_rep3: "OK" | "KO" | "";
   app2_rep1: "OK" | "KO";
   app2_rep2: "OK" | "KO";
-  app2_rep3: "OK" | "KO";
+  app2_rep3: "OK" | "KO" | "";
   app3_rep1: "OK" | "KO";
   app3_rep2: "OK" | "KO";
-  app3_rep3: "OK" | "KO";
+  app3_rep3: "OK" | "KO" | "";
 }
 
 // Interface for Continuous Gage R&R data (real numbers)
@@ -86,16 +86,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const generateDefaultAttributeData = (): AttributeAnalysisRow[] => {
     return Array.from({ length: 20 }, (_, index) => ({
       unitNumber: index + 1,
-      reference: "OK" as const,
+      reference: "" as const,
       app1_rep1: "OK" as const,
       app1_rep2: "OK" as const,
-      app1_rep3: "OK" as const,
+      app1_rep3: "" as const,
       app2_rep1: "OK" as const,
       app2_rep2: "OK" as const,
-      app2_rep3: "OK" as const,
+      app2_rep3: "" as const,
       app3_rep1: "OK" as const,
       app3_rep2: "OK" as const,
-      app3_rep3: "OK" as const,
+      app3_rep3: "" as const,
     }));
   };
 
@@ -270,7 +270,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }));
   };
 
-  const updateAttributeAnalysisRow = (ctq: string, rowIndex: number, field: keyof AttributeAnalysisRow, value: "OK" | "KO") => {
+  const updateAttributeAnalysisRow = (ctq: string, rowIndex: number, field: keyof AttributeAnalysisRow, value: "OK" | "KO" | "") => {
     setAttributeMsaData(prev => {
       const updatedData = [...(prev[ctq]?.agreementAnalysisData || [])];
       if (updatedData[rowIndex]) {
@@ -294,16 +294,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       const currentData = prev[ctq]?.agreementAnalysisData || [];
       const newRow: AttributeAnalysisRow = {
         unitNumber: currentData.length + 1,
-        reference: "OK",
+        reference: "",
         app1_rep1: "OK",
         app1_rep2: "OK",
-        app1_rep3: "OK",
+        app1_rep3: "",
         app2_rep1: "OK",
         app2_rep2: "OK",
-        app2_rep3: "OK",
+        app2_rep3: "",
         app3_rep1: "OK",
         app3_rep2: "OK",
-        app3_rep3: "OK",
+        app3_rep3: "",
       };
       
       return {
@@ -639,22 +639,26 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           {(attributeMsaData[ctqItem.ctq]?.agreementAnalysisData || []).map((row, index) => (
                             <TableRow key={index}>
                               <TableCell className="font-medium">{row.unitNumber}</TableCell>
-                              {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => (
-                                <TableCell key={field}>
-                                  <Select
-                                    value={row[field as keyof AttributeAnalysisRow] as string}
-                                    onValueChange={(value: "OK" | "KO") => updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                              ))}
+                              {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
+                                const isBlankAllowed = field === 'reference' || field.includes('rep3');
+                                return (
+                                  <TableCell key={field}>
+                                    <Select
+                                      value={row[field as keyof AttributeAnalysisRow] as string}
+                                      onValueChange={(value: "OK" | "KO" | "") => updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, value)}
+                                    >
+                                      <SelectTrigger className="w-20">
+                                        <SelectValue placeholder="--" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {isBlankAllowed && <SelectItem value="">--</SelectItem>}
+                                        <SelectItem value="OK">OK</SelectItem>
+                                        <SelectItem value="KO">KO</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
+                                );
+                              })}
                               <TableCell>
                                 <Button
                                   onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
