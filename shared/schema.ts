@@ -902,44 +902,49 @@ export const insertCtsCharacteristicsSchema = createInsertSchema(ctsCharacterist
 export type InsertCtsCharacteristics = z.infer<typeof insertCtsCharacteristicsSchema>;
 export type CtsCharacteristics = typeof ctsCharacteristics.$inferSelect;
 
-// MSA (Measurement System Analysis) for each CTQ
-export const msaAnalysis = pgTable("msa_analysis", {
+// Attribute MSA Analysis for Attribute CTQs
+export const attributeMsaAnalysis = pgTable("attribute_msa_analysis", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
-  msaType: text("msa_type").notNull().default("Gage R&R"), // "Gage R&R", "Attribute Agreement", "Bias Study"
-  studyDescription: text("study_description"),
-  operators: text("operators"), // JSON array of operator names
-  parts: text("parts"), // JSON array of part identifiers
-  measurements: text("measurements"), // JSON array of measurement data
-  repeatability: text("repeatability"), // %Study Variation
-  reproducibility: text("reproducibility"), // %Study Variation
-  partToPartVariation: text("part_to_part_variation"), // %Study Variation
-  totalGageRR: text("total_gage_rr"), // %Study Variation
-  numberDistinctCategories: integer("number_distinct_categories"), // ndc
-  acceptableCriteria: text("acceptable_criteria"), // Pass/Fail criteria
-  conclusion: text("conclusion"),
-  actionPlan: text("action_plan"),
-  
-  // Attribute Agreement Analysis fields
   unitAppraisedType: text("unit_appraised_type").$type<UnitAppraisedType>().default("Parts"),
   unitAppraisedTypeOther: text("unit_appraised_type_other"), // Comment for "Other" selection
   appraiser1Name: text("appraiser1_name"),
   appraiser2Name: text("appraiser2_name"),
   appraiser3Name: text("appraiser3_name"),
   agreementAnalysisData: text("agreement_analysis_data"), // JSON array of measurement data with structure: [{unitNumber: 1, reference: "OK", app1_rep1: "OK", app1_rep2: "KO", ...}]
-  studyDateTime: timestamp("study_date_time"),
-  
+  studyDateTime: timestamp("study_date_time").notNull().defaultNow(),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertMsaAnalysisSchema = createInsertSchema(msaAnalysis).omit({
+export const insertAttributeMsaAnalysisSchema = createInsertSchema(attributeMsaAnalysis).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertMsaAnalysis = z.infer<typeof insertMsaAnalysisSchema>;
-export type MsaAnalysis = typeof msaAnalysis.$inferSelect;
+export type InsertAttributeMsaAnalysis = z.infer<typeof insertAttributeMsaAnalysisSchema>;
+export type AttributeMsaAnalysis = typeof attributeMsaAnalysis.$inferSelect;
+
+// Continuous MSA Analysis for Continuous CTQs
+export const continuousMsaAnalysis = pgTable("continuous_msa_analysis", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
+  appraiser1Name: text("appraiser1_name"),
+  appraiser2Name: text("appraiser2_name"),
+  appraiser3Name: text("appraiser3_name"),
+  gageRRData: text("gage_rr_data"), // JSON array of measurement data with structure: [{unitNumber: 1, app1_rep1: 12.5, app1_rep2: 12.3, app1_rep3: 12.7, ...}]
+  studyDateTime: timestamp("study_date_time").notNull().defaultNow(),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertContinuousMsaAnalysisSchema = createInsertSchema(continuousMsaAnalysis).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertContinuousMsaAnalysis = z.infer<typeof insertContinuousMsaAnalysisSchema>;
+export type ContinuousMsaAnalysis = typeof continuousMsaAnalysis.$inferSelect;
 
 // Process Capability for each CTQ
 export const processCapability = pgTable("process_capability", {

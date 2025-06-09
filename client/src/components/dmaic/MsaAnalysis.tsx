@@ -11,40 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Save, Upload, Download, Plus, Trash2 } from "lucide-react";
+import { BarChart3, Save, Plus, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-interface MsaData {
-  id?: number;
-  ctq: string;
-  msaType: string;
-  studyDescription: string;
-  operators: string;
-  parts: string;
-  measurements: string;
-  repeatability: string;
-  reproducibility: string;
-  partToPartVariation: string;
-  totalGageRR: string;
-  numberDistinctCategories: number | null;
-  acceptableCriteria: string;
-  conclusion: string;
-  actionPlan: string;
-  
-  // Attribute Agreement Analysis fields
-  unitAppraisedType: string;
-  unitAppraisedTypeOther: string;
-  appraiser1Name: string;
-  appraiser2Name: string;
-  appraiser3Name: string;
-  agreementAnalysisData: AgreementAnalysisRow[];
-  studyDateTime: string;
-}
-
-interface AgreementAnalysisRow {
+// Interface for Attribute Agreement Analysis data (OK/KO values)
+interface AttributeAnalysisRow {
   unitNumber: number;
   reference: "OK" | "KO";
   app1_rep1: "OK" | "KO";
@@ -58,17 +31,59 @@ interface AgreementAnalysisRow {
   app3_rep3: "OK" | "KO";
 }
 
+// Interface for Continuous Gage R&R data (real numbers)
+interface ContinuousAnalysisRow {
+  unitNumber: number;
+  app1_rep1: number;
+  app1_rep2: number;
+  app1_rep3: number;
+  app2_rep1: number;
+  app2_rep2: number;
+  app2_rep3: number;
+  app3_rep1: number;
+  app3_rep2: number;
+  app3_rep3: number;
+}
+
+interface AttributeMsaData {
+  id?: number;
+  ctq: string;
+  unitAppraisedType: string;
+  unitAppraisedTypeOther: string;
+  appraiser1Name: string;
+  appraiser2Name: string;
+  appraiser3Name: string;
+  agreementAnalysisData: AttributeAnalysisRow[];
+  studyDateTime: string;
+}
+
+interface ContinuousMsaData {
+  id?: number;
+  ctq: string;
+  appraiser1Name: string;
+  appraiser2Name: string;
+  appraiser3Name: string;
+  gageRRData: ContinuousAnalysisRow[];
+  studyDateTime: string;
+}
+
+interface CtqWithType {
+  ctq: string;
+  ctqType: "Attribute" | "Continuous";
+}
+
 interface MsaAnalysisProps {
   projectId: number;
 }
 
 export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const { toast } = useToast();
-  const [msaData, setMsaData] = useState<{ [ctq: string]: MsaData }>({});
+  const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
+  const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
-  // Generate default agreement analysis data with 10 rows
-  const generateDefaultAgreementData = (): AgreementAnalysisRow[] => {
+  // Generate default attribute analysis data with 10 rows
+  const generateDefaultAttributeData = (): AttributeAnalysisRow[] => {
     return Array.from({ length: 10 }, (_, index) => ({
       unitNumber: index + 1,
       reference: "OK" as const,
@@ -84,117 +99,169 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }));
   };
 
-  // Load CTQs from centralized endpoint
-  const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctqs`],
-    enabled: !!projectId,
-  });
+  // Generate default continuous analysis data with 10 rows
+  const generateDefaultContinuousData = (): ContinuousAnalysisRow[] => {
+    return Array.from({ length: 10 }, (_, index) => ({
+      unitNumber: index + 1,
+      app1_rep1: 0,
+      app1_rep2: 0,
+      app1_rep3: 0,
+      app2_rep1: 0,
+      app2_rep2: 0,
+      app2_rep3: 0,
+      app3_rep1: 0,
+      app3_rep2: 0,
+      app3_rep3: 0,
+    }));
+  };
 
-  // Load CTS characteristics for additional data
-  const { data: ctsData } = useQuery({
+  // Load CTQs with types from CTS characteristics
+  const { data: ctsData, isLoading: ctsLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/cts-characteristics`],
     enabled: !!projectId,
   });
 
-  // Load existing MSA data
+  // Load existing MSA data (both attribute and continuous)
   const { data: msaDataResponse, isLoading: msaLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/msa-analysis`],
     enabled: !!projectId,
   });
 
-  // Save MSA mutation
-  const saveMsaMutation = useMutation({
-    mutationFn: async (data: MsaData) => {
+  // Save attribute MSA mutation
+  const saveAttributeMsaMutation = useMutation({
+    mutationFn: async (data: AttributeMsaData) => {
       const payload = {
         projectId,
         ...data,
+        agreementAnalysisData: JSON.stringify(data.agreementAnalysisData),
+        studyDateTime: data.studyDateTime || new Date().toISOString(),
       };
       
       if (data.id) {
-        return apiRequest("PUT", `/api/projects/${projectId}/msa-analysis/${data.id}`, payload);
+        return apiRequest("PUT", `/api/projects/${projectId}/attribute-msa/${data.id}`, payload);
       } else {
-        return apiRequest("POST", `/api/projects/${projectId}/msa-analysis`, payload);
+        return apiRequest("POST", `/api/projects/${projectId}/attribute-msa`, payload);
       }
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "MSA analysis saved successfully",
+        description: "Attribute MSA analysis saved successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to save MSA analysis: ${error}`,
+        description: `Failed to save attribute MSA analysis: ${error}`,
         variant: "destructive",
       });
     },
   });
 
-  // Get CTQs from centralized endpoint
-  const getCTQs = () => {
-    // Use centralized CTQs endpoint which aggregates from all sources
-    if ((ctqsData as any)?.ctqs?.length > 0) {
-      return (ctqsData as any).ctqs.map((item: any) => item.ctq);
+  // Save continuous MSA mutation
+  const saveContinuousMsaMutation = useMutation({
+    mutationFn: async (data: ContinuousMsaData) => {
+      const payload = {
+        projectId,
+        ...data,
+        gageRRData: JSON.stringify(data.gageRRData),
+        studyDateTime: data.studyDateTime || new Date().toISOString(),
+      };
+      
+      if (data.id) {
+        return apiRequest("PUT", `/api/projects/${projectId}/continuous-msa/${data.id}`, payload);
+      } else {
+        return apiRequest("POST", `/api/projects/${projectId}/continuous-msa`, payload);
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Continuous MSA analysis saved successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to save continuous MSA analysis: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Get CTQs with types from CTS characteristics
+  const getCtqsWithTypes = (): CtqWithType[] => {
+    if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData) {
+      return (ctsData as any).characteristics.map((item: any) => ({
+        ctq: item.ctq,
+        ctqType: item.ctqType || "Continuous"
+      }));
     }
-    
     return [];
   };
 
   // Initialize MSA data when CTQs and MSA data are loaded
   useEffect(() => {
-    const ctqs = getCTQs();
-    if (ctqs.length > 0 && msaDataResponse && typeof msaDataResponse === 'object' && 'msaAnalysis' in msaDataResponse) {
-      const initialData: { [ctq: string]: MsaData } = {};
+    const ctqsWithTypes = getCtqsWithTypes();
+    if (ctqsWithTypes.length > 0 && msaDataResponse) {
+      const initialAttributeData: { [ctq: string]: AttributeMsaData } = {};
+      const initialContinuousData: { [ctq: string]: ContinuousMsaData } = {};
       
-      // Create MSA entry for each CTQ
-      ctqs.forEach((ctq: string) => {
-        const existingMsa = (msaDataResponse as any).msaAnalysis.find((msa: any) => msa.ctq === ctq);
+      ctqsWithTypes.forEach((ctqItem: CtqWithType) => {
+        const { ctq, ctqType } = ctqItem;
         
-        initialData[ctq] = existingMsa ? {
-          ...existingMsa,
-          agreementAnalysisData: existingMsa.agreementAnalysisData ? 
-            JSON.parse(existingMsa.agreementAnalysisData) : 
-            generateDefaultAgreementData(),
-        } : {
-          ctq: ctq,
-          msaType: "Gage R&R",
-          studyDescription: "",
-          operators: "",
-          parts: "",
-          measurements: "",
-          repeatability: "",
-          reproducibility: "",
-          partToPartVariation: "",
-          totalGageRR: "",
-          numberDistinctCategories: null,
-          acceptableCriteria: "",
-          conclusion: "",
-          actionPlan: "",
+        if (ctqType === "Attribute") {
+          const existingMsa = (msaDataResponse as any)?.attributeMsa?.find((msa: any) => msa.ctq === ctq);
           
-          // Attribute Agreement Analysis fields
-          unitAppraisedType: "Parts",
-          unitAppraisedTypeOther: "",
-          appraiser1Name: "",
-          appraiser2Name: "",
-          appraiser3Name: "",
-          agreementAnalysisData: generateDefaultAgreementData(),
-          studyDateTime: "",
-        };
+          initialAttributeData[ctq] = existingMsa ? {
+            ...existingMsa,
+            agreementAnalysisData: existingMsa.agreementAnalysisData ? 
+              JSON.parse(existingMsa.agreementAnalysisData) : 
+              generateDefaultAttributeData(),
+          } : {
+            ctq: ctq,
+            unitAppraisedType: "Parts",
+            unitAppraisedTypeOther: "",
+            appraiser1Name: "",
+            appraiser2Name: "",
+            appraiser3Name: "",
+            agreementAnalysisData: generateDefaultAttributeData(),
+            studyDateTime: new Date().toISOString(),
+          };
+        } else {
+          const existingMsa = (msaDataResponse as any)?.continuousMsa?.find((msa: any) => msa.ctq === ctq);
+          
+          initialContinuousData[ctq] = existingMsa ? {
+            ...existingMsa,
+            gageRRData: existingMsa.gageRRData ? 
+              JSON.parse(existingMsa.gageRRData) : 
+              generateDefaultContinuousData(),
+          } : {
+            ctq: ctq,
+            appraiser1Name: "",
+            appraiser2Name: "",
+            appraiser3Name: "",
+            gageRRData: generateDefaultContinuousData(),
+            studyDateTime: new Date().toISOString(),
+          };
+        }
       });
       
-      setMsaData(initialData);
+      setAttributeMsaData(initialAttributeData);
+      setContinuousMsaData(initialContinuousData);
       
-      // Set active tab to first CTQ if not already set
-      if (!activeTab && ctqs.length > 0) {
-        setActiveTab(ctqs[0]);
+      // Set first tab as active
+      if (ctqsWithTypes.length > 0 && !activeTab) {
+        setActiveTab(ctqsWithTypes[0].ctq);
       }
     }
-  }, [ctqsData, msaDataResponse, ctsData, activeTab]);
+  }, [ctsData, msaDataResponse, activeTab]);
 
-  const updateMsaField = (ctq: string, field: keyof MsaData, value: any) => {
-    setMsaData(prev => ({
+  // Helper functions for attribute MSA
+  const updateAttributeMsaField = (ctq: string, field: keyof AttributeMsaData, value: any) => {
+    setAttributeMsaData(prev => ({
       ...prev,
       [ctq]: {
         ...prev[ctq],
@@ -203,8 +270,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }));
   };
 
-  const updateAgreementAnalysisRow = (ctq: string, rowIndex: number, field: keyof AgreementAnalysisRow, value: "OK" | "KO") => {
-    setMsaData(prev => {
+  const updateAttributeAnalysisRow = (ctq: string, rowIndex: number, field: keyof AttributeAnalysisRow, value: "OK" | "KO") => {
+    setAttributeMsaData(prev => {
       const updatedData = [...(prev[ctq]?.agreementAnalysisData || [])];
       if (updatedData[rowIndex]) {
         updatedData[rowIndex] = {
@@ -222,10 +289,10 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     });
   };
 
-  const addAgreementAnalysisRow = (ctq: string) => {
-    setMsaData(prev => {
+  const addAttributeAnalysisRow = (ctq: string) => {
+    setAttributeMsaData(prev => {
       const currentData = prev[ctq]?.agreementAnalysisData || [];
-      const newRow: AgreementAnalysisRow = {
+      const newRow: AttributeAnalysisRow = {
         unitNumber: currentData.length + 1,
         reference: "OK",
         app1_rep1: "OK",
@@ -249,8 +316,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     });
   };
 
-  const removeAgreementAnalysisRow = (ctq: string, rowIndex: number) => {
-    setMsaData(prev => {
+  const removeAttributeAnalysisRow = (ctq: string, rowIndex: number) => {
+    setAttributeMsaData(prev => {
       const updatedData = [...(prev[ctq]?.agreementAnalysisData || [])];
       updatedData.splice(rowIndex, 1);
       
@@ -269,35 +336,129 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     });
   };
 
-  const handleSaveMsa = (ctq: string) => {
-    const data = msaData[ctq];
+  // Helper functions for continuous MSA
+  const updateContinuousMsaField = (ctq: string, field: keyof ContinuousMsaData, value: any) => {
+    setContinuousMsaData(prev => ({
+      ...prev,
+      [ctq]: {
+        ...prev[ctq],
+        [field]: value,
+      }
+    }));
+  };
+
+  const updateContinuousAnalysisRow = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, value: number) => {
+    setContinuousMsaData(prev => {
+      const updatedData = [...(prev[ctq]?.gageRRData || [])];
+      if (updatedData[rowIndex]) {
+        updatedData[rowIndex] = {
+          ...updatedData[rowIndex],
+          [field]: value,
+        };
+      }
+      return {
+        ...prev,
+        [ctq]: {
+          ...prev[ctq],
+          gageRRData: updatedData,
+        }
+      };
+    });
+  };
+
+  const addContinuousAnalysisRow = (ctq: string) => {
+    setContinuousMsaData(prev => {
+      const currentData = prev[ctq]?.gageRRData || [];
+      const newRow: ContinuousAnalysisRow = {
+        unitNumber: currentData.length + 1,
+        app1_rep1: 0,
+        app1_rep2: 0,
+        app1_rep3: 0,
+        app2_rep1: 0,
+        app2_rep2: 0,
+        app2_rep3: 0,
+        app3_rep1: 0,
+        app3_rep2: 0,
+        app3_rep3: 0,
+      };
+      
+      return {
+        ...prev,
+        [ctq]: {
+          ...prev[ctq],
+          gageRRData: [...currentData, newRow],
+        }
+      };
+    });
+  };
+
+  const removeContinuousAnalysisRow = (ctq: string, rowIndex: number) => {
+    setContinuousMsaData(prev => {
+      const updatedData = [...(prev[ctq]?.gageRRData || [])];
+      updatedData.splice(rowIndex, 1);
+      
+      // Renumber the remaining rows
+      updatedData.forEach((row, index) => {
+        row.unitNumber = index + 1;
+      });
+      
+      return {
+        ...prev,
+        [ctq]: {
+          ...prev[ctq],
+          gageRRData: updatedData,
+        }
+      };
+    });
+  };
+
+  const handleSaveAttributeMsa = (ctq: string) => {
+    const data = attributeMsaData[ctq];
     if (data) {
-      const payload = {
-        ...data,
-        agreementAnalysisData: JSON.stringify(data.agreementAnalysisData),
-        studyDateTime: data.studyDateTime || new Date().toISOString(),
-      } as any;
-      saveMsaMutation.mutate(payload);
+      saveAttributeMsaMutation.mutate(data);
     }
   };
 
-  const getMsaStatusBadge = (ctq: string) => {
-    const data = msaData[ctq];
-    if (!data) return <Badge variant="secondary">No Data</Badge>;
-    
-    const hasBasicData = data.msaType && data.studyDescription;
-    const hasResults = data.totalGageRR || data.numberDistinctCategories;
-    
-    if (hasResults) {
-      return <Badge variant="default" className="bg-green-600">Complete</Badge>;
-    } else if (hasBasicData) {
-      return <Badge variant="outline">In Progress</Badge>;
+  const handleSaveContinuousMsa = (ctq: string) => {
+    const data = continuousMsaData[ctq];
+    if (data) {
+      saveContinuousMsaMutation.mutate(data);
+    }
+  };
+
+  const getMsaStatusBadge = (ctq: string, ctqType: "Attribute" | "Continuous") => {
+    if (ctqType === "Attribute") {
+      const data = attributeMsaData[ctq];
+      if (!data) return <Badge variant="secondary">No Data</Badge>;
+      
+      const hasBasicData = data.appraiser1Name && data.appraiser2Name && data.appraiser3Name;
+      const hasData = data.agreementAnalysisData && data.agreementAnalysisData.length > 0;
+      
+      if (hasBasicData && hasData) {
+        return <Badge variant="default" className="bg-green-600">Complete</Badge>;
+      } else if (hasBasicData) {
+        return <Badge variant="outline">In Progress</Badge>;
+      } else {
+        return <Badge variant="secondary">Not Started</Badge>;
+      }
     } else {
-      return <Badge variant="secondary">Not Started</Badge>;
+      const data = continuousMsaData[ctq];
+      if (!data) return <Badge variant="secondary">No Data</Badge>;
+      
+      const hasBasicData = data.appraiser1Name && data.appraiser2Name && data.appraiser3Name;
+      const hasData = data.gageRRData && data.gageRRData.length > 0;
+      
+      if (hasBasicData && hasData) {
+        return <Badge variant="default" className="bg-green-600">Complete</Badge>;
+      } else if (hasBasicData) {
+        return <Badge variant="outline">In Progress</Badge>;
+      } else {
+        return <Badge variant="secondary">Not Started</Badge>;
+      }
     }
   };
 
-  if (ctqsLoading || msaLoading) {
+  if (ctsLoading || msaLoading) {
     return (
       <Card>
         <CardHeader>
@@ -313,7 +474,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     );
   }
 
-  const ctqList = getCTQs();
+  const ctqList = getCtqsWithTypes();
 
   if (ctqList.length === 0) {
     return (
@@ -341,473 +502,312 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           MSA (Measurement System Analysis)
         </CardTitle>
         <p className="text-sm text-gray-600 mt-2">
-          One MSA study per CTQ defined in CTS Characteristics table
+          Automatic MSA type selection based on CTQ type: Attribute Agreement Analysis for Attribute CTQs, Gage R&R for Continuous CTQs
         </p>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
-            {ctqList.map((ctq: string) => (
+            {ctqList.map((ctqItem: CtqWithType) => (
               <TabsTrigger 
-                key={ctq} 
-                value={ctq}
+                key={ctqItem.ctq} 
+                value={ctqItem.ctq}
                 className="flex flex-col items-center gap-1 p-3"
               >
-                <span className="font-medium truncate max-w-[150px]">{ctq}</span>
-                {getMsaStatusBadge(ctq)}
+                <span className="font-medium truncate max-w-[150px]">{ctqItem.ctq}</span>
+                <span className="text-xs text-gray-500">{ctqItem.ctqType}</span>
+                {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {ctqList.map((ctq: string) => (
-            <TabsContent key={ctq} value={ctq} className="mt-6">
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">MSA Type</label>
-                    <Select
-                      value={msaData[ctq]?.msaType || "Gage R&R"}
-                      onValueChange={(value) => updateMsaField(ctq, "msaType", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Gage R&R">Gage R&R</SelectItem>
-                        <SelectItem value="Attribute Agreement">Attribute Agreement</SelectItem>
-                        <SelectItem value="Bias Study">Bias Study</SelectItem>
-                        <SelectItem value="Linearity Study">Linearity Study</SelectItem>
-                      </SelectContent>
-                    </Select>
+          {ctqList.map((ctqItem: CtqWithType) => (
+            <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-6">
+              {ctqItem.ctqType === "Attribute" ? (
+                // Attribute Agreement Analysis Interface
+                <div className="space-y-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
+                    <p className="text-sm text-gray-600">
+                      For Attribute CTQs, we perform Agreement Analysis studying both Accuracy and Precision using OK/KO evaluations.
+                    </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Number of Distinct Categories (ndc)</label>
-                    <Input
-                      type="number"
-                      value={msaData[ctq]?.numberDistinctCategories || ""}
-                      onChange={(e) => updateMsaField(ctq, "numberDistinctCategories", e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="e.g., 5"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Study Description</label>
-                  <Textarea
-                    value={msaData[ctq]?.studyDescription || ""}
-                    onChange={(e) => updateMsaField(ctq, "studyDescription", e.target.value)}
-                    placeholder="Describe the MSA study methodology and objectives..."
-                    rows={3}
-                  />
-                </div>
-
-                {/* Conditional rendering based on MSA Type */}
-                {msaData[ctq]?.msaType === "Attribute Agreement" ? (
-                  // Attribute Agreement Analysis Interface
-                  <div className="space-y-6">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-4">Attribute Agreement Analysis (Gage R&R)</h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        For Attribute CTQs, we perform Agreement Analysis studying both Accuracy and Precision using OK/KO evaluations.
-                      </p>
-                    </div>
-
-                    {/* Unit Appraised Type and Study Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Unit Appraised Type</label>
-                        <Select
-                          value={msaData[ctq]?.unitAppraisedType || "Parts"}
-                          onValueChange={(value) => updateMsaField(ctq, "unitAppraisedType", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Parts">Parts</SelectItem>
-                            <SelectItem value="Units">Units</SelectItem>
-                            <SelectItem value="Files">Files</SelectItem>
-                            <SelectItem value="Documents">Documents</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {msaData[ctq]?.unitAppraisedType === "Other" && (
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Other - Please specify</label>
-                          <Input
-                            value={msaData[ctq]?.unitAppraisedTypeOther || ""}
-                            onChange={(e) => updateMsaField(ctq, "unitAppraisedTypeOther", e.target.value)}
-                            placeholder="Specify the type of unit being appraised"
-                          />
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Study Date & Time</label>
-                        <Input
-                          type="datetime-local"
-                          value={msaData[ctq]?.studyDateTime || ""}
-                          onChange={(e) => updateMsaField(ctq, "studyDateTime", e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Appraiser Names */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Appraiser 1 Name</label>
-                        <Input
-                          value={msaData[ctq]?.appraiser1Name || ""}
-                          onChange={(e) => updateMsaField(ctq, "appraiser1Name", e.target.value)}
-                          placeholder="Enter appraiser 1 name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Appraiser 2 Name</label>
-                        <Input
-                          value={msaData[ctq]?.appraiser2Name || ""}
-                          onChange={(e) => updateMsaField(ctq, "appraiser2Name", e.target.value)}
-                          placeholder="Enter appraiser 2 name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Appraiser 3 Name</label>
-                        <Input
-                          value={msaData[ctq]?.appraiser3Name || ""}
-                          onChange={(e) => updateMsaField(ctq, "appraiser3Name", e.target.value)}
-                          placeholder="Enter appraiser 3 name"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Agreement Analysis Data Table */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-md font-semibold">Agreement Analysis Data (OK/KO)</h4>
-                        <div className="space-x-2">
-                          <Button
-                            onClick={() => addAgreementAnalysisRow(ctq)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Row
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Upload className="h-4 w-4 mr-2" />
-                            Import Excel
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            Export Excel
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="overflow-x-auto border rounded-lg">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-20">Unit #</TableHead>
-                              <TableHead className="w-24">Reference (Standard)</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser1Name || "App 1"} Rep 1</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser1Name || "App 1"} Rep 2</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser1Name || "App 1"} Rep 3</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser2Name || "App 2"} Rep 1</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser2Name || "App 2"} Rep 2</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser2Name || "App 2"} Rep 3</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser3Name || "App 3"} Rep 1</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser3Name || "App 3"} Rep 2</TableHead>
-                              <TableHead className="w-24">{msaData[ctq]?.appraiser3Name || "App 3"} Rep 3</TableHead>
-                              <TableHead className="w-16">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(msaData[ctq]?.agreementAnalysisData || []).map((row, index) => (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">{row.unitNumber}</TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.reference}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "reference", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app1_rep1}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app1_rep1", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app1_rep2}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app1_rep2", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app1_rep3}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app1_rep3", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app2_rep1}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app2_rep1", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app2_rep2}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app2_rep2", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app2_rep3}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app2_rep3", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app3_rep1}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app3_rep1", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app3_rep2}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app3_rep2", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={row.app3_rep3}
-                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app3_rep3", value)}
-                                  >
-                                    <SelectTrigger className="w-20">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="OK">OK</SelectItem>
-                                      <SelectItem value="KO">KO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Button
-                                    onClick={() => removeAgreementAnalysisRow(ctq, index)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  // Traditional Gage R&R Interface
+                  {/* Unit Appraised Type and Study Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Operators</label>
-                      <Input
-                        value={msaData[ctq]?.operators || ""}
-                        onChange={(e) => updateMsaField(ctq, "operators", e.target.value)}
-                        placeholder="e.g., Operator A, Operator B, Operator C"
-                      />
+                      <label className="block text-sm font-medium mb-2">Unit Appraised Type</label>
+                      <Select
+                        value={attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Parts"}
+                        onValueChange={(value) => updateAttributeMsaField(ctqItem.ctq, "unitAppraisedType", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Parts">Parts</SelectItem>
+                          <SelectItem value="Units">Units</SelectItem>
+                          <SelectItem value="Files">Files</SelectItem>
+                          <SelectItem value="Documents">Documents</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
+                    {attributeMsaData[ctqItem.ctq]?.unitAppraisedType === "Other" && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Other - Please specify</label>
+                        <Input
+                          value={attributeMsaData[ctqItem.ctq]?.unitAppraisedTypeOther || ""}
+                          onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "unitAppraisedTypeOther", e.target.value)}
+                          placeholder="Specify the type of unit being appraised"
+                        />
+                      </div>
+                    )}
+
                     <div>
-                      <label className="block text-sm font-medium mb-2">Parts/Samples</label>
+                      <label className="block text-sm font-medium mb-2">Study Date & Time</label>
                       <Input
-                        value={msaData[ctq]?.parts || ""}
-                        onChange={(e) => updateMsaField(ctq, "parts", e.target.value)}
-                        placeholder="e.g., Part 1, Part 2, Part 3"
+                        type="datetime-local"
+                        value={attributeMsaData[ctqItem.ctq]?.studyDateTime?.slice(0, 16) || new Date().toISOString().slice(0, 16)}
+                        onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "studyDateTime", e.target.value)}
                       />
                     </div>
                   </div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Measurement Data</label>
-                  <Textarea
-                    value={msaData[ctq]?.measurements || ""}
-                    onChange={(e) => updateMsaField(ctq, "measurements", e.target.value)}
-                    placeholder="Enter measurement data (JSON format or structured text)..."
-                    rows={4}
-                  />
-                </div>
-
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-4">MSA Results (%Study Variation)</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Appraiser Names */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Repeatability (%)</label>
+                      <label className="block text-sm font-medium mb-2">Appraiser 1 Name</label>
                       <Input
-                        value={msaData[ctq]?.repeatability || ""}
-                        onChange={(e) => updateMsaField(ctq, "repeatability", e.target.value)}
-                        placeholder="e.g., 15.2"
+                        value={attributeMsaData[ctqItem.ctq]?.appraiser1Name || ""}
+                        onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "appraiser1Name", e.target.value)}
+                        placeholder="Enter appraiser 1 name"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2">Reproducibility (%)</label>
+                      <label className="block text-sm font-medium mb-2">Appraiser 2 Name</label>
                       <Input
-                        value={msaData[ctq]?.reproducibility || ""}
-                        onChange={(e) => updateMsaField(ctq, "reproducibility", e.target.value)}
-                        placeholder="e.g., 8.7"
+                        value={attributeMsaData[ctqItem.ctq]?.appraiser2Name || ""}
+                        onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "appraiser2Name", e.target.value)}
+                        placeholder="Enter appraiser 2 name"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2">Part-to-Part (%)</label>
+                      <label className="block text-sm font-medium mb-2">Appraiser 3 Name</label>
                       <Input
-                        value={msaData[ctq]?.partToPartVariation || ""}
-                        onChange={(e) => updateMsaField(ctq, "partToPartVariation", e.target.value)}
-                        placeholder="e.g., 89.3"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Total Gage R&R (%)</label>
-                      <Input
-                        value={msaData[ctq]?.totalGageRR || ""}
-                        onChange={(e) => updateMsaField(ctq, "totalGageRR", e.target.value)}
-                        placeholder="e.g., 17.5"
-                        className={
-                          msaData[ctq]?.totalGageRR && parseFloat(msaData[ctq]?.totalGageRR) > 30
-                            ? "border-red-500"
-                            : msaData[ctq]?.totalGageRR && parseFloat(msaData[ctq]?.totalGageRR) <= 10
-                            ? "border-green-500"
-                            : ""
-                        }
+                        value={attributeMsaData[ctqItem.ctq]?.appraiser3Name || ""}
+                        onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "appraiser3Name", e.target.value)}
+                        placeholder="Enter appraiser 3 name"
                       />
                     </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Acceptable Criteria</label>
-                  <Textarea
-                    value={msaData[ctq]?.acceptableCriteria || ""}
-                    onChange={(e) => updateMsaField(ctq, "acceptableCriteria", e.target.value)}
-                    placeholder="Define the pass/fail criteria for this MSA study..."
-                    rows={2}
-                  />
-                </div>
+                  {/* Agreement Analysis Data Table */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-md font-semibold">Agreement Analysis Data (OK/KO)</h4>
+                      <Button
+                        onClick={() => addAttributeAnalysisRow(ctqItem.ctq)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Row
+                      </Button>
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Conclusion</label>
-                  <Textarea
-                    value={msaData[ctq]?.conclusion || ""}
-                    onChange={(e) => updateMsaField(ctq, "conclusion", e.target.value)}
-                    placeholder="Summarize the MSA study results and measurement system acceptability..."
-                    rows={3}
-                  />
-                </div>
+                    <div className="overflow-x-auto border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-20">Unit #</TableHead>
+                            <TableHead className="w-24">Reference (Standard)</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 1</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 2</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 3</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 1</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 2</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 3</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 1</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 2</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 3</TableHead>
+                            <TableHead className="w-16">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {(attributeMsaData[ctqItem.ctq]?.agreementAnalysisData || []).map((row, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                              {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => (
+                                <TableCell key={field}>
+                                  <Select
+                                    value={row[field as keyof AttributeAnalysisRow] as string}
+                                    onValueChange={(value: "OK" | "KO") => updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                              ))}
+                              <TableCell>
+                                <Button
+                                  onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Action Plan</label>
-                  <Textarea
-                    value={msaData[ctq]?.actionPlan || ""}
-                    onChange={(e) => updateMsaField(ctq, "actionPlan", e.target.value)}
-                    placeholder="Define actions needed to improve the measurement system if required..."
-                    rows={3}
-                  />
+                  <div className="flex justify-end pt-4">
+                    <Button
+                      onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
+                      disabled={saveAttributeMsaMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saveAttributeMsaMutation.isPending ? "Saving..." : "Save Attribute MSA Study"}
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                // Continuous Gage R&R Interface
+                <div className="space-y-6">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2">Gage R&R Study</h3>
+                    <p className="text-sm text-gray-600">
+                      For Continuous CTQs, we perform Gage R&R analysis studying measurement system variation using numerical values.
+                    </p>
+                  </div>
 
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={() => handleSaveMsa(ctq)}
-                    disabled={saveMsaMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {saveMsaMutation.isPending ? "Saving..." : "Save MSA Study"}
-                  </Button>
+                  {/* Study Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Study Date & Time</label>
+                      <Input
+                        type="datetime-local"
+                        value={continuousMsaData[ctqItem.ctq]?.studyDateTime?.slice(0, 16) || new Date().toISOString().slice(0, 16)}
+                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "studyDateTime", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Appraiser Names */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Appraiser 1 Name</label>
+                      <Input
+                        value={continuousMsaData[ctqItem.ctq]?.appraiser1Name || ""}
+                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "appraiser1Name", e.target.value)}
+                        placeholder="Enter appraiser 1 name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Appraiser 2 Name</label>
+                      <Input
+                        value={continuousMsaData[ctqItem.ctq]?.appraiser2Name || ""}
+                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "appraiser2Name", e.target.value)}
+                        placeholder="Enter appraiser 2 name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Appraiser 3 Name</label>
+                      <Input
+                        value={continuousMsaData[ctqItem.ctq]?.appraiser3Name || ""}
+                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "appraiser3Name", e.target.value)}
+                        placeholder="Enter appraiser 3 name"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gage R&R Data Table */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-md font-semibold">Gage R&R Measurement Data</h4>
+                      <Button
+                        onClick={() => addContinuousAnalysisRow(ctqItem.ctq)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Row
+                      </Button>
+                    </div>
+
+                    <div className="overflow-x-auto border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-20">Unit #</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 1</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 2</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 3</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 1</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 2</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 3</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 1</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 2</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 3</TableHead>
+                            <TableHead className="w-16">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {(continuousMsaData[ctqItem.ctq]?.gageRRData || []).map((row, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                              {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => (
+                                <TableCell key={field}>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={row[field as keyof ContinuousAnalysisRow] as number}
+                                    onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, parseFloat(e.target.value) || 0)}
+                                    className="w-20"
+                                  />
+                                </TableCell>
+                              ))}
+                              <TableCell>
+                                <Button
+                                  onClick={() => removeContinuousAnalysisRow(ctqItem.ctq, index)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <Button
+                      onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
+                      disabled={saveContinuousMsaMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R Study"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </TabsContent>
           ))}
         </Tabs>

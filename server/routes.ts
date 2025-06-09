@@ -10,7 +10,7 @@ import {
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
-  insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema
+  insertStakeholderAnalysisItemSchema, insertAttributeMsaAnalysisSchema, insertContinuousMsaAnalysisSchema, insertProcessCapabilitySchema
 } from "@shared/schema";
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
@@ -19,7 +19,7 @@ import {
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
-  customerRequirements, businessRequirements, msaAnalysis, processCapability
+  customerRequirements, businessRequirements, attributeMsaAnalysis, continuousMsaAnalysis, processCapability
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2334,50 +2334,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // MSA Analysis routes
+  // MSA Analysis routes - separate for attribute and continuous
   app.get("/api/projects/:projectId/msa-analysis", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const msaAnalysisData = await db
-        .select()
-        .from(msaAnalysis)
-        .where(eq(msaAnalysis.projectId, projectId));
       
-      return res.status(200).json({ msaAnalysis: msaAnalysisData });
+      // Get both attribute and continuous MSA data
+      const attributeMsaData = await db
+        .select()
+        .from(attributeMsaAnalysis)
+        .where(eq(attributeMsaAnalysis.projectId, projectId));
+        
+      const continuousMsaData = await db
+        .select()
+        .from(continuousMsaAnalysis)
+        .where(eq(continuousMsaAnalysis.projectId, projectId));
+      
+      return res.status(200).json({ 
+        attributeMsa: attributeMsaData,
+        continuousMsa: continuousMsaData 
+      });
     } catch (err) {
       return handleErrors(err, res);
     }
   });
 
-  app.post("/api/projects/:projectId/msa-analysis", async (req, res) => {
+  app.post("/api/projects/:projectId/attribute-msa", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const payload = insertMsaAnalysisSchema.parse({
+      const payload = insertAttributeMsaAnalysisSchema.parse({
         ...req.body,
         projectId,
       });
 
-      // Check if MSA record already exists for this CTQ and project
+      // Check if attribute MSA record already exists for this CTQ and project
       const existingMsa = await db
         .select()
-        .from(msaAnalysis)
+        .from(attributeMsaAnalysis)
         .where(and(
-          eq(msaAnalysis.projectId, projectId),
-          eq(msaAnalysis.ctq, payload.ctq)
+          eq(attributeMsaAnalysis.projectId, projectId),
+          eq(attributeMsaAnalysis.ctq, payload.ctq)
         ))
         .limit(1);
 
       if (existingMsa.length > 0) {
         // Update existing record
         const [updatedMsa] = await db
-          .update(msaAnalysis)
+          .update(attributeMsaAnalysis)
           .set({
             ...payload,
             lastUpdated: new Date(),
           })
           .where(and(
-            eq(msaAnalysis.projectId, projectId),
-            eq(msaAnalysis.ctq, payload.ctq)
+            eq(attributeMsaAnalysis.projectId, projectId),
+            eq(attributeMsaAnalysis.ctq, payload.ctq)
           ))
           .returning();
 
@@ -2385,7 +2395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Create new record
         const [newMsa] = await db
-          .insert(msaAnalysis)
+          .insert(attributeMsaAnalysis)
           .values(payload)
           .returning();
 
@@ -2396,23 +2406,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/projects/:projectId/msa-analysis/:id", async (req, res) => {
+  app.post("/api/projects/:projectId/continuous-msa", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const payload = insertContinuousMsaAnalysisSchema.parse({
+        ...req.body,
+        projectId,
+      });
+
+      // Check if continuous MSA record already exists for this CTQ and project
+      const existingMsa = await db
+        .select()
+        .from(continuousMsaAnalysis)
+        .where(and(
+          eq(continuousMsaAnalysis.projectId, projectId),
+          eq(continuousMsaAnalysis.ctq, payload.ctq)
+        ))
+        .limit(1);
+
+      if (existingMsa.length > 0) {
+        // Update existing record
+        const [updatedMsa] = await db
+          .update(continuousMsaAnalysis)
+          .set({
+            ...payload,
+            lastUpdated: new Date(),
+          })
+          .where(and(
+            eq(continuousMsaAnalysis.projectId, projectId),
+            eq(continuousMsaAnalysis.ctq, payload.ctq)
+          ))
+          .returning();
+
+        return res.status(200).json({ msa: updatedMsa });
+      } else {
+        // Create new record
+        const [newMsa] = await db
+          .insert(continuousMsaAnalysis)
+          .values(payload)
+          .returning();
+
+        return res.status(201).json({ msa: newMsa });
+      }
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/projects/:projectId/attribute-msa/:id", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const id = parseInt(req.params.id);
       
-      const payload = insertMsaAnalysisSchema.parse({
+      const payload = insertAttributeMsaAnalysisSchema.parse({
         ...req.body,
         projectId,
       });
 
       const [updatedMsa] = await db
-        .update(msaAnalysis)
+        .update(attributeMsaAnalysis)
         .set({
           ...payload,
           lastUpdated: new Date(),
         })
-        .where(and(eq(msaAnalysis.id, id), eq(msaAnalysis.projectId, projectId)))
+        .where(and(eq(attributeMsaAnalysis.id, id), eq(attributeMsaAnalysis.projectId, projectId)))
+        .returning();
+
+      return res.status(200).json({ msa: updatedMsa });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/projects/:projectId/continuous-msa/:id", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const id = parseInt(req.params.id);
+      
+      const payload = insertContinuousMsaAnalysisSchema.parse({
+        ...req.body,
+        projectId,
+      });
+
+      const [updatedMsa] = await db
+        .update(continuousMsaAnalysis)
+        .set({
+          ...payload,
+          lastUpdated: new Date(),
+        })
+        .where(and(eq(continuousMsaAnalysis.id, id), eq(continuousMsaAnalysis.projectId, projectId)))
         .returning();
 
       return res.status(200).json({ msa: updatedMsa });
