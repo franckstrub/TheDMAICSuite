@@ -22,6 +22,10 @@ export type InfluenceLevel = typeof influenceLevels[number];
 export const supportLevels = ["Supporter", "Neutral", "Resistant"] as const;
 export type SupportLevel = typeof supportLevels[number];
 
+// Unit appraised type options for MSA
+export const unitAppraisedTypes = ["Parts", "Units", "Files", "Documents", "Other"] as const;
+export type UnitAppraisedType = typeof unitAppraisedTypes[number];
+
 // Gate Review Validation Status
 export const validationStatusTypes = ["Pending", "Approved", "Rejected"] as const;
 export type ValidationStatus = typeof validationStatusTypes[number];
@@ -64,7 +68,6 @@ export const users = pgTable("users", {
 });
 
 export type UpsertUser = typeof users.$inferInsert;
-export type User = typeof users.$inferSelect;
 
 export const updateUserProfileSchema = createInsertSchema(users).pick({
   firstName: true,
@@ -645,8 +648,13 @@ export const insertRiskSchema = createInsertSchema(projectRisks).pick({
   riskOwner6: true,
 });
 
-// Type definitions
-export type User = typeof users.$inferSelect;
+// User insert schema
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Project = typeof projects.$inferSelect & {
@@ -912,6 +920,16 @@ export const msaAnalysis = pgTable("msa_analysis", {
   acceptableCriteria: text("acceptable_criteria"), // Pass/Fail criteria
   conclusion: text("conclusion"),
   actionPlan: text("action_plan"),
+  
+  // Attribute Agreement Analysis fields
+  unitAppraisedType: text("unit_appraised_type").$type<UnitAppraisedType>().default("Parts"),
+  unitAppraisedTypeOther: text("unit_appraised_type_other"), // Comment for "Other" selection
+  appraiser1Name: text("appraiser1_name"),
+  appraiser2Name: text("appraiser2_name"),
+  appraiser3Name: text("appraiser3_name"),
+  agreementAnalysisData: text("agreement_analysis_data"), // JSON array of measurement data with structure: [{unitNumber: 1, reference: "OK", app1_rep1: "OK", app1_rep2: "KO", ...}]
+  studyDateTime: timestamp("study_date_time"),
+  
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
