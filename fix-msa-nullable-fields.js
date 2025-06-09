@@ -29,7 +29,14 @@ async function fixMsaNullableFields() {
       ALTER COLUMN operators DROP NOT NULL,
       ALTER COLUMN parts DROP NOT NULL,
       ALTER COLUMN measurements DROP NOT NULL,
-      ALTER COLUMN number_distinct_categories DROP NOT NULL;
+      ALTER COLUMN repeatability DROP NOT NULL,
+      ALTER COLUMN reproducibility DROP NOT NULL,
+      ALTER COLUMN part_to_part_variation DROP NOT NULL,
+      ALTER COLUMN total_gage_rr DROP NOT NULL,
+      ALTER COLUMN number_distinct_categories DROP NOT NULL,
+      ALTER COLUMN acceptable_criteria DROP NOT NULL,
+      ALTER COLUMN conclusion DROP NOT NULL,
+      ALTER COLUMN action_plan DROP NOT NULL;
     `);
     
     console.log('Successfully made MSA fields nullable');
@@ -43,8 +50,15 @@ async function fixMsaNullableFields() {
         'study_description', 
         'operators', 
         'parts', 
-        'measurements', 
-        'number_distinct_categories'
+        'measurements',
+        'repeatability',
+        'reproducibility',
+        'part_to_part_variation',
+        'total_gage_rr',
+        'number_distinct_categories',
+        'acceptable_criteria',
+        'conclusion',
+        'action_plan'
       )
       ORDER BY column_name;
     `);
