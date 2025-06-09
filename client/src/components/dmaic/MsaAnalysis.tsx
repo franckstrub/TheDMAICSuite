@@ -636,16 +636,53 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {(attributeMsaData[ctqItem.ctq]?.agreementAnalysisData || []).map((row, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="font-medium">{row.unitNumber}</TableCell>
-                              {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
+                          {(attributeMsaData[ctqItem.ctq]?.agreementAnalysisData || []).map((row, index) => {
+                            // Check for disagreement in the row
+                            const nonBlankValues = Object.keys(row)
+                              .filter(key => key !== 'unitNumber' && row[key as keyof AttributeAnalysisRow] !== "")
+                              .map(key => row[key as keyof AttributeAnalysisRow]);
+                            
+                            const hasDisagreement = nonBlankValues.length > 1 && 
+                              !nonBlankValues.every(val => val === nonBlankValues[0]);
+                            
+                            const hasReference = row.reference !== "";
+                            
+                            return (
+                              <TableRow 
+                                key={index} 
+                                className={hasDisagreement ? "bg-red-50" : ""}
+                              >
+                                <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                                {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
                                 const isBlankAllowed = field === 'reference' || field.includes('rep3');
                                 const fieldValue = row[field as keyof AttributeAnalysisRow] as string;
                                 const selectValue = fieldValue === "" ? "blank" : fieldValue;
                                 
+                                // Determine styling based on disagreement conditions
+                                let cellStyling = "";
+                                let triggerStyling = "";
+                                
+                                if (hasDisagreement) {
+                                  if (!hasReference) {
+                                    // No reference available - bold and white text for all non-blank cells
+                                    if (fieldValue !== "") {
+                                      cellStyling = "text-white font-bold";
+                                      triggerStyling = "text-white font-bold bg-transparent border-white";
+                                    }
+                                  } else {
+                                    // Reference available - white text for all cells, bold for disagreeing cells
+                                    cellStyling = "text-white";
+                                    triggerStyling = "text-white bg-transparent border-white";
+                                    
+                                    if (fieldValue !== "" && fieldValue !== row.reference) {
+                                      cellStyling += " font-bold";
+                                      triggerStyling += " font-bold";
+                                    }
+                                  }
+                                }
+                                
                                 return (
-                                  <TableCell key={field}>
+                                  <TableCell key={field} className={cellStyling}>
                                     <Select
                                       value={selectValue}
                                       onValueChange={(value: string) => {
@@ -653,7 +690,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                         updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, actualValue as "OK" | "KO" | "");
                                       }}
                                     >
-                                      <SelectTrigger className="w-20">
+                                      <SelectTrigger className={"w-20 " + triggerStyling}>
                                         <SelectValue placeholder="--" />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -664,19 +701,20 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                     </Select>
                                   </TableCell>
                                 );
-                              })}
-                              <TableCell>
-                                <Button
-                                  onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                                })}
+                                <TableCell>
+                                  <Button
+                                    onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
