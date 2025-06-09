@@ -32,6 +32,29 @@ interface MsaData {
   acceptableCriteria: string;
   conclusion: string;
   actionPlan: string;
+  
+  // Attribute Agreement Analysis fields
+  unitAppraisedType: string;
+  unitAppraisedTypeOther: string;
+  appraiser1Name: string;
+  appraiser2Name: string;
+  appraiser3Name: string;
+  agreementAnalysisData: AgreementAnalysisRow[];
+  studyDateTime: string;
+}
+
+interface AgreementAnalysisRow {
+  unitNumber: number;
+  reference: "OK" | "KO";
+  app1_rep1: "OK" | "KO";
+  app1_rep2: "OK" | "KO";
+  app1_rep3: "OK" | "KO";
+  app2_rep1: "OK" | "KO";
+  app2_rep2: "OK" | "KO";
+  app2_rep3: "OK" | "KO";
+  app3_rep1: "OK" | "KO";
+  app3_rep2: "OK" | "KO";
+  app3_rep3: "OK" | "KO";
 }
 
 interface MsaAnalysisProps {
@@ -42,6 +65,23 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const { toast } = useToast();
   const [msaData, setMsaData] = useState<{ [ctq: string]: MsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
+
+  // Generate default agreement analysis data with 10 rows
+  const generateDefaultAgreementData = (): AgreementAnalysisRow[] => {
+    return Array.from({ length: 10 }, (_, index) => ({
+      unitNumber: index + 1,
+      reference: "OK" as const,
+      app1_rep1: "OK" as const,
+      app1_rep2: "OK" as const,
+      app1_rep3: "OK" as const,
+      app2_rep1: "OK" as const,
+      app2_rep2: "OK" as const,
+      app2_rep3: "OK" as const,
+      app3_rep1: "OK" as const,
+      app3_rep2: "OK" as const,
+      app3_rep3: "OK" as const,
+    }));
+  };
 
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
@@ -111,7 +151,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       ctqs.forEach((ctq: string) => {
         const existingMsa = msaDataResponse.msaAnalysis.find((msa: any) => msa.ctq === ctq);
         
-        initialData[ctq] = existingMsa || {
+        initialData[ctq] = existingMsa ? {
+          ...existingMsa,
+          agreementAnalysisData: existingMsa.agreementAnalysisData ? 
+            JSON.parse(existingMsa.agreementAnalysisData) : 
+            generateDefaultAgreementData(),
+        } : {
           ctq: ctq,
           msaType: "Gage R&R",
           studyDescription: "",
@@ -126,6 +171,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           acceptableCriteria: "",
           conclusion: "",
           actionPlan: "",
+          
+          // Attribute Agreement Analysis fields
+          unitAppraisedType: "Parts",
+          unitAppraisedTypeOther: "",
+          appraiser1Name: "",
+          appraiser2Name: "",
+          appraiser3Name: "",
+          agreementAnalysisData: generateDefaultAgreementData(),
+          studyDateTime: "",
         };
       });
       
