@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Save } from "lucide-react";
+import { BarChart3, Save, Upload, Download, Plus, Trash2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface MsaData {
   id?: number;
@@ -144,12 +145,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Initialize MSA data when CTQs and MSA data are loaded
   useEffect(() => {
     const ctqs = getCTQs();
-    if (ctqs.length > 0 && msaDataResponse?.msaAnalysis) {
+    if (ctqs.length > 0 && msaDataResponse && typeof msaDataResponse === 'object' && 'msaAnalysis' in msaDataResponse) {
       const initialData: { [ctq: string]: MsaData } = {};
       
       // Create MSA entry for each CTQ
       ctqs.forEach((ctq: string) => {
-        const existingMsa = msaDataResponse.msaAnalysis.find((msa: any) => msa.ctq === ctq);
+        const existingMsa = (msaDataResponse as any).msaAnalysis.find((msa: any) => msa.ctq === ctq);
         
         initialData[ctq] = existingMsa ? {
           ...existingMsa,
@@ -202,10 +203,81 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }));
   };
 
+  const updateAgreementAnalysisRow = (ctq: string, rowIndex: number, field: keyof AgreementAnalysisRow, value: "OK" | "KO") => {
+    setMsaData(prev => {
+      const updatedData = [...(prev[ctq]?.agreementAnalysisData || [])];
+      if (updatedData[rowIndex]) {
+        updatedData[rowIndex] = {
+          ...updatedData[rowIndex],
+          [field]: value,
+        };
+      }
+      return {
+        ...prev,
+        [ctq]: {
+          ...prev[ctq],
+          agreementAnalysisData: updatedData,
+        }
+      };
+    });
+  };
+
+  const addAgreementAnalysisRow = (ctq: string) => {
+    setMsaData(prev => {
+      const currentData = prev[ctq]?.agreementAnalysisData || [];
+      const newRow: AgreementAnalysisRow = {
+        unitNumber: currentData.length + 1,
+        reference: "OK",
+        app1_rep1: "OK",
+        app1_rep2: "OK",
+        app1_rep3: "OK",
+        app2_rep1: "OK",
+        app2_rep2: "OK",
+        app2_rep3: "OK",
+        app3_rep1: "OK",
+        app3_rep2: "OK",
+        app3_rep3: "OK",
+      };
+      
+      return {
+        ...prev,
+        [ctq]: {
+          ...prev[ctq],
+          agreementAnalysisData: [...currentData, newRow],
+        }
+      };
+    });
+  };
+
+  const removeAgreementAnalysisRow = (ctq: string, rowIndex: number) => {
+    setMsaData(prev => {
+      const updatedData = [...(prev[ctq]?.agreementAnalysisData || [])];
+      updatedData.splice(rowIndex, 1);
+      
+      // Renumber the remaining rows
+      updatedData.forEach((row, index) => {
+        row.unitNumber = index + 1;
+      });
+      
+      return {
+        ...prev,
+        [ctq]: {
+          ...prev[ctq],
+          agreementAnalysisData: updatedData,
+        }
+      };
+    });
+  };
+
   const handleSaveMsa = (ctq: string) => {
     const data = msaData[ctq];
     if (data) {
-      saveMsaMutation.mutate(data);
+      const payload = {
+        ...data,
+        agreementAnalysisData: JSON.stringify(data.agreementAnalysisData),
+        studyDateTime: data.studyDateTime || new Date().toISOString(),
+      } as any;
+      saveMsaMutation.mutate(payload);
     }
   };
 
@@ -330,25 +402,312 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Operators</label>
-                    <Input
-                      value={msaData[ctq]?.operators || ""}
-                      onChange={(e) => updateMsaField(ctq, "operators", e.target.value)}
-                      placeholder="e.g., Operator A, Operator B, Operator C"
-                    />
-                  </div>
+                {/* Conditional rendering based on MSA Type */}
+                {msaData[ctq]?.msaType === "Attribute Agreement" ? (
+                  // Attribute Agreement Analysis Interface
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4">Attribute Agreement Analysis (Gage R&R)</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        For Attribute CTQs, we perform Agreement Analysis studying both Accuracy and Precision using OK/KO evaluations.
+                      </p>
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Parts/Samples</label>
-                    <Input
-                      value={msaData[ctq]?.parts || ""}
-                      onChange={(e) => updateMsaField(ctq, "parts", e.target.value)}
-                      placeholder="e.g., Part 1, Part 2, Part 3"
-                    />
+                    {/* Unit Appraised Type and Study Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Unit Appraised Type</label>
+                        <Select
+                          value={msaData[ctq]?.unitAppraisedType || "Parts"}
+                          onValueChange={(value) => updateMsaField(ctq, "unitAppraisedType", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Parts">Parts</SelectItem>
+                            <SelectItem value="Units">Units</SelectItem>
+                            <SelectItem value="Files">Files</SelectItem>
+                            <SelectItem value="Documents">Documents</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {msaData[ctq]?.unitAppraisedType === "Other" && (
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Other - Please specify</label>
+                          <Input
+                            value={msaData[ctq]?.unitAppraisedTypeOther || ""}
+                            onChange={(e) => updateMsaField(ctq, "unitAppraisedTypeOther", e.target.value)}
+                            placeholder="Specify the type of unit being appraised"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Study Date & Time</label>
+                        <Input
+                          type="datetime-local"
+                          value={msaData[ctq]?.studyDateTime || ""}
+                          onChange={(e) => updateMsaField(ctq, "studyDateTime", e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Appraiser Names */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Appraiser 1 Name</label>
+                        <Input
+                          value={msaData[ctq]?.appraiser1Name || ""}
+                          onChange={(e) => updateMsaField(ctq, "appraiser1Name", e.target.value)}
+                          placeholder="Enter appraiser 1 name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Appraiser 2 Name</label>
+                        <Input
+                          value={msaData[ctq]?.appraiser2Name || ""}
+                          onChange={(e) => updateMsaField(ctq, "appraiser2Name", e.target.value)}
+                          placeholder="Enter appraiser 2 name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Appraiser 3 Name</label>
+                        <Input
+                          value={msaData[ctq]?.appraiser3Name || ""}
+                          onChange={(e) => updateMsaField(ctq, "appraiser3Name", e.target.value)}
+                          placeholder="Enter appraiser 3 name"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Agreement Analysis Data Table */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-md font-semibold">Agreement Analysis Data (OK/KO)</h4>
+                        <div className="space-x-2">
+                          <Button
+                            onClick={() => addAgreementAnalysisRow(ctq)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Row
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Import Excel
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Download className="h-4 w-4 mr-2" />
+                            Export Excel
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto border rounded-lg">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-20">Unit #</TableHead>
+                              <TableHead className="w-24">Reference (Standard)</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser1Name || "App 1"} Rep 1</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser1Name || "App 1"} Rep 2</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser1Name || "App 1"} Rep 3</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser2Name || "App 2"} Rep 1</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser2Name || "App 2"} Rep 2</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser2Name || "App 2"} Rep 3</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser3Name || "App 3"} Rep 1</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser3Name || "App 3"} Rep 2</TableHead>
+                              <TableHead className="w-24">{msaData[ctq]?.appraiser3Name || "App 3"} Rep 3</TableHead>
+                              <TableHead className="w-16">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {(msaData[ctq]?.agreementAnalysisData || []).map((row, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.reference}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "reference", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app1_rep1}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app1_rep1", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app1_rep2}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app1_rep2", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app1_rep3}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app1_rep3", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app2_rep1}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app2_rep1", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app2_rep2}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app2_rep2", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app2_rep3}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app2_rep3", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app3_rep1}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app3_rep1", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app3_rep2}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app3_rep2", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={row.app3_rep3}
+                                    onValueChange={(value: "OK" | "KO") => updateAgreementAnalysisRow(ctq, index, "app3_rep3", value)}
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="OK">OK</SelectItem>
+                                      <SelectItem value="KO">KO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    onClick={() => removeAgreementAnalysisRow(ctq, index)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // Traditional Gage R&R Interface
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Operators</label>
+                      <Input
+                        value={msaData[ctq]?.operators || ""}
+                        onChange={(e) => updateMsaField(ctq, "operators", e.target.value)}
+                        placeholder="e.g., Operator A, Operator B, Operator C"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Parts/Samples</label>
+                      <Input
+                        value={msaData[ctq]?.parts || ""}
+                        onChange={(e) => updateMsaField(ctq, "parts", e.target.value)}
+                        placeholder="e.g., Part 1, Part 2, Part 3"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Measurement Data</label>
