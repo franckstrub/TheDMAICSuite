@@ -641,17 +641,23 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                               <TableCell className="font-medium">{row.unitNumber}</TableCell>
                               {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
                                 const isBlankAllowed = field === 'reference' || field.includes('rep3');
+                                const fieldValue = row[field as keyof AttributeAnalysisRow] as string;
+                                const selectValue = fieldValue === "" ? "blank" : fieldValue;
+                                
                                 return (
                                   <TableCell key={field}>
                                     <Select
-                                      value={row[field as keyof AttributeAnalysisRow] as string}
-                                      onValueChange={(value: "OK" | "KO" | "") => updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, value)}
+                                      value={selectValue}
+                                      onValueChange={(value: string) => {
+                                        const actualValue = value === "blank" ? "" : value;
+                                        updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, actualValue as "OK" | "KO" | "");
+                                      }}
                                     >
                                       <SelectTrigger className="w-20">
                                         <SelectValue placeholder="--" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {isBlankAllowed && <SelectItem value="">--</SelectItem>}
+                                        {isBlankAllowed && <SelectItem value="blank">--</SelectItem>}
                                         <SelectItem value="OK">OK</SelectItem>
                                         <SelectItem value="KO">KO</SelectItem>
                                       </SelectContent>
