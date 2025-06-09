@@ -82,9 +82,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
-  // Generate default attribute analysis data with 10 rows
+  // Generate default attribute analysis data with 20 rows
   const generateDefaultAttributeData = (): AttributeAnalysisRow[] => {
-    return Array.from({ length: 10 }, (_, index) => ({
+    return Array.from({ length: 20 }, (_, index) => ({
       unitNumber: index + 1,
       reference: "OK" as const,
       app1_rep1: "OK" as const,
@@ -252,8 +252,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setAttributeMsaData(initialAttributeData);
       setContinuousMsaData(initialContinuousData);
       
-      // Set first tab as active
-      if (ctqsWithTypes.length > 0 && !activeTab) {
+      // Always set first tab as active
+      if (ctqsWithTypes.length > 0) {
         setActiveTab(ctqsWithTypes[0].ctq);
       }
     }
@@ -533,10 +533,10 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </p>
                   </div>
 
-                  {/* Unit Appraised Type and Study Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Appraised unit type and Study Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Unit Appraised Type</label>
+                      <label className="block text-sm font-medium mb-2">Appraised unit type</label>
                       <Select
                         value={attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Parts"}
                         onValueChange={(value) => updateAttributeMsaField(ctqItem.ctq, "unitAppraisedType", value)}
