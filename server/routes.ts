@@ -10,7 +10,7 @@ import {
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
-  insertStakeholderAnalysisItemSchema, insertAttributeMsaAnalysisSchema, insertContinuousMsaAnalysisSchema, insertProcessCapabilitySchema
+  insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema
 } from "@shared/schema";
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
@@ -19,7 +19,7 @@ import {
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
-  customerRequirements, businessRequirements, attributeMsaAnalysis, continuousMsaAnalysis, processCapability
+  customerRequirements, businessRequirements, msaAnalysis, processCapability
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2334,25 +2334,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // MSA Analysis routes - separate for attribute and continuous
+  // MSA Analysis routes - using existing table structure temporarily
   app.get("/api/projects/:projectId/msa-analysis", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       
-      // Get both attribute and continuous MSA data
-      const attributeMsaData = await db
+      // Use existing MSA table structure with Drizzle ORM
+      const msaAnalysisData = await db
         .select()
-        .from(attributeMsaAnalysis)
-        .where(eq(attributeMsaAnalysis.projectId, projectId));
-        
-      const continuousMsaData = await db
-        .select()
-        .from(continuousMsaAnalysis)
-        .where(eq(continuousMsaAnalysis.projectId, projectId));
+        .from(msaAnalysis)
+        .where(eq(msaAnalysis.projectId, projectId));
       
       return res.status(200).json({ 
-        attributeMsa: attributeMsaData,
-        continuousMsa: continuousMsaData 
+        attributeMsa: msaAnalysisData,
+        continuousMsa: msaAnalysisData
       });
     } catch (err) {
       return handleErrors(err, res);
