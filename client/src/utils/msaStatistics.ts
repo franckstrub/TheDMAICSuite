@@ -385,6 +385,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     // Logic: Count all individual appraiser agreements with standard / all values entered
     let agreementCount = 0;
     let totalValues = 0;
+    let debugInfo: any[] = [];
     
     for (let i = 0; i < data.length; i++) {
       if (reference[i] !== "") { // Only check rows with reference values
@@ -396,17 +397,39 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
           appraiserValues.push({ value: app3_rep1[i], name: 'app3' });
         }
         
+        let rowAgreements = 0;
+        let rowValues = 0;
+        
         // Count each individual appraiser's agreement with standard
         appraiserValues.forEach(appraiser => {
           if (appraiser.value !== "") {
             totalValues++;
+            rowValues++;
             if (appraiser.value === reference[i]) {
               agreementCount++;
+              rowAgreements++;
             }
           }
         });
+        
+        if (rowValues > 0) {
+          debugInfo.push({
+            row: i + 1,
+            reference: reference[i],
+            appraisers: appraiserValues.filter(a => a.value !== ""),
+            rowAgreements,
+            rowValues
+          });
+        }
       }
     }
+    
+    console.log('Overall Agreement vs Standard Debug:', {
+      totalAgreements: agreementCount,
+      totalValues,
+      percentage: totalValues > 0 ? (agreementCount / totalValues) * 100 : 0,
+      debugInfo
+    });
     
     overallVsStandardPercent = totalValues > 0 ? (agreementCount / totalValues) * 100 : 0;
   }
