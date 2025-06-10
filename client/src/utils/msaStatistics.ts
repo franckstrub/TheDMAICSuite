@@ -317,14 +317,19 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   if (hasReference) {
     if (app1Agreement < minAcceptableAgreement) recommendations.push("Appraiser 1 needs calibration training");
     if (app2Agreement < minAcceptableAgreement) recommendations.push("Appraiser 2 needs calibration training");
-    if (app3Agreement < minAcceptableAgreement) recommendations.push("Appraiser 3 needs calibration training");
+    if (hasApp3Data && app3Agreement < minAcceptableAgreement) recommendations.push("Appraiser 3 needs calibration training");
   }
   
   if (app1Repeatability < 90) recommendations.push("Appraiser 1 shows poor repeatability");
   if (app2Repeatability < 90) recommendations.push("Appraiser 2 shows poor repeatability");
-  if (app3Repeatability < 90) recommendations.push("Appraiser 3 shows poor repeatability");
+  if (hasApp3Data && app3Repeatability < 90) recommendations.push("Appraiser 3 shows poor repeatability");
   
-  if (Math.min(app1VsApp2, app1VsApp3, app2VsApp3) < 90) {
+  // Only check appraiser 3 comparisons if appraiser 3 has data
+  const minBetweenAppraiserAgreement = hasApp3Data ? 
+    Math.min(app1VsApp2, app1VsApp3, app2VsApp3) : 
+    app1VsApp2;
+  
+  if (minBetweenAppraiserAgreement < 90) {
     recommendations.push("Significant differences between appraisers - review measurement criteria");
   }
   
