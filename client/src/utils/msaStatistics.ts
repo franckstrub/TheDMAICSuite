@@ -234,6 +234,44 @@ function calculatePercentAgreement(array1: string[], array2: string[]): number {
 }
 
 /**
+ * Calculate Overall Concordant Agreement vs Standard
+ * This is different from other percentage calculations as it counts individual
+ * agreements with the standard across ALL appraiser measurements
+ */
+function calculateOverallConcordantAgreementVsStandard(data: AttributeAnalysisRow[]): number {
+  if (data.length === 0) return 0;
+  
+  let totalAgreements = 0;
+  let totalValues = 0;
+  
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const reference = row.reference;
+    
+    if (reference !== "") { // Only count rows with reference values
+      // Collect all appraiser values for this row
+      const appraiserValues = [
+        row.app1_rep1, row.app1_rep2, row.app1_rep3,
+        row.app2_rep1, row.app2_rep2, row.app2_rep3,
+        row.app3_rep1, row.app3_rep2, row.app3_rep3
+      ];
+      
+      // Count each individual agreement with the standard
+      appraiserValues.forEach(value => {
+        if (value !== "") { // Only count non-empty values
+          totalValues++;
+          if (value === reference) {
+            totalAgreements++;
+          }
+        }
+      });
+    }
+  }
+  
+  return totalValues > 0 ? (totalAgreements / totalValues) * 100 : 0;
+}
+
+/**
  * Calculate within-appraiser repeatability
  */
 function calculateRepeatability(rep1: string[], rep2: string[], rep3?: string[]): number {
@@ -352,57 +390,13 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
     app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
     
-    // Calculate overall agreement vs standard using row-level logic
-    // Logic: A row counts as agreement only if ALL appraisers in that row agree with standard
-    let rowAgreementCount = 0;
-    let totalRows = 0;
-    let debugInfo: any[] = [];
+    // Use the new specific function for Overall Concordant Agreement vs Standard
+    overallVsStandardPercent = calculateOverallConcordantAgreementVsStandard(data);
     
-    for (let i = 0; i < data.length; i++) {
-      if (reference[i] !== "") { // Only check rows with reference values
-        const appraiserValues = [
-          app1_rep1[i], app1_rep2[i], app1_rep3[i],
-          app2_rep1[i], app2_rep2[i], app2_rep3[i]
-        ];
-        if (hasApp3Data) {
-          appraiserValues.push(
-            app3_rep1[i], app3_rep2[i], app3_rep3[i]
-          );
-        }
-        
-        // Only count non-empty values
-        const validValues = appraiserValues.filter(val => val !== "");
-        
-        if (validValues.length > 0) {
-          totalRows++;
-          // Check if ALL valid appraiser values agree with the reference
-          const allAgreeWithStandard = validValues.every(val => val === reference[i]);
-          
-          if (allAgreeWithStandard) {
-            rowAgreementCount++;
-          }
-          
-          debugInfo.push({
-            row: i + 1,
-            reference: reference[i],
-            validValues,
-            allAgree: allAgreeWithStandard,
-            agreementCount: validValues.filter(val => val === reference[i]).length,
-            totalValues: validValues.length
-          });
-        }
-      }
-    }
-    
-    console.log('=== All Appraisers vs Standard Debug ===');
-    console.log('Row Agreements:', rowAgreementCount);
-    console.log('Total Rows:', totalRows);
-    console.log('Percentage:', totalRows > 0 ? (rowAgreementCount / totalRows) * 100 : 0);
-    console.log('Expected (19/20):', (19/20) * 100);
-    console.log('Row details:', debugInfo);
-    console.log('===========================================');
-    
-    overallVsStandardPercent = totalRows > 0 ? (rowAgreementCount / totalRows) * 100 : 0;
+    console.log('=== Overall Concordant Agreement vs Standard Debug ===');
+    console.log('Percentage:', overallVsStandardPercent);
+    console.log('Expected 119/120 = 99.17%:', (119/120) * 100);
+    console.log('=======================================================');
   }
 
   // Calculate Fleiss Kappa for Overall Agreement vs Standard
