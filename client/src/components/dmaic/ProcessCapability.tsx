@@ -57,6 +57,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     localStorage.setItem(`process-capability-active-tab-${projectId}`, tabValue);
   };
 
+  // Track tab initialization to prevent overriding saved tabs
+  const [hasInitializedTab, setHasInitializedTab] = useState(false);
+
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/ctqs`],
@@ -151,9 +154,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       
       setCapabilityData(initialData);
       
-      // Set active tab to first CTQ if not already set
-      if (!activeTab && ctqs.length > 0) {
-        setActiveTab(ctqs[0]);
+      // Set active tab to saved or first CTQ if not initialized yet
+      if (!activeTab && ctqs.length > 0 && !hasInitializedTab) {
+        const savedTab = localStorage.getItem(`process-capability-active-tab-${projectId}`);
+        if (savedTab && ctqs.includes(savedTab)) {
+          setActiveTab(savedTab);
+        } else {
+          setActiveTab(ctqs[0]);
+        }
+        setHasInitializedTab(true);
       }
     }
   }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
