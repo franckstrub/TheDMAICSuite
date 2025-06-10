@@ -91,6 +91,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   }, [projectId]);
 
+  // Separate effect to handle first-time tab setting
+  const [hasInitializedTab, setHasInitializedTab] = useState(false);
+
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tabValue: string) => {
     setActiveTab(tabValue);
@@ -268,9 +271,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setAttributeMsaData(initialAttributeData);
       setContinuousMsaData(initialContinuousData);
       
-      // Set first tab as active only if no tab is currently active
-      if (ctqsWithTypes.length > 0 && !activeTab) {
-        setActiveTab(ctqsWithTypes[0].ctq);
+      // Set first tab as active only if no tab is saved and not initialized yet
+      if (ctqsWithTypes.length > 0 && !activeTab && !hasInitializedTab) {
+        const savedTab = localStorage.getItem(`msa-active-tab-${projectId}`);
+        if (savedTab && ctqsWithTypes.some(ctq => ctq.ctq === savedTab)) {
+          setActiveTab(savedTab);
+        } else {
+          setActiveTab(ctqsWithTypes[0].ctq);
+        }
+        setHasInitializedTab(true);
       }
     }
   }, [ctsData, msaDataResponse]);
