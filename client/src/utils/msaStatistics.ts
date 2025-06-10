@@ -162,15 +162,18 @@ function calculatePercentAgreement(array1: string[], array2: string[]): number {
  * Calculate within-appraiser repeatability
  */
 function calculateRepeatability(rep1: string[], rep2: string[], rep3?: string[]): number {
-  if (rep3) {
+  // Check if rep3 has any meaningful data (non-empty values)
+  const hasRep3Data = rep3 && rep3.some(val => val !== "");
+  
+  if (hasRep3Data) {
     // Three repetitions - calculate average pairwise agreement
     const agreement12 = calculatePercentAgreement(rep1, rep2);
-    const agreement13 = calculatePercentAgreement(rep1, rep3);
-    const agreement23 = calculatePercentAgreement(rep2, rep3);
+    const agreement13 = calculatePercentAgreement(rep1, rep3!);
+    const agreement23 = calculatePercentAgreement(rep2, rep3!);
     
     return (agreement12 + agreement13 + agreement23) / 3;
   } else {
-    // Two repetitions
+    // Two repetitions only
     return calculatePercentAgreement(rep1, rep2);
   }
 }
@@ -248,6 +251,9 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   const app3_rep2 = data.map(row => row.app3_rep2);
   const app3_rep3 = data.map(row => row.app3_rep3);
 
+  // Check if appraiser 3 has actual data
+  const hasApp3Data = app3_rep1.some(val => val !== "");
+
   // Calculate overall agreement
   const allRatings = [app1_rep1, app1_rep2, app2_rep1, app2_rep2, app3_rep1, app3_rep2];
   const validRatings = allRatings.filter(ratings => ratings.some(r => r !== ""));
@@ -283,22 +289,22 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     // Use first repetition for appraiser vs standard
     app1Agreement = calculatePercentAgreement(reference, app1_rep1);
     app2Agreement = calculatePercentAgreement(reference, app2_rep1);
-    app3Agreement = calculatePercentAgreement(reference, app3_rep1);
+    app3Agreement = hasApp3Data ? calculatePercentAgreement(reference, app3_rep1) : 0;
     
     app1Kappa = calculateCohensKappa(reference, app1_rep1);
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
-    app3Kappa = calculateCohensKappa(reference, app3_rep1);
+    app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
   }
 
   // Calculate within-appraiser repeatability
   const app1Repeatability = calculateRepeatability(app1_rep1, app1_rep2, app1_rep3);
   const app2Repeatability = calculateRepeatability(app2_rep1, app2_rep2, app2_rep3);
-  const app3Repeatability = calculateRepeatability(app3_rep1, app3_rep2, app3_rep3);
+  const app3Repeatability = hasApp3Data ? calculateRepeatability(app3_rep1, app3_rep2, app3_rep3) : 0;
 
   // Calculate between-appraiser agreement
   const app1VsApp2 = calculatePercentAgreement(app1_rep1, app2_rep1);
-  const app1VsApp3 = calculatePercentAgreement(app1_rep1, app3_rep1);
-  const app2VsApp3 = calculatePercentAgreement(app2_rep1, app3_rep1);
+  const app1VsApp3 = hasApp3Data ? calculatePercentAgreement(app1_rep1, app3_rep1) : 0;
+  const app2VsApp3 = hasApp3Data ? calculatePercentAgreement(app2_rep1, app3_rep1) : 0;
 
   // Generate recommendations
   const recommendations: string[] = [];
