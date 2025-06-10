@@ -47,6 +47,7 @@ export interface MSAStatistics {
     app1VsApp2: number;
     app1VsApp3: number;
     app2VsApp3: number;
+    betweenAllAppraisers?: number;
   };
   summary: {
     acceptableAgreement: boolean;
@@ -429,6 +430,12 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   const app1VsApp2 = calculatePercentAgreement(app1_rep1, app2_rep1);
   const app1VsApp3 = hasApp3Data ? calculatePercentAgreement(app1_rep1, app3_rep1) : 0;
   const app2VsApp3 = hasApp3Data ? calculatePercentAgreement(app2_rep1, app3_rep1) : 0;
+  
+  // Calculate overall between-appraiser agreement when 3 appraisers are present
+  let betweenAllAppraisers: number | undefined = undefined;
+  if (hasApp3Data) {
+    betweenAllAppraisers = (app1VsApp2 + app1VsApp3 + app2VsApp3) / 3;
+  }
 
   // Generate recommendations
   const recommendations: string[] = [];
@@ -484,7 +491,8 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     betweenAppraiser: {
       app1VsApp2,
       app1VsApp3,
-      app2VsApp3
+      app2VsApp3,
+      betweenAllAppraisers
     },
     summary: {
       acceptableAgreement: overallPercent >= minAcceptableAgreement && 
