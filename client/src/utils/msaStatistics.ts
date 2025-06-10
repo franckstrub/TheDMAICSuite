@@ -204,6 +204,38 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     };
   }
 
+  // Check if there's any real data (non-empty values)
+  const hasRealData = data.some(row => 
+    row.app1_rep1 !== "" || row.app1_rep2 !== "" || 
+    row.app2_rep1 !== "" || row.app2_rep2 !== "" ||
+    row.app3_rep1 !== "" || row.app3_rep2 !== ""
+  );
+
+  if (!hasRealData) {
+    return {
+      overallAgreement: { percentAgreement: 0 },
+      appraiserVsStandard: {
+        app1Agreement: 0,
+        app2Agreement: 0,
+        app3Agreement: 0
+      },
+      withinAppraiser: {
+        app1Repeatability: 0,
+        app2Repeatability: 0,
+        app3Repeatability: 0
+      },
+      betweenAppraiser: {
+        app1VsApp2: 0,
+        app1VsApp3: 0,
+        app2VsApp3: 0
+      },
+      summary: {
+        acceptableAgreement: false,
+        recommendations: ["Please enter actual measurement data to calculate statistics"]
+      }
+    };
+  }
+
   // Extract data arrays
   const reference = data.map(row => row.reference);
   const app1_rep1 = data.map(row => row.app1_rep1);

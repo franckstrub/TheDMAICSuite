@@ -21,11 +21,11 @@ import MSAStatisticsDisplay from "./MSAStatisticsDisplay";
 interface AttributeAnalysisRow {
   unitNumber: number;
   reference: "OK" | "KO" | "";
-  app1_rep1: "OK" | "KO" | "";
-  app1_rep2: "OK" | "KO" | "";
+  app1_rep1: "OK" | "KO";
+  app1_rep2: "OK" | "KO";
   app1_rep3: "OK" | "KO" | "";
-  app2_rep1: "OK" | "KO" | "";
-  app2_rep2: "OK" | "KO" | "";
+  app2_rep1: "OK" | "KO";
+  app2_rep2: "OK" | "KO";
   app2_rep3: "OK" | "KO" | "";
   app3_rep1: "OK" | "KO" | "";
   app3_rep2: "OK" | "KO" | "";
@@ -91,9 +91,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   }, [projectId]);
 
-  // Separate effect to handle first-time tab setting
-  const [hasInitializedTab, setHasInitializedTab] = useState(false);
-
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tabValue: string) => {
     setActiveTab(tabValue);
@@ -101,16 +98,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   };
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
 
-  // Generate default attribute analysis data with 20 rows
+  // Generate default attribute analysis data with 20 rows (all empty for real data entry)
   const generateDefaultAttributeData = (): AttributeAnalysisRow[] => {
     return Array.from({ length: 20 }, (_, index) => ({
       unitNumber: index + 1,
       reference: "" as const,
-      app1_rep1: "OK" as const,
-      app1_rep2: "OK" as const,
+      app1_rep1: "" as "OK" | "KO",
+      app1_rep2: "" as "OK" | "KO", 
       app1_rep3: "" as const,
-      app2_rep1: "OK" as const,
-      app2_rep2: "OK" as const,
+      app2_rep1: "" as "OK" | "KO",
+      app2_rep2: "" as "OK" | "KO",
       app2_rep3: "" as const,
       app3_rep1: "" as const,
       app3_rep2: "" as const,
@@ -271,15 +268,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setAttributeMsaData(initialAttributeData);
       setContinuousMsaData(initialContinuousData);
       
-      // Set first tab as active only if no tab is saved and not initialized yet
-      if (ctqsWithTypes.length > 0 && !activeTab && !hasInitializedTab) {
-        const savedTab = localStorage.getItem(`msa-active-tab-${projectId}`);
-        if (savedTab && ctqsWithTypes.some(ctq => ctq.ctq === savedTab)) {
-          setActiveTab(savedTab);
-        } else {
-          setActiveTab(ctqsWithTypes[0].ctq);
-        }
-        setHasInitializedTab(true);
+      // Set first tab as active only if no tab is currently active
+      if (ctqsWithTypes.length > 0 && !activeTab) {
+        setActiveTab(ctqsWithTypes[0].ctq);
       }
     }
   }, [ctsData, msaDataResponse]);
@@ -531,7 +522,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
             {ctqList.map((ctqItem: CtqWithType) => (
               <TabsTrigger 
@@ -554,7 +545,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
                     <p className="text-sm text-gray-600">
-                      For Attribute CTQs, we perform Agreement Analysis studying both Accuracy and Precision using OK/KO evaluations.
+                      For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) and Precision (Agreement R&R) using OK/KO evaluations.<br></br>
+                      A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
+                      It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
                     </p>
                   </div>
 
@@ -635,9 +628,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                     {/* Scroll indicator */}
                     <div className="relative">
-                    <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
-                    ← Scroll horizontally →
-                    </div>
+                     <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+                     ← Scroll horizontally →
+                     </div>
                     </div>
 
                     <div className="overflow-x-auto border rounded-lg pt-6">
@@ -649,17 +642,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                 ? (attributeMsaData[ctqItem.ctq]?.unitAppraisedTypeOther || "Unit") + " #"
                                 : (attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Unit") + " #"}
                             </TableHead>
-                            <TableHead className="w-24">Reference (Standard)</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 1</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 2</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 3</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 1</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 2</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 3</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 1</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 2</TableHead>
-                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 3</TableHead>
-                            <TableHead className="w-16">Actions</TableHead>
+                            <TableHead className="w-24">Reference<br></br>(Standard)</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 1</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 2</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 3</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 1</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 2</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 3</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 1</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 2</TableHead>
+                            <TableHead className="w-24">{attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 3</TableHead>
+                            <TableHead className="w-16">Action</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -745,6 +738,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           })}
                         </TableBody>
                       </Table>
+                      {/* Scroll indicator */}
+                    <div className="relative">
+                     <div className="absolute bottom-[-14px] right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+                     ← Scroll horizontally →
+                     </div>
+                    </div>
                     </div>
                   </div>
 
@@ -851,15 +850,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="w-20">Unit #</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 1</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 2</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "App 1"} Rep 3</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 1</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 2</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "App 2"} Rep 3</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 1</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 2</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "App 3"} Rep 3</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 1</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 2</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 3</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 1</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 2</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 3</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 1</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 2</TableHead>
+                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 3</TableHead>
                             <TableHead className="w-16">Actions</TableHead>
                           </TableRow>
                         </TableHeader>

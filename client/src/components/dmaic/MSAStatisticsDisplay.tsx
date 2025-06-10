@@ -33,20 +33,33 @@ export default function MSAStatisticsDisplay({
 }: MSAStatisticsDisplayProps) {
   const statistics = calculateMSAStatistics(data);
   
-  if (data.length === 0) {
+  // Check if there's meaningful data for analysis
+  const hasRealData = data.length > 0 && data.some(row => 
+    row.app1_rep1 !== "" || row.app1_rep2 !== "" || 
+    row.app2_rep1 !== "" || row.app2_rep2 !== "" ||
+    row.app3_rep1 !== "" || row.app3_rep2 !== ""
+  );
+
+  if (data.length === 0 || !hasRealData) {
     return (
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            MSA Statistics
+            MSA Attribute Agreement Statistics
+            <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200">
+              Real Data Analysis
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              No data available for statistical analysis. Please enter measurement data first.
+              {data.length === 0 
+                ? "No data available for Attribute Agreement statistical analysis. Please enter measurement data first."
+                : "Please enter actual OK/KO values in the agreement analysis table above to calculate meaningful statistics. Empty cells are not included in calculations."
+              }
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -54,8 +67,8 @@ export default function MSAStatisticsDisplay({
     );
   }
 
-  const getStatusIcon = (percentage: number, threshold: number = 90) => {
-    if (percentage >= 95) return <CheckCircle className="h-4 w-4 text-green-600" />;
+  const getStatusIcon = (percentage: number, threshold: number = 80) => {
+    if (percentage >= 90) return <CheckCircle className="h-4 w-4 text-green-600" />;
     if (percentage >= threshold) return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
     return <XCircle className="h-4 w-4 text-red-600" />;
   };
@@ -70,7 +83,10 @@ export default function MSAStatisticsDisplay({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            Overall Agreement Summary
+            Overall Agreement Analysis Summary
+            <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200">
+              Real Data Analysis
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -238,15 +254,15 @@ export default function MSAStatisticsDisplay({
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-500 rounded"></div>
-                  <span>≥95%: Excellent agreement</span>
+                  <span>90%-95%: Excellent agreement</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                  <span>90-94%: Acceptable agreement</span>
+                  <span>80%-90%: Acceptable agreement but needs improvement</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-red-500 rounded"></div>
-                  <span>&lt;90%: Unacceptable agreement</span>
+                  <span>&lt;80%: Unacceptable agreement</span>
                 </div>
               </div>
             </div>
