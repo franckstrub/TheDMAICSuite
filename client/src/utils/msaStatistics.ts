@@ -352,57 +352,66 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
     app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
     
-    // Calculate overall agreement vs standard using row-level logic
-    // Logic: A row counts as agreement only if ALL appraisers in that row agree with standard
-    let rowAgreementCount = 0;
-    let totalRows = 0;
+    // Calculate overall agreement vs standard using individual value logic
+    // Logic: Count all individual appraiser agreements with standard / all values entered
+    let agreementCount = 0;
+    let totalValues = 0;
     let debugInfo: any[] = [];
     
     for (let i = 0; i < data.length; i++) {
       if (reference[i] !== "") { // Only check rows with reference values
         const appraiserValues = [
-          app1_rep1[i], app1_rep2[i], app1_rep3[i],
-          app2_rep1[i], app2_rep2[i], app2_rep3[i]
+          { value: app1_rep1[i], name: 'app1_rep1' },
+          { value: app1_rep2[i], name: 'app1_rep2' },
+          { value: app1_rep3[i], name: 'app1_rep3' },
+          { value: app2_rep1[i], name: 'app2_rep1' },
+          { value: app2_rep2[i], name: 'app2_rep2' },
+          { value: app2_rep3[i], name: 'app2_rep3' }
         ];
         if (hasApp3Data) {
           appraiserValues.push(
-            app3_rep1[i], app3_rep2[i], app3_rep3[i]
+            { value: app3_rep1[i], name: 'app3_rep1' },
+            { value: app3_rep2[i], name: 'app3_rep2' },
+            { value: app3_rep3[i], name: 'app3_rep3' }
           );
         }
         
-        // Only count non-empty values
-        const validValues = appraiserValues.filter(val => val !== "");
+        let rowAgreements = 0;
+        let rowValues = 0;
         
-        if (validValues.length > 0) {
-          totalRows++;
-          // Check if ALL valid appraiser values agree with the reference
-          const allAgreeWithStandard = validValues.every(val => val === reference[i]);
-          
-          if (allAgreeWithStandard) {
-            rowAgreementCount++;
+        // Count each individual appraiser's agreement with standard (all repetitions)
+        appraiserValues.forEach(appraiser => {
+          if (appraiser.value !== "") {
+            totalValues++;
+            rowValues++;
+            if (appraiser.value === reference[i]) {
+              agreementCount++;
+              rowAgreements++;
+            }
           }
-          
+        });
+        
+        if (rowValues > 0) {
           debugInfo.push({
             row: i + 1,
             reference: reference[i],
-            validValues,
-            allAgree: allAgreeWithStandard,
-            agreementCount: validValues.filter(val => val === reference[i]).length,
-            totalValues: validValues.length
+            appraisers: appraiserValues.filter(a => a.value !== ""),
+            rowAgreements,
+            rowValues
           });
         }
       }
     }
     
-    console.log('=== All Appraisers vs Standard Debug ===');
-    console.log('Row Agreements:', rowAgreementCount);
-    console.log('Total Rows:', totalRows);
-    console.log('Percentage:', totalRows > 0 ? (rowAgreementCount / totalRows) * 100 : 0);
-    console.log('Expected (19/20):', (19/20) * 100);
+    console.log('=== Overall Agreement vs Standard Debug ===');
+    console.log('Total Agreements:', agreementCount);
+    console.log('Total Values:', totalValues);
+    console.log('Percentage:', totalValues > 0 ? (agreementCount / totalValues) * 100 : 0);
+    console.log('Expected (119/120):', (119/120) * 100);
     console.log('Row details:', debugInfo);
     console.log('===========================================');
     
-    overallVsStandardPercent = totalRows > 0 ? (rowAgreementCount / totalRows) * 100 : 0;
+    overallVsStandardPercent = totalValues > 0 ? (agreementCount / totalValues) * 100 : 0;
   }
 
   // Calculate Fleiss Kappa for Overall Agreement vs Standard
