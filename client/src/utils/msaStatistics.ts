@@ -352,66 +352,51 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
     app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
     
-    // Calculate overall agreement vs standard using individual value logic
-    // Logic: Count all individual appraiser agreements with standard / all values entered
-    let agreementCount = 0;
-    let totalValues = 0;
+    // Calculate "All Appraisers vs Standard" using row-level agreement logic
+    // Logic: Count rows where ALL appraisers agree with standard / total rows with data
+    let rowAgreementCount = 0;
+    let totalRowsWithData = 0;
     let debugInfo: any[] = [];
     
     for (let i = 0; i < data.length; i++) {
       if (reference[i] !== "") { // Only check rows with reference values
-        const appraiserValues = [
-          { value: app1_rep1[i], name: 'app1_rep1' },
-          { value: app1_rep2[i], name: 'app1_rep2' },
-          { value: app1_rep3[i], name: 'app1_rep3' },
-          { value: app2_rep1[i], name: 'app2_rep1' },
-          { value: app2_rep2[i], name: 'app2_rep2' },
-          { value: app2_rep3[i], name: 'app2_rep3' }
-        ];
+        // Get all appraiser values for this row (first repetition only)
+        const appraiserValues = [app1_rep1[i], app2_rep1[i]];
         if (hasApp3Data) {
-          appraiserValues.push(
-            { value: app3_rep1[i], name: 'app3_rep1' },
-            { value: app3_rep2[i], name: 'app3_rep2' },
-            { value: app3_rep3[i], name: 'app3_rep3' }
-          );
+          appraiserValues.push(app3_rep1[i]);
         }
         
-        let rowAgreements = 0;
-        let rowValues = 0;
+        // Filter out empty values
+        const validAppraiserValues = appraiserValues.filter(val => val !== "");
         
-        // Count each individual appraiser's agreement with standard (all repetitions)
-        appraiserValues.forEach(appraiser => {
-          if (appraiser.value !== "") {
-            totalValues++;
-            rowValues++;
-            if (appraiser.value === reference[i]) {
-              agreementCount++;
-              rowAgreements++;
-            }
+        if (validAppraiserValues.length > 0) {
+          totalRowsWithData++;
+          
+          // Check if ALL appraisers agree with the standard
+          const allAgreeWithStandard = validAppraiserValues.every(val => val === reference[i]);
+          
+          if (allAgreeWithStandard) {
+            rowAgreementCount++;
           }
-        });
-        
-        if (rowValues > 0) {
+          
           debugInfo.push({
             row: i + 1,
             reference: reference[i],
-            appraisers: appraiserValues.filter(a => a.value !== ""),
-            rowAgreements,
-            rowValues
+            appraisers: validAppraiserValues,
+            allAgree: allAgreeWithStandard
           });
         }
       }
     }
     
-    console.log('=== Overall Agreement vs Standard Debug ===');
-    console.log('Total Agreements:', agreementCount);
-    console.log('Total Values:', totalValues);
-    console.log('Percentage:', totalValues > 0 ? (agreementCount / totalValues) * 100 : 0);
-    console.log('Expected (119/120):', (119/120) * 100);
+    console.log('=== All Appraisers vs Standard (Row-Level) Debug ===');
+    console.log('Rows in Agreement:', rowAgreementCount);
+    console.log('Total Rows with Data:', totalRowsWithData);
+    console.log('Percentage:', totalRowsWithData > 0 ? (rowAgreementCount / totalRowsWithData) * 100 : 0);
     console.log('Row details:', debugInfo);
-    console.log('===========================================');
+    console.log('=======================================================');
     
-    overallVsStandardPercent = totalValues > 0 ? (agreementCount / totalValues) * 100 : 0;
+    overallVsStandardPercent = totalRowsWithData > 0 ? (rowAgreementCount / totalRowsWithData) * 100 : 0;
   }
 
   // Calculate Fleiss Kappa for Overall Agreement vs Standard
