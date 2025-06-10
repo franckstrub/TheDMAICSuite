@@ -96,51 +96,61 @@ export default function MSAStatisticsDisplay({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Overall Concordant Agreement vs Standard</span>
-                {getStatusIcon(statistics.overallAgreement.percentAgreementVsStandard)}
-              </div>
-              <div className="flex items-center gap-2">
-                <Progress 
-                  value={statistics.overallAgreement.percentAgreementVsStandard} 
-                  className="flex-1"
-                />
-                <span className={`text-sm font-medium ${getAgreementColor(statistics.overallAgreement.percentAgreementVsStandard)}`}>
-                  {formatPercentage(statistics.overallAgreement.percentAgreementVsStandard)}
-                </span>
-              </div>
-              {statistics.overallAgreement.fleissKappaVsStandard && (
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs text-gray-500">Fleiss' Kappa:</span>
-                  <Badge variant="outline" className="text-xs">
-                    {formatKappa(statistics.overallAgreement.fleissKappaVsStandard)}
-                  </Badge>
-                  <span className="text-xs text-gray-600">
-                    {interpretKappa(statistics.overallAgreement.fleissKappaVsStandard)}
-                  </span>
+          {/* Check if there are reference values to show the full content */}
+          {data.some(row => row.reference !== "") ? (
+            <>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Overall Concordant Agreement vs Standard</span>
+                    {getStatusIcon(statistics.overallAgreement.percentAgreementVsStandard)}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Progress 
+                      value={statistics.overallAgreement.percentAgreementVsStandard} 
+                      className="flex-1"
+                    />
+                    <span className={`text-sm font-medium ${getAgreementColor(statistics.overallAgreement.percentAgreementVsStandard)}`}>
+                      {formatPercentage(statistics.overallAgreement.percentAgreementVsStandard)}
+                    </span>
+                  </div>
+                  {statistics.overallAgreement.fleissKappaVsStandard && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-xs text-gray-500">Fleiss' Kappa:</span>
+                      <Badge variant="outline" className="text-xs">
+                        {formatKappa(statistics.overallAgreement.fleissKappaVsStandard)}
+                      </Badge>
+                      <span className="text-xs text-gray-600">
+                        {interpretKappa(statistics.overallAgreement.fleissKappaVsStandard)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+              
+              <Alert className={statistics.summary.acceptableAgreement ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
+                {statistics.summary.acceptableAgreement ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-red-600" />
+                )}
+                <AlertDescription>
+                  <strong>
+                    {statistics.summary.acceptableAgreement ? "Acceptable" : "Unacceptable"} 
+                    Measurement System
+                  </strong>
+                  {statistics.summary.recommendations.map((rec, idx) => (
+                    <div key={idx} className="mt-1">• {rec}</div>
+                  ))}
+                </AlertDescription>
+              </Alert>
+            </>
+          ) : (
+            /* Show only title when no reference values */
+            <div className="text-sm text-gray-500">
+              No standard reference values available for agreement analysis.
             </div>
-          </div>
-          
-          <Alert className={statistics.summary.acceptableAgreement ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
-            {statistics.summary.acceptableAgreement ? (
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            ) : (
-              <XCircle className="h-4 w-4 text-red-600" />
-            )}
-            <AlertDescription>
-              <strong>
-                {statistics.summary.acceptableAgreement ? "Acceptable" : "Unacceptable"} 
-                Measurement System
-              </strong>
-              {statistics.summary.recommendations.map((rec, idx) => (
-                <div key={idx} className="mt-1">• {rec}</div>
-              ))}
-            </AlertDescription>
-          </Alert>
+          )}
         </CardContent>
       </Card>
 
