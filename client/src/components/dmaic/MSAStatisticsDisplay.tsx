@@ -79,7 +79,8 @@ export default function MSAStatisticsDisplay({
   };
 
   const formatPercentage = (value: number) => `${value.toFixed(1)}%`;
-  const formatKappa = (value: number | undefined) => value ? value.toFixed(3) : "N/A";
+  const formatKappa = (value: number | undefined) => 
+    value !== undefined && value !== null ? value.toFixed(3) : "N/A";
 
   return (
     <div className="space-y-6">
@@ -171,7 +172,7 @@ export default function MSAStatisticsDisplay({
                         {formatPercentage(appraiser.agreement)}
                       </span>
                     </div>
-                    {appraiser.kappa && (
+                    {appraiser.kappa !== undefined && appraiser.kappa !== null && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
                           κ = {formatKappa(appraiser.kappa)}

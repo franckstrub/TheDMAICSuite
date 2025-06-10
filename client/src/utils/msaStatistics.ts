@@ -86,6 +86,16 @@ function calculateCohensKappa(rater1: string[], rater2: string[]): number | null
   }, 0);
   
   // Calculate Kappa
+  // Handle perfect agreement case (when observedAgreement = 1)
+  if (observedAgreement === 1) {
+    return 1; // Perfect agreement = Kappa of 1
+  }
+  
+  // Handle case where expectedAgreement = 1 (would cause division by zero)
+  if (expectedAgreement >= 1) {
+    return observedAgreement === 1 ? 1 : 0;
+  }
+  
   const kappa = (observedAgreement - expectedAgreement) / (1 - expectedAgreement);
   return isNaN(kappa) ? 0 : kappa;
 }
@@ -138,6 +148,16 @@ function calculateFleissKappa(ratings: string[][]): number | null {
   const koProportion = agreementMatrix.reduce((sum, row) => sum + row[1], 0) / totalRatings;
   
   const expectedAgreement = okProportion * okProportion + koProportion * koProportion;
+  
+  // Handle perfect agreement case
+  if (observedAgreement === 1) {
+    return 1; // Perfect agreement = Kappa of 1
+  }
+  
+  // Handle case where expectedAgreement = 1 (would cause division by zero)
+  if (expectedAgreement >= 1) {
+    return observedAgreement === 1 ? 1 : 0;
+  }
   
   const kappa = (observedAgreement - expectedAgreement) / (1 - expectedAgreement);
   return isNaN(kappa) ? 0 : kappa;
@@ -311,7 +331,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   const minAcceptableAgreement = 90; // 90% threshold for acceptable agreement
   
   if (overallPercent < minAcceptableAgreement) {
-    recommendations.push("Overall agreement is below 90% - consider additional appraiser training");
+    recommendations.push("Overall agreement is below {minAcceptableAgreement}% - consider additional appraiser training");
   }
   
   if (hasReference) {
@@ -334,7 +354,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   }
   
   if (recommendations.length === 0) {
-    recommendations.push("Measurement system shows acceptable agreement levels");
+    recommendations.push("Measurement system shows excellent agreement levels");
   }
 
   return {
@@ -372,6 +392,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
  * Interpret Kappa values according to standard guidelines
  */
 export function interpretKappa(kappa: number): string {
+  if (kappa === 1) return "Perfect agreement";
   if (kappa < 0) return "Poor (worse than chance)";
   if (kappa < 0.20) return "Slight agreement";
   if (kappa < 0.40) return "Fair agreement";
