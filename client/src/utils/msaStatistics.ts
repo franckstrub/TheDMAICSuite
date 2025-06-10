@@ -381,13 +381,29 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
     app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
     
-    // Calculate overall agreement vs standard (average of all appraisers vs standard)
-    const standardAgreements = [app1Agreement, app2Agreement];
-    if (hasApp3Data && app3Agreement > 0) {
-      standardAgreements.push(app3Agreement);
+    // Calculate overall agreement vs standard using row-level logic
+    // Logic: A row is considered "agreed" only if ALL appraisers agree with the standard
+    let agreementCount = 0;
+    let totalRows = 0;
+    
+    for (let i = 0; i < data.length; i++) {
+      if (reference[i] !== "") { // Only check rows with reference values
+        const appraiserValues = [app1_rep1[i], app2_rep1[i]];
+        if (hasApp3Data) appraiserValues.push(app3_rep1[i]);
+        
+        const validAppraisers = appraiserValues.filter(val => val !== "");
+        if (validAppraisers.length > 0) {
+          totalRows++;
+          // Check if ALL valid appraisers agree with the reference
+          const allAgreeWithStandard = validAppraisers.every(val => val === reference[i]);
+          if (allAgreeWithStandard) {
+            agreementCount++;
+          }
+        }
+      }
     }
-    overallVsStandardPercent = standardAgreements.length > 0 ? 
-      standardAgreements.reduce((sum, val) => sum + val, 0) / standardAgreements.length : 0;
+    
+    overallVsStandardPercent = totalRows > 0 ? (agreementCount / totalRows) * 100 : 0;
   }
 
   // Calculate Fleiss Kappa for Overall Agreement vs Standard
@@ -432,9 +448,25 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   const app2VsApp3 = hasApp3Data ? calculatePercentAgreement(app2_rep1, app3_rep1) : 0;
   
   // Calculate overall between-appraiser agreement when 3 appraisers are present
+  // Logic: A row is considered "agreed" only if ALL appraisers have the same value
   let betweenAllAppraisers: number | undefined = undefined;
   if (hasApp3Data) {
-    betweenAllAppraisers = (app1VsApp2 + app1VsApp3 + app2VsApp3) / 3;
+    let agreementCount = 0;
+    let totalRows = 0;
+    
+    for (let i = 0; i < data.length; i++) {
+      const values = [app1_rep1[i], app2_rep1[i], app3_rep1[i]].filter(val => val !== "");
+      if (values.length >= 2) { // At least 2 appraisers have values
+        totalRows++;
+        // Check if all non-empty values are the same
+        const allSame = values.every(val => val === values[0]);
+        if (allSame) {
+          agreementCount++;
+        }
+      }
+    }
+    
+    betweenAllAppraisers = totalRows > 0 ? (agreementCount / totalRows) * 100 : 0;
   }
 
   // Generate recommendations
