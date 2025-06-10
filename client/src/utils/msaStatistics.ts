@@ -31,6 +31,7 @@ export interface MSAStatistics {
     app1Agreement: number;
     app2Agreement: number;
     app3Agreement: number;
+    allAppraisersVsStandard: number;
     app1Kappa?: number;
     app2Kappa?: number;
     app3Kappa?: number;
@@ -303,7 +304,8 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       appraiserVsStandard: {
         app1Agreement: 0,
         app2Agreement: 0,
-        app3Agreement: 0
+        app3Agreement: 0,
+        allAppraisersVsStandard: 0
       },
       withinAppraiser: {
         app1Repeatability: 0,
@@ -337,7 +339,8 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       appraiserVsStandard: {
         app1Agreement: 0,
         app2Agreement: 0,
-        app3Agreement: 0
+        app3Agreement: 0,
+        allAppraisersVsStandard: 0
       },
       withinAppraiser: {
         app1Repeatability: 0,
@@ -379,6 +382,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   let app1Agreement = 0, app2Agreement = 0, app3Agreement = 0;
   let app1Kappa, app2Kappa, app3Kappa;
   let overallVsStandardPercent = 0;
+  let allAppraisersVsStandardPercent = 0;
   
   if (hasReference) {
     // Use first repetition for appraiser vs standard
@@ -390,13 +394,47 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
     app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
     
-    // Use the new specific function for Overall Concordant Agreement vs Standard
+    // Calculate Overall Concordant Agreement vs Standard using individual agreements
     overallVsStandardPercent = calculateOverallConcordantAgreementVsStandard(data);
     
-    console.log('=== Overall Concordant Agreement vs Standard Debug ===');
-    console.log('Percentage:', overallVsStandardPercent);
-    console.log('Expected 119/120 = 99.17%:', (119/120) * 100);
-    console.log('=======================================================');
+    // Calculate All Appraisers vs Standard using row-level logic (19/20 = 95%)
+    let rowAgreementCount = 0;
+    let totalRows = 0;
+    
+    for (let i = 0; i < data.length; i++) {
+      if (reference[i] !== "") { // Only check rows with reference values
+        const appraiserValues = [
+          app1_rep1[i], app1_rep2[i], app1_rep3[i],
+          app2_rep1[i], app2_rep2[i], app2_rep3[i]
+        ];
+        if (hasApp3Data) {
+          appraiserValues.push(
+            app3_rep1[i], app3_rep2[i], app3_rep3[i]
+          );
+        }
+        
+        // Only count non-empty values
+        const validValues = appraiserValues.filter(val => val !== "");
+        
+        if (validValues.length > 0) {
+          totalRows++;
+          // Check if ALL valid appraiser values agree with the reference
+          const allAgreeWithStandard = validValues.every(val => val === reference[i]);
+          
+          if (allAgreeWithStandard) {
+            rowAgreementCount++;
+          }
+        }
+      }
+    }
+    
+    allAppraisersVsStandardPercent = totalRows > 0 ? (rowAgreementCount / totalRows) * 100 : 0;
+    
+    console.log('=== MSA Agreement Calculations Debug ===');
+    console.log('Overall Concordant Agreement vs Standard (individual):', overallVsStandardPercent, '% (Expected: 99.17%)');
+    console.log('All Appraisers vs Standard (row-level):', allAppraisersVsStandardPercent, '% (Expected: 95%)');
+    console.log('Row agreements:', rowAgreementCount, '/', totalRows);
+    console.log('============================================');
   }
 
   // Calculate Fleiss Kappa for Overall Agreement vs Standard
@@ -498,6 +536,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       app1Agreement,
       app2Agreement,
       app3Agreement,
+      allAppraisersVsStandard: allAppraisersVsStandardPercent,
       app1Kappa: app1Kappa || undefined,
       app2Kappa: app2Kappa || undefined,
       app3Kappa: app3Kappa || undefined
