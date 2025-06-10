@@ -28,6 +28,7 @@ export interface MSAStatistics {
     percentAgreementVsStandard: number;
     cohensKappa?: number;
     fleissKappa?: number;
+    fleissKappaVsStandard?: number;
   };
   appraiserVsStandard: {
     app1Agreement: number;
@@ -386,6 +387,26 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     }
     overallVsStandardPercent = standardAgreements.length > 0 ? 
       standardAgreements.reduce((sum, val) => sum + val, 0) / standardAgreements.length : 0;
+  }
+
+  // Calculate Fleiss Kappa for Overall Agreement vs Standard
+  let fleissKappaVsStandard: number | undefined = undefined;
+  if (hasReference) {
+    // Create matrix for appraisers vs standard comparison
+    const standardMatrix: string[][] = [];
+    for (let i = 0; i < data.length; i++) {
+      const row = [reference[i]];
+      if (app1_rep1[i] !== "") row.push(app1_rep1[i]);
+      if (app2_rep1[i] !== "") row.push(app2_rep1[i]);
+      if (hasApp3Data && app3_rep1[i] !== "") row.push(app3_rep1[i]);
+      
+      // Only include rows with at least reference + 1 appraiser
+      if (row.length >= 2) {
+        standardMatrix.push(row);
+      }
+    }
+    const kappaResult = calculateFleissKappa(standardMatrix);
+    fleissKappaVsStandard = kappaResult !== null ? kappaResult : undefined;
     
     console.log('Appraiser vs Standard Kappa values:', {
       app1Kappa,
@@ -394,7 +415,8 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       app1Agreement,
       app2Agreement,
       app3Agreement,
-      overallVsStandardPercent
+      overallVsStandardPercent,
+      fleissKappaVsStandard
     });
   }
 
@@ -443,7 +465,8 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     overallAgreement: {
       percentAgreement: overallPercent,
       percentAgreementVsStandard: overallVsStandardPercent,
-      fleissKappa: fleissKappa || undefined
+      fleissKappa: fleissKappa || undefined,
+      fleissKappaVsStandard: fleissKappaVsStandard
     },
     appraiserVsStandard: {
       app1Agreement,

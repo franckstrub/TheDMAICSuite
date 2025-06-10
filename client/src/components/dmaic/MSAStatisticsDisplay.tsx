@@ -96,8 +96,8 @@ export default function MSAStatisticsDisplay({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Overall Agreement</span>
                 {getStatusIcon(statistics.overallAgreement.percentAgreement)}
@@ -111,9 +111,20 @@ export default function MSAStatisticsDisplay({
                   {formatPercentage(statistics.overallAgreement.percentAgreement)}
                 </span>
               </div>
+              {statistics.overallAgreement.fleissKappa && (
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs text-gray-500">Fleiss' Kappa:</span>
+                  <Badge variant="outline" className="text-xs">
+                    {formatKappa(statistics.overallAgreement.fleissKappa)}
+                  </Badge>
+                  <span className="text-xs text-gray-600">
+                    {interpretKappa(statistics.overallAgreement.fleissKappa)}
+                  </span>
+                </div>
+              )}
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Overall Agreement vs Standard</span>
                 {getStatusIcon(statistics.overallAgreement.percentAgreementVsStandard)}
@@ -127,21 +138,18 @@ export default function MSAStatisticsDisplay({
                   {formatPercentage(statistics.overallAgreement.percentAgreementVsStandard)}
                 </span>
               </div>
-            </div>
-            
-            {statistics.overallAgreement.fleissKappa && (
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Fleiss' Kappa</span>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">
-                    {formatKappa(statistics.overallAgreement.fleissKappa)}
+              {statistics.overallAgreement.fleissKappaVsStandard && (
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs text-gray-500">Fleiss' Kappa:</span>
+                  <Badge variant="outline" className="text-xs">
+                    {formatKappa(statistics.overallAgreement.fleissKappaVsStandard)}
                   </Badge>
-                  <span className="text-sm text-gray-600">
-                    {interpretKappa(statistics.overallAgreement.fleissKappa)}
+                  <span className="text-xs text-gray-600">
+                    {interpretKappa(statistics.overallAgreement.fleissKappaVsStandard)}
                   </span>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           
           <Alert className={statistics.summary.acceptableAgreement ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
