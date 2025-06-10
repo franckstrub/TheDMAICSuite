@@ -390,17 +390,25 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     for (let i = 0; i < data.length; i++) {
       if (reference[i] !== "") { // Only check rows with reference values
         const appraiserValues = [
-          { value: app1_rep1[i], name: 'app1' },
-          { value: app2_rep1[i], name: 'app2' }
+          { value: app1_rep1[i], name: 'app1_rep1' },
+          { value: app1_rep2[i], name: 'app1_rep2' },
+          { value: app1_rep3[i], name: 'app1_rep3' },
+          { value: app2_rep1[i], name: 'app2_rep1' },
+          { value: app2_rep2[i], name: 'app2_rep2' },
+          { value: app2_rep3[i], name: 'app2_rep3' }
         ];
         if (hasApp3Data) {
-          appraiserValues.push({ value: app3_rep1[i], name: 'app3' });
+          appraiserValues.push(
+            { value: app3_rep1[i], name: 'app3_rep1' },
+            { value: app3_rep2[i], name: 'app3_rep2' },
+            { value: app3_rep3[i], name: 'app3_rep3' }
+          );
         }
         
         let rowAgreements = 0;
         let rowValues = 0;
         
-        // Count each individual appraiser's agreement with standard
+        // Count each individual appraiser's agreement with standard (all repetitions)
         appraiserValues.forEach(appraiser => {
           if (appraiser.value !== "") {
             totalValues++;
