@@ -249,17 +249,20 @@ export default function MSAStatisticsDisplay({
           <CardTitle>Between-Appraiser Agreement</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-4`}>
+          <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-1'} gap-4`}>
             {[
               { pair: `${appraiser1Name} vs ${appraiser2Name}`, agreement: statistics.betweenAppraiser.app1VsApp2 },
               ...(hasApp3Data ? [
                 { pair: `${appraiser1Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app1VsApp3 },
-                { pair: `${appraiser2Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app2VsApp3 }
+                { pair: `${appraiser2Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app2VsApp3 },
+                { pair: "Between all Appraisers", agreement: statistics.betweenAppraiser.betweenAllAppraisers || 0, isOverall: true }
               ] : [])
             ].map((comparison, idx) => (
-              <div key={idx} className="space-y-3 p-4 border rounded-lg">
+              <div key={idx} className={`space-y-3 p-4 border rounded-lg ${comparison.isOverall ? 'bg-blue-50 border-blue-200' : ''}`}>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{comparison.pair}</span>
+                  <span className={`font-medium text-sm ${comparison.isOverall ? 'text-blue-800' : ''}`}>
+                    {comparison.pair}
+                  </span>
                   {getStatusIcon(comparison.agreement)}
                 </div>
                 <div className="flex items-center gap-2">
