@@ -96,7 +96,7 @@ export default function MSAStatisticsDisplay({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Overall Agreement</span>
@@ -109,6 +109,22 @@ export default function MSAStatisticsDisplay({
                 />
                 <span className={`text-sm font-medium ${getAgreementColor(statistics.overallAgreement.percentAgreement)}`}>
                   {formatPercentage(statistics.overallAgreement.percentAgreement)}
+                </span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Overall Agreement vs Standard</span>
+                {getStatusIcon(statistics.overallAgreement.percentAgreementVsStandard)}
+              </div>
+              <div className="flex items-center gap-2">
+                <Progress 
+                  value={statistics.overallAgreement.percentAgreementVsStandard} 
+                  className="flex-1"
+                />
+                <span className={`text-sm font-medium ${getAgreementColor(statistics.overallAgreement.percentAgreementVsStandard)}`}>
+                  {formatPercentage(statistics.overallAgreement.percentAgreementVsStandard)}
                 </span>
               </div>
             </div>
