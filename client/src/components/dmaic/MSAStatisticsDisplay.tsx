@@ -40,6 +40,11 @@ export default function MSAStatisticsDisplay({
     row.app3_rep1 !== "" || row.app3_rep2 !== ""
   );
 
+  // Check if appraiser 3 has any data
+  const hasApp3Data = data.some(row => 
+    row.app3_rep1 !== "" || row.app3_rep2 !== "" || row.app3_rep3 !== ""
+  );
+
   if (data.length === 0 || !hasRealData) {
     return (
       <Card className="w-full">
@@ -148,11 +153,11 @@ export default function MSAStatisticsDisplay({
             <CardTitle>Appraiser vs Standard Agreement</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
               {[
                 { name: appraiser1Name, agreement: statistics.appraiserVsStandard.app1Agreement, kappa: statistics.appraiserVsStandard.app1Kappa },
                 { name: appraiser2Name, agreement: statistics.appraiserVsStandard.app2Agreement, kappa: statistics.appraiserVsStandard.app2Kappa },
-                { name: appraiser3Name, agreement: statistics.appraiserVsStandard.app3Agreement, kappa: statistics.appraiserVsStandard.app3Kappa }
+                ...(hasApp3Data ? [{ name: appraiser3Name, agreement: statistics.appraiserVsStandard.app3Agreement, kappa: statistics.appraiserVsStandard.app3Kappa }] : [])
               ].map((appraiser, idx) => (
                 <div key={idx} className="space-y-3 p-4 border rounded-lg">
                   <div className="flex items-center justify-between">
@@ -190,11 +195,11 @@ export default function MSAStatisticsDisplay({
           <CardTitle>Within-Appraiser Repeatability</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
             {[
               { name: appraiser1Name, repeatability: statistics.withinAppraiser.app1Repeatability },
               { name: appraiser2Name, repeatability: statistics.withinAppraiser.app2Repeatability },
-              { name: appraiser3Name, repeatability: statistics.withinAppraiser.app3Repeatability }
+              ...(hasApp3Data ? [{ name: appraiser3Name, repeatability: statistics.withinAppraiser.app3Repeatability }] : [])
             ].map((appraiser, idx) => (
               <div key={idx} className="space-y-3 p-4 border rounded-lg">
                 <div className="flex items-center justify-between">
@@ -219,11 +224,13 @@ export default function MSAStatisticsDisplay({
           <CardTitle>Between-Appraiser Agreement</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-4`}>
             {[
               { pair: `${appraiser1Name} vs ${appraiser2Name}`, agreement: statistics.betweenAppraiser.app1VsApp2 },
-              { pair: `${appraiser1Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app1VsApp3 },
-              { pair: `${appraiser2Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app2VsApp3 }
+              ...(hasApp3Data ? [
+                { pair: `${appraiser1Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app1VsApp3 },
+                { pair: `${appraiser2Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app2VsApp3 }
+              ] : [])
             ].map((comparison, idx) => (
               <div key={idx} className="space-y-3 p-4 border rounded-lg">
                 <div className="flex items-center justify-between">
