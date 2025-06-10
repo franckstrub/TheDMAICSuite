@@ -82,12 +82,23 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
+  const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
+  const [hasCalculatedStatistics, setHasCalculatedStatistics] = useState<{ [ctq: string]: boolean }>({});
 
-  // Load last active tab from localStorage on component mount
+  // Load last active tab and statistics state from localStorage on component mount
   useEffect(() => {
     const savedTab = localStorage.getItem(`msa-active-tab-${projectId}`);
     if (savedTab) {
       setActiveTab(savedTab);
+    }
+
+    // Load saved statistics calculation state
+    const savedStatsState = localStorage.getItem(`msa-calculated-stats-${projectId}`);
+    if (savedStatsState) {
+      const parsedState = JSON.parse(savedStatsState);
+      setHasCalculatedStatistics(parsedState);
+      // Show statistics for CTQs that have been calculated before
+      setShowStatistics(parsedState);
     }
   }, [projectId]);
 
@@ -96,18 +107,37 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     setActiveTab(tabValue);
     localStorage.setItem(`msa-active-tab-${projectId}`, tabValue);
   };
-  const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
+
+  // Function to toggle statistics visibility and mark as calculated
+  const toggleStatistics = (ctq: string) => {
+    const newShowState = !showStatistics[ctq];
+    
+    setShowStatistics(prev => ({
+      ...prev,
+      [ctq]: newShowState
+    }));
+
+    // If showing statistics, mark as calculated and persist
+    if (newShowState) {
+      const newCalculatedState = {
+        ...hasCalculatedStatistics,
+        [ctq]: true
+      };
+      setHasCalculatedStatistics(newCalculatedState);
+      localStorage.setItem(`msa-calculated-stats-${projectId}`, JSON.stringify(newCalculatedState));
+    }
+  };
 
   // Generate default attribute analysis data with 20 rows (all empty for real data entry)
   const generateDefaultAttributeData = (): AttributeAnalysisRow[] => {
     return Array.from({ length: 20 }, (_, index) => ({
       unitNumber: index + 1,
       reference: "" as const,
-      app1_rep1: "" as "OK" | "KO",
-      app1_rep2: "" as "OK" | "KO", 
+      app1_rep1: "OK" as "OK" | "KO",
+      app1_rep2: "OK" as "OK" | "KO", 
       app1_rep3: "" as const,
-      app2_rep1: "" as "OK" | "KO",
-      app2_rep2: "" as "OK" | "KO",
+      app2_rep1: "OK" as "OK" | "KO",
+      app2_rep2: "OK" as "OK" | "KO",
       app2_rep3: "" as const,
       app3_rep1: "" as const,
       app3_rep2: "" as const,
@@ -758,7 +788,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         Add Row
                       </Button>
                       <Button
-                        onClick={() => setShowStatistics(prev => ({ ...prev, [ctqItem.ctq]: !prev[ctqItem.ctq] }))}
+                        onClick={() => toggleStatistics(ctqItem.ctq)}
                         variant="outline"
                         size="sm"
                         className="flex items-center gap-2"
