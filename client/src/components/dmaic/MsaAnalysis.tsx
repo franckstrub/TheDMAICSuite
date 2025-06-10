@@ -21,14 +21,14 @@ import MSAStatisticsDisplay from "./MSAStatisticsDisplay";
 interface AttributeAnalysisRow {
   unitNumber: number;
   reference: "OK" | "KO" | "";
-  app1_rep1: "OK" | "KO";
-  app1_rep2: "OK" | "KO";
+  app1_rep1: "OK" | "KO" | "";
+  app1_rep2: "OK" | "KO" | "";
   app1_rep3: "OK" | "KO" | "";
-  app2_rep1: "OK" | "KO";
-  app2_rep2: "OK" | "KO";
+  app2_rep1: "OK" | "KO" | "";
+  app2_rep2: "OK" | "KO" | "";
   app2_rep3: "OK" | "KO" | "";
-  app3_rep1: "OK" | "KO";
-  app3_rep2: "OK" | "KO";
+  app3_rep1: "OK" | "KO" | "";
+  app3_rep2: "OK" | "KO" | "";
   app3_rep3: "OK" | "KO" | "";
 }
 
@@ -82,6 +82,20 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
+
+  // Load last active tab from localStorage on component mount
+  useEffect(() => {
+    const savedTab = localStorage.getItem(`msa-active-tab-${projectId}`);
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
+  }, [projectId]);
+
+  // Save active tab to localStorage whenever it changes
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
+    localStorage.setItem(`msa-active-tab-${projectId}`, tabValue);
+  };
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
 
   // Generate default attribute analysis data with 20 rows
@@ -95,8 +109,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       app2_rep1: "OK" as const,
       app2_rep2: "OK" as const,
       app2_rep3: "" as const,
-      app3_rep1: "OK" as const,
-      app3_rep2: "OK" as const,
+      app3_rep1: "" as const,
+      app3_rep2: "" as const,
       app3_rep3: "" as const,
     }));
   };
@@ -303,8 +317,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         app2_rep1: "OK",
         app2_rep2: "OK",
         app2_rep3: "",
-        app3_rep1: "OK",
-        app3_rep2: "OK",
+        app3_rep1: "",
+        app3_rep2: "",
         app3_rep3: "",
       };
       
@@ -508,7 +522,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
             {ctqList.map((ctqItem: CtqWithType) => (
               <TabsTrigger 
@@ -658,7 +672,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                               >
                                 <TableCell className="font-medium">{row.unitNumber}</TableCell>
                                 {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
-                                const isBlankAllowed = field === 'reference' || field.includes('rep3');
+                                const isBlankAllowed = field === 'reference' || field.includes('rep3') || field.includes('app3');
                                 const fieldValue = row[field as keyof AttributeAnalysisRow] as string;
                                 const selectValue = fieldValue === "" ? "blank" : fieldValue;
                                 
