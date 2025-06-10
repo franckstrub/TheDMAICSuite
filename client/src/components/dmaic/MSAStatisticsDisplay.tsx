@@ -156,7 +156,7 @@ export default function MSAStatisticsDisplay({
                 { name: `${appraiser1Name} vs standard`, agreement: statistics.appraiserVsStandard.app1Agreement, kappa: statistics.appraiserVsStandard.app1Kappa },
                 { name: `${appraiser2Name} vs standard`, agreement: statistics.appraiserVsStandard.app2Agreement, kappa: statistics.appraiserVsStandard.app2Kappa },
                 ...(hasApp3Data ? [{ name: `${appraiser3Name} vs  standard`, agreement: statistics.appraiserVsStandard.app3Agreement, kappa: statistics.appraiserVsStandard.app3Kappa }] : []),
-                { name: "All Appraisers vs Standard", agreement: statistics.overallAgreement.percentAgreementVsStandard, kappa: statistics.overallAgreement.fleissKappaVsStandard, isOverall: true }
+                { name: "All Appraisers vs Standard", agreement: statistics.appraiserVsStandard.allAppraisersVsStandard, kappa: statistics.overallAgreement.fleissKappaVsStandard, isOverall: true }
               ].map((appraiser, idx) => (
                 <div key={idx} className={`space-y-3 p-4 border rounded-lg ${appraiser.isOverall ? 'bg-green-50 border-green-200' : ''}`}>
                   <div className="flex items-center justify-between">
