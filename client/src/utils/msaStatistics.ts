@@ -11,14 +11,14 @@ import * as stats from 'simple-statistics';
 export interface AttributeAnalysisRow {
   unitNumber: number;
   reference: "OK" | "KO" | "";
-  app1_rep1: "OK" | "KO";
-  app1_rep2: "OK" | "KO";
+  app1_rep1: "OK" | "KO" | "";
+  app1_rep2: "OK" | "KO" | "";
   app1_rep3: "OK" | "KO" | "";
-  app2_rep1: "OK" | "KO";
-  app2_rep2: "OK" | "KO";
+  app2_rep1: "OK" | "KO" | "";
+  app2_rep2: "OK" | "KO" | "";
   app2_rep3: "OK" | "KO" | "";
-  app3_rep1: "OK" | "KO";
-  app3_rep2: "OK" | "KO";
+  app3_rep1: "OK" | "KO" | "";
+  app3_rep2: "OK" | "KO" | "";
   app3_rep3: "OK" | "KO" | "";
 }
 

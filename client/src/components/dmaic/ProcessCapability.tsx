@@ -43,6 +43,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [capabilityData, setCapabilityData] = useState<{ [ctq: string]: ProcessCapabilityData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
+  // Load last active tab from localStorage on component mount
+  useEffect(() => {
+    const savedTab = localStorage.getItem(`process-capability-active-tab-${projectId}`);
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
+  }, [projectId]);
+
+  // Save active tab to localStorage whenever it changes
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
+    localStorage.setItem(`process-capability-active-tab-${projectId}`, tabValue);
+  };
+
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/ctqs`],
@@ -226,7 +240,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
             {ctqList.map((ctq: string) => (
               <TabsTrigger 
