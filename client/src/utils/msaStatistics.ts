@@ -381,29 +381,34 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
     app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
     
-    // Calculate overall agreement vs standard using row-level logic
-    // Logic: A row is considered "agreed" only if ALL appraisers agree with the standard
+    // Calculate overall agreement vs standard using individual value logic
+    // Logic: Count all individual appraiser agreements with standard / all values entered
     let agreementCount = 0;
-    let totalRows = 0;
+    let totalValues = 0;
     
     for (let i = 0; i < data.length; i++) {
       if (reference[i] !== "") { // Only check rows with reference values
-        const appraiserValues = [app1_rep1[i], app2_rep1[i]];
-        if (hasApp3Data) appraiserValues.push(app3_rep1[i]);
-        
-        const validAppraisers = appraiserValues.filter(val => val !== "");
-        if (validAppraisers.length > 0) {
-          totalRows++;
-          // Check if ALL valid appraisers agree with the reference
-          const allAgreeWithStandard = validAppraisers.every(val => val === reference[i]);
-          if (allAgreeWithStandard) {
-            agreementCount++;
-          }
+        const appraiserValues = [
+          { value: app1_rep1[i], name: 'app1' },
+          { value: app2_rep1[i], name: 'app2' }
+        ];
+        if (hasApp3Data) {
+          appraiserValues.push({ value: app3_rep1[i], name: 'app3' });
         }
+        
+        // Count each individual appraiser's agreement with standard
+        appraiserValues.forEach(appraiser => {
+          if (appraiser.value !== "") {
+            totalValues++;
+            if (appraiser.value === reference[i]) {
+              agreementCount++;
+            }
+          }
+        });
       }
     }
     
-    overallVsStandardPercent = totalRows > 0 ? (agreementCount / totalRows) * 100 : 0;
+    overallVsStandardPercent = totalValues > 0 ? (agreementCount / totalValues) * 100 : 0;
   }
 
   // Calculate Fleiss Kappa for Overall Agreement vs Standard
