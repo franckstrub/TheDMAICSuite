@@ -178,15 +178,16 @@ export default function MSAStatisticsDisplay({
             <CardTitle>Appraiser vs Standard Agreement</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+            <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
               {[
                 { name: appraiser1Name, agreement: statistics.appraiserVsStandard.app1Agreement, kappa: statistics.appraiserVsStandard.app1Kappa },
                 { name: appraiser2Name, agreement: statistics.appraiserVsStandard.app2Agreement, kappa: statistics.appraiserVsStandard.app2Kappa },
-                ...(hasApp3Data ? [{ name: appraiser3Name, agreement: statistics.appraiserVsStandard.app3Agreement, kappa: statistics.appraiserVsStandard.app3Kappa }] : [])
+                ...(hasApp3Data ? [{ name: appraiser3Name, agreement: statistics.appraiserVsStandard.app3Agreement, kappa: statistics.appraiserVsStandard.app3Kappa }] : []),
+                { name: "All Appraisers vs Standard", agreement: statistics.overallAgreement.percentAgreementVsStandard, kappa: statistics.overallAgreement.fleissKappaVsStandard, isOverall: true }
               ].map((appraiser, idx) => (
-                <div key={idx} className="space-y-3 p-4 border rounded-lg">
+                <div key={idx} className={`space-y-3 p-4 border rounded-lg ${appraiser.isOverall ? 'bg-green-50 border-green-200' : ''}`}>
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{appraiser.name}</span>
+                    <span className={`font-medium ${appraiser.isOverall ? 'text-green-800' : ''}`}>{appraiser.name}</span>
                     {getStatusIcon(appraiser.agreement)}
                   </div>
                   <div className="space-y-2">
