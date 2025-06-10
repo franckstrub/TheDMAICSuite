@@ -25,6 +25,7 @@ export interface AttributeAnalysisRow {
 export interface MSAStatistics {
   overallAgreement: {
     percentAgreement: number;
+    percentAgreementVsStandard: number;
     cohensKappa?: number;
     fleissKappa?: number;
   };
@@ -259,7 +260,10 @@ function calculateRepeatability(rep1: string[], rep2: string[], rep3?: string[])
 export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatistics {
   if (data.length === 0) {
     return {
-      overallAgreement: { percentAgreement: 0 },
+      overallAgreement: { 
+        percentAgreement: 0,
+        percentAgreementVsStandard: 0
+      },
       appraiserVsStandard: {
         app1Agreement: 0,
         app2Agreement: 0,
@@ -291,7 +295,10 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
 
   if (!hasRealData) {
     return {
-      overallAgreement: { percentAgreement: 0 },
+      overallAgreement: { 
+        percentAgreement: 0,
+        percentAgreementVsStandard: 0
+      },
       appraiserVsStandard: {
         app1Agreement: 0,
         app2Agreement: 0,
@@ -360,6 +367,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   
   let app1Agreement = 0, app2Agreement = 0, app3Agreement = 0;
   let app1Kappa, app2Kappa, app3Kappa;
+  let overallVsStandardPercent = 0;
   
   if (hasReference) {
     // Use first repetition for appraiser vs standard
@@ -371,13 +379,22 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     app2Kappa = calculateCohensKappa(reference, app2_rep1);
     app3Kappa = hasApp3Data ? calculateCohensKappa(reference, app3_rep1) : undefined;
     
+    // Calculate overall agreement vs standard (average of all appraisers vs standard)
+    const standardAgreements = [app1Agreement, app2Agreement];
+    if (hasApp3Data && app3Agreement > 0) {
+      standardAgreements.push(app3Agreement);
+    }
+    overallVsStandardPercent = standardAgreements.length > 0 ? 
+      standardAgreements.reduce((sum, val) => sum + val, 0) / standardAgreements.length : 0;
+    
     console.log('Appraiser vs Standard Kappa values:', {
       app1Kappa,
       app2Kappa,
       app3Kappa,
       app1Agreement,
       app2Agreement,
-      app3Agreement
+      app3Agreement,
+      overallVsStandardPercent
     });
   }
 
@@ -425,6 +442,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   return {
     overallAgreement: {
       percentAgreement: overallPercent,
+      percentAgreementVsStandard: overallVsStandardPercent,
       fleissKappa: fleissKappa || undefined
     },
     appraiserVsStandard: {
