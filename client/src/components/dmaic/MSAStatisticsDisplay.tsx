@@ -96,37 +96,10 @@ export default function MSAStatisticsDisplay({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Overall Agreement</span>
-                {getStatusIcon(statistics.overallAgreement.percentAgreement)}
-              </div>
-              <div className="flex items-center gap-2">
-                <Progress 
-                  value={statistics.overallAgreement.percentAgreement} 
-                  className="flex-1"
-                />
-                <span className={`text-sm font-medium ${getAgreementColor(statistics.overallAgreement.percentAgreement)}`}>
-                  {formatPercentage(statistics.overallAgreement.percentAgreement)}
-                </span>
-              </div>
-              {statistics.overallAgreement.fleissKappa && (
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs text-gray-500">Fleiss' Kappa:</span>
-                  <Badge variant="outline" className="text-xs">
-                    {formatKappa(statistics.overallAgreement.fleissKappa)}
-                  </Badge>
-                  <span className="text-xs text-gray-600">
-                    {interpretKappa(statistics.overallAgreement.fleissKappa)}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Overall Agreement vs Standard</span>
+                <span className="text-sm font-medium">Overall Concordant Agreement vs Standard</span>
                 {getStatusIcon(statistics.overallAgreement.percentAgreementVsStandard)}
               </div>
               <div className="flex items-center gap-2">

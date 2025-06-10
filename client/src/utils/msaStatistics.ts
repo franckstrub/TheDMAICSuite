@@ -24,10 +24,7 @@ export interface AttributeAnalysisRow {
 
 export interface MSAStatistics {
   overallAgreement: {
-    percentAgreement: number;
     percentAgreementVsStandard: number;
-    cohensKappa?: number;
-    fleissKappa?: number;
     fleissKappaVsStandard?: number;
   };
   appraiserVsStandard: {
@@ -263,7 +260,6 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   if (data.length === 0) {
     return {
       overallAgreement: { 
-        percentAgreement: 0,
         percentAgreementVsStandard: 0
       },
       appraiserVsStandard: {
@@ -298,7 +294,6 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   if (!hasRealData) {
     return {
       overallAgreement: { 
-        percentAgreement: 0,
         percentAgreementVsStandard: 0
       },
       appraiserVsStandard: {
@@ -338,31 +333,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   // Check if appraiser 3 has actual data
   const hasApp3Data = app3_rep1.some(val => val !== "");
 
-  // Calculate overall agreement
-  const allRatings = [app1_rep1, app1_rep2, app2_rep1, app2_rep2, app3_rep1, app3_rep2];
-  const validRatings = allRatings.filter(ratings => ratings.some(r => r !== ""));
-  
-  // For Fleiss' Kappa, transpose the data (units x raters)
-  const ratingsMatrix: string[][] = [];
-  for (let i = 0; i < data.length; i++) {
-    ratingsMatrix.push([
-      app1_rep1[i], app1_rep2[i], app2_rep1[i], 
-      app2_rep2[i], app3_rep1[i], app3_rep2[i]
-    ]);
-  }
-
-  const fleissKappa = calculateFleissKappa(ratingsMatrix);
-  console.log('Fleiss Kappa calculated:', fleissKappa);
-  
-  // Calculate overall percent agreement (average of all pairwise comparisons)
-  const pairwiseAgreements: number[] = [];
-  for (let i = 0; i < validRatings.length; i++) {
-    for (let j = i + 1; j < validRatings.length; j++) {
-      pairwiseAgreements.push(calculatePercentAgreement(validRatings[i], validRatings[j]));
-    }
-  }
-  const overallPercent = pairwiseAgreements.length > 0 ? 
-    pairwiseAgreements.reduce((sum, val) => sum + val, 0) / pairwiseAgreements.length : 0;
+  // Skip overall concordant agreement calculations - only calculate vs standard
 
   // Calculate appraiser vs standard agreement
   const hasReference = reference.some(ref => ref !== "");
@@ -510,10 +481,6 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   const recommendations: string[] = [];
   const minAcceptableAgreement = 90; // 90% threshold for acceptable agreement
   
-  if (overallPercent < minAcceptableAgreement) {
-    recommendations.push(`Overall agreement is below ${minAcceptableAgreement}% - consider additional appraiser training`);
-  }
-  
   if (hasReference) {
     if (app1Agreement < minAcceptableAgreement) recommendations.push("Appraiser 1 needs calibration training");
     if (app2Agreement < minAcceptableAgreement) recommendations.push("Appraiser 2 needs calibration training");
@@ -539,9 +506,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
 
   return {
     overallAgreement: {
-      percentAgreement: overallPercent,
       percentAgreementVsStandard: overallVsStandardPercent,
-      fleissKappa: fleissKappa || undefined,
       fleissKappaVsStandard: fleissKappaVsStandard
     },
     appraiserVsStandard: {
@@ -564,7 +529,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       betweenAllAppraisers
     },
     summary: {
-      acceptableAgreement: overallPercent >= minAcceptableAgreement && 
+      acceptableAgreement: overallVsStandardPercent >= minAcceptableAgreement && 
                           Math.min(app1Repeatability, app2Repeatability, app3Repeatability) >= 90,
       recommendations
     }
