@@ -424,12 +424,13 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       }
     }
     
-    console.log('Overall Agreement vs Standard Debug:', {
-      totalAgreements: agreementCount,
-      totalValues,
-      percentage: totalValues > 0 ? (agreementCount / totalValues) * 100 : 0,
-      debugInfo
-    });
+    console.log('=== Overall Agreement vs Standard Debug ===');
+    console.log('Total Agreements:', agreementCount);
+    console.log('Total Values:', totalValues);
+    console.log('Percentage:', totalValues > 0 ? (agreementCount / totalValues) * 100 : 0);
+    console.log('Expected (119/120):', (119/120) * 100);
+    console.log('Row details:', debugInfo);
+    console.log('===========================================');
     
     overallVsStandardPercent = totalValues > 0 ? (agreementCount / totalValues) * 100 : 0;
   }
