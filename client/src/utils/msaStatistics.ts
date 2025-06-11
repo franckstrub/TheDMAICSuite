@@ -47,6 +47,10 @@ export interface MSAStatistics {
     app2VsApp3: number;
     betweenAllAppraisers?: number;
   };
+  disagreementAnalysis: {
+    standardOkAppraisedKo: number;
+    standardKoAppraisedOk: number;
+  };
   summary: {
     acceptableAgreement: boolean;
     recommendations: string[];
@@ -273,6 +277,51 @@ function calculateOverallConcordantAgreementVsStandard(data: AttributeAnalysisRo
 }
 
 /**
+ * Calculate Disagreement Analysis between Standard and Appraisers
+ * Returns proportions of disagreements in both directions
+ */
+function calculateDisagreementAnalysis(data: AttributeAnalysisRow[]): { standardOkAppraisedKo: number; standardKoAppraisedOk: number } {
+  if (data.length === 0) return { standardOkAppraisedKo: 0, standardKoAppraisedOk: 0 };
+  
+  let standardOkAppraisedKoCount = 0;
+  let standardKoAppraisedOkCount = 0;
+  let totalValues = 0;
+  
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const reference = row.reference;
+    
+    if (reference !== "") { // Only count rows with reference values
+      // Collect all appraiser values for this row
+      const appraiserValues = [
+        row.app1_rep1, row.app1_rep2, row.app1_rep3,
+        row.app2_rep1, row.app2_rep2, row.app2_rep3,
+        row.app3_rep1, row.app3_rep2, row.app3_rep3
+      ];
+      
+      // Analyze each appraiser value against the standard
+      appraiserValues.forEach(value => {
+        if (value !== "") { // Only count non-empty values
+          totalValues++;
+          
+          // Count disagreements
+          if (reference === "OK" && value === "KO") {
+            standardOkAppraisedKoCount++;
+          } else if (reference === "KO" && value === "OK") {
+            standardKoAppraisedOkCount++;
+          }
+        }
+      });
+    }
+  }
+  
+  return {
+    standardOkAppraisedKo: totalValues > 0 ? (standardOkAppraisedKoCount / totalValues) * 100 : 0,
+    standardKoAppraisedOk: totalValues > 0 ? (standardKoAppraisedOkCount / totalValues) * 100 : 0
+  };
+}
+
+/**
  * Calculate within-appraiser repeatability
  */
 function calculateRepeatability(rep1: string[], rep2: string[], rep3?: string[]): number {
@@ -317,6 +366,10 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
         app1VsApp3: 0,
         app2VsApp3: 0
       },
+      disagreementAnalysis: {
+        standardOkAppraisedKo: 0,
+        standardKoAppraisedOk: 0
+      },
       summary: {
         acceptableAgreement: false,
         recommendations: ["Insufficient data for analysis"]
@@ -352,6 +405,10 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
         app1VsApp3: 0,
         app2VsApp3: 0
       },
+      disagreementAnalysis: {
+        standardOkAppraisedKo: 0,
+        standardKoAppraisedOk: 0
+      },
       summary: {
         acceptableAgreement: false,
         recommendations: ["Please enter actual measurement data to calculate statistics"]
@@ -383,6 +440,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   let app1Kappa, app2Kappa, app3Kappa;
   let overallVsStandardPercent = 0;
   let allAppraisersVsStandardPercent = 0;
+  let disagreementAnalysis = { standardOkAppraisedKo: 0, standardKoAppraisedOk: 0 };
   
   if (hasReference) {
     // Use first repetition for appraiser vs standard
@@ -396,6 +454,9 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     
     // Calculate Overall Concordant Agreement vs Standard using individual agreements
     overallVsStandardPercent = calculateOverallConcordantAgreementVsStandard(data);
+    
+    // Calculate disagreement analysis
+    const disagreementAnalysis = calculateDisagreementAnalysis(data);
     
     // Calculate All Appraisers vs Standard using row-level logic (19/20 = 95%)
     let rowAgreementCount = 0;
@@ -552,6 +613,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       app2VsApp3,
       betweenAllAppraisers
     },
+    disagreementAnalysis: hasReference ? disagreementAnalysis : { standardOkAppraisedKo: 0, standardKoAppraisedOk: 0 },
     summary: {
       acceptableAgreement: overallVsStandardPercent >= minAcceptableAgreement && 
                           Math.min(app1Repeatability, app2Repeatability, app3Repeatability) >= 90,

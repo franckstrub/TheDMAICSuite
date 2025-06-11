@@ -136,7 +136,7 @@ export default function MSAStatisticsDisplay({
                 )}
                 <AlertDescription>
                   <strong>
-                    {statistics.summary.acceptableAgreement ? "Acceptable" : "Unacceptable"} 
+                    {statistics.summary.acceptableAgreement ? "Acceptable " : "Unacceptable "} 
                     Measurement System
                   </strong>
                   {statistics.summary.recommendations.map((rec, idx) => (
