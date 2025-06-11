@@ -91,7 +91,15 @@ export default function MSAStatisticsDisplay({
             <BarChart3 className="h-5 w-5" />
             Overall Agreement Analysis Summary
             <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200">
-              Real Data Analysis
+              {data.some(row => row.reference !== "") ? (
+                <div>
+                Precision & Accuracy Analysis
+                </div>
+              ) : (
+                <div>
+                Precision Analysis
+                </div>
+              )}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -114,6 +122,7 @@ export default function MSAStatisticsDisplay({
                       {formatPercentage(statistics.overallAgreement.percentAgreementVsStandard)}
                     </span>
                   </div>
+                  {/*
                   {statistics.overallAgreement.fleissKappaVsStandard && (
                     <div className="flex items-center gap-2 pt-1">
                       <span className="text-xs text-gray-500">Fleiss' Kappa:</span>
@@ -125,19 +134,28 @@ export default function MSAStatisticsDisplay({
                       </span>
                     </div>
                   )}
+                    */}
                 </div>
               </div>
               
-              <Alert className={statistics.summary.acceptableAgreement ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
-                {statistics.summary.acceptableAgreement ? (
+              <Alert className={
+                statistics.summary.acceptableAgreement === "excellent" ? "border-green-200 bg-green-50" :
+                statistics.summary.acceptableAgreement === "acceptable but needs improvement" ? "border-yellow-200 bg-yellow-50" :
+                "border-red-200 bg-red-50"
+              }>
+                {statistics.summary.acceptableAgreement === "excellent" ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : statistics.summary.acceptableAgreement === "acceptable but needs improvement" ? (
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
                 ) : (
                   <XCircle className="h-4 w-4 text-red-600" />
                 )}
                 <AlertDescription>
                   <strong>
-                    {statistics.summary.acceptableAgreement ? "Acceptable " : "Unacceptable "} 
-                    Measurement System
+                    {statistics.summary.acceptableAgreement === "excellent" ? "Excellent" :
+                     statistics.summary.acceptableAgreement === "acceptable but needs improvement" ? "Acceptable but Needs Improvement" :
+                     "Unacceptable"} 
+                    {" "}Measurement System
                   </strong>
                   {statistics.summary.recommendations.map((rec, idx) => (
                     <div key={idx} className="mt-1">• {rec}</div>
@@ -161,12 +179,12 @@ export default function MSAStatisticsDisplay({
             <CardTitle>Appraiser vs Standard Agreement</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
+            <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-2`}>
               {[
                 { name: `${appraiser1Name} vs standard`, agreement: statistics.appraiserVsStandard.app1Agreement, kappa: statistics.appraiserVsStandard.app1Kappa },
                 { name: `${appraiser2Name} vs standard`, agreement: statistics.appraiserVsStandard.app2Agreement, kappa: statistics.appraiserVsStandard.app2Kappa },
                 ...(hasApp3Data ? [{ name: `${appraiser3Name} vs  standard`, agreement: statistics.appraiserVsStandard.app3Agreement, kappa: statistics.appraiserVsStandard.app3Kappa }] : []),
-                { name: "All Appraisers vs Standard", agreement: statistics.appraiserVsStandard.allAppraisersVsStandard, kappa: statistics.overallAgreement.fleissKappaVsStandard, isOverall: true }
+                { name: "All appraisers vs standard", agreement: statistics.appraiserVsStandard.allAppraisersVsStandard, kappa: statistics.overallAgreement.fleissKappaVsStandard, isOverall: true }
               ].map((appraiser, idx) => (
                 <div key={idx} className={`space-y-3 p-4 border rounded-lg ${appraiser.isOverall ? 'bg-green-50 border-green-200' : ''}`}>
                   <div className="flex items-center justify-between">
@@ -180,6 +198,7 @@ export default function MSAStatisticsDisplay({
                         {formatPercentage(appraiser.agreement)}
                       </span>
                     </div>
+                    {/*
                     {appraiser.kappa !== undefined && appraiser.kappa !== null && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
@@ -190,6 +209,7 @@ export default function MSAStatisticsDisplay({
                         </span>
                       </div>
                     )}
+                    */}
                   </div>
                 </div>
               ))}
@@ -202,7 +222,7 @@ export default function MSAStatisticsDisplay({
       {data.some(row => row.reference !== "") && (
         <Card>
           <CardHeader>
-            <CardTitle>Disagreement Analysis</CardTitle>
+            <CardTitle>Disagreement vs Standard Analysis</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -333,6 +353,7 @@ export default function MSAStatisticsDisplay({
                 </div>
               </div>
             </div>
+            {/*}
             <div>
               <h4 className="font-medium mb-3">Kappa Interpretation</h4>
               <div className="space-y-1 text-sm">
@@ -344,6 +365,7 @@ export default function MSAStatisticsDisplay({
                 <div>&lt;0.00: Poor</div>
               </div>
             </div>
+            */}
           </div>
         </CardContent>
       </Card>
