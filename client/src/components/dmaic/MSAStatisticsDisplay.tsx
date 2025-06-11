@@ -198,6 +198,54 @@ export default function MSAStatisticsDisplay({
         </Card>
       )}
 
+      {/* Disagreement Analysis */}
+      {data.some(row => row.reference !== "") && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Disagreement Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3 p-4 border rounded-lg bg-red-50 border-red-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-red-800">Standard "OK" Appraised "KO"</span>
+                  <span className="text-sm text-red-600 font-medium">
+                    {formatPercentage(statistics.disagreementAnalysis.standardOkAppraisedKo)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Progress 
+                    value={statistics.disagreementAnalysis.standardOkAppraisedKo} 
+                    className="flex-1"
+                  />
+                </div>
+                <div className="text-xs text-red-700">
+                  Proportion where standard says "OK" but appraisers say "KO"
+                </div>
+              </div>
+              
+              <div className="space-y-3 p-4 border rounded-lg bg-orange-50 border-orange-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-orange-800">Standard "KO" Appraised "OK"</span>
+                  <span className="text-sm text-orange-600 font-medium">
+                    {formatPercentage(statistics.disagreementAnalysis.standardKoAppraisedOk)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Progress 
+                    value={statistics.disagreementAnalysis.standardKoAppraisedOk} 
+                    className="flex-1"
+                  />
+                </div>
+                <div className="text-xs text-orange-700">
+                  Proportion where standard says "KO" but appraisers say "OK"
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Within-Appraiser Repeatability */}
       <Card>
         <CardHeader>
