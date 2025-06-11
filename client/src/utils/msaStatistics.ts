@@ -45,14 +45,14 @@ export interface MSAStatistics {
     app1VsApp2: number;
     app1VsApp3: number;
     app2VsApp3: number;
-    betweenAllAppraisers?: number;
+    betweenAllAppraisers: number;
   };
   disagreementAnalysis: {
     standardOkAppraisedKo: number;
     standardKoAppraisedOk: number;
   };
   summary: {
-    acceptableAgreement: "unacceptable" | "acceptable but needs improvement" | "excellent";
+    allAgreements: "unacceptable" | "acceptable but needs improvement" | "excellent";
     recommendations: string[];
   };
 }
@@ -322,6 +322,81 @@ function calculateDisagreementAnalysis(data: AttributeAnalysisRow[]): { standard
 }
 
 /**
+ * Calculate between-appraiser agreement considering ALL repetitions
+ * Two appraisers agree on a row if ALL their repetitions for that row are identical
+ */
+function calculateBetweenAppraiserAgreement(data: AttributeAnalysisRow[], appraiser1Reps: string[][], appraiser2Reps: string[][]): number {
+  let agreementCount = 0;
+  let totalRows = 0;
+  
+  for (let i = 0; i < data.length; i++) {
+    // Get all repetitions for appraiser 1 for this row
+    const app1Values = appraiser1Reps.map(rep => rep[i]).filter(val => val !== "");
+    // Get all repetitions for appraiser 2 for this row
+    const app2Values = appraiser2Reps.map(rep => rep[i]).filter(val => val !== "");
+    
+    // Only count rows where both appraisers have at least one value
+    if (app1Values.length > 0 && app2Values.length > 0) {
+      totalRows++;
+      
+      // Check if ALL values from appraiser 1 match ALL values from appraiser 2
+      // This means both appraisers must be consistent within themselves AND agree with each other
+      const app1AllSame = app1Values.every(val => val === app1Values[0]);
+      const app2AllSame = app2Values.every(val => val === app2Values[0]);
+      const appraisersAgree = app1Values[0] === app2Values[0];
+      
+      if (app1AllSame && app2AllSame && appraisersAgree) {
+        agreementCount++;
+      }
+    }
+  }
+  
+  return totalRows > 0 ? (agreementCount / totalRows) * 100 : 0;
+}
+
+/**
+ * Calculate between ALL appraisers agreement considering ALL repetitions
+ * All appraisers agree on a row if ALL their repetitions for that row are identical
+ */
+function calculateBetweenAllAppraisersAgreement(data: AttributeAnalysisRow[], app1Reps: string[][], app2Reps: string[][], app3Reps: string[][]): number {
+  let agreementCount = 0;
+  let totalRows = 0;
+  
+  for (let i = 0; i < data.length; i++) {
+    // Get all repetitions for each appraiser for this row
+    const app1Values = app1Reps.map(rep => rep[i]).filter(val => val !== "");
+    const app2Values = app2Reps.map(rep => rep[i]).filter(val => val !== "");
+    const app3Values = app3Reps.map(rep => rep[i]).filter(val => val !== "");
+    
+    // Only count rows where at least 2 appraisers have values
+    const appraisersWithData = [app1Values, app2Values, app3Values].filter(vals => vals.length > 0);
+    if (appraisersWithData.length >= 2) {
+      totalRows++;
+      
+      // Check if ALL appraisers are internally consistent AND all agree with each other
+      const app1AllSame = app1Values.length === 0 || app1Values.every(val => val === app1Values[0]);
+      const app2AllSame = app2Values.length === 0 || app2Values.every(val => val === app2Values[0]);
+      const app3AllSame = app3Values.length === 0 || app3Values.every(val => val === app3Values[0]);
+      
+      // Get the representative value for each appraiser (if they have data)
+      const app1Rep = app1Values.length > 0 ? app1Values[0] : null;
+      const app2Rep = app2Values.length > 0 ? app2Values[0] : null;
+      const app3Rep = app3Values.length > 0 ? app3Values[0] : null;
+      
+      // Check if all non-null representative values are the same
+      const nonNullReps = [app1Rep, app2Rep, app3Rep].filter(val => val !== null);
+      const allAppraisersAgree = nonNullReps.length > 0 && nonNullReps.every(val => val === nonNullReps[0]);
+      
+      if (app1AllSame && app2AllSame && app3AllSame && allAppraisersAgree) {
+        agreementCount++;
+      }
+    }
+  }
+  
+  return totalRows > 0 ? (agreementCount / totalRows) * 100 : 0;
+}
+
+/**
  * Calculate within-appraiser repeatability
  */
 function calculateRepeatability(rep1: string[], rep2: string[], rep3?: string[]): number {
@@ -371,7 +446,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
         standardKoAppraisedOk: 0
       },
       summary: {
-        acceptableAgreement: "unacceptable",
+        allAgreements: "unacceptable",
         recommendations: ["Insufficient data for analysis"]
       }
     };
@@ -403,14 +478,15 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
       betweenAppraiser: {
         app1VsApp2: 0,
         app1VsApp3: 0,
-        app2VsApp3: 0
+        app2VsApp3: 0,
+        betweenAllAppraisers: 0,
       },
       disagreementAnalysis: {
         standardOkAppraisedKo: 0,
         standardKoAppraisedOk: 0
       },
       summary: {
-        acceptableAgreement: "unacceptable",
+        allAgreements: "unacceptable",
         recommendations: ["Please enter actual measurement data to calculate statistics"]
       }
     };
@@ -491,11 +567,13 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     
     allAppraisersVsStandardPercent = totalRows > 0 ? (rowAgreementCount / totalRows) * 100 : 0;
     
+    /*
     console.log('=== MSA Agreement Calculations Debug ===');
     console.log('Overall Concordant Agreement vs Standard (individual):', overallVsStandardPercent, '% (Expected: 99.17%)');
     console.log('All Appraisers vs Standard (row-level):', allAppraisersVsStandardPercent, '% (Expected: 95%)');
     console.log('Row agreements:', rowAgreementCount, '/', totalRows);
     console.log('============================================');
+    */
   }
 
   // Calculate Fleiss Kappa for Overall Agreement vs Standard
@@ -534,31 +612,19 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   const app2Repeatability = calculateRepeatability(app2_rep1, app2_rep2, app2_rep3);
   const app3Repeatability = hasApp3Data ? calculateRepeatability(app3_rep1, app3_rep2, app3_rep3) : 0;
 
-  // Calculate between-appraiser agreement
-  const app1VsApp2 = calculatePercentAgreement(app1_rep1, app2_rep1);
-  const app1VsApp3 = hasApp3Data ? calculatePercentAgreement(app1_rep1, app3_rep1) : 0;
-  const app2VsApp3 = hasApp3Data ? calculatePercentAgreement(app2_rep1, app3_rep1) : 0;
+  // Calculate between-appraiser agreement using ALL repetitions
+  const app1Reps = [app1_rep1, app1_rep2, app1_rep3];
+  const app2Reps = [app2_rep1, app2_rep2, app2_rep3];
+  const app3Reps = [app3_rep1, app3_rep2, app3_rep3];
+  
+  const app1VsApp2 = calculateBetweenAppraiserAgreement(data, app1Reps, app2Reps);
+  const app1VsApp3 = hasApp3Data ? calculateBetweenAppraiserAgreement(data, app1Reps, app3Reps) : 0;
+  const app2VsApp3 = hasApp3Data ? calculateBetweenAppraiserAgreement(data, app2Reps, app3Reps) : 0;
   
   // Calculate overall between-appraiser agreement when 3 appraisers are present
-  // Logic: A row is considered "agreed" only if ALL appraisers have the same value
-  let betweenAllAppraisers: number | undefined = undefined;
+  let betweenAllAppraisers: number = 0;
   if (hasApp3Data) {
-    let agreementCount = 0;
-    let totalRows = 0;
-    
-    for (let i = 0; i < data.length; i++) {
-      const values = [app1_rep1[i], app2_rep1[i], app3_rep1[i]].filter(val => val !== "");
-      if (values.length >= 2) { // At least 2 appraisers have values
-        totalRows++;
-        // Check if all non-empty values are the same
-        const allSame = values.every(val => val === values[0]);
-        if (allSame) {
-          agreementCount++;
-        }
-      }
-    }
-    
-    betweenAllAppraisers = totalRows > 0 ? (agreementCount / totalRows) * 100 : 0;
+    betweenAllAppraisers = calculateBetweenAllAppraisersAgreement(data, app1Reps, app2Reps, app3Reps);
   }
 
   // Generate recommendations
@@ -578,15 +644,16 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
   
   // Only check appraiser 3 comparisons if appraiser 3 has data
   const minBetweenAppraiserAgreement = hasApp3Data ? 
-    Math.min(app1VsApp2, app1VsApp3, app2VsApp3) : 
-    app1VsApp2;
+    Math.min(app1VsApp2, app1VsApp3, app2VsApp3, betweenAllAppraisers) : 
+    Math.min(app1VsApp2,betweenAllAppraisers);
   
-  if (minBetweenAppraiserAgreement < 90) {
+  if (!hasReference && minBetweenAppraiserAgreement < minAcceptableAgreement) {
     recommendations.push("Significant differences between appraisers - review measurement criteria");
   }
+  // Only check appraiser 3 comparisons if appraiser 3 has data
   
-  if (recommendations.length === 0) {
-    recommendations.push("Measurement system shows excellent agreement levels");
+  if (hasReference && allAppraisersVsStandardPercent < minAcceptableAgreement) {
+    recommendations.push("Significant differences between appraisers vs standard - review measurement criteria and calibration training");
   }
 
   return {
@@ -616,22 +683,51 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     },
     disagreementAnalysis: hasReference ? disagreementAnalysis : { standardOkAppraisedKo: 0, standardKoAppraisedOk: 0 },
     summary: {
-      acceptableAgreement: (() => {
-        const overallMeetsMinimum = overallVsStandardPercent >= minAcceptableAgreement;
-        const repeatabilityMeetsMinimum = Math.min(app1Repeatability, app2Repeatability, app3Repeatability) >= minAcceptableAgreement;
-        
-        if (!overallMeetsMinimum || !repeatabilityMeetsMinimum) {
-          return "unacceptable";
-        } else if (overallVsStandardPercent >= minExcellentAgreement && 
-                   Math.min(app1Repeatability, app2Repeatability, app3Repeatability) >= minExcellentAgreement) {
-          return "excellent";
-        } else {
-          return "acceptable but needs improvement";
+      allAgreements: (() => {
+        const allMeetsExcellence = hasApp3Data ? Math.min(overallVsStandardPercent,app1Agreement, app2Agreement, app3Agreement, allAppraisersVsStandardPercent) >= minExcellentAgreement:
+          Math.min(overallVsStandardPercent,app1Agreement, app2Agreement, allAppraisersVsStandardPercent) >= minExcellentAgreement;
+        const allMeetsMinimum = hasApp3Data ? Math.min(overallVsStandardPercent,app1Agreement, app2Agreement, app3Agreement, allAppraisersVsStandardPercent) >= minAcceptableAgreement:
+          Math.min(overallVsStandardPercent,app1Agreement, app2Agreement, allAppraisersVsStandardPercent) >= minAcceptableAgreement;
+        const intrinsicPrecision = betweenAllAppraisers >= minExcellentAgreement;
+        const allwithnostdMeetsExcellence = hasApp3Data ? Math.min(app1Repeatability,app2Repeatability,app3Repeatability, betweenAllAppraisers) >= minExcellentAgreement:
+          Math.min(app1Repeatability,app2Repeatability, betweenAllAppraisers) >= minExcellentAgreement;
+        const allwithnostdMeetsMinimum = hasApp3Data ? Math.min(app1Repeatability,app2Repeatability,app3Repeatability, betweenAllAppraisers) >= minAcceptableAgreement:
+          Math.min(app1Repeatability,app2Repeatability, betweenAllAppraisers) >= minAcceptableAgreement;
+
+        if (hasReference) {
+           if (allMeetsExcellence) {
+              if (recommendations.length === 0) {
+                recommendations.push("Measurement system shows excellent agreement levels");}
+              return "Excellent precise & accurate";
+            }
+            else if (allMeetsMinimum) {
+              if (recommendations.length === 0) {
+                recommendations.push("Measurement system shows acceptale agreement levels");}
+              if(intrinsicPrecision) {
+                return "Acceptable and precise but needs improvement vs standard";
+              }
+              else {
+                return "Acceptable but needs improvement";
+              }
+            } else {
+              if (recommendations.length === 0) {
+                recommendations.push("Measurement system shows unacceptale agreement levels");}
+              return "Unacceptable and needs serious improvement";
+            } 
         }
+        else if (!hasReference){
+            if (allwithnostdMeetsExcellence) {
+              return "Excellent precise";
+            } else if (allwithnostdMeetsMinimum) { 
+              return "Acceptable but needs improvement"; 
+            } else {
+              return "Unacceptable and needs serious improvement";
+            }
+        };
       })(),
       recommendations
     }
-  };
+    };
 }
 
 /**
@@ -645,13 +741,4 @@ export function interpretKappa(kappa: number): string {
   if (kappa < 0.60) return "Moderate agreement";
   if (kappa < 0.80) return "Substantial agreement";
   return "Almost perfect agreement";
-}
-
-/**
- * Get color coding for agreement percentages
- */
-export function getAgreementColor(percentage: number): string {
-  if (percentage >= 95) return "text-green-600";
-  if (percentage >= 90) return "text-yellow-600";
-  return "text-red-600";
 }

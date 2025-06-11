@@ -12,8 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertTriangle, XCircle, BarChart3 } from "lucide-react";
 import { 
   calculateMSAStatistics, 
-  interpretKappa, 
-  getAgreementColor,
+  interpretKappa,
   type AttributeAnalysisRow,
   type MSAStatistics 
 } from "@/utils/msaStatistics";
@@ -51,9 +50,9 @@ export default function MSAStatisticsDisplay({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            MSA Attribute Agreement Statistics
+            Overall Agreement Analysis
             <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200">
-              Real Data Analysis
+             No data for Precision & Accuracy Analysis
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -82,14 +81,24 @@ export default function MSAStatisticsDisplay({
   const formatKappa = (value: number | undefined) => 
     value !== undefined && value !== null ? value.toFixed(3) : "N/A";
 
+  function getAgreementColor(percentage: number): string {
+  const minExcellentAgreement = 90; // 90% threshold for excellent agreement
+  const minAcceptableAgreement = 80; // 80% threshold for acceptable agreement but needs improvement
+  if (percentage >= minExcellentAgreement) return "text-green-600";
+  if (percentage >= minAcceptableAgreement) return "text-yellow-500";
+  return "text-red-600";
+  };
+
+  
+
   return (
     <div className="space-y-6">
-      {/* Overall Agreement Summary */}
+      {/* Overall Agreement Analysis */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            Overall Agreement Analysis Summary
+            Overall Agreement Analysis
             <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200">
               {data.some(row => row.reference !== "") ? (
                 <div>
@@ -103,10 +112,17 @@ export default function MSAStatisticsDisplay({
             </Badge>
           </CardTitle>
         </CardHeader>
+        </Card>
+      {/* Overall Concordant Agreement Analysis vs standard */}
+      {/* Check if there are reference values to show the full content */}
+       {data.some(row => row.reference !== "") && (
+        <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Overall Concordant Agreement Analysis
+          </CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
-          {/* Check if there are reference values to show the full content */}
-          {data.some(row => row.reference !== "") ? (
-            <>
               <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -122,7 +138,7 @@ export default function MSAStatisticsDisplay({
                       {formatPercentage(statistics.overallAgreement.percentAgreementVsStandard)}
                     </span>
                   </div>
-                  {/*
+                  {/* Fleiss Kappa
                   {statistics.overallAgreement.fleissKappaVsStandard && (
                     <div className="flex items-center gap-2 pt-1">
                       <span className="text-xs text-gray-500">Fleiss' Kappa:</span>
@@ -137,40 +153,11 @@ export default function MSAStatisticsDisplay({
                     */}
                 </div>
               </div>
-              
-              <Alert className={
-                statistics.summary.acceptableAgreement === "excellent" ? "border-green-200 bg-green-50" :
-                statistics.summary.acceptableAgreement === "acceptable but needs improvement" ? "border-yellow-200 bg-yellow-50" :
-                "border-red-200 bg-red-50"
-              }>
-                {statistics.summary.acceptableAgreement === "excellent" ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : statistics.summary.acceptableAgreement === "acceptable but needs improvement" ? (
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-red-600" />
-                )}
-                <AlertDescription>
-                  <strong>
-                    {statistics.summary.acceptableAgreement === "excellent" ? "Excellent" :
-                     statistics.summary.acceptableAgreement === "acceptable but needs improvement" ? "Acceptable but Needs Improvement" :
-                     "Unacceptable"} 
-                    {" "}Measurement System
-                  </strong>
-                  {statistics.summary.recommendations.map((rec, idx) => (
-                    <div key={idx} className="mt-1">• {rec}</div>
-                  ))}
-                </AlertDescription>
-              </Alert>
-            </>
-          ) : (
-            /* Show only title when no reference values */
-            <div className="text-sm text-gray-500">
-              No standard reference values available for agreement analysis.
-            </div>
-          )}
         </CardContent>
       </Card>
+       )}
+
+      {/* Appraiser Agreement Analysis */}
 
       {/* Appraiser vs Standard */}
       {data.some(row => row.reference !== "") && (
@@ -198,7 +185,7 @@ export default function MSAStatisticsDisplay({
                         {formatPercentage(appraiser.agreement)}
                       </span>
                     </div>
-                    {/*
+                    {/* Fliess' Kappa
                     {appraiser.kappa !== undefined && appraiser.kappa !== null && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
@@ -344,7 +331,7 @@ export default function MSAStatisticsDisplay({
                   <span>90%-95%: Excellent agreement</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                  <div className="w-3 h-3 bg-yellow-400 rounded"></div>
                   <span>80%-90%: Acceptable agreement but needs improvement</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -353,7 +340,7 @@ export default function MSAStatisticsDisplay({
                 </div>
               </div>
             </div>
-            {/*}
+            {/* Fleiss' Kappa interpretation guide
             <div>
               <h4 className="font-medium mb-3">Kappa Interpretation</h4>
               <div className="space-y-1 text-sm">
@@ -369,6 +356,54 @@ export default function MSAStatisticsDisplay({
           </div>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Overall Agreement Analysis Summary
+            <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200">
+              {data.some(row => row.reference !== "") ? (
+                <div>
+                Precision & Accuracy Analysis
+                </div>
+              ) : (
+                <div>
+                Precision Analysis
+                </div>
+              )}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">     
+              <Alert className={
+                statistics.summary.allAgreements == "excellent" ? "border-green-200 bg-green-50" :
+                statistics.summary.allAgreement == "acceptable but needs improvement" ? "border-yellow-200 bg-yellow-50" :
+                "border-red-200 bg-red-50"
+              }>
+                {statistics.summary.allAgreements == "excellent" ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : statistics.summary.allAgreements == "acceptable but needs improvement" ? (
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-red-600" />
+                )}
+                <AlertDescription>
+                  <strong>
+                    {/*}
+                    {statistics.summary.allAgreements == "excellent" ? "Excellent" :
+                     statistics.summary.allAgreements == "acceptable but needs improvement" ? "Acceptable but Needs Improvement" :
+                     "Unacceptable"} 
+                     */}
+                    {statistics.summary.allAgreements}{" "}Measurement System
+                  </strong>
+                  {statistics.summary.recommendations.map((rec, idx) => (
+                    <div key={idx} className="mt-1">• {rec}</div>
+                  ))}
+                </AlertDescription>
+              </Alert>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
