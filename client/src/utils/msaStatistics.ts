@@ -456,7 +456,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     overallVsStandardPercent = calculateOverallConcordantAgreementVsStandard(data);
     
     // Calculate disagreement analysis
-    const disagreementAnalysis = calculateDisagreementAnalysis(data);
+    disagreementAnalysis = calculateDisagreementAnalysis(data);
     
     // Calculate All Appraisers vs Standard using row-level logic (19/20 = 95%)
     let rowAgreementCount = 0;
