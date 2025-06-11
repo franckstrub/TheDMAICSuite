@@ -52,7 +52,7 @@ export interface MSAStatistics {
     standardKoAppraisedOk: number;
   };
   summary: {
-    acceptableAgreement: boolean;
+    acceptableAgreement: "unacceptable" | "acceptable but needs improvement" | "excellent";
     recommendations: string[];
   };
 }
@@ -371,7 +371,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
         standardKoAppraisedOk: 0
       },
       summary: {
-        acceptableAgreement: false,
+        acceptableAgreement: "unacceptable",
         recommendations: ["Insufficient data for analysis"]
       }
     };
@@ -410,7 +410,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
         standardKoAppraisedOk: 0
       },
       summary: {
-        acceptableAgreement: false,
+        acceptableAgreement: "unacceptable",
         recommendations: ["Please enter actual measurement data to calculate statistics"]
       }
     };
@@ -563,7 +563,8 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
 
   // Generate recommendations
   const recommendations: string[] = [];
-  const minAcceptableAgreement = 90; // 90% threshold for acceptable agreement
+  const minExcellentAgreement = 90; // 90% threshold for excellent agreement
+  const minAcceptableAgreement = 80; // 80% threshold for acceptable agreement but needs improvement
   
   if (hasReference) {
     if (app1Agreement < minAcceptableAgreement) recommendations.push("Appraiser 1 needs calibration training");
@@ -571,9 +572,9 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     if (hasApp3Data && app3Agreement < minAcceptableAgreement) recommendations.push("Appraiser 3 needs calibration training");
   }
   
-  if (app1Repeatability < 90) recommendations.push("Appraiser 1 shows poor repeatability");
-  if (app2Repeatability < 90) recommendations.push("Appraiser 2 shows poor repeatability");
-  if (hasApp3Data && app3Repeatability < 90) recommendations.push("Appraiser 3 shows poor repeatability");
+  if (app1Repeatability < minAcceptableAgreement) recommendations.push("Appraiser 1 shows poor repeatability");
+  if (app2Repeatability < minAcceptableAgreement) recommendations.push("Appraiser 2 shows poor repeatability");
+  if (hasApp3Data && app3Repeatability < minAcceptableAgreement) recommendations.push("Appraiser 3 shows poor repeatability");
   
   // Only check appraiser 3 comparisons if appraiser 3 has data
   const minBetweenAppraiserAgreement = hasApp3Data ? 
@@ -615,8 +616,19 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     },
     disagreementAnalysis: hasReference ? disagreementAnalysis : { standardOkAppraisedKo: 0, standardKoAppraisedOk: 0 },
     summary: {
-      acceptableAgreement: overallVsStandardPercent >= minAcceptableAgreement && 
-                          Math.min(app1Repeatability, app2Repeatability, app3Repeatability) >= 90,
+      acceptableAgreement: (() => {
+        const overallMeetsMinimum = overallVsStandardPercent >= minAcceptableAgreement;
+        const repeatabilityMeetsMinimum = Math.min(app1Repeatability, app2Repeatability, app3Repeatability) >= minAcceptableAgreement;
+        
+        if (!overallMeetsMinimum || !repeatabilityMeetsMinimum) {
+          return "unacceptable";
+        } else if (overallVsStandardPercent >= minExcellentAgreement && 
+                   Math.min(app1Repeatability, app2Repeatability, app3Repeatability) >= minExcellentAgreement) {
+          return "excellent";
+        } else {
+          return "acceptable but needs improvement";
+        }
+      })(),
       recommendations
     }
   };
