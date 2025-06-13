@@ -531,7 +531,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const ctqList = getCtqsWithTypes();
   
   // Get project type from project data
-  const projectType = projectData?.project?.projectType;
+  const projectType = (projectData as any)?.project?.projectType;
   const isSimplifiedView = projectType === "Yellow Belt" || projectType === "White Belt";
 
   if (ctqList.length === 0) {
@@ -622,18 +622,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   {!isSimplifiedView && (
                     <>
                       <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
-                    <p className="text-sm text-gray-600">
-                      . For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) if a standard exists and Precision (Agreement R&R), using OK/KO evaluations.<br></br>
-                      . It is still possible to perform an Agreement Analysis without a standard. In this case, it will be a Precision Agreement Analysis.<br></br>
-                      . A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
-                      . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
-                    </p>
-                  </div>
+                        <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
+                        <p className="text-sm text-gray-600">
+                          . For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) if a standard exists and Precision (Agreement R&R), using OK/KO evaluations.<br></br>
+                          . It is still possible to perform an Agreement Analysis without a standard. In this case, it will be a Precision Agreement Analysis.<br></br>
+                          . A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
+                          . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
+                        </p>
+                      </div>
 
-            {/* Appraised unit type and Study Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
+                      {/* Appraised unit type and Study Information */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
                       <label className="block text-sm font-medium mb-2">Appraised unit type</label>
                       <Select
                         value={attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Part"}
