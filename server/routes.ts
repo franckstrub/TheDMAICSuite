@@ -2370,6 +2370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appraiser3Name: req.body.appraiser3Name || null,
         agreementAnalysisData: req.body.agreementAnalysisData || null,
         studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
+        justification: req.body.justification || null,
       };
 
       // Check if MSA record already exists for this CTQ and project
@@ -2483,6 +2484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appraiser3Name: req.body.appraiser3Name || null,
         agreementAnalysisData: req.body.agreementAnalysisData || null,
         studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
+        justification: req.body.justification || null,
         lastUpdated: new Date(),
       };
 
