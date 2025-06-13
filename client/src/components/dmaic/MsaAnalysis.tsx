@@ -57,6 +57,7 @@ interface AttributeMsaData {
   appraiser3Name: string;
   agreementAnalysisData: AttributeAnalysisRow[];
   studyDateTime: string;
+  justification?: string;
 }
 
 interface ContinuousMsaData {
