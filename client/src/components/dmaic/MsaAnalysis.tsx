@@ -169,6 +169,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     enabled: !!projectId,
   });
 
+  // Load project data to get project type
+  const { data: projectData, isLoading: projectLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}`],
+    enabled: !!projectId,
+  });
+
   // Load existing MSA data (both attribute and continuous)
   const { data: msaDataResponse, isLoading: msaLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/msa-analysis`],
@@ -506,7 +512,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   };
 
-  if (ctsLoading || msaLoading) {
+  if (ctsLoading || msaLoading || projectLoading) {
     return (
       <Card>
         <CardHeader>
@@ -523,6 +529,10 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   }
 
   const ctqList = getCtqsWithTypes();
+  
+  // Get project type from project data
+  const projectType = projectData?.project?.projectType;
+  const isSimplifiedView = projectType === "Yellow Belt" || projectType === "White Belt";
 
   if (ctqList.length === 0) {
     return (
@@ -593,11 +603,25 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
  . Precision: Explain why the measurement system is precise?
  . Accuracy: Explain why the measurement system is accurate?"
-                        title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the reality or are they biased (Accuracy)? Please justify here."
+                        title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
                       />
                     </div>
                   </div>
-                  <div className="bg-blue-50 p-4 rounded-lg">
+                  
+                  {/* Save MSA Button */}
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
+                      disabled={saveAttributeMsaMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saveAttributeMsaMutation.isPending ? "Saving..." : "Save MSA"}
+                    </Button>
+                  </div>
+
+                  {!isSimplifiedView && (
+                    <>
+                      <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
                     <p className="text-sm text-gray-600">
                       . For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) if a standard exists and Precision (Agreement R&R), using OK/KO evaluations.<br></br>
@@ -833,16 +857,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </Button>
                   </div>
 
-                  {/* Statistics Display */}
-                  {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
-                    <div className="mt-6">
-                      <MSAStatisticsDisplay
-                        data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
-                        appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
-                        appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
-                        appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
-                      />
-                    </div>
+                      {/* Statistics Display */}
+                      {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
+                        <div className="mt-6">
+                          <MSAStatisticsDisplay
+                            data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
+                            appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
+                            appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
+                            appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
