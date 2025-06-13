@@ -68,6 +68,7 @@ interface ContinuousMsaData {
   appraiser3Name: string;
   gageRRData: ContinuousAnalysisRow[];
   studyDateTime: string;
+  justification?: string;
 }
 
 interface CtqWithType {
@@ -151,7 +152,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   }, []);
 
-  // Check scrollability when ctqList changes
+  // Check scrollability when component mounts and updates
   useEffect(() => {
     const checkScrollability = () => {
       if (tabsListRef.current) {
@@ -161,9 +162,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }
     };
 
-    // Delay check to ensure DOM is updated
-    setTimeout(checkScrollability, 100);
-  }, [ctqList]);
+    // Initial check and setup resize observer
+    const resizeObserver = new ResizeObserver(checkScrollability);
+    if (tabsListRef.current) {
+      resizeObserver.observe(tabsListRef.current);
+    }
+    
+    checkScrollability();
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  });
 
   // Function to toggle statistics visibility and mark as calculated
   const toggleStatistics = (ctq: string) => {
