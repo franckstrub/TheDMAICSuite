@@ -70,10 +70,14 @@ export default function MSAStatisticsDisplay({
       </Card>
     );
   }
+  const minExcellentAgreement = 90; // 90% threshold for excellent agreement
+  const minAcceptableAgreement = 80; // 80% threshold for acceptable agreement but needs improvement
+  const maxExcellentDisAgreement = 5; // 5% threshold for low disagreement
+  const maxAcceptableDisAgreement = 10; // 10% threshold for moderate disagreement but needs improvement
 
-  const getStatusIcon = (percentage: number, threshold: number = 80) => {
-    if (percentage >= 90) return <CheckCircle className="h-4 w-4 text-green-600" />;
-    if (percentage >= threshold) return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+  const getStatusIcon = (percentage: number, threshold: number = minAcceptableAgreement) => {
+    if (percentage >= minExcellentAgreement) return <CheckCircle className="h-4 w-4 text-green-600" />;
+    if (percentage >= threshold) return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
     return <XCircle className="h-4 w-4 text-red-600" />;
   };
 
@@ -82,14 +86,34 @@ export default function MSAStatisticsDisplay({
     value !== undefined && value !== null ? value.toFixed(3) : "N/A";
 
   function getAgreementColor(percentage: number): string {
-  const minExcellentAgreement = 90; // 90% threshold for excellent agreement
-  const minAcceptableAgreement = 80; // 80% threshold for acceptable agreement but needs improvement
   if (percentage >= minExcellentAgreement) return "text-green-600";
   if (percentage >= minAcceptableAgreement) return "text-yellow-500";
   return "text-red-600";
   };
 
-  
+  const getDisStatusIcon = (percentage: number, threshold: number = maxAcceptableDisAgreement) => {
+    if (percentage <= maxExcellentDisAgreement) return <CheckCircle className="h-4 w-4 text-green-600" />;
+    if (percentage <= threshold) return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+    return <XCircle className="h-4 w-4 text-red-600" />;
+  };
+
+  function getDisAgreementColor(percentage: number): string {
+
+  if (percentage <= maxExcellentDisAgreement) return "text-green-600";
+  if (percentage <= maxAcceptableDisAgreement) return "text-yellow-500";
+  return "text-red-600";
+  };
+
+  function getDisTitle(percentage: number): string {
+    if (percentage <= maxExcellentDisAgreement) return "Low disagreement";
+    if (percentage <= maxAcceptableDisAgreement) return "Moderate disagreement but needs improvement";
+    return "Unacceptable disagreement";
+  }
+  function getTitle(percentage: number): string {
+    if (percentage >= minExcellentAgreement) return "Excellent agreement";
+    if (percentage >= minAcceptableAgreement) return "Acceptable agreement but needs improvement";
+    return "Unacceptable agreement";
+  }
 
   return (
     <div className="space-y-6">
@@ -119,7 +143,7 @@ export default function MSAStatisticsDisplay({
         <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            Overall Concordant Agreement Analysis
+            Overall Concordant Agreement vs Standard
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -134,7 +158,8 @@ export default function MSAStatisticsDisplay({
                       value={statistics.overallAgreement.percentAgreementVsStandard} 
                       className="flex-1"
                     />
-                    <span className={`text-sm font-medium ${getAgreementColor(statistics.overallAgreement.percentAgreementVsStandard)}`}>
+                    <span className={`text-sm font-medium hover:bg-gray-200 ${getAgreementColor(statistics.overallAgreement.percentAgreementVsStandard)}`}
+                    title={`${getTitle(statistics.overallAgreement.percentAgreementVsStandard)}: ${statistics.overallAgreement.NbTotalUserAgrees} / ${statistics.overallAgreement.NbAgreeVsStd}`}>
                       {formatPercentage(statistics.overallAgreement.percentAgreementVsStandard)}
                     </span>
                   </div>
@@ -168,10 +193,10 @@ export default function MSAStatisticsDisplay({
           <CardContent>
             <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-2`}>
               {[
-                { name: `${appraiser1Name} vs standard`, agreement: statistics.appraiserVsStandard.app1Agreement, kappa: statistics.appraiserVsStandard.app1Kappa },
-                { name: `${appraiser2Name} vs standard`, agreement: statistics.appraiserVsStandard.app2Agreement, kappa: statistics.appraiserVsStandard.app2Kappa },
-                ...(hasApp3Data ? [{ name: `${appraiser3Name} vs  standard`, agreement: statistics.appraiserVsStandard.app3Agreement, kappa: statistics.appraiserVsStandard.app3Kappa }] : []),
-                { name: "All appraisers vs standard", agreement: statistics.appraiserVsStandard.allAppraisersVsStandard, kappa: statistics.overallAgreement.fleissKappaVsStandard, isOverall: true }
+                { name: `${appraiser1Name} vs standard`, agreement: statistics.appraiserVsStandard.app1VsStd.Percent, NbUserAgreesVsStd: statistics.appraiserVsStandard.app1VsStd.NbAgrees, NbStd: statistics.appraiserVsStandard.app1VsStd.NbStd, kappa: statistics.appraiserVsStandard.app1Kappa },
+                { name: `${appraiser2Name} vs standard`, agreement: statistics.appraiserVsStandard.app2VsStd.Percent, NbUserAgreesVsStd: statistics.appraiserVsStandard.app2VsStd.NbAgrees, NbStd: statistics.appraiserVsStandard.app2VsStd.NbStd, kappa: statistics.appraiserVsStandard.app2Kappa },
+                ...(hasApp3Data ? [{ name: `${appraiser3Name} vs  standard`, agreement: statistics.appraiserVsStandard.app3VsStd.Percent, NbUserAgreesVsStd: statistics.appraiserVsStandard.app3VsStd.NbAgrees, NbStd: statistics.appraiserVsStandard.app3VsStd.NbStd,kappa: statistics.appraiserVsStandard.app3Kappa }] : []),
+                { name: "All appraisers vs standard", agreement: statistics.appraiserVsStandard.allAppraisersVsStandard.allAppraisersVsStandardPercent, NbUserAgreesVsStd: statistics.appraiserVsStandard.allAppraisersVsStandard.allAppraisersAgreesVsStd, NbStd: statistics.appraiserVsStandard.allAppraisersVsStandard.allAppraisersNbStd, kappa: statistics.overallAgreement.fleissKappaVsStandard, isOverall: true }
               ].map((appraiser, idx) => (
                 <div key={idx} className={`space-y-3 p-4 border rounded-lg ${appraiser.isOverall ? 'bg-green-50 border-green-200' : ''}`}>
                   <div className="flex items-center justify-between">
@@ -181,7 +206,8 @@ export default function MSAStatisticsDisplay({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Progress value={appraiser.agreement} className="flex-1" />
-                      <span className={`text-sm font-medium ${getAgreementColor(appraiser.agreement)}`}>
+                      <span className={`text-sm font-medium hover:bg-gray-200 ${getAgreementColor(appraiser.agreement)}`}
+                      title={`${getTitle(appraiser.agreement)}: ${appraiser.NbUserAgreesVsStd} / ${appraiser.NbStd}`}>
                         {formatPercentage(appraiser.agreement)}
                       </span>
                     </div>
@@ -209,14 +235,16 @@ export default function MSAStatisticsDisplay({
       {data.some(row => row.reference !== "") && (
         <Card>
           <CardHeader>
-            <CardTitle>Disagreement vs Standard Analysis</CardTitle>
+            <CardTitle>Overall Disagreement vs Standard Analysis</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3 p-4 border rounded-lg bg-red-50 border-red-200">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-red-800">Standard "OK" Appraised "KO"</span>
-                  <span className="text-sm text-red-600 font-medium">
+                  {getDisStatusIcon(statistics.disagreementAnalysis.standardOkAppraisedKo)}
+                  <span className="text-sm text-red-600 font-medium hover:bg-gray-200 ${getDisAgreementColor(statistics.disagreementAnalysis.standardOkAppraisedKo)}"
+                  title={`${getDisTitle(statistics.disagreementAnalysis.standardOkAppraisedKo)}: ${statistics.disagreementAnalysis.standardOkAppraisedKoCount} / ${statistics.disagreementAnalysis.totalValues} `}>
                     {formatPercentage(statistics.disagreementAnalysis.standardOkAppraisedKo)}
                   </span>
                 </div>
@@ -234,7 +262,9 @@ export default function MSAStatisticsDisplay({
               <div className="space-y-3 p-4 border rounded-lg bg-orange-50 border-orange-200">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-orange-800">Standard "KO" Appraised "OK"</span>
-                  <span className="text-sm text-orange-600 font-medium">
+                  {getDisStatusIcon(statistics.disagreementAnalysis.standardKoAppraisedOk)}
+                  <span className="text-sm text-orange-600 font-medium hover:bg-gray-200 ${getDisAgreementColor(statistics.disagreementAnalysis.standardKoAppraisedOk)}"
+                  title={`${getDisTitle(statistics.disagreementAnalysis.standardKoAppraisedOk)}: ${statistics.disagreementAnalysis.standardKoAppraisedOkCount} / ${statistics.disagreementAnalysis.totalValues} `}>
                     {formatPercentage(statistics.disagreementAnalysis.standardKoAppraisedOk)}
                   </span>
                 </div>
@@ -256,7 +286,7 @@ export default function MSAStatisticsDisplay({
       {/* Within-Appraiser Repeatability */}
       <Card>
         <CardHeader>
-          <CardTitle>Within-Appraiser Repeatability</CardTitle>
+          <CardTitle>Within-Appraiser Repeatability Agreement</CardTitle>
         </CardHeader>
         <CardContent>
           <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
@@ -268,12 +298,13 @@ export default function MSAStatisticsDisplay({
               <div key={idx} className="space-y-3 p-4 border rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{appraiser.name}</span>
-                  {getStatusIcon(appraiser.repeatability)}
+                  {getStatusIcon(appraiser.repeatability.Percent)}
                 </div>
                 <div className="flex items-center gap-2">
                   <Progress value={appraiser.repeatability} className="flex-1" />
-                  <span className={`text-sm font-medium ${getAgreementColor(appraiser.repeatability)}`}>
-                    {formatPercentage(appraiser.repeatability)}
+                  <span className={`text-sm font-medium hover:bg-gray-200 ${getAgreementColor(appraiser.repeatability.Percent)}`}
+                  title={`${getTitle(appraiser.repeatability.Percent)}: ${appraiser.repeatability.NbFullRowAgrees} / ${appraiser.repeatability.NbRows}`}>
+                    {formatPercentage(appraiser.repeatability.Percent)}
                   </span>
                 </div>
               </div>
@@ -285,16 +316,16 @@ export default function MSAStatisticsDisplay({
       {/* Between-Appraiser Agreement */}
       <Card>
         <CardHeader>
-          <CardTitle>Between-Appraiser Agreement</CardTitle>
+          <CardTitle>Between-Appraiser Reproducibility Agreement</CardTitle>
         </CardHeader>
         <CardContent>
           <div className={`grid grid-cols-1 ${hasApp3Data ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-1'} gap-4`}>
             {[
-              { pair: `${appraiser1Name} vs ${appraiser2Name}`, agreement: statistics.betweenAppraiser.app1VsApp2 },
+              { pair: `${appraiser1Name} vs ${appraiser2Name}`, agreement: statistics.betweenAppraiser.app1VsApp2.Percent, NbFullRowAgrees: statistics.betweenAppraiser.app1VsApp2.NbFullRowAgrees, NbRows: statistics.betweenAppraiser.app1VsApp2.NbRows },
               ...(hasApp3Data ? [
-                { pair: `${appraiser1Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app1VsApp3 },
-                { pair: `${appraiser2Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app2VsApp3 },
-                { pair: "Between all Appraisers", agreement: statistics.betweenAppraiser.betweenAllAppraisers || 0, isOverall: true }
+                { pair: `${appraiser1Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app1VsApp3.Percent, NbFullRowAgrees: statistics.betweenAppraiser.app1VsApp3.NbFullRowAgrees, NbRows: statistics.betweenAppraiser.app1VsApp3.NbRows },
+                { pair: `${appraiser2Name} vs ${appraiser3Name}`, agreement: statistics.betweenAppraiser.app2VsApp3.Percent, NbFullRowAgrees: statistics.betweenAppraiser.app2VsApp3.NbFullRowAgrees, NbRows: statistics.betweenAppraiser.app2VsApp3.NbRows },
+                { pair: "Between all Appraisers", agreement: statistics.betweenAppraiser.betweenAllAppraisers.Percent || 0, NbFullRowAgrees: statistics.betweenAppraiser.betweenAllAppraisers.NbFullRowAgrees, NbRows: statistics.betweenAppraiser.betweenAllAppraisers.NbRows, isOverall: true },
               ] : [])
             ].map((comparison, idx) => (
               <div key={idx} className={`space-y-3 p-4 border rounded-lg ${comparison.isOverall ? 'bg-blue-50 border-blue-200' : ''}`}>
@@ -306,7 +337,8 @@ export default function MSAStatisticsDisplay({
                 </div>
                 <div className="flex items-center gap-2">
                   <Progress value={comparison.agreement} className="flex-1" />
-                  <span className={`text-sm font-medium ${getAgreementColor(comparison.agreement)}`}>
+                  <span className={`text-sm font-medium hover:bg-gray-200 ${getAgreementColor(comparison.agreement)}`}
+                    title={`${getTitle(comparison.agreement)}: ${comparison.NbFullRowAgrees} / ${comparison.NbRows}`}>
                     {formatPercentage(comparison.agreement)}
                   </span>
                 </div>
@@ -328,15 +360,18 @@ export default function MSAStatisticsDisplay({
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-500 rounded"></div>
-                  <span>90%-95%: Excellent agreement</span>
+                  <span>90%-100%: Excellent agreement</span>
+                  {getStatusIcon(minExcellentAgreement)}
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-yellow-400 rounded"></div>
                   <span>80%-90%: Acceptable agreement but needs improvement</span>
+                  {getStatusIcon(minAcceptableAgreement)}
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-red-500 rounded"></div>
                   <span>&lt;80%: Unacceptable agreement</span>
+                  {getStatusIcon(minAcceptableAgreement-1)}
                 </div>
               </div>
             </div>
@@ -353,6 +388,29 @@ export default function MSAStatisticsDisplay({
               </div>
             </div>
             */}
+            {/* Disagreement percentages interpretation guide */}
+            {data.some(row => row.reference !== "") && (
+            <div>
+              <h4 className="font-medium mb-3">Disagreement Thresholds</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <span>0%-5%: Low disgreement</span>
+                  {getDisStatusIcon(maxExcellentDisAgreement)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-yellow-400 rounded"></div>
+                  <span>5%-10%: Moderate disagreement but needs improvement</span>
+                  {getDisStatusIcon(maxAcceptableDisAgreement)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded"></div>
+                  <span>&gt;10%: Unacceptable disagreement</span>
+                  {getDisStatusIcon(maxAcceptableDisAgreement+1)}
+                </div>
+              </div>
+            </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -376,13 +434,13 @@ export default function MSAStatisticsDisplay({
         </CardHeader>
         <CardContent className="space-y-4">     
               <Alert className={
-                statistics.summary.allAgreements == "excellent" ? "border-green-200 bg-green-50" :
-                statistics.summary.allAgreement == "acceptable but needs improvement" ? "border-yellow-200 bg-yellow-50" :
+                statistics.summary.allAgreements === "Excellent precise and accurate" || statistics.summary.allAgreements === "Excellent precise" ? "border-green-200 bg-green-50" :
+                statistics.summary.allAgreements === "Acceptable and precise but needs improvement vs standard" || statistics.summary.allAgreements === "Acceptable but needs improvement" ? "border-yellow-200 bg-yellow-50" :
                 "border-red-200 bg-red-50"
               }>
-                {statistics.summary.allAgreements == "excellent" ? (
+                {statistics.summary.allAgreements === "Excellent precise and accurate" || statistics.summary.allAgreements === "Excellent precise" ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : statistics.summary.allAgreements == "acceptable but needs improvement" ? (
+                ) : statistics.summary.allAgreements === "Acceptable and precise but needs improvement vs standard" || statistics.summary.allAgreements === "Acceptable but needs improvement" ? (
                   <AlertTriangle className="h-4 w-4 text-yellow-600" />
                 ) : (
                   <XCircle className="h-4 w-4 text-red-600" />

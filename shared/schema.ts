@@ -929,6 +929,7 @@ export const msaAnalysis = pgTable("msa_analysis", {
   appraiser3Name: text("appraiser3_name"),
   agreementAnalysisData: text("agreement_analysis_data"), // JSON array of measurement data with structure: [{unitNumber: 1, reference: "OK", app1_rep1: "OK", app1_rep2: "KO", ...}]
   studyDateTime: timestamp("study_date_time"),
+  justification: text("justification"), // Measurement System Precision & Accuracy justification
   
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });

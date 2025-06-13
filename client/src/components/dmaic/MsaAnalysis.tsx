@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -573,11 +574,35 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 // Attribute Agreement Analysis Interface
                 <div className="space-y-6">
                   <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
+                    <p className="text-sm text-gray-600">
+                      . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
+                      . Your Measurement System must be Precise and Accurate and your measurements Reliable.
+                    </p>
+                  </div>
+                  {/* Appraiser Names */}
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
+                      <Textarea
+                        value={attributeMsaData[ctqItem.ctq]?.justification || ""}
+                        onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "justification", e.target.value)}
+                        className="w-full flex min-h-[150px]"
+                        placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
+
+ . Precision: Explain why the measurement system is precise?
+ . Accuracy: Explain why the measurement system is accurate?"
+                        title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the reality or are they biased (Accuracy)? Please justify here."
+                      />
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
                     <p className="text-sm text-gray-600">
-                      For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) and Precision (Agreement R&R) using OK/KO evaluations.<br></br>
-                      A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
-                      It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
+                      . For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) if a standard exists and Precision (Agreement R&R), using OK/KO evaluations.<br></br>
+                      . It is still possible to perform an Agreement Analysis without a standard. In this case, it will be a Precision Agreement Analysis.<br></br>
+                      . A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
+                      . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
                     </p>
                   </div>
 
