@@ -921,94 +921,86 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData.length > 0 ? (
-                            attributeMsaData[ctqItem.ctq]?.agreementAnalysisData.map((row, index) => {
-                              // Check for disagreement in the row
-                              const nonBlankValues = Object.keys(row)
-                                .filter(key => key !== 'unitNumber' && row[key as keyof AttributeAnalysisRow] !== "")
-                                .map(key => row[key as keyof AttributeAnalysisRow]);
-                              
-                              const hasDisagreement = nonBlankValues.length > 1 && 
-                                !nonBlankValues.every(val => val === nonBlankValues[0]);
-                              
-                              const hasReference = row.reference !== "";
-                              
-                              return (
-                                <TableRow 
-                                  key={index} 
-                                  className={hasDisagreement ? "bg-red-200" : ""}
-                                >
-                                  <TableCell className="font-medium">{row.unitNumber}</TableCell>
-                                  {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
-                                    const isBlankAllowed = field === 'reference' || field.includes('rep3') || field.includes('app3');
-                                    const fieldValue = row[field as keyof AttributeAnalysisRow] as string;
-                                    const selectValue = fieldValue === "" ? "blank" : fieldValue;
-                                    
-                                    // Determine styling based on disagreement conditions
-                                    let cellStyling = "";
-                                    let triggerStyling = "";
-                                    
-                                    if (hasDisagreement) {
-                                      if (!hasReference) {
-                                        // No reference available - bold and white text for all non-blank cells
-                                        if (fieldValue !== "") {
-                                          cellStyling = "font-bold";
-                                          triggerStyling = "font-bold bg-transparent";
-                                        }
-                                      } else {
-                                        // Reference available - white text for all cells, bold for disagreeing cells
-                                        cellStyling = "";
-                                        triggerStyling = "bg-transparent";
-                                        
-                                        if (fieldValue !== "" && fieldValue !== row.reference) {
-                                          cellStyling += " font-bold";
-                                          triggerStyling += " font-bold";
-                                        }
-                                      }
+                          {(attributeMsaData[ctqItem.ctq]?.agreementAnalysisData || []).map((row, index) => {
+                            // Check for disagreement in the row
+                            const nonBlankValues = Object.keys(row)
+                              .filter(key => key !== 'unitNumber' && row[key as keyof AttributeAnalysisRow] !== "")
+                              .map(key => row[key as keyof AttributeAnalysisRow]);
+                            
+                            const hasDisagreement = nonBlankValues.length > 1 && 
+                              !nonBlankValues.every(val => val === nonBlankValues[0]);
+                            
+                            const hasReference = row.reference !== "";
+                            
+                            return (
+                              <TableRow 
+                                key={index} 
+                                className={hasDisagreement ? "bg-red-200" : ""}
+                              >
+                                <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                                {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
+                                const isBlankAllowed = field === 'reference' || field.includes('rep3') || field.includes('app3');
+                                const fieldValue = row[field as keyof AttributeAnalysisRow] as string;
+                                const selectValue = fieldValue === "" ? "blank" : fieldValue;
+                                
+                                // Determine styling based on disagreement conditions
+                                let cellStyling = "";
+                                let triggerStyling = "";
+                                
+                                if (hasDisagreement) {
+                                  if (!hasReference) {
+                                    // No reference available - bold and white text for all non-blank cells
+                                    if (fieldValue !== "") {
+                                      cellStyling = "font-bold";
+                                      triggerStyling = "font-bold bg-transparent";
                                     }
+                                  } else {
+                                    // Reference available - white text for all cells, bold for disagreeing cells
+                                    cellStyling = "";
+                                    triggerStyling = "bg-transparent";
                                     
-                                    return (
-                                      <TableCell key={field} className={cellStyling}>
-                                        <Select
-                                          value={selectValue}
-                                          onValueChange={(value: string) => {
-                                            const actualValue = value === "blank" ? "" : value;
-                                            updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, actualValue as "OK" | "KO" | "");
-                                          }}
-                                        >
-                                          <SelectTrigger className={"w-20 " + triggerStyling}>
-                                            <SelectValue placeholder="--" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {isBlankAllowed && <SelectItem value="blank">--</SelectItem>}
-                                            <SelectItem value="OK">OK</SelectItem>
-                                            <SelectItem value="KO">KO</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </TableCell>
-                                    );
-                                  })}
-                                  <TableCell>
-                                    <Button
-                                      onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-8 w-8 p-0"
+                                    if (fieldValue !== "" && fieldValue !== row.reference) {
+                                      cellStyling += " font-bold";
+                                      triggerStyling += " font-bold";
+                                    }
+                                  }
+                                }
+                                
+                                return (
+                                  <TableCell key={field} className={cellStyling}>
+                                    <Select
+                                      value={selectValue}
+                                      onValueChange={(value: string) => {
+                                        const actualValue = value === "blank" ? "" : value;
+                                        updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, actualValue as "OK" | "KO" | "");
+                                      }}
                                     >
-                                      {/* <Trash2 className="h-4 w-4" /> */}
-                                      <i className="fas fa-trash h-4 w-4"></i>
-                                    </Button>
+                                      <SelectTrigger className={"w-20 " + triggerStyling}>
+                                        <SelectValue placeholder="--" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {isBlankAllowed && <SelectItem value="blank">--</SelectItem>}
+                                        <SelectItem value="OK">OK</SelectItem>
+                                        <SelectItem value="KO">KO</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </TableCell>
-                                </TableRow>
-                              );
-                          })
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                                No measurement data yet. Click "Add Row" to start entering agreement analysis data.
-                              </TableCell>
-                            </TableRow>
-                          )}
+                                );
+                                })}
+                                <TableCell>
+                                  <Button
+                                    onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    {/* <Trash2 className="h-4 w-4" /> */}
+                                    <i className="fas fa-trash h-4 w-4"></i>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                       {/* Scroll indicator */}
@@ -1346,54 +1338,46 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {continuousMsaData[ctqItem.ctq]?.gageRRData && continuousMsaData[ctqItem.ctq]?.gageRRData.length > 0 ? (
-                            continuousMsaData[ctqItem.ctq]?.gageRRData.map((row, index) => {
-                              const repetitions = continuousMsaData[ctqItem.ctq]?.repetitions || 2;
-                              const numberOfAppraisers = continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2;
-                              const fields = ['app1_rep1', 'app1_rep2'];
-                              if (repetitions === 3) fields.push('app1_rep3');
-                              fields.push('app2_rep1', 'app2_rep2');
-                              if (repetitions === 3) fields.push('app2_rep3');
-                              if (numberOfAppraisers === 3) {
-                                fields.push('app3_rep1', 'app3_rep2');
-                                if (repetitions === 3) fields.push('app3_rep3');
-                              }
-                              
-                              return (
-                                <TableRow key={index}>
-                                  <TableCell className="font-medium">{row.unitNumber}</TableCell>
-                                  {fields.map((field) => (
-                                    <TableCell key={field}>
-                                      <Input
-                                        type="number"
-                                        step="0.01"
-                                        value={row[field as keyof ContinuousAnalysisRow] as number | null ?? ''}
-                                        onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, e.target.value)}
-                                        className="w-20"
-                                        disabled={(repetitions === 2 && field.includes('_rep3')) || (numberOfAppraisers === 2 && field.includes('app3_'))}
-                                      />
-                                    </TableCell>
-                                  ))}
-                                  <TableCell>
-                                    <Button
-                                      onClick={() => removeContinuousAnalysisRow(ctqItem.ctq, index)}
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
+                          {(continuousMsaData[ctqItem.ctq]?.gageRRData || []).map((row, index) => {
+                            const repetitions = continuousMsaData[ctqItem.ctq]?.repetitions || 2;
+                            const numberOfAppraisers = continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2;
+                            const fields = ['app1_rep1', 'app1_rep2'];
+                            if (repetitions === 3) fields.push('app1_rep3');
+                            fields.push('app2_rep1', 'app2_rep2');
+                            if (repetitions === 3) fields.push('app2_rep3');
+                            if (numberOfAppraisers === 3) {
+                              fields.push('app3_rep1', 'app3_rep2');
+                              if (repetitions === 3) fields.push('app3_rep3');
+                            }
+                            
+                            return (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                                {fields.map((field) => (
+                                  <TableCell key={field}>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      value={row[field as keyof ContinuousAnalysisRow] as number | null ?? ''}
+                                      onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, e.target.value)}
+                                      className="w-20"
+                                      disabled={(repetitions === 2 && field.includes('_rep3')) || (numberOfAppraisers === 2 && field.includes('app3_'))}
+                                    />
                                   </TableCell>
-                                </TableRow>
-                              );
-                            })
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                                No measurement data yet. Click "Add Row" to start entering Gage R&R measurements.
-                              </TableCell>
-                            </TableRow>
-                          )}
+                                ))}
+                                <TableCell>
+                                  <Button
+                                    onClick={() => removeContinuousAnalysisRow(ctqItem.ctq, index)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
