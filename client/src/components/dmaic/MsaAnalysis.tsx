@@ -1546,35 +1546,35 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       </Button>
                       
                       <Button
-                        onClick={() => {
-                          // Create a temporary input element to trigger paste
-                          const tempInput = document.createElement('input');
-                          tempInput.style.position = 'fixed';
-                          tempInput.style.left = '-9999px';
-                          document.body.appendChild(tempInput);
-                          tempInput.focus();
-                          
-                          const handlePaste = (e: ClipboardEvent) => {
-                            e.preventDefault();
-                            handlePasteData(ctqItem.ctq, e as any);
-                            document.body.removeChild(tempInput);
-                          };
-                          
-                          tempInput.addEventListener('paste', handlePaste);
-                          
-                          // Show instructions
-                          toast({
-                            title: "Paste Excel Data",
-                            description: "Press Ctrl+V to paste data from Excel. Data should be in columns matching the table structure.",
-                          });
-                          
-                          // Clean up if no paste occurs within 5 seconds
-                          setTimeout(() => {
-                            if (document.body.contains(tempInput)) {
-                              tempInput.removeEventListener('paste', handlePaste);
-                              document.body.removeChild(tempInput);
+                        onClick={async () => {
+                          try {
+                            // Try to read clipboard directly
+                            const clipboardData = await navigator.clipboard.readText();
+                            if (clipboardData.trim()) {
+                              // Create a synthetic paste event
+                              const syntheticEvent = {
+                                preventDefault: () => {},
+                                clipboardData: {
+                                  getData: () => clipboardData
+                                }
+                              } as unknown as React.ClipboardEvent;
+                              
+                              handlePasteData(ctqItem.ctq, syntheticEvent);
+                            } else {
+                              toast({
+                                title: "No Data Found",
+                                description: "No data found in clipboard. Please copy data from Excel first.",
+                                variant: "destructive",
+                              });
                             }
-                          }, 5000);
+                          } catch (error) {
+                            // Fallback: Show instructions for manual paste
+                            toast({
+                              title: "Clipboard Access Required",
+                              description: "Please copy data from Excel and use Ctrl+V to paste directly into the table.",
+                              variant: "default",
+                            });
+                          }
                         }}
                         variant="outline"
                         size="sm"
