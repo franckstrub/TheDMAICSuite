@@ -1573,8 +1573,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             
                           } catch (error) {
                             toast({
-                              title: "Clipboard Access",
-                              description: "Unable to access clipboard. Please use Ctrl+V to paste or ensure clipboard permissions are granted.",
+                              title: "Clipboard Permission Required",
+                              description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
                               variant: "destructive",
                             });
                           }
