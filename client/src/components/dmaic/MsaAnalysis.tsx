@@ -68,7 +68,8 @@ interface ContinuousMsaData {
   appraiser3Name: string;
   gageRRData: ContinuousAnalysisRow[];
   studyDateTime: string;
-justification?: string;}
+  justification?: string;
+}
 
 interface CtqWithType {
   ctq: string;
@@ -86,6 +87,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [activeTab, setActiveTab] = useState<string>("");
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [hasCalculatedStatistics, setHasCalculatedStatistics] = useState<{ [ctq: string]: boolean }>({});
+  const [attributeAnalysisType, setAttributeAnalysisType] = useState<{ [ctq: string]: 'simple' | 'agreement' }>({});
 
   // Load last active tab and statistics state from localStorage on component mount
   useEffect(() => {
@@ -593,16 +595,25 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className="w-full overflow-x-auto">
-            <TabsList className="flex w-max min-w-full">
+        {/* Only show scroll indicator if 5+ CTQs exist */}
+        {ctqList.length >= 6 && (
+         <div className="relative">
+          <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+          ← Scroll horizontally →
+          </div>
+        </div>
+      )}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
+          <div className="w-full overflow-x-auto">         
+            <TabsList className="flex w-max min-w-full justify-start">
               {ctqList.map((ctqItem: CtqWithType) => (
                 <TabsTrigger 
                   key={ctqItem.ctq} 
                   value={ctqItem.ctq}
-                  className="whitespace-nowrap px-4 py-2 min-w-max"
+                  className="px-4 py-2 min-w-max flex flex-col items-cente border border-gray-200 data-[state=active]:border-none"
                 >
-                  {ctqItem.ctq} ({ctqItem.type})
+                  <span className="font-medium truncate min-w-[150px]">{ctqItem.ctq}</span>
+                  <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -611,42 +622,76 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           {ctqList.map((ctqItem: CtqWithType) => (
             <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-0 border border-gray-200 rounded-lg p-4" >
               {ctqItem.ctqType === "Attribute" ? (
-                // Attribute Agreement Analysis Interface
-                <div className="space-y-3">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
-                    <p className="text-sm text-gray-600">
-                      . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
-                      . Your Measurement System must be Precise and Accurate and your measurements Reliable.
-                    </p>
+                // Attribute MSA Analysis Interface with Choice Selector
+                <div className="space-y-4">
+                  {/* Analysis Type Selector */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`analysis-type-${ctqItem.ctq}`}
+                          value="simple"
+                          checked={attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]}
+                          onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'simple' }))}
+                          className="mr-2"
+                        />
+                        <span className="text-sm font-medium">Measurement System Simple Analysis</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`analysis-type-${ctqItem.ctq}`}
+                          value="agreement"
+                          checked={attributeAnalysisType[ctqItem.ctq] === 'agreement'}
+                          onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'agreement' }))}
+                          className="mr-2"
+                        />
+                        <span className="text-sm font-medium">Attribute Agreement Analysis</span>
+                      </label>
+                    </div>
                   </div>
-                  {/* Appraiser Names */}
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
-                      <Textarea
-                        value={attributeMsaData[ctqItem.ctq]?.justification || ""}
-                        onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "justification", e.target.value)}
-                        className="w-full flex min-h-[150px]"
-                        placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
+
+                  {/* Simple Analysis Card */}
+                  {(attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
+                      <p className="text-sm text-gray-600">
+                        . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
+                        . Your Measurement System must be Precise and Accurate and your measurements Reliable.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Simple Analysis Content */}
+                  {(attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
+                        <Textarea
+                          value={attributeMsaData[ctqItem.ctq]?.justification || ""}
+                          onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "justification", e.target.value)}
+                          className="w-full flex min-h-[150px]"
+                          placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
 
  . Precision: Explain why the measurement system is precise?
  . Accuracy: Explain why the measurement system is accurate?"
-                        title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
-                      />
+                          title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
+                        />
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Save MSA Button */}
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
-                      disabled={saveAttributeMsaMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {saveAttributeMsaMutation.isPending ? "Saving..." : "Save MSA"}
-                    </Button>
-                  </div>
+                  )}
+
+                  {/* Attribute Agreement Analysis Content */}
+                  {attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
+                        <p className="text-sm text-gray-600">
+                          Complete statistical analysis of measurement system agreement between appraisers for attribute data.
+                        </p>
+                      </div>
 
                   {!isSimplifiedView && (
                     <>
@@ -910,6 +955,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       </div>
                     </>
                   )}
+                    </div>
+                  )}
+
+                  {/* Save MSA Button */}
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
+                      disabled={saveAttributeMsaMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saveAttributeMsaMutation.isPending ? "Saving..." : "Save MSA"}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 // Continuous Gage R&R Interface
@@ -1075,6 +1133,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   </>
                   )}
                   {/* Statistics Display */}
+                  {showStatistics[ctqItem.ctq] && (
+                    <MsaStatisticsDisplay 
+                      ctq={ctqItem.ctq}
+                      ctqType={ctqItem.ctqType}
+                      projectId={projectId}
+                    />
+                  )}
                 </div>
               )}
             </TabsContent>
