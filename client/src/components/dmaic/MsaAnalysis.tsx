@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Save, Plus, Trash2, Calculator } from "lucide-react";
+import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import MSAStatisticsDisplay from "./MSAStatisticsDisplay";
 import MSAContinuousStatisticsDisplay from "./MSAContinuousStatisticsDisplay";
@@ -89,6 +89,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const { toast } = useToast();
   const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
+  const [undoStates, setUndoStates] = useState<{ [ctq: string]: ContinuousMsaData }>({});
+  const [showUndoButton, setShowUndoButton] = useState<{ [ctq: string]: boolean }>({});
   const [activeTab, setActiveTab] = useState<string>("");
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [showContinuousStatistics, setShowContinuousStatistics] = useState<{ [ctq: string]: boolean }>({});
@@ -175,17 +177,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   }, [showContinuousStatistics, projectId]);
 
-  // Add keyboard shortcut support for paste functionality
+  // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Check if Ctrl+V is pressed and we're in the MSA section
+      // Check if the focus is on an input field - if so, don't interfere
+      const activeElement = document.activeElement;
+      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+
+      // Handle Ctrl+V for paste
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
-        // Check if the focus is on an input field - if so, don't interfere
-        const activeElement = document.activeElement;
-        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
-          return;
-        }
-        
         // Trigger paste for the active CTQ
         event.preventDefault();
         
@@ -210,11 +212,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           });
         });
       }
+
+      // Handle Ctrl+Z for undo
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab) {
+        if (undoStates[activeTab] && showUndoButton[activeTab]) {
+          event.preventDefault();
+          handleUndo(activeTab);
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [activeTab]);
+  }, [activeTab, undoStates, showUndoButton]);
 
 
 
@@ -589,6 +599,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     if (!pasteData.trim()) return;
     
     try {
+      // Save current state for undo
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+      }));
+      
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
       const parsedData: (number | null)[][] = [];
@@ -661,6 +677,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         };
       });
       
+      // Show undo button
+      setShowUndoButton(prev => ({
+        ...prev,
+        [ctq]: true
+      }));
+      
       toast({
         title: "Data Pasted Successfully",
         description: `Imported ${parsedData.length} rows of measurement data`,
@@ -671,6 +693,33 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         title: "Paste Error",
         description: "Failed to parse pasted data. Please ensure data is in a valid format.",
         variant: "destructive",
+      });
+    }
+  };
+
+  // Handle undo functionality
+  const handleUndo = (ctq: string) => {
+    if (undoStates[ctq]) {
+      setContinuousMsaData(prev => ({
+        ...prev,
+        [ctq]: undoStates[ctq]
+      }));
+      
+      // Hide undo button and clear undo state
+      setShowUndoButton(prev => ({
+        ...prev,
+        [ctq]: false
+      }));
+      
+      setUndoStates(prev => {
+        const newStates = { ...prev };
+        delete newStates[ctq];
+        return newStates;
+      });
+      
+      toast({
+        title: "Undo Successful",
+        description: "Restored previous table data",
       });
     }
   };
@@ -1453,7 +1502,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             return `Copy ${totalCols} columns (${reps} reps × ${appraisers} appraisers)`;
                           })()}
                         </div>
-                        <div className="text-blue-600 mt-1">Ctrl+V to paste | Click table to paste</div>
+                        <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table to paste</div>
                       </div>
                     </div>
 
@@ -1585,6 +1634,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       >
                         📋 Paste from Excel
                       </Button>
+                      
+                      {showUndoButton[ctqItem.ctq] && (
+                        <Button
+                          onClick={() => handleUndo(ctqItem.ctq)}
+                          variant="outline"
+                          size="sm"
+                          className="text-orange-700 border-orange-300 hover:bg-orange-50"
+                        >
+                          <Undo2 className="h-4 w-4 mr-2" />
+                          Undo Paste
+                        </Button>
+                      )}
                       
                         <Button
                           onClick={() => toggleContinuousStatistics(ctqItem.ctq)}
