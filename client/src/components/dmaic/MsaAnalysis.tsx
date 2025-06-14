@@ -180,14 +180,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Check if the focus is on an input field - if so, don't interfere
       const activeElement = document.activeElement;
-      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
-        return;
-      }
+      const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
-      // Handle Ctrl+V for paste
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
+      // Handle Ctrl+V for paste - only when not in input field
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab && !isInInputField) {
         // Trigger paste for the active CTQ
         event.preventDefault();
         
@@ -213,7 +210,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         });
       }
 
-      // Handle Ctrl+Z for undo
+      // Handle Ctrl+Z for undo - works both in and outside input fields
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab) {
         if (undoStates[activeTab] && showUndoButton[activeTab]) {
           event.preventDefault();
