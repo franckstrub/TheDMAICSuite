@@ -923,84 +923,84 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         <TableBody>
                           {attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData.length > 0 ? (
                             attributeMsaData[ctqItem.ctq]?.agreementAnalysisData.map((row, index) => {
-                            // Check for disagreement in the row
-                            const nonBlankValues = Object.keys(row)
-                              .filter(key => key !== 'unitNumber' && row[key as keyof AttributeAnalysisRow] !== "")
-                              .map(key => row[key as keyof AttributeAnalysisRow]);
-                            
-                            const hasDisagreement = nonBlankValues.length > 1 && 
-                              !nonBlankValues.every(val => val === nonBlankValues[0]);
-                            
-                            const hasReference = row.reference !== "";
-                            
-                            return (
-                              <TableRow 
-                                key={index} 
-                                className={hasDisagreement ? "bg-red-200" : ""}
-                              >
-                                <TableCell className="font-medium">{row.unitNumber}</TableCell>
-                                {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
-                                const isBlankAllowed = field === 'reference' || field.includes('rep3') || field.includes('app3');
-                                const fieldValue = row[field as keyof AttributeAnalysisRow] as string;
-                                const selectValue = fieldValue === "" ? "blank" : fieldValue;
-                                
-                                // Determine styling based on disagreement conditions
-                                let cellStyling = "";
-                                let triggerStyling = "";
-                                
-                                if (hasDisagreement) {
-                                  if (!hasReference) {
-                                    // No reference available - bold and white text for all non-blank cells
-                                    if (fieldValue !== "") {
-                                      cellStyling = "font-bold";
-                                      triggerStyling = "font-bold bg-transparent";
-                                    }
-                                  } else {
-                                    // Reference available - white text for all cells, bold for disagreeing cells
-                                    cellStyling = "";
-                                    triggerStyling = "bg-transparent";
+                              // Check for disagreement in the row
+                              const nonBlankValues = Object.keys(row)
+                                .filter(key => key !== 'unitNumber' && row[key as keyof AttributeAnalysisRow] !== "")
+                                .map(key => row[key as keyof AttributeAnalysisRow]);
+                              
+                              const hasDisagreement = nonBlankValues.length > 1 && 
+                                !nonBlankValues.every(val => val === nonBlankValues[0]);
+                              
+                              const hasReference = row.reference !== "";
+                              
+                              return (
+                                <TableRow 
+                                  key={index} 
+                                  className={hasDisagreement ? "bg-red-200" : ""}
+                                >
+                                  <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                                  {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => {
+                                    const isBlankAllowed = field === 'reference' || field.includes('rep3') || field.includes('app3');
+                                    const fieldValue = row[field as keyof AttributeAnalysisRow] as string;
+                                    const selectValue = fieldValue === "" ? "blank" : fieldValue;
                                     
-                                    if (fieldValue !== "" && fieldValue !== row.reference) {
-                                      cellStyling += " font-bold";
-                                      triggerStyling += " font-bold";
+                                    // Determine styling based on disagreement conditions
+                                    let cellStyling = "";
+                                    let triggerStyling = "";
+                                    
+                                    if (hasDisagreement) {
+                                      if (!hasReference) {
+                                        // No reference available - bold and white text for all non-blank cells
+                                        if (fieldValue !== "") {
+                                          cellStyling = "font-bold";
+                                          triggerStyling = "font-bold bg-transparent";
+                                        }
+                                      } else {
+                                        // Reference available - white text for all cells, bold for disagreeing cells
+                                        cellStyling = "";
+                                        triggerStyling = "bg-transparent";
+                                        
+                                        if (fieldValue !== "" && fieldValue !== row.reference) {
+                                          cellStyling += " font-bold";
+                                          triggerStyling += " font-bold";
+                                        }
+                                      }
                                     }
-                                  }
-                                }
-                                
-                                return (
-                                  <TableCell key={field} className={cellStyling}>
-                                    <Select
-                                      value={selectValue}
-                                      onValueChange={(value: string) => {
-                                        const actualValue = value === "blank" ? "" : value;
-                                        updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, actualValue as "OK" | "KO" | "");
-                                      }}
+                                    
+                                    return (
+                                      <TableCell key={field} className={cellStyling}>
+                                        <Select
+                                          value={selectValue}
+                                          onValueChange={(value: string) => {
+                                            const actualValue = value === "blank" ? "" : value;
+                                            updateAttributeAnalysisRow(ctqItem.ctq, index, field as keyof AttributeAnalysisRow, actualValue as "OK" | "KO" | "");
+                                          }}
+                                        >
+                                          <SelectTrigger className={"w-20 " + triggerStyling}>
+                                            <SelectValue placeholder="--" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {isBlankAllowed && <SelectItem value="blank">--</SelectItem>}
+                                            <SelectItem value="OK">OK</SelectItem>
+                                            <SelectItem value="KO">KO</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </TableCell>
+                                    );
+                                  })}
+                                  <TableCell>
+                                    <Button
+                                      onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
                                     >
-                                      <SelectTrigger className={"w-20 " + triggerStyling}>
-                                        <SelectValue placeholder="--" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {isBlankAllowed && <SelectItem value="blank">--</SelectItem>}
-                                        <SelectItem value="OK">OK</SelectItem>
-                                        <SelectItem value="KO">KO</SelectItem>
-                                      </SelectContent>
-                                    </Select>
+                                      {/* <Trash2 className="h-4 w-4" /> */}
+                                      <i className="fas fa-trash h-4 w-4"></i>
+                                    </Button>
                                   </TableCell>
-                                );
-                                })}
-                                <TableCell>
-                                  <Button
-                                    onClick={() => removeAttributeAnalysisRow(ctqItem.ctq, index)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    {/* <Trash2 className="h-4 w-4" /> */}
-                                    <i className="fas fa-trash h-4 w-4"></i>
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            );
+                                </TableRow>
+                              );
                           })
                           ) : (
                             <TableRow>
