@@ -88,6 +88,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [hasCalculatedStatistics, setHasCalculatedStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [attributeAnalysisType, setAttributeAnalysisType] = useState<{ [ctq: string]: 'simple' | 'agreement' }>({});
+  const [continuousAnalysisType, setContinuousAnalysisType] = useState<{ [ctq: string]: 'simple' | 'gage_rr' }>({});
 
   // Load last active tab and statistics state from localStorage on component mount
   useEffect(() => {
@@ -117,6 +118,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         setAttributeAnalysisType(parsedTypes);
       } catch (error) {
         console.warn("Failed to parse saved analysis types:", error);
+      }
+    }
+
+    // Load saved continuous analysis type choices
+    const savedContinuousTypes = localStorage.getItem(`msa-continuous-types-${projectId}`);
+    if (savedContinuousTypes) {
+      try {
+        const parsedTypes = JSON.parse(savedContinuousTypes);
+        setContinuousAnalysisType(parsedTypes);
+      } catch (error) {
+        console.warn("Failed to parse saved continuous analysis types:", error);
       }
     }
   }, [projectId]);
@@ -700,6 +712,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           />
                         </div>
                       </div>
+                      {/* Save MSA Button */}
+                      <div className="flex justify-end gap-2">
+                      <Button 
+                        onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
+                        disabled={saveAttributeMsaMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        >
+                        {saveAttributeMsaMutation.isPending ? "Saving..." : "Save MSA"}
+                      </Button>
+                      </div>
                     </>
                   )}
 
@@ -954,7 +976,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
                       {/* Statistics Display */}
                       {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
-                        <div className="mt-6">
+                        <div>
+                          <div className="mt-6">
                           <MSAStatisticsDisplay
                             data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
                             appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
@@ -962,8 +985,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
                           />
                         </div>
-                      )}
-                      <div className="flex justify-end mt-1">
+                        <div className="flex justify-end mt-1">
                         <Button
                           onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
                           disabled={saveAttributeMsaMutation.isPending}
@@ -972,60 +994,97 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         <Save className="h-4 w-4 mr-2" />
                        {saveAttributeMsaMutation.isPending ? "Saving..." : "Save Attribute MSA Study"}
                         </Button>
+                        </div>
                       </div>
+                      )}
+                      
                     </>
                   )}
                     </div>
                   )}
 
-                  {/* Save MSA Button */}
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
-                      disabled={saveAttributeMsaMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {saveAttributeMsaMutation.isPending ? "Saving..." : "Save MSA"}
-                    </Button>
-                  </div>
                 </div>
               ) : (
-                // Continuous Gage R&R Interface
-                <div className="space-y-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
-                    <p className="text-sm text-gray-600">
-                      . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
-                      . Your Measurement System must be Precise and Accurate and your measurements Reliable.
-                    </p>
-                  </div>
-                  {/* Appraiser Names */}
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
-                      <Textarea
-                        value={attributeMsaData[ctqItem.ctq]?.justification || ""}
-                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "justification", e.target.value)}
-                        className="w-full flex min-h-[150px]"
-                        placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
+                // Continuous MSA Analysis Interface with Choice Selector
+                <div className="space-y-4">
+                  {/* Analysis Type Selector - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`continuous-analysis-type-${ctqItem.ctq}`}
+                            value="simple"
+                            checked={continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]}
+                            onChange={() => {
+                              const newTypes = { ...continuousAnalysisType, [ctqItem.ctq]: 'simple' as const };
+                              setContinuousAnalysisType(newTypes);
+                              localStorage.setItem(`msa-continuous-types-${projectId}`, JSON.stringify(newTypes));
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="text-sm font-medium">Measurement System Simple Analysis</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`continuous-analysis-type-${ctqItem.ctq}`}
+                            value="gage_rr"
+                            checked={continuousAnalysisType[ctqItem.ctq] === 'gage_rr'}
+                            onChange={() => {
+                              const newTypes = { ...continuousAnalysisType, [ctqItem.ctq]: 'gage_rr' as const };
+                              setContinuousAnalysisType(newTypes);
+                              localStorage.setItem(`msa-continuous-types-${projectId}`, JSON.stringify(newTypes));
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="text-sm font-medium">Gage R&R MSA Analysis</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Simple Analysis Card - Always show for simplified view or when simple is selected */}
+                  {(isSimplifiedView || continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]) && (
+                    <>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
+                        <p className="text-sm text-gray-600">
+                          . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
+                          . Your Measurement System must be Precise and Accurate and your measurements Reliable.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
+                          <Textarea
+                            value={continuousMsaData[ctqItem.ctq]?.justification || ""}
+                            onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "justification", e.target.value)}
+                            className="w-full flex min-h-[150px]"
+                            placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
 
  . Precision: Explain why the measurement system is precise?
  . Accuracy: Explain why the measurement system is accurate?"
-                        title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Save MSA Button */}
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
-                      disabled={saveContinuousMsaMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save MSA Study"}
-                    </Button>
-                  </div>
+                            title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Gage R&R Analysis Content - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && continuousAnalysisType[ctqItem.ctq] === 'gage_rr' && (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Gage R&R MSA Analysis</h3>
+                        <p className="text-sm text-gray-600">
+                          Complete statistical analysis of measurement system repeatability and reproducibility for continuous data.
+                        </p>
+                      </div>
+
                   {!isSimplifiedView && (
                     <>
                   <div className="bg-green-50 p-4 rounded-lg">
@@ -1152,17 +1211,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   </div>
                   </>
                   )}
-                  {/* Statistics Display */}
-                  {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
-                    <div className="mt-6">
-                      <MSAStatisticsDisplay
-                        data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
-                        appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
-                        appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
-                        appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
-                      />
                     </div>
                   )}
+
+                  {/* Save MSA Button */}
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
+                      disabled={saveContinuousMsaMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save MSA"}
+                    </Button>
+                  </div>
                 </div>
               )}
             </TabsContent>
