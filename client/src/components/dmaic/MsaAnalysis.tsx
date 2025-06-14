@@ -1110,15 +1110,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         </p>
                       </div>
 
-                  {!isSimplifiedView && (
-                    <>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">Gage R&R Study</h3>
-                    <p className="text-sm text-gray-600">
-                      For Continuous CTQs, we perform Gage R&R analysis studying measurement system variation using numerical values.
-                    </p>
-                  </div>
-
                   {/* Study Parameters */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
@@ -1281,7 +1272,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       />
                     </div>
                   )}
-                    </>
+                    </div>
                   )}
                 </div>
               )}
