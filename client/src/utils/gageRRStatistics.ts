@@ -50,11 +50,22 @@ export function calculateGageRRStatistics(
     return createEmptyStatistics();
   }
 
-  // Filter out rows with all zero values
+  // Check if there are any non-null values in the data
+  const hasValidValues = data.some(row => 
+    row.app1_rep1 !== null || row.app1_rep2 !== null || row.app1_rep3 !== null ||
+    row.app2_rep1 !== null || row.app2_rep2 !== null || row.app2_rep3 !== null ||
+    row.app3_rep1 !== null || row.app3_rep2 !== null || row.app3_rep3 !== null
+  );
+
+  if (!hasValidValues) {
+    return createEmptyStatistics();
+  }
+
+  // Filter out rows with all null values
   const validData = data.filter(row => 
-    row.app1_rep1 !== 0 || row.app1_rep2 !== 0 || row.app1_rep3 !== 0 ||
-    row.app2_rep1 !== 0 || row.app2_rep2 !== 0 || row.app2_rep3 !== 0 ||
-    row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0
+    row.app1_rep1 !== null || row.app1_rep2 !== null || row.app1_rep3 !== null ||
+    row.app2_rep1 !== null || row.app2_rep2 !== null || row.app2_rep3 !== null ||
+    row.app3_rep1 !== null || row.app3_rep2 !== null || row.app3_rep3 !== null
   );
 
   if (validData.length === 0) {
