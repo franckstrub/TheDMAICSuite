@@ -175,6 +175,47 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   }, [showContinuousStatistics, projectId]);
 
+  // Add keyboard shortcut support for paste functionality
+  useEffect(() => {
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      // Check if Ctrl+V is pressed and we're in the MSA section
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
+        // Check if the focus is on an input field - if so, don't interfere
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+          return;
+        }
+        
+        // Trigger paste for the active CTQ
+        event.preventDefault();
+        
+        // Get clipboard data
+        navigator.clipboard.readText().then(clipboardData => {
+          if (clipboardData.trim()) {
+            // Create a synthetic paste event
+            const syntheticEvent = {
+              preventDefault: () => {},
+              clipboardData: {
+                getData: () => clipboardData
+              }
+            } as unknown as React.ClipboardEvent;
+            
+            handlePasteData(activeTab, syntheticEvent);
+          }
+        }).catch(() => {
+          toast({
+            title: "Clipboard Access",
+            description: "Please use the 'Paste from Excel' button or paste directly into the table.",
+            variant: "default",
+          });
+        });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyboardShortcut);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [activeTab]);
+
 
 
   // Save active tab to localStorage whenever it changes
@@ -538,6 +579,100 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         }
       };
     });
+  };
+
+  // Handle Excel paste functionality
+  const handlePasteData = (ctq: string, event: React.ClipboardEvent) => {
+    event.preventDefault();
+    
+    const pasteData = event.clipboardData.getData('text');
+    if (!pasteData.trim()) return;
+    
+    try {
+      // Parse tab-separated or comma-separated values
+      const rows = pasteData.trim().split('\n');
+      const parsedData: (number | null)[][] = [];
+      
+      rows.forEach(row => {
+        // Split by tabs first (Excel default), then by commas if no tabs
+        const cells = row.includes('\t') ? row.split('\t') : row.split(',');
+        const rowData: (number | null)[] = [];
+        
+        cells.forEach(cell => {
+          const trimmedCell = cell.trim();
+          if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
+            rowData.push(null);
+          } else {
+            const parsed = parseFloat(trimmedCell);
+            rowData.push(!isNaN(parsed) && isFinite(parsed) ? parsed : null);
+          }
+        });
+        
+        if (rowData.length > 0) {
+          parsedData.push(rowData);
+        }
+      });
+      
+      if (parsedData.length === 0) return;
+      
+      // Apply the pasted data to the table
+      setContinuousMsaData(prev => {
+        const currentData = [...(prev[ctq]?.gageRRData || [])];
+        const repetitions = prev[ctq]?.repetitions || 2;
+        const numberOfAppraisers = prev[ctq]?.numberOfAppraisers || 2;
+        
+        // Determine expected columns based on current settings
+        const expectedColumns = (repetitions * numberOfAppraisers);
+        
+        parsedData.forEach((rowData, rowIndex) => {
+          if (rowIndex < currentData.length && rowData.length > 0) {
+            const row = { ...currentData[rowIndex] };
+            
+            // Map data to the correct fields based on current appraiser/repetition settings
+            let colIndex = 0;
+            
+            // Appraiser 1 data
+            if (colIndex < rowData.length) row.app1_rep1 = rowData[colIndex++];
+            if (colIndex < rowData.length) row.app1_rep2 = rowData[colIndex++];
+            if (repetitions === 3 && colIndex < rowData.length) row.app1_rep3 = rowData[colIndex++];
+            
+            // Appraiser 2 data
+            if (colIndex < rowData.length) row.app2_rep1 = rowData[colIndex++];
+            if (colIndex < rowData.length) row.app2_rep2 = rowData[colIndex++];
+            if (repetitions === 3 && colIndex < rowData.length) row.app2_rep3 = rowData[colIndex++];
+            
+            // Appraiser 3 data (if enabled)
+            if (numberOfAppraisers === 3) {
+              if (colIndex < rowData.length) row.app3_rep1 = rowData[colIndex++];
+              if (colIndex < rowData.length) row.app3_rep2 = rowData[colIndex++];
+              if (repetitions === 3 && colIndex < rowData.length) row.app3_rep3 = rowData[colIndex++];
+            }
+            
+            currentData[rowIndex] = row;
+          }
+        });
+        
+        return {
+          ...prev,
+          [ctq]: {
+            ...prev[ctq],
+            gageRRData: currentData,
+          }
+        };
+      });
+      
+      toast({
+        title: "Data Pasted Successfully",
+        description: `Imported ${parsedData.length} rows of measurement data`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Paste Error",
+        description: "Failed to parse pasted data. Please ensure data is in a valid format.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addContinuousAnalysisRow = (ctq: string) => {
@@ -1308,9 +1443,25 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="text-md font-semibold">Gage R&R Measurement Data</h4>
+                      <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200">
+                        <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
+                        <div>
+                          {(() => {
+                            const reps = continuousMsaData[ctqItem.ctq]?.repetitions || 2;
+                            const appraisers = continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2;
+                            const totalCols = reps * appraisers;
+                            return `Copy ${totalCols} columns (${reps} reps × ${appraisers} appraisers)`;
+                          })()}
+                        </div>
+                        <div className="text-blue-600 mt-1">Ctrl+V to paste | Click table to paste</div>
+                      </div>
                     </div>
 
-                    <div className="overflow-x-auto border rounded-lg">
+                    <div 
+                      className="overflow-x-auto border rounded-lg"
+                      onPaste={(e) => handlePasteData(ctqItem.ctq, e)}
+                      tabIndex={0}
+                    >
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -1392,6 +1543,44 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Row
+                      </Button>
+                      
+                      <Button
+                        onClick={() => {
+                          // Create a temporary input element to trigger paste
+                          const tempInput = document.createElement('input');
+                          tempInput.style.position = 'fixed';
+                          tempInput.style.left = '-9999px';
+                          document.body.appendChild(tempInput);
+                          tempInput.focus();
+                          
+                          const handlePaste = (e: ClipboardEvent) => {
+                            e.preventDefault();
+                            handlePasteData(ctqItem.ctq, e as any);
+                            document.body.removeChild(tempInput);
+                          };
+                          
+                          tempInput.addEventListener('paste', handlePaste);
+                          
+                          // Show instructions
+                          toast({
+                            title: "Paste Excel Data",
+                            description: "Press Ctrl+V to paste data from Excel. Data should be in columns matching the table structure.",
+                          });
+                          
+                          // Clean up if no paste occurs within 5 seconds
+                          setTimeout(() => {
+                            if (document.body.contains(tempInput)) {
+                              tempInput.removeEventListener('paste', handlePaste);
+                              document.body.removeChild(tempInput);
+                            }
+                          }, 5000);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="text-green-700 border-green-300 hover:bg-green-50"
+                      >
+                        📋 Paste from Excel
                       </Button>
                       
                         <Button
