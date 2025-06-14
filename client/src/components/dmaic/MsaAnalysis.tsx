@@ -68,7 +68,7 @@ interface ContinuousMsaData {
   appraiser3Name: string;
   gageRRData: ContinuousAnalysisRow[];
   studyDateTime: string;
-}
+justification?: string;}
 
 interface CtqWithType {
   ctq: string;
@@ -97,12 +97,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     // Load saved statistics calculation state
     const savedStatsState = localStorage.getItem(`msa-calculated-stats-${projectId}`);
     if (savedStatsState) {
-      const parsedState = JSON.parse(savedStatsState);
-      setHasCalculatedStatistics(parsedState);
-      // Show statistics for CTQs that have been calculated before
-      setShowStatistics(parsedState);
+      try {
+        const parsedState = JSON.parse(savedStatsState);
+        setHasCalculatedStatistics(parsedState);
+        // Show statistics for CTQs that have been calculated before
+        setShowStatistics(parsedState);
+      } catch (error) {
+        console.warn("Failed to parse saved statistics state:", error);
+      }
     }
   }, [projectId]);
+
+
 
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tabValue: string) => {
@@ -180,6 +186,27 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     queryKey: [`/api/projects/${projectId}/msa-analysis`],
     enabled: !!projectId,
   });
+
+  // Set default active tab when CTQ list changes and no tab is selected
+  useEffect(() => {
+    const ctqList = getCtqsWithTypes();
+    if (ctqList.length > 0) {
+      const savedTab = localStorage.getItem(`msa-active-tab-${projectId}`);
+      
+      // Check if saved tab still exists in current CTQ list
+      const savedTabExists = savedTab && ctqList.some(ctq => ctq.ctq === savedTab);
+      
+      if (savedTabExists && activeTab !== savedTab) {
+        // Restore saved tab if it exists and is different from current
+        setActiveTab(savedTab);
+      } else if (!activeTab || !ctqList.some(ctq => ctq.ctq === activeTab)) {
+        // Set first CTQ as default if no active tab or current tab doesn't exist
+        const firstCtq = ctqList[0].ctq;
+        setActiveTab(firstCtq);
+        localStorage.setItem(`msa-active-tab-${projectId}`, firstCtq);
+      }
+    }
+  }, [ctsData, msaDataResponse, projectId, activeTab]);
 
   // Save attribute MSA mutation
   const saveAttributeMsaMutation = useMutation({
@@ -480,7 +507,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
   };
 
-  const getMsaStatusBadge = (ctq: string, ctqType: "Attribute" | "Continuous") => {
+  {/*
+    const getMsaStatusBadge = (ctq: string, ctqType: "Attribute" | "Continuous") => {
     if (ctqType === "Attribute") {
       const data = attributeMsaData[ctq];
       if (!data) return <Badge variant="secondary">No Data</Badge>;
@@ -511,6 +539,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }
     }
   };
+  */}
 
   if (ctsLoading || msaLoading || projectLoading) {
     return (
@@ -564,7 +593,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
             {ctqList.map((ctqItem: CtqWithType) => (
               <TabsTrigger 
@@ -573,17 +602,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 className="flex flex-col items-center gap-1 p-3"
               >
                 <span className="font-medium truncate max-w-[150px]">{ctqItem.ctq}</span>
-                <span className="text-xs text-gray-500">{ctqItem.ctqType}</span>
-                {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)}
+                <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
+                {/* {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)} */}
               </TabsTrigger>
             ))}
           </TabsList>
 
           {ctqList.map((ctqItem: CtqWithType) => (
-            <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-6">
+            <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-0 border border-gray-200 rounded-lg p-4" >
               {ctqItem.ctqType === "Attribute" ? (
                 // Attribute Agreement Analysis Interface
-                <div className="space-y-6">
+                <div className="space-y-3">
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
                     <p className="text-sm text-gray-600">
@@ -627,7 +656,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           . For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) if a standard exists and Precision (Agreement R&R), using OK/KO evaluations.<br></br>
                           . It is still possible to perform an Agreement Analysis without a standard. In this case, it will be a Precision Agreement Analysis.<br></br>
                           . A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
-                          . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
+                          . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.<br></br>
+                          .  We also recommend having the same number of OKs and KOs in your Reference if there is a Reference (Standard) in your study.
                         </p>
                       </div>
 
@@ -868,12 +898,58 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           />
                         </div>
                       )}
+                      <div className="flex justify-end mt-1">
+                        <Button
+                          onClick={() => handleSaveAttributeMsa(ctqItem.ctq)}
+                          disabled={saveAttributeMsaMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                        <Save className="h-4 w-4 mr-2" />
+                       {saveAttributeMsaMutation.isPending ? "Saving..." : "Save Attribute MSA Study"}
+                        </Button>
+                      </div>
                     </>
                   )}
                 </div>
               ) : (
                 // Continuous Gage R&R Interface
                 <div className="space-y-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
+                    <p className="text-sm text-gray-600">
+                      . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
+                      . Your Measurement System must be Precise and Accurate and your measurements Reliable.
+                    </p>
+                  </div>
+                  {/* Appraiser Names */}
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
+                      <Textarea
+                        value={attributeMsaData[ctqItem.ctq]?.justification || ""}
+                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "justification", e.target.value)}
+                        className="w-full flex min-h-[150px]"
+                        placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
+
+ . Precision: Explain why the measurement system is precise?
+ . Accuracy: Explain why the measurement system is accurate?"
+                        title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Save MSA Button */}
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
+                      disabled={saveContinuousMsaMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save MSA Study"}
+                    </Button>
+                  </div>
+                  {!isSimplifiedView && (
+                    <>
                   <div className="bg-green-50 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">Gage R&R Study</h3>
                     <p className="text-sm text-gray-600">
@@ -993,9 +1069,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R Study"}
+                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R MSA Study"}
                     </Button>
                   </div>
+                  </>
+                  )}
+                  {/* Statistics Display */}
                 </div>
               )}
             </TabsContent>
