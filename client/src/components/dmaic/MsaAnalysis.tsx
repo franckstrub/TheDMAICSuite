@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Save, Plus, Trash2, Calculator, ChevronLeft, ChevronRight } from "lucide-react";
+import { BarChart3, Save, Plus, Trash2, Calculator } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import MSAStatisticsDisplay from "./MSAStatisticsDisplay";
 
@@ -68,7 +68,6 @@ interface ContinuousMsaData {
   appraiser3Name: string;
   gageRRData: ContinuousAnalysisRow[];
   studyDateTime: string;
-  justification?: string;
 }
 
 interface CtqWithType {
@@ -87,8 +86,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [activeTab, setActiveTab] = useState<string>("");
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [hasCalculatedStatistics, setHasCalculatedStatistics] = useState<{ [ctq: string]: boolean }>({});
-  const [tabScrollPosition, setTabScrollPosition] = useState(0);
-  const tabsListRef = useRef<HTMLDivElement>(null);
 
   // Load last active tab and statistics state from localStorage on component mount
   useEffect(() => {
@@ -112,68 +109,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     setActiveTab(tabValue);
     localStorage.setItem(`msa-active-tab-${projectId}`, tabValue);
   };
-
-  // Tab scroll navigation functions
-  const scrollTabsLeft = () => {
-    if (tabsListRef.current) {
-      const scrollAmount = 200;
-      tabsListRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    }
-  };
-
-  const scrollTabsRight = () => {
-    if (tabsListRef.current) {
-      const scrollAmount = 200;
-      tabsListRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
-  // Check if tabs can scroll
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  useEffect(() => {
-    const checkScrollability = () => {
-      if (tabsListRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = tabsListRef.current;
-        setCanScrollLeft(scrollLeft > 0);
-        setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-      }
-    };
-
-    const tabsElement = tabsListRef.current;
-    if (tabsElement) {
-      tabsElement.addEventListener('scroll', checkScrollability);
-      checkScrollability(); // Initial check
-      
-      return () => {
-        tabsElement.removeEventListener('scroll', checkScrollability);
-      };
-    }
-  }, []);
-
-  // Check scrollability when component mounts and updates
-  useEffect(() => {
-    const checkScrollability = () => {
-      if (tabsListRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = tabsListRef.current;
-        setCanScrollLeft(scrollLeft > 0);
-        setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-      }
-    };
-
-    // Initial check and setup resize observer
-    const resizeObserver = new ResizeObserver(checkScrollability);
-    if (tabsListRef.current) {
-      resizeObserver.observe(tabsListRef.current);
-    }
-    
-    checkScrollability();
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  });
 
   // Function to toggle statistics visibility and mark as calculated
   const toggleStatistics = (ctq: string) => {
@@ -544,7 +479,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       saveContinuousMsaMutation.mutate(data);
     }
   };
-{/*
+
   const getMsaStatusBadge = (ctq: string, ctqType: "Attribute" | "Continuous") => {
     if (ctqType === "Attribute") {
       const data = attributeMsaData[ctq];
@@ -576,7 +511,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }
     }
   };
-  */}
 
   if (ctsLoading || msaLoading || projectLoading) {
     return (
@@ -630,54 +564,20 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <div className="relative flex items-center">
-            {/* Left scroll arrow */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={scrollTabsLeft}
-              disabled={!canScrollLeft}
-              className={`absolute left-0 z-10 h-8 w-8 p-0 rounded-full bg-white shadow-md ${!canScrollLeft ? 'opacity-50' : 'hover:bg-gray-100'}`}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            {/* Scrollable tabs container */}
-            <div className="flex-1 mx-8">
-              <TabsList 
-                ref={tabsListRef}
-                className="flex w-full overflow-x-auto scrollbar-hide gap-1 p-1"
-                style={{ 
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                }}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
+            {ctqList.map((ctqItem: CtqWithType) => (
+              <TabsTrigger 
+                key={ctqItem.ctq} 
+                value={ctqItem.ctq}
+                className="flex flex-col items-center gap-1 p-3"
               >
-                {ctqList.map((ctqItem: CtqWithType) => (
-                  <TabsTrigger 
-                    key={ctqItem.ctq} 
-                    value={ctqItem.ctq}
-                    className="flex flex-col items-center gap-1 p-3 min-w-[180px] whitespace-nowrap"
-                  >
-                    <span className="font-medium truncate max-w-[150px]">{ctqItem.ctq}</span>
-                    <span className="text-xs text-gray-500">{ctqItem.ctqType}</span>
-                    {/* {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)} */}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-
-            {/* Right scroll arrow */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={scrollTabsRight}
-              disabled={!canScrollRight}
-              className={`absolute right-0 z-10 h-8 w-8 p-0 rounded-full bg-white shadow-md ${!canScrollRight ? 'opacity-50' : 'hover:bg-gray-100'}`}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+                <span className="font-medium truncate max-w-[150px]">{ctqItem.ctq}</span>
+                <span className="text-xs text-gray-500">{ctqItem.ctqType}</span>
+                {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
           {ctqList.map((ctqItem: CtqWithType) => (
             <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-6">
@@ -727,19 +627,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           . For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) if a standard exists and Precision (Agreement R&R), using OK/KO evaluations.<br></br>
                           . It is still possible to perform an Agreement Analysis without a standard. In this case, it will be a Precision Agreement Analysis.<br></br>
                           . A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
-                          . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.<br></br>
-                          .  We also recommend having the same number of OKs and KOs in your Reference if there is a Reference (Standard) in your study.
+                          . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
                         </p>
                       </div>
 
                       {/* Appraised unit type and Study Information */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                        <label className="block text-sm font-medium mb-2">Appraised unit type</label>
-                        <Select
+                      <label className="block text-sm font-medium mb-2">Appraised unit type</label>
+                      <Select
                         value={attributeMsaData[ctqItem.ctq]?.unitAppraisedType || "Part"}
                         onValueChange={(value) => updateAttributeMsaField(ctqItem.ctq, "unitAppraisedType", value)}
-                        >
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -750,8 +649,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           <SelectItem value="Document">Document</SelectItem>
                           <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
-                        </Select>
-                      </div>
+                      </Select>
+                    </div>
 
                     {attributeMsaData[ctqItem.ctq]?.unitAppraisedType === "Other" && (
                       <div>
@@ -772,9 +671,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "studyDateTime", e.target.value)}
                       />
                     </div>
-                    </div>
+                  </div>
 
-                    {/* Appraiser Names */}
+                  {/* Appraiser Names */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Appraiser 1 Name</label>
@@ -975,42 +874,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
               ) : (
                 // Continuous Gage R&R Interface
                 <div className="space-y-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
-                    <p className="text-sm text-gray-600">
-                      . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
-                      . Your Measurement System must be Precise and Accurate and your measurements Reliable.
-                    </p>
-                  </div>
-                  {/* Appraiser Names */}
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
-                      <Textarea
-                        value={attributeMsaData[ctqItem.ctq]?.justification || ""}
-                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "justification", e.target.value)}
-                        className="w-full flex min-h-[150px]"
-                        placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
-
- . Precision: Explain why the measurement system is precise?
- . Accuracy: Explain why the measurement system is accurate?"
-                        title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Save MSA Button */}
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
-                      disabled={saveContinuousMsaMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save MSA Study"}
-                    </Button>
-                  </div>
-                  {!isSimplifiedView && (
-                    <>
                   <div className="bg-green-50 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">Gage R&R Study</h3>
                     <p className="text-sm text-gray-600">
@@ -1133,9 +996,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R Study"}
                     </Button>
                   </div>
-                  </>
-                  )}
-                  {/* Statistics Display */}
                 </div>
               )}
             </TabsContent>
