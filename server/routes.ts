@@ -2424,7 +2424,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appraiser1Name: req.body.appraiser1Name || null,
         appraiser2Name: req.body.appraiser2Name || null,
         appraiser3Name: req.body.appraiser3Name || null,
-        measurements: req.body.measurements || null, // For continuous data
+        gageRRData: req.body.gageRRData || null, // Store Gage R&R data
+        sigmaMultiplier: req.body.sigmaMultiplier || 6,
+        tolerance: req.body.tolerance || null,
         studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
       };
 
