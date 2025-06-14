@@ -594,19 +594,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
-            {ctqList.map((ctqItem: CtqWithType) => (
-              <TabsTrigger 
-                key={ctqItem.ctq} 
-                value={ctqItem.ctq}
-                className="flex flex-col items-center gap-1 p-3"
-              >
-                <span className="font-medium truncate max-w-[150px]">{ctqItem.ctq}</span>
-                <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
-                {/* {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)} */}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="w-full overflow-x-auto">
+            <TabsList className="flex w-max min-w-full">
+              {ctqList.map((ctqItem: CtqWithType) => (
+                <TabsTrigger 
+                  key={ctqItem.ctq} 
+                  value={ctqItem.ctq}
+                  className="whitespace-nowrap px-4 py-2 min-w-max"
+                >
+                  {ctqItem.ctq} ({ctqItem.type})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {ctqList.map((ctqItem: CtqWithType) => (
             <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-0 border border-gray-200 rounded-lg p-4" >
