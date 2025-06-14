@@ -86,6 +86,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
+  const [showContinuousStatistics, setShowContinuousStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [hasCalculatedStatistics, setHasCalculatedStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [attributeAnalysisType, setAttributeAnalysisType] = useState<{ [ctq: string]: 'simple' | 'agreement' }>({});
   const [continuousAnalysisType, setContinuousAnalysisType] = useState<{ [ctq: string]: 'simple' | 'gage_rr' }>({});
@@ -1072,6 +1073,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           />
                         </div>
                       </div>
+                      {/* Save MSA Button */}
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
+                          disabled={saveContinuousMsaMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                        {saveContinuousMsaMutation.isPending ? "Saving..." : "Save MSA"}
+                        </Button>
+                      </div>
                     </>
                   )}
 
@@ -1191,39 +1202,49 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
                   <div className="flex justify-between pt-4">
                       <Button
-                        onClick={() => addAttributeAnalysisRow(ctqItem.ctq)}
+                        onClick={() => addContinuousAnalysisRow(ctqItem.ctq)}
                         variant="outline"
                         size="sm"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Row
                       </Button>
-                  {/* </div >
-                  <div className="flex justify-end pt-4"> */}
-                    <Button
-                      onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
-                      disabled={saveContinuousMsaMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R MSA Study"}
-                    </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => toggleContinuousStatistics(ctqItem.ctq)}
+                          variant="secondary"
+                          className="bg-blue-100 hover:bg-blue-200 text-blue-800"
+                        >
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          {showContinuousStatistics[ctqItem.ctq] ? "Hide Statistics" : "Show Statistics"}
+                        </Button>
+                        <Button
+                          onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
+                          disabled={saveContinuousMsaMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R MSA Study"}
+                        </Button>
+                      </div>
                   </div>
+
+                  {/* Statistics Display for Continuous MSA */}
+                  {showContinuousStatistics[ctqItem.ctq] && continuousMsaData[ctqItem.ctq] && continuousMsaData[ctqItem.ctq].analysisData.length > 0 && (
+                    <div className="mt-6">
+                      <MSAContinuousStatisticsDisplay
+                        data={continuousMsaData[ctqItem.ctq].analysisData}
+                        appraiser1Name={continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
+                        appraiser2Name={continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
+                        appraiser3Name={continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
+                      />
+                    </div>
+                  )}
                     </>
                   )}
                     </div>
                   )}
 
-                  {/* Save MSA Button */}
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
-                      disabled={saveContinuousMsaMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {saveContinuousMsaMutation.isPending ? "Saving..." : "Save MSA"}
-                    </Button>
-                  </div>
                 </div>
               )}
             </TabsContent>
