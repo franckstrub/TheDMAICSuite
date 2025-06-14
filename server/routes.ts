@@ -2428,6 +2428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sigmaMultiplier: req.body.sigmaMultiplier || 6,
         tolerance: req.body.tolerance || null,
         repetitions: req.body.repetitions || 2,
+        numberOfAppraisers: req.body.numberOfAppraisers || 2,
         studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
       };
 
@@ -2520,6 +2521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sigmaMultiplier: req.body.sigmaMultiplier || 6,
         tolerance: req.body.tolerance || null,
         repetitions: req.body.repetitions || 2,
+        numberOfAppraisers: req.body.numberOfAppraisers || 2,
         studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
         lastUpdated: new Date(),
       };
