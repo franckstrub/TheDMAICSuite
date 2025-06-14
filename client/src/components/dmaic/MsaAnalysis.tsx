@@ -1327,6 +1327,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         appraiser3Name={continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
                         sigmaMultiplier={continuousMsaData[ctqItem.ctq]?.sigmaMultiplier || 6}
                         tolerance={continuousMsaData[ctqItem.ctq]?.tolerance}
+                        repetitions={continuousMsaData[ctqItem.ctq]?.repetitions || 2}
                       />
                     </div>
                   )}
