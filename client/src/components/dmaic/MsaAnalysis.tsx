@@ -544,7 +544,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       saveContinuousMsaMutation.mutate(data);
     }
   };
-
+{/*
   const getMsaStatusBadge = (ctq: string, ctqType: "Attribute" | "Continuous") => {
     if (ctqType === "Attribute") {
       const data = attributeMsaData[ctq];
@@ -576,6 +576,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }
     }
   };
+  */}
 
   if (ctsLoading || msaLoading || projectLoading) {
     return (
@@ -660,7 +661,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   >
                     <span className="font-medium truncate max-w-[150px]">{ctqItem.ctq}</span>
                     <span className="text-xs text-gray-500">{ctqItem.ctqType}</span>
-                    {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)}
+                    {/* {getMsaStatusBadge(ctqItem.ctq, ctqItem.ctqType)} */}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -726,7 +727,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           . For Attribute CTQs, we perform Agreement Analysis studying both Accuracy (Agreement vs a Standard) if a standard exists and Precision (Agreement R&R), using OK/KO evaluations.<br></br>
                           . It is still possible to perform an Agreement Analysis without a standard. In this case, it will be a Precision Agreement Analysis.<br></br>
                           . A minimum of two Appraisers with two repetitions each is mandatory to calculate the statistics.<br></br>
-                          . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.
+                          . It is recommended to have a minimum of 100 data in your study and a balanced table (equal number of appraisals for each unit) for a significant Analysis.<br></br>
+                          .  We also recommend having the same number of OKs and KOs in your Reference if there is a Reference (Standard) in your study.
                         </p>
                       </div>
 
