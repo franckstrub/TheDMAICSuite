@@ -227,19 +227,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }));
   };
 
-  // Generate default continuous analysis data with 10 rows
+  // Generate default continuous analysis data with 10 rows (all null values for empty cells)
   const generateDefaultContinuousData = (): ContinuousAnalysisRow[] => {
     return Array.from({ length: 10 }, (_, index) => ({
       unitNumber: index + 1,
-      app1_rep1: 0,
-      app1_rep2: 0,
-      app1_rep3: 0,
-      app2_rep1: 0,
-      app2_rep2: 0,
-      app2_rep3: 0,
-      app3_rep1: 0,
-      app3_rep2: 0,
-      app3_rep3: 0,
+      app1_rep1: null,
+      app1_rep2: null,
+      app1_rep3: null,
+      app2_rep1: null,
+      app2_rep2: null,
+      app2_rep3: null,
+      app3_rep1: null,
+      app3_rep2: null,
+      app3_rep3: null,
     }));
   };
 
