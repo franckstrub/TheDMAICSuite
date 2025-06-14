@@ -596,11 +596,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     if (!pasteData.trim()) return;
     
     try {
-      // Save current state for undo
-      setUndoStates(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
-      }));
+      // Save current state for undo (only if data exists)
+      if (continuousMsaData[ctq]) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+        }));
+      }
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
