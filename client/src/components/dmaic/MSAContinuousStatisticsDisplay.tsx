@@ -57,6 +57,7 @@ interface MSAContinuousStatisticsDisplayProps {
   sigmaMultiplier: number;
   tolerance?: number;
   repetitions: number;
+  numberOfAppraisers: number;
 }
 
 export default function MSAContinuousStatisticsDisplay({ 
@@ -66,7 +67,8 @@ export default function MSAContinuousStatisticsDisplay({
   appraiser3Name,
   sigmaMultiplier,
   tolerance,
-  repetitions
+  repetitions,
+  numberOfAppraisers
 }: MSAContinuousStatisticsDisplayProps) {
   const statistics = calculateGageRRStatistics(data, sigmaMultiplier, tolerance);
   

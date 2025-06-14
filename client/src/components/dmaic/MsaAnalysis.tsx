@@ -71,6 +71,7 @@ interface ContinuousMsaData {
   sigmaMultiplier: number;
   tolerance?: number;
   repetitions: number; // 2 or 3 repetitions
+  numberOfAppraisers: number; // 2 or 3 appraisers
   studyDateTime: string;
   justification?: string;
 }
@@ -361,6 +362,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             sigmaMultiplier: existingMsa.sigmaMultiplier || 6,
             tolerance: existingMsa.tolerance,
             repetitions: existingMsa.repetitions || 2,
+            numberOfAppraisers: existingMsa.numberOfAppraisers || 2,
           } : {
             ctq: ctq,
             appraiser1Name: "",
@@ -370,6 +372,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             sigmaMultiplier: 6,
             tolerance: undefined,
             repetitions: 2,
+            numberOfAppraisers: 2,
             studyDateTime: new Date().toISOString(),
           };
         }
@@ -685,7 +688,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             }}
                             className="mr-2"
                           />
-                          <span className="text-sm font-medium">Measurement System Simple Analysis</span>
+                          <span className="text-sm font-medium">Measurement System Simplified Analysis</span>
                         </label>
                         <label className="flex items-center cursor-pointer">
                           <input
@@ -706,11 +709,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   )}
 
-                  {/* Simple Analysis Card - Always show for simplified view or when simple is selected */}
+                  {/* Simplified Analysis Card - Always show for simplified view or when simple is selected */}
                   {(isSimplifiedView || attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
                     <>
                       <div className="bg-blue-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
+                        <h3 className="text-lg font-semibold mb-2">Measurement System Simplified Analysis</h3>
                         <p className="text-sm text-gray-600">
                           . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
                           . Your Measurement System must be Precise and Accurate and your measurements Reliable.
@@ -1045,7 +1048,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             }}
                             className="mr-2"
                           />
-                          <span className="text-sm font-medium">Measurement System Simple Analysis</span>
+                          <span className="text-sm font-medium">Measurement System Simplified Analysis</span>
                         </label>
                         <label className="flex items-center cursor-pointer">
                           <input
@@ -1066,11 +1069,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   )}
 
-                  {/* Simple Analysis Card - Always show for simplified view or when simple is selected */}
+                  {/* Simplified Analysis Card - Always show for simplified view or when simple is selected */}
                   {(isSimplifiedView || continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]) && (
                     <>
                       <div className="bg-blue-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
+                        <h3 className="text-lg font-semibold mb-2">Measurement System Simplified Analysis</h3>
                         <p className="text-sm text-gray-600">
                           . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
                           . Your Measurement System must be Precise and Accurate and your measurements Reliable.
@@ -1116,7 +1119,45 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       </div>
 
                   {/* Study Parameters */}
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Number of appraisers</label>
+                      <Select
+                        value={continuousMsaData[ctqItem.ctq]?.numberOfAppraisers?.toString() || "2"}
+                        onValueChange={(value) => {
+                          const newAppraisers = parseInt(value);
+                          updateContinuousMsaField(ctqItem.ctq, 'numberOfAppraisers', newAppraisers);
+                          
+                          // If changing to 2 appraisers, null all Appraiser 3 values
+                          if (newAppraisers === 2) {
+                            updateContinuousMsaField(ctqItem.ctq, 'appraiser3Name', '');
+                            
+                            const updatedData = continuousMsaData[ctqItem.ctq]?.gageRRData.map(row => ({
+                              ...row,
+                              app3_rep1: 0,
+                              app3_rep2: 0,
+                              app3_rep3: 0
+                            })) || [];
+                            
+                            setContinuousMsaData(prev => ({
+                              ...prev,
+                              [ctqItem.ctq]: {
+                                ...prev[ctqItem.ctq],
+                                gageRRData: updatedData
+                              }
+                            }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select appraisers" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2">2</SelectItem>
+                          <SelectItem value="3">3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Number of repetitions</label>
                       <Select
@@ -1189,7 +1230,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   </div>
 
                   {/* Appraiser Names */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className={`grid grid-cols-1 gap-4 ${(continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2) === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
                     <div>
                       <label className="block text-sm font-medium mb-2">Appraiser 1 Name</label>
                       <Input
@@ -1206,14 +1247,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         placeholder="Enter appraiser 2 name"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Appraiser 3 Name</label>
-                      <Input
-                        value={continuousMsaData[ctqItem.ctq]?.appraiser3Name || ""}
-                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "appraiser3Name", e.target.value)}
-                        placeholder="Enter appraiser 3 name"
-                      />
-                    </div>
+                    {(continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2) === 3 && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Appraiser 3 Name</label>
+                        <Input
+                          value={continuousMsaData[ctqItem.ctq]?.appraiser3Name || ""}
+                          onChange={(e) => updateContinuousMsaField(ctqItem.ctq, "appraiser3Name", e.target.value)}
+                          placeholder="Enter appraiser 3 name"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Gage R&R Data Table */}
@@ -1237,10 +1280,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             {(continuousMsaData[ctqItem.ctq]?.repetitions || 2) === 3 && (
                               <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 3</TableHead>
                             )}
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 1</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 2</TableHead>
-                            {(continuousMsaData[ctqItem.ctq]?.repetitions || 2) === 3 && (
-                              <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 3</TableHead>
+                            {(continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2) === 3 && (
+                              <>
+                                <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 1</TableHead>
+                                <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 2</TableHead>
+                                {(continuousMsaData[ctqItem.ctq]?.repetitions || 2) === 3 && (
+                                  <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 3</TableHead>
+                                )}
+                              </>
                             )}
                             <TableHead className="w-16">Actions</TableHead>
                           </TableRow>
@@ -1248,12 +1295,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         <TableBody>
                           {(continuousMsaData[ctqItem.ctq]?.gageRRData || []).map((row, index) => {
                             const repetitions = continuousMsaData[ctqItem.ctq]?.repetitions || 2;
+                            const numberOfAppraisers = continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2;
                             const fields = ['app1_rep1', 'app1_rep2'];
                             if (repetitions === 3) fields.push('app1_rep3');
                             fields.push('app2_rep1', 'app2_rep2');
                             if (repetitions === 3) fields.push('app2_rep3');
-                            fields.push('app3_rep1', 'app3_rep2');
-                            if (repetitions === 3) fields.push('app3_rep3');
+                            if (numberOfAppraisers === 3) {
+                              fields.push('app3_rep1', 'app3_rep2');
+                              if (repetitions === 3) fields.push('app3_rep3');
+                            }
                             
                             return (
                               <TableRow key={index}>
@@ -1266,7 +1316,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                       value={row[field as keyof ContinuousAnalysisRow] as number}
                                       onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, parseFloat(e.target.value) || 0)}
                                       className="w-20"
-                                      disabled={repetitions === 2 && field.includes('_rep3')}
+                                      disabled={(repetitions === 2 && field.includes('_rep3')) || (numberOfAppraisers === 2 && field.includes('app3_'))}
                                     />
                                   </TableCell>
                                 ))}
@@ -1328,6 +1378,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         sigmaMultiplier={continuousMsaData[ctqItem.ctq]?.sigmaMultiplier || 6}
                         tolerance={continuousMsaData[ctqItem.ctq]?.tolerance}
                         repetitions={continuousMsaData[ctqItem.ctq]?.repetitions || 2}
+                        numberOfAppraisers={continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2}
                       />
                     </div>
                   )}
