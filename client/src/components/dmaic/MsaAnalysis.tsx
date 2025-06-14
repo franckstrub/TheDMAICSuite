@@ -116,6 +116,28 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }
     }
 
+    // Load saved attribute statistics show/hide state
+    const savedAttributeShowState = localStorage.getItem(`msa-show-attribute-stats-${projectId}`);
+    if (savedAttributeShowState) {
+      try {
+        const parsedState = JSON.parse(savedAttributeShowState);
+        setShowStatistics(prev => ({ ...prev, ...parsedState }));
+      } catch (error) {
+        console.warn("Failed to parse saved attribute statistics show state:", error);
+      }
+    }
+
+    // Load saved continuous statistics show/hide state
+    const savedContinuousShowState = localStorage.getItem(`msa-show-continuous-stats-${projectId}`);
+    if (savedContinuousShowState) {
+      try {
+        const parsedState = JSON.parse(savedContinuousShowState);
+        setShowContinuousStatistics(parsedState);
+      } catch (error) {
+        console.warn("Failed to parse saved continuous statistics show state:", error);
+      }
+    }
+
     // Load saved attribute analysis type choices
     const savedAnalysisTypes = localStorage.getItem(`msa-analysis-types-${projectId}`);
     if (savedAnalysisTypes) {
@@ -138,6 +160,20 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }
     }
   }, [projectId]);
+
+  // Save attribute statistics show/hide state to localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(showStatistics).length > 0) {
+      localStorage.setItem(`msa-show-attribute-stats-${projectId}`, JSON.stringify(showStatistics));
+    }
+  }, [showStatistics, projectId]);
+
+  // Save continuous statistics show/hide state to localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(showContinuousStatistics).length > 0) {
+      localStorage.setItem(`msa-show-continuous-stats-${projectId}`, JSON.stringify(showContinuousStatistics));
+    }
+  }, [showContinuousStatistics, projectId]);
 
 
 
