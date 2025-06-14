@@ -624,67 +624,68 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
               {ctqItem.ctqType === "Attribute" ? (
                 // Attribute MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
-                  {/* Analysis Type Selector */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name={`analysis-type-${ctqItem.ctq}`}
-                          value="simple"
-                          checked={attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]}
-                          onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'simple' }))}
-                          className="mr-2"
-                        />
-                        <span className="text-sm font-medium">Measurement System Simple Analysis</span>
-                      </label>
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name={`analysis-type-${ctqItem.ctq}`}
-                          value="agreement"
-                          checked={attributeAnalysisType[ctqItem.ctq] === 'agreement'}
-                          onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'agreement' }))}
-                          className="mr-2"
-                        />
-                        <span className="text-sm font-medium">Attribute Agreement Analysis</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Simple Analysis Card */}
-                  {(attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
-                      <p className="text-sm text-gray-600">
-                        . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
-                        . Your Measurement System must be Precise and Accurate and your measurements Reliable.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Simple Analysis Content */}
-                  {(attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
-                        <Textarea
-                          value={attributeMsaData[ctqItem.ctq]?.justification || ""}
-                          onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "justification", e.target.value)}
-                          className="w-full flex min-h-[150px]"
-                          placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
-
- . Precision: Explain why the measurement system is precise?
- . Accuracy: Explain why the measurement system is accurate?"
-                          title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
-                        />
+                  {/* Analysis Type Selector - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`analysis-type-${ctqItem.ctq}`}
+                            value="simple"
+                            checked={attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]}
+                            onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'simple' }))}
+                            className="mr-2"
+                          />
+                          <span className="text-sm font-medium">Measurement System Simple Analysis</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`analysis-type-${ctqItem.ctq}`}
+                            value="agreement"
+                            checked={attributeAnalysisType[ctqItem.ctq] === 'agreement'}
+                            onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'agreement' }))}
+                            className="mr-2"
+                          />
+                          <span className="text-sm font-medium">Attribute Agreement Analysis</span>
+                        </label>
                       </div>
                     </div>
                   )}
 
-                  {/* Attribute Agreement Analysis Content */}
-                  {attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
+                  {/* Simple Analysis Card - Always show for simplified view or when simple is selected */}
+                  {(isSimplifiedView || attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
+                    <>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Measurement System Simple Analysis</h3>
+                        <p className="text-sm text-gray-600">
+                          . Please justify the correctness of your Measurement System for the CTQ here.<br></br>
+                          . Your Measurement System must be Precise and Accurate and your measurements Reliable.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Measurement System Precision & Accuracy justification</label>
+                          <Textarea
+                            value={attributeMsaData[ctqItem.ctq]?.justification || ""}
+                            onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "justification", e.target.value)}
+                            className="w-full flex min-h-[150px]"
+                            placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
+
+ . Precision: Explain why the measurement system is precise?
+ . Accuracy: Explain why the measurement system is accurate?"
+                            title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Attribute Agreement Analysis Content - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
                     <div className="space-y-4">
                       <div className="bg-green-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
@@ -934,13 +935,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
                       {/* Statistics Display */}
                       {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
-                        <div className="mt-6">
-                          <MSAStatisticsDisplay
-                            data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
-                            appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
-                            appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
-                            appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
-                          />
+                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                          <h4 className="font-medium mb-2">Agreement Analysis Statistics</h4>
+                          <p className="text-sm text-gray-600">Statistics will be calculated and displayed here after data collection is complete.</p>
                         </div>
                       )}
                       <div className="flex justify-end mt-1">
@@ -1134,11 +1131,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   )}
                   {/* Statistics Display */}
                   {showStatistics[ctqItem.ctq] && (
-                    <MsaStatisticsDisplay 
-                      ctq={ctqItem.ctq}
-                      ctqType={ctqItem.ctqType}
-                      projectId={projectId}
-                    />
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600">Statistics will be displayed here after data collection.</p>
+                    </div>
                   )}
                 </div>
               )}
