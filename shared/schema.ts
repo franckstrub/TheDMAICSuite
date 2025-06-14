@@ -928,6 +928,9 @@ export const msaAnalysis = pgTable("msa_analysis", {
   appraiser2Name: text("appraiser2_name"),
   appraiser3Name: text("appraiser3_name"),
   agreementAnalysisData: text("agreement_analysis_data"), // JSON array of measurement data with structure: [{unitNumber: 1, reference: "OK", app1_rep1: "OK", app1_rep2: "KO", ...}]
+  gageRRData: text("gage_rr_data"), // JSON array of continuous measurement data for Gage R&R analysis
+  sigmaMultiplier: real("sigma_multiplier").default(6), // Number of sigma used in Gage R&R study (6 or 5.15)
+  tolerance: real("tolerance"), // Tolerance field for Gage R&R calculations
   studyDateTime: timestamp("study_date_time"),
   justification: text("justification"), // Measurement System Precision & Accuracy justification
   

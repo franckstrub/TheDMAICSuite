@@ -67,6 +67,8 @@ interface ContinuousMsaData {
   appraiser2Name: string;
   appraiser3Name: string;
   gageRRData: ContinuousAnalysisRow[];
+  sigmaMultiplier: number;
+  tolerance?: number;
   studyDateTime: string;
   justification?: string;
 }
@@ -160,6 +162,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setHasCalculatedStatistics(newCalculatedState);
       localStorage.setItem(`msa-calculated-stats-${projectId}`, JSON.stringify(newCalculatedState));
     }
+  }
+
+  const toggleContinuousStatistics = (ctq: string) => {
+    setShowContinuousStatistics(prev => ({
+      ...prev,
+      [ctq]: !prev[ctq]
+    }));
   };
 
   // Generate default attribute analysis data with 20 rows (all empty for real data entry)
@@ -1230,13 +1239,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   </div>
 
                   {/* Statistics Display for Continuous MSA */}
-                  {showContinuousStatistics[ctqItem.ctq] && continuousMsaData[ctqItem.ctq] && continuousMsaData[ctqItem.ctq].analysisData.length > 0 && (
+                  {showContinuousStatistics[ctqItem.ctq] && continuousMsaData[ctqItem.ctq] && continuousMsaData[ctqItem.ctq].gageRRData.length > 0 && (
                     <div className="mt-6">
-                      <MSAContinuousStatisticsDisplay
-                        data={continuousMsaData[ctqItem.ctq].analysisData}
+                      <MSAStatisticsDisplay
+                        data={continuousMsaData[ctqItem.ctq].gageRRData}
                         appraiser1Name={continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
                         appraiser2Name={continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
                         appraiser3Name={continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
+                        sigmaMultiplier={continuousMsaData[ctqItem.ctq]?.sigmaMultiplier || 6}
+                        tolerance={continuousMsaData[ctqItem.ctq]?.tolerance}
+                        isGageRR={true}
                       />
                     </div>
                   )}
