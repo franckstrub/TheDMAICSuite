@@ -70,6 +70,7 @@ interface ContinuousMsaData {
   gageRRData: ContinuousAnalysisRow[];
   sigmaMultiplier: number;
   tolerance?: number;
+  repetitions: number; // 2 or 3 repetitions
   studyDateTime: string;
   justification?: string;
 }
@@ -359,6 +360,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
               generateDefaultContinuousData(),
             sigmaMultiplier: existingMsa.sigmaMultiplier || 6,
             tolerance: existingMsa.tolerance,
+            repetitions: existingMsa.repetitions || 2,
           } : {
             ctq: ctq,
             appraiser1Name: "",
@@ -367,6 +369,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             gageRRData: generateDefaultContinuousData(),
             sigmaMultiplier: 6,
             tolerance: undefined,
+            repetitions: 2,
             studyDateTime: new Date().toISOString(),
           };
         }
@@ -1113,7 +1116,43 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       </div>
 
                   {/* Study Parameters */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Number of repetitions</label>
+                      <Select
+                        value={continuousMsaData[ctqItem.ctq]?.repetitions?.toString() || "2"}
+                        onValueChange={(value) => {
+                          const newRepetitions = parseInt(value);
+                          updateContinuousMsaField(ctqItem.ctq, 'repetitions', newRepetitions);
+                          
+                          // If changing to 2 repetitions, null all third repetitions
+                          if (newRepetitions === 2) {
+                            const updatedData = continuousMsaData[ctqItem.ctq]?.gageRRData.map(row => ({
+                              ...row,
+                              app1_rep3: 0,
+                              app2_rep3: 0,
+                              app3_rep3: 0
+                            })) || [];
+                            
+                            setContinuousMsaData(prev => ({
+                              ...prev,
+                              [ctqItem.ctq]: {
+                                ...prev[ctqItem.ctq],
+                                gageRRData: updatedData
+                              }
+                            }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select repetitions" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2">2</SelectItem>
+                          <SelectItem value="3">3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Nb of sigma used</label>
                       <Select
@@ -1190,43 +1229,60 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             <TableHead className="w-20">Unit #</TableHead>
                             <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 1</TableHead>
                             <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 2</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 3</TableHead>
+                            {(continuousMsaData[ctqItem.ctq]?.repetitions || 2) === 3 && (
+                              <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"} <br></br>Repetition 3</TableHead>
+                            )}
                             <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 1</TableHead>
                             <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 2</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 3</TableHead>
+                            {(continuousMsaData[ctqItem.ctq]?.repetitions || 2) === 3 && (
+                              <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"} <br></br>Repetition 3</TableHead>
+                            )}
                             <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 1</TableHead>
                             <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 2</TableHead>
-                            <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 3</TableHead>
+                            {(continuousMsaData[ctqItem.ctq]?.repetitions || 2) === 3 && (
+                              <TableHead className="w-24">{continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"} <br></br>Repetition 3</TableHead>
+                            )}
                             <TableHead className="w-16">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {(continuousMsaData[ctqItem.ctq]?.gageRRData || []).map((row, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="font-medium">{row.unitNumber}</TableCell>
-                              {Object.keys(row).filter(key => key !== 'unitNumber').map((field) => (
-                                <TableCell key={field}>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    value={row[field as keyof ContinuousAnalysisRow] as number}
-                                    onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, parseFloat(e.target.value) || 0)}
-                                    className="w-20"
-                                  />
+                          {(continuousMsaData[ctqItem.ctq]?.gageRRData || []).map((row, index) => {
+                            const repetitions = continuousMsaData[ctqItem.ctq]?.repetitions || 2;
+                            const fields = ['app1_rep1', 'app1_rep2'];
+                            if (repetitions === 3) fields.push('app1_rep3');
+                            fields.push('app2_rep1', 'app2_rep2');
+                            if (repetitions === 3) fields.push('app2_rep3');
+                            fields.push('app3_rep1', 'app3_rep2');
+                            if (repetitions === 3) fields.push('app3_rep3');
+                            
+                            return (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">{row.unitNumber}</TableCell>
+                                {fields.map((field) => (
+                                  <TableCell key={field}>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      value={row[field as keyof ContinuousAnalysisRow] as number}
+                                      onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, parseFloat(e.target.value) || 0)}
+                                      className="w-20"
+                                      disabled={repetitions === 2 && field.includes('_rep3')}
+                                    />
+                                  </TableCell>
+                                ))}
+                                <TableCell>
+                                  <Button
+                                    onClick={() => removeContinuousAnalysisRow(ctqItem.ctq, index)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
                                 </TableCell>
-                              ))}
-                              <TableCell>
-                                <Button
-                                  onClick={() => removeContinuousAnalysisRow(ctqItem.ctq, index)}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
