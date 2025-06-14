@@ -32,7 +32,10 @@ interface ProcessCapabilityData {
   conclusion: string;
   actionPlan: string;
 }
-
+interface CtqWithType {
+  ctq: string;
+  ctqType: "Attribute" | "Continuous";
+}
 interface ProcessCapabilityProps {
   projectId: number;
 }
@@ -116,10 +119,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     return [];
   };
+  // Get CTQs with types from CTS characteristics
+  const getCtqsWithTypes = (): CtqWithType[] => {
+    if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData) {
+      return (ctsData as any).characteristics.map((item: any) => ({
+        ctq: item.ctq,
+        ctqType: item.ctqType || "Continuous"
+      }));
+    }
+    return [];
+  };
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
-    const ctqs = getCTQs();
+    const ctqs = getCtqsWithTypes();
     if (ctqs.length > 0) {
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
       
@@ -249,6 +262,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         </p>
       </CardHeader>
       <CardContent>
+        {/*
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
             {ctqList.map((ctq: string) => (
@@ -262,7 +276,31 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
               </TabsTrigger>
             ))}
           </TabsList>
-
+          */}
+          {/* Only show scroll indicator if 5+ CTQs exist */}
+                  {ctqList.length >= 6 && (
+                   <div className="relative">
+                    <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+                    ← Scroll horizontally →
+                    </div>
+                  </div>
+                )}
+                  <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
+                    <div className="w-full overflow-x-auto">         
+                      <TabsList className="flex w-max min-w-full justify-start">
+                        {ctqList.map((ctq: string) => (
+                          <TabsTrigger 
+                            key={ctq} 
+                            value={ctq}
+                            className="px-4 py-2 min-w-max flex flex-col items-cente border border-gray-200 data-[state=active]:border-none"
+                          >
+                            <span className="font-medium truncate min-w-[150px]">{ctq}</span>
+                            {/*<span className="text-xs text-gray-600">{ctq.ctqType}</span>*/}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </div>
+          
           {ctqList.map((ctq: string) => (
             <TabsContent key={ctq} value={ctq} className="mt-6">
               <div className="space-y-6">
