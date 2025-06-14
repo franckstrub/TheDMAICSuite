@@ -1548,8 +1548,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       <Button
                         onClick={async () => {
                           try {
+                            // Check clipboard permissions first
+                            const permission = await navigator.permissions.query({ name: 'clipboard-read' as PermissionName });
+                            console.log('Clipboard permission:', permission.state);
+                            
                             // Try to read clipboard directly
                             const clipboardData = await navigator.clipboard.readText();
+                            console.log('Clipboard data length:', clipboardData.length);
+                            
                             if (clipboardData.trim()) {
                               // Create a synthetic paste event
                               const syntheticEvent = {
@@ -1559,6 +1565,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                 }
                               } as unknown as React.ClipboardEvent;
                               
+                              console.log('Calling handlePasteData with CTQ:', ctqItem.ctq);
                               handlePasteData(ctqItem.ctq, syntheticEvent);
                             } else {
                               toast({
@@ -1568,11 +1575,51 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                               });
                             }
                           } catch (error) {
-                            // Fallback: Show instructions for manual paste
+                            console.error('Clipboard error:', error);
+                            // Create a focusable element for manual paste
+                            const pasteArea = document.createElement('textarea');
+                            pasteArea.style.position = 'fixed';
+                            pasteArea.style.top = '50%';
+                            pasteArea.style.left = '50%';
+                            pasteArea.style.transform = 'translate(-50%, -50%)';
+                            pasteArea.style.zIndex = '9999';
+                            pasteArea.style.background = 'white';
+                            pasteArea.style.border = '2px solid #ccc';
+                            pasteArea.style.padding = '20px';
+                            pasteArea.style.borderRadius = '8px';
+                            pasteArea.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                            pasteArea.placeholder = 'Paste your Excel data here and press Enter';
+                            pasteArea.rows = 10;
+                            pasteArea.cols = 50;
+                            
+                            document.body.appendChild(pasteArea);
+                            pasteArea.focus();
+                            
+                            const handleKeyPress = (e: KeyboardEvent) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                const data = pasteArea.value.trim();
+                                if (data) {
+                                  const syntheticEvent = {
+                                    preventDefault: () => {},
+                                    clipboardData: {
+                                      getData: () => data
+                                    }
+                                  } as unknown as React.ClipboardEvent;
+                                  
+                                  handlePasteData(ctqItem.ctq, syntheticEvent);
+                                }
+                                document.body.removeChild(pasteArea);
+                              } else if (e.key === 'Escape') {
+                                document.body.removeChild(pasteArea);
+                              }
+                            };
+                            
+                            pasteArea.addEventListener('keydown', handleKeyPress);
+                            
                             toast({
-                              title: "Clipboard Access Required",
-                              description: "Please copy data from Excel and use Ctrl+V to paste directly into the table.",
-                              variant: "default",
+                              title: "Paste Dialog Opened",
+                              description: "Paste your Excel data in the text area and press Enter",
                             });
                           }
                         }}
