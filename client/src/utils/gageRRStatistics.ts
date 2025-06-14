@@ -98,29 +98,45 @@ interface ANOVAResults {
 
 function performANOVA(data: ContinuousAnalysisRow[]): ANOVAResults {
   const numParts = data.length;
-  const numOperators = 3; // Always 3 operators
+  
+  // Determine which operators have data (non-zero values)
+  const activeOperators: number[] = [];
+  const hasOp1Data = data.some(row => row.app1_rep1 !== 0 || row.app1_rep2 !== 0 || row.app1_rep3 !== 0);
+  const hasOp2Data = data.some(row => row.app2_rep1 !== 0 || row.app2_rep2 !== 0 || row.app2_rep3 !== 0);
+  const hasOp3Data = data.some(row => row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0);
+  
+  if (hasOp1Data) activeOperators.push(0);
+  if (hasOp2Data) activeOperators.push(1);
+  if (hasOp3Data) activeOperators.push(2);
+  
+  const numOperators = activeOperators.length;
   const numReps = 3; // Always 3 repetitions per operator
-  const totalObs = numParts * numOperators * numReps;
-
-  // Flatten data into a structure for ANOVA calculations
+  
+  // Flatten data into a structure for ANOVA calculations - only include active operators
   const flatData: { part: number; operator: number; rep: number; value: number }[] = [];
   
   data.forEach((row, partIndex) => {
-    // Operator 1
-    flatData.push({ part: partIndex, operator: 0, rep: 0, value: row.app1_rep1 });
-    flatData.push({ part: partIndex, operator: 0, rep: 1, value: row.app1_rep2 });
-    flatData.push({ part: partIndex, operator: 0, rep: 2, value: row.app1_rep3 });
+    // Only include data from active operators
+    if (hasOp1Data) {
+      flatData.push({ part: partIndex, operator: 0, rep: 0, value: row.app1_rep1 });
+      flatData.push({ part: partIndex, operator: 0, rep: 1, value: row.app1_rep2 });
+      flatData.push({ part: partIndex, operator: 0, rep: 2, value: row.app1_rep3 });
+    }
     
-    // Operator 2
-    flatData.push({ part: partIndex, operator: 1, rep: 0, value: row.app2_rep1 });
-    flatData.push({ part: partIndex, operator: 1, rep: 1, value: row.app2_rep2 });
-    flatData.push({ part: partIndex, operator: 1, rep: 2, value: row.app2_rep3 });
+    if (hasOp2Data) {
+      flatData.push({ part: partIndex, operator: 1, rep: 0, value: row.app2_rep1 });
+      flatData.push({ part: partIndex, operator: 1, rep: 1, value: row.app2_rep2 });
+      flatData.push({ part: partIndex, operator: 1, rep: 2, value: row.app2_rep3 });
+    }
     
-    // Operator 3
-    flatData.push({ part: partIndex, operator: 2, rep: 0, value: row.app3_rep1 });
-    flatData.push({ part: partIndex, operator: 2, rep: 1, value: row.app3_rep2 });
-    flatData.push({ part: partIndex, operator: 2, rep: 2, value: row.app3_rep3 });
+    if (hasOp3Data) {
+      flatData.push({ part: partIndex, operator: 2, rep: 0, value: row.app3_rep1 });
+      flatData.push({ part: partIndex, operator: 2, rep: 1, value: row.app3_rep2 });
+      flatData.push({ part: partIndex, operator: 2, rep: 2, value: row.app3_rep3 });
+    }
   });
+  
+  const totalObs = flatData.length;
 
   // Calculate grand mean
   const grandMean = flatData.reduce((sum, obs) => sum + obs.value, 0) / totalObs;
