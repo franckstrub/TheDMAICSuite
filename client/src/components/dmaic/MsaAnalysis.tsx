@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart3, Save, Plus, Trash2, Calculator } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import MSAStatisticsDisplay from "./MSAStatisticsDisplay";
+import MSAContinuousStatisticsDisplay from "./MSAContinuousStatisticsDisplay";
 
 // Interface for Attribute Agreement Analysis data (OK/KO values)
 interface AttributeAnalysisRow {
@@ -354,12 +355,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             gageRRData: existingMsa.gageRRData ? 
               JSON.parse(existingMsa.gageRRData) : 
               generateDefaultContinuousData(),
+            sigmaMultiplier: existingMsa.sigmaMultiplier || 6,
+            tolerance: existingMsa.tolerance,
           } : {
             ctq: ctq,
             appraiser1Name: "",
             appraiser2Name: "",
             appraiser3Name: "",
             gageRRData: generateDefaultContinuousData(),
+            sigmaMultiplier: 6,
+            tolerance: undefined,
             studyDateTime: new Date().toISOString(),
           };
         }
@@ -1114,8 +1119,33 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </p>
                   </div>
 
-                  {/* Study Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Study Parameters */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Nb of sigma used</label>
+                      <Select
+                        value={continuousMsaData[ctqItem.ctq]?.sigmaMultiplier?.toString() || "6"}
+                        onValueChange={(value) => updateContinuousMsaField(ctqItem.ctq, 'sigmaMultiplier', parseFloat(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select sigma" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="6">6</SelectItem>
+                          <SelectItem value="5.15">5.15</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Tolerance (optional)</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Enter tolerance"
+                        value={continuousMsaData[ctqItem.ctq]?.tolerance || ""}
+                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, 'tolerance', parseFloat(e.target.value) || undefined)}
+                      />
+                    </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Study Date & Time</label>
                       <Input
