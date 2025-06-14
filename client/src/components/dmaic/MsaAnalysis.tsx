@@ -353,7 +353,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           initialContinuousData[ctq] = existingMsa ? {
             ...existingMsa,
             gageRRData: existingMsa.gageRRData ? 
-              JSON.parse(existingMsa.gageRRData) : 
+              (typeof existingMsa.gageRRData === 'string' ? 
+                JSON.parse(existingMsa.gageRRData) : 
+                existingMsa.gageRRData) : 
               generateDefaultContinuousData(),
             sigmaMultiplier: existingMsa.sigmaMultiplier || 6,
             tolerance: existingMsa.tolerance,
