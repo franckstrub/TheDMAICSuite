@@ -935,9 +935,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
                       {/* Statistics Display */}
                       {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                          <h4 className="font-medium mb-2">Agreement Analysis Statistics</h4>
-                          <p className="text-sm text-gray-600">Statistics will be calculated and displayed here after data collection is complete.</p>
+                        <div className="mt-6">
+                          <MSAStatisticsDisplay
+                            data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
+                            appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
+                            appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
+                            appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
+                          />
                         </div>
                       )}
                       <div className="flex justify-end mt-1">
@@ -1130,9 +1134,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   </>
                   )}
                   {/* Statistics Display */}
-                  {showStatistics[ctqItem.ctq] && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Statistics will be displayed here after data collection.</p>
+                  {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
+                    <div className="mt-6">
+                      <MSAStatisticsDisplay
+                        data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
+                        appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
+                        appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
+                        appraiser3Name={attributeMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
+                      />
                     </div>
                   )}
                 </div>
