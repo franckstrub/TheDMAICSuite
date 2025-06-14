@@ -1546,82 +1546,35 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       </Button>
                       
                       <Button
-                        onClick={async () => {
-                          try {
-                            // Check clipboard permissions first
-                            const permission = await navigator.permissions.query({ name: 'clipboard-read' as PermissionName });
-                            console.log('Clipboard permission:', permission.state);
-                            
-                            // Try to read clipboard directly
-                            const clipboardData = await navigator.clipboard.readText();
-                            console.log('Clipboard data length:', clipboardData.length);
-                            
-                            if (clipboardData.trim()) {
-                              // Create a synthetic paste event
-                              const syntheticEvent = {
-                                preventDefault: () => {},
-                                clipboardData: {
-                                  getData: () => clipboardData
-                                }
-                              } as unknown as React.ClipboardEvent;
-                              
-                              console.log('Calling handlePasteData with CTQ:', ctqItem.ctq);
-                              handlePasteData(ctqItem.ctq, syntheticEvent);
-                            } else {
-                              toast({
-                                title: "No Data Found",
-                                description: "No data found in clipboard. Please copy data from Excel first.",
-                                variant: "destructive",
-                              });
+                        onClick={() => {
+                          // Create a temporary input element to trigger paste
+                          const tempInput = document.createElement('input');
+                          tempInput.style.position = 'fixed';
+                          tempInput.style.left = '-9999px';
+                          document.body.appendChild(tempInput);
+                          tempInput.focus();
+                          
+                          const handlePaste = (e: ClipboardEvent) => {
+                            e.preventDefault();
+                            handlePasteData(ctqItem.ctq, e as any);
+                            document.body.removeChild(tempInput);
+                          };
+                          
+                          tempInput.addEventListener('paste', handlePaste);
+                          
+                          // Show instructions
+                          toast({
+                            title: "Paste Excel Data",
+                            description: "Press Ctrl+V to paste data from Excel. Data should be in columns matching the table structure.",
+                          });
+                          
+                          // Clean up if no paste occurs within 5 seconds
+                          setTimeout(() => {
+                            if (document.body.contains(tempInput)) {
+                              tempInput.removeEventListener('paste', handlePaste);
+                              document.body.removeChild(tempInput);
                             }
-                          } catch (error) {
-                            console.error('Clipboard error:', error);
-                            // Create a focusable element for manual paste
-                            const pasteArea = document.createElement('textarea');
-                            pasteArea.style.position = 'fixed';
-                            pasteArea.style.top = '50%';
-                            pasteArea.style.left = '50%';
-                            pasteArea.style.transform = 'translate(-50%, -50%)';
-                            pasteArea.style.zIndex = '9999';
-                            pasteArea.style.background = 'white';
-                            pasteArea.style.border = '2px solid #ccc';
-                            pasteArea.style.padding = '20px';
-                            pasteArea.style.borderRadius = '8px';
-                            pasteArea.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-                            pasteArea.placeholder = 'Paste your Excel data here and press Enter';
-                            pasteArea.rows = 10;
-                            pasteArea.cols = 50;
-                            
-                            document.body.appendChild(pasteArea);
-                            pasteArea.focus();
-                            
-                            const handleKeyPress = (e: KeyboardEvent) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                const data = pasteArea.value.trim();
-                                if (data) {
-                                  const syntheticEvent = {
-                                    preventDefault: () => {},
-                                    clipboardData: {
-                                      getData: () => data
-                                    }
-                                  } as unknown as React.ClipboardEvent;
-                                  
-                                  handlePasteData(ctqItem.ctq, syntheticEvent);
-                                }
-                                document.body.removeChild(pasteArea);
-                              } else if (e.key === 'Escape') {
-                                document.body.removeChild(pasteArea);
-                              }
-                            };
-                            
-                            pasteArea.addEventListener('keydown', handleKeyPress);
-                            
-                            toast({
-                              title: "Paste Dialog Opened",
-                              description: "Paste your Excel data in the text area and press Enter",
-                            });
-                          }
+                          }, 5000);
                         }}
                         variant="outline"
                         size="sm"
