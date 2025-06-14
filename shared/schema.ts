@@ -931,6 +931,7 @@ export const msaAnalysis = pgTable("msa_analysis", {
   gageRRData: text("gage_rr_data"), // JSON array of continuous measurement data for Gage R&R analysis
   sigmaMultiplier: real("sigma_multiplier").default(6), // Number of sigma used in Gage R&R study (6 or 5.15)
   tolerance: real("tolerance"), // Tolerance field for Gage R&R calculations
+  repetitions: integer("repetitions").default(2), // Number of repetitions per part (2 or 3)
   studyDateTime: timestamp("study_date_time"),
   justification: text("justification"), // Measurement System Precision & Accuracy justification
   
