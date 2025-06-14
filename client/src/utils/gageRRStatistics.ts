@@ -118,28 +118,28 @@ function validateGageRRData(data: ContinuousAnalysisRow[]): DataValidation {
   
   // Check Operator 1
   const op1HasMinReps = data.every(row => 
-    (row.app1_rep1 !== 0 && row.app1_rep2 !== 0) || 
-    (row.app1_rep1 === 0 && row.app1_rep2 === 0 && row.app1_rep3 === 0)
+    (row.app1_rep1 !== null && row.app1_rep2 !== null) || 
+    (row.app1_rep1 === null && row.app1_rep2 === null && row.app1_rep3 === null)
   );
-  if (data.some(row => row.app1_rep1 !== 0 || row.app1_rep2 !== 0) && op1HasMinReps) {
+  if (data.some(row => row.app1_rep1 !== null || row.app1_rep2 !== null) && op1HasMinReps) {
     activeOperators++;
   }
   
   // Check Operator 2
   const op2HasMinReps = data.every(row => 
-    (row.app2_rep1 !== 0 && row.app2_rep2 !== 0) || 
-    (row.app2_rep1 === 0 && row.app2_rep2 === 0 && row.app2_rep3 === 0)
+    (row.app2_rep1 !== null && row.app2_rep2 !== null) || 
+    (row.app2_rep1 === null && row.app2_rep2 === null && row.app2_rep3 === null)
   );
-  if (data.some(row => row.app2_rep1 !== 0 || row.app2_rep2 !== 0) && op2HasMinReps) {
+  if (data.some(row => row.app2_rep1 !== null || row.app2_rep2 !== null) && op2HasMinReps) {
     activeOperators++;
   }
   
   // Check Operator 3 (optional)
   const op3HasMinReps = data.every(row => 
-    (row.app3_rep1 !== 0 && row.app3_rep2 !== 0) || 
-    (row.app3_rep1 === 0 && row.app3_rep2 === 0 && row.app3_rep3 === 0)
+    (row.app3_rep1 !== null && row.app3_rep2 !== null) || 
+    (row.app3_rep1 === null && row.app3_rep2 === null && row.app3_rep3 === null)
   );
-  if (data.some(row => row.app3_rep1 !== 0 || row.app3_rep2 !== 0) && op3HasMinReps) {
+  if (data.some(row => row.app3_rep1 !== null || row.app3_rep2 !== null) && op3HasMinReps) {
     activeOperators++;
   }
   
@@ -181,11 +181,11 @@ interface ANOVAResults {
 function performANOVA(data: ContinuousAnalysisRow[]): ANOVAResults {
   const numParts = data.length;
   
-  // Determine which operators have data (non-zero values)
+  // Determine which operators have data (non-null values)
   const activeOperators: number[] = [];
-  const hasOp1Data = data.some(row => row.app1_rep1 !== 0 || row.app1_rep2 !== 0 || row.app1_rep3 !== 0);
-  const hasOp2Data = data.some(row => row.app2_rep1 !== 0 || row.app2_rep2 !== 0 || row.app2_rep3 !== 0);
-  const hasOp3Data = data.some(row => row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0);
+  const hasOp1Data = data.some(row => row.app1_rep1 !== null || row.app1_rep2 !== null || row.app1_rep3 !== null);
+  const hasOp2Data = data.some(row => row.app2_rep1 !== null || row.app2_rep2 !== null || row.app2_rep3 !== null);
+  const hasOp3Data = data.some(row => row.app3_rep1 !== null || row.app3_rep2 !== null || row.app3_rep3 !== null);
   
   if (hasOp1Data) activeOperators.push(0);
   if (hasOp2Data) activeOperators.push(1);
@@ -194,27 +194,27 @@ function performANOVA(data: ContinuousAnalysisRow[]): ANOVAResults {
   const numOperators = activeOperators.length;
   const numReps = 3; // Always 3 repetitions per operator
   
-  // Flatten data into a structure for ANOVA calculations - only include active operators
+  // Flatten data into a structure for ANOVA calculations - only include active operators and non-null values
   const flatData: { part: number; operator: number; rep: number; value: number }[] = [];
   
   data.forEach((row, partIndex) => {
-    // Only include data from active operators
+    // Only include data from active operators and filter out null values
     if (hasOp1Data) {
-      flatData.push({ part: partIndex, operator: 0, rep: 0, value: row.app1_rep1 });
-      flatData.push({ part: partIndex, operator: 0, rep: 1, value: row.app1_rep2 });
-      flatData.push({ part: partIndex, operator: 0, rep: 2, value: row.app1_rep3 });
+      if (row.app1_rep1 !== null) flatData.push({ part: partIndex, operator: 0, rep: 0, value: row.app1_rep1 as number });
+      if (row.app1_rep2 !== null) flatData.push({ part: partIndex, operator: 0, rep: 1, value: row.app1_rep2 as number });
+      if (row.app1_rep3 !== null) flatData.push({ part: partIndex, operator: 0, rep: 2, value: row.app1_rep3 as number });
     }
     
     if (hasOp2Data) {
-      flatData.push({ part: partIndex, operator: 1, rep: 0, value: row.app2_rep1 });
-      flatData.push({ part: partIndex, operator: 1, rep: 1, value: row.app2_rep2 });
-      flatData.push({ part: partIndex, operator: 1, rep: 2, value: row.app2_rep3 });
+      if (row.app2_rep1 !== null) flatData.push({ part: partIndex, operator: 1, rep: 0, value: row.app2_rep1 as number });
+      if (row.app2_rep2 !== null) flatData.push({ part: partIndex, operator: 1, rep: 1, value: row.app2_rep2 as number });
+      if (row.app2_rep3 !== null) flatData.push({ part: partIndex, operator: 1, rep: 2, value: row.app2_rep3 as number });
     }
     
     if (hasOp3Data) {
-      flatData.push({ part: partIndex, operator: 2, rep: 0, value: row.app3_rep1 });
-      flatData.push({ part: partIndex, operator: 2, rep: 1, value: row.app3_rep2 });
-      flatData.push({ part: partIndex, operator: 2, rep: 2, value: row.app3_rep3 });
+      if (row.app3_rep1 !== null) flatData.push({ part: partIndex, operator: 2, rep: 0, value: row.app3_rep1 as number });
+      if (row.app3_rep2 !== null) flatData.push({ part: partIndex, operator: 2, rep: 1, value: row.app3_rep2 as number });
+      if (row.app3_rep3 !== null) flatData.push({ part: partIndex, operator: 2, rep: 2, value: row.app3_rep3 as number });
     }
   });
   
