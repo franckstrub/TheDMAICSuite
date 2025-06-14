@@ -72,36 +72,36 @@ export default function MSAContinuousStatisticsDisplay({
 }: MSAContinuousStatisticsDisplayProps) {
   const statistics = calculateGageRRStatistics(data, sigmaMultiplier, tolerance);
   
-  // Check if there's meaningful data for analysis
+  // Check if there's meaningful data for analysis (non-null values)
   const hasRealData = data.length > 0 && data.some(row => 
-    row.app1_rep1 !== 0 || row.app1_rep2 !== 0 || row.app1_rep3 !== 0 ||
-    row.app2_rep1 !== 0 || row.app2_rep2 !== 0 || row.app2_rep3 !== 0 ||
-    row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0
+    row.app1_rep1 !== null || row.app1_rep2 !== null || row.app1_rep3 !== null ||
+    row.app2_rep1 !== null || row.app2_rep2 !== null || row.app2_rep3 !== null ||
+    row.app3_rep1 !== null || row.app3_rep2 !== null || row.app3_rep3 !== null
   );
 
   // Validate AIAG standards compliance
   const validData = data.filter(row => 
-    row.app1_rep1 !== 0 || row.app1_rep2 !== 0 || row.app1_rep3 !== 0 ||
-    row.app2_rep1 !== 0 || row.app2_rep2 !== 0 || row.app2_rep3 !== 0 ||
-    row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0
+    row.app1_rep1 !== null || row.app1_rep2 !== null || row.app1_rep3 !== null ||
+    row.app2_rep1 !== null || row.app2_rep2 !== null || row.app2_rep3 !== null ||
+    row.app3_rep1 !== null || row.app3_rep2 !== null || row.app3_rep3 !== null
   );
 
   // Count active operators with balanced data (at least 2 repetitions per part)
   let activeOperators = 0;
   const op1HasBalancedData = validData.every(row => 
-    (row.app1_rep1 !== 0 && row.app1_rep2 !== 0) || 
-    (row.app1_rep1 === 0 && row.app1_rep2 === 0 && row.app1_rep3 === 0)
-  ) && validData.some(row => row.app1_rep1 !== 0 || row.app1_rep2 !== 0);
+    (row.app1_rep1 !== null && row.app1_rep2 !== null) || 
+    (row.app1_rep1 === null && row.app1_rep2 === null && row.app1_rep3 === null)
+  ) && validData.some(row => row.app1_rep1 !== null || row.app1_rep2 !== null);
 
   const op2HasBalancedData = validData.every(row => 
-    (row.app2_rep1 !== 0 && row.app2_rep2 !== 0) || 
-    (row.app2_rep1 === 0 && row.app2_rep2 === 0 && row.app2_rep3 === 0)
-  ) && validData.some(row => row.app2_rep1 !== 0 || row.app2_rep2 !== 0);
+    (row.app2_rep1 !== null && row.app2_rep2 !== null) || 
+    (row.app2_rep1 === null && row.app2_rep2 === null && row.app2_rep3 === null)
+  ) && validData.some(row => row.app2_rep1 !== null || row.app2_rep2 !== null);
 
   const op3HasBalancedData = validData.every(row => 
-    (row.app3_rep1 !== 0 && row.app3_rep2 !== 0) || 
-    (row.app3_rep1 === 0 && row.app3_rep2 === 0 && row.app3_rep3 === 0)
-  ) && validData.some(row => row.app3_rep1 !== 0 || row.app3_rep2 !== 0);
+    (row.app3_rep1 !== null && row.app3_rep2 !== null) || 
+    (row.app3_rep1 === null && row.app3_rep2 === null && row.app3_rep3 === null)
+  ) && validData.some(row => row.app3_rep1 !== null || row.app3_rep2 !== null);
 
   if (op1HasBalancedData) activeOperators++;
   if (op2HasBalancedData) activeOperators++;
