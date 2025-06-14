@@ -2589,41 +2589,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Development authentication routes
-  app.post("/api/dev-login", async (req: Request, res: Response) => {
-    try {
-      (req.session as any).user = {
-        id: 1,
-        email: "dev@example.com",
-        name: "Developer User"
-      };
-      
-      res.status(200).json({ 
-        message: "Development login successful",
-        user: (req.session as any).user
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Development login failed" });
-    }
-  });
-
-  // Override auth user route for development
-  app.get("/api/auth/user", async (req: Request, res: Response) => {
-    try {
-      if (!(req.session as any)?.user) {
-        (req.session as any).user = {
-          id: 1,
-          email: "dev@example.com", 
-          name: "Developer User"
-        };
-      }
-      
-      res.status(200).json({ user: (req.session as any).user });
-    } catch (error) {
-      res.status(500).json({ error: "Session error" });
-    }
-  });
-
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
