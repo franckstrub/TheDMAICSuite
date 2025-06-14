@@ -932,6 +932,7 @@ export const msaAnalysis = pgTable("msa_analysis", {
   sigmaMultiplier: real("sigma_multiplier").default(6), // Number of sigma used in Gage R&R study (6 or 5.15)
   tolerance: real("tolerance"), // Tolerance field for Gage R&R calculations
   repetitions: integer("repetitions").default(2), // Number of repetitions per part (2 or 3)
+  numberOfAppraisers: integer("number_of_appraisers").default(2), // Number of appraisers (2 or 3)
   studyDateTime: timestamp("study_date_time"),
   justification: text("justification"), // Measurement System Precision & Accuracy justification
   

@@ -165,6 +165,7 @@ export default function MSAContinuousStatisticsDisplay({
             ANOVA Gage R&R Statistics
           </CardTitle>
           <div className="flex items-center gap-4 text-sm text-gray-600">
+            <span>Appraisers: <strong>{numberOfAppraisers}</strong></span>
             <span>Repetitions: <strong>{repetitions}</strong></span>
             <span>Nb of sigma used: <strong>{sigmaMultiplier}</strong></span>
             {tolerance && <span>Tolerance: <strong>{tolerance}</strong></span>}
