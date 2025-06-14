@@ -593,7 +593,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     event.preventDefault();
     
     const pasteData = event.clipboardData.getData('text');
-    if (!pasteData.trim()) return;
+    if (!pasteData.trim()) {
+      toast({
+        title: "No Data Found",
+        description: "No data found in clipboard. Please copy data from Excel first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       // Save current state for undo (only if data exists)
