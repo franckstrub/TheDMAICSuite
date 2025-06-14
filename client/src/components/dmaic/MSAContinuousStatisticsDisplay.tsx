@@ -13,7 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertTriangle, XCircle, BarChart3 } from "lucide-react";
-// Inline types and calculation for ANOVA Gage R&R
+import { calculateGageRRStatistics } from "@/utils/gageRRStatistics";
+// Types for ANOVA Gage R&R
 interface ContinuousAnalysisRow {
   unitNumber: number;
   app1_rep1: number;
@@ -46,83 +47,7 @@ interface GageRRStatistics {
   isValid: boolean;
 }
 
-// Simple ANOVA Gage R&R calculation function
-function calculateGageRRStatistics(
-  data: ContinuousAnalysisRow[], 
-  sigmaMultiplier: number = 6, 
-  tolerance?: number
-): GageRRStatistics {
-  // Filter valid data
-  const validData = data.filter(row => 
-    row.app1_rep1 !== 0 || row.app1_rep2 !== 0 || row.app1_rep3 !== 0 ||
-    row.app2_rep1 !== 0 || row.app2_rep2 !== 0 || row.app2_rep3 !== 0 ||
-    row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0
-  );
 
-  if (validData.length === 0) {
-    const emptyComponent: VariationComponent = {
-      studyVariation: 0, studyVar: 0, percentStudyVar: 0, percentTolerance: 0
-    };
-    return {
-      totalGageRR: emptyComponent, repeatability: emptyComponent, reproducibility: emptyComponent,
-      operator: emptyComponent, partOperator: emptyComponent, partToPart: emptyComponent,
-      total: emptyComponent, numberDistinctCategories: 0, isValid: false
-    };
-  }
-
-  // Simple variance calculations for demonstration
-  const allValues: number[] = [];
-  const partMeans: number[] = [];
-  const operatorMeans = [0, 0, 0];
-  
-  validData.forEach(row => {
-    const values = [row.app1_rep1, row.app1_rep2, row.app1_rep3, row.app2_rep1, row.app2_rep2, row.app2_rep3, row.app3_rep1, row.app3_rep2, row.app3_rep3];
-    allValues.push(...values);
-    partMeans.push(values.reduce((a, b) => a + b, 0) / values.length);
-    
-    operatorMeans[0] += (row.app1_rep1 + row.app1_rep2 + row.app1_rep3) / 3;
-    operatorMeans[1] += (row.app2_rep1 + row.app2_rep2 + row.app2_rep3) / 3;
-    operatorMeans[2] += (row.app3_rep1 + row.app3_rep2 + row.app3_rep3) / 3;
-  });
-
-  operatorMeans[0] /= validData.length;
-  operatorMeans[1] /= validData.length;
-  operatorMeans[2] /= validData.length;
-
-  const grandMean = allValues.reduce((a, b) => a + b, 0) / allValues.length;
-  const totalVar = allValues.reduce((sum, val) => sum + Math.pow(val - grandMean, 2), 0) / (allValues.length - 1);
-  
-  // Simplified variance components
-  const partToPartVar = partMeans.reduce((sum, mean) => sum + Math.pow(mean - grandMean, 2), 0) / (partMeans.length - 1);
-  const operatorVar = operatorMeans.reduce((sum, mean) => sum + Math.pow(mean - grandMean, 2), 0) / 2;
-  const repeatabilityVar = Math.max(0, totalVar - partToPartVar - operatorVar) * 0.5;
-  const partOperatorVar = Math.max(0, totalVar - partToPartVar - operatorVar - repeatabilityVar) * 0.3;
-  const reproducibilityVar = operatorVar + partOperatorVar;
-  const totalGageRRVar = repeatabilityVar + reproducibilityVar;
-
-  const createComponent = (variance: number): VariationComponent => {
-    const studyVariation = Math.sqrt(Math.max(0, variance));
-    const studyVar = sigmaMultiplier * studyVariation;
-    const percentStudyVar = totalVar > 0 ? (studyVar / (sigmaMultiplier * Math.sqrt(totalVar))) * 100 : 0;
-    const percentTolerance = tolerance ? (studyVar / tolerance) * 100 : 0;
-    
-    return { studyVariation, studyVar, percentStudyVar, percentTolerance };
-  };
-
-  const ndc = totalGageRRVar > 0 ? 1.41 * Math.sqrt(partToPartVar / totalGageRRVar) : 0;
-
-  return {
-    totalGageRR: createComponent(totalGageRRVar),
-    repeatability: createComponent(repeatabilityVar),
-    reproducibility: createComponent(reproducibilityVar),
-    operator: createComponent(operatorVar),
-    partOperator: createComponent(partOperatorVar),
-    partToPart: createComponent(partToPartVar),
-    total: createComponent(totalVar),
-    numberDistinctCategories: ndc,
-    isValid: createComponent(totalGageRRVar).percentStudyVar < 30 && ndc >= 5
-  };
-}
 
 interface MSAContinuousStatisticsDisplayProps {
   data: ContinuousAnalysisRow[];
@@ -150,17 +75,65 @@ export default function MSAContinuousStatisticsDisplay({
     row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0
   );
 
-  // Check if appraiser 3 has any data
-  const hasApp3Data = data.some(row => 
+  // Validate AIAG standards compliance
+  const validData = data.filter(row => 
+    row.app1_rep1 !== 0 || row.app1_rep2 !== 0 || row.app1_rep3 !== 0 ||
+    row.app2_rep1 !== 0 || row.app2_rep2 !== 0 || row.app2_rep3 !== 0 ||
     row.app3_rep1 !== 0 || row.app3_rep2 !== 0 || row.app3_rep3 !== 0
   );
 
+  // Count active operators with balanced data (at least 2 repetitions per part)
+  let activeOperators = 0;
+  const op1HasBalancedData = validData.every(row => 
+    (row.app1_rep1 !== 0 && row.app1_rep2 !== 0) || 
+    (row.app1_rep1 === 0 && row.app1_rep2 === 0 && row.app1_rep3 === 0)
+  ) && validData.some(row => row.app1_rep1 !== 0 || row.app1_rep2 !== 0);
+
+  const op2HasBalancedData = validData.every(row => 
+    (row.app2_rep1 !== 0 && row.app2_rep2 !== 0) || 
+    (row.app2_rep1 === 0 && row.app2_rep2 === 0 && row.app2_rep3 === 0)
+  ) && validData.some(row => row.app2_rep1 !== 0 || row.app2_rep2 !== 0);
+
+  const op3HasBalancedData = validData.every(row => 
+    (row.app3_rep1 !== 0 && row.app3_rep2 !== 0) || 
+    (row.app3_rep1 === 0 && row.app3_rep2 === 0 && row.app3_rep3 === 0)
+  ) && validData.some(row => row.app3_rep1 !== 0 || row.app3_rep2 !== 0);
+
+  if (op1HasBalancedData) activeOperators++;
+  if (op2HasBalancedData) activeOperators++;
+  if (op3HasBalancedData) activeOperators++;
+
+  // Check AIAG compliance
   if (!hasRealData) {
     return (
       <Alert className="border-amber-200 bg-amber-50">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-800">
           No measurement data available. Please enter measurement values to calculate ANOVA Gage R&R statistics.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (validData.length < 10) {
+    return (
+      <Alert className="border-red-200 bg-red-50">
+        <XCircle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-800">
+          <strong>AIAG Standard Not Met:</strong> Minimum 10 parts required for valid Gage R&R analysis. 
+          Current: {validData.length}/10 parts. Please add more measurement data.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (activeOperators < 2) {
+    return (
+      <Alert className="border-red-200 bg-red-50">
+        <XCircle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-800">
+          <strong>AIAG Standard Not Met:</strong> Minimum 2 operators with balanced data required (at least 2 repetitions per part). 
+          Current: {activeOperators}/2 operators. Please ensure each operator has at least 2 measurements per part.
         </AlertDescription>
       </Alert>
     );
