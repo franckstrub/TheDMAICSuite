@@ -1271,22 +1271,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   {/* Statistics Display for Continuous MSA */}
                   {showContinuousStatistics[ctqItem.ctq] && continuousMsaData[ctqItem.ctq] && continuousMsaData[ctqItem.ctq].gageRRData.length > 0 && (
                     <div className="mt-6">
-                      <MSAStatisticsDisplay
+                      <MSAContinuousStatisticsDisplay
                         data={continuousMsaData[ctqItem.ctq].gageRRData}
                         appraiser1Name={continuousMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
                         appraiser2Name={continuousMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
                         appraiser3Name={continuousMsaData[ctqItem.ctq]?.appraiser3Name || "Appraiser 3"}
                         sigmaMultiplier={continuousMsaData[ctqItem.ctq]?.sigmaMultiplier || 6}
                         tolerance={continuousMsaData[ctqItem.ctq]?.tolerance}
-                        isGageRR={true}
                       />
                     </div>
                   )}
                     </>
                   )}
-                    </div>
-                  )}
-
                 </div>
               )}
             </TabsContent>
