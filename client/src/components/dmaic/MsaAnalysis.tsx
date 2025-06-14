@@ -108,6 +108,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         console.warn("Failed to parse saved statistics state:", error);
       }
     }
+
+    // Load saved attribute analysis type choices
+    const savedAnalysisTypes = localStorage.getItem(`msa-analysis-types-${projectId}`);
+    if (savedAnalysisTypes) {
+      try {
+        const parsedTypes = JSON.parse(savedAnalysisTypes);
+        setAttributeAnalysisType(parsedTypes);
+      } catch (error) {
+        console.warn("Failed to parse saved analysis types:", error);
+      }
+    }
   }, [projectId]);
 
 
@@ -635,7 +646,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             name={`analysis-type-${ctqItem.ctq}`}
                             value="simple"
                             checked={attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]}
-                            onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'simple' }))}
+                            onChange={() => {
+                              const newTypes = { ...attributeAnalysisType, [ctqItem.ctq]: 'simple' as const };
+                              setAttributeAnalysisType(newTypes);
+                              localStorage.setItem(`msa-analysis-types-${projectId}`, JSON.stringify(newTypes));
+                            }}
                             className="mr-2"
                           />
                           <span className="text-sm font-medium">Measurement System Simple Analysis</span>
@@ -646,7 +661,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             name={`analysis-type-${ctqItem.ctq}`}
                             value="agreement"
                             checked={attributeAnalysisType[ctqItem.ctq] === 'agreement'}
-                            onChange={() => setAttributeAnalysisType(prev => ({ ...prev, [ctqItem.ctq]: 'agreement' }))}
+                            onChange={() => {
+                              const newTypes = { ...attributeAnalysisType, [ctqItem.ctq]: 'agreement' as const };
+                              setAttributeAnalysisType(newTypes);
+                              localStorage.setItem(`msa-analysis-types-${projectId}`, JSON.stringify(newTypes));
+                            }}
                             className="mr-2"
                           />
                           <span className="text-sm font-medium">Attribute Agreement Analysis</span>
