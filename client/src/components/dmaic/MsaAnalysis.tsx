@@ -628,7 +628,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         }
       });
       
-      if (parsedData.length === 0) return;
+      if (parsedData.length === 0) {
+        toast({
+          title: "No Data Found",
+          description: "No valid data found in clipboard. Please copy measurement data from Excel first.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       // Apply the pasted data to the table
       setContinuousMsaData(prev => {
@@ -1491,6 +1498,60 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="text-md font-semibold">Gage R&R Measurement Data</h4>
+                      <div className="flex gap-2">
+                      <Button
+                        onClick={async () => {
+                          try {
+                            // Read directly from clipboard
+                            const clipboardData = await navigator.clipboard.readText();
+                            
+                            if (!clipboardData.trim()) {
+                              toast({
+                                title: "No Data Found",
+                                description: "No data found in clipboard. Please copy data from Excel first.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            
+                            // Create a synthetic paste event
+                            const syntheticEvent = {
+                              preventDefault: () => {},
+                              clipboardData: {
+                                getData: () => clipboardData
+                              }
+                            } as unknown as React.ClipboardEvent;
+                            
+                            // Call the paste handler directly
+                            handlePasteData(ctqItem.ctq, syntheticEvent);
+                            
+                          } catch (error) {
+                            toast({
+                              title: "Clipboard Permission Required",
+                              description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="text-green-700 border-green-300 hover:bg-green-50"
+                      >
+                        📋 Paste from Excel
+                      </Button>
+                      
+                      {showUndoButton[ctqItem.ctq] && (
+                        <Button
+                          onClick={() => handleUndo(ctqItem.ctq)}
+                          variant="outline"
+                          size="sm"
+                          className="text-orange-700 border-orange-300 hover:bg-orange-50"
+                        >
+                          <Undo2 className="h-4 w-4 mr-2" />
+                          Undo Paste
+                        </Button>
+                      )}
+                      </div>
                       <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200">
                         <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
                         <div>
@@ -1592,7 +1653,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         <Plus className="h-4 w-4 mr-2" />
                         Add Row
                       </Button>
-                      
+                      {/*
                       <Button
                         onClick={async () => {
                           try {
@@ -1645,7 +1706,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           Undo Paste
                         </Button>
                       )}
-                      
+                      */}
                         <Button
                           onClick={() => toggleContinuousStatistics(ctqItem.ctq)}
                           variant="secondary"
