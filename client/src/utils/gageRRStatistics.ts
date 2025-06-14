@@ -61,11 +61,17 @@ export function calculateGageRRStatistics(
     return createEmptyStatistics();
   }
 
+  // Validate data meets AIAG standards before performing calculations
+  const validation = validateGageRRData(validData);
+  if (!validation.isValid) {
+    return createEmptyStatistics();
+  }
+
   // Perform ANOVA calculations
   const anovaResults = performANOVA(validData);
   
   // Calculate variance components
-  const varComponents = calculateVarianceComponents(anovaResults, validData.length);
+  const varComponents = calculateVarianceComponents(anovaResults, validData.length, validation.activeOperators);
   
   // Calculate study variations and percentages
   const statistics = calculateStudyVariations(varComponents, sigmaMultiplier, tolerance);
@@ -77,6 +83,82 @@ export function calculateGageRRStatistics(
     ...statistics,
     numberDistinctCategories: ndc,
     isValid: statistics.totalGageRR.percentStudyVar < 30 && ndc >= 5
+  };
+}
+
+interface DataValidation {
+  isValid: boolean;
+  activeOperators: number;
+  minRepetitions: number;
+  validParts: number;
+  message?: string;
+}
+
+/**
+ * Validate Gage R&R data according to AIAG standards
+ * Minimum requirements: 10 parts, 2 operators, 2 repetitions each
+ */
+function validateGageRRData(data: ContinuousAnalysisRow[]): DataValidation {
+  const numParts = data.length;
+  
+  // Check minimum parts requirement (AIAG standard: minimum 10 parts)
+  if (numParts < 10) {
+    return {
+      isValid: false,
+      activeOperators: 0,
+      minRepetitions: 0,
+      validParts: numParts,
+      message: `Insufficient parts: ${numParts}/10 minimum required`
+    };
+  }
+  
+  // Count active operators (operators with at least 2 repetitions per part)
+  let activeOperators = 0;
+  let minRepetitions = 3;
+  
+  // Check Operator 1
+  const op1HasMinReps = data.every(row => 
+    (row.app1_rep1 !== 0 && row.app1_rep2 !== 0) || 
+    (row.app1_rep1 === 0 && row.app1_rep2 === 0 && row.app1_rep3 === 0)
+  );
+  if (data.some(row => row.app1_rep1 !== 0 || row.app1_rep2 !== 0) && op1HasMinReps) {
+    activeOperators++;
+  }
+  
+  // Check Operator 2
+  const op2HasMinReps = data.every(row => 
+    (row.app2_rep1 !== 0 && row.app2_rep2 !== 0) || 
+    (row.app2_rep1 === 0 && row.app2_rep2 === 0 && row.app2_rep3 === 0)
+  );
+  if (data.some(row => row.app2_rep1 !== 0 || row.app2_rep2 !== 0) && op2HasMinReps) {
+    activeOperators++;
+  }
+  
+  // Check Operator 3 (optional)
+  const op3HasMinReps = data.every(row => 
+    (row.app3_rep1 !== 0 && row.app3_rep2 !== 0) || 
+    (row.app3_rep1 === 0 && row.app3_rep2 === 0 && row.app3_rep3 === 0)
+  );
+  if (data.some(row => row.app3_rep1 !== 0 || row.app3_rep2 !== 0) && op3HasMinReps) {
+    activeOperators++;
+  }
+  
+  // Check minimum operators requirement (AIAG standard: minimum 2 operators)
+  if (activeOperators < 2) {
+    return {
+      isValid: false,
+      activeOperators,
+      minRepetitions,
+      validParts: numParts,
+      message: `Insufficient operators: ${activeOperators}/2 minimum required with balanced data`
+    };
+  }
+  
+  return {
+    isValid: true,
+    activeOperators,
+    minRepetitions,
+    validParts: numParts
   };
 }
 
@@ -236,18 +318,22 @@ interface VarianceComponents {
   total: number;
 }
 
-function calculateVarianceComponents(anova: ANOVAResults, numParts: number): VarianceComponents {
-  const numOperators = 3;
+function calculateVarianceComponents(anova: ANOVAResults, numParts: number, activeOperators: number): VarianceComponents {
   const numReps = 3;
 
   // Variance components from ANOVA mean squares
   const repeatability = anova.repeatableMeanSquare;
   
-  const partOperator = Math.max(0, (anova.partOperatorMeanSquare - anova.repeatableMeanSquare) / numReps);
+  // If only one operator, reproducibility components should be zero
+  let partOperator = 0;
+  let operator = 0;
   
-  const operator = Math.max(0, (anova.operatorMeanSquare - anova.partOperatorMeanSquare) / (numParts * numReps));
+  if (activeOperators > 1) {
+    partOperator = Math.max(0, (anova.partOperatorMeanSquare - anova.repeatableMeanSquare) / numReps);
+    operator = Math.max(0, (anova.operatorMeanSquare - anova.partOperatorMeanSquare) / (numParts * numReps));
+  }
   
-  const partToPart = Math.max(0, (anova.partMeanSquare - anova.partOperatorMeanSquare) / (numOperators * numReps));
+  const partToPart = Math.max(0, (anova.partMeanSquare - anova.partOperatorMeanSquare) / (activeOperators * numReps));
 
   const totalGageRR = repeatability + operator + partOperator;
   const total = totalGageRR + partToPart;
