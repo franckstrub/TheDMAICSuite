@@ -34,18 +34,18 @@ interface AttributeAnalysisRow {
   app3_rep3: "OK" | "KO" | "";
 }
 
-// Interface for Continuous Gage R&R data (real numbers)
+// Interface for Continuous Gage R&R data (real numbers or null)
 interface ContinuousAnalysisRow {
   unitNumber: number;
-  app1_rep1: number;
-  app1_rep2: number;
-  app1_rep3: number;
-  app2_rep1: number;
-  app2_rep2: number;
-  app2_rep3: number;
-  app3_rep1: number;
-  app3_rep2: number;
-  app3_rep3: number;
+  app1_rep1: number | null;
+  app1_rep2: number | null;
+  app1_rep3: number | null;
+  app2_rep1: number | null;
+  app2_rep2: number | null;
+  app2_rep3: number | null;
+  app3_rep1: number | null;
+  app3_rep2: number | null;
+  app3_rep3: number | null;
 }
 
 interface AttributeMsaData {
@@ -512,13 +512,22 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }));
   };
 
-  const updateContinuousAnalysisRow = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, value: number) => {
+  const updateContinuousAnalysisRow = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, value: string | number) => {
     setContinuousMsaData(prev => {
       const updatedData = [...(prev[ctq]?.gageRRData || [])];
       if (updatedData[rowIndex]) {
+        // Validate numeric input - if not a valid number, set to null
+        let numericValue: number | null = null;
+        if (value !== '' && value !== null && value !== undefined) {
+          const parsed = typeof value === 'string' ? parseFloat(value) : value;
+          if (!isNaN(parsed) && isFinite(parsed)) {
+            numericValue = parsed;
+          }
+        }
+        
         updatedData[rowIndex] = {
           ...updatedData[rowIndex],
-          [field]: value,
+          [field]: numericValue,
         };
       }
       return {
@@ -536,15 +545,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       const currentData = prev[ctq]?.gageRRData || [];
       const newRow: ContinuousAnalysisRow = {
         unitNumber: currentData.length + 1,
-        app1_rep1: 0,
-        app1_rep2: 0,
-        app1_rep3: 0,
-        app2_rep1: 0,
-        app2_rep2: 0,
-        app2_rep3: 0,
-        app3_rep1: 0,
-        app3_rep2: 0,
-        app3_rep3: 0,
+        app1_rep1: null as number | null,
+        app1_rep2: null as number | null,
+        app1_rep3: null as number | null,
+        app2_rep1: null as number | null,
+        app2_rep2: null as number | null,
+        app2_rep3: null as number | null,
+        app3_rep1: null as number | null,
+        app3_rep2: null as number | null,
+        app3_rep3: null as number | null,
       };
       
       return {
@@ -1349,8 +1358,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                     <Input
                                       type="number"
                                       step="0.01"
-                                      value={row[field as keyof ContinuousAnalysisRow] as number}
-                                      onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, parseFloat(e.target.value) || 0)}
+                                      value={row[field as keyof ContinuousAnalysisRow] as number | null ?? ''}
+                                      onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, e.target.value)}
                                       className="w-20"
                                       disabled={(repetitions === 2 && field.includes('_rep3')) || (numberOfAppraisers === 2 && field.includes('app3_'))}
                                     />
@@ -1375,6 +1384,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   </div>
 
                   <div className="flex justify-between pt-4">
+                    <div className="flex gap-2">
                       <Button
                         onClick={() => addContinuousAnalysisRow(ctqItem.ctq)}
                         variant="outline"
@@ -1383,25 +1393,25 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         <Plus className="h-4 w-4 mr-2" />
                         Add Row
                       </Button>
-                      <div className="flex gap-2">
+                      
                         <Button
                           onClick={() => toggleContinuousStatistics(ctqItem.ctq)}
                           variant="secondary"
-                          className="bg-blue-100 hover:bg-blue-200 text-blue-800"
+                          className="bg-blue-100 hover:bg-blue-200 text-blue-800 flex items-center"
                         >
                           <BarChart3 className="h-4 w-4 mr-2" />
                           {showContinuousStatistics[ctqItem.ctq] ? "Hide Statistics" : "Show Statistics"}
                         </Button>
+                    </div>
                         <Button
                           onClick={() => handleSaveContinuousMsa(ctqItem.ctq)}
                           disabled={saveContinuousMsaMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-blue-600 hover:bg-blue-700"
                         >
                           <Save className="h-4 w-4 mr-2" />
                           {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R MSA Study"}
                         </Button>
-                      </div>
-                  </div>
+                   </div>
 
                   {/* Statistics Display for Continuous MSA */}
                   {showContinuousStatistics[ctqItem.ctq] && continuousMsaData[ctqItem.ctq] && continuousMsaData[ctqItem.ctq].gageRRData.length > 0 && (
