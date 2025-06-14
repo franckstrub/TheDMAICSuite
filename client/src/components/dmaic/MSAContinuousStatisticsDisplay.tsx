@@ -56,6 +56,7 @@ interface MSAContinuousStatisticsDisplayProps {
   appraiser3Name: string;
   sigmaMultiplier: number;
   tolerance?: number;
+  repetitions: number;
 }
 
 export default function MSAContinuousStatisticsDisplay({ 
@@ -64,7 +65,8 @@ export default function MSAContinuousStatisticsDisplay({
   appraiser2Name, 
   appraiser3Name,
   sigmaMultiplier,
-  tolerance
+  tolerance,
+  repetitions
 }: MSAContinuousStatisticsDisplayProps) {
   const statistics = calculateGageRRStatistics(data, sigmaMultiplier, tolerance);
   
@@ -294,11 +296,11 @@ export default function MSAContinuousStatisticsDisplay({
               <div>
                 <span className="font-medium">Appraiser 2:</span> {appraiser2Name || "Not specified"}
               </div>
-              {hasApp3Data && (
+              
                 <div>
                   <span className="font-medium">Appraiser 3:</span> {appraiser3Name || "Not specified"}
                 </div>
-              )}
+              
             </div>
             <div className="mt-2 text-sm text-gray-600">
               <span className="font-medium">Analysis Method:</span> ANOVA with {sigmaMultiplier} sigma multiplier
