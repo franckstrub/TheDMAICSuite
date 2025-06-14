@@ -2519,6 +2519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gageRRData: req.body.gageRRData || null, // Store Gage R&R data
         sigmaMultiplier: req.body.sigmaMultiplier || 6,
         tolerance: req.body.tolerance || null,
+        repetitions: req.body.repetitions || 2,
         studyDateTime: req.body.studyDateTime ? new Date(req.body.studyDateTime) : new Date(),
         lastUpdated: new Date(),
       };
