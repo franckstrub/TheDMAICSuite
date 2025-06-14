@@ -1209,7 +1209,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       {saveContinuousMsaMutation.isPending ? "Saving..." : "Save Gage R&R MSA Study"}
                     </Button>
                   </div>
-                  </>
+                    </>
                   )}
                     </div>
                   )}
