@@ -8,15 +8,15 @@
 
 export interface ContinuousAnalysisRow {
   unitNumber: number;
-  app1_rep1: number;
-  app1_rep2: number;
-  app1_rep3: number;
-  app2_rep1: number;
-  app2_rep2: number;
-  app2_rep3: number;
-  app3_rep1: number;
-  app3_rep2: number;
-  app3_rep3: number;
+  app1_rep1: number | null;
+  app1_rep2: number | null;
+  app1_rep3: number | null;
+  app2_rep1: number | null;
+  app2_rep2: number | null;
+  app2_rep3: number | null;
+  app3_rep1: number | null;
+  app3_rep2: number | null;
+  app3_rep3: number | null;
 }
 
 export interface VariationComponent {

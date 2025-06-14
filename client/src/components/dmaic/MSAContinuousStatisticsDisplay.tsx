@@ -17,15 +17,15 @@ import { calculateGageRRStatistics } from "@/utils/gageRRStatistics";
 // Types for ANOVA Gage R&R
 interface ContinuousAnalysisRow {
   unitNumber: number;
-  app1_rep1: number;
-  app1_rep2: number;
-  app1_rep3: number;
-  app2_rep1: number;
-  app2_rep2: number;
-  app2_rep3: number;
-  app3_rep1: number;
-  app3_rep2: number;
-  app3_rep3: number;
+  app1_rep1: number | null;
+  app1_rep2: number | null;
+  app1_rep3: number | null;
+  app2_rep1: number | null;
+  app2_rep2: number | null;
+  app2_rep3: number | null;
+  app3_rep1: number | null;
+  app3_rep2: number | null;
+  app3_rep3: number | null;
 }
 
 interface VariationComponent {
@@ -292,7 +292,7 @@ export default function MSAContinuousStatisticsDisplay({
 
           {/* Appraiser Information */}
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">Study Information:</h4>
+            <h4 className="font-medium mb-2">Study Summary:</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="font-medium">Appraiser 1:</span> {appraiser1Name || "Not specified"}
@@ -301,14 +301,16 @@ export default function MSAContinuousStatisticsDisplay({
                 <span className="font-medium">Appraiser 2:</span> {appraiser2Name || "Not specified"}
               </div>
               
+             {numberOfAppraisers > 2 && (
                 <div>
-                  <span className="font-medium">Appraiser 3:</span> {appraiser3Name || "Not specified"}
+                <span className="font-medium">Appraiser 3:</span> {appraiser3Name}
                 </div>
+              )}
               
             </div>
             <div className="mt-2 text-sm text-gray-600">
               <span className="font-medium">Analysis Method:</span> ANOVA with {sigmaMultiplier} sigma multiplier
-              {tolerance && <span> • Tolerance: {tolerance}</span>}
+              {tolerance && <span> • Tolerance: {tolerance}</span>} • Number of Repetitions: {repetitions}
             </div>
           </div>
         </CardContent>
