@@ -49,6 +49,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [inputValues, setInputValues] = useState<{ [ctq: string]: string }>({});
   const [undoStates, setUndoStates] = useState<{ [ctq: string]: DataPoint[] }>({});
   const [pasteInputs, setPasteInputs] = useState<{ [ctq: string]: string }>({});
+  const [focusedCell, setFocusedCell] = useState<{ [ctq: string]: number }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -752,6 +753,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           });
                                         }
                                       }}
+                                      onFocus={() => {
+                                        setFocusedCell(prev => ({ ...prev, [ctq]: index }));
+                                      }}
                                       onPaste={(e) => {
                                         e.preventDefault();
                                         const pasteData = e.clipboardData.getData('text');
@@ -778,6 +782,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         if (e.key === 'Enter') {
                                           handleAddDataPoint(ctq);
                                         }
+                                      }}
+                                      onFocus={() => {
+                                        setFocusedCell(prev => ({ ...prev, [ctq]: (dataPoints[ctq] || []).length }));
                                       }}
                                       onPaste={(e) => {
                                         e.preventDefault();
@@ -829,7 +836,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       }
                                     } as unknown as React.ClipboardEvent;
                                     
-                                    const rawindex = (dataPoints[ctq] || []).length;
+                                    const rawindex = focusedCell[ctq] !== undefined ? focusedCell[ctq] : (dataPoints[ctq] || []).length;
                                     handlePasteFromExcel(ctq, rawindex, syntheticEvent);
                                   } else {
                                     toast({
