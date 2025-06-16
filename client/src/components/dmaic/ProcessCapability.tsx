@@ -802,43 +802,47 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       {/* Paste from Excel Section */}
                       <div className="mt-4 space-y-3">
                         <div className="border-t pt-3">
-                          <div className="space-y-2">
-                            <Textarea
-                              value={pasteInputs[ctq] || ""}
-                              onChange={(e) => setPasteInputs(prev => ({ ...prev, [ctq]: e.target.value }))}
-                              placeholder="Copy data from Excel and paste here..."
-                              rows={3}
-                              className="text-sm"
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => {
-                                  if (pasteInputs[ctq]?.trim()) {
-                                    handlePasteFromExcel(ctq, pasteInputs[ctq]);
-                                    setPasteInputs(prev => ({ ...prev, [ctq]: "" }));
+                          <div className="flex gap-2 mt-2">
+                            <Button
+                              onClick={async () => {
+                                try {
+                                  const clipboardData = await navigator.clipboard.readText();
+                                  if (clipboardData.trim()) {
+                                    handlePasteFromExcel(ctq, clipboardData);
+                                  } else {
+                                    toast({
+                                      title: "No Data Found",
+                                      description: "No data found in clipboard. Please copy data from Excel first.",
+                                      variant: "destructive",
+                                    });
                                   }
-                                }}
-                                disabled={!pasteInputs[ctq]?.trim()}
+                                } catch (error) {
+                                  toast({
+                                    title: "Clipboard Access Required",
+                                    description: "Please allow clipboard access in your browser settings, or use Ctrl+V directly on the data cells.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-1"
+                            >
+                              Paste from Excel
+                            </Button>
+                            {undoStates[ctq] && (
+                              <Button
+                                onClick={() => handleUndo(ctq)}
                                 size="sm"
                                 variant="outline"
-                                className="flex items-center gap-1"
+                                className="flex items-center gap-1 text-xs"
                               >
-                                Paste from Excel
+                                <Undo className="h-3 w-3" />
+                                Undo Paste
                               </Button>
-                              {undoStates[ctq] && (
-                                <Button
-                                  onClick={() => handleUndo(ctq)}
-                                  size="sm"
-                                  variant="outline"
-                                  className="flex items-center gap-1 text-xs"
-                                >
-                                  <Undo className="h-3 w-3" />
-                                  Undo Paste
-                                </Button>
-                              )}
-                            </div>
+                            )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel and paste into the textarea above</p>
+                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel, then click the button to paste from the beginning</p>
                         </div>
                         <div className="flex justify-between items-center">
                           <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
