@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,7 +68,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
 
   // Function to handle undo operation
-  const handleUndo = useCallback((ctq: string) => {
+  const handleUndo = (ctq: string) => {
     if (undoStates[ctq]) {
       setDataPoints(prev => ({
         ...prev,
@@ -87,22 +87,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         description: "Previous paste operation has been undone",
       });
     }
-  }, [undoStates, toast]);
+  };
 
-  // Add keyboard event handler for Ctrl+Z
+  // Add keyboard shortcut handler for Ctrl+Z (matching MSA implementation)
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 'z' && activeTab && undoStates[activeTab]) {
-        event.preventDefault();
-        handleUndo(activeTab);
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      // Handle Ctrl+Z for undo - works both in and outside input fields
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab) {
+        if (undoStates[activeTab]) {
+          event.preventDefault();
+          handleUndo(activeTab);
+        }
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [activeTab, undoStates, handleUndo]);
+    document.addEventListener('keydown', handleKeyboardShortcut);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [activeTab, undoStates]);
 
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
