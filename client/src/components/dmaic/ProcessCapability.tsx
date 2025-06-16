@@ -14,28 +14,16 @@ import { apiRequest } from "@/lib/queryClient";
 interface ProcessCapabilityData {
   id?: number;
   ctq: string;
-  sampleSize: number | null;
-  mean: string;
-  standardDeviation: string;
   lsl: string;
   usl: string;
   target: string;
   zShift: number;
   dataSetTerm: "Long Term" | "Short Term";
-  cp: string;
-  cpk: string;
-  pp: string;
-  ppk: string;
-  sigma: string;
-  dpmo: string;
-  yield: string;
-  dataPoints: string;
+  capabilityIndex: "Z" | "Cp/Cpk";
+  showPercentage: boolean;
   controlChartType: string;
   conclusion: string;
   actionPlan: string;
-  // Display options for continuous CTQs
-  capabilityDisplayType?: "Z" | "Cp/Cpk";
-  showPercentageOutput?: boolean;
 }
 interface CtqWithType {
   ctq: string;
@@ -151,22 +139,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         
         initialData[ctq] = existingCapability || {
           ctq: ctq,
-          sampleSize: null,
-          mean: "",
-          standardDeviation: "",
           lsl: ctsChar?.lsl || "",
           usl: ctsChar?.usl || "",
           target: ctsChar?.target || "",
           zShift: 1.5,
           dataSetTerm: "Long Term" as const,
-          cp: "",
-          cpk: "",
-          pp: "",
-          ppk: "",
-          sigma: "",
-          dpmo: "",
-          yield: "",
-          dataPoints: "",
+          capabilityIndex: "Cp/Cpk" as const,
+          showPercentage: false,
           controlChartType: ctqWithType.ctqType === "Continuous" ? "X-bar R" : "P",
           conclusion: "",
           actionPlan: "",
@@ -203,13 +182,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const data = capabilityData[ctq];
     if (!data) return <Badge variant="secondary">No Data</Badge>;
     
-    const hasBasicData = data.mean && data.standardDeviation;
-    const hasSpecs = data.lsl || data.usl;
-    const hasCapability = data.cp || data.cpk;
+    const hasSpecs = data.lsl || data.usl || data.target;
+    const hasConfiguration = data.capabilityIndex && data.zShift;
     
-    if (hasCapability) {
-      return <Badge variant="default" className="bg-green-600">Complete</Badge>;
-    } else if (hasBasicData && hasSpecs) {
+    if (hasSpecs && hasConfiguration) {
+      return <Badge variant="default" className="bg-green-600">Configured</Badge>;
+    } else if (hasSpecs) {
       return <Badge variant="outline">In Progress</Badge>;
     } else {
       return <Badge variant="secondary">Not Started</Badge>;
@@ -223,10 +201,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       const transformedData = {
         ...data,
         // Ensure numeric fields are properly typed
-        sampleSize: data.sampleSize ? Number(data.sampleSize) : null,
         zShift: Number(data.zShift) || 1.5,
         // Ensure dataSetTerm is properly typed
         dataSetTerm: data.dataSetTerm || "Long Term",
+        // Ensure capabilityIndex is properly typed
+        capabilityIndex: data.capabilityIndex || "Cp/Cpk",
+        // Ensure showPercentage is boolean
+        showPercentage: Boolean(data.showPercentage),
         // Convert numeric values to strings as expected by schema
         lsl: data.lsl ? String(data.lsl) : "",
         usl: data.usl ? String(data.usl) : "",
@@ -339,17 +320,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             return (
             <TabsContent key={ctq} value={ctq} className="mt-6">
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Sample Size</label>
-                    <Input
-                      type="number"
-                      value={capabilityData[ctq]?.sampleSize || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "sampleSize", e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="e.g., 100"
-                    />
-                  </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Control Chart Type</label>
                     <Select
@@ -369,9 +340,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Z-Shift Value</label>
                     <Input
@@ -402,10 +371,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   {ctqWithType.ctqType === "Continuous" && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Capability Display Type</label>
+                        <label className="block text-sm font-medium mb-2">Capability Index</label>
                         <Select
-                          value={capabilityData[ctq]?.capabilityDisplayType || "Cp/Cpk"}
-                          onValueChange={(value) => updateCapabilityField(ctq, "capabilityDisplayType", value)}
+                          value={capabilityData[ctq]?.capabilityIndex || "Cp/Cpk"}
+                          onValueChange={(value) => updateCapabilityField(ctq, "capabilityIndex", value)}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -418,10 +387,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2">Show Percentage Output</label>
+                        <label className="block text-sm font-medium mb-2">Show Percentage Display</label>
                         <Select
-                          value={capabilityData[ctq]?.showPercentageOutput ? "true" : "false"}
-                          onValueChange={(value) => updateCapabilityField(ctq, "showPercentageOutput", value === "true")}
+                          value={capabilityData[ctq]?.showPercentage ? "true" : "false"}
+                          onValueChange={(value) => updateCapabilityField(ctq, "showPercentage", value === "true")}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -434,31 +403,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </div>
                     </>
                   )}
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Process Mean</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.mean || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "mean", e.target.value)}
-                      placeholder="e.g., 10.5"
-                    />
-                  </div>
                 </div>
 
                 <div className={`grid grid-cols-1 gap-4 ${ctqWithType.ctqType === "Continuous" ? "md:grid-cols-3" : "md:grid-cols-1"}`}>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Standard Deviation</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.standardDeviation || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "standardDeviation", e.target.value)}
-                      placeholder="e.g., 0.5"
-                    />
-                  </div>
-
                   {ctqWithType.ctqType === "Continuous" && (
                     <>
                       <div>
@@ -484,138 +431,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         />
                         <p className="text-xs text-gray-500 mt-1">Default from CTS Characteristics</p>
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Target Value</label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={capabilityData[ctq]?.target || ""}
+                          onChange={(e) => updateCapabilityField(ctq, "target", e.target.value)}
+                          placeholder="e.g., 10.0"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Default from CTS Characteristics</p>
+                      </div>
                     </>
                   )}
                 </div>
-
-                <div className={`grid grid-cols-1 gap-4 ${ctqWithType.ctqType === "Continuous" ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
-                  {ctqWithType.ctqType === "Continuous" && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Target Value</label>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={capabilityData[ctq]?.target || ""}
-                        onChange={(e) => updateCapabilityField(ctq, "target", e.target.value)}
-                        placeholder="e.g., 10.0"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Default from CTS Characteristics</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Data Points</label>
-                    <Input
-                      value={capabilityData[ctq]?.dataPoints || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "dataPoints", e.target.value)}
-                      placeholder="Brief description of data source"
-                    />
-                  </div>
-                </div>
-
-                {ctqWithType.ctqType === "Continuous" && (
-                  <>
-                    {/* Show Cp/Cpk indices when selected */}
-                    {(capabilityData[ctq]?.capabilityDisplayType || "Cp/Cpk") === "Cp/Cpk" && (
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Cp{capabilityData[ctq]?.showPercentageOutput ? " (%)" : ""}
-                          </label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={capabilityData[ctq]?.cp || ""}
-                            onChange={(e) => updateCapabilityField(ctq, "cp", e.target.value)}
-                            placeholder={capabilityData[ctq]?.showPercentageOutput ? "e.g., 133%" : "e.g., 1.33"}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Cpk{capabilityData[ctq]?.showPercentageOutput ? " (%)" : ""}
-                          </label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={capabilityData[ctq]?.cpk || ""}
-                            onChange={(e) => updateCapabilityField(ctq, "cpk", e.target.value)}
-                            placeholder={capabilityData[ctq]?.showPercentageOutput ? "e.g., 125%" : "e.g., 1.25"}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Pp{capabilityData[ctq]?.showPercentageOutput ? " (%)" : ""}
-                          </label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={capabilityData[ctq]?.pp || ""}
-                            onChange={(e) => updateCapabilityField(ctq, "pp", e.target.value)}
-                            placeholder={capabilityData[ctq]?.showPercentageOutput ? "e.g., 120%" : "e.g., 1.20"}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Ppk{capabilityData[ctq]?.showPercentageOutput ? " (%)" : ""}
-                          </label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={capabilityData[ctq]?.ppk || ""}
-                            onChange={(e) => updateCapabilityField(ctq, "ppk", e.target.value)}
-                            placeholder={capabilityData[ctq]?.showPercentageOutput ? "e.g., 115%" : "e.g., 1.15"}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Show Z (Sigma Level) and related metrics when selected */}
-                    {(capabilityData[ctq]?.capabilityDisplayType || "Cp/Cpk") === "Z" && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Sigma Level{capabilityData[ctq]?.showPercentageOutput ? " (%)" : ""}
-                          </label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={capabilityData[ctq]?.sigma || ""}
-                            onChange={(e) => updateCapabilityField(ctq, "sigma", e.target.value)}
-                            placeholder={capabilityData[ctq]?.showPercentageOutput ? "e.g., 420%" : "e.g., 4.2"}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            DPMO{capabilityData[ctq]?.showPercentageOutput ? " (%)" : ""}
-                          </label>
-                          <Input
-                            type="number"
-                            value={capabilityData[ctq]?.dpmo || ""}
-                            onChange={(e) => updateCapabilityField(ctq, "dpmo", e.target.value)}
-                            placeholder={capabilityData[ctq]?.showPercentageOutput ? "e.g., 621,000%" : "e.g., 6210"}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Yield (%)</label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={capabilityData[ctq]?.yield || ""}
-                            onChange={(e) => updateCapabilityField(ctq, "yield", e.target.value)}
-                            placeholder="e.g., 99.7"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-
-
 
                 <div className="space-y-4">
                   <div>
