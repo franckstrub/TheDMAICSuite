@@ -404,11 +404,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           type="number"
                           step="any"
                           value={capabilityData[ctq]?.lsl || ""}
-                          readOnly
-                          className="bg-gray-50 cursor-not-allowed"
-                          placeholder="Set in CTS Characteristics"
+                          onChange={(e) => updateCapabilityField(ctq, "lsl", e.target.value)}
+                          placeholder="e.g., 8.0"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Value from CTS Characteristics</p>
+                        <p className="text-xs text-gray-500 mt-1">Default from CTS Characteristics</p>
                       </div>
 
                       <div>
@@ -417,11 +416,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           type="number"
                           step="any"
                           value={capabilityData[ctq]?.usl || ""}
-                          readOnly
-                          className="bg-gray-50 cursor-not-allowed"
-                          placeholder="Set in CTS Characteristics"
+                          onChange={(e) => updateCapabilityField(ctq, "usl", e.target.value)}
+                          placeholder="e.g., 12.0"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Value from CTS Characteristics</p>
+                        <p className="text-xs text-gray-500 mt-1">Default from CTS Characteristics</p>
                       </div>
                     </>
                   )}
@@ -435,11 +433,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         type="number"
                         step="any"
                         value={capabilityData[ctq]?.target || ""}
-                        readOnly
-                        className="bg-gray-50 cursor-not-allowed"
-                        placeholder="Set in CTS Characteristics"
+                        onChange={(e) => updateCapabilityField(ctq, "target", e.target.value)}
+                        placeholder="e.g., 10.0"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Value from CTS Characteristics</p>
+                      <p className="text-xs text-gray-500 mt-1">Default from CTS Characteristics</p>
                     </div>
                   )}
 
