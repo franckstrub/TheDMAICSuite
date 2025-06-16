@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertTriangle, XCircle, BarChart3 } from "lucide-react";
 import { calculateGageRRStatistics } from "@/utils/gageRRStatistics";
+import { ZodUndefined } from "zod";
 // Types for ANOVA Gage R&R
 interface ContinuousAnalysisRow {
   unitNumber: number;
@@ -143,17 +144,59 @@ export default function MSAContinuousStatisticsDisplay({
     );
   }
 
-  const getVariationAssessment = (percentage: number) => {
-    if (percentage < 10) {
-      return { label: "Excellent", color: "bg-green-600", icon: CheckCircle };
-    } else if (percentage < 30) {
+  const getVariationAssessment = (percentage: number, distinct_cat: number, percenttolerance: number) => {
+  if (!tolerance) {
+    // If no tolerance is provided, use only percentage and distinct categories
+    if (percentage <= 10 && distinct_cat >= 5) {
+      return { label: "Precise", color: "bg-green-600", icon: CheckCircle };
+    } else if (percentage <= 30 && distinct_cat >= 3) {
       return { label: "Acceptable", color: "bg-yellow-500", icon: AlertTriangle };
     } else {
       return { label: "Unacceptable", color: "bg-red-600", icon: XCircle };
-    }
-  };
+    }     
+  }
+  else {
+    // If tolerance is provided, use percentage, distinct categories, and tolerance
+    if (percentage <= 10 && distinct_cat >= 5) {
+      if (percenttolerance <= 10) {
+      return { label: "Precise with excellent Tolerance measurement", color: "bg-green-600", icon: CheckCircle };
+      }
+      else if (percenttolerance <= 30) {
+        return { label: "Precise with acceptable Tolerance measurement", color: "bg-yellow-500", icon: AlertTriangle };
+      }
+      else if (percenttolerance > 30) {
+        return { label: "Precise but cannot measure Tolerance", color: "bg-red-600", icon: XCircle };
+      }
+      else {
+      // Default fallback
+        return { label: "Unknown", color: "bg-gray-500", icon: AlertTriangle };
+      }
+    } else if (percentage <= 30 && distinct_cat >= 3) {
+      if (percenttolerance <= 10) {
+        return { label: "Acceptable with excellent Tolerance measurement", color: "bg-yellow-500", icon: AlertTriangle };
+      } else if (percenttolerance <= 30) {
+        return { label: "Acceptable with acceptable Tolerance measurement", color: "bg-yellow-500", icon: AlertTriangle };
+      } else if (percenttolerance > 30) {
+        return { label: "Acceptable but cannot measure Tolerance", color: "bg-red-600", icon: XCircle };
+      }
+      else {
+      // Default fallback
+        return { label: "Unknown", color: "bg-gray-500", icon: AlertTriangle };
+      }
 
-  const totalGageRRAssessment = getVariationAssessment(statistics.totalGageRR.percentStudyVar);
+    } else {
+      if (percenttolerance <= 10) {
+        return { label: "Unacceptable but excellent Tolerance measurement", color: "bg-red-600", icon: XCircle };
+      } else if (percenttolerance <= 30) {
+        return { label: "Unacceptable but acceptable Tolerance measurement", color: "bg-red-600", icon: XCircle };
+      } else {
+        return { label: "Unacceptable and cannot measure Tolerance", color: "bg-red-600", icon: XCircle };
+      }
+    }
+  }
+  };
+  
+  const totalGageRRAssessment = getVariationAssessment(statistics.totalGageRR.percentStudyVar, statistics.numberDistinctCategories, statistics.totalGageRR.percentTolerance);
   const Icon = totalGageRRAssessment.icon;
 
   return (
@@ -169,7 +212,7 @@ export default function MSAContinuousStatisticsDisplay({
             <span>Repetitions: <strong>{repetitions}</strong></span>
             <span>Nb of sigma used: <strong>{sigmaMultiplier}</strong></span>
             {tolerance && <span>Tolerance: <strong>{tolerance}</strong></span>}
-            <span>Nbr of distinct categories: <strong>{statistics.numberDistinctCategories.toFixed(1)}</strong></span>
+            <span> <strong>Nbr of distinct categories: {statistics.numberDistinctCategories.toFixed(1)}</strong></span>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -178,23 +221,23 @@ export default function MSAContinuousStatisticsDisplay({
             <table className="w-full border-collapse border border-gray-300">
               <thead>
                 <tr className="bg-blue-100">
-                  <th className="border border-gray-300 px-3 py-2 text-left font-medium">ANOVA Method</th>
-                  <th className="border border-gray-300 px-3 py-2 text-center font-medium">study variation<br/>(σ dev)</th>
-                  <th className="border border-gray-300 px-3 py-2 text-center font-medium">{sigmaMultiplier}*study var</th>
-                  <th className="border border-gray-300 px-3 py-2 text-center font-medium">%study var</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left font-bold">ANOVA Method</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center font-bold">study variation<br/>(σ dev)</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center font-bold">{sigmaMultiplier}*study var</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center font-bbold">%study var</th>
                   {tolerance && (
-                    <th className="border border-gray-300 px-3 py-2 text-center font-medium">%tolerance</th>
+                    <th className="border border-gray-300 px-3 py-2 text-center font-bold">%tolerance</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 <tr className="bg-blue-50">
-                  <td className="border border-gray-300 px-3 py-2 font-medium">Total Gage R&R</td>
+                  <td className="border border-gray-300 px-3 py-2 font-bold">Total Gage R&R</td>
                   <td className="border border-gray-300 px-3 py-2 text-center">{statistics.totalGageRR.studyVariation.toFixed(2)}</td>
                   <td className="border border-gray-300 px-3 py-2 text-center">{statistics.totalGageRR.studyVar.toFixed(2)}</td>
-                  <td className="border border-gray-300 px-3 py-2 text-center">{statistics.totalGageRR.percentStudyVar.toFixed(2)}%</td>
+                  <td className="border border-gray-300 px-3 py-2 text-center font-bold">{statistics.totalGageRR.percentStudyVar.toFixed(2)}%</td>
                   {tolerance && (
-                    <td className="border border-gray-300 px-3 py-2 text-center">{statistics.totalGageRR.percentTolerance.toFixed(2)}%</td>
+                    <td className="border border-gray-300 px-3 py-2 text-center font-bold">{statistics.totalGageRR.percentTolerance.toFixed(2)}%</td>
                   )}
                 </tr>
                 <tr>
@@ -263,7 +306,7 @@ export default function MSAContinuousStatisticsDisplay({
             <AlertDescription className={`font-medium ${totalGageRRAssessment.color === 'bg-green-600' ? 'text-green-800' : 
               totalGageRRAssessment.color === 'bg-yellow-500' ? 'text-yellow-800' : 'text-red-800'}`}>
               <div className="flex items-center justify-between">
-                <span>Measurement System is {totalGageRRAssessment.label.toLowerCase()} and {statistics.isValid ? 'valid' : 'invalid'}!</span>
+                <span>Measurement System is {statistics.isValid ? 'valid' : 'invalid'} & {totalGageRRAssessment.label.toLowerCase()}!</span>
                 <Badge className={`${totalGageRRAssessment.color} text-white`}>
                   {totalGageRRAssessment.label}
                 </Badge>
@@ -273,26 +316,49 @@ export default function MSAContinuousStatisticsDisplay({
 
           {/* Interpretation Guidelines */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">ANOVA Gage R&R Guidelines:</h4>
+            <h2 className="font-bold mb-2">ANOVA Gage R&R Interpretation Guide:</h2>
+<div className="flex justify-center gap-2">
+  <div>
+            <h4 className="font-medium mb-2">%study var & %tolerance</h4>
+            
             <div className="space-y-1 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span><strong>Excellent (&lt;10%):</strong> Measurement system is excellent for this application</span>
+                <span><strong>Excellent (&lt;10%):</strong> Measurement system is precise for this application</span>
               </div>
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <span><strong>Acceptable (10-30%):</strong> May be acceptable depending on application, cost of improvement, etc.</span>
+                <span><strong>Acceptable (10-30%):</strong> Measurement system is acceptable but needs improvement</span>
               </div>
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4 text-red-600" />
-                <span><strong>Unacceptable (&gt;30%):</strong> Measurement system needs improvement</span>
+                <span><strong>Unacceptable (&gt;30%):</strong> Measurement system is unacceptable and needs serious improvement</span>
               </div>
             </div>
+  </div>
+  <div>
+            <h4 className="font-medium mb-2">Nbr of distinct categories</h4>
+            <div className="space-y-1 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span><strong>Excellent (&ge;5):</strong> Measurement system is precise for this application</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <span><strong>Acceptable (3-4):</strong> Measurement system is acceptable but needs improvement</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-red-600" />
+                <span><strong>Unacceptable (&lt;3):</strong> Measurement system is unacceptable and needs serious improvement</span>
+              </div>
+            </div>
+  </div>
+</div>
           </div>
 
           {/* Appraiser Information */}
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">Study Summary:</h4>
+            <h3 className="font-bold mb-2">Study Summary:</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="font-medium">Appraiser 1:</span> {appraiser1Name || "Not specified"}
@@ -310,7 +376,7 @@ export default function MSAContinuousStatisticsDisplay({
             </div>
             <div className="mt-2 text-sm text-gray-600">
               <span className="font-medium">Analysis Method:</span> ANOVA with {sigmaMultiplier} sigma multiplier
-              {tolerance && <span> • Tolerance: {tolerance}</span>} • Number of Repetitions: {repetitions}
+              {tolerance && <span className="font-medium"> • Tolerance: {tolerance}</span>} <span className="font-medium">• Number of Repetitions: </span>{repetitions}
             </div>
           </div>
         </CardContent>

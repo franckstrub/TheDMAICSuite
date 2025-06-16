@@ -22,7 +22,7 @@ export interface AttributeAnalysisRow {
   app3_rep3: "OK" | "KO" | "";
 }
 
-export interface MSAStatistics {
+export interface MSAAttrStatistics {
   overallAgreement: {
     percentAgreementVsStandard: number;
     NbAgreeVsStd: number,
@@ -179,9 +179,9 @@ function calculateCohensKappa(rater1: string[], rater2: string[]): number | null
   // 3. Calculation artifact from chance agreement being overestimated
   
   if (kappa < 0 && observedAgreement > 0.90) {
-    // For MSA purposes, when observed agreement is very high (>90%),
+    // For MSA ATTRIBUTE purposes, when observed agreement is very high (>90%),
     // a negative kappa is usually not meaningful and indicates calculation issues
-    // Apply a more appropriate formula for highly skewed MSA data
+    // Apply a more appropriate formula for highly skewed MSA ATTRIBUTE data
     
     // Alternative calculation: Use a modified approach for skewed distributions
     const balanceCheck = Math.min(p1_OK / p1_KO, p1_KO / p1_OK);
@@ -608,9 +608,9 @@ function calculateBetweenAllAppraisersAgreement(data: AttributeAnalysisRow[], ap
 
 /***********************************************************************************************************
  *
- * Main function to calculate all MSA statistics
+ * Main function to calculate all MSA ATTRIBUTE statistics
  */
-export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatistics {
+export function calculateMSAAttrStatistics(data: AttributeAnalysisRow[]): MSAAttrStatistics {
   if (data.length === 0) {
     return {
       overallAgreement: { 
@@ -837,7 +837,7 @@ export function calculateMSAStatistics(data: AttributeAnalysisRow[]): MSAStatist
     allAppraisersVsStandard = calculateBtwAllAppraisersVsStdAgreement(data, reference, app1_rep1, app1_rep2, app1_rep3, app2_rep1, app2_rep2, app2_rep3, app3_rep1, app3_rep2, app3_rep3);
     
     /*
-    console.log('=== MSA Agreement Calculations Debug ===');
+    console.log('=== MSA ATTRIBUTE Agreement Calculations Debug ===');
     console.log('Overall Concordant Agreement vs Standard (individual):', overallVsStandardPercent.Percent, '% (Expected: 99.17%)');
     console.log('All Appraisers vs Standard (row-level):', allAppraisersVsStandardPercent, '% (Expected: 95%)');
     console.log('Row agreements:', rowAgreementCount, '/', totalRows);

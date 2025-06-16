@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import MSAStatisticsDisplay from "./MSAStatisticsDisplay";
+import MSAAttributeStatisticsDisplay from "./MSAAttributeStatisticsDisplay";
 import MSAContinuousStatisticsDisplay from "./MSAContinuousStatisticsDisplay";
 
 // Interface for Attribute Agreement Analysis data (OK/KO values)
@@ -890,7 +890,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           ← Scroll horizontally →
           </div>
         </div>
-      )}
+        )}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
           <div className="w-full overflow-x-auto">         
             <TabsList className="flex w-max min-w-full justify-start">
@@ -1243,7 +1243,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       {showStatistics[ctqItem.ctq] && attributeMsaData[ctqItem.ctq]?.agreementAnalysisData && (
                         <div>
                           <div className="mt-6">
-                          <MSAStatisticsDisplay
+                          <MSAAttributeStatisticsDisplay
                             data={attributeMsaData[ctqItem.ctq].agreementAnalysisData}
                             appraiser1Name={attributeMsaData[ctqItem.ctq]?.appraiser1Name || "Appraiser 1"}
                             appraiser2Name={attributeMsaData[ctqItem.ctq]?.appraiser2Name || "Appraiser 2"}
@@ -1356,7 +1356,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       <div className="bg-green-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Gage R&R MSA Analysis</h3>
                         <p className="text-sm text-gray-600">
-                          Complete statistical analysis of measurement system repeatability and reproducibility for continuous data.
+                          Complete statistical analysis of measurement system repeatability and reproducibility for continuous data using ANOVA method.
                         </p>
                       </div>
 
@@ -1544,7 +1544,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         size="sm"
                         className="text-green-700 border-green-300 hover:bg-green-50"
                       >
-                        📋 Paste from Excel
+                        📋 Paste data from Excel
                       </Button>
                       
                       {showUndoButton[ctqItem.ctq] && (
@@ -1578,6 +1578,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       onPaste={(e) => handlePasteData(ctqItem.ctq, e)}
                       tabIndex={0}
                     >
+                      {/* Only show scroll indicator if 3 repeats or 3 Appraisers */}
+                      {(continuousMsaData[ctqItem.ctq].repetitions > 2 || continuousMsaData[ctqItem.ctq].numberOfAppraisers > 2) && (
+                      <div className="relative">
+                        <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+                        ← Scroll horizontally →
+                        </div>
+                      </div>
+                      )}
+                      <div className="pt-5 pb-6">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -1605,6 +1614,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
+                        
                           {(continuousMsaData[ctqItem.ctq]?.gageRRData || []).map((row, index) => {
                             const repetitions = continuousMsaData[ctqItem.ctq]?.repetitions || 2;
                             const numberOfAppraisers = continuousMsaData[ctqItem.ctq]?.numberOfAppraisers || 2;
@@ -1639,7 +1649,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                     size="sm"
                                     className="h-8 w-8 p-0"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    {/* <Trash2 className="h-4 w-4" /> */}
+                                    <i className="fas fa-trash h-4 w-4"></i>
                                   </Button>
                                 </TableCell>
                               </TableRow>
@@ -1647,6 +1658,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           })}
                         </TableBody>
                       </Table>
+                      {/* Only show scroll indicator if 3 repeats or 3 Appraisers */}
+                        {(continuousMsaData[ctqItem.ctq].repetitions > 2 || continuousMsaData[ctqItem.ctq].numberOfAppraisers > 2) && (
+                        <div className="relative">
+                          <div className="absolute bottom-[-18px] top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+                          ← Scroll horizontally →
+                          </div>
+                        </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
