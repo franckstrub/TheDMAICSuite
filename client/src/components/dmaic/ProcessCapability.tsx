@@ -23,6 +23,7 @@ interface ProcessCapabilityData {
   dataSetTerm: "Long Term" | "Short Term";
   capabilityIndex: "Z" | "Cp/Cpk";
   showPercentage: boolean;
+  showZ: boolean; // For attribute CTQs
   conclusion: string;
 }
 interface CtqWithType {
@@ -146,6 +147,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           dataSetTerm: "Long Term" as const,
           capabilityIndex: "Cp/Cpk" as const,
           showPercentage: false,
+          showZ: false,
           conclusion: "",
         };
       });
@@ -205,6 +207,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         dataSetTerm: data.dataSetTerm || "Long Term",
         capabilityIndex: data.capabilityIndex || "Cp/Cpk",
         showPercentage: Boolean(data.showPercentage),
+        showZ: Boolean(data.showZ),
         conclusion: data.conclusion || "",
       };
       
@@ -337,7 +340,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <div>
                         <label className="block text-sm font-medium mb-2">Capability Index</label>
                         <Select
-                          value={capabilityData[ctq]?.capabilityIndex || "Cp/Cpk"}
+                          value={capabilityData[ctq]?.capabilityIndex || "Z"}
                           onValueChange={(value) => updateCapabilityField(ctq, "capabilityIndex", value)}
                         >
                           <SelectTrigger>
@@ -368,6 +371,26 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         </RadioGroup>
                       </div>
                     </>
+                  )}
+
+                  {ctqWithType.ctqType === "Attribute" && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Show Z</label>
+                      <RadioGroup
+                        value={capabilityData[ctq]?.showZ ? "true" : "false"}
+                        onValueChange={(value) => updateCapabilityField(ctq, "showZ", value === "true")}
+                        className="flex flex-row space-x-4 mt-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="false" id={`${ctq}-showz-no`} />
+                          <Label htmlFor={`${ctq}-showz-no`}>No</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="true" id={`${ctq}-showz-yes`} />
+                          <Label htmlFor={`${ctq}-showz-yes`}>Yes</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
                   )}
                 </div>
 
