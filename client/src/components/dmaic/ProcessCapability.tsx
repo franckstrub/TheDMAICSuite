@@ -384,7 +384,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`grid grid-cols-1 gap-4 ${ctqWithType.ctqType === "Continuous" ? "md:grid-cols-3" : "md:grid-cols-1"}`}>
                   <div>
                     <label className="block text-sm font-medium mb-2">Standard Deviation</label>
                     <Input
@@ -396,40 +396,46 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">LSL (Lower Spec Limit)</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.lsl || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "lsl", e.target.value)}
-                      placeholder="e.g., 8.0"
-                    />
-                  </div>
+                  {ctqWithType.ctqType === "Continuous" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">LSL (Lower Spec Limit)</label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={capabilityData[ctq]?.lsl || ""}
+                          onChange={(e) => updateCapabilityField(ctq, "lsl", e.target.value)}
+                          placeholder="e.g., 8.0"
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">USL (Upper Spec Limit)</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.usl || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "usl", e.target.value)}
-                      placeholder="e.g., 12.0"
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">USL (Upper Spec Limit)</label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={capabilityData[ctq]?.usl || ""}
+                          onChange={(e) => updateCapabilityField(ctq, "usl", e.target.value)}
+                          placeholder="e.g., 12.0"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Target Value</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.target || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "target", e.target.value)}
-                      placeholder="e.g., 10.0"
-                    />
-                  </div>
+                <div className={`grid grid-cols-1 gap-4 ${ctqWithType.ctqType === "Continuous" ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+                  {ctqWithType.ctqType === "Continuous" && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Target Value</label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={capabilityData[ctq]?.target || ""}
+                        onChange={(e) => updateCapabilityField(ctq, "target", e.target.value)}
+                        placeholder="e.g., 10.0"
+                      />
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium mb-2">Data Points</label>
@@ -441,51 +447,53 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Cp</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.cp || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "cp", e.target.value)}
-                      placeholder="e.g., 1.33"
-                    />
-                  </div>
+                {ctqWithType.ctqType === "Continuous" && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Cp</label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={capabilityData[ctq]?.cp || ""}
+                        onChange={(e) => updateCapabilityField(ctq, "cp", e.target.value)}
+                        placeholder="e.g., 1.33"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Cpk</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.cpk || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "cpk", e.target.value)}
-                      placeholder="e.g., 1.25"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Cpk</label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={capabilityData[ctq]?.cpk || ""}
+                        onChange={(e) => updateCapabilityField(ctq, "cpk", e.target.value)}
+                        placeholder="e.g., 1.25"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Pp</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.pp || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "pp", e.target.value)}
-                      placeholder="e.g., 1.20"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Pp</label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={capabilityData[ctq]?.pp || ""}
+                        onChange={(e) => updateCapabilityField(ctq, "pp", e.target.value)}
+                        placeholder="e.g., 1.20"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Ppk</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={capabilityData[ctq]?.ppk || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "ppk", e.target.value)}
-                      placeholder="e.g., 1.15"
-                    />
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Ppk</label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={capabilityData[ctq]?.ppk || ""}
+                        onChange={(e) => updateCapabilityField(ctq, "ppk", e.target.value)}
+                        placeholder="e.g., 1.15"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
