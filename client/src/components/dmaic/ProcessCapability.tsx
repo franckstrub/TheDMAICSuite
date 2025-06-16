@@ -224,6 +224,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         zShift: Number(data.zShift) || 1.5,
         // Ensure dataSetTerm is properly typed
         dataSetTerm: data.dataSetTerm || "Long Term",
+        // Convert numeric values to strings as expected by schema
+        lsl: data.lsl ? String(data.lsl) : "",
+        usl: data.usl ? String(data.usl) : "",
+        target: data.target ? String(data.target) : "",
         // Remove any undefined fields
         projectId: undefined, // This will be added by the server
         id: undefined, // This should not be included in POST
