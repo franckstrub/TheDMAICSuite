@@ -2556,6 +2556,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/process-capability", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Log the incoming request body for debugging
+      console.log("Process Capability POST - Request body:", JSON.stringify(req.body, null, 2));
+      
       const payload = insertProcessCapabilitySchema.parse({
         ...req.body,
         projectId,
@@ -2568,6 +2572,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       return res.status(201).json({ capability: newCapability });
     } catch (err) {
+      if (err instanceof ZodError) {
+        console.error("Process Capability validation error:", err.errors);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: err.errors,
+          receivedData: req.body
+        });
+      }
       return handleErrors(err, res);
     }
   });
