@@ -1080,7 +1080,7 @@ export default function MeasurePhase() {
       <MsaAnalysis projectId={projectId} />
       
       {/* Process Capability - One tab per CTQ */}
-      <ProcessCapability projectId={projectId} />
+      <ProcessCapabilityAnalysis projectId={projectId} />
     </div>
   );
 }

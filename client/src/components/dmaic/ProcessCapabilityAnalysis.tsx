@@ -13,8 +13,8 @@ import { AlertCircle, Calculator, BarChart3, PieChart, Settings } from 'lucide-r
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import type { CtsCharacteristics, ProcessCapability, CtqAnalysisType, DataSetTerm, AttributeCalculationType } from '@shared/schema';
-import { ContinuousCapabilityDisplay } from './ContinuousCapabilityDisplay';
-import { AttributeCapabilityDisplay } from './AttributeCapabilityDisplay';
+import { ContinuousCapabilityDisplay } from '@/components/dmaic/ContinuousCapabilityDisplay';
+import { AttributeCapabilityDisplay } from '@/components/dmaic/AttributeCapabilityDisplay';
 
 interface ProcessCapabilityAnalysisProps {
   projectId: string | number;
@@ -43,7 +43,7 @@ export default function ProcessCapabilityAnalysis({ projectId }: ProcessCapabili
   });
 
   // Get current CTQ characteristics
-  const currentCtqData = ctsData?.characteristics?.find((char: CtsCharacteristics) => char.ctq === selectedCtq);
+  const currentCtqData = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === selectedCtq);
   
   // Set CTQ type based on selected CTQ
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function ProcessCapabilityAnalysis({ projectId }: ProcessCapabili
   }, [currentCtqData]);
 
   // Get existing analysis for current CTQ
-  const existingAnalysis = capabilityData?.processCapability?.find((analysis: ProcessCapability) => analysis.ctq === selectedCtq);
+  const existingAnalysis = (capabilityData as any)?.processCapability?.find((analysis: any) => analysis.ctq === selectedCtq);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -114,7 +114,7 @@ export default function ProcessCapabilityAnalysis({ projectId }: ProcessCapabili
     );
   }
 
-  const availableCtqs = ctsData?.characteristics || [];
+  const availableCtqs = (ctsData as any)?.characteristics || [];
 
   return (
     <div className="space-y-6">
