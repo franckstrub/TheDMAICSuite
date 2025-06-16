@@ -114,7 +114,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Function to load data points for a specific process capability
   const loadDataPoints = async (processCapabilityId: number) => {
-    const data = await apiRequest(`/api/process-capability/${processCapabilityId}/data`);
+    const response = await fetch(`/api/process-capability/${processCapabilityId}/data`, {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to load data points: ${response.statusText}`);
+    }
+    const data = await response.json();
     return data.dataPoints || [];
   };
 
@@ -159,9 +165,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   };
 
   // Functions to handle data input for continuous CTQs
-  const addDataPoint = async (ctq: string, value: string) => {
-    const processCapabilityId = capabilityData[ctq]?.id;
-    if (!processCapabilityId || !value.trim()) return;
+  const addDataPointToLocalState = (ctq: string, value: string) => {
+    if (!value.trim()) return;
     
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return;
@@ -169,46 +174,70 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const currentPoints = dataPoints[ctq] || [];
     const nextIndex = currentPoints.length + 1;
     
+    // Update local state only
+    const newDataPoint: DataPoint = {
+      indexNumber: nextIndex,
+      dataValue: numericValue
+    };
+    
+    setDataPoints(prev => ({
+      ...prev,
+      [ctq]: [...(prev[ctq] || []), newDataPoint]
+    }));
+    
+    // Clear input value
+    setInputValues(prev => ({
+      ...prev,
+      [ctq]: ""
+    }));
+  };
+
+  const saveAllDataPoints = async (ctq: string) => {
+    const processCapabilityId = capabilityData[ctq]?.id;
+    if (!processCapabilityId) return;
+    
+    const currentPoints = dataPoints[ctq] || [];
+    
     try {
-      await saveDataPointMutation.mutateAsync({
-        processCapabilityId,
-        indexNumber: nextIndex,
-        dataValue: numericValue
+      // Save all data points to database
+      for (const point of currentPoints) {
+        if (!point.id) { // Only save new points that don't have an ID
+          await saveDataPointMutation.mutateAsync({
+            processCapabilityId,
+            indexNumber: point.indexNumber,
+            dataValue: point.dataValue
+          });
+        }
+      }
+      
+      // Reload data points from database to get IDs
+      await loadDataPointsForCtq(ctq);
+      
+      toast({
+        title: "Success",
+        description: `Saved ${currentPoints.filter(p => !p.id).length} data points`,
       });
-      
-      // Update local state
-      const newDataPoint: DataPoint = {
-        indexNumber: nextIndex,
-        dataValue: numericValue
-      };
-      
-      setDataPoints(prev => ({
-        ...prev,
-        [ctq]: [...(prev[ctq] || []), newDataPoint]
-      }));
-      
-      // Clear input value
-      setInputValues(prev => ({
-        ...prev,
-        [ctq]: ""
-      }));
     } catch (error) {
-      console.error("Failed to save data point:", error);
+      console.error("Failed to save data points:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save data points",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleDataInput = async (ctq: string, value: string, index?: number) => {
-    if (index === undefined) {
-      // Adding new data point
-      if (value.trim() && !isNaN(parseFloat(value))) {
-        await addDataPoint(ctq, value);
-      }
-    } else {
-      // Just updating input value for display
-      setInputValues(prev => ({
-        ...prev,
-        [ctq]: value
-      }));
+  const handleDataInput = (ctq: string, value: string) => {
+    setInputValues(prev => ({
+      ...prev,
+      [ctq]: value
+    }));
+  };
+
+  const handleAddDataPoint = (ctq: string) => {
+    const value = inputValues[ctq] || "";
+    if (value.trim() && !isNaN(parseFloat(value))) {
+      addDataPointToLocalState(ctq, value);
     }
   };
 
@@ -579,31 +608,49 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   {(dataPoints[ctq] || []).length + 1}
                                 </td>
                                 <td className="px-4 py-2">
-                                  <Input
-                                    type="number"
-                                    step="any"
-                                    value={inputValues[ctq] || ""}
-                                    onChange={(e) => setInputValues(prev => ({ ...prev, [ctq]: e.target.value }))}
-                                    onKeyDown={async (e) => {
-                                      if (e.key === 'Enter') {
-                                        await handleDataInput(ctq, inputValues[ctq] || "");
-                                      }
-                                    }}
-                                    onBlur={async () => {
-                                      if (inputValues[ctq]?.trim()) {
-                                        await handleDataInput(ctq, inputValues[ctq]);
-                                      }
-                                    }}
-                                    placeholder="Enter numeric value"
-                                    className="border-none p-1 h-8 text-sm"
-                                  />
+                                  <div className="flex gap-2">
+                                    <Input
+                                      type="number"
+                                      step="any"
+                                      value={inputValues[ctq] || ""}
+                                      onChange={(e) => handleDataInput(ctq, e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          handleAddDataPoint(ctq);
+                                        }
+                                      }}
+                                      placeholder="Enter numeric value"
+                                      className="border-none p-1 h-8 text-sm flex-1"
+                                    />
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      onClick={() => handleAddDataPoint(ctq)}
+                                      disabled={!inputValues[ctq]?.trim() || isNaN(parseFloat(inputValues[ctq] || ""))}
+                                      className="h-8 px-2 text-xs"
+                                    >
+                                      Add
+                                    </Button>
+                                  </div>
                                 </td>
                               </tr>
                             </tbody>
                           </table>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Enter data values and press Enter or click away to save</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
+                        <Button
+                          onClick={() => saveAllDataPoints(ctq)}
+                          disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).filter(p => !p.id).length === 0}
+                          size="sm"
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          <Save className="h-3 w-3" />
+                          {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
