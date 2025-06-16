@@ -9,9 +9,21 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { 
+  mean, 
+  standardDeviation, 
+  calculateCp, 
+  calculateCpk, 
+  calculatePp, 
+  calculatePpk, 
+  calculateYield, 
+  calculateDPMOFromYield, 
+  calculateZScore,
+  parseNumericValue 
+} from "@/lib/statisticsUtils";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -469,6 +481,56 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
+  // Calculate process capability statistics
+  const calculateProcessCapabilityStats = (ctq: string) => {
+    const data = capabilityData[ctq];
+    const dataPointsArray = dataPoints[ctq]?.map(dp => dp.dataValue) || [];
+    
+    if (!data || dataPointsArray.length < 30) {
+      return null;
+    }
+    
+    const lsl = parseNumericValue(data.lsl);
+    const usl = parseNumericValue(data.usl);
+    const target = parseNumericValue(data.target);
+    const zShift = data.zShift || 1.5;
+    
+    if (lsl === 0 && usl === 0) {
+      return null; // No specification limits defined
+    }
+    
+    const sampleSize = dataPointsArray.length;
+    const meanValue = mean(dataPointsArray);
+    const stdDev = standardDeviation(dataPointsArray);
+    
+    // Calculate capability indices
+    const cp = calculateCp(dataPointsArray, lsl, usl);
+    const cpk = calculateCpk(dataPointsArray, lsl, usl);
+    const pp = calculatePp(dataPointsArray, lsl, usl);
+    const ppk = calculatePpk(dataPointsArray, lsl, usl);
+    
+    // Calculate yield and performance metrics
+    const yieldPercent = calculateYield(dataPointsArray, lsl, usl);
+    const dpmo = calculateDPMOFromYield(yieldPercent);
+    const zScore = calculateZScore(yieldPercent, zShift);
+    
+    return {
+      sampleSize,
+      mean: meanValue,
+      standardDeviation: stdDev,
+      cp,
+      cpk,
+      pp,
+      ppk,
+      yield: yieldPercent,
+      dpmo,
+      zScore,
+      lsl,
+      usl,
+      target
+    };
+  };
+
   const saveCapability = (ctq: string) => {
     const data = capabilityData[ctq];
     if (data) {
@@ -894,6 +956,179 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     </div>
                   </div>
                 )}
+
+                {/* Process Capability Calculations Display */}
+                {ctqWithType.ctqType === "Continuous" && (() => {
+                  const stats = calculateProcessCapabilityStats(ctq);
+                  const data = capabilityData[ctq];
+                  const showPercentage = data?.showPercentage || false;
+                  const capabilityIndex = data?.capabilityIndex || "Cp/Cpk";
+                  
+                  if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
+                    return (
+                      <div className="mt-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Calculator className="h-5 w-5 text-blue-600" />
+                          <h3 className="text-lg font-semibold">Process Capability Analysis Results</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {/* Basic Statistics */}
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Basic Statistics</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Sample Size:</span>
+                                <span className="font-medium">{stats.sampleSize}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Mean (X̄):</span>
+                                <span className="font-medium">{stats.mean.toFixed(4)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Std Dev (σ):</span>
+                                <span className="font-medium">{stats.standardDeviation.toFixed(4)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>LSL:</span>
+                                <span className="font-medium">{stats.lsl || "N/A"}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>USL:</span>
+                                <span className="font-medium">{stats.usl || "N/A"}</span>
+                              </div>
+                              {stats.target && (
+                                <div className="flex justify-between">
+                                  <span>Target:</span>
+                                  <span className="font-medium">{stats.target}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Capability Indices */}
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-blue-800 mb-3">
+                              {capabilityIndex === "Cp/Cpk" ? "Capability Indices" : "Z Score Analysis"}
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              {capabilityIndex === "Cp/Cpk" ? (
+                                <>
+                                  <div className="flex justify-between">
+                                    <span>Cp:</span>
+                                    <span className="font-medium">
+                                      {stats.cp !== null ? stats.cp.toFixed(3) : "N/A"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Cpk:</span>
+                                    <span className="font-medium">
+                                      {stats.cpk !== null ? stats.cpk.toFixed(3) : "N/A"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Pp:</span>
+                                    <span className="font-medium">
+                                      {stats.pp !== null ? stats.pp.toFixed(3) : "N/A"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Ppk:</span>
+                                    <span className="font-medium">
+                                      {stats.ppk !== null ? stats.ppk.toFixed(3) : "N/A"}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex justify-between">
+                                  <span>Z Score:</span>
+                                  <span className="font-medium text-lg">
+                                    {stats.zScore.toFixed(2)}σ
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Performance Metrics */}
+                          <div className="bg-green-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-green-800 mb-3">Performance Metrics</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Yield:</span>
+                                <span className="font-medium">
+                                  {showPercentage ? `${stats.yield.toFixed(2)}%` : stats.yield.toFixed(4)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>DPMO:</span>
+                                <span className="font-medium">
+                                  {Math.round(stats.dpmo).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Z Level:</span>
+                                <span className="font-medium">
+                                  {stats.zScore.toFixed(2)}σ
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Capability Assessment */}
+                        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <h4 className="font-medium text-yellow-800 mb-2">Capability Assessment</h4>
+                          <div className="text-sm text-yellow-700">
+                            {stats.cpk !== null && capabilityIndex === "Cp/Cpk" && (
+                              <div>
+                                {stats.cpk >= 1.33 && (
+                                  <p className="text-green-700 font-medium">✓ Process is capable (Cpk ≥ 1.33)</p>
+                                )}
+                                {stats.cpk >= 1.0 && stats.cpk < 1.33 && (
+                                  <p className="text-yellow-700 font-medium">⚠ Process is marginally capable (1.0 ≤ Cpk {'<'} 1.33)</p>
+                                )}
+                                {stats.cpk < 1.0 && (
+                                  <p className="text-red-700 font-medium">✗ Process is not capable (Cpk {'<'} 1.0)</p>
+                                )}
+                              </div>
+                            )}
+                            {capabilityIndex === "Z" && (
+                              <div>
+                                {stats.zScore >= 6 && (
+                                  <p className="text-green-700 font-medium">✓ World class performance (≥ 6σ)</p>
+                                )}
+                                {stats.zScore >= 4 && stats.zScore < 6 && (
+                                  <p className="text-blue-700 font-medium">○ Good performance (4-6σ)</p>
+                                )}
+                                {stats.zScore >= 3 && stats.zScore < 4 && (
+                                  <p className="text-yellow-700 font-medium">⚠ Average performance (3-4σ)</p>
+                                )}
+                                {stats.zScore < 3 && (
+                                  <p className="text-red-700 font-medium">✗ Poor performance ({'<'} 3σ)</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } else if (dataPoints[ctq]?.length > 0) {
+                    return (
+                      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-blue-700">
+                          <Calculator className="h-4 w-4" />
+                          <span className="font-medium">Process Capability Analysis</span>
+                        </div>
+                        <p className="text-sm text-blue-600 mt-2">
+                          Need at least 30 data points for statistical analysis. 
+                          Current: {dataPoints[ctq]?.length || 0} data points.
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
                 <div className="space-y-4">
                   <div>
