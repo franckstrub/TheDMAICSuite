@@ -139,7 +139,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
       
       // Create Process Capability entry for each CTQ
-      ctqs.forEach((ctq: string) => {
+      ctqs.forEach((ctqWithType: CtqWithType) => {
+        const ctq = ctqWithType.ctq;
         const existingCapability = (capabilityDataResponse as any)?.processCapability?.find((cap: any) => cap.ctq === ctq);
         
         // Check if this CTQ comes from CTS characteristics to auto-populate LSL, USL, target
@@ -153,6 +154,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           lsl: ctsChar?.lsl || "",
           usl: ctsChar?.usl || "",
           target: ctsChar?.target || "",
+          zShift: 1.5,
+          dataSetTerm: "Long Term" as const,
           cp: "",
           cpk: "",
           pp: "",
@@ -161,7 +164,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           dpmo: "",
           yield: "",
           dataPoints: "",
-          controlChartType: ctsChar?.ctqType === "Continuous" ? "X-bar R" : "P",
+          controlChartType: ctqWithType.ctqType === "Continuous" ? "X-bar R" : "P",
           conclusion: "",
           actionPlan: "",
         };
@@ -172,10 +175,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       // Set active tab to saved or first CTQ if not initialized yet
       if (!activeTab && ctqs.length > 0 && !hasInitializedTab) {
         const savedTab = localStorage.getItem(`process-capability-active-tab-${projectId}`);
-        if (savedTab && ctqs.includes(savedTab)) {
+        const ctqNames = ctqs.map(c => c.ctq);
+        if (savedTab && ctqNames.includes(savedTab)) {
           setActiveTab(savedTab);
         } else {
-          setActiveTab(ctqs[0]);
+          setActiveTab(ctqs[0].ctq);
         }
         setHasInitializedTab(true);
       }
@@ -333,6 +337,35 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         <SelectItem value="NP">NP Chart (Number Defective)</SelectItem>
                         <SelectItem value="C">C Chart (Count of Defects)</SelectItem>
                         <SelectItem value="U">U Chart (Defects per Unit)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Z-Shift Value</label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={capabilityData[ctq]?.zShift || 1.5}
+                      onChange={(e) => updateCapabilityField(ctq, "zShift", parseFloat(e.target.value) || 1.5)}
+                      placeholder="1.5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Data Set Term</label>
+                    <Select
+                      value={capabilityData[ctq]?.dataSetTerm || "Long Term"}
+                      onValueChange={(value) => updateCapabilityField(ctq, "dataSetTerm", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Long Term">Long Term</SelectItem>
+                        <SelectItem value="Short Term">Short Term</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
