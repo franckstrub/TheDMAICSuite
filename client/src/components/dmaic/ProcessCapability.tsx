@@ -404,9 +404,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           type="number"
                           step="any"
                           value={capabilityData[ctq]?.lsl || ""}
-                          onChange={(e) => updateCapabilityField(ctq, "lsl", e.target.value)}
-                          placeholder="e.g., 8.0"
+                          readOnly
+                          className="bg-gray-50 cursor-not-allowed"
+                          placeholder="Set in CTS Characteristics"
                         />
+                        <p className="text-xs text-gray-500 mt-1">Value from CTS Characteristics</p>
                       </div>
 
                       <div>
@@ -415,9 +417,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           type="number"
                           step="any"
                           value={capabilityData[ctq]?.usl || ""}
-                          onChange={(e) => updateCapabilityField(ctq, "usl", e.target.value)}
-                          placeholder="e.g., 12.0"
+                          readOnly
+                          className="bg-gray-50 cursor-not-allowed"
+                          placeholder="Set in CTS Characteristics"
                         />
+                        <p className="text-xs text-gray-500 mt-1">Value from CTS Characteristics</p>
                       </div>
                     </>
                   )}
@@ -431,9 +435,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         type="number"
                         step="any"
                         value={capabilityData[ctq]?.target || ""}
-                        onChange={(e) => updateCapabilityField(ctq, "target", e.target.value)}
-                        placeholder="e.g., 10.0"
+                        readOnly
+                        className="bg-gray-50 cursor-not-allowed"
+                        placeholder="Set in CTS Characteristics"
                       />
+                      <p className="text-xs text-gray-500 mt-1">Value from CTS Characteristics</p>
                     </div>
                   )}
 
