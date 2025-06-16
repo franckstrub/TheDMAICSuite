@@ -355,8 +355,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Function to handle paste from textarea
-  const handlePasteFromExcel = (ctq: string, pasteData: string) => {
+  // Function to handle paste from Excel button (consistent with MSA pattern)
+  const handlePasteFromExcel = (ctq: string, event: React.ClipboardEvent) => {
+    event.preventDefault();
+    
+    const pasteData = event.clipboardData.getData('text');
+    if (!pasteData.trim()) {
+      toast({
+        title: "No Data Found",
+        description: "No data found in clipboard. Please copy data from Excel first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     handleFocusedCellPaste(ctq, 0, pasteData);
   };
 
@@ -808,7 +820,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 try {
                                   const clipboardData = await navigator.clipboard.readText();
                                   if (clipboardData.trim()) {
-                                    handlePasteFromExcel(ctq, clipboardData);
+                                    // Create a synthetic paste event like MSA does
+                                    const syntheticEvent = {
+                                      preventDefault: () => {},
+                                      clipboardData: {
+                                        getData: (format: string) => clipboardData
+                                      }
+                                    } as unknown as React.ClipboardEvent;
+                                    
+                                    handlePasteFromExcel(ctq, syntheticEvent);
                                   } else {
                                     toast({
                                       title: "No Data Found",
@@ -818,31 +838,35 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   }
                                 } catch (error) {
                                   toast({
-                                    title: "Clipboard Access Required",
-                                    description: "Please allow clipboard access in your browser settings, or use Ctrl+V directly on the data cells.",
+                                    title: "Clipboard Permission Required",
+                                    description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
                                     variant: "destructive",
                                   });
                                 }
                               }}
-                              size="sm"
                               variant="outline"
-                              className="flex items-center gap-1"
+                              size="sm"
+                              className="text-green-700 border-green-300 hover:bg-green-50"
                             >
-                              Paste from Excel
+                              📋 Paste data from Excel
                             </Button>
                             {undoStates[ctq] && (
                               <Button
                                 onClick={() => handleUndo(ctq)}
-                                size="sm"
                                 variant="outline"
-                                className="flex items-center gap-1 text-xs"
+                                size="sm"
+                                className="text-orange-700 border-orange-300 hover:bg-orange-50"
                               >
-                                <Undo className="h-3 w-3" />
+                                <Undo className="h-4 w-4 mr-2" />
                                 Undo Paste
                               </Button>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel, then click the button to paste from the beginning</p>
+                          <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200 mt-2">
+                            <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
+                            <div>Copy single column of numeric values from Excel</div>
+                            <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table to paste</div>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
