@@ -93,7 +93,7 @@ export function calculateGageRRStatistics(
   return {
     ...statistics,
     numberDistinctCategories: ndc,
-    isValid: statistics.totalGageRR.percentStudyVar < 30 && ndc >= 5
+    isValid: statistics.totalGageRR.percentStudyVar <= 10 && ndc >= 5
   };
 }
 

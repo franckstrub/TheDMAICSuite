@@ -908,18 +908,6 @@ export const msaAnalysis = pgTable("msa_analysis", {
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
   msaType: text("msa_type").notNull().default("Gage R&R"), // "Gage R&R", "Attribute Agreement", "Bias Study"
-  studyDescription: text("study_description"),
-  operators: text("operators"), // JSON array of operator names
-  parts: text("parts"), // JSON array of part identifiers
-  measurements: text("measurements"), // JSON array of measurement data
-  repeatability: text("repeatability"), // %Study Variation
-  reproducibility: text("reproducibility"), // %Study Variation
-  partToPartVariation: text("part_to_part_variation"), // %Study Variation
-  totalGageRR: text("total_gage_rr"), // %Study Variation
-  numberDistinctCategories: integer("number_distinct_categories"), // ndc
-  acceptableCriteria: text("acceptable_criteria"), // Pass/Fail criteria
-  conclusion: text("conclusion"),
-  actionPlan: text("action_plan"),
   
   // Attribute Agreement Analysis fields
   unitAppraisedType: text("unit_appraised_type").$type<UnitAppraisedType>().default("Part"),

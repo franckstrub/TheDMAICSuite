@@ -1,5 +1,5 @@
 /**
- * MSA Statistics Display Component
+ * MSA ATTRIBUTE Statistics Display Component
  * 
  * Displays comprehensive attribute agreement analysis statistics including
  * Cohen's Kappa, Fleiss' Kappa, percent agreement, and recommendations.
@@ -11,26 +11,26 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertTriangle, XCircle, BarChart3 } from "lucide-react";
 import { 
-  calculateMSAStatistics, 
+  calculateMSAAttrStatistics, 
   interpretKappa,
   type AttributeAnalysisRow,
-  type MSAStatistics 
-} from "@/utils/msaStatistics";
+  type MSAAttrStatistics 
+} from "@/utils/msaAttributeStatistics";
 
-interface MSAStatisticsDisplayProps {
+interface MSAAttributeStatisticsDisplayProps {
   data: AttributeAnalysisRow[];
   appraiser1Name: string;
   appraiser2Name: string;
   appraiser3Name: string;
 }
 
-export default function MSAStatisticsDisplay({ 
+export default function MSAAttributeStatisticsDisplay({ 
   data, 
   appraiser1Name, 
   appraiser2Name, 
   appraiser3Name 
-}: MSAStatisticsDisplayProps) {
-  const statistics = calculateMSAStatistics(data);
+}: MSAAttributeStatisticsDisplayProps) {
+  const statistics = calculateMSAAttrStatistics(data);
   
   // Check if there's meaningful data for analysis
   const hasRealData = data.length > 0 && data.some(row => 
