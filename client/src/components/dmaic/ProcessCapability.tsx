@@ -286,23 +286,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return;
       }
       
-      // Apply the pasted data starting from the focused position
+      // Apply the pasted data from startIndex to startIndex + parsedValues.length - 1
       setDataPoints(prev => {
         const currentData = [...(prev[ctq] || [])];
         
-        // Fill in data starting from the focused index
+        // Calculate the end index for the paste operation
+        const endIndex = startIndex + parsedValues.length - 1;
+        
+        // Extend array if needed to accommodate the paste range
+        while (currentData.length <= endIndex) {
+          currentData.push({
+            indexNumber: currentData.length + 1,
+            dataValue: 0
+          });
+        }
+        
+        // Replace values from startIndex to endIndex (inclusive)
         parsedValues.forEach((value, i) => {
           const targetIndex = startIndex + i;
-          
-          // Extend array if needed
-          while (currentData.length <= targetIndex) {
-            currentData.push({
-              indexNumber: currentData.length + 1,
-              dataValue: 0
-            });
-          }
-          
-          // Update the value at the target position
           currentData[targetIndex] = {
             indexNumber: targetIndex + 1,
             dataValue: value
@@ -317,7 +318,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       
       toast({
         title: "Success",
-        description: `Pasted ${parsedValues.length} data points starting from position ${startIndex + 1}`,
+        description: `Pasted ${parsedValues.length} data points from position ${startIndex + 1} to ${startIndex + parsedValues.length}`,
       });
       
     } catch (error) {
