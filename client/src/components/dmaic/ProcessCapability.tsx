@@ -357,7 +357,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   };
 
   // Function to handle paste from Excel button (consistent with MSA pattern)
-  const handlePasteFromExcel = (ctq: string, event: React.ClipboardEvent) => {
+  const handlePasteFromExcel = (ctq: string, rawindex: number, event: React.ClipboardEvent) => {
     event.preventDefault();
     
     const pasteData = event.clipboardData.getData('text');
@@ -370,7 +370,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       return;
     }
     
-    handleFocusedCellPaste(ctq, 0, pasteData);
+    handleFocusedCellPaste(ctq, rawindex, pasteData);
   };
 
   const loadDataPointsForCtq = async (ctq: string) => {
@@ -719,8 +719,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         className="border rounded-lg overflow-hidden"
                         onPaste={(e) => {
                           e.preventDefault();
-                          const pasteData = e.clipboardData.getData('text');
-                          handleFocusedCellPaste(ctq, 0, pasteData);
+                          //const pasteData = e.clipboardData.getData('text');
+                          //handleFocusedCellPaste(ctq, 0, pasteData);
                         }}
                         tabIndex={0}
                       >
@@ -829,7 +829,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       }
                                     } as unknown as React.ClipboardEvent;
                                     
-                                    handlePasteFromExcel(ctq, syntheticEvent);
+                                    const rawindex=0;
+                                    handlePasteFromExcel(ctq, rawindex, syntheticEvent);
                                   } else {
                                     toast({
                                       title: "No Data Found",
