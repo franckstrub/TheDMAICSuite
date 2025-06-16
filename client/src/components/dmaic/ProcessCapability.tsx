@@ -139,8 +139,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
       
       // Create Process Capability entry for each CTQ
-      ctqs.forEach((CtqWithType: CtqWithType) => {
-        const ctq = CtqWithType.ctq;
+      ctqs.forEach((ctqWithType: CtqWithType) => {
+        const ctq = ctqWithType.ctq;
         const existingCapability = (capabilityDataResponse as any)?.processCapability?.find((cap: any) => cap.ctq === ctq);
         
         // Check if this CTQ comes from CTS characteristics to auto-populate LSL, USL, target
@@ -164,7 +164,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           dpmo: "",
           yield: "",
           dataPoints: "",
-          controlChartType: CtqWithType.ctqType === "Continuous" ? "X-bar R" : "P",
+          controlChartType: ctqWithType.ctqType === "Continuous" ? "X-bar R" : "P",
           conclusion: "",
           actionPlan: "",
         };
@@ -294,16 +294,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
                     <div className="w-full overflow-x-auto">         
                       <TabsList className="flex w-max min-w-full justify-start">
-                        {ctqList.map((CtqWithType: CtqWithType) => (
+                        {ctqList.map((ctq: string) => (
                           <TabsTrigger 
-                            key={CtqWithType.ctq} 
-                            value={CtqWithType.ctq}
-                            className="px-4 py-2 min-w-max flex flex-col items-center border border-gray-200 data-[state=active]:border-none"
+                            key={ctq} 
+                            value={ctq}
+                            className="px-4 py-2 min-w-max flex flex-col items-cente border border-gray-200 data-[state=active]:border-none"
                           >
-                            <span className="font-medium truncate min-w-[150px]">{CtqWithType.ctq}</span>
-                            essai
-                            Wew
-                            <span className="text-xs text-gray-600">{CtqWithType.ctqType}</span>
+                            <span className="font-medium truncate min-w-[150px]">{ctq}</span>
+                            {/*<span className="text-xs text-gray-600">{ctq.ctqType}</span>*/}
                           </TabsTrigger>
                         ))}
                       </TabsList>
