@@ -2630,80 +2630,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Process Capability Data Routes
+  // Process Capability Data Routes (now using JSON storage)
   app.get("/api/process-capability/:id/data", async (req, res) => {
     try {
       const processCapabilityId = parseInt(req.params.id);
       
-      const dataPoints = await db
-        .select()
-        .from(processCapabilityData)
-        .where(eq(processCapabilityData.processCapabilityId, processCapabilityId))
-        .orderBy(processCapabilityData.indexNumber);
+      const [processCapabilityRecord] = await db
+        .select({ dataPoints: processCapability.dataPoints })
+        .from(processCapability)
+        .where(eq(processCapability.id, processCapabilityId));
 
-      return res.status(200).json({ dataPoints });
+      const dataPoints = processCapabilityRecord?.dataPoints || [];
+      // Convert array to objects with index for compatibility
+      const formattedDataPoints = dataPoints.map((value, index) => ({
+        indexNumber: index + 1,
+        dataValue: value
+      }));
+
+      return res.status(200).json({ dataPoints: formattedDataPoints });
     } catch (err) {
       return handleErrors(err, res);
     }
   });
 
+  // Update data points for a process capability (save entire JSON array)
   app.post("/api/process-capability/:id/data", async (req, res) => {
     try {
       const processCapabilityId = parseInt(req.params.id);
-      const payload = insertProcessCapabilityDataSchema.parse({
-        ...req.body,
-        processCapabilityId,
-      });
-
-      const [newDataPoint] = await db
-        .insert(processCapabilityData)
-        .values(payload)
-        .returning();
-
-      return res.status(201).json({ dataPoint: newDataPoint });
-    } catch (err) {
-      return handleErrors(err, res);
-    }
-  });
-
-  app.put("/api/process-capability/:id/data/:dataId", async (req, res) => {
-    try {
-      const processCapabilityId = parseInt(req.params.id);
-      const dataId = parseInt(req.params.dataId);
+      const { dataPoints } = req.body; // Expecting array of numbers
       
-      const payload = insertProcessCapabilityDataSchema.parse({
-        ...req.body,
-        processCapabilityId,
-      });
+      if (!Array.isArray(dataPoints) || !dataPoints.every(n => typeof n === 'number')) {
+        return res.status(400).json({ error: "dataPoints must be an array of numbers" });
+      }
 
-      const [updatedDataPoint] = await db
-        .update(processCapabilityData)
-        .set(payload)
-        .where(and(
-          eq(processCapabilityData.id, dataId),
-          eq(processCapabilityData.processCapabilityId, processCapabilityId)
-        ))
+      const [updatedRecord] = await db
+        .update(processCapability)
+        .set({ 
+          dataPoints: dataPoints,
+          lastUpdated: new Date()
+        })
+        .where(eq(processCapability.id, processCapabilityId))
         .returning();
 
-      return res.status(200).json({ dataPoint: updatedDataPoint });
-    } catch (err) {
-      return handleErrors(err, res);
-    }
-  });
-
-  app.delete("/api/process-capability/:id/data/:dataId", async (req, res) => {
-    try {
-      const processCapabilityId = parseInt(req.params.id);
-      const dataId = parseInt(req.params.dataId);
-
-      await db
-        .delete(processCapabilityData)
-        .where(and(
-          eq(processCapabilityData.id, dataId),
-          eq(processCapabilityData.processCapabilityId, processCapabilityId)
-        ));
-
-      return res.status(200).json({ success: true });
+      return res.status(200).json({ processCapability: updatedRecord });
     } catch (err) {
       return handleErrors(err, res);
     }

@@ -956,6 +956,7 @@ export const processCapability = pgTable("process_capability", {
   capabilityIndex: text("capability_index").$type<CapabilityIndexType>().default("Cp/Cpk"), // Z or Cp/Cpk
   showPercentage: boolean("show_percentage").default(false), // Show percentage display
   showZ: boolean("show_z").default(false), // Show Z for attribute CTQs
+  dataPoints: jsonb("data_points").$type<number[]>().default([]), // JSON array of numeric data points
   conclusion: text("conclusion"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
@@ -968,19 +969,4 @@ export const insertProcessCapabilitySchema = createInsertSchema(processCapabilit
 export type InsertProcessCapability = z.infer<typeof insertProcessCapabilitySchema>;
 export type ProcessCapability = typeof processCapability.$inferSelect;
 
-// Process Capability Data Points for continuous CTQs
-export const processCapabilityData = pgTable("process_capability_data", {
-  id: serial("id").primaryKey(),
-  processCapabilityId: integer("process_capability_id").notNull().references(() => processCapability.id, { onDelete: "cascade" }),
-  indexNumber: integer("index_number").notNull(),
-  dataValue: real("data_value").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const insertProcessCapabilityDataSchema = createInsertSchema(processCapabilityData).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type InsertProcessCapabilityData = z.infer<typeof insertProcessCapabilityDataSchema>;
-export type ProcessCapabilityData = typeof processCapabilityData.$inferSelect;
+// Process Capability Data is now stored as JSON array in the processCapability table
