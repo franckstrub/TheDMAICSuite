@@ -2561,12 +2561,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId,
       });
 
-      const [newCapability] = await db
-        .insert(processCapability)
-        .values(payload)
-        .returning();
+      // Check if a process capability record already exists for this CTQ and project
+      const existingCapability = await db
+        .select()
+        .from(processCapability)
+        .where(and(
+          eq(processCapability.projectId, projectId),
+          eq(processCapability.ctq, payload.ctq)
+        ))
+        .limit(1);
 
-      return res.status(201).json({ capability: newCapability });
+      let capability;
+      
+      if (existingCapability.length > 0) {
+        // Update existing record
+        const [updatedCapability] = await db
+          .update(processCapability)
+          .set({
+            ...payload,
+            lastUpdated: new Date(),
+          })
+          .where(and(
+            eq(processCapability.projectId, projectId),
+            eq(processCapability.ctq, payload.ctq)
+          ))
+          .returning();
+        
+        capability = updatedCapability;
+      } else {
+        // Create new record
+        const [newCapability] = await db
+          .insert(processCapability)
+          .values(payload)
+          .returning();
+        
+        capability = newCapability;
+      }
+
+      return res.status(200).json({ capability });
     } catch (err) {
       return handleErrors(err, res);
     }
