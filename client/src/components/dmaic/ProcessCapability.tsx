@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,7 +68,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
 
   // Function to handle undo operation
-  const handleUndo = (ctq: string) => {
+  const handleUndo = useCallback((ctq: string) => {
     if (undoStates[ctq]) {
       setDataPoints(prev => ({
         ...prev,
@@ -87,7 +87,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         description: "Previous paste operation has been undone",
       });
     }
-  };
+  }, [undoStates, toast]);
 
   // Add keyboard event handler for Ctrl+Z
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeTab, undoStates]);
+  }, [activeTab, undoStates, handleUndo]);
 
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
