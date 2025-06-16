@@ -124,10 +124,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     return data.dataPoints || [];
   };
 
-  // Mutation to save a data point
+  // Mutation to save data points (JSON array)
   const saveDataPointMutation = useMutation({
-    mutationFn: async ({ processCapabilityId, indexNumber, dataValue }: { processCapabilityId: number, indexNumber: number, dataValue: number }) => {
-      return await apiRequest('POST', `/api/process-capability/${processCapabilityId}/data`, { indexNumber, dataValue });
+    mutationFn: async ({ processCapabilityId, dataPoints }: { processCapabilityId: number, dataPoints: number[] }) => {
+      return await apiRequest('POST', `/api/process-capability/${processCapabilityId}/data`, { dataPoints });
     },
     onSuccess: () => {
       toast({
@@ -172,17 +172,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     if (isNaN(numericValue)) return;
     
     const currentPoints = dataPoints[ctq] || [];
-    const nextIndex = currentPoints.length + 1;
     
-    // Update local state only
-    const newDataPoint: DataPoint = {
-      indexNumber: nextIndex,
-      dataValue: numericValue
-    };
-    
+    // Update local state with just the numeric values
     setDataPoints(prev => ({
       ...prev,
-      [ctq]: [...(prev[ctq] || []), newDataPoint]
+      [ctq]: [...(prev[ctq] || []), { indexNumber: currentPoints.length + 1, dataValue: numericValue }]
     }));
     
     // Clear input value
@@ -197,25 +191,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     if (!processCapabilityId) return;
     
     const currentPoints = dataPoints[ctq] || [];
+    const numericValues = currentPoints.map(point => point.dataValue);
     
     try {
-      // Save all data points to database
-      for (const point of currentPoints) {
-        if (!point.id) { // Only save new points that don't have an ID
-          await saveDataPointMutation.mutateAsync({
-            processCapabilityId,
-            indexNumber: point.indexNumber,
-            dataValue: point.dataValue
-          });
-        }
-      }
+      // Save all data points as JSON array to database
+      await saveDataPointMutation.mutateAsync({
+        processCapabilityId,
+        dataPoints: numericValues
+      });
       
-      // Reload data points from database to get IDs
+      // Reload data points from database
       await loadDataPointsForCtq(ctq);
       
       toast({
         title: "Success",
-        description: `Saved ${currentPoints.filter(p => !p.id).length} data points`,
+        description: `Saved ${numericValues.length} data points`,
       });
     } catch (error) {
       console.error("Failed to save data points:", error);
@@ -238,6 +228,38 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const value = inputValues[ctq] || "";
     if (value.trim() && !isNaN(parseFloat(value))) {
       addDataPointToLocalState(ctq, value);
+    }
+  };
+
+  // Function to handle Excel paste functionality
+  const handlePasteFromExcel = (ctq: string, pastedData: string) => {
+    const lines = pastedData.trim().split('\n');
+    const values: number[] = [];
+    
+    for (const line of lines) {
+      const cleanValue = line.trim().replace(/[^\d.-]/g, '');
+      const numericValue = parseFloat(cleanValue);
+      if (!isNaN(numericValue)) {
+        values.push(numericValue);
+      }
+    }
+    
+    if (values.length > 0) {
+      // Convert to DataPoint format for local state
+      const dataPointsArray = values.map((value, index) => ({
+        indexNumber: index + 1,
+        dataValue: value
+      }));
+      
+      setDataPoints(prev => ({
+        ...prev,
+        [ctq]: dataPointsArray
+      }));
+      
+      toast({
+        title: "Success",
+        description: `Added ${values.length} data points from Excel`,
+      });
     }
   };
 
@@ -638,18 +660,33 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           </table>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center mt-2">
-                        <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
-                        <Button
-                          onClick={() => saveAllDataPoints(ctq)}
-                          disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).filter(p => !p.id).length === 0}
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-1"
-                        >
-                          <Save className="h-3 w-3" />
-                          {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
-                        </Button>
+                      <div className="mt-4 space-y-3">
+                        <div className="border-t pt-3">
+                          <label className="block text-sm font-medium mb-2">Or paste from Excel:</label>
+                          <textarea
+                            placeholder="Paste numeric values from Excel (one per line)"
+                            className="w-full h-20 p-2 border rounded text-sm resize-none"
+                            onPaste={(e) => {
+                              e.preventDefault();
+                              const pastedData = e.clipboardData.getData('text');
+                              handlePasteFromExcel(ctq, pastedData);
+                            }}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel and paste here</p>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
+                          <Button
+                            onClick={() => saveAllDataPoints(ctq)}
+                            disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
+                            size="sm"
+                            variant="outline"
+                            className="flex items-center gap-1"
+                          >
+                            <Save className="h-3 w-3" />
+                            {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

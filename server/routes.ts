@@ -11,7 +11,7 @@ import {
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
-  insertProcessCapabilityDataSchema
+
 } from "@shared/schema";
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
@@ -20,7 +20,7 @@ import {
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
-  customerRequirements, businessRequirements, msaAnalysis, processCapability, processCapabilityData
+  customerRequirements, businessRequirements, msaAnalysis, processCapability
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
