@@ -935,28 +935,63 @@ export const insertMsaAnalysisSchema = createInsertSchema(msaAnalysis).omit({
 export type InsertMsaAnalysis = z.infer<typeof insertMsaAnalysisSchema>;
 export type MsaAnalysis = typeof msaAnalysis.$inferSelect;
 
+// CTQ Analysis Types
+export const ctqAnalysisTypes = ["Continuous", "Attribute"] as const;
+export type CtqAnalysisType = typeof ctqAnalysisTypes[number];
+
+// Data Set Terms
+export const dataSetTerms = ["Long Term", "Short Term"] as const;
+export type DataSetTerm = typeof dataSetTerms[number];
+
+// Attribute Calculation Types
+export const attributeCalculationTypes = ["DPMO", "DPU", "YRT", "OEE"] as const;
+export type AttributeCalculationType = typeof attributeCalculationTypes[number];
+
 // Process Capability for each CTQ
 export const processCapability = pgTable("process_capability", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
+  ctqType: text("ctq_type").$type<CtqAnalysisType>().notNull(), // "Continuous" or "Attribute"
+  zShift: real("z_shift").default(1.5), // Z-shift value (default 1.5)
+  dataSetTerm: text("data_set_term").$type<DataSetTerm>().default("Long Term"), // "Long Term" or "Short Term"
+  
+  // Continuous CTQ fields
   sampleSize: integer("sample_size"),
-  mean: text("mean"), // Process mean
-  standardDeviation: text("standard_deviation"), // Process std dev
-  lsl: text("lsl"), // Lower Specification Limit
-  usl: text("usl"), // Upper Specification Limit
-  target: text("target"), // Target value
-  cp: text("cp"), // Process Capability Index
-  cpk: text("cpk"), // Process Capability Index (one-sided)
-  pp: text("pp"), // Process Performance Index
-  ppk: text("ppk"), // Process Performance Index (one-sided)
-  sigma: text("sigma"), // Sigma level
-  dpmo: text("dpmo"), // Defects Per Million Opportunities
-  yield: text("yield"), // Process yield percentage
-  dataPoints: text("data_points"), // JSON array of raw data
+  mean: real("mean"), // Process mean
+  standardDeviation: real("standard_deviation"), // Process std dev
+  target: real("target"), // Target value (also from CTS characteristics)
+  cp: real("cp"), // Process Capability Index
+  cpk: real("cpk"), // Process Capability Index (one-sided)
+  pp: real("pp"), // Process Performance Index
+  ppk: real("ppk"), // Process Performance Index (one-sided)
+  sigma: real("sigma"), // Sigma level
+  dpmo: integer("dpmo"), // Defects Per Million Opportunities
+  processYield: real("process_yield"), // Process yield percentage
+  dataPoints: text("data_points"), // JSON array of raw data values
+  
+  // Attribute CTQ fields
+  attributeCalculationType: text("attribute_calculation_type").$type<AttributeCalculationType>(), // "DPMO", "DPU", "YRT", "OEE"
+  totalUnits: integer("total_units"), // Total units inspected
+  defectiveUnits: integer("defective_units"), // Number of defective units
+  totalDefects: integer("total_defects"), // Total number of defects
+  opportunities: integer("opportunities"), // Opportunities for defects per unit
+  
+  // OEE specific fields
+  availability: real("availability"), // Availability percentage
+  performance: real("performance"), // Performance percentage
+  quality: real("quality"), // Quality percentage
+  oeeValue: real("oee_value"), // Overall Equipment Effectiveness
+  
+  // YRT specific fields
+  yieldStep1: real("yield_step_1"), // Yield for step 1
+  yieldStep2: real("yield_step_2"), // Yield for step 2
+  yieldStep3: real("yield_step_3"), // Yield for step 3
+  yieldStep4: real("yield_step_4"), // Yield for step 4
+  yieldStep5: real("yield_step_5"), // Yield for step 5
+  rolledThroughputYield: real("rolled_throughput_yield"), // Final RTY calculation
+  
   controlChartType: text("control_chart_type"), // "X-bar R", "I-MR", "P", "NP", "C", "U"
-  conclusion: text("conclusion"),
-  actionPlan: text("action_plan"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
