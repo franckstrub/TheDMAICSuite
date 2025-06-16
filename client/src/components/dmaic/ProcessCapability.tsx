@@ -241,10 +241,29 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   const saveAllDataPoints = async (ctq: string) => {
     const processCapabilityId = capabilityData[ctq]?.id;
-    if (!processCapabilityId) return;
+    if (!processCapabilityId) {
+      console.error("No process capability ID found for CTQ:", ctq);
+      toast({
+        title: "Error",
+        description: "Process capability configuration not found. Please save the capability settings first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const currentPoints = dataPoints[ctq] || [];
     const numericValues = currentPoints.map(point => point.dataValue);
+    
+    if (numericValues.length === 0) {
+      toast({
+        title: "Warning",
+        description: "No data points to save",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Saving data points:", { processCapabilityId, numericValues });
     
     try {
       // Save all data points as JSON array to database
@@ -262,9 +281,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       });
     } catch (error) {
       console.error("Failed to save data points:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Error",
-        description: "Failed to save data points",
+        description: `Failed to save data points: ${errorMessage}`,
         variant: "destructive",
       });
     }
