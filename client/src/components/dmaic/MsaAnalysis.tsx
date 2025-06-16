@@ -1096,7 +1096,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 <TabsTrigger 
                   key={ctqItem.ctq} 
                   value={ctqItem.ctq}
-                  className="px-4 py-2 min-w-max flex flex-col items-center border border-gray-200 data-[state=active]:border-none"
+                  className="px-4 py-2 min-w-max flex flex-col items-cente border border-gray-200 data-[state=active]:border-none"
                 >
                   <span className="font-medium truncate min-w-[150px]">{ctqItem.ctq}</span>
                   <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
