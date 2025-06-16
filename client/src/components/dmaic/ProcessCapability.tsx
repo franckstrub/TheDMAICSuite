@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { TrendingUp, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -388,18 +390,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                       <div>
                         <label className="block text-sm font-medium mb-2">Show Percentage Display</label>
-                        <Select
+                        <RadioGroup
                           value={capabilityData[ctq]?.showPercentage ? "true" : "false"}
                           onValueChange={(value) => updateCapabilityField(ctq, "showPercentage", value === "true")}
+                          className="flex flex-row space-x-4 mt-2"
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="false">No</SelectItem>
-                            <SelectItem value="true">Yes (%)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="false" id={`${ctq}-percentage-no`} />
+                            <Label htmlFor={`${ctq}-percentage-no`}>No</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="true" id={`${ctq}-percentage-yes`} />
+                            <Label htmlFor={`${ctq}-percentage-yes`}>Yes (%)</Label>
+                          </div>
+                        </RadioGroup>
                       </div>
                     </>
                   )}
