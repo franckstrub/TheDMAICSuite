@@ -273,6 +273,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Function to handle focused cell paste for data input
   const handleFocusedCellPaste = (ctq: string, startIndex: number, pasteData: string) => {
     try {
+      console.log(`Pasting at startIndex: ${startIndex} for CTQ: ${ctq}`);
+      
       // Save current state for undo (only if data exists)
       if (dataPoints[ctq]) {
         setUndoStates(prev => ({
@@ -300,6 +302,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         });
       });
       
+      console.log(`Parsed values:`, parsedValues);
+      
       if (parsedValues.length === 0) {
         toast({
           title: "No Data Found",
@@ -312,6 +316,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       // Apply the pasted data from startIndex to startIndex + parsedValues.length - 1
       setDataPoints(prev => {
         const currentData = [...(prev[ctq] || [])];
+        console.log(`Current data before paste:`, currentData);
+        console.log(`Will paste from index ${startIndex} to ${startIndex + parsedValues.length - 1}`);
         
         // Calculate the end index for the paste operation
         const endIndex = startIndex + parsedValues.length - 1;
@@ -327,11 +333,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         // Replace values from startIndex to endIndex (inclusive)
         parsedValues.forEach((value, i) => {
           const targetIndex = startIndex + i;
+          console.log(`Setting index ${targetIndex} to value ${value}`);
           currentData[targetIndex] = {
             indexNumber: targetIndex + 1,
             dataValue: value
           };
         });
+        
+        console.log(`Current data after paste:`, currentData);
         
         return {
           ...prev,
@@ -352,6 +361,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         variant: "destructive",
       });
     }
+  };
+
+  // Function to handle paste from textarea
+  const handlePasteFromExcel = (ctq: string, pasteData: string) => {
+    handleFocusedCellPaste(ctq, 0, pasteData);
   };
 
   const loadDataPointsForCtq = async (ctq: string) => {
@@ -791,34 +805,62 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           • Focus on any cell and paste (Ctrl+V) to fill down from that position
                           • Copy numeric values from Excel and paste directly into the table
                           • Use individual cells for precise data entry
+                          • Or use the "Paste from Excel" button below for bulk import
                         </div>
                       </div>
-                      
-                      <div className="flex justify-between items-center mt-4">
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-gray-500">Enter data values manually or paste from Excel, then Save Data to persist to database</p>
-                          {undoStates[ctq] && (
+
+                      {/* Paste from Excel Section */}
+                      <div className="mt-4 space-y-3">
+                        <div className="border-t pt-3">
+                          <label className="block text-sm font-medium mb-2">Or paste from Excel:</label>
+                          <textarea
+                            placeholder="Paste numeric values from Excel (one per line)"
+                            className="w-full h-20 p-2 border rounded text-sm resize-none"
+                            value={pasteInputs[ctq] || ""}
+                            onChange={(e) => setPasteInputs(prev => ({ ...prev, [ctq]: e.target.value }))}
+                          />
+                          <div className="flex gap-2 mt-2">
                             <Button
-                              onClick={() => handleUndo(ctq)}
+                              onClick={() => {
+                                if (pasteInputs[ctq]?.trim()) {
+                                  handlePasteFromExcel(ctq, pasteInputs[ctq]);
+                                  setPasteInputs(prev => ({ ...prev, [ctq]: "" }));
+                                }
+                              }}
+                              disabled={!pasteInputs[ctq]?.trim()}
                               size="sm"
                               variant="outline"
-                              className="flex items-center gap-1 text-xs h-7 px-2"
+                              className="flex items-center gap-1"
                             >
-                              <Undo className="h-3 w-3" />
-                              Undo Paste
+                              Paste from Excel
                             </Button>
-                          )}
+                            {undoStates[ctq] && (
+                              <Button
+                                onClick={() => handleUndo(ctq)}
+                                size="sm"
+                                variant="outline"
+                                className="flex items-center gap-1 text-xs"
+                              >
+                                <Undo className="h-3 w-3" />
+                                Undo Paste
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel and paste here</p>
                         </div>
-                        <Button
-                          onClick={() => saveAllDataPoints(ctq)}
-                          disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-1"
-                        >
-                          <Save className="h-3 w-3" />
-                          {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
-                        </Button>
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
+                          <Button
+                            onClick={() => saveAllDataPoints(ctq)}
+                            disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
+                            size="sm"
+                            variant="outline"
+                            className="flex items-center gap-1"
+                          >
+                            <Save className="h-3 w-3" />
+                            {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
