@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -22,8 +22,15 @@ import {
   calculateYield, 
   calculateDPMOFromYield, 
   calculateZScore,
-  parseNumericValue 
+  parseNumericValue,
+  median,
+  getHistogramData,
+  calculateQuartiles,
+  calculateMovingRange,
+  calculateIndividualControlLimits,
+  calculateMovingRangeControlLimits
 } from "@/lib/statisticsUtils";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from "recharts";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -1141,6 +1148,219 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         <p className="text-sm text-blue-600 mt-2">
                           Need at least 30 data points for statistical analysis. 
                           Current: {dataPoints[ctq]?.length || 0} data points.
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Statistical Control Charts */}
+                {ctqWithType.ctqType === "Continuous" && (() => {
+                  const currentPoints = dataPoints[ctq] || [];
+                  const numericValues = currentPoints.map(point => point.dataValue);
+                  
+                  if (numericValues.length >= 5) {
+                    // Prepare data for charts
+                    const individualData = numericValues.map((value, index) => ({
+                      point: index + 1,
+                      value: value,
+                      index: index + 1
+                    }));
+
+                    const movingRanges = calculateMovingRange(numericValues);
+                    const movingRangeData = movingRanges.map((range, index) => ({
+                      point: index + 2, // MR starts from point 2
+                      value: range,
+                      index: index + 2
+                    }));
+
+                    const histogramData = getHistogramData(numericValues, 8);
+                    const quartiles = calculateQuartiles(numericValues);
+                    const individualLimits = calculateIndividualControlLimits(numericValues);
+                    const mrLimits = calculateMovingRangeControlLimits(numericValues);
+
+                    // Box plot data
+                    const boxPlotData = [
+                      {
+                        name: ctq,
+                        min: quartiles.min,
+                        q1: quartiles.q1,
+                        median: quartiles.median,
+                        q3: quartiles.q3,
+                        max: quartiles.max,
+                        outliers: [] // Could add outlier detection later
+                      }
+                    ];
+
+                    return (
+                      <div className="mt-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <BarChart3 className="h-5 w-5 text-green-600" />
+                          <h3 className="text-lg font-semibold">Statistical Control Charts</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Individual Control Chart (I Chart) */}
+                          <div className="bg-white p-4 border rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Individual Control Chart (I Chart)</h4>
+                            <ResponsiveContainer width="100%" height={250}>
+                              <LineChart data={individualData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
+                                <YAxis label={{ value: 'Value', angle: -90, position: 'insideLeft' }} />
+                                <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
+                                <ReferenceLine y={individualLimits.centerLine} stroke="#2563eb" strokeDasharray="8 8" label="CL" />
+                                <ReferenceLine y={individualLimits.ucl} stroke="#dc2626" strokeDasharray="4 4" label="UCL" />
+                                <ReferenceLine y={individualLimits.lcl} stroke="#dc2626" strokeDasharray="4 4" label="LCL" />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="value" 
+                                  stroke="#059669" 
+                                  strokeWidth={2}
+                                  dot={{ r: 3 }}
+                                  connectNulls={false}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                            <div className="text-xs text-gray-600 mt-2">
+                              CL: {individualLimits.centerLine.toFixed(3)} | 
+                              UCL: {individualLimits.ucl.toFixed(3)} | 
+                              LCL: {individualLimits.lcl.toFixed(3)}
+                            </div>
+                          </div>
+
+                          {/* Moving Range Control Chart (MR Chart) */}
+                          <div className="bg-white p-4 border rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Moving Range Control Chart (MR Chart)</h4>
+                            <ResponsiveContainer width="100%" height={250}>
+                              <LineChart data={movingRangeData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
+                                <YAxis label={{ value: 'Moving Range', angle: -90, position: 'insideLeft' }} />
+                                <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Moving Range']} />
+                                <ReferenceLine y={mrLimits.centerLine} stroke="#2563eb" strokeDasharray="8 8" label="CL" />
+                                <ReferenceLine y={mrLimits.ucl} stroke="#dc2626" strokeDasharray="4 4" label="UCL" />
+                                <ReferenceLine y={mrLimits.lcl} stroke="#dc2626" strokeDasharray="4 4" label="LCL" />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="value" 
+                                  stroke="#7c3aed" 
+                                  strokeWidth={2}
+                                  dot={{ r: 3 }}
+                                  connectNulls={false}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                            <div className="text-xs text-gray-600 mt-2">
+                              CL: {mrLimits.centerLine.toFixed(3)} | 
+                              UCL: {mrLimits.ucl.toFixed(3)} | 
+                              LCL: {mrLimits.lcl.toFixed(3)}
+                            </div>
+                          </div>
+
+                          {/* Density Histogram */}
+                          <div className="bg-white p-4 border rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Density Histogram</h4>
+                            <ResponsiveContainer width="100%" height={250}>
+                              <BarChart data={histogramData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                  dataKey="x" 
+                                  label={{ value: 'Value', position: 'insideBottom', offset: -5 }}
+                                  tickFormatter={(value) => Number(value).toFixed(2)}
+                                />
+                                <YAxis label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }} />
+                                <Tooltip 
+                                  formatter={(value: any) => [value, 'Frequency']}
+                                  labelFormatter={(value) => `Value: ${Number(value).toFixed(3)}`}
+                                />
+                                <Bar dataKey="y" fill="#3b82f6" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                            <div className="text-xs text-gray-600 mt-2">
+                              Mean: {mean(numericValues).toFixed(3)} | 
+                              Std Dev: {standardDeviation(numericValues).toFixed(3)}
+                            </div>
+                          </div>
+
+                          {/* Box Plot */}
+                          <div className="bg-white p-4 border rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Box Plot</h4>
+                            <div className="h-[250px] flex items-center justify-center">
+                              <div className="relative w-full max-w-md">
+                                {/* Box plot visualization */}
+                                <div className="relative h-32 bg-gray-50 border rounded">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="relative w-3/4 h-8">
+                                      {/* Whiskers */}
+                                      <div 
+                                        className="absolute h-0.5 bg-gray-600"
+                                        style={{
+                                          left: '0%',
+                                          width: '100%',
+                                          top: '50%',
+                                          transform: 'translateY(-50%)'
+                                        }}
+                                      />
+                                      
+                                      {/* Min line */}
+                                      <div 
+                                        className="absolute w-0.5 h-4 bg-gray-600"
+                                        style={{ left: '0%', top: '25%' }}
+                                      />
+                                      
+                                      {/* Q1-Q3 Box */}
+                                      <div 
+                                        className="absolute h-full bg-blue-200 border border-blue-400"
+                                        style={{
+                                          left: '25%',
+                                          width: '50%'
+                                        }}
+                                      />
+                                      
+                                      {/* Median line */}
+                                      <div 
+                                        className="absolute w-0.5 h-full bg-red-600"
+                                        style={{
+                                          left: '50%',
+                                          top: '0%'
+                                        }}
+                                      />
+                                      
+                                      {/* Max line */}
+                                      <div 
+                                        className="absolute w-0.5 h-4 bg-gray-600"
+                                        style={{ right: '0%', top: '25%' }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Labels */}
+                                <div className="flex justify-between text-xs text-gray-600 mt-2">
+                                  <span>Min: {quartiles.min.toFixed(2)}</span>
+                                  <span>Q1: {quartiles.q1.toFixed(2)}</span>
+                                  <span>Med: {quartiles.median.toFixed(2)}</span>
+                                  <span>Q3: {quartiles.q3.toFixed(2)}</span>
+                                  <span>Max: {quartiles.max.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } else if (numericValues.length > 0) {
+                    return (
+                      <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-orange-700">
+                          <BarChart3 className="h-4 w-4" />
+                          <span className="font-medium">Statistical Control Charts</span>
+                        </div>
+                        <p className="text-sm text-orange-600 mt-2">
+                          Need at least 5 data points for control charts. 
+                          Current: {numericValues.length} data points.
                         </p>
                       </div>
                     );
