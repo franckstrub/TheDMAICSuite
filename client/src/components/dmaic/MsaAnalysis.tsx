@@ -90,7 +90,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [undoStates, setUndoStates] = useState<{ [ctq: string]: ContinuousMsaData }>({});
+  const [redoStates, setRedoStates] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [showUndoButton, setShowUndoButton] = useState<{ [ctq: string]: boolean }>({});
+  const [showRedoButton, setShowRedoButton] = useState<{ [ctq: string]: boolean }>({});
   const [activeTab, setActiveTab] = useState<string>("");
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [showContinuousStatistics, setShowContinuousStatistics] = useState<{ [ctq: string]: boolean }>({});
@@ -698,11 +700,22 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         };
       });
       
-      // Show undo button
+      // Show undo button and clear any existing redo state
       setShowUndoButton(prev => ({
         ...prev,
         [ctq]: true
       }));
+      
+      setShowRedoButton(prev => ({
+        ...prev,
+        [ctq]: false
+      }));
+      
+      setRedoStates(prev => {
+        const newStates = { ...prev };
+        delete newStates[ctq];
+        return newStates;
+      });
       
       toast({
         title: "Data Pasted Successfully",
@@ -843,15 +856,26 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle undo functionality
   const handleUndo = (ctq: string) => {
     if (undoStates[ctq]) {
+      // Save current state for redo before undoing
+      setRedoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+      }));
+      
       setContinuousMsaData(prev => ({
         ...prev,
         [ctq]: undoStates[ctq]
       }));
       
-      // Hide undo button and clear undo state
+      // Hide undo button and show redo button
       setShowUndoButton(prev => ({
         ...prev,
         [ctq]: false
+      }));
+      
+      setShowRedoButton(prev => ({
+        ...prev,
+        [ctq]: true
       }));
       
       setUndoStates(prev => {
@@ -863,6 +887,44 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       toast({
         title: "Undo Successful",
         description: "Restored previous table data",
+      });
+    }
+  };
+
+  // Handle redo functionality
+  const handleRedo = (ctq: string) => {
+    if (redoStates[ctq]) {
+      // Save current state for undo before redoing
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+      }));
+      
+      setContinuousMsaData(prev => ({
+        ...prev,
+        [ctq]: redoStates[ctq]
+      }));
+      
+      // Show undo button and hide redo button
+      setShowUndoButton(prev => ({
+        ...prev,
+        [ctq]: true
+      }));
+      
+      setShowRedoButton(prev => ({
+        ...prev,
+        [ctq]: false
+      }));
+      
+      setRedoStates(prev => {
+        const newStates = { ...prev };
+        delete newStates[ctq];
+        return newStates;
+      });
+      
+      toast({
+        title: "Redo Successful",
+        description: "Restored redone table data",
       });
     }
   };
@@ -1773,9 +1835,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                         handleFocusedCellPaste(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, pasteData);
                                       }}
                                       onKeyDown={(e) => {
-                                        if (e.ctrlKey && e.key === 'z') {
+                                        if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
                                           e.preventDefault();
                                           handleUndo(ctqItem.ctq);
+                                        } else if (e.ctrlKey && e.shiftKey && e.key === 'Z') {
+                                          e.preventDefault();
+                                          handleRedo(ctqItem.ctq);
                                         }
                                       }}
                                       className="w-20"
@@ -1819,6 +1884,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
                       <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
                       <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
+                      <p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p>
                       <p>• Data will automatically create new rows if needed</p>
                     </div>
                   </div>
@@ -1843,6 +1909,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         >
                           <Undo2 className="h-4 w-4 mr-2" />
                           Undo Paste
+                        </Button>
+                      )}
+                      
+                      {showRedoButton[ctqItem.ctq] && (
+                        <Button
+                          onClick={() => handleRedo(ctqItem.ctq)}
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-700 border-blue-300 hover:bg-blue-50"
+                        >
+                          <Undo2 className="h-4 w-4 mr-2 scale-x-[-1]" />
+                          Redo Paste
                         </Button>
                       )}
                       
