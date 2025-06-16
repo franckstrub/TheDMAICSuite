@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save } from "lucide-react";
+import { TrendingUp, Save, Undo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -47,6 +47,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [activeTab, setActiveTab] = useState<string>("");
   const [dataPoints, setDataPoints] = useState<{ [ctq: string]: DataPoint[] }>({});
   const [inputValues, setInputValues] = useState<{ [ctq: string]: string }>({});
+  const [undoStates, setUndoStates] = useState<{ [ctq: string]: DataPoint[] }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -64,6 +65,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Track tab initialization to prevent overriding saved tabs
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
+
+  // Add keyboard event handler for Ctrl+Z
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'z' && activeTab) {
+        event.preventDefault();
+        handleUndo(activeTab);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeTab, undoStates]);
 
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
@@ -234,6 +250,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Function to handle focused cell paste for data input
   const handleFocusedCellPaste = (ctq: string, startIndex: number, pasteData: string) => {
     try {
+      // Save current state for undo (only if data exists)
+      if (dataPoints[ctq]) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(dataPoints[ctq]))
+        }));
+      }
+      
       // Parse tab-separated or comma-separated values (Excel format)
       const rows = pasteData.trim().split('\n');
       const parsedValues: number[] = [];
@@ -302,6 +326,28 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         title: "Error",
         description: "Failed to paste data. Please try again.",
         variant: "destructive",
+      });
+    }
+  };
+
+  // Function to handle undo operation
+  const handleUndo = (ctq: string) => {
+    if (undoStates[ctq]) {
+      setDataPoints(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(undoStates[ctq]))
+      }));
+      
+      // Clear the undo state after using it
+      setUndoStates(prev => {
+        const newState = { ...prev };
+        delete newState[ctq];
+        return newState;
+      });
+      
+      toast({
+        title: "Undone",
+        description: "Previous paste operation has been undone",
       });
     }
   };
@@ -747,7 +793,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </div>
                       
                       <div className="flex justify-between items-center mt-4">
-                        <p className="text-xs text-gray-500">Enter data values manually or paste from Excel, then Save Data to persist to database</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-gray-500">Enter data values manually or paste from Excel, then Save Data to persist to database</p>
+                          {undoStates[ctq] && (
+                            <Button
+                              onClick={() => handleUndo(ctq)}
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-1 text-xs h-7 px-2"
+                            >
+                              <Undo className="h-3 w-3" />
+                              Undo Paste
+                            </Button>
+                          )}
+                        </div>
                         <Button
                           onClick={() => saveAllDataPoints(ctq)}
                           disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
