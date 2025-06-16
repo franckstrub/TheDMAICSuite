@@ -162,6 +162,98 @@ export function calculateSigmaLevel(dpmo: number): number {
 }
 
 /**
+ * Calculate the Pp (Process Performance) for a process
+ * @param values Array of process measurements
+ * @param lsl Lower Specification Limit
+ * @param usl Upper Specification Limit
+ * @returns The Pp value or null if insufficient data
+ */
+export function calculatePp(values: number[], lsl: number, usl: number): number | null {
+  if (values.length < 30 || lsl >= usl) return null;
+  
+  const sigma = standardDeviation(values);
+  
+  if (sigma === 0) return null;
+  
+  return (usl - lsl) / (6 * sigma);
+}
+
+/**
+ * Calculate the Ppk (Process Performance Index) for a process
+ * @param values Array of process measurements
+ * @param lsl Lower Specification Limit
+ * @param usl Upper Specification Limit
+ * @returns The Ppk value or null if insufficient data
+ */
+export function calculatePpk(values: number[], lsl: number, usl: number): number | null {
+  if (values.length < 30 || lsl >= usl) return null;
+  
+  const avg = mean(values);
+  const sigma = standardDeviation(values);
+  
+  if (sigma === 0) return null;
+  
+  const ppkUpper = (usl - avg) / (3 * sigma);
+  const ppkLower = (avg - lsl) / (3 * sigma);
+  
+  return Math.min(ppkUpper, ppkLower);
+}
+
+/**
+ * Calculate process yield (percentage within specification limits)
+ * @param values Array of process measurements
+ * @param lsl Lower Specification Limit
+ * @param usl Upper Specification Limit
+ * @returns Yield percentage (0-100)
+ */
+export function calculateYield(values: number[], lsl: number, usl: number): number {
+  if (values.length === 0) return 0;
+  
+  const withinSpec = values.filter(value => value >= lsl && value <= usl).length;
+  return (withinSpec / values.length) * 100;
+}
+
+/**
+ * Calculate DPMO based on yield
+ * @param yieldPercent Yield percentage (0-100)
+ * @returns DPMO value
+ */
+export function calculateDPMOFromYield(yieldPercent: number): number {
+  const defectRate = (100 - yieldPercent) / 100;
+  return defectRate * 1000000;
+}
+
+/**
+ * Calculate Z score with shift adjustment
+ * @param yieldPercent Yield percentage (0-100)
+ * @param shift Z-shift value (typically 1.5)
+ * @returns Z score
+ */
+export function calculateZScore(yieldPercent: number, shift: number = 1.5): number {
+  const defectRate = (100 - yieldPercent) / 100;
+  
+  if (defectRate <= 0) return 6 + shift;
+  if (defectRate >= 1) return shift;
+  
+  // Using normal distribution inverse (simplified approximation)
+  const z = Math.sqrt(2) * inverseErrorFunction(1 - 2 * defectRate);
+  return Math.max(0, z + shift);
+}
+
+/**
+ * Simplified inverse error function approximation
+ * @param x Input value
+ * @returns Inverse error function result
+ */
+function inverseErrorFunction(x: number): number {
+  const a = 0.147;
+  const firstPart = Math.log(1 - x * x);
+  const secondPart = 2 / (Math.PI * a) + firstPart / 2;
+  
+  return Math.sign(x) * Math.sqrt(Math.sqrt(secondPart * secondPart - firstPart / a) - secondPart);
+}
+
+/**
  * Get frequency distribution for histogram data
  * @param values Array of values
  * @param bins Number of bins for the histogram
