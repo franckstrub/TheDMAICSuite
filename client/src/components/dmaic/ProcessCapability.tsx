@@ -284,7 +284,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           </TabsList>
           */}
           {/* Only show scroll indicator if 5+ CTQs exist */}
-                  {ctqList.length >= 6 && (
+                  {getCtqsWithTypes().length >= 6 && (
                    <div className="relative">
                     <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
                     ← Scroll horizontally →
@@ -294,20 +294,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
                     <div className="w-full overflow-x-auto">         
                       <TabsList className="flex w-max min-w-full justify-start">
-                        {ctqList.map((ctq: string) => (
+                        {getCtqsWithTypes().map((ctqWithType: CtqWithType) => (
                           <TabsTrigger 
-                            key={ctq} 
-                            value={ctq}
-                            className="px-4 py-2 min-w-max flex flex-col items-cente border border-gray-200 data-[state=active]:border-none"
+                            key={ctqWithType.ctq} 
+                            value={ctqWithType.ctq}
+                            className="px-4 py-2 min-w-max flex flex-col items-center border border-gray-200 data-[state=active]:border-none"
                           >
-                            <span className="font-medium truncate min-w-[150px]">{ctq}</span>
-                            {/*<span className="text-xs text-gray-600">{ctq.ctqType}</span>*/}
+                            <span className="font-medium truncate min-w-[150px]">{ctqWithType.ctq}</span>
+                            <span className="text-xs text-gray-600">{ctqWithType.ctqType}</span>
                           </TabsTrigger>
                         ))}
                       </TabsList>
                     </div>
           
-          {ctqList.map((ctq: string) => (
+          {getCtqsWithTypes().map((ctqWithType: CtqWithType) => {
+            const ctq = ctqWithType.ctq;
+            return (
             <TabsContent key={ctq} value={ctq} className="mt-6">
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -553,7 +555,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 </div>
               </div>
             </TabsContent>
-          ))}
+            );
+          })}
         </Tabs>
       </CardContent>
     </Card>
