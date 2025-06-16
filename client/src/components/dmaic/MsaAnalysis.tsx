@@ -678,14 +678,20 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           if (targetRowIndex < currentData.length) {
             const row = { ...currentData[targetRowIndex] };
             
-            // Apply data to consecutive cells starting from the focused position
-            rowData.forEach((cellValue, pasteColIndex) => {
-              const targetColIndex = startColIndex + pasteColIndex;
-              if (targetColIndex < fields.length) {
-                const fieldName = fields[targetColIndex] as keyof ContinuousAnalysisRow;
-                (row as any)[fieldName] = cellValue;
-              }
-            });
+            // For single column paste (most common case), only update the focused field
+            if (rowData.length === 1) {
+              const fieldName = field as keyof ContinuousAnalysisRow;
+              (row as any)[fieldName] = rowData[0];
+            } else {
+              // For multi-column paste, apply data to consecutive cells starting from the focused position
+              rowData.forEach((cellValue, pasteColIndex) => {
+                const targetColIndex = startColIndex + pasteColIndex;
+                if (targetColIndex < fields.length) {
+                  const fieldName = fields[targetColIndex] as keyof ContinuousAnalysisRow;
+                  (row as any)[fieldName] = cellValue;
+                }
+              });
+            }
             
             currentData[targetRowIndex] = row;
           }
