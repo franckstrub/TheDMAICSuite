@@ -114,8 +114,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Function to load data points for a specific process capability
   const loadDataPoints = async (processCapabilityId: number) => {
-    const response = await fetch(`/api/process-capability/${processCapabilityId}/data`);
-    const data = await response.json();
+    const data = await apiRequest(`/api/process-capability/${processCapabilityId}/data`);
     return data.dataPoints || [];
   };
 
