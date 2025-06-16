@@ -48,6 +48,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [dataPoints, setDataPoints] = useState<{ [ctq: string]: DataPoint[] }>({});
   const [inputValues, setInputValues] = useState<{ [ctq: string]: string }>({});
   const [undoStates, setUndoStates] = useState<{ [ctq: string]: DataPoint[] }>({});
+  const [pasteInputs, setPasteInputs] = useState<{ [ctq: string]: string }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -65,6 +66,28 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Track tab initialization to prevent overriding saved tabs
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
+
+  // Function to handle undo operation
+  const handleUndo = (ctq: string) => {
+    if (undoStates[ctq]) {
+      setDataPoints(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(undoStates[ctq]))
+      }));
+      
+      // Clear the undo state after using it
+      setUndoStates(prev => {
+        const newState = { ...prev };
+        delete newState[ctq];
+        return newState;
+      });
+      
+      toast({
+        title: "Undone",
+        description: "Previous paste operation has been undone",
+      });
+    }
+  };
 
   // Add keyboard event handler for Ctrl+Z
   useEffect(() => {
@@ -327,28 +350,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         title: "Error",
         description: "Failed to paste data. Please try again.",
         variant: "destructive",
-      });
-    }
-  };
-
-  // Function to handle undo operation
-  const handleUndo = (ctq: string) => {
-    if (undoStates[ctq]) {
-      setDataPoints(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(undoStates[ctq]))
-      }));
-      
-      // Clear the undo state after using it
-      setUndoStates(prev => {
-        const newState = { ...prev };
-        delete newState[ctq];
-        return newState;
-      });
-      
-      toast({
-        title: "Undone",
-        description: "Previous paste operation has been undone",
       });
     }
   };
