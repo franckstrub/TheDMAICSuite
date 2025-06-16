@@ -24,7 +24,7 @@ import { PlusCircle } from "lucide-react";
 import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
 import CtsCharacteristics from '@/components/dmaic/CtsCharacteristics';
 import MsaAnalysis from '@/components/dmaic/MsaAnalysis';
-import ProcessCapability from '@/components/dmaic/ProcessCapability';
+import ProcessCapabilityAnalysis from '@/components/dmaic/ProcessCapabilityAnalysis';
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();

@@ -61,10 +61,11 @@ export default function ProcessCapabilityAnalysis({ projectId }: ProcessCapabili
         ? `/api/projects/${projectId}/process-capability/${existingAnalysis.id}`
         : `/api/projects/${projectId}/process-capability`;
       
-      return apiRequest(endpoint, {
-        method: existingAnalysis ? 'PUT' : 'POST',
-        body: JSON.stringify(data)
-      });
+      if (existingAnalysis) {
+        return apiRequest(endpoint, 'PUT', data);
+      } else {
+        return apiRequest(endpoint, 'POST', data);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'process-capability'] });
