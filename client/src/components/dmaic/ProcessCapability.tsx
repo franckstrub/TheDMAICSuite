@@ -273,10 +273,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Function to handle focused cell paste for data input
   const handleFocusedCellPaste = (ctq: string, startIndex: number, pasteData: string) => {
     try {
-      console.log(`=== PASTE DEBUG ===`);
-      console.log(`CTQ: ${ctq}, StartIndex: ${startIndex}`);
-      console.log(`Current data before paste:`, dataPoints[ctq]);
-      
       // Save current state for undo (only if data exists)
       if (dataPoints[ctq] && dataPoints[ctq].length > 0) {
         setUndoStates(prev => ({
@@ -304,8 +300,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         });
       });
       
-      console.log(`Parsed values:`, parsedValues);
-      
       if (parsedValues.length === 0) {
         toast({
           title: "No Data Found",
@@ -315,39 +309,44 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return;
       }
       
-      // Apply the pasted data starting from the correct startIndex
+      // Apply the pasted data by completely preserving original values before startIndex
       setDataPoints(prev => {
         const currentData = [...(prev[ctq] || [])];
-        console.log(`Array before modification:`, currentData.map((item, idx) => `[${idx}]: ${item.dataValue}`));
         
-        // Calculate the end index for the paste operation
-        const endIndex = startIndex + parsedValues.length - 1;
-        console.log(`Will paste from index ${startIndex} to ${endIndex}`);
+        // Preserve original values before startIndex - CRITICAL: never modify these
+        const preservedData = currentData.slice(0, startIndex);
         
-        // Extend array if needed to accommodate the paste range
-        while (currentData.length <= endIndex) {
-          currentData.push({
-            indexNumber: currentData.length + 1,
-            dataValue: 0
+        // Calculate how many cells we need total
+        const totalNeeded = startIndex + parsedValues.length;
+        
+        // Build new array: preserved data + pasted data + any additional cells needed
+        const newData = [];
+        
+        // Add preserved data (indices 0 to startIndex-1)
+        for (let i = 0; i < startIndex; i++) {
+          if (i < preservedData.length) {
+            newData.push({ ...preservedData[i] });
+          } else {
+            newData.push({
+              indexNumber: i + 1,
+              dataValue: 0
+            });
+          }
+        }
+        
+        // Add pasted data (indices startIndex to startIndex + parsedValues.length - 1)
+        for (let i = 0; i < parsedValues.length; i++) {
+          newData.push({
+            indexNumber: startIndex + i + 1,
+            dataValue: parsedValues[i]
           });
         }
         
-        // Create a completely NEW array to avoid reference issues
-        const newData = currentData.map((item, index) => {
-          if (index >= startIndex && index <= endIndex) {
-            const pasteValueIndex = index - startIndex;
-            if (pasteValueIndex < parsedValues.length) {
-              console.log(`Modifying index ${index}: ${item.dataValue} -> ${parsedValues[pasteValueIndex]}`);
-              return {
-                indexNumber: index + 1,
-                dataValue: parsedValues[pasteValueIndex]
-              };
-            }
-          }
-          return { ...item }; // Keep original values unchanged
-        });
-        
-        console.log(`Array after modification:`, newData.map((item, idx) => `[${idx}]: ${item.dataValue}`));
+        // Add any remaining original data beyond the paste range
+        const pasteEndIndex = startIndex + parsedValues.length;
+        for (let i = pasteEndIndex; i < currentData.length; i++) {
+          newData.push({ ...currentData[i] });
+        }
         
         return {
           ...prev,
