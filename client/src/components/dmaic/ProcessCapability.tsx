@@ -127,7 +127,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Mutation to save a data point
   const saveDataPointMutation = useMutation({
     mutationFn: async ({ processCapabilityId, indexNumber, dataValue }: { processCapabilityId: number, indexNumber: number, dataValue: number }) => {
-      return await apiRequest(`/api/process-capability/${processCapabilityId}/data`, 'POST', { indexNumber, dataValue });
+      return await apiRequest('POST', `/api/process-capability/${processCapabilityId}/data`, { indexNumber, dataValue });
     },
     onSuccess: () => {
       toast({
