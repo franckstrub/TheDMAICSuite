@@ -829,7 +829,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       }
                                     } as unknown as React.ClipboardEvent;
                                     
-                                    const rawindex=0;
+                                    const rawindex = (dataPoints[ctq] || []).length;
                                     handlePasteFromExcel(ctq, rawindex, syntheticEvent);
                                   } else {
                                     toast({
