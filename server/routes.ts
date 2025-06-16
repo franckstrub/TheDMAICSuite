@@ -10,7 +10,8 @@ import {
   insertSipocSchema, insertRequirementSchema, insertBusinessRequirementSchema, insertDatasetSchema,
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
-  insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema
+  insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
+  insertProcessCapabilityDataSchema
 } from "@shared/schema";
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
@@ -19,7 +20,7 @@ import {
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
-  customerRequirements, businessRequirements, msaAnalysis, processCapability
+  customerRequirements, businessRequirements, msaAnalysis, processCapability, processCapabilityData
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2624,6 +2625,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       return res.status(200).json({ capability: updatedCapability });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Process Capability Data Routes
+  app.get("/api/process-capability/:id/data", async (req, res) => {
+    try {
+      const processCapabilityId = parseInt(req.params.id);
+      
+      const dataPoints = await db
+        .select()
+        .from(processCapabilityData)
+        .where(eq(processCapabilityData.processCapabilityId, processCapabilityId))
+        .orderBy(processCapabilityData.indexNumber);
+
+      return res.status(200).json({ dataPoints });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/process-capability/:id/data", async (req, res) => {
+    try {
+      const processCapabilityId = parseInt(req.params.id);
+      const payload = insertProcessCapabilityDataSchema.parse({
+        ...req.body,
+        processCapabilityId,
+      });
+
+      const [newDataPoint] = await db
+        .insert(processCapabilityData)
+        .values(payload)
+        .returning();
+
+      return res.status(201).json({ dataPoint: newDataPoint });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.put("/api/process-capability/:id/data/:dataId", async (req, res) => {
+    try {
+      const processCapabilityId = parseInt(req.params.id);
+      const dataId = parseInt(req.params.dataId);
+      
+      const payload = insertProcessCapabilityDataSchema.parse({
+        ...req.body,
+        processCapabilityId,
+      });
+
+      const [updatedDataPoint] = await db
+        .update(processCapabilityData)
+        .set(payload)
+        .where(and(
+          eq(processCapabilityData.id, dataId),
+          eq(processCapabilityData.processCapabilityId, processCapabilityId)
+        ))
+        .returning();
+
+      return res.status(200).json({ dataPoint: updatedDataPoint });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.delete("/api/process-capability/:id/data/:dataId", async (req, res) => {
+    try {
+      const processCapabilityId = parseInt(req.params.id);
+      const dataId = parseInt(req.params.dataId);
+
+      await db
+        .delete(processCapabilityData)
+        .where(and(
+          eq(processCapabilityData.id, dataId),
+          eq(processCapabilityData.processCapabilityId, processCapabilityId)
+        ));
+
+      return res.status(200).json({ success: true });
     } catch (err) {
       return handleErrors(err, res);
     }
