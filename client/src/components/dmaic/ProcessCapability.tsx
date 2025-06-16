@@ -23,9 +23,7 @@ interface ProcessCapabilityData {
   dataSetTerm: "Long Term" | "Short Term";
   capabilityIndex: "Z" | "Cp/Cpk";
   showPercentage: boolean;
-  controlChartType: string;
   conclusion: string;
-  actionPlan: string;
 }
 interface CtqWithType {
   ctq: string;
@@ -148,9 +146,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           dataSetTerm: "Long Term" as const,
           capabilityIndex: "Cp/Cpk" as const,
           showPercentage: false,
-          controlChartType: ctqWithType.ctqType === "Continuous" ? "X-bar R" : "P",
           conclusion: "",
-          actionPlan: "",
         };
       });
       
@@ -201,30 +197,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     if (data) {
       // Transform data to match schema expectations
       const transformedData = {
-        ...data,
-        // Ensure numeric fields are properly typed
-        zShift: Number(data.zShift) || 1.5,
-        // Ensure dataSetTerm is properly typed
-        dataSetTerm: data.dataSetTerm || "Long Term",
-        // Ensure capabilityIndex is properly typed
-        capabilityIndex: data.capabilityIndex || "Cp/Cpk",
-        // Ensure showPercentage is boolean
-        showPercentage: Boolean(data.showPercentage),
-        // Convert numeric values to strings as expected by schema
+        ctq: data.ctq,
         lsl: data.lsl ? String(data.lsl) : "",
         usl: data.usl ? String(data.usl) : "",
         target: data.target ? String(data.target) : "",
-        // Remove any undefined fields
-        projectId: undefined, // This will be added by the server
-        id: undefined, // This should not be included in POST
+        zShift: Number(data.zShift) || 1.5,
+        dataSetTerm: data.dataSetTerm || "Long Term",
+        capabilityIndex: data.capabilityIndex || "Cp/Cpk",
+        showPercentage: Boolean(data.showPercentage),
+        conclusion: data.conclusion || "",
       };
-      
-      // Remove undefined values
-      Object.keys(transformedData).forEach(key => {
-        if (transformedData[key as keyof typeof transformedData] === undefined) {
-          delete transformedData[key as keyof typeof transformedData];
-        }
-      });
       
       saveCapabilityMutation.mutate(transformedData);
     }
@@ -323,26 +305,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             <TabsContent key={ctq} value={ctq} className="mt-6">
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Control Chart Type</label>
-                    <Select
-                      value={capabilityData[ctq]?.controlChartType || "X-bar R"}
-                      onValueChange={(value) => updateCapabilityField(ctq, "controlChartType", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="X-bar R">X-bar R Chart</SelectItem>
-                        <SelectItem value="I-MR">Individual-Moving Range</SelectItem>
-                        <SelectItem value="P">P Chart (Proportion)</SelectItem>
-                        <SelectItem value="NP">NP Chart (Number Defective)</SelectItem>
-                        <SelectItem value="C">C Chart (Count of Defects)</SelectItem>
-                        <SelectItem value="U">U Chart (Defects per Unit)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <div>
                     <label className="block text-sm font-medium mb-2">Z-Shift Value</label>
                     <Input
@@ -458,16 +420,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       value={capabilityData[ctq]?.conclusion || ""}
                       onChange={(e) => updateCapabilityField(ctq, "conclusion", e.target.value)}
                       placeholder="Summary of process capability assessment..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Action Plan</label>
-                    <Textarea
-                      value={capabilityData[ctq]?.actionPlan || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "actionPlan", e.target.value)}
-                      placeholder="Actions needed to improve process capability..."
                       rows={3}
                     />
                   </div>
