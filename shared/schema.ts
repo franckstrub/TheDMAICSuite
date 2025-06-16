@@ -955,9 +955,7 @@ export const processCapability = pgTable("process_capability", {
   dataSetTerm: text("data_set_term").$type<DataSetTermType>().default("Long Term"), // Data set term (Long Term or Short Term)
   capabilityIndex: text("capability_index").$type<CapabilityIndexType>().default("Cp/Cpk"), // Z or Cp/Cpk
   showPercentage: boolean("show_percentage").default(false), // Show percentage display
-  controlChartType: text("control_chart_type"), // "X-bar R", "I-MR", "P", "NP", "C", "U"
   conclusion: text("conclusion"),
-  actionPlan: text("action_plan"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
