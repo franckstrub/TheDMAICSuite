@@ -92,7 +92,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Add keyboard event handler for Ctrl+Z
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 'z' && activeTab) {
+      if (event.ctrlKey && event.key === 'z' && activeTab && undoStates[activeTab]) {
         event.preventDefault();
         handleUndo(activeTab);
       }
@@ -273,10 +273,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Function to handle focused cell paste for data input
   const handleFocusedCellPaste = (ctq: string, startIndex: number, pasteData: string) => {
     try {
-      console.log(`Pasting at startIndex: ${startIndex} for CTQ: ${ctq}`);
-      
       // Save current state for undo (only if data exists)
-      if (dataPoints[ctq]) {
+      if (dataPoints[ctq] && dataPoints[ctq].length > 0) {
         setUndoStates(prev => ({
           ...prev,
           [ctq]: JSON.parse(JSON.stringify(dataPoints[ctq]))
@@ -302,8 +300,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         });
       });
       
-      console.log(`Parsed values:`, parsedValues);
-      
       if (parsedValues.length === 0) {
         toast({
           title: "No Data Found",
@@ -313,11 +309,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return;
       }
       
-      // Apply the pasted data from startIndex to startIndex + parsedValues.length - 1
+      // Apply the pasted data starting from the correct startIndex
       setDataPoints(prev => {
         const currentData = [...(prev[ctq] || [])];
-        console.log(`Current data before paste:`, currentData);
-        console.log(`Will paste from index ${startIndex} to ${startIndex + parsedValues.length - 1}`);
         
         // Calculate the end index for the paste operation
         const endIndex = startIndex + parsedValues.length - 1;
@@ -330,17 +324,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           });
         }
         
-        // Replace values from startIndex to endIndex (inclusive)
+        // Replace values ONLY from startIndex to endIndex (inclusive)
+        // Do not modify any cells before startIndex
         parsedValues.forEach((value, i) => {
           const targetIndex = startIndex + i;
-          console.log(`Setting index ${targetIndex} to value ${value}`);
-          currentData[targetIndex] = {
-            indexNumber: targetIndex + 1,
-            dataValue: value
-          };
+          if (targetIndex < currentData.length) {
+            currentData[targetIndex] = {
+              indexNumber: targetIndex + 1,
+              dataValue: value
+            };
+          }
         });
-        
-        console.log(`Current data after paste:`, currentData);
         
         return {
           ...prev,
