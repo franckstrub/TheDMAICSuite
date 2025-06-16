@@ -939,27 +939,22 @@ export type MsaAnalysis = typeof msaAnalysis.$inferSelect;
 export const dataSetTermTypes = ["Long Term", "Short Term"] as const;
 export type DataSetTermType = typeof dataSetTermTypes[number];
 
+// Capability Index Type
+export const capabilityIndexType = z.enum(["Z", "Cp/Cpk"]);
+export type CapabilityIndexType = z.infer<typeof capabilityIndexType>;
+
 // Process Capability for each CTQ
 export const processCapability = pgTable("process_capability", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
-  sampleSize: integer("sample_size"),
-  mean: text("mean"), // Process mean
-  standardDeviation: text("standard_deviation"), // Process std dev
   lsl: text("lsl"), // Lower Specification Limit
   usl: text("usl"), // Upper Specification Limit
   target: text("target"), // Target value
   zShift: real("z_shift").default(1.5), // Z-shift value (default 1.5)
   dataSetTerm: text("data_set_term").$type<DataSetTermType>().default("Long Term"), // Data set term (Long Term or Short Term)
-  cp: text("cp"), // Process Capability Index
-  cpk: text("cpk"), // Process Capability Index (one-sided)
-  pp: text("pp"), // Process Performance Index
-  ppk: text("ppk"), // Process Performance Index (one-sided)
-  sigma: text("sigma"), // Sigma level
-  dpmo: text("dpmo"), // Defects Per Million Opportunities
-  yield: text("yield"), // Process yield percentage
-  dataPoints: text("data_points"), // JSON array of raw data
+  capabilityIndex: text("capability_index").$type<CapabilityIndexType>().default("Cp/Cpk"), // Z or Cp/Cpk
+  showPercentage: boolean("show_percentage").default(false), // Show percentage display
   controlChartType: text("control_chart_type"), // "X-bar R", "I-MR", "P", "NP", "C", "U"
   conclusion: text("conclusion"),
   actionPlan: text("action_plan"),
