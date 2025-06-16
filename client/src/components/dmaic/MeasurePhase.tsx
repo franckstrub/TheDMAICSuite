@@ -24,7 +24,7 @@ import { PlusCircle } from "lucide-react";
 import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
 import CtsCharacteristics from '@/components/dmaic/CtsCharacteristics';
 import MsaAnalysis from '@/components/dmaic/MsaAnalysis';
-import ProcessCapabilityAnalysis from '@/components/dmaic/ProcessCapabilityAnalysis';
+import ProcessCapability from '@/components/dmaic/ProcessCapability';
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
@@ -1080,7 +1080,7 @@ export default function MeasurePhase() {
       <MsaAnalysis projectId={projectId} />
       
       {/* Process Capability - One tab per CTQ */}
-      <ProcessCapabilityAnalysis projectId={projectId} />
+      <ProcessCapability projectId={projectId} />
     </div>
   );
 }

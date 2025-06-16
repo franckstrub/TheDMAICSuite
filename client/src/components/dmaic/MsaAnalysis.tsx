@@ -90,7 +90,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [undoStates, setUndoStates] = useState<{ [ctq: string]: ContinuousMsaData }>({});
+  const [redoStates, setRedoStates] = useState<{ [ctq: string]: ContinuousMsaData }>({});
   const [showUndoButton, setShowUndoButton] = useState<{ [ctq: string]: boolean }>({});
+  const [showRedoButton, setShowRedoButton] = useState<{ [ctq: string]: boolean }>({});
   const [activeTab, setActiveTab] = useState<string>("");
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [showContinuousStatistics, setShowContinuousStatistics] = useState<{ [ctq: string]: boolean }>({});
@@ -588,6 +590,153 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     });
   };
 
+  // Handle focused cell paste for continuous MSA
+  const handleFocusedCellPaste = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, pasteData: string) => {
+    try {
+      // Save current state for undo (only if data exists)
+      if (continuousMsaData[ctq]) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+        }));
+      }
+      
+      // Parse tab-separated or comma-separated values
+      const rows = pasteData.trim().split('\n');
+      const parsedData: (number | null)[][] = [];
+      
+      rows.forEach(row => {
+        // Split by tabs first (Excel default), then by commas if no tabs
+        const cells = row.includes('\t') ? row.split('\t') : row.split(',');
+        const rowData: (number | null)[] = [];
+        
+        cells.forEach(cell => {
+          const trimmedCell = cell.trim();
+          if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
+            rowData.push(null);
+          } else {
+            const parsed = parseFloat(trimmedCell);
+            rowData.push(!isNaN(parsed) && isFinite(parsed) ? parsed : null);
+          }
+        });
+        
+        if (rowData.length > 0) {
+          parsedData.push(rowData);
+        }
+      });
+      
+      if (parsedData.length === 0) {
+        toast({
+          title: "No Data Found",
+          description: "No valid data found in clipboard. Please copy measurement data from Excel first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Apply the pasted data starting from the focused cell
+      setContinuousMsaData(prev => {
+        const currentData = [...(prev[ctq]?.gageRRData || [])];
+        const repetitions = prev[ctq]?.repetitions || 2;
+        const numberOfAppraisers = prev[ctq]?.numberOfAppraisers || 2;
+        
+        // Define field order for mapping
+        const fields = ['app1_rep1', 'app1_rep2'];
+        if (repetitions === 3) fields.push('app1_rep3');
+        fields.push('app2_rep1', 'app2_rep2');
+        if (repetitions === 3) fields.push('app2_rep3');
+        if (numberOfAppraisers === 3) {
+          fields.push('app3_rep1', 'app3_rep2');
+          if (repetitions === 3) fields.push('app3_rep3');
+        }
+        
+        // Find starting column index
+        const startColIndex = fields.indexOf(field as string);
+        if (startColIndex === -1) return prev;
+        
+        // Apply pasted data starting from the focused cell position
+        parsedData.forEach((rowData, pasteRowIndex) => {
+          const targetRowIndex = rowIndex + pasteRowIndex;
+          
+          // Ensure we don't exceed existing rows, create new rows if needed
+          while (currentData.length <= targetRowIndex) {
+            const newRow: ContinuousAnalysisRow = {
+              unitNumber: currentData.length + 1,
+              app1_rep1: null,
+              app1_rep2: null,
+              app1_rep3: null,
+              app2_rep1: null,
+              app2_rep2: null,
+              app2_rep3: null,
+              app3_rep1: null,
+              app3_rep2: null,
+              app3_rep3: null,
+            };
+            currentData.push(newRow);
+          }
+          
+          if (targetRowIndex < currentData.length) {
+            const row = { ...currentData[targetRowIndex] };
+            
+            // For single column paste (most common case), only update the focused field
+            if (rowData.length === 1) {
+              const fieldName = field as keyof ContinuousAnalysisRow;
+              (row as any)[fieldName] = rowData[0];
+            } else {
+              // For multi-column paste, apply data to consecutive cells starting from the focused position
+              rowData.forEach((cellValue, pasteColIndex) => {
+                const targetColIndex = startColIndex + pasteColIndex;
+                if (targetColIndex < fields.length) {
+                  const fieldName = fields[targetColIndex] as keyof ContinuousAnalysisRow;
+                  (row as any)[fieldName] = cellValue;
+                }
+              });
+            }
+            
+            currentData[targetRowIndex] = row;
+          }
+        });
+        
+        return {
+          ...prev,
+          [ctq]: {
+            ...prev[ctq],
+            gageRRData: currentData,
+          }
+        };
+      });
+      
+      // Show undo button and clear any existing redo state
+      setShowUndoButton(prev => ({
+        ...prev,
+        [ctq]: true
+      }));
+      
+      setShowRedoButton(prev => ({
+        ...prev,
+        [ctq]: false
+      }));
+      
+      setRedoStates(prev => {
+        const newStates = { ...prev };
+        delete newStates[ctq];
+        return newStates;
+      });
+      
+      toast({
+        title: "Data Pasted Successfully",
+        description: `Imported ${parsedData.length} rows starting from focused cell`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Paste Error",
+        description: "Failed to parse pasted data. Please ensure data is in a valid format.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handle Excel paste functionality
   const handlePasteData = (ctq: string, event: React.ClipboardEvent) => {
     event.preventDefault();
@@ -713,15 +862,26 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle undo functionality
   const handleUndo = (ctq: string) => {
     if (undoStates[ctq]) {
+      // Save current state for redo before undoing
+      setRedoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+      }));
+      
       setContinuousMsaData(prev => ({
         ...prev,
         [ctq]: undoStates[ctq]
       }));
       
-      // Hide undo button and clear undo state
+      // Hide undo button and show redo button
       setShowUndoButton(prev => ({
         ...prev,
         [ctq]: false
+      }));
+      
+      setShowRedoButton(prev => ({
+        ...prev,
+        [ctq]: true
       }));
       
       setUndoStates(prev => {
@@ -733,6 +893,44 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       toast({
         title: "Undo Successful",
         description: "Restored previous table data",
+      });
+    }
+  };
+
+  // Handle redo functionality
+  const handleRedo = (ctq: string) => {
+    if (redoStates[ctq]) {
+      // Save current state for undo before redoing
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+      }));
+      
+      setContinuousMsaData(prev => ({
+        ...prev,
+        [ctq]: redoStates[ctq]
+      }));
+      
+      // Show undo button and hide redo button
+      setShowUndoButton(prev => ({
+        ...prev,
+        [ctq]: true
+      }));
+      
+      setShowRedoButton(prev => ({
+        ...prev,
+        [ctq]: false
+      }));
+      
+      setRedoStates(prev => {
+        const newStates = { ...prev };
+        delete newStates[ctq];
+        return newStates;
+      });
+      
+      toast({
+        title: "Redo Successful",
+        description: "Restored redone table data",
       });
     }
   };
@@ -1637,8 +1835,23 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                       step="0.01"
                                       value={row[field as keyof ContinuousAnalysisRow] as number | null ?? ''}
                                       onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, e.target.value)}
+                                      onPaste={(e) => {
+                                        e.preventDefault();
+                                        const pasteData = e.clipboardData.getData('text');
+                                        handleFocusedCellPaste(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, pasteData);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+                                          e.preventDefault();
+                                          handleUndo(ctqItem.ctq);
+                                        } else if (e.ctrlKey && e.shiftKey && e.key === 'Z') {
+                                          e.preventDefault();
+                                          handleRedo(ctqItem.ctq);
+                                        }
+                                      }}
                                       className="w-20"
                                       disabled={(repetitions === 2 && field.includes('_rep3')) || (numberOfAppraisers === 2 && field.includes('app3_'))}
+                                      title="Click to focus, then Ctrl+V to paste data starting from this cell"
                                     />
                                   </TableCell>
                                 ))}
@@ -1670,6 +1883,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   </div>
 
+                  {/* Paste Instructions */}
+                  <div className="bg-green-50 p-3 rounded-lg mb-4">
+                    <h4 className="text-sm font-medium text-green-800 mb-2">📋 Excel Copy-Paste Instructions</h4>
+                    <div className="text-xs text-green-700 space-y-1">
+                      <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
+                      <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
+                      <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
+                      <p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p>
+                      <p>• Data will automatically create new rows if needed</p>
+                    </div>
+                  </div>
+
                   <div className="flex justify-between pt-4">
                     <div className="flex gap-2">
                       <Button
@@ -1679,47 +1904,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Row
-                      </Button>
-                      {/*
-                      <Button
-                        onClick={async () => {
-                          try {
-                            // Read directly from clipboard
-                            const clipboardData = await navigator.clipboard.readText();
-                            
-                            if (!clipboardData.trim()) {
-                              toast({
-                                title: "No Data Found",
-                                description: "No data found in clipboard. Please copy data from Excel first.",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-                            
-                            // Create a synthetic paste event
-                            const syntheticEvent = {
-                              preventDefault: () => {},
-                              clipboardData: {
-                                getData: () => clipboardData
-                              }
-                            } as unknown as React.ClipboardEvent;
-                            
-                            // Call the paste handler directly
-                            handlePasteData(ctqItem.ctq, syntheticEvent);
-                            
-                          } catch (error) {
-                            toast({
-                              title: "Clipboard Permission Required",
-                              description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="text-green-700 border-green-300 hover:bg-green-50"
-                      >
-                        📋 Paste from Excel
                       </Button>
                       
                       {showUndoButton[ctqItem.ctq] && (
@@ -1733,7 +1917,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           Undo Paste
                         </Button>
                       )}
-                      */}
+                      
+                      {showRedoButton[ctqItem.ctq] && (
+                        <Button
+                          onClick={() => handleRedo(ctqItem.ctq)}
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-700 border-blue-300 hover:bg-blue-50"
+                        >
+                          <Undo2 className="h-4 w-4 mr-2 scale-x-[-1]" />
+                          Redo Paste
+                        </Button>
+                      )}
+                      
                         <Button
                           onClick={() => toggleContinuousStatistics(ctqItem.ctq)}
                           variant="secondary"
