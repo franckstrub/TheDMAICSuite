@@ -26,6 +26,12 @@ interface ProcessCapabilityData {
   showZ: boolean; // For attribute CTQs
   conclusion: string;
 }
+
+interface DataPoint {
+  id?: number;
+  indexNumber: number;
+  dataValue: number;
+}
 interface CtqWithType {
   ctq: string;
   ctqType: "Attribute" | "Continuous";
@@ -39,6 +45,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const { toast } = useToast();
   const [capabilityData, setCapabilityData] = useState<{ [ctq: string]: ProcessCapabilityData }>({});
   const [activeTab, setActiveTab] = useState<string>("");
+  const [dataPoints, setDataPoints] = useState<{ [ctq: string]: DataPoint[] }>({});
+  const [inputValues, setInputValues] = useState<{ [ctq: string]: string }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
