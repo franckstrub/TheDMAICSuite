@@ -216,7 +216,27 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const saveCapability = (ctq: string) => {
     const data = capabilityData[ctq];
     if (data) {
-      saveCapabilityMutation.mutate(data);
+      // Transform data to match schema expectations
+      const transformedData = {
+        ...data,
+        // Ensure numeric fields are properly typed
+        sampleSize: data.sampleSize ? Number(data.sampleSize) : null,
+        zShift: Number(data.zShift) || 1.5,
+        // Ensure dataSetTerm is properly typed
+        dataSetTerm: data.dataSetTerm || "Long Term",
+        // Remove any undefined fields
+        projectId: undefined, // This will be added by the server
+        id: undefined, // This should not be included in POST
+      };
+      
+      // Remove undefined values
+      Object.keys(transformedData).forEach(key => {
+        if (transformedData[key as keyof typeof transformedData] === undefined) {
+          delete transformedData[key as keyof typeof transformedData];
+        }
+      });
+      
+      saveCapabilityMutation.mutate(transformedData);
     }
   };
 
