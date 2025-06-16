@@ -254,6 +254,110 @@ function inverseErrorFunction(x: number): number {
 }
 
 /**
+ * Calculate quartiles for box plot
+ * @param values Array of values
+ * @returns Object with quartile values
+ */
+export function calculateQuartiles(values: number[]): {
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
+} {
+  if (values.length === 0) {
+    return { min: 0, q1: 0, median: 0, q3: 0, max: 0 };
+  }
+  
+  const sorted = [...values].sort((a, b) => a - b);
+  const n = sorted.length;
+  
+  const min = sorted[0];
+  const max = sorted[n - 1];
+  const medianValue = median(values);
+  
+  // Calculate Q1 and Q3
+  const q1Index = Math.floor(n * 0.25);
+  const q3Index = Math.floor(n * 0.75);
+  
+  const q1 = sorted[q1Index];
+  const q3 = sorted[q3Index];
+  
+  return { min, q1, median: medianValue, q3, max };
+}
+
+/**
+ * Calculate moving range for control charts
+ * @param values Array of values
+ * @returns Array of moving ranges
+ */
+export function calculateMovingRange(values: number[]): number[] {
+  if (values.length < 2) return [];
+  
+  const movingRanges: number[] = [];
+  for (let i = 1; i < values.length; i++) {
+    movingRanges.push(Math.abs(values[i] - values[i - 1]));
+  }
+  
+  return movingRanges;
+}
+
+/**
+ * Calculate control limits for Individual chart
+ * @param values Array of values
+ * @returns Control limits object
+ */
+export function calculateIndividualControlLimits(values: number[]): {
+  centerLine: number;
+  ucl: number;
+  lcl: number;
+} {
+  if (values.length < 2) {
+    return { centerLine: 0, ucl: 0, lcl: 0 };
+  }
+  
+  const centerLine = mean(values);
+  const movingRanges = calculateMovingRange(values);
+  const avgMovingRange = mean(movingRanges);
+  
+  // Constants for Individual chart (d2 = 1.128 for n=2)
+  const d2 = 1.128;
+  const estimatedSigma = avgMovingRange / d2;
+  
+  const ucl = centerLine + 3 * estimatedSigma;
+  const lcl = centerLine - 3 * estimatedSigma;
+  
+  return { centerLine, ucl, lcl };
+}
+
+/**
+ * Calculate control limits for Moving Range chart
+ * @param values Array of values
+ * @returns Control limits object
+ */
+export function calculateMovingRangeControlLimits(values: number[]): {
+  centerLine: number;
+  ucl: number;
+  lcl: number;
+} {
+  if (values.length < 2) {
+    return { centerLine: 0, ucl: 0, lcl: 0 };
+  }
+  
+  const movingRanges = calculateMovingRange(values);
+  const centerLine = mean(movingRanges);
+  
+  // Constants for Moving Range chart (D3 = 0, D4 = 3.267 for n=2)
+  const D3 = 0;
+  const D4 = 3.267;
+  
+  const ucl = D4 * centerLine;
+  const lcl = D3 * centerLine;
+  
+  return { centerLine, ucl, lcl };
+}
+
+/**
  * Get frequency distribution for histogram data
  * @param values Array of values
  * @param bins Number of bins for the histogram
