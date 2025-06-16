@@ -309,48 +309,34 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return;
       }
       
-      // Apply the pasted data by completely preserving original values before startIndex
+      // Apply the pasted data starting from the correct startIndex
       setDataPoints(prev => {
         const currentData = [...(prev[ctq] || [])];
         
-        // Preserve original values before startIndex - CRITICAL: never modify these
-        const preservedData = currentData.slice(0, startIndex);
+        // Calculate the end index for the paste operation
+        const endIndex = startIndex + parsedValues.length - 1;
         
-        // Calculate how many cells we need total
-        const totalNeeded = startIndex + parsedValues.length;
-        
-        // Build new array: preserved data + pasted data + any additional cells needed
-        const newData = [];
-        
-        // Add preserved data (indices 0 to startIndex-1)
-        for (let i = 0; i < startIndex; i++) {
-          if (i < preservedData.length) {
-            newData.push({ ...preservedData[i] });
-          } else {
-            newData.push({
-              indexNumber: i + 1,
-              dataValue: 0
-            });
-          }
-        }
-        
-        // Add pasted data (indices startIndex to startIndex + parsedValues.length - 1)
-        for (let i = 0; i < parsedValues.length; i++) {
-          newData.push({
-            indexNumber: startIndex + i + 1,
-            dataValue: parsedValues[i]
+        // Extend array if needed to accommodate the paste range
+        while (currentData.length <= endIndex) {
+          currentData.push({
+            indexNumber: currentData.length + 1,
+            dataValue: 0
           });
         }
         
-        // Add any remaining original data beyond the paste range
-        const pasteEndIndex = startIndex + parsedValues.length;
-        for (let i = pasteEndIndex; i < currentData.length; i++) {
-          newData.push({ ...currentData[i] });
-        }
+        // Replace values ONLY from startIndex to endIndex (inclusive)
+        // Do not modify any cells before startIndex
+        parsedValues.forEach((value, i) => {
+          const targetIndex = startIndex + i;
+          currentData[targetIndex] = {
+            indexNumber: targetIndex + 1,
+            dataValue: value
+          };
+        });
         
         return {
           ...prev,
-          [ctq]: newData
+          [ctq]: currentData
         };
       });
       
@@ -816,36 +802,43 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       {/* Paste from Excel Section */}
                       <div className="mt-4 space-y-3">
                         <div className="border-t pt-3">
-                          
-                          
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                              onClick={() => {
-                                if (pasteInputs[ctq]?.trim()) {
-                                  handlePasteFromExcel(ctq, pasteInputs[ctq]);
-                                  setPasteInputs(prev => ({ ...prev, [ctq]: "" }));
-                                }
-                              }}
-                              disabled={!pasteInputs[ctq]?.trim()}
-                              size="sm"
-                              variant="outline"
-                              className="flex items-center gap-1"
-                            >
-                              Paste from Excel
-                            </Button>
-                            {undoStates[ctq] && (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={pasteInputs[ctq] || ""}
+                              onChange={(e) => setPasteInputs(prev => ({ ...prev, [ctq]: e.target.value }))}
+                              placeholder="Copy data from Excel and paste here..."
+                              rows={3}
+                              className="text-sm"
+                            />
+                            <div className="flex gap-2">
                               <Button
-                                onClick={() => handleUndo(ctq)}
+                                onClick={() => {
+                                  if (pasteInputs[ctq]?.trim()) {
+                                    handlePasteFromExcel(ctq, pasteInputs[ctq]);
+                                    setPasteInputs(prev => ({ ...prev, [ctq]: "" }));
+                                  }
+                                }}
+                                disabled={!pasteInputs[ctq]?.trim()}
                                 size="sm"
                                 variant="outline"
-                                className="flex items-center gap-1 text-xs"
+                                className="flex items-center gap-1"
                               >
-                                <Undo className="h-3 w-3" />
-                                Undo Paste
+                                Paste from Excel
                               </Button>
-                            )}
+                              {undoStates[ctq] && (
+                                <Button
+                                  onClick={() => handleUndo(ctq)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex items-center gap-1 text-xs"
+                                >
+                                  <Undo className="h-3 w-3" />
+                                  Undo Paste
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel and paste here</p>
+                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel and paste into the textarea above</p>
                         </div>
                         <div className="flex justify-between items-center">
                           <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
