@@ -328,12 +328,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         // Do not modify any cells before startIndex
         parsedValues.forEach((value, i) => {
           const targetIndex = startIndex + i;
-          if (targetIndex < currentData.length) {
-            currentData[targetIndex] = {
-              indexNumber: targetIndex + 1,
-              dataValue: value
-            };
-          }
+          currentData[targetIndex] = {
+            indexNumber: targetIndex + 1,
+            dataValue: value
+          };
         });
         
         return {
@@ -796,23 +794,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="font-medium text-blue-700 mb-1">Excel Import Instructions:</div>
                         <div className="text-sm text-blue-600">
-                          • Focus on any cell and paste (Ctrl+V) to fill down from that position
                           • Copy numeric values from Excel and paste directly into the table
-                          • Use individual cells for precise data entry
-                          • Or use the "Paste from Excel" button below for bulk import
+                          • Focus on any cell and paste (Ctrl+V) to fill down from that position
                         </div>
                       </div>
 
                       {/* Paste from Excel Section */}
                       <div className="mt-4 space-y-3">
                         <div className="border-t pt-3">
-                          <label className="block text-sm font-medium mb-2">Or paste from Excel:</label>
-                          <textarea
-                            placeholder="Paste numeric values from Excel (one per line)"
-                            className="w-full h-20 p-2 border rounded text-sm resize-none"
-                            value={pasteInputs[ctq] || ""}
-                            onChange={(e) => setPasteInputs(prev => ({ ...prev, [ctq]: e.target.value }))}
-                          />
+                          
+                          
                           <div className="flex gap-2 mt-2">
                             <Button
                               onClick={() => {

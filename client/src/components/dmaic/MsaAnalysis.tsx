@@ -1777,7 +1777,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       tabIndex={0}
                     >
                       {/* Only show scroll indicator if 3 repeats or 3 Appraisers */}
-                      {(continuousMsaData[ctqItem.ctq].repetitions > 2 || continuousMsaData[ctqItem.ctq].numberOfAppraisers > 2) && (
+                      {(continuousMsaData[ctqItem.ctq]?.repetitions > 2 || continuousMsaData[ctqItem.ctq]?.numberOfAppraisers > 2) && (
                       <div className="relative">
                         <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
                         ← Scroll horizontally →
