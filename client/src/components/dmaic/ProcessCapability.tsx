@@ -180,20 +180,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Mutation to save data points (JSON array)
   const saveDataPointMutation = useMutation({
     mutationFn: async ({ processCapabilityId, dataPoints }: { processCapabilityId: number, dataPoints: number[] }) => {
-      return await apiRequest('POST', `/api/process-capability/${processCapabilityId}/data`, { dataPoints });
+      console.log("Mutation function called with:", { processCapabilityId, dataPoints });
+      const response = await apiRequest('POST', `/api/process-capability/${processCapabilityId}/data`, { dataPoints });
+      console.log("API response:", response);
+      return response;
     },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Data point saved successfully",
-      });
+    onSuccess: (data) => {
+      console.log("Mutation succeeded:", data);
+      // Don't show toast here as it's handled in saveAllDataPoints
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to save data point: ${error}`,
-        variant: "destructive",
-      });
+      console.error("Mutation failed:", error);
+      // Don't show toast here as it's handled in saveAllDataPoints
     },
   });
 
