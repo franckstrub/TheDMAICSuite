@@ -112,6 +112,33 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     },
   });
 
+  // Function to load data points for a specific process capability
+  const loadDataPoints = async (processCapabilityId: number) => {
+    const response = await fetch(`/api/process-capability/${processCapabilityId}/data`);
+    const data = await response.json();
+    return data.dataPoints || [];
+  };
+
+  // Mutation to save a data point
+  const saveDataPointMutation = useMutation({
+    mutationFn: async ({ processCapabilityId, indexNumber, dataValue }: { processCapabilityId: number, indexNumber: number, dataValue: number }) => {
+      return await apiRequest(`/api/process-capability/${processCapabilityId}/data`, 'POST', { indexNumber, dataValue });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Data point saved successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to save data point: ${error}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Get CTQs from centralized endpoint
   const getCTQs = () => {
     // Use centralized CTQs endpoint which aggregates from all sources
@@ -131,6 +158,85 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
     return [];
   };
+
+  // Functions to handle data input for continuous CTQs
+  const addDataPoint = async (ctq: string, value: string) => {
+    const processCapabilityId = capabilityData[ctq]?.id;
+    if (!processCapabilityId || !value.trim()) return;
+    
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return;
+    
+    const currentPoints = dataPoints[ctq] || [];
+    const nextIndex = currentPoints.length + 1;
+    
+    try {
+      await saveDataPointMutation.mutateAsync({
+        processCapabilityId,
+        indexNumber: nextIndex,
+        dataValue: numericValue
+      });
+      
+      // Update local state
+      const newDataPoint: DataPoint = {
+        indexNumber: nextIndex,
+        dataValue: numericValue
+      };
+      
+      setDataPoints(prev => ({
+        ...prev,
+        [ctq]: [...(prev[ctq] || []), newDataPoint]
+      }));
+      
+      // Clear input value
+      setInputValues(prev => ({
+        ...prev,
+        [ctq]: ""
+      }));
+    } catch (error) {
+      console.error("Failed to save data point:", error);
+    }
+  };
+
+  const handleDataInput = async (ctq: string, value: string, index?: number) => {
+    if (index === undefined) {
+      // Adding new data point
+      if (value.trim() && !isNaN(parseFloat(value))) {
+        await addDataPoint(ctq, value);
+      }
+    } else {
+      // Just updating input value for display
+      setInputValues(prev => ({
+        ...prev,
+        [ctq]: value
+      }));
+    }
+  };
+
+  const loadDataPointsForCtq = async (ctq: string) => {
+    const processCapabilityId = capabilityData[ctq]?.id;
+    if (!processCapabilityId) return;
+    
+    try {
+      const points = await loadDataPoints(processCapabilityId);
+      setDataPoints(prev => ({
+        ...prev,
+        [ctq]: points
+      }));
+    } catch (error) {
+      console.error("Failed to load data points:", error);
+    }
+  };
+
+  // Load data points when process capability data is loaded
+  useEffect(() => {
+    const ctqs = getCtqsWithTypes();
+    ctqs.forEach(({ ctq }) => {
+      if (capabilityData[ctq]?.id) {
+        loadDataPointsForCtq(ctq);
+      }
+    });
+  }, [capabilityData]);
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
@@ -443,6 +549,65 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     </>
                   )}
                 </div>
+
+                {/* Data Input Section for Continuous CTQs */}
+                {ctqWithType.ctqType === "Continuous" && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Data Input</label>
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="max-h-64 overflow-y-auto">
+                          <table className="w-full">
+                            <thead className="bg-gray-50 sticky top-0">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-r">Index</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Data Value</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {/* Existing data points */}
+                              {(dataPoints[ctq] || []).map((point, index) => (
+                                <tr key={index} className="border-t">
+                                  <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">{point.indexNumber}</td>
+                                  <td className="px-4 py-2">
+                                    <span className="text-sm">{point.dataValue}</span>
+                                  </td>
+                                </tr>
+                              ))}
+                              {/* Input row for new data */}
+                              <tr className="border-t">
+                                <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">
+                                  {(dataPoints[ctq] || []).length + 1}
+                                </td>
+                                <td className="px-4 py-2">
+                                  <Input
+                                    type="number"
+                                    step="any"
+                                    value={inputValues[ctq] || ""}
+                                    onChange={(e) => setInputValues(prev => ({ ...prev, [ctq]: e.target.value }))}
+                                    onKeyDown={async (e) => {
+                                      if (e.key === 'Enter') {
+                                        await handleDataInput(ctq, inputValues[ctq] || "");
+                                      }
+                                    }}
+                                    onBlur={async () => {
+                                      if (inputValues[ctq]?.trim()) {
+                                        await handleDataInput(ctq, inputValues[ctq]);
+                                      }
+                                    }}
+                                    placeholder="Enter numeric value"
+                                    className="border-none p-1 h-8 text-sm"
+                                  />
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Enter data values and press Enter or click away to save</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   <div>
