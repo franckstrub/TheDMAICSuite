@@ -935,6 +935,10 @@ export const insertMsaAnalysisSchema = createInsertSchema(msaAnalysis).omit({
 export type InsertMsaAnalysis = z.infer<typeof insertMsaAnalysisSchema>;
 export type MsaAnalysis = typeof msaAnalysis.$inferSelect;
 
+// Data set term types for process capability
+export const dataSetTermTypes = ["Long Term", "Short Term"] as const;
+export type DataSetTermType = typeof dataSetTermTypes[number];
+
 // Process Capability for each CTQ
 export const processCapability = pgTable("process_capability", {
   id: serial("id").primaryKey(),
@@ -946,6 +950,8 @@ export const processCapability = pgTable("process_capability", {
   lsl: text("lsl"), // Lower Specification Limit
   usl: text("usl"), // Upper Specification Limit
   target: text("target"), // Target value
+  zShift: real("z_shift").default(1.5), // Z-shift value (default 1.5)
+  dataSetTerm: text("data_set_term").$type<DataSetTermType>().default("Long Term"), // Data set term (Long Term or Short Term)
   cp: text("cp"), // Process Capability Index
   cpk: text("cpk"), // Process Capability Index (one-sided)
   pp: text("pp"), // Process Performance Index

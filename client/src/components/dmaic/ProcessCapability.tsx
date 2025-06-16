@@ -20,6 +20,8 @@ interface ProcessCapabilityData {
   lsl: string;
   usl: string;
   target: string;
+  zShift: number;
+  dataSetTerm: "Long Term" | "Short Term";
   cp: string;
   cpk: string;
   pp: string;
