@@ -231,34 +231,77 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Function to handle Excel paste functionality
-  const handlePasteFromExcel = (ctq: string, pastedData: string) => {
-    const lines = pastedData.trim().split('\n');
-    const values: number[] = [];
-    
-    for (const line of lines) {
-      const cleanValue = line.trim().replace(/[^\d.-]/g, '');
-      const numericValue = parseFloat(cleanValue);
-      if (!isNaN(numericValue)) {
-        values.push(numericValue);
-      }
-    }
-    
-    if (values.length > 0) {
-      // Convert to DataPoint format for local state
-      const dataPointsArray = values.map((value, index) => ({
-        indexNumber: index + 1,
-        dataValue: value
-      }));
+  // Function to handle focused cell paste for data input
+  const handleFocusedCellPaste = (ctq: string, startIndex: number, pasteData: string) => {
+    try {
+      // Parse tab-separated or comma-separated values (Excel format)
+      const rows = pasteData.trim().split('\n');
+      const parsedValues: number[] = [];
       
-      setDataPoints(prev => ({
-        ...prev,
-        [ctq]: dataPointsArray
-      }));
+      rows.forEach(row => {
+        // Split by tabs first (Excel default), then by commas if no tabs
+        const cells = row.includes('\t') ? row.split('\t') : row.split(',');
+        
+        cells.forEach(cell => {
+          const trimmedCell = cell.trim();
+          if (trimmedCell !== '' && trimmedCell !== '-') {
+            const parsed = parseFloat(trimmedCell);
+            if (!isNaN(parsed) && isFinite(parsed)) {
+              parsedValues.push(parsed);
+            }
+          }
+        });
+      });
+      
+      if (parsedValues.length === 0) {
+        toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Apply the pasted data starting from the focused position
+      setDataPoints(prev => {
+        const currentData = [...(prev[ctq] || [])];
+        
+        // Fill in data starting from the focused index
+        parsedValues.forEach((value, i) => {
+          const targetIndex = startIndex + i;
+          
+          // Extend array if needed
+          while (currentData.length <= targetIndex) {
+            currentData.push({
+              indexNumber: currentData.length + 1,
+              dataValue: 0
+            });
+          }
+          
+          // Update the value at the target position
+          currentData[targetIndex] = {
+            indexNumber: targetIndex + 1,
+            dataValue: value
+          };
+        });
+        
+        return {
+          ...prev,
+          [ctq]: currentData
+        };
+      });
       
       toast({
         title: "Success",
-        description: `Added ${values.length} data points from Excel`,
+        description: `Pasted ${parsedValues.length} data points starting from position ${startIndex + 1}`,
+      });
+      
+    } catch (error) {
+      console.error("Error pasting data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to paste data. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -605,7 +648,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Data Input</label>
-                      <div className="border rounded-lg overflow-hidden">
+                      <div 
+                        className="border rounded-lg overflow-hidden"
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const pasteData = e.clipboardData.getData('text');
+                          handleFocusedCellPaste(ctq, 0, pasteData);
+                        }}
+                        tabIndex={0}
+                      >
                         <div className="max-h-64 overflow-y-auto">
                           <table className="w-full">
                             <thead className="bg-gray-50 sticky top-0">
@@ -615,12 +666,32 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               </tr>
                             </thead>
                             <tbody>
-                              {/* Existing data points */}
+                              {/* Existing data points with editable cells */}
                               {(dataPoints[ctq] || []).map((point, index) => (
                                 <tr key={index} className="border-t">
                                   <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">{point.indexNumber}</td>
                                   <td className="px-4 py-2">
-                                    <span className="text-sm">{point.dataValue}</span>
+                                    <Input
+                                      type="number"
+                                      step="any"
+                                      value={point.dataValue}
+                                      onChange={(e) => {
+                                        const newValue = parseFloat(e.target.value);
+                                        if (!isNaN(newValue)) {
+                                          setDataPoints(prev => {
+                                            const updated = [...(prev[ctq] || [])];
+                                            updated[index] = { ...updated[index], dataValue: newValue };
+                                            return { ...prev, [ctq]: updated };
+                                          });
+                                        }
+                                      }}
+                                      onPaste={(e) => {
+                                        e.preventDefault();
+                                        const pasteData = e.clipboardData.getData('text');
+                                        handleFocusedCellPaste(ctq, index, pasteData);
+                                      }}
+                                      className="border-none p-1 h-8 text-sm w-full"
+                                    />
                                   </td>
                                 </tr>
                               ))}
@@ -641,6 +712,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           handleAddDataPoint(ctq);
                                         }
                                       }}
+                                      onPaste={(e) => {
+                                        e.preventDefault();
+                                        const pasteData = e.clipboardData.getData('text');
+                                        handleFocusedCellPaste(ctq, (dataPoints[ctq] || []).length, pasteData);
+                                      }}
                                       placeholder="Enter numeric value"
                                       className="border-none p-1 h-8 text-sm flex-1"
                                     />
@@ -660,33 +736,28 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           </table>
                         </div>
                       </div>
-                      <div className="mt-4 space-y-3">
-                        <div className="border-t pt-3">
-                          <label className="block text-sm font-medium mb-2">Or paste from Excel:</label>
-                          <textarea
-                            placeholder="Paste numeric values from Excel (one per line)"
-                            className="w-full h-20 p-2 border rounded text-sm resize-none"
-                            onPaste={(e) => {
-                              e.preventDefault();
-                              const pastedData = e.clipboardData.getData('text');
-                              handlePasteFromExcel(ctq, pastedData);
-                            }}
-                          />
-                          <p className="text-xs text-gray-500 mt-1">Copy numeric values from Excel and paste here</p>
+                      {/* Excel Import Instructions */}
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="font-medium text-blue-700 mb-1">Excel Import Instructions:</div>
+                        <div className="text-sm text-blue-600">
+                          • Focus on any cell and paste (Ctrl+V) to fill down from that position
+                          • Copy numeric values from Excel and paste directly into the table
+                          • Use individual cells for precise data entry
                         </div>
-                        <div className="flex justify-between items-center">
-                          <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
-                          <Button
-                            onClick={() => saveAllDataPoints(ctq)}
-                            disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
-                            size="sm"
-                            variant="outline"
-                            className="flex items-center gap-1"
-                          >
-                            <Save className="h-3 w-3" />
-                            {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
-                          </Button>
-                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center mt-4">
+                        <p className="text-xs text-gray-500">Enter data values manually or paste from Excel, then Save Data to persist to database</p>
+                        <Button
+                          onClick={() => saveAllDataPoints(ctq)}
+                          disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
+                          size="sm"
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          <Save className="h-3 w-3" />
+                          {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
+                        </Button>
                       </div>
                     </div>
                   </div>
