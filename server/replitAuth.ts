@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./databaseStorage";
+import { OrganizationService } from "./organizationService";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -64,13 +65,34 @@ async function upsertUser(
   const hasCustomProfileImage = existingUser?.profileImageUrl && 
     existingUser.profileImageUrl.startsWith('/uploads/');
   
+  // Create organization service instance
+  const organizationService = new OrganizationService();
+  
+  // Determine user type based on company name
+  const userType = claims["company_name"] ? 'enterprise_small' : 'individual';
+  
+  // Get or create organization for the user
+  const organization = await organizationService.getOrCreateUserOrganization(
+    claims["sub"], 
+    userType as any, 
+    {
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      companyName: claims["company_name"]
+    }
+  );
+  
   const userData = {
     id: claims["sub"],
+    organizationId: organization.id,
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
+    companyName: claims["company_name"],
     // Only use OAuth profile image if user doesn't have a custom uploaded image
     profileImageUrl: hasCustomProfileImage ? existingUser.profileImageUrl : claims["profile_image_url"],
+    // Preserve existing role or use default
+    role: existingUser?.role || 'admin',
   };
   
   await storage.upsertUser(userData);
