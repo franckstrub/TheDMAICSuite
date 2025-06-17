@@ -2740,7 +2740,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Management Routes (Super Admin only)
   app.get("/api/admin/users", isAuthenticated, async (req, res) => {
     try {
+      console.log("Admin users route - req.user:", req.user);
+      console.log("Admin users route - req.session:", req.session);
       if (!req.user || !req.user.id) {
+        console.log("User not authenticated in admin route");
         return res.status(401).json({ message: "User not authenticated" });
       }
       const currentUser = await storage.getUser(parseInt(req.user.id));
