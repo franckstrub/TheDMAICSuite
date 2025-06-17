@@ -1271,8 +1271,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <YAxis 
                                   label={{ value: 'Individual Value', angle: -90, position: 'insideBottomLeft' }}
                                   domain={[
-                                    Math.round(individualLimits.lcl * 100) / 100,
-                                    Math.round(individualLimits.ucl * 100) / 100
+                                    Math.round(Math.min(individualLimits.lcl, Math.min(...numericValues))),
+                                    Math.round(Math.max(individualLimits.ucl, Math.max(...numericValues)))
                                   ]}
                                 />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
