@@ -135,7 +135,7 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values([insertUser])
       .returning();
     return user;
   }
@@ -144,9 +144,17 @@ export class DatabaseStorage implements IStorage {
     const existingUser = await this.getUser(userData.id);
     
     if (existingUser) {
+      // If user exists but has no organization, create one
+      if (!existingUser.organizationId) {
+        const userType = userData.userType || 'individual';
+        const organization = await organizationService.getOrCreateUserOrganization(userData.id, userType, userData);
+        userData.organizationId = organization.id;
+      }
+      
       const [updatedUser] = await db
         .update(users)
         .set({
+          organizationId: userData.organizationId || existingUser.organizationId,
           email: userData.email,
           firstName: userData.firstName,
           lastName: userData.lastName,
@@ -160,6 +168,12 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updatedUser;
     } else {
+      // For new users, ensure they have an organization
+      if (!userData.organizationId) {
+        const userType = userData.userType || 'individual';
+        const organization = await organizationService.getOrCreateUserOrganization(userData.id, userType, userData);
+        userData.organizationId = organization.id;
+      }
       return await this.createUser(userData);
     }
   }
