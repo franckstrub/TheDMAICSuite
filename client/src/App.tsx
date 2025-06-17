@@ -66,12 +66,12 @@ function Router() {
         <>
           <Route path="/" component={HomePage} />
           <Route path="/app" component={HomePage} />
-          <Route path="/app/:tab" component={HomePage} />
-          <Route path="/app/:tab/:phase" component={HomePage} />
-          <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
           <Route path="/app/profile" component={ProfilePage} />
           <Route path="/app/settings" component={SettingsPage} />
           <Route path="/app/admin/users" component={UserManagement} />
+          <Route path="/app/:tab" component={HomePage} />
+          <Route path="/app/:tab/:phase" component={HomePage} />
+          <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
           <Route path="/mockup" component={MockupPage} />
         </>
       )}
