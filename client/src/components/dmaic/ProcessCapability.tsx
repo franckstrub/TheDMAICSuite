@@ -158,12 +158,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       if (!response.ok) throw new Error("Failed to save");
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast({
         title: "Success",
         description: "Process capability analysis saved successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
+      
+      // Preserve the current statistics visibility state before invalidating
+      const currentStatsState = { ...showStatistics };
+      
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] }).then(() => {
+        // Restore statistics visibility state after data refresh
+        setShowStatistics(currentStatsState);
+      });
     },
     onError: (error) => {
       toast({
@@ -466,8 +473,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           conclusion: "",
         };
         
-        // Load statistics visibility state from database
-        statisticsStates[ctq] = existingCapability?.showStatistics || false;
+        // Load statistics visibility state from database, but preserve current state if it exists
+        statisticsStates[ctq] = showStatistics[ctq] !== undefined ? showStatistics[ctq] : (existingCapability?.showStatistics || false);
       });
       
       setCapabilityData(initialData);
@@ -578,6 +585,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         showPercentage: Boolean(data.showPercentage),
         showZ: Boolean(data.showZ),
         conclusion: data.conclusion || "",
+        showStatistics: Boolean(showStatistics[ctq]), // Include current statistics visibility state
       };
       
       saveCapabilityMutation.mutate(transformedData);
