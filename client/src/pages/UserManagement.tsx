@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
+import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2, Copy, Info } from "lucide-react";
 import { UserRole } from "@shared/schema";
 
 interface User {
@@ -433,14 +433,52 @@ export default function UserManagement() {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Dashboard</span>
           </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              const currentUrl = window.location.origin;
+              navigator.clipboard.writeText(currentUrl);
+              toast({
+                title: "Link copied!",
+                description: "Share this link with new users to invite them to the platform.",
+              });
+            }}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            Copy Invite Link
+          </Button>
         </div>
       </div>
+
+      {/* Authentication Info Card */}
+      <Card className="mb-6 border-blue-200 bg-blue-50">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-blue-900 mb-1">How User Authentication Works</h3>
+              <p className="text-sm text-blue-700 mb-2">
+                This application uses Replit OAuth authentication. Here's how to invite new users:
+              </p>
+              <ol className="text-sm text-blue-700 space-y-1 ml-4">
+                <li>1. Create a user account below with their email and desired role</li>
+                <li>2. Share the application URL with them (use "Copy Invite Link" button)</li>
+                <li>3. They click "Login" and authenticate with their Replit account</li>
+                <li>4. The system matches their email and assigns the pre-configured role</li>
+              </ol>
+              <p className="text-xs text-blue-600 mt-2">
+                <strong>Note:</strong> Users must have a Replit account with the same email address you register here.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>System Users</CardTitle>
           <CardDescription>
-            Manage user roles and permissions. Only super admins can modify user roles.
+            Manage user roles and permissions. Users authenticate through Replit OAuth - send them the application URL to login with their Replit account.
           </CardDescription>
         </CardHeader>
         <CardContent>
