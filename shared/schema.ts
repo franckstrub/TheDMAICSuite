@@ -291,6 +291,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
 // SIPOC Diagrams
 export const sipocDiagrams = pgTable("sipoc_diagrams", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   processName: text("process_name"),
   suppliers: text("suppliers"),
@@ -376,6 +377,7 @@ export const insertSipocSchema = createInsertSchema(sipocDiagrams).pick({
 // Customer Requirements
 export const customerRequirements = pgTable("customer_requirements", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   requirement: text("requirement").notNull(),
   customerRequirement: text("customer_requirement"),
@@ -397,6 +399,7 @@ export const insertRequirementSchema = createInsertSchema(customerRequirements).
 // Business Requirements
 export const businessRequirements = pgTable("business_requirements", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   requirement: text("requirement").notNull(),
   businessNeed: text("business_need"),
@@ -416,6 +419,7 @@ export const insertBusinessRequirementSchema = createInsertSchema(businessRequir
 // Datasets
 export const datasets = pgTable("datasets", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   name: text("name").notNull(),
   description: text("description"),
   projectId: integer("project_id"),
@@ -449,6 +453,7 @@ export type CollectionMethodType = typeof collectionMethodTypes[number];
 // Data Collection Plans
 export const dataCollectionPlans = pgTable("data_collection_plans", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(),
   operationalDefinition: text("operational_definition"),
@@ -484,6 +489,7 @@ export const insertPlanSchema = createInsertSchema(dataCollectionPlans).pick({
 // Storage Configuration
 export const storageConfigs = pgTable("storage_configs", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   userId: integer("user_id").notNull(),
   cloudEnabled: boolean("cloud_enabled").notNull().default(true),
   cloudRegion: text("cloud_region"),
