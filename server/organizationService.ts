@@ -85,26 +85,45 @@ export class OrganizationService {
   }
 
   /**
-   * Generates a unique organization name for individual users
+   * Generates organization name for individual users using company_name or user data
    */
-  private async generateUniqueIndividualOrgName(userId: string): Promise<string> {
-    const baseNames = [
-      `${userId}-workspace`,
-      `${userId}-projects`,
-      `${userId}-personal-org`,
-      `user-${userId}-org`,
-      `individual-${userId}`
-    ];
-
-    for (const baseName of baseNames) {
-      const existing = await db.select().from(organizations).where(eq(organizations.name, baseName));
-      if (existing.length === 0) {
-        return baseName;
-      }
+  private async generateIndividualOrgName(firstName?: string, lastName?: string, email?: string, userId?: string): Promise<string> {
+    // Build organization name from user data with "Private Individual" extension
+    let orgName = '';
+    
+    if (firstName && lastName) {
+      orgName = `${firstName} ${lastName} Private Individual`;
+    } else if (firstName) {
+      orgName = `${firstName} Private Individual`;
+    } else if (email) {
+      const emailPrefix = email.split('@')[0];
+      orgName = `${emailPrefix} Private Individual`;
+    } else if (userId) {
+      orgName = `${userId} Private Individual`;
+    } else {
+      orgName = `User Organization Private Individual`;
     }
 
-    // Fallback with timestamp
-    return `${userId}-org-${Date.now()}`;
+    // Ensure uniqueness
+    let finalOrgName = orgName;
+    let counter = 1;
+    while (true) {
+      const [existingOrg] = await db.select().from(organizations).where(eq(organizations.name, finalOrgName));
+      if (!existingOrg) {
+        break;
+      }
+      finalOrgName = `${orgName} ${counter}`;
+      counter++;
+    }
+
+    return finalOrgName;
+  }
+
+  /**
+   * Generates a unique organization name for individual users (legacy method)
+   */
+  private async generateUniqueIndividualOrgName(userId: string): Promise<string> {
+    return await this.generateIndividualOrgName(undefined, undefined, undefined, userId);
   }
 
   /**

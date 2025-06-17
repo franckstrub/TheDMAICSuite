@@ -64,14 +64,16 @@ async function upsertUser(
   const hasCustomProfileImage = existingUser?.profileImageUrl && 
     existingUser.profileImageUrl.startsWith('/uploads/');
   
-  await storage.upsertUser({
+  const userData = {
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     // Only use OAuth profile image if user doesn't have a custom uploaded image
     profileImageUrl: hasCustomProfileImage ? existingUser.profileImageUrl : claims["profile_image_url"],
-  });
+  };
+  
+  await storage.upsertUser(userData);
 }
 
 export async function setupAuth(app: Express) {

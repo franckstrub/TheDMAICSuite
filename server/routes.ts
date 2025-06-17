@@ -384,7 +384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create or get organization for the user
       const userType = userData.userType || 'individual';
-      const organization = await organizationService.getOrCreateUserOrganization(userData.id, userType);
+      const organization = await organizationService.getOrCreateUserOrganization(userData.id, userType, userData);
       
       // Create user with organization assignment
       const userWithOrg = { ...userData, organizationId: organization.id };
