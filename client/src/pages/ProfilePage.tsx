@@ -154,7 +154,8 @@ export default function ProfilePage() {
                 {user.role && (
                   <div className="flex items-center justify-center mb-4">
                     {(() => {
-                      const roleInfo = getRoleBadge(user.role);
+                      console.log("User role:", user.role, "Type:", typeof user.role);
+                      const roleInfo = getRoleBadge(user.role as UserRole);
                       const IconComponent = roleInfo.icon;
                       return (
                         <Badge 
@@ -168,6 +169,11 @@ export default function ProfilePage() {
                     })()}
                   </div>
                 )}
+                
+                {/* Debug: Show all user data */}
+                <div className="text-xs text-gray-400 mb-2">
+                  Role: {user.role || "undefined"} | ID: {user.id}
+                </div>
                 
                 <Badge variant="secondary" className="mb-4">
                   Verified Account
