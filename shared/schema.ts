@@ -675,7 +675,6 @@ export const insertRiskSchema = createInsertSchema(projectRisks).pick({
 
 // User insert schema
 export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
   createdAt: true,
   updatedAt: true,
 });

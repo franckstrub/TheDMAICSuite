@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./databaseStorage";
+import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import multer from "multer";
 import path from "path";
@@ -11,6 +11,7 @@ import {
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
+  insertUserSchema
 
 } from "@shared/schema";
 import { 
@@ -28,6 +29,7 @@ import { z } from "zod";
 import { ZodError } from "zod";
 // Using Google AI for mitigation plan, elevator speech, and engagement strategy generation
 import { generateMitigationPlan, generateElevatorSpeech, generateEngagementStrategy } from "./googleai";
+import { organizationService } from "./organizationService";
 import { registerGateReviewRoutes } from "./routes-gate-review";
 import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
@@ -374,15 +376,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userData = insertUserSchema.parse(req.body);
       
-      const existingUser = await storage.getUserByUsername(userData.username);
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(409).json({ message: "Username already exists" });
+        return res.status(409).json({ message: "Email already exists" });
       }
       
-      const user = await storage.createUser(userData);
-      const { password: _, ...userWithoutPassword } = user;
+      // Create or get organization for the user
+      const userType = userData.userType || 'individual';
+      const organization = await organizationService.getOrCreateUserOrganization(userData.id, userType);
       
-      return res.status(201).json({ user: userWithoutPassword });
+      // Create user with organization assignment
+      const userWithOrg = { ...userData, organizationId: organization.id };
+      const user = await storage.createUser(userWithOrg);
+      
+      return res.status(201).json({ user });
     } catch (err) {
       return handleErrors(err, res);
     }
