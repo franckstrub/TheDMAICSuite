@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, UserCheck, Settings } from "lucide-react";
+import { Shield, Users, UserCheck, Settings, X, ArrowLeft } from "lucide-react";
 import { UserRole } from "@shared/schema";
 
 interface User {
@@ -44,6 +45,7 @@ const roleIcons: Record<UserRole, JSX.Element> = {
 export default function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [selectedRoles, setSelectedRoles] = useState<Record<string, UserRole>>({});
 
   const { data: usersData, isLoading } = useQuery({
@@ -111,9 +113,20 @@ export default function UserManagement() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="flex items-center space-x-2 mb-6">
-          <Shield className="h-6 w-6" />
-          <h1 className="text-3xl font-bold">User Management</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-2">
+            <Shield className="h-6 w-6" />
+            <h1 className="text-3xl font-bold">User Management</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/app')}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Button>
         </div>
         <Card>
           <CardContent className="p-6">
@@ -128,9 +141,20 @@ export default function UserManagement() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex items-center space-x-2 mb-6">
-        <Shield className="h-6 w-6" />
-        <h1 className="text-3xl font-bold">User Management</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-2">
+          <Shield className="h-6 w-6" />
+          <h1 className="text-3xl font-bold">User Management</h1>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/app')}
+          className="flex items-center space-x-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Dashboard</span>
+        </Button>
       </div>
 
       <Card>
