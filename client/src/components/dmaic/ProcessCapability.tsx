@@ -1239,7 +1239,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               <LineChart data={individualData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
-                                <YAxis label={{ value: 'Value', angle: -90, position: 'insideLeft' }} />
+                                <YAxis 
+                                  label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
+                                  domain={[
+                                    Math.min(individualLimits.lcl, Math.min(...numericValues)) * 0.95,
+                                    Math.max(individualLimits.ucl, Math.max(...numericValues)) * 1.05
+                                  ]}
+                                />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
                                 <ReferenceLine 
                                   y={individualLimits.centerLine} 
