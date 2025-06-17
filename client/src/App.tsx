@@ -26,26 +26,38 @@ import UserManagement from "@/pages/UserManagement";
 function Router() {
   const [location, navigate] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
+  const [hasRestoredRoute, setHasRestoredRoute] = useState(false);
   
-  // Save the current route to localStorage whenever it changes
+  // Save the current route to localStorage whenever it changes (only for authenticated users)
   useEffect(() => {
-    if (location !== '/' && location !== '/app') {
+    if (isAuthenticated && location !== '/' && location !== '/app') {
       saveRouteToStorage(location);
       console.log('Saved current route to localStorage:', location);
     }
-  }, [location]);
+  }, [location, isAuthenticated]);
   
-  // On initial load, check if we have a stored route to navigate to
+  // On authentication success, restore the stored route
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated && !isLoading && !hasRestoredRoute) {
       const storedRoute = getStoredRoute();
-      // Restore to stored route if we're on root or /app paths, or if opening a new tab
-      if (storedRoute && (location === '/' || location === '/app')) {
+      console.log('Authentication successful, checking stored route:', storedRoute);
+      console.log('Current location:', location);
+      
+      // Restore route if we have one and we're on a default route
+      if (storedRoute && storedRoute !== '/' && storedRoute !== '/app' && (location === '/' || location === '/app')) {
         console.log('Restoring route from localStorage:', storedRoute);
-        navigate(storedRoute);
+        navigate(storedRoute, { replace: true });
       }
+      setHasRestoredRoute(true);
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, hasRestoredRoute, location, navigate]);
+  
+  // Reset restoration flag when authentication status changes
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setHasRestoredRoute(false);
+    }
+  }, [isAuthenticated]);
   
   // Show loading state while checking authentication
   if (isLoading) {
