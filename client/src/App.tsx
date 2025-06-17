@@ -19,7 +19,7 @@ import Landing from "@/pages/Landing";
 import LandingPage from "@/pages/LandingPage";
 import HomePage from "@/pages/HomePage";
 import MockupPage from "@/pages/MockupPage";
-import ProfilePage from "@/pages/ProfilePage";
+
 import SettingsPage from "@/pages/SettingsPage";
 import UserManagement from "@/pages/UserManagement";
 
