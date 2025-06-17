@@ -20,6 +20,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
+import { organizationService } from "./organizationService";
 
 // Type for User select operations
 type User = typeof users.$inferSelect;
