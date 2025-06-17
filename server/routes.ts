@@ -2740,7 +2740,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Management Routes (Super Admin only)
   app.get("/api/admin/users", isAuthenticated, async (req, res) => {
     try {
-      const currentUser = await storage.getUser(parseInt(req.session.user.id));
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      const currentUser = await storage.getUser(parseInt(req.user.id));
       if (!currentUser || currentUser.role !== 'super_admin') {
         return res.status(403).json({ message: "Access denied. Super admin privileges required." });
       }

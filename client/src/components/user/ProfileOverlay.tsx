@@ -144,9 +144,6 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
             <h1 className="text-2xl font-bold text-gray-900">Your Profile</h1>
             <p className="text-gray-600 mt-1">Manage your account information and preferences.</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
