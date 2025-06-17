@@ -921,6 +921,7 @@ export const msaAnalysis = pgTable("msa_analysis", {
   tolerance: real("tolerance"), // Tolerance field for Gage R&R calculations
   repetitions: integer("repetitions").default(2), // Number of repetitions per part (2 or 3)
   numberOfAppraisers: integer("number_of_appraisers").default(2), // Number of appraisers (2 or 3)
+  showStatistics: boolean("show_statistics").default(false), // Show/hide statistics section
   studyDateTime: timestamp("study_date_time"),
   justification: text("justification"), // Measurement System Precision & Accuracy justification
   
@@ -956,6 +957,7 @@ export const processCapability = pgTable("process_capability", {
   capabilityIndex: text("capability_index").$type<CapabilityIndexType>().default("Cp/Cpk"), // Z or Cp/Cpk
   showPercentage: boolean("show_percentage").default(false), // Show percentage display
   showZ: boolean("show_z").default(false), // Show Z for attribute CTQs
+  showStatistics: boolean("show_statistics").default(false), // Show/hide statistics section
   dataPoints: jsonb("data_points").$type<number[]>().default([]), // JSON array of numeric data points
   conclusion: text("conclusion"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
