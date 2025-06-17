@@ -1209,6 +1209,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     const individualLimits = calculateIndividualControlLimits(numericValues);
                     const mrLimits = calculateMovingRangeControlLimits(numericValues);
 
+                    // Debug MR limits
+                    console.log("MR Limits:", mrLimits);
+                    console.log("Moving Ranges:", movingRanges);
+                    console.log("Max MR value:", Math.max(...movingRanges));
+
                     // Box plot data
                     const boxPlotData = [
                       {
@@ -1293,7 +1298,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               <LineChart data={movingRangeData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
-                                <YAxis label={{ value: 'Moving Range', angle: -90, position: 'insideLeft' }} />
+                                <YAxis 
+                                  label={{ value: 'Moving Range', angle: -90, position: 'insideLeft' }}
+                                  domain={[0, 'dataMax']}
+                                />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Moving Range']} />
                                 <ReferenceLine 
                                   y={mrLimits.centerLine} 
@@ -1311,20 +1319,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   strokeDasharray="4 4" 
                                   label={{ 
                                     value: `UCL=${mrLimits.ucl.toFixed(3)}`, 
-                                    position: "insideTopLeft",
+                                    position: "insideTopRight",
                                     style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
                                   }} 
                                 />
-                                <ReferenceLine 
-                                  y={mrLimits.lcl} 
-                                  stroke="#dc2626" 
-                                  strokeDasharray="4 4" 
-                                  label={{ 
-                                    value: `LCL=${mrLimits.lcl.toFixed(3)}`, 
-                                    position: "insideBottomLeft",
-                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
-                                  }} 
-                                />
+                                {mrLimits.lcl > 0 && (
+                                  <ReferenceLine 
+                                    y={mrLimits.lcl} 
+                                    stroke="#dc2626" 
+                                    strokeDasharray="4 4" 
+                                    label={{ 
+                                      value: `LCL=${mrLimits.lcl.toFixed(3)}`, 
+                                      position: "insideBottomLeft",
+                                      style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
+                                    }} 
+                                  />
+                                )}
                                 <Line 
                                   type="monotone" 
                                   dataKey="value" 
