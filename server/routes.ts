@@ -2740,13 +2740,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Management Routes (Super Admin only)
   app.get("/api/admin/users", isAuthenticated, async (req, res) => {
     try {
-      console.log("Admin users route - req.user:", req.user);
-      console.log("Admin users route - req.session:", req.session);
-      if (!req.user || !req.user.id) {
-        console.log("User not authenticated in admin route");
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
         return res.status(401).json({ message: "User not authenticated" });
       }
-      const currentUser = await storage.getUser(parseInt(req.user.id));
+      const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
       if (!currentUser || currentUser.role !== 'super_admin') {
         return res.status(403).json({ message: "Access denied. Super admin privileges required." });
       }
@@ -2774,10 +2771,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/admin/users/:userId/role", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user || !req.user.id) {
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
         return res.status(401).json({ message: "User not authenticated" });
       }
-      const currentUser = await storage.getUser(parseInt(req.user.id));
+      const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
       if (!currentUser || currentUser.role !== 'super_admin') {
         return res.status(403).json({ message: "Access denied. Super admin privileges required." });
       }
