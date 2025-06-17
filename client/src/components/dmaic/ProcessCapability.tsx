@@ -1209,10 +1209,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     const individualLimits = calculateIndividualControlLimits(numericValues);
                     const mrLimits = calculateMovingRangeControlLimits(numericValues);
 
-                    // Debug MR limits
-                    console.log("MR Limits:", mrLimits);
-                    console.log("Moving Ranges:", movingRanges);
-                    console.log("Max MR value:", Math.max(...movingRanges));
+
 
                     // Box plot data
                     const boxPlotData = [
@@ -1300,7 +1297,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
                                 <YAxis 
                                   label={{ value: 'Moving Range', angle: -90, position: 'insideLeft' }}
-                                  domain={[0, 'dataMax']}
+                                  domain={[0, Math.max(mrLimits.ucl, Math.max(...movingRanges))]}
                                 />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Moving Range']} />
                                 <ReferenceLine 
@@ -1319,11 +1316,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   strokeDasharray="4 4" 
                                   label={{ 
                                     value: `UCL=${mrLimits.ucl.toFixed(3)}`, 
-                                    position: "insideTopRight",
+                                    position: "insideTopLeft",
                                     style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
                                   }} 
                                 />
-                                {mrLimits.lcl > 0 && (
+                                {/* {mrLimits.lcl > 0 && ( */}
                                   <ReferenceLine 
                                     y={mrLimits.lcl} 
                                     stroke="#dc2626" 
@@ -1334,7 +1331,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
                                     }} 
                                   />
-                                )}
+                                {/* }) */}
                                 <Line 
                                   type="monotone" 
                                   dataKey="value" 
