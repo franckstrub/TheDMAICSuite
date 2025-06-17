@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
@@ -11,15 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, User, Settings, LogOut, HelpCircle } from "lucide-react";
 import { useLocation } from "wouter";
-import ProfileOverlay from "./ProfileOverlay";
 
 export default function UserDropdown() {
   const { user, isAuthenticated } = useAuth();
   const [location, navigate] = useLocation();
-  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleProfileClick = () => {
-    setProfileOpen(true);
+    navigate('/app/profile');
   };
 
   const handleSettingsClick = () => {
@@ -60,8 +57,7 @@ export default function UserDropdown() {
   };
 
   return (
-    <>
-      <DropdownMenu>
+    <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="flex items-center gap-2 h-10 px-3">
             <Avatar className="h-8 w-8">
@@ -107,11 +103,6 @@ export default function UserDropdown() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      
-      <ProfileOverlay 
-        open={profileOpen} 
-        onClose={() => setProfileOpen(false)} 
-      />
-    </>
+    </div>
   );
 }
