@@ -869,8 +869,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             <div>Copy single column of numeric values from Excel</div>
                             <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table cell to paste</div>
                           </div>
-                        
                       </div>
+                      <p className="text-xs text-gray-500 pb-1">Enter data values and click Add, then Save Data to persist to database</p>
                       <div 
                         className="border rounded-lg overflow-hidden"
                         onPaste={(e) => {
@@ -999,7 +999,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
                 {ctqWithType.ctqType === "Continuous" && dataPoints[ctq] && dataPoints[ctq].length >= 5 && (
-                  <div className="mt-6 flex justify-center">
+                  <div className="mt-6 flex justify-left">
                     <Button
                       onClick={() => toggleStatistics(ctq)}
                       variant={showStatistics[ctq] ? "outline" : "default"}
@@ -1239,9 +1239,36 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
                                 <YAxis label={{ value: 'Value', angle: -90, position: 'insideLeft' }} />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
-                                <ReferenceLine y={individualLimits.centerLine} stroke="#2563eb" strokeDasharray="8 8" label="CL" />
-                                <ReferenceLine y={individualLimits.ucl} stroke="#dc2626" strokeDasharray="4 4" label="UCL" />
-                                <ReferenceLine y={individualLimits.lcl} stroke="#dc2626" strokeDasharray="4 4" label="LCL" />
+                                <ReferenceLine 
+                                  y={individualLimits.centerLine} 
+                                  stroke="#2563eb" 
+                                  strokeDasharray="8 8" 
+                                  label={{ 
+                                    value: `X̄=${individualLimits.centerLine.toFixed(3)}`, 
+                                    position: "insideTopLeft",
+                                    style: { fill: "#2563eb", fontWeight: "bold", fontSize: "12px" }
+                                  }} 
+                                />
+                                <ReferenceLine 
+                                  y={individualLimits.ucl} 
+                                  stroke="#dc2626" 
+                                  strokeDasharray="4 4" 
+                                  label={{ 
+                                    value: `UCL=${individualLimits.ucl.toFixed(3)}`, 
+                                    position: "insideTopLeft",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
+                                  }} 
+                                />
+                                <ReferenceLine 
+                                  y={individualLimits.lcl} 
+                                  stroke="#dc2626" 
+                                  strokeDasharray="4 4" 
+                                  label={{ 
+                                    value: `LCL=${individualLimits.lcl.toFixed(3)}`, 
+                                    position: "insideBottomLeft",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
+                                  }} 
+                                />
                                 <Line 
                                   type="monotone" 
                                   dataKey="value" 
@@ -1268,9 +1295,36 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
                                 <YAxis label={{ value: 'Moving Range', angle: -90, position: 'insideLeft' }} />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Moving Range']} />
-                                <ReferenceLine y={mrLimits.centerLine} stroke="#2563eb" strokeDasharray="8 8" label="CL" />
-                                <ReferenceLine y={mrLimits.ucl} stroke="#dc2626" strokeDasharray="4 4" label="UCL" />
-                                <ReferenceLine y={mrLimits.lcl} stroke="#dc2626" strokeDasharray="4 4" label="LCL" />
+                                <ReferenceLine 
+                                  y={mrLimits.centerLine} 
+                                  stroke="#2563eb" 
+                                  strokeDasharray="8 8" 
+                                  label={{ 
+                                    value: `MR̄=${mrLimits.centerLine.toFixed(3)}`, 
+                                    position: "insideTopLeft",
+                                    style: { fill: "#2563eb", fontWeight: "bold", fontSize: "12px" }
+                                  }} 
+                                />
+                                <ReferenceLine 
+                                  y={mrLimits.ucl} 
+                                  stroke="#dc2626" 
+                                  strokeDasharray="4 4" 
+                                  label={{ 
+                                    value: `UCL=${mrLimits.ucl.toFixed(3)}`, 
+                                    position: "insideTopLeft",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
+                                  }} 
+                                />
+                                <ReferenceLine 
+                                  y={mrLimits.lcl} 
+                                  stroke="#dc2626" 
+                                  strokeDasharray="4 4" 
+                                  label={{ 
+                                    value: `LCL=${mrLimits.lcl.toFixed(3)}`, 
+                                    position: "insideBottomLeft",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "12px" }
+                                  }} 
+                                />
                                 <Line 
                                   type="monotone" 
                                   dataKey="value" 
