@@ -151,7 +151,7 @@ export class DatabaseStorage implements IStorage {
           firstName: userData.firstName,
           lastName: userData.lastName,
           profileImageUrl: userData.profileImageUrl,
-          phoneNumber: userData.phoneNumber,
+          phone: userData.phone,
           phoneCountryCode: userData.phoneCountryCode,
           billingAddress: userData.billingAddress,
           updatedAt: new Date()
