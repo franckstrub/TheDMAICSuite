@@ -2789,7 +2789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Prevent changing own role
-      if (userId === req.session.user.id) {
+      if (userId === req.user.claims.sub) {
         return res.status(400).json({ message: "Cannot change your own role." });
       }
 
