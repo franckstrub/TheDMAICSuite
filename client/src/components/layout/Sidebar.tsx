@@ -26,7 +26,8 @@ import {
   X,
   User,
   LogOut,
-  ChevronUp
+  ChevronUp,
+  Shield
 } from "lucide-react";
 
 export default function Sidebar() {

@@ -6,18 +6,62 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Calendar, Edit, Save, X } from "lucide-react";
+import { User, Mail, Calendar, Edit, Save, X, Shield, UserCheck, Settings, Users } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import type { UserRole } from "@shared/schema";
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
     firstName: "",
     lastName: "",
   });
+
+  // Get role badge properties
+  const getRoleBadge = (role: UserRole) => {
+    switch (role) {
+      case 'super_admin':
+        return { 
+          variant: 'destructive' as const, 
+          icon: Shield, 
+          label: 'Super Admin',
+          color: 'bg-red-600 text-white'
+        };
+      case 'admin':
+        return { 
+          variant: 'default' as const, 
+          icon: UserCheck, 
+          label: 'Admin',
+          color: 'bg-blue-600 text-white'
+        };
+      case 'manager':
+        return { 
+          variant: 'secondary' as const, 
+          icon: Settings, 
+          label: 'Manager',
+          color: 'bg-purple-600 text-white'
+        };
+      case 'member':
+        return { 
+          variant: 'outline' as const, 
+          icon: User, 
+          label: 'Member',
+          color: 'bg-gray-600 text-white'
+        };
+      default:
+        return { 
+          variant: 'outline' as const, 
+          icon: User, 
+          label: 'Member',
+          color: 'bg-gray-600 text-white'
+        };
+    }
+  };
 
   if (!isAuthenticated || !user) {
     return (
@@ -105,7 +149,25 @@ export default function ProfilePage() {
                   {getDisplayName()}
                 </h2>
                 
-                <p className="text-sm text-gray-500 mb-4">{user.email}</p>
+                <p className="text-sm text-gray-500 mb-2">{user.email}</p>
+                
+                {user.role && (
+                  <div className="flex items-center justify-center mb-4">
+                    {(() => {
+                      const roleInfo = getRoleBadge(user.role);
+                      const IconComponent = roleInfo.icon;
+                      return (
+                        <Badge 
+                          variant={roleInfo.variant} 
+                          className={`${roleInfo.color} flex items-center gap-1`}
+                        >
+                          <IconComponent className="h-3 w-3" />
+                          {roleInfo.label}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
+                )}
                 
                 <Badge variant="secondary" className="mb-4">
                   Verified Account
@@ -245,6 +307,54 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
+
+      {/* Admin Panel - Only visible to super_admin users */}
+      {user.role === 'super_admin' && (
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-red-600" />
+                Administration Panel
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Super administrator tools and system management
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button 
+                  onClick={() => navigate('/app/admin/users')}
+                  variant="outline"
+                  className="flex items-center justify-start gap-3 h-auto p-4"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">User Management</p>
+                    <p className="text-sm text-gray-500">Manage user roles and permissions</p>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  className="flex items-center justify-start gap-3 h-auto p-4 opacity-50 cursor-not-allowed"
+                  disabled
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg">
+                    <Settings className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">System Settings</p>
+                    <p className="text-sm text-gray-500">Coming soon</p>
+                  </div>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
