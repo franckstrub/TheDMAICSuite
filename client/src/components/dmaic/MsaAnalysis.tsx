@@ -234,7 +234,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   };
 
   // Function to toggle statistics visibility and mark as calculated
-  const toggleStatistics = (ctq: string) => {
+  const toggleStatistics = async (ctq: string) => {
     const newShowState = !showStatistics[ctq];
     
     setShowStatistics(prev => ({
@@ -251,13 +251,41 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setHasCalculatedStatistics(newCalculatedState);
       localStorage.setItem(`msa-calculated-stats-${projectId}`, JSON.stringify(newCalculatedState));
     }
+
+    try {
+      await apiRequest('PATCH', `/api/projects/${projectId}/msa-analysis/${ctq}/statistics`, {
+        showStatistics: newShowState
+      });
+    } catch (error) {
+      console.error('Failed to save MSA statistics toggle state:', error);
+      // Revert the state on error
+      setShowStatistics(prev => ({
+        ...prev,
+        [ctq]: !newShowState
+      }));
+    }
   }
 
-  const toggleContinuousStatistics = (ctq: string) => {
+  const toggleContinuousStatistics = async (ctq: string) => {
+    const newState = !showContinuousStatistics[ctq];
+    
     setShowContinuousStatistics(prev => ({
       ...prev,
-      [ctq]: !prev[ctq]
+      [ctq]: newState
     }));
+
+    try {
+      await apiRequest('PATCH', `/api/projects/${projectId}/msa-analysis/${ctq}/statistics`, {
+        showStatistics: newState
+      });
+    } catch (error) {
+      console.error('Failed to save MSA continuous statistics toggle state:', error);
+      // Revert the state on error
+      setShowContinuousStatistics(prev => ({
+        ...prev,
+        [ctq]: !newState
+      }));
+    }
   };
 
   // Generate default attribute analysis data with 20 rows (all empty for real data entry)

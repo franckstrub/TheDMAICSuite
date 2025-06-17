@@ -2678,6 +2678,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update statistics toggle state for Process Capability
+  app.patch("/api/projects/:projectId/process-capability/:ctq/statistics", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctq = req.params.ctq;
+      const { showStatistics } = req.body;
+
+      const [updatedRecord] = await db
+        .update(processCapability)
+        .set({ 
+          showStatistics: showStatistics,
+          lastUpdated: new Date()
+        })
+        .where(and(
+          eq(processCapability.projectId, projectId),
+          eq(processCapability.ctq, ctq)
+        ))
+        .returning();
+
+      return res.status(200).json({ success: true, processCapability: updatedRecord });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Update statistics toggle state for MSA Analysis
+  app.patch("/api/projects/:projectId/msa-analysis/:ctq/statistics", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctq = req.params.ctq;
+      const { showStatistics } = req.body;
+
+      const [updatedRecord] = await db
+        .update(msaAnalysis)
+        .set({ 
+          showStatistics: showStatistics,
+          lastUpdated: new Date()
+        })
+        .where(and(
+          eq(msaAnalysis.projectId, projectId),
+          eq(msaAnalysis.ctq, ctq)
+        ))
+        .returning();
+
+      return res.status(200).json({ success: true, msaAnalysis: updatedRecord });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
