@@ -1,6 +1,10 @@
 import { db } from "./db";
-import { organizations, users, type Organization, type InsertOrganization } from "@shared/schema";
+import { organizations, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
+
+// Type definitions for organizations
+type Organization = typeof organizations.$inferSelect;
+type InsertOrganization = typeof organizations.$inferInsert;
 
 /**
  * Organization Service
