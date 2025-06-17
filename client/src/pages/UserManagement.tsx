@@ -76,15 +76,6 @@ export default function UserManagement() {
     phoneCountryCode: ""
   });
 
-  const { data: currentUserData } = useQuery({
-    queryKey: ["/api/auth/user"],
-    queryFn: async () => {
-      const response = await fetch("/api/auth/user");
-      if (!response.ok) return null;
-      return response.json();
-    }
-  });
-
   const { data: usersData, isLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
