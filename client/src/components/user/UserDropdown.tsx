@@ -103,6 +103,5 @@ export default function UserDropdown() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
   );
 }
