@@ -584,12 +584,27 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Toggle statistics visibility
-  const toggleStatistics = (ctq: string) => {
+  // Toggle statistics visibility and save to database
+  const toggleStatistics = async (ctq: string) => {
+    const newState = !showStatistics[ctq];
+    
     setShowStatistics(prev => ({
       ...prev,
-      [ctq]: !prev[ctq]
+      [ctq]: newState
     }));
+
+    try {
+      await apiRequest('PATCH', `/api/projects/${projectId}/process-capability/${ctq}/statistics`, {
+        showStatistics: newState
+      });
+    } catch (error) {
+      console.error('Failed to save statistics toggle state:', error);
+      // Revert the state on error
+      setShowStatistics(prev => ({
+        ...prev,
+        [ctq]: !newState
+      }));
+    }
   };
 
   if (ctqsLoading || capabilityLoading) {
