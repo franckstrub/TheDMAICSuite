@@ -39,7 +39,8 @@ function Router() {
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
       const storedRoute = getStoredRoute();
-      if (storedRoute && location === '/') {
+      // Restore to stored route if we're on root or /app paths, or if opening a new tab
+      if (storedRoute && (location === '/' || location === '/app')) {
         console.log('Restoring route from localStorage:', storedRoute);
         navigate(storedRoute);
       }
