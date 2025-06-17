@@ -6,8 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, UserCheck, Settings, X, ArrowLeft } from "lucide-react";
+import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
 import { UserRole } from "@shared/schema";
 
 interface User {
@@ -17,8 +21,20 @@ interface User {
   lastName: string;
   companyName: string;
   role: UserRole;
+  phone?: string;
+  phoneCountryCode?: string;
   createdAt: string;
   organizationId: number;
+}
+
+interface UserFormData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  role: UserRole;
+  phone: string;
+  phoneCountryCode: string;
 }
 
 const roleLabels: Record<UserRole, string> = {
@@ -47,6 +63,18 @@ export default function UserManagement() {
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [selectedRoles, setSelectedRoles] = useState<Record<string, UserRole>>({});
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [formData, setFormData] = useState<UserFormData>({
+    email: "",
+    firstName: "",
+    lastName: "",
+    companyName: "",
+    role: "admin",
+    phone: "",
+    phoneCountryCode: ""
+  });
 
   const { data: usersData, isLoading } = useQuery({
     queryKey: ["/api/admin/users"],
@@ -97,6 +125,113 @@ export default function UserManagement() {
         variant: "destructive"
       });
     }
+  });
+
+  const addUserMutation = useMutation({
+    mutationFn: async (userData: UserFormData) => {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add user");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setIsAddDialogOpen(false);
+      setFormData({
+        email: "",
+        firstName: "",
+        lastName: "",
+        companyName: "",
+        role: "admin",
+        phone: "",
+        phoneCountryCode: ""
+      });
+      toast({
+        title: "Success",
+        description: "User added successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, userData }: { userId: string; userData: Partial<UserFormData> }) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update user");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete user");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const handleRoleChange = (userId: string, newRole: UserRole) => {
