@@ -1890,7 +1890,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
                       <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
                       <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
-                      <p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p>
+                      {/*<p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p> */}
                       <p>• Data will automatically create new rows if needed</p>
                     </div>
                   </div>
