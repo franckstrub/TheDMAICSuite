@@ -33,6 +33,18 @@ export type ValidationStatus = typeof validationStatusTypes[number];
 export const deliverableRequirementTypes = ["Required", "Optional", "Added by User"] as const;
 export type DeliverableRequirementType = typeof deliverableRequirementTypes[number];
 
+// Organizations table for multi-tenant support
+export const organizations = pgTable("organizations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type", { enum: ["enterprise_small", "enterprise_medium", "solo_entrepreneur", "individual"] }).notNull(),
+  isSystemGenerated: boolean("is_system_generated").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  subscriptionTier: text("subscription_tier"),
+  isActive: boolean("is_active").default(true),
+});
+
 // Session storage table for authentication
 export const sessions = pgTable(
   "sessions",
@@ -49,6 +61,7 @@ export const sessions = pgTable(
 // Users (for Replit authentication)
 export const users = pgTable("users", {
   id: text("id").primaryKey().notNull(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   email: text("email").unique(),
   firstName: text("first_name"),
   lastName: text("last_name"),
@@ -56,6 +69,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   phoneCountryCode: text("phone_country_code"),
   companyName: text("company_name"),
+  role: text("role", { enum: ["admin", "member", "viewer"] }).default("member"),
   billingAddress: jsonb("billing_address").$type<{
     street?: string;
     city?: string;
@@ -83,6 +97,7 @@ export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 // Projects
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   title: text("title").notNull(),
   description: text("description"),
   projectType: text("project_type").default("Green Belt"),
@@ -128,6 +143,7 @@ export type Stakeholder = z.infer<typeof stakeholderSchema>;
 // Project Charter
 export const projectCharters = pgTable("project_charters", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   projectTitle: text("project_title"), // Add projectTitle field to store the title
   projectReferenceNumber: text("project_reference_number"),
