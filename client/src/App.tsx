@@ -21,6 +21,7 @@ import HomePage from "@/pages/HomePage";
 import MockupPage from "@/pages/MockupPage";
 import ProfilePage from "@/pages/ProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
+import UserManagement from "@/pages/UserManagement";
 
 function Router() {
   const [location, navigate] = useLocation();
@@ -70,6 +71,7 @@ function Router() {
           <Route path="/app/:tab/:phase/:projectId" component={HomePage} />
           <Route path="/app/profile" component={ProfilePage} />
           <Route path="/app/settings" component={SettingsPage} />
+          <Route path="/app/admin/users" component={UserManagement} />
           <Route path="/mockup" component={MockupPage} />
         </>
       )}
