@@ -276,6 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      console.log("Auth user response - User data:", JSON.stringify(user, null, 2));
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
