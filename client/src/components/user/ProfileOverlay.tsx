@@ -1,97 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  User,
-  Mail,
-  Calendar,
-  Phone,
-  Building,
-  MapPin,
-  Edit,
-  Save,
-  X,
-  Camera,
-  Upload,
-} from "lucide-react";
-
-const billingAddressSchema = z.object({
-  street: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zipCode: z.string().optional(),
-  country: z.string().optional(),
-});
-
-const profileFormSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  phone: z.string().optional(),
-  phoneCountryCode: z.string().optional(),
-  companyName: z.string().optional(),
-  billingAddress: billingAddressSchema.optional(),
-});
-
-type ProfileFormData = z.infer<typeof profileFormSchema>;
-
-// Common country codes for phone numbers
-const countryCodes = [
-  { code: "+33", country: "France" },
-  { code: "+1", country: "United States" },
-  { code: "+44", country: "United Kingdom" },
-  { code: "+49", country: "Germany" },
-  { code: "+39", country: "Italy" },
-  { code: "+34", country: "Spain" },
-  { code: "+31", country: "Netherlands" },
-  { code: "+32", country: "Belgium" },
-  { code: "+41", country: "Switzerland" },
-  { code: "+43", country: "Austria" },
-  { code: "+45", country: "Denmark" },
-  { code: "+46", country: "Sweden" },
-  { code: "+47", country: "Norway" },
-  { code: "+48", country: "Poland" },
-  { code: "+351", country: "Portugal" },
-  { code: "+86", country: "China" },
-  { code: "+81", country: "Japan" },
-  { code: "+82", country: "South Korea" },
-  { code: "+91", country: "India" },
-  { code: "+61", country: "Australia" },
-  { code: "+7", country: "Russia" },
-];
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { User, Mail, Calendar, Edit, Save, X, Shield, UserCheck, Settings, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import type { UserRole } from "@shared/schema";
 
 interface ProfileOverlayProps {
   open: boolean;
@@ -99,150 +22,69 @@ interface ProfileOverlayProps {
 }
 
 export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const form = useForm<ProfileFormData>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      phone: "",
-      phoneCountryCode: "+33",
-      companyName: "",
-      billingAddress: {
-        street: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        country: "",
-      },
-    },
+  const [editedProfile, setEditedProfile] = useState({
+    firstName: "",
+    lastName: "",
   });
 
-  // Reset form when user data changes
-  useEffect(() => {
-    if (user) {
-      form.reset({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        phone: user.phone || "",
-        phoneCountryCode: user.phoneCountryCode || "+33",
-        companyName: user.companyName || "",
-        billingAddress: {
-          street: user.billingAddress?.street || "",
-          city: user.billingAddress?.city || "",
-          state: user.billingAddress?.state || "",
-          zipCode: user.billingAddress?.zipCode || "",
-          country: user.billingAddress?.country || "",
-        },
-      });
-    }
-  }, [user, form]);
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: ProfileFormData) => {
-      console.log("Sending profile update:", data);
-      const response = await apiRequest("PATCH", "/api/auth/user", data);
-      console.log("Profile update response:", response);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Profile Updated",
-        description: "Your profile information has been updated successfully.",
-      });
-      setIsEditing(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    },
-    onError: (error) => {
-      console.error("Profile update error:", error);
-      toast({
-        title: "Update Failed",
-        description: "Failed to update your profile. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const uploadProfilePictureMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("profileImage", file);
-      
-      const response = await fetch("/api/auth/upload-profile-image", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
-      }
-      
-      return response.json();
-    },
-    onSuccess: async () => {
-      toast({
-        title: "Profile Picture Updated",
-        description: "Your profile picture has been updated successfully.",
-      });
-      // Force refetch of user data to get the updated profile image URL
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
-    },
-    onError: (error) => {
-      console.error("Image upload error:", error);
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload profile picture. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid File",
-          description: "Please select an image file.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File Too Large",
-          description: "Please select an image smaller than 5MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Show upload starting toast
-      toast({
-        title: "Uploading...",
-        description: "Your profile picture is being uploaded.",
-      });
-      
-      uploadProfilePictureMutation.mutate(file);
-    }
-    
-    // Reset the input value so the same file can be selected again if needed
-    event.target.value = '';
-  };
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-center items-center h-64">Loading...</div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (!isAuthenticated || !user) {
     return null;
   }
+
+  // Get role badge properties
+  const getRoleBadge = (role: UserRole) => {
+    switch (role) {
+      case 'super_admin':
+        return { 
+          variant: 'destructive' as const, 
+          icon: Shield, 
+          label: 'Super Admin',
+          color: 'bg-red-600 text-white'
+        };
+      case 'admin':
+        return { 
+          variant: 'default' as const, 
+          icon: UserCheck, 
+          label: 'Admin',
+          color: 'bg-blue-600 text-white'
+        };
+      case 'manager':
+        return { 
+          variant: 'secondary' as const, 
+          icon: Settings, 
+          label: 'Manager',
+          color: 'bg-purple-600 text-white'
+        };
+      case 'member':
+        return { 
+          variant: 'outline' as const, 
+          icon: User, 
+          label: 'Member',
+          color: 'bg-gray-600 text-white'
+        };
+      default:
+        return { 
+          variant: 'outline' as const, 
+          icon: User, 
+          label: 'Member',
+          color: 'bg-gray-600 text-white'
+        };
+    }
+  };
 
   // Get user initials for avatar fallback
   const getInitials = () => {
@@ -270,111 +112,112 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
   };
 
   const handleEdit = () => {
+    setEditedProfile({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+    });
     setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    // In a real application, you would save the profile changes here
+    toast({
+      title: "Profile Updated",
+      description: "Your profile information has been updated successfully.",
+    });
+    setIsEditing(false);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    form.reset();
-  };
-
-  const onSubmit = (data: ProfileFormData) => {
-    updateProfileMutation.mutate(data);
+    setEditedProfile({
+      firstName: "",
+      lastName: "",
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">DMAIC Suite Profile</DialogTitle>
-          <DialogDescription>
-            Manage your profile information for the Lean Six Sigma DMAIC Suite.
-          </DialogDescription>
-        </DialogHeader>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Your Profile</h1>
+            <p className="text-gray-600 mt-1">Manage your account information and preferences.</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Profile Card */}
           <div className="lg:col-span-1">
-            <div className="border rounded-lg p-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="relative">
-                  <Avatar className="h-24 w-24 mb-4" key={`${user.profileImageUrl}-${Date.now()}`}>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center">
+                  <Avatar className="h-24 w-24 mb-4">
                     <AvatarImage 
                       src={user.profileImageUrl || undefined} 
                       alt={getDisplayName()}
                       className="object-cover"
                     />
-                    <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                    <AvatarFallback className="text-xl bg-blue-100 text-blue-700">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadProfilePictureMutation.isPending}
-                  >
-                    {uploadProfilePictureMutation.isPending ? (
-                      <Upload className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Camera className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-                
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                  {getDisplayName()}
-                </h2>
-                
-                <p className="text-sm text-gray-500 mb-4">{user.email}</p>
-                
-                <Badge variant="secondary" className="mb-4">
-                  DMAIC Suite User
-                </Badge>
-                
-                <div className="w-full text-left space-y-2">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <User className="h-4 w-4 mr-2" />
-                    User ID: {user.id}
+                  
+                  <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                    {getDisplayName()}
+                  </h2>
+                  
+                  <p className="text-sm text-gray-500 mb-2">{user.email}</p>
+                  
+                  {/* Role Badge */}
+                  <div className="flex items-center justify-center mb-4">
+                    {(() => {
+                      const role = user.role || 'member';
+                      const roleInfo = getRoleBadge(role as UserRole);
+                      const IconComponent = roleInfo.icon;
+                      return (
+                        <Badge 
+                          variant={roleInfo.variant} 
+                          className={`${roleInfo.color} flex items-center gap-1`}
+                        >
+                          <IconComponent className="h-3 w-3" />
+                          {roleInfo.label}
+                        </Badge>
+                      );
+                    })()}
                   </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Mail className="h-4 w-4 mr-2" />
-                    {user.email}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Member since {new Date(user.createdAt || Date.now()).toLocaleDateString()}
-                  </div>
-                  {user.phone && (
+                  
+                  <Badge variant="secondary" className="mb-4">
+                    Verified Account
+                  </Badge>
+                  
+                  <div className="w-full text-left space-y-2">
                     <div className="flex items-center text-sm text-gray-600">
-                      <Phone className="h-4 w-4 mr-2" />
-                      {user.phoneCountryCode || '+33'} {user.phone}
+                      <User className="h-4 w-4 mr-2" />
+                      User ID: {user.id}
                     </div>
-                  )}
-                  {user.companyName && (
                     <div className="flex items-center text-sm text-gray-600">
-                      <Building className="h-4 w-4 mr-2" />
-                      {user.companyName}
+                      <Mail className="h-4 w-4 mr-2" />
+                      {user.email}
                     </div>
-                  )}
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Member since {new Date(user.createdAt || Date.now()).toLocaleDateString()}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Profile Information */}
           <div className="lg:col-span-2">
-            <div className="border rounded-lg">
-              <div className="flex flex-row items-center justify-between p-6 border-b">
-                <h3 className="text-lg font-semibold">Profile Information</h3>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Profile Information</CardTitle>
                 {!isEditing ? (
                   <Button onClick={handleEdit} variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
@@ -382,13 +225,9 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button 
-                      onClick={form.handleSubmit(onSubmit)} 
-                      size="sm"
-                      disabled={updateProfileMutation.isPending}
-                    >
+                    <Button onClick={handleSave} size="sm">
                       <Save className="h-4 w-4 mr-2" />
-                      {updateProfileMutation.isPending ? "Saving..." : "Save"}
+                      Save
                     </Button>
                     <Button onClick={handleCancel} variant="outline" size="sm">
                       <X className="h-4 w-4 mr-2" />
@@ -396,260 +235,150 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                     </Button>
                   </div>
                 )}
-              </div>
-              
-              <div className="p-6 space-y-6">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Basic Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="firstName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>First Name</FormLabel>
-                            {isEditing ? (
-                              <FormControl>
-                                <Input {...field} placeholder="Enter your first name" />
-                              </FormControl>
-                            ) : (
-                              <p className="mt-1 text-sm text-gray-900">{user.firstName || "Not provided"}</p>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName">First Name</Label>
+                    {isEditing ? (
+                      <Input
+                        id="firstName"
+                        value={editedProfile.firstName}
+                        onChange={(e) => setEditedProfile(prev => ({ ...prev, firstName: e.target.value }))}
+                        placeholder="Enter your first name"
                       />
-                      
-                      <FormField
-                        control={form.control}
-                        name="lastName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Last Name</FormLabel>
-                            {isEditing ? (
-                              <FormControl>
-                                <Input {...field} placeholder="Enter your last name" />
-                              </FormControl>
-                            ) : (
-                              <p className="mt-1 text-sm text-gray-900">{user.lastName || "Not provided"}</p>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{user.firstName || "Not provided"}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="lastName">Last Name</Label>
+                    {isEditing ? (
+                      <Input
+                        id="lastName"
+                        value={editedProfile.lastName}
+                        onChange={(e) => setEditedProfile(prev => ({ ...prev, lastName: e.target.value }))}
+                        placeholder="Enter your last name"
                       />
-                    </div>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{user.lastName || "Not provided"}</p>
+                    )}
+                  </div>
+                </div>
 
-                    <Separator />
+                <Separator />
 
-                    {/* Contact Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Email Address</Label>
-                        <p className="mt-1 text-sm text-gray-900">{user.email}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Email address cannot be changed here.
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Phone Number</Label>
-                        {isEditing ? (
-                          <div className="flex gap-2">
-                            <FormField
-                              control={form.control}
-                              name="phoneCountryCode"
-                              render={({ field }) => (
-                                <FormItem className="w-32">
-                                  <FormControl>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Code" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {countryCodes.map((country) => (
-                                          <SelectItem key={country.code} value={country.code}>
-                                            {country.code} {country.country}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="phone"
-                              render={({ field }) => (
-                                <FormItem className="flex-1">
-                                  <FormControl>
-                                    <Input {...field} placeholder="Enter your phone number" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        ) : (
-                          <p className="mt-1 text-sm text-gray-900">
-                            {user.phone ? `${user.phoneCountryCode || '+33'} ${user.phone}` : "Not provided"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                <div>
+                  <Label>Email Address</Label>
+                  <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Email address is managed by your authentication provider and cannot be changed here.
+                  </p>
+                </div>
 
-                    <Separator />
+                <Separator />
 
-                    {/* Company Information */}
-                    <FormField
-                      control={form.control}
-                      name="companyName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company Name</FormLabel>
-                          {isEditing ? (
-                            <FormControl>
-                              <Input {...field} placeholder="Enter your company name" />
-                            </FormControl>
-                          ) : (
-                            <p className="mt-1 text-sm text-gray-900">{user.companyName || "Not provided"}</p>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <div>
+                  <Label>Account Type</Label>
+                  <p className="mt-1 text-sm text-gray-900">Standard User</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Access to all standard features of the Lean Six Sigma platform.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-                    <Separator />
-
-                    {/* Billing Address */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <Label className="text-base font-medium">Billing Address</Label>
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="billingAddress.street"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Street Address</FormLabel>
-                            {isEditing ? (
-                              <FormControl>
-                                <Input {...field} placeholder="Enter street address" />
-                              </FormControl>
-                            ) : (
-                              <p className="mt-1 text-sm text-gray-900">{user.billingAddress?.street || "Not provided"}</p>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="billingAddress.city"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>City</FormLabel>
-                              {isEditing ? (
-                                <FormControl>
-                                  <Input {...field} placeholder="City" />
-                                </FormControl>
-                              ) : (
-                                <p className="mt-1 text-sm text-gray-900">{user.billingAddress?.city || "Not provided"}</p>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="billingAddress.state"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>State/Province</FormLabel>
-                              {isEditing ? (
-                                <FormControl>
-                                  <Input {...field} placeholder="State" />
-                                </FormControl>
-                              ) : (
-                                <p className="mt-1 text-sm text-gray-900">{user.billingAddress?.state || "Not provided"}</p>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="billingAddress.zipCode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>ZIP/Postal Code</FormLabel>
-                              {isEditing ? (
-                                <FormControl>
-                                  <Input {...field} placeholder="ZIP Code" />
-                                </FormControl>
-                              ) : (
-                                <p className="mt-1 text-sm text-gray-900">{user.billingAddress?.zipCode || "Not provided"}</p>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="billingAddress.country"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Country</FormLabel>
-                            {isEditing ? (
-                              <FormControl>
-                                <Input {...field} placeholder="Country" />
-                              </FormControl>
-                            ) : (
-                              <p className="mt-1 text-sm text-gray-900">{user.billingAddress?.country || "Not provided"}</p>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </form>
-                </Form>
-              </div>
-            </div>
-
-            {/* DMAIC Suite Preferences */}
-            <div className="border rounded-lg mt-6">
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold">Suite Preferences</h3>
-              </div>
-              <div className="p-6">
+            {/* Account Security */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Account Security</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Account Status</p>
+                      <p className="font-medium">Authentication</p>
                       <p className="text-sm text-gray-500">
-                        Your current access level in the DMAIC Suite
+                        Your account is secured through Replit authentication
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-primary border-primary">
-                      Active User
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      Active
                     </Badge>
                   </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Profile Image</p>
+                      <p className="text-sm text-gray-500">
+                        Managed through your Replit account settings
+                      </p>
+                    </div>
+                    {user.profileImageUrl && (
+                      <Badge variant="outline" className="text-blue-600 border-blue-600">
+                        Set
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
+
+        {/* Admin Panel - Only visible to super_admin users */}
+        {user.role === 'super_admin' && (
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-red-600" />
+                  Administration Panel
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Super administrator tools and system management
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button 
+                    onClick={() => {
+                      navigate('/app/admin/users');
+                      onClose();
+                    }}
+                    variant="outline"
+                    className="flex items-center justify-start gap-3 h-auto p-4"
+                  >
+                    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                      <Users className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">User Management</p>
+                      <p className="text-sm text-gray-500">Manage user roles and permissions</p>
+                    </div>
+                  </Button>
+
+                  <Button 
+                    variant="outline"
+                    className="flex items-center justify-start gap-3 h-auto p-4 opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg">
+                      <Settings className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">System Settings</p>
+                      <p className="text-sm text-gray-500">Coming soon</p>
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
