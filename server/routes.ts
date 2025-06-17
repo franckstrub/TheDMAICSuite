@@ -2736,6 +2736,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Management Routes (Super Admin only)
+  app.get("/api/admin/users", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = await storage.getUser(parseInt(req.session.user.id));
+      if (!currentUser || currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      }
+
+      const { users: usersTable } = await import("@shared/schema");
+      const users = await db
+        .select({
+          id: usersTable.id,
+          email: usersTable.email,
+          firstName: usersTable.firstName,
+          lastName: usersTable.lastName,
+          companyName: usersTable.companyName,
+          role: usersTable.role,
+          createdAt: usersTable.createdAt,
+          organizationId: usersTable.organizationId
+        })
+        .from(usersTable)
+        .orderBy(asc(usersTable.createdAt));
+
+      return res.status(200).json({ users });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.patch("/api/admin/users/:userId/role", isAuthenticated, async (req, res) => {
+    try {
+      const currentUser = await storage.getUser(parseInt(req.session.user.id));
+      if (!currentUser || currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      }
+
+      const userId = req.params.userId;
+      const { role } = req.body;
+
+      // Validate role
+      const validRoles = ['super_admin', 'admin', 'manager', 'member'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role specified." });
+      }
+
+      // Prevent changing own role
+      if (userId === req.session.user.id) {
+        return res.status(400).json({ message: "Cannot change your own role." });
+      }
+
+      const { users: usersTable } = await import("@shared/schema");
+      const [updatedUser] = await db
+        .update(usersTable)
+        .set({ role, updatedAt: new Date() })
+        .where(eq(usersTable.id, userId))
+        .returning({
+          id: usersTable.id,
+          email: usersTable.email,
+          firstName: usersTable.firstName,
+          lastName: usersTable.lastName,
+          role: usersTable.role
+        });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      return res.status(200).json({ user: updatedUser });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
