@@ -1242,8 +1242,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <YAxis 
                                   label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
                                   domain={[
-                                    Math.min(lsl || Math.min(...numericValues), Math.min(...numericValues)),
-                                    Math.max(usl || Math.max(...numericValues), Math.max(...numericValues))
+                                    Math.min(individualLimits.lcl, Math.min(...numericValues)),
+                                    Math.max(individualLimits.ucl, Math.max(...numericValues))
                                   ]}
                                 />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
