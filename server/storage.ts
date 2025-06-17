@@ -271,6 +271,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(customerRequirements).where(eq(customerRequirements.projectId, projectId));
   }
 
+  async getRequirements(projectId: number): Promise<CustomerRequirement[]> {
+    return await db.select().from(customerRequirements).where(eq(customerRequirements.projectId, projectId));
+  }
+
   async createCustomerRequirement(requirement: InsertRequirement): Promise<CustomerRequirement> {
     const [newRequirement] = await db
       .insert(customerRequirements)

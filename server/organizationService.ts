@@ -19,7 +19,7 @@ export class OrganizationService {
   /**
    * Gets or creates an organization for a user based on their type
    */
-  async getOrCreateUserOrganization(userId: string, userType: 'individual' | 'solo_entrepreneur' | 'enterprise_small' | 'enterprise_medium' = 'individual'): Promise<Organization> {
+  async getOrCreateUserOrganization(userId: string, userType: 'individual' | 'solo_entrepreneur' | 'enterprise_small' | 'enterprise_medium' = 'individual', userData?: any): Promise<Organization> {
     // First check if user already has an organization
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     
@@ -34,38 +34,40 @@ export class OrganizationService {
     let orgData: InsertOrganization;
     
     if (userType === 'individual') {
-      // Generate a unique organization name for individual users
-      const orgName = await this.generateUniqueIndividualOrgName(userId);
+      // Use company_name if provided, otherwise generate from user data with "Private Individual" extension
+      const orgName = userData?.companyName || 
+        await this.generateIndividualOrgName(userData?.firstName, userData?.lastName, userData?.email, userId);
+      
       orgData = {
         name: orgName,
         type: 'individual',
-        description: 'Auto-generated organization for individual user',
         maxUsers: 1,
-        isActive: true
+        isActive: true,
+        isSystemGenerated: true
       };
     } else if (userType === 'solo_entrepreneur') {
       orgData = {
-        name: `${userId}-solo-business`,
+        name: userData?.companyName || `${userId} Solo Business`,
         type: 'solo_entrepreneur',
-        description: 'Solo entrepreneur organization',
         maxUsers: 5,
-        isActive: true
+        isActive: true,
+        isSystemGenerated: !userData?.companyName
       };
     } else if (userType === 'enterprise_small') {
       orgData = {
-        name: `${userId}-small-enterprise`,
+        name: userData?.companyName || `${userId} Small Enterprise`,
         type: 'enterprise_small',
-        description: 'Small enterprise organization',
         maxUsers: 50,
-        isActive: true
+        isActive: true,
+        isSystemGenerated: !userData?.companyName
       };
     } else {
       orgData = {
-        name: `${userId}-medium-enterprise`,
+        name: userData?.companyName || `${userId} Medium Enterprise`,
         type: 'enterprise_medium',
-        description: 'Medium enterprise organization',
         maxUsers: 200,
-        isActive: true
+        isActive: true,
+        isSystemGenerated: !userData?.companyName
       };
     }
 
