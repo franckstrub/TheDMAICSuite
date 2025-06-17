@@ -69,6 +69,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [undoStates, setUndoStates] = useState<{ [ctq: string]: DataPoint[] }>({});
   const [pasteInputs, setPasteInputs] = useState<{ [ctq: string]: string }>({});
   const [focusedCell, setFocusedCell] = useState<{ [ctq: string]: number }>({});
+  const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -577,6 +578,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
+  // Toggle statistics visibility
+  const toggleStatistics = (ctq: string) => {
+    setShowStatistics(prev => ({
+      ...prev,
+      [ctq]: !prev[ctq]
+    }));
+  };
+
   if (ctqsLoading || capabilityLoading) {
     return (
       <Card>
@@ -802,7 +811,66 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 {ctqWithType.ctqType === "Continuous" && (
                   <div className="space-y-4">
                     <div>
+                      <div  className="flex justify-between items-center">
                       <label className="block text-sm font-medium mb-2">Data Input</label>
+                      {/* Paste from Excel Section */}
+                      
+                          <div className="flex gap-2 mt-2">
+                            <Button
+                              onClick={async () => {
+                                try {
+                                  const clipboardData = await navigator.clipboard.readText();
+                                  if (clipboardData.trim()) {
+                                    // Create a synthetic paste event like MSA does
+                                    const syntheticEvent = {
+                                      preventDefault: () => {},
+                                      clipboardData: {
+                                        getData: (format: string) => clipboardData
+                                      }
+                                    } as unknown as React.ClipboardEvent;
+                                    
+                                    const rawindex = focusedCell[ctq] !== undefined ? focusedCell[ctq] : (dataPoints[ctq] || []).length;
+                                    handlePasteFromExcel(ctq, rawindex, syntheticEvent);
+                                  } else {
+                                    toast({
+                                      title: "No Data Found",
+                                      description: "No data found in clipboard. Please copy data from Excel first.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } catch (error) {
+                                  toast({
+                                    title: "Clipboard Permission Required",
+                                    description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="text-green-700 border-green-300 hover:bg-green-50"
+                            >
+                              📋 Paste data from Excel
+                            </Button>
+                            {undoStates[ctq] && (
+                              <Button
+                                onClick={() => handleUndo(ctq)}
+                                variant="outline"
+                                size="sm"
+                                className="text-orange-700 border-orange-300 hover:bg-orange-50"
+                              >
+                                <Undo className="h-4 w-4 mr-2" />
+                                Undo Paste
+                              </Button>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200 mt-2">
+                            <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
+                            <div>Copy single column of numeric values from Excel</div>
+                            <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table cell to paste</div>
+                          </div>
+                        
+                      </div>
                       <div 
                         className="border rounded-lg overflow-hidden"
                         onPaste={(e) => {
@@ -899,71 +967,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </div>
                       {/* Excel Import Instructions */}
                       <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="font-medium text-blue-700 mb-1">Excel Import Instructions:</div>
-                        <div className="text-sm text-blue-600">
-                          • Copy numeric values from Excel and paste directly into the table
-                          • Focus on any cell and paste (Ctrl+V) to fill down from that position
+                        <div className="font-medium text-sm text-blue-700 mb-1">Excel Import Instructions:</div>
+                        <div className="text-xs text-blue-600">
+                          <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
+                          <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
+                          <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
+                          {/* <p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p> */}
+                          <p>• Data will automatically create new rows if needed</p>
                         </div>
                       </div>
 
-                      {/* Paste from Excel Section */}
+                      {/* Save Data button */}
                       <div className="mt-4 space-y-3">
-                        <div className="border-t pt-3">
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                              onClick={async () => {
-                                try {
-                                  const clipboardData = await navigator.clipboard.readText();
-                                  if (clipboardData.trim()) {
-                                    // Create a synthetic paste event like MSA does
-                                    const syntheticEvent = {
-                                      preventDefault: () => {},
-                                      clipboardData: {
-                                        getData: (format: string) => clipboardData
-                                      }
-                                    } as unknown as React.ClipboardEvent;
-                                    
-                                    const rawindex = focusedCell[ctq] !== undefined ? focusedCell[ctq] : (dataPoints[ctq] || []).length;
-                                    handlePasteFromExcel(ctq, rawindex, syntheticEvent);
-                                  } else {
-                                    toast({
-                                      title: "No Data Found",
-                                      description: "No data found in clipboard. Please copy data from Excel first.",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                } catch (error) {
-                                  toast({
-                                    title: "Clipboard Permission Required",
-                                    description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="text-green-700 border-green-300 hover:bg-green-50"
-                            >
-                              📋 Paste data from Excel
-                            </Button>
-                            {undoStates[ctq] && (
-                              <Button
-                                onClick={() => handleUndo(ctq)}
-                                variant="outline"
-                                size="sm"
-                                className="text-orange-700 border-orange-300 hover:bg-orange-50"
-                              >
-                                <Undo className="h-4 w-4 mr-2" />
-                                Undo Paste
-                              </Button>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200 mt-2">
-                            <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
-                            <div>Copy single column of numeric values from Excel</div>
-                            <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table to paste</div>
-                          </div>
-                        </div>
                         <div className="flex justify-between items-center">
                           <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
                           <Button
@@ -982,8 +997,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   </div>
                 )}
 
+                {/* Statistics Control Buttons for Continuous CTQs */}
+                {ctqWithType.ctqType === "Continuous" && dataPoints[ctq] && dataPoints[ctq].length >= 5 && (
+                  <div className="mt-6 flex justify-center">
+                    <Button
+                      onClick={() => toggleStatistics(ctq)}
+                      variant={showStatistics[ctq] ? "outline" : "default"}
+                      className="flex items-center gap-2"
+                    >
+                      <Calculator className="h-4 w-4" />
+                      {showStatistics[ctq] ? "Hide Statistics" : "Calculate Process Capability Statistics"}
+                    </Button>
+                  </div>
+                )}
+
                 {/* Process Capability Calculations Display */}
-                {ctqWithType.ctqType === "Continuous" && (() => {
+                {ctqWithType.ctqType === "Continuous" && showStatistics[ctq] && (() => {
                   const stats = calculateProcessCapabilityStats(ctq);
                   const data = capabilityData[ctq];
                   const showPercentage = data?.showPercentage || false;
@@ -1156,7 +1185,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 })()}
 
                 {/* Statistical Control Charts */}
-                {ctqWithType.ctqType === "Continuous" && (() => {
+                {ctqWithType.ctqType === "Continuous" && showStatistics[ctq] && (() => {
                   const currentPoints = dataPoints[ctq] || [];
                   const numericValues = currentPoints.map(point => point.dataValue);
                   
