@@ -2816,6 +2816,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new user route (Super Admin only)
+  app.post("/api/admin/users", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
+      if (!currentUser || currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      }
+
+      const { email, firstName, lastName, companyName, role = 'admin', phone, phoneCountryCode } = req.body;
+
+      if (!email || !firstName || !lastName) {
+        return res.status(400).json({ message: "Email, first name, and last name are required." });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this email already exists." });
+      }
+
+      const validRoles = ['super_admin', 'admin', 'manager', 'member'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role specified." });
+      }
+
+      // Get or create organization based on companyName
+      let organizationId = currentUser.organizationId; // Default to current user's org
+      if (companyName && companyName.trim()) {
+        try {
+          const orgService = await import("./organizationService");
+          const organization = await orgService.findOrCreateOrganization(companyName.trim());
+          organizationId = organization.id;
+        } catch (error) {
+          console.error("Error creating organization:", error);
+          // Fall back to current user's organization
+        }
+      }
+
+      const { users: usersTable } = await import("@shared/schema");
+      const [newUser] = await db
+        .insert(usersTable)
+        .values({
+          id: Math.random().toString().substring(2, 10), // Generate random ID
+          email,
+          firstName,
+          lastName,
+          companyName: companyName || null,
+          role,
+          phone: phone || null,
+          phoneCountryCode: phoneCountryCode || null,
+          organizationId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning({
+          id: usersTable.id,
+          email: usersTable.email,
+          firstName: usersTable.firstName,
+          lastName: usersTable.lastName,
+          companyName: usersTable.companyName,
+          role: usersTable.role,
+          phone: usersTable.phone,
+          phoneCountryCode: usersTable.phoneCountryCode,
+          organizationId: usersTable.organizationId,
+          createdAt: usersTable.createdAt
+        });
+
+      return res.status(201).json({ user: newUser });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Update user route (Super Admin only)
+  app.put("/api/admin/users/:userId", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
+      if (!currentUser || currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      }
+
+      const { userId } = req.params;
+      const { email, firstName, lastName, companyName, role, phone, phoneCountryCode } = req.body;
+
+      if (!email || !firstName || !lastName) {
+        return res.status(400).json({ message: "Email, first name, and last name are required." });
+      }
+
+      // Prevent updating own user through this route
+      if (userId === req.user.claims.sub) {
+        return res.status(400).json({ message: "Cannot update your own user through this route." });
+      }
+
+      const validRoles = ['super_admin', 'admin', 'manager', 'member'];
+      if (role && !validRoles.includes(role)) {
+        return res.status(400).json({ message: "Invalid role specified." });
+      }
+
+      // Check if email is already taken by another user
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ message: "Email is already taken by another user." });
+      }
+
+      const { users: usersTable } = await import("@shared/schema");
+      const [updatedUser] = await db
+        .update(usersTable)
+        .set({
+          email,
+          firstName,
+          lastName,
+          companyName: companyName || null,
+          role,
+          phone: phone || null,
+          phoneCountryCode: phoneCountryCode || null,
+          updatedAt: new Date()
+        })
+        .where(eq(usersTable.id, userId))
+        .returning({
+          id: usersTable.id,
+          email: usersTable.email,
+          firstName: usersTable.firstName,
+          lastName: usersTable.lastName,
+          companyName: usersTable.companyName,
+          role: usersTable.role,
+          phone: usersTable.phone,
+          phoneCountryCode: usersTable.phoneCountryCode,
+          organizationId: usersTable.organizationId,
+          createdAt: usersTable.createdAt,
+          updatedAt: usersTable.updatedAt
+        });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      return res.status(200).json({ user: updatedUser });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Delete user route (Super Admin only)
+  app.delete("/api/admin/users/:userId", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
+      if (!currentUser || currentUser.role !== 'super_admin') {
+        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      }
+
+      const { userId } = req.params;
+
+      // Prevent deleting own user
+      if (userId === req.user.claims.sub) {
+        return res.status(400).json({ message: "Cannot delete your own user account." });
+      }
+
+      const { users: usersTable } = await import("@shared/schema");
+      const result = await db
+        .delete(usersTable)
+        .where(eq(usersTable.id, userId))
+        .returning({ id: usersTable.id });
+
+      if (!result || result.length === 0) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      return res.status(200).json({ message: "User deleted successfully." });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
