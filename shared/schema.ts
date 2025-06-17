@@ -86,6 +86,7 @@ export const users = pgTable("users", {
 });
 
 export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
 
 export const updateUserProfileSchema = createInsertSchema(users).pick({
   firstName: true,
