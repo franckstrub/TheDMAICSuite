@@ -1271,8 +1271,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <YAxis 
                                   label={{ value: 'Individual Value', angle: -90, position: 'insideBottomLeft' }}
                                   domain={[
-                                    Math.round(Math.min(individualLimits.lcl, Math.min(...numericValues))),
-                                    Math.round(Math.max(individualLimits.ucl, Math.max(...numericValues)))
+                                    Math.min(individualLimits.lcl, Math.min(...numericValues)),
+                                    Math.max(individualLimits.ucl, Math.max(...numericValues))
                                   ]}
                                 />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
@@ -1319,7 +1319,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             <div className="text-xs text-gray-600 mt-2">
                               CL: {individualLimits.centerLine.toFixed(3)} | 
                               UCL: {individualLimits.ucl.toFixed(3)} | 
-                              LCL: {individualLimits.lcl.toFixed(3)}
+                              LCL: {individualLimits.lcl.toFixed(3)} | 
+                              min data: {Math.min(...numericValues)} | 
+                              max data: {Math.max( ...numericValues)} | 
+                              Yscale min: {Math.min(individualLimits.lcl, Math.min(...numericValues))} |
+                              Yscale max: {Math.max(individualLimits.lcl, Math.max(...numericValues))} | 
+ 
                             </div>
                           </div>
 
