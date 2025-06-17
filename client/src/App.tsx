@@ -36,17 +36,15 @@ function Router() {
     }
   }, [location, isAuthenticated]);
   
-  // On authentication success, restore the stored route
+  // On authentication success, redirect to dashboard
   useEffect(() => {
     if (isAuthenticated && !isLoading && !hasRestoredRoute) {
-      const storedRoute = getStoredRoute();
-      console.log('Authentication successful, checking stored route:', storedRoute);
-      console.log('Current location:', location);
+      console.log('Authentication successful, current location:', location);
       
-      // Restore route if we have one and we're on a default route
-      if (storedRoute && storedRoute !== '/' && storedRoute !== '/app' && (location === '/' || location === '/app')) {
-        console.log('Restoring route from localStorage:', storedRoute);
-        navigate(storedRoute, { replace: true });
+      // Always redirect to dashboard when on default routes
+      if (location === '/' || location === '/app') {
+        console.log('Redirecting to dashboard');
+        navigate('/app/dashboard', { replace: true });
       }
       setHasRestoredRoute(true);
     }
