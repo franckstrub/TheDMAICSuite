@@ -13,7 +13,7 @@ import { useLocation } from "wouter";
 import type { UserRole } from "@shared/schema";
 
 export default function ProfilePage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
@@ -21,6 +21,15 @@ export default function ProfilePage() {
     firstName: "",
     lastName: "",
   });
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
+
+  if (!isAuthenticated || !user) {
+    navigate('/');
+    return null;
+  }
 
   // Get role badge properties
   const getRoleBadge = (role: UserRole) => {
@@ -151,23 +160,30 @@ export default function ProfilePage() {
                 
                 <p className="text-sm text-gray-500 mb-2">{user.email}</p>
                 
-                {user.role && (
-                  <div className="flex items-center justify-center mb-4">
-                    {(() => {
-                      const roleInfo = getRoleBadge(user.role);
-                      const IconComponent = roleInfo.icon;
-                      return (
-                        <Badge 
-                          variant={roleInfo.variant} 
-                          className={`${roleInfo.color} flex items-center gap-1`}
-                        >
-                          <IconComponent className="h-3 w-3" />
-                          {roleInfo.label}
-                        </Badge>
-                      );
-                    })()}
-                  </div>
-                )}
+                {/* Role Badge */}
+                <div className="flex items-center justify-center mb-4">
+                  {(() => {
+                    console.log("Full user object:", user);
+                    console.log("User role specifically:", user.role);
+                    const role = user.role || 'member';
+                    const roleInfo = getRoleBadge(role as UserRole);
+                    const IconComponent = roleInfo.icon;
+                    return (
+                      <Badge 
+                        variant={roleInfo.variant} 
+                        className={`${roleInfo.color} flex items-center gap-1`}
+                      >
+                        <IconComponent className="h-3 w-3" />
+                        {roleInfo.label}
+                      </Badge>
+                    );
+                  })()}
+                </div>
+                
+                {/* Debug information */}
+                <div className="text-xs text-gray-400 mb-2 bg-gray-50 p-2 rounded">
+                  DEBUG: Role={user.role || "undefined"} | Type={typeof user.role} | Admin Panel Condition={user.role === 'super_admin' ? "TRUE" : "FALSE"}
+                </div>
                 
                 <Badge variant="secondary" className="mb-4">
                   Verified Account
