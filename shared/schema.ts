@@ -543,6 +543,7 @@ export const insertRaciSchema = createInsertSchema(projectRaciMatrix).pick({
 // Activity Log
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   userId: integer("user_id").notNull(),
   projectId: integer("project_id"),
   action: text("action").notNull(),
@@ -560,6 +561,7 @@ export const insertLogSchema = createInsertSchema(activityLogs).pick({
 // Process Data (for statistical analysis)
 export const processData = pgTable("process_data", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   datasetId: integer("dataset_id").notNull(),
   projectId: integer("project_id").notNull(),
   data: jsonb("data").notNull(),
@@ -575,6 +577,7 @@ export const insertProcessDataSchema = createInsertSchema(processData).pick({
 // Project Risk Assessment
 export const projectRisks = pgTable("project_risks", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   
   // First risk row (mandatory)
@@ -795,6 +798,7 @@ export type StakeholderAnalysisItem = typeof stakeholderAnalysisItems.$inferSele
 // Gate Review Deliverables
 export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   phase: text("phase").notNull(), // define, measure, analyze, improve, control
   name: text("name").notNull(),
@@ -819,6 +823,7 @@ export type GateReviewDeliverable = typeof gateReviewDeliverables.$inferSelect;
 // Gate Review Validators
 export const gateReviewValidators = pgTable("gate_review_validators", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   phase: text("phase").notNull(), // define, measure, analyze, improve, control
   validatorName: text("validator_name").notNull(),
@@ -841,6 +846,7 @@ export type GateReviewValidator = typeof gateReviewValidators.$inferSelect;
 // Gantt Tasks for Work Breakdown Structure
 export const ganttTasks = pgTable("gantt_tasks", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   name: text("name").notNull(),
   description: text("description"),
@@ -868,6 +874,7 @@ export type GanttTask = typeof ganttTasks.$inferSelect;
 
 export const ganttSettings = pgTable("gantt_settings", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull().unique(),
   viewMode: text("view_mode").notNull().default("months"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
@@ -884,6 +891,7 @@ export type GanttSettings = typeof ganttSettings.$inferSelect;
 // Process Maps for DMAIC Measure Phase
 export const processMaps = pgTable("process_maps", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   diagramData: text("diagram_data"), // Store draw.io XML data
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
