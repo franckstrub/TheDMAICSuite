@@ -70,6 +70,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [pasteInputs, setPasteInputs] = useState<{ [ctq: string]: string }>({});
   const [focusedCell, setFocusedCell] = useState<{ [ctq: string]: number }>({});
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
+  const [isStatisticsLoaded, setIsStatisticsLoaded] = useState(false);
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -442,6 +443,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const ctqs = getCtqsWithTypes();
     if (ctqs.length > 0) {
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
+      const statisticsStates: { [ctq: string]: boolean } = {};
       
       // Create Process Capability entry for each CTQ
       ctqs.forEach((ctqWithType: CtqWithType) => {
@@ -463,9 +465,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           showZ: false,
           conclusion: "",
         };
+        
+        // Load statistics visibility state from database
+        statisticsStates[ctq] = existingCapability?.showStatistics || false;
       });
       
       setCapabilityData(initialData);
+      setShowStatistics(statisticsStates);
       
       // Set active tab to saved or first CTQ if not initialized yet
       if (!activeTab && ctqs.length > 0 && !hasInitializedTab) {
@@ -1234,16 +1240,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Individual Control Chart (I Chart) */}
                           <div className="bg-white p-4 border rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Individual Control Chart (I Chart)</h4>
+                            <h4 className="font-medium text-gray-800 mb-3">Individual Control Chart (I-Chart)</h4>
                             <ResponsiveContainer width="100%" height={250}>
                               <LineChart data={individualData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
                                 <YAxis 
-                                  label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
+                                  label={{ value: 'Individual Value', angle: -90, position: 'insideBottomLeft' }}
                                   domain={[
-                                    Math.min(individualLimits.lcl, Math.min(...numericValues)),
-                                    Math.max(individualLimits.ucl, Math.max(...numericValues))
+                                    Math.round(Math.min(individualLimits.lcl, Math.min(...numericValues))),
+                                    Math.round(Math.max(individualLimits.ucl, Math.max(...numericValues)))
                                   ]}
                                 />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
@@ -1296,13 +1302,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                           {/* Moving Range Control Chart (MR Chart) */}
                           <div className="bg-white p-4 border rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Moving Range Control Chart (MR Chart)</h4>
+                            <h4 className="font-medium text-gray-800 mb-3">Moving Range Control Chart (MR-Chart)</h4>
                             <ResponsiveContainer width="100%" height={250}>
                               <LineChart data={movingRangeData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
                                 <YAxis 
-                                  label={{ value: 'Moving Range', angle: -90, position: 'insideLeft' }}
+                                  label={{ value: 'Moving Range', angle: -90, position: 'insideBottomLeft' }}
                                   domain={[0, Math.max(mrLimits.ucl, Math.max(...movingRanges))]}
                                 />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Moving Range']} />
