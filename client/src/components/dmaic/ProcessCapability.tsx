@@ -473,8 +473,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           conclusion: "",
         };
         
-        // Load statistics visibility state from database, but preserve current state if it exists
-        statisticsStates[ctq] = showStatistics[ctq] !== undefined ? showStatistics[ctq] : (existingCapability?.showStatistics || false);
+        // Load statistics visibility state from database
+        statisticsStates[ctq] = existingCapability?.showStatistics || false;
       });
       
       setCapabilityData(initialData);
