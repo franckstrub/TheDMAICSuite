@@ -33,6 +33,10 @@ export type ValidationStatus = typeof validationStatusTypes[number];
 export const deliverableRequirementTypes = ["Required", "Optional", "Added by User"] as const;
 export type DeliverableRequirementType = typeof deliverableRequirementTypes[number];
 
+// User Roles
+export const userRoles = ["super_admin", "admin", "manager", "member"] as const;
+export type UserRole = typeof userRoles[number];
+
 // Organizations table for multi-tenant support
 export const organizations = pgTable("organizations", {
   id: serial("id").primaryKey(),
@@ -69,7 +73,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   phoneCountryCode: text("phone_country_code"),
   companyName: text("company_name"),
-  role: text("role", { enum: ["admin", "member", "viewer"] }).default("member"),
+  role: text("role", { enum: ["super_admin", "admin", "manager", "member"] }).default("admin"),
   billingAddress: jsonb("billing_address").$type<{
     street?: string;
     city?: string;
