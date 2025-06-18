@@ -2757,6 +2757,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: usersTable.lastName,
           companyName: usersTable.companyName,
           role: usersTable.role,
+          phone: usersTable.phone,
+          phoneCountryCode: usersTable.phoneCountryCode,
           createdAt: usersTable.createdAt,
           organizationId: usersTable.organizationId
         })
