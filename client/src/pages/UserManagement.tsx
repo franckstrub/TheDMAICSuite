@@ -465,7 +465,9 @@ export default function UserManagement() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                        {currentUserRole === 'super_admin' && (
+                          <SelectItem value="super_admin">Super Admin</SelectItem>
+                        )}
                         <SelectItem value="admin">Admin</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="member">Member</SelectItem>
@@ -766,7 +768,9 @@ export default function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                    {currentUserRole === 'super_admin' && (
+                      <SelectItem value="super_admin">Super Admin</SelectItem>
+                    )}
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>
                     <SelectItem value="member">Member</SelectItem>
