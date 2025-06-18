@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2, Copy, Info } from "lucide-react";
 import { UserRole } from "@shared/schema";
 import HeaderFooterLayout from "@/components/layout/HeaderFooterLayout";
@@ -87,6 +86,17 @@ export default function UserManagement() {
           throw new Error("Access denied. Super admin privileges required.");
         }
         throw new Error("Failed to fetch users");
+      }
+      return response.json();
+    }
+  });
+
+  const { data: currentUserData } = useQuery({
+    queryKey: ["/api/auth/user"],
+    queryFn: async () => {
+      const response = await fetch("/api/auth/user");
+      if (!response.ok) {
+        throw new Error("Failed to fetch current user");
       }
       return response.json();
     }
@@ -572,6 +582,8 @@ export default function UserManagement() {
                                 size="sm"
                                 variant="ghost"
                                 className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                disabled={currentUserData?.id === user.id}
+                                title={currentUserData?.id === user.id ? "You cannot delete your own account" : "Delete user"}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
