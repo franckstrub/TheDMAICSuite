@@ -274,6 +274,12 @@ export default function ProfilePage() {
                     <Mail className="h-4 w-4 mr-2" />
                     {user.email}
                   </div>
+                  {user.phone && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone className="h-4 w-4 mr-2" />
+                      {user.phoneCountryCode} {user.phone}
+                    </div>
+                  )}
                   <div className="flex items-center text-sm text-gray-600">
                     <Calendar className="h-4 w-4 mr-2" />
                     Member since {new Date(user.createdAt || Date.now()).toLocaleDateString()}

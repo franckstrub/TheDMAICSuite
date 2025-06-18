@@ -308,7 +308,7 @@ export default function UserManagement() {
       companyName: user.companyName,
       role: user.role,
       phone: user.phone || "",
-      phoneCountryCode: user.phoneCountryCode || ""
+      phoneCountryCode: user.phoneCountryCode || "+1"
     });
     setIsEditDialogOpen(true);
   };
@@ -325,7 +325,7 @@ export default function UserManagement() {
       companyName: "",
       role: "admin",
       phone: "",
-      phoneCountryCode: ""
+      phoneCountryCode: "+1"
     });
     setEditingUser(null);
   };
@@ -567,6 +567,11 @@ export default function UserManagement() {
                           <div className="text-sm text-muted-foreground">
                             {user.email}
                           </div>
+                          {user.phone && (
+                            <div className="text-xs text-muted-foreground">
+                              {user.phoneCountryCode} {user.phone}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
