@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2, Copy, Info } from "lucide-react";
 import { UserRole } from "@shared/schema";
-import MainLayout from "@/components/layout/MainLayout";
+import HeaderFooterLayout from "@/components/layout/HeaderFooterLayout";
 
 interface User {
   id: string;
@@ -112,7 +112,6 @@ export default function UserManagement() {
         title: "Role Updated",
         description: `User role updated to ${roleLabels[variables.role]}`
       });
-      // Clear the selected role for this user
       setSelectedRoles(prev => {
         const updated = { ...prev };
         delete updated[variables.userId];
@@ -288,7 +287,7 @@ export default function UserManagement() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <HeaderFooterLayout>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
@@ -311,14 +310,14 @@ export default function UserManagement() {
             </CardContent>
           </Card>
         </div>
-      </MainLayout>
+      </HeaderFooterLayout>
     );
   }
 
   const users: User[] = usersData?.users || [];
 
   return (
-    <MainLayout>
+    <HeaderFooterLayout>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
@@ -705,6 +704,6 @@ export default function UserManagement() {
           </DialogContent>
         </Dialog>
       </div>
-    </MainLayout>
+    </HeaderFooterLayout>
   );
 }
