@@ -592,16 +592,16 @@ export default function UserManagement() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete User</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete {user.firstName} {user.lastName}? This action cannot be undone.
+                                  Are you sure? Please confirm the deletion of user {user.firstName} {user.lastName}. This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>Cancel deletion</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDeleteUser(user.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Delete
+                                  Yes I confirm
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
