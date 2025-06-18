@@ -38,18 +38,18 @@ interface UserFormData {
   phoneCountryCode: string;
 }
 
+const roleColors: Record<UserRole, string> = {
+  super_admin: "bg-red-100 text-red-800",
+  admin: "bg-blue-100 text-blue-800",
+  manager: "bg-green-100 text-green-800",
+  member: "bg-gray-100 text-gray-800"
+};
+
 const roleLabels: Record<UserRole, string> = {
   super_admin: "Super Admin",
   admin: "Admin",
   manager: "Manager",
   member: "Member"
-};
-
-const roleBadgeVariants: Record<UserRole, "default" | "secondary" | "destructive" | "outline"> = {
-  super_admin: "destructive",
-  admin: "default",
-  manager: "secondary",
-  member: "outline"
 };
 
 const roleIcons: Record<UserRole, JSX.Element> = {
@@ -326,387 +326,384 @@ export default function UserManagement() {
             <h1 className="text-3xl font-bold">User Management</h1>
           </div>
           <div className="flex items-center space-x-2">
-          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-            setIsAddDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
-                <span>Add User</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-                <DialogDescription>
-                  Create a new user account with the specified role and details.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleFormSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+              setIsAddDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center space-x-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Add User</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add New User</DialogTitle>
+                  <DialogDescription>
+                    Create a new user account with the specified role and details.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleFormSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                        required
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="companyName">Company Name</Label>
                     <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                      id="companyName"
+                      value={formData.companyName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
                       required
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    value={formData.companyName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phoneCountryCode">Country Code</Label>
-                    <Input
-                      id="phoneCountryCode"
-                      value={formData.phoneCountryCode}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phoneCountryCode: e.target.value }))}
-                      placeholder="+1"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneCountryCode">Country Code</Label>
+                      <Input
+                        id="phoneCountryCode"
+                        value={formData.phoneCountryCode}
+                        onChange={(e) => setFormData(prev => ({ ...prev, phoneCountryCode: e.target.value }))}
+                        placeholder="+1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="(555) 123-4567"
-                    />
+                    <Label htmlFor="role">Role</Label>
+                    <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="member">Member</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="super_admin">Super Admin</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="member">Member</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={addUserMutation.isPending}>
-                    {addUserMutation.isPending ? "Adding..." : "Add User"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/app')}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              const currentUrl = window.location.origin;
-              navigator.clipboard.writeText(currentUrl);
-              toast({
-                title: "Link copied!",
-                description: "Share this link with new users to invite them to the platform.",
-              });
-            }}
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            Copy Invite Link
-          </Button>
-        </div>
-      </div>
-
-      {/* Authentication Info Card */}
-      <Card className="mb-6 border-blue-200 bg-blue-50">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div>
-              <h3 className="font-medium text-blue-900 mb-1">How User Authentication Works</h3>
-              <p className="text-sm text-blue-700 mb-2">
-                This application uses Replit OAuth authentication. Here's how to invite new users:
-              </p>
-              <ol className="text-sm text-blue-700 space-y-1 ml-4">
-                <li>1. Create a user account below with their email and desired role</li>
-                <li>2. Share the application URL with them (use "Copy Invite Link" button)</li>
-                <li>3. They click "Login" and authenticate with their Replit account</li>
-                <li>4. The system matches their email and assigns the pre-configured role</li>
-              </ol>
-              <p className="text-xs text-blue-600 mt-2">
-                <strong>Note:</strong> Users must have a Replit account with the same email address you register here.
-              </p>
-            </div>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={addUserMutation.isPending}>
+                      {addUserMutation.isPending ? "Adding..." : "Add User"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/app')}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Dashboard</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const currentUrl = window.location.origin;
+                navigator.clipboard.writeText(currentUrl);
+                toast({
+                  title: "Link copied!",
+                  description: "Share this link with new users to invite them to the platform.",
+                });
+              }}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Invite Link
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>System Users</CardTitle>
-          <CardDescription>
-            Manage user roles and permissions. Users authenticate through Replit OAuth - send them the application URL to login with their Replit account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {users.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No users found.
+        {/* Authentication Info Card */}
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-blue-900 mb-1">How User Authentication Works</h3>
+                <p className="text-sm text-blue-700 mb-2">
+                  This application uses Replit OAuth authentication. Here's how to invite new users:
+                </p>
+                <ol className="text-sm text-blue-700 space-y-1 ml-4">
+                  <li>1. Create a user account below with their email and desired role</li>
+                  <li>2. Share the application URL with them (use "Copy Invite Link" button)</li>
+                  <li>3. They click "Login" and authenticate with their Replit account</li>
+                  <li>4. The system matches their email and assigns the pre-configured role</li>
+                </ol>
+                <p className="text-xs text-blue-600 mt-2">
+                  <strong>Note:</strong> Users must have a Replit account with the same email address you register here.
+                </p>
+              </div>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Current Role</TableHead>
-                  <TableHead>Change Role</TableHead>
-                  <TableHead>Update Role</TableHead>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">
-                          {user.firstName} {user.lastName}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>System Users</CardTitle>
+            <CardDescription>
+              Manage user roles and permissions. Users authenticate through Replit OAuth - send them the application URL to login with their Replit account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {users.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No users found.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Current Role</TableHead>
+                    <TableHead>Change Role</TableHead>
+                    <TableHead>Update Role</TableHead>
+                    <TableHead>Actions</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {user.email}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {user.email}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {user.companyName}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {user.companyName || "Individual"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={roleBadgeVariants[user.role]} className="flex items-center space-x-1 w-fit">
-                        {roleIcons[user.role]}
-                        <span>{roleLabels[user.role]}</span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={selectedRoles[user.id] || ""}
-                        onValueChange={(value) => handleRoleChange(user.id, value as UserRole)}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="super_admin">Super Admin</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="member">Member</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        onClick={() => handleUpdateRole(user.id)}
-                        disabled={!selectedRoles[user.id] || updateRoleMutation.isPending}
-                      >
-                        {updateRoleMutation.isPending ? "Updating..." : "Update"}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="secondary" 
+                          className={`${roleColors[user.role]} flex items-center gap-1 w-fit`}
+                        >
+                          {roleIcons[user.role]}
+                          {roleLabels[user.role]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Select 
+                          value={selectedRoles[user.id] || user.role} 
+                          onValueChange={(value: UserRole) => handleRoleChange(user.id, value)}
+                        >
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="manager">Manager</SelectItem>
+                            <SelectItem value="member">Member</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleEditUser(user)}
-                          className="flex items-center space-x-1"
+                          onClick={() => handleUpdateRole(user.id)}
+                          disabled={!selectedRoles[user.id] || selectedRoles[user.id] === user.role || updateRoleMutation.isPending}
                         >
-                          <Edit className="h-3 w-3" />
-                          <span>Edit</span>
+                          {updateRoleMutation.isPending ? "Updating..." : "Update"}
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="flex items-center space-x-1"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                              <span>Delete</span>
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete User</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete {user.firstName} {user.lastName}? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditUser(user)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                               >
-                                {deleteUserMutation.isPending ? "Deleting..." : "Delete"}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-muted-foreground">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete {user.firstName} {user.lastName}? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
                         {new Date(user.createdAt).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-        setIsEditDialogOpen(open);
-        if (!open) {
-          resetForm();
-        }
-      }}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
-              Update user information and role assignments.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        {/* Edit User Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) resetForm();
+        }}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>
+                Update user information and role.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editFirstName">First Name</Label>
+                  <Input
+                    id="editFirstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editLastName">Last Name</Label>
+                  <Input
+                    id="editLastName"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="editFirstName">First Name</Label>
+                <Label htmlFor="editEmail">Email</Label>
                 <Input
-                  id="editFirstName"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  id="editEmail"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="editLastName">Last Name</Label>
+                <Label htmlFor="editCompanyName">Company Name</Label>
                 <Input
-                  id="editLastName"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  id="editCompanyName"
+                  value={formData.companyName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
                   required
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editEmail">Email</Label>
-              <Input
-                id="editEmail"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editCompanyName">Company Name</Label>
-              <Input
-                id="editCompanyName"
-                value={formData.companyName}
-                onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="editPhoneCountryCode">Country Code</Label>
-                <Input
-                  id="editPhoneCountryCode"
-                  value={formData.phoneCountryCode}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phoneCountryCode: e.target.value }))}
-                  placeholder="+1"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editPhoneCountryCode">Country Code</Label>
+                  <Input
+                    id="editPhoneCountryCode"
+                    value={formData.phoneCountryCode}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phoneCountryCode: e.target.value }))}
+                    placeholder="+1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editPhone">Phone Number</Label>
+                  <Input
+                    id="editPhone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="editPhone">Phone Number</Label>
-                <Input
-                  id="editPhone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="(555) 123-4567"
-                />
+                <Label htmlFor="editRole">Role</Label>
+                <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="member">Member</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editRole">Role</Label>
-              <Select value={formData.role} onValueChange={(value: UserRole) => setFormData(prev => ({ ...prev, role: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={updateUserMutation.isPending}>
-                {updateUserMutation.isPending ? "Updating..." : "Update User"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-        </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateUserMutation.isPending}>
+                  {updateUserMutation.isPending ? "Updating..." : "Update User"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
