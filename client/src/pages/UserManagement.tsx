@@ -15,6 +15,40 @@ import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2, C
 import { UserRole } from "@shared/schema";
 import HeaderFooterLayout from "@/components/layout/HeaderFooterLayout";
 
+// Phone country codes for dropdown
+const phoneCountryCodes = [
+  { value: "+1", label: "+1 (US/Canada)" },
+  { value: "+33", label: "+33 (France)" },
+  { value: "+44", label: "+44 (UK)" },
+  { value: "+49", label: "+49 (Germany)" },
+  { value: "+39", label: "+39 (Italy)" },
+  { value: "+34", label: "+34 (Spain)" },
+  { value: "+31", label: "+31 (Netherlands)" },
+  { value: "+32", label: "+32 (Belgium)" },
+  { value: "+41", label: "+41 (Switzerland)" },
+  { value: "+43", label: "+43 (Austria)" },
+  { value: "+45", label: "+45 (Denmark)" },
+  { value: "+46", label: "+46 (Sweden)" },
+  { value: "+47", label: "+47 (Norway)" },
+  { value: "+358", label: "+358 (Finland)" },
+  { value: "+351", label: "+351 (Portugal)" },
+  { value: "+353", label: "+353 (Ireland)" },
+  { value: "+81", label: "+81 (Japan)" },
+  { value: "+82", label: "+82 (South Korea)" },
+  { value: "+86", label: "+86 (China)" },
+  { value: "+91", label: "+91 (India)" },
+  { value: "+61", label: "+61 (Australia)" },
+  { value: "+64", label: "+64 (New Zealand)" },
+  { value: "+52", label: "+52 (Mexico)" },
+  { value: "+55", label: "+55 (Brazil)" },
+  { value: "+54", label: "+54 (Argentina)" },
+  { value: "+27", label: "+27 (South Africa)" },
+  { value: "+7", label: "+7 (Russia)" },
+  { value: "+90", label: "+90 (Turkey)" },
+  { value: "+966", label: "+966 (Saudi Arabia)" },
+  { value: "+971", label: "+971 (UAE)" }
+];
+
 interface User {
   id: string;
   email: string;
