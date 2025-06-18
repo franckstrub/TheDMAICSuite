@@ -11,10 +11,46 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Calendar, Edit, Save, X, Shield, UserCheck, Settings, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User, Mail, Calendar, Edit, Save, X, Shield, UserCheck, Settings, Users, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UserRole } from "@shared/schema";
+
+// Phone country codes for dropdown
+const phoneCountryCodes = [
+  { value: "+1", label: "+1 (US/Canada)" },
+  { value: "+33", label: "+33 (France)" },
+  { value: "+44", label: "+44 (UK)" },
+  { value: "+49", label: "+49 (Germany)" },
+  { value: "+39", label: "+39 (Italy)" },
+  { value: "+34", label: "+34 (Spain)" },
+  { value: "+31", label: "+31 (Netherlands)" },
+  { value: "+32", label: "+32 (Belgium)" },
+  { value: "+41", label: "+41 (Switzerland)" },
+  { value: "+43", label: "+43 (Austria)" },
+  { value: "+45", label: "+45 (Denmark)" },
+  { value: "+46", label: "+46 (Sweden)" },
+  { value: "+47", label: "+47 (Norway)" },
+  { value: "+358", label: "+358 (Finland)" },
+  { value: "+351", label: "+351 (Portugal)" },
+  { value: "+353", label: "+353 (Ireland)" },
+  { value: "+81", label: "+81 (Japan)" },
+  { value: "+82", label: "+82 (South Korea)" },
+  { value: "+86", label: "+86 (China)" },
+  { value: "+91", label: "+91 (India)" },
+  { value: "+61", label: "+61 (Australia)" },
+  { value: "+64", label: "+64 (New Zealand)" },
+  { value: "+52", label: "+52 (Mexico)" },
+  { value: "+55", label: "+55 (Brazil)" },
+  { value: "+54", label: "+54 (Argentina)" },
+  { value: "+27", label: "+27 (South Africa)" },
+  { value: "+7", label: "+7 (Russia)" },
+  { value: "+90", label: "+90 (Turkey)" },
+  { value: "+966", label: "+966 (Saudi Arabia)" },
+  { value: "+971", label: "+971 (UAE)" }
+];
 
 interface ProfileOverlayProps {
   open: boolean;
@@ -25,11 +61,77 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
-    firstName: "",
-    lastName: "",
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    phone: user?.phone || "",
+    phoneCountryCode: user?.phoneCountryCode || "",
+    companyName: user?.companyName || "",
   });
+
+  // Update mutation for profile
+  const updateProfileMutation = useMutation({
+    mutationFn: async (profileData: typeof editedProfile) => {
+      const response = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      setIsEditing(false);
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Profile update error:', error);
+    },
+  });
+
+  // Reset form when user data changes or when starting to edit
+  const handleStartEdit = () => {
+    setEditedProfile({
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      phone: user?.phone || "",
+      phoneCountryCode: user?.phoneCountryCode || "",
+      companyName: user?.companyName || "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate(editedProfile);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedProfile({
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      phone: user?.phone || "",
+      phoneCountryCode: user?.phoneCountryCode || "",
+      companyName: user?.companyName || "",
+    });
+  };
 
   if (isLoading) {
     return (
@@ -111,30 +213,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
     return 'User';
   };
 
-  const handleEdit = () => {
-    setEditedProfile({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-    });
-    setIsEditing(true);
-  };
 
-  const handleSave = () => {
-    // In a real application, you would save the profile changes here
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been updated successfully.",
-    });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedProfile({
-      firstName: "",
-      lastName: "",
-    });
-  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -200,6 +279,12 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                       <Mail className="h-4 w-4 mr-2" />
                       {user.email}
                     </div>
+                    {user.phone && user.phone.length > 0 && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Phone className="h-4 w-4 mr-2" />
+                        {user.phoneCountryCode || '+1'} {user.phone}
+                      </div>
+                    )}
                     <div className="flex items-center text-sm text-gray-600">
                       <Calendar className="h-4 w-4 mr-2" />
                       Member since {new Date(user.createdAt || Date.now()).toLocaleDateString()}
@@ -216,17 +301,21 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Profile Information</CardTitle>
                 {!isEditing ? (
-                  <Button onClick={handleEdit} variant="outline" size="sm">
+                  <Button onClick={handleStartEdit} variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button onClick={handleSave} size="sm">
+                    <Button 
+                      onClick={handleSaveProfile} 
+                      size="sm"
+                      disabled={updateProfileMutation.isPending}
+                    >
                       <Save className="h-4 w-4 mr-2" />
-                      Save
+                      {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
                     </Button>
-                    <Button onClick={handleCancel} variant="outline" size="sm">
+                    <Button onClick={handleCancelEdit} variant="outline" size="sm">
                       <X className="h-4 w-4 mr-2" />
                       Cancel
                     </Button>
@@ -262,6 +351,65 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                       <p className="mt-1 text-sm text-gray-900">{user.lastName || "Not provided"}</p>
                     )}
                   </div>
+                </div>
+
+                <Separator />
+
+                {/* Phone Number Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="phoneCountryCode">Country Code</Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editedProfile.phoneCountryCode} 
+                        onValueChange={(value) => setEditedProfile(prev => ({ ...prev, phoneCountryCode: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select country code" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {phoneCountryCodes.map((code) => (
+                            <SelectItem key={code.value} value={code.value}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{user.phoneCountryCode || "Not provided"}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
+                    {isEditing ? (
+                      <Input
+                        id="phone"
+                        value={editedProfile.phone}
+                        onChange={(e) => setEditedProfile(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="Enter your phone number"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-900">{user.phone || "Not provided"}</p>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Company Name Section */}
+                <div>
+                  <Label htmlFor="companyName">Company Name</Label>
+                  {isEditing ? (
+                    <Input
+                      id="companyName"
+                      value={editedProfile.companyName}
+                      onChange={(e) => setEditedProfile(prev => ({ ...prev, companyName: e.target.value }))}
+                      placeholder="Enter your company name"
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm text-gray-900">{user.companyName || "Not provided"}</p>
+                  )}
                 </div>
 
                 <Separator />
