@@ -204,14 +204,16 @@ export default function Sidebar() {
             <h3 className="text-xs uppercase font-semibold text-gray-500 tracking-wider">Settings</h3>
           </div>
           
-          <Button
-            variant={currentTab === "storage" ? "default" : "ghost"}
-            className="w-full justify-start font-medium"
-            onClick={() => navigateTo("storage")}
-          >
-            <ServerCog className="w-5 h-5 mr-3" />
-            <span>Storage Options</span>
-          </Button>
+          {user?.role === 'super_admin' && (
+            <Button
+              variant={currentTab === "storage" ? "default" : "ghost"}
+              className="w-full justify-start font-medium"
+              onClick={() => navigateTo("storage")}
+            >
+              <ServerCog className="w-5 h-5 mr-3" />
+              <span>Storage Options</span>
+            </Button>
+          )}
           
           <Button
             variant={currentTab === "settings" ? "default" : "ghost"}
