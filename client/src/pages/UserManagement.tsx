@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2, Copy, Info } from "lucide-react";
 import { UserRole } from "@shared/schema";
 import HeaderFooterLayout from "@/components/layout/HeaderFooterLayout";
