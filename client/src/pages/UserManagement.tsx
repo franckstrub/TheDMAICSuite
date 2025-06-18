@@ -430,12 +430,21 @@ export default function UserManagement() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="phoneCountryCode">Country Code</Label>
-                      <Input
-                        id="phoneCountryCode"
-                        value={formData.phoneCountryCode}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phoneCountryCode: e.target.value }))}
-                        placeholder="+1"
-                      />
+                      <Select 
+                        value={formData.phoneCountryCode} 
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, phoneCountryCode: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select country code" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {phoneCountryCodes.map((code) => (
+                            <SelectItem key={code.value} value={code.value}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
@@ -708,12 +717,21 @@ export default function UserManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="editPhoneCountryCode">Country Code</Label>
-                  <Input
-                    id="editPhoneCountryCode"
-                    value={formData.phoneCountryCode}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phoneCountryCode: e.target.value }))}
-                    placeholder="+1"
-                  />
+                  <Select 
+                    value={formData.phoneCountryCode} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, phoneCountryCode: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country code" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {phoneCountryCodes.map((code) => (
+                        <SelectItem key={code.value} value={code.value}>
+                          {code.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="editPhone">Phone Number</Label>
