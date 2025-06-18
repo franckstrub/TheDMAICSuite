@@ -15,6 +15,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { 
   mean, 
   standardDeviation, 
+  variance, 
   calculateCp, 
   calculateCpk, 
   calculatePp, 
@@ -541,6 +542,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const sampleSize = dataPointsArray.length;
     const meanValue = mean(dataPointsArray);
     const stdDev = standardDeviation(dataPointsArray);
+    const varianceValue = variance(dataPointsArray);
+    const myquartiles= calculateQuartiles(dataPointsArray);
     
     // Calculate capability indices
     const cp = calculateCp(dataPointsArray, lsl, usl);
@@ -557,6 +560,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       sampleSize,
       mean: meanValue,
       standardDeviation: stdDev,
+      variance: varianceValue,
+      quartiles: myquartiles,
       cp,
       cpk,
       pp,
@@ -1073,6 +1078,50 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span className="font-medium">{stats.standardDeviation.toFixed(4)}</span>
                               </div>
                               <div className="flex justify-between">
+                                <span>Variance (σ²):</span>
+                                <span className="font-medium">{stats.variance.toFixed(4)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Centiles */}
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Centiles</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Min:</span>
+                                <span className="font-medium">{stats.quartiles?.min?.toFixed(4) || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Q1:</span>
+                                <span className="font-medium">{stats.quartiles?.q1?.toFixed(4) || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Median:</span>
+                                <span className="font-medium">{stats.quartiles?.median?.toFixed(4) || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Q3:</span>
+                                <span className="font-medium">{stats.quartiles?.q3?.toFixed(4) || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Max:</span>
+                                <span className="font-medium">{stats.quartiles?.max?.toFixed(4) || 'N/A'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Range:</span>
+                                <span className="font-medium">{stats.quartiles ? (stats.quartiles.max - stats.quartiles.min).toFixed(4) : 'N/A'}</span>
+                              </div>
+                            </div>
+                          </div>                          
+
+                          {/* Capability Indices */}
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-blue-800 mb-3">
+                              {capabilityIndex === "Cp/Cpk" ? "Cp/Cpk Capability Indices" : "Z values"}
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
                                 <span>LSL:</span>
                                 <span className="font-medium">{stats.lsl || "N/A"}</span>
                               </div>
@@ -1080,21 +1129,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span>USL:</span>
                                 <span className="font-medium">{stats.usl || "N/A"}</span>
                               </div>
-                              {stats.target && (
+                              {stats.target && !(capabilityIndex === "Cp/Cpk") && (
                                 <div className="flex justify-between">
                                   <span>Target:</span>
                                   <span className="font-medium">{stats.target}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Capability Indices */}
-                          <div className="bg-blue-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-blue-800 mb-3">
-                              {capabilityIndex === "Cp/Cpk" ? "Capability Indices" : "Z Score Analysis"}
-                            </h4>
-                            <div className="space-y-2 text-sm">
+                                </div>)}
                               {capabilityIndex === "Cp/Cpk" ? (
                                 <>
                                   <div className="flex justify-between">
@@ -1134,6 +1173,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           </div>
 
                           {/* Performance Metrics */}
+                          {showPercentage && (
                           <div className="bg-green-50 p-4 rounded-lg">
                             <h4 className="font-medium text-green-800 mb-3">Performance Metrics</h4>
                             <div className="space-y-2 text-sm">
@@ -1157,6 +1197,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               </div>
                             </div>
                           </div>
+                        )}
                         </div>
 
                         {/* Capability Assessment */}
