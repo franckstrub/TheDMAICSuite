@@ -29,7 +29,8 @@ import {
   calculateQuartiles,
   calculateMovingRange,
   calculateIndividualControlLimits,
-  calculateMovingRangeControlLimits
+  calculateMovingRangeControlLimits,
+  calculateZScoreLongShortTerm
 } from "@/lib/statisticsUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from "recharts";
 
@@ -1188,17 +1189,37 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Z-LT:</span>
+                                  <span>Z Long Term:</span>
                                   <span className="font-medium text-sm">
-                                    {stats.zScore.toFixed(2)}σ
+                                    {stats.zLongTerm ? stats.zLongTerm.toFixed(2) : '0.00'}σ
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Z-ST:</span>
+                                  <span>Z Short Term:</span>
                                   <span className="font-medium text-sm">
-                                    {(stats.zShift+stats.zScore).toFixed(2)}σ
+                                    {stats.zShortTerm ? stats.zShortTerm.toFixed(2) : '0.00'}σ
                                   </span>
                                 </div>
+                                <div className="flex justify-between">
+                                  <span>Z.Bench:</span>
+                                  <span className="font-medium text-sm">
+                                    {stats.zBench ? stats.zBench.toFixed(2) : '0.00'}σ
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Normality Test:</span>
+                                  <span className={`font-medium text-sm ${stats.isNormal ? 'text-green-600' : 'text-red-600'}`}>
+                                    {stats.isNormal ? 'Pass' : 'Fail'}
+                                  </span>
+                                </div>
+                                {stats.pValue && (
+                                  <div className="flex justify-between">
+                                    <span>P-Value:</span>
+                                    <span className="font-medium text-sm">
+                                      {stats.pValue.toFixed(3)}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                               )}
                             </div>
