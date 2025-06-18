@@ -274,10 +274,10 @@ export default function ProfilePage() {
                     <Mail className="h-4 w-4 mr-2" />
                     {user.email}
                   </div>
-                  {user.phone && (
+                  {user.phone && user.phone.length > 0 && (
                     <div className="flex items-center text-sm text-gray-600">
                       <Phone className="h-4 w-4 mr-2" />
-                      {user.phoneCountryCode} {user.phone}
+                      {user.phoneCountryCode || '+1'} {user.phone}
                     </div>
                   )}
                   <div className="flex items-center text-sm text-gray-600">
