@@ -239,6 +239,159 @@ export function calculateDPMOFromYield(yieldPercent: number): number {
 }
 
 /**
+ * Normal cumulative distribution function (CDF)
+ */
+function normalCDF(x: number): number {
+  // Using the complementary error function approximation
+  return 0.5 * (1 + erf(x / Math.sqrt(2)));
+}
+
+/**
+ * Error function approximation
+ */
+function erf(x: number): number {
+  // Abramowitz and Stegun approximation
+  const a1 =  0.254829592;
+  const a2 = -0.284496736;
+  const a3 =  1.421413741;
+  const a4 = -1.453152027;
+  const a5 =  1.061405429;
+  const p  =  0.3275911;
+
+  // Save the sign of x
+  const sign = x >= 0 ? 1 : -1;
+  x = Math.abs(x);
+
+  // A&S formula 7.1.26
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+
+  return sign * y;
+}
+
+/**
+ * Perform Anderson-Darling normality test
+ */
+export function performNormalityTest(values: number[]): {
+  isNormal: boolean;
+  adStatistic: number;
+  pValue: number;
+} {
+  if (values.length < 8) {
+    return { isNormal: false, adStatistic: 0, pValue: 0 };
+  }
+
+  const n = values.length;
+  const sorted = [...values].sort((a, b) => a - b);
+  const meanVal = mean(values);
+  const stdDev = standardDeviation(values);
+  
+  // Calculate Anderson-Darling statistic
+  let adSum = 0;
+  for (let i = 0; i < n; i++) {
+    const zi = (sorted[i] - meanVal) / stdDev;
+    const phi = normalCDF(zi);
+    const phiComp = 1 - normalCDF((sorted[n - 1 - i] - meanVal) / stdDev);
+    
+    if (phi > 0 && phi < 1 && phiComp > 0 && phiComp < 1) {
+      adSum += (2 * i + 1) * (Math.log(phi) + Math.log(phiComp));
+    }
+  }
+  
+  const adStatistic = -n - adSum / n;
+  const adAdjusted = adStatistic * (1 + 0.75/n + 2.25/(n*n));
+  
+  // Critical values for Anderson-Darling test (approximate)
+  const criticalValue = 0.787; // 5% significance level
+  const isNormal = adAdjusted < criticalValue;
+  
+  // Approximate p-value calculation
+  let pValue = 0.05;
+  if (adAdjusted < 0.2) pValue = 0.8;
+  else if (adAdjusted < 0.34) pValue = 0.5;
+  else if (adAdjusted < 0.787) pValue = 0.1;
+  else pValue = 0.01;
+  
+  return { isNormal, adStatistic: adAdjusted, pValue };
+}
+
+/**
+ * Calculate Z-score for Long Term and Short Term based on data term, normality, and specification limits
+ */
+export function calculateZScoreLongShortTerm(
+  values: number[],
+  meanVal: number,
+  stdDev: number,
+  lsl: number,
+  usl: number,
+  dataSetTerm: "Long Term" | "Short Term",
+  zShift: number = 1.5
+): {
+  zLongTerm: number;
+  zShortTerm: number;
+  zBench: number;
+  isNormal: boolean;
+  adStatistic: number;
+  pValue: number;
+} {
+  if (values.length === 0 || stdDev === 0) {
+    return {
+      zLongTerm: 0,
+      zShortTerm: 0,
+      zBench: 0,
+      isNormal: false,
+      adStatistic: 0,
+      pValue: 0
+    };
+  }
+
+  // Perform normality test
+  const normalityTest = performNormalityTest(values);
+  
+  // Calculate Z values based on specification limits
+  let zLsl = Infinity;
+  let zUsl = Infinity;
+  
+  if (lsl !== 0 && !isNaN(lsl) && isFinite(lsl)) {
+    zLsl = Math.abs(meanVal - lsl) / stdDev;
+  }
+  
+  if (usl !== 0 && !isNaN(usl) && isFinite(usl)) {
+    zUsl = Math.abs(usl - meanVal) / stdDev;
+  }
+  
+  // Take the minimum Z (worst case) - only consider finite values
+  const validZValues = [zLsl, zUsl].filter(z => isFinite(z));
+  const zMinimum = validZValues.length > 0 ? Math.min(...validZValues) : 0;
+  
+  // Calculate Long Term and Short Term Z scores
+  let zLongTerm = zMinimum;
+  let zShortTerm = zMinimum;
+  
+  if (dataSetTerm === "Long Term") {
+    // Long term data already includes variation
+    zLongTerm = zMinimum;
+    zShortTerm = zMinimum + zShift; // Add shift to get short term equivalent
+  } else {
+    // Short term data - add shift to get long term
+    zShortTerm = zMinimum;
+    zLongTerm = Math.max(0, zMinimum - zShift); // Subtract shift for long term
+  }
+  
+  // Z.Bench is typically the short term capability
+  const zBench = zShortTerm;
+  
+  return {
+    zLongTerm: Math.max(0, zLongTerm),
+    zShortTerm: Math.max(0, zShortTerm),
+    zBench: Math.max(0, zBench),
+    isNormal: normalityTest.isNormal,
+    adStatistic: normalityTest.adStatistic,
+    pValue: normalityTest.pValue
+  };
+}
+
+/**
  * Calculate Z score with shift adjustment
  * @param yieldPercent Yield percentage (0-100)
  * @param shift Z-shift value (typically 1.5)
