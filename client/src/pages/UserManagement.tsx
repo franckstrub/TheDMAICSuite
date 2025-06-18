@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Users, UserCheck, Settings, X, ArrowLeft, Plus, Edit, Trash2, Copy, Info } from "lucide-react";
 import { UserRole } from "@shared/schema";
+import MainLayout from "@/components/layout/MainLayout";
 
 interface User {
   id: string;
@@ -287,41 +288,44 @@ export default function UserManagement() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-6 w-6" />
-            <h1 className="text-3xl font-bold">User Management</h1>
+      <MainLayout>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-6 w-6" />
+              <h1 className="text-3xl font-bold">User Management</h1>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/app')}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Dashboard</span>
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/app')}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
-          </Button>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">Loading users...</div>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">Loading users...</div>
-          </CardContent>
-        </Card>
-      </div>
+      </MainLayout>
     );
   }
 
   const users: User[] = usersData?.users || [];
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-2">
-          <Shield className="h-6 w-6" />
-          <h1 className="text-3xl font-bold">User Management</h1>
-        </div>
-        <div className="flex items-center space-x-2">
+    <MainLayout>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-2">
+            <Shield className="h-6 w-6" />
+            <h1 className="text-3xl font-bold">User Management</h1>
+          </div>
+          <div className="flex items-center space-x-2">
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
             setIsAddDialogOpen(open);
             if (!open) resetForm();
@@ -702,6 +706,8 @@ export default function UserManagement() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </div>
+    </MainLayout>
   );
 }
