@@ -556,6 +556,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const dpmo = calculateDPMOFromYield(yieldPercent);
     const zScore = calculateZScore(yieldPercent, zShift);
     
+    // Calculate Long Term and Short Term Z scores with normality test
+    const zScoreData = calculateZScoreLongShortTerm(
+      dataPointsArray, 
+      meanValue, 
+      stdDev, 
+      lsl, 
+      usl, 
+      data.dataSetTerm, 
+      zShift
+    );
+    
     return {
       sampleSize,
       mean: meanValue,
@@ -569,9 +580,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       yield: yieldPercent,
       dpmo,
       zScore,
+      zLongTerm: zScoreData.zLongTerm,
+      zShortTerm: zScoreData.zShortTerm,
+      zBench: zScoreData.zBench,
+      isNormal: zScoreData.isNormal,
+      adStatistic: zScoreData.adStatistic,
+      pValue: zScoreData.pValue,
       lsl,
       usl,
-      target
+      target,
+      zShift,
     };
   };
 
@@ -714,7 +732,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Z-Shift Value</label>
+                    <label className="block text-sm font-medium mb-2">Z-shift Value</label>
                     <Input
                       type="number"
                       step="0.1"
@@ -1086,7 +1104,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                           {/* Centiles */}
                           <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Centiles</h4>
+                            <h4 className="font-medium text-gray-800 mb-3">Percentiles</h4>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
                                 <span>Min:</span>
@@ -1162,12 +1180,26 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   </div>
                                 </>
                               ) : (
+                              <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                  <span>Z Score:</span>
-                                  <span className="font-medium text-lg">
+                                  <span>Z-shift:</span>
+                                  <span className="font-medium text-sm">
+                                    {stats.zShift.toFixed(2)}σ
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Z-LT:</span>
+                                  <span className="font-medium text-sm">
                                     {stats.zScore.toFixed(2)}σ
                                   </span>
                                 </div>
+                                <div className="flex justify-between">
+                                  <span>Z-ST:</span>
+                                  <span className="font-medium text-sm">
+                                    {(stats.zShift+stats.zScore).toFixed(2)}σ
+                                  </span>
+                                </div>
+                              </div>
                               )}
                             </div>
                           </div>
