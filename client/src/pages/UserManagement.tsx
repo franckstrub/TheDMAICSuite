@@ -117,7 +117,7 @@ export default function UserManagement() {
       const response = await fetch("/api/admin/users");
       if (!response.ok) {
         if (response.status === 403) {
-          throw new Error("Access denied. Super admin privileges required.");
+          throw new Error("Access denied. Admin privileges required.");
         }
         throw new Error("Failed to fetch users");
       }
@@ -337,7 +337,8 @@ export default function UserManagement() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
               <Shield className="h-6 w-6" />
-              <h1 className="text-3xl font-bold">User Management</h1>
+              <h1 className="text-3xl font-bold">Administration Panel</h1>
+              
             </div>
             <Button
               variant="ghost"
@@ -360,6 +361,7 @@ export default function UserManagement() {
   }
 
   const users: User[] = usersData?.users || [];
+  const currentUserRole = usersData?.currentUser?.role || currentUserData?.role;
 
   return (
     <HeaderFooterLayout>
@@ -367,7 +369,7 @@ export default function UserManagement() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
             <Shield className="h-6 w-6" />
-            <h1 className="text-3xl font-bold">User Management</h1>
+            <h1 className="text-3xl font-bold">Administration Panel</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
@@ -520,7 +522,7 @@ export default function UserManagement() {
                 <ol className="text-sm text-blue-700 space-y-1 ml-4">
                   <li>1. Create a user account below with their email and desired role</li>
                   <li>2. Share the application URL with them (use "Copy Invite Link" button)</li>
-                  <li>3. They click "Login" and authenticate with their Replit account</li>
+                  <li>3. They click "Login" and authenticate with their Replit account (if they don’t have one, they create one)</li>
                   <li>4. The system matches their email and assigns the pre-configured role</li>
                 </ol>
                 <p className="text-xs text-blue-600 mt-2">
@@ -533,7 +535,14 @@ export default function UserManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>System Users</CardTitle>
+            <CardTitle>
+              <div className="flex w-min-20 items-center">
+                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+              &nbsp; System Users Management
+              </div>
+              </CardTitle>
             <CardDescription>
               Manage user roles and permissions. Users authenticate through Replit OAuth - send them the application URL to login with their Replit account.
             </CardDescription>
@@ -597,7 +606,9 @@ export default function UserManagement() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                            {currentUserRole === 'super_admin' && (
+                              <SelectItem value="super_admin">Super Admin</SelectItem>
+                            )}
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="manager">Manager</SelectItem>
                             <SelectItem value="member">Member</SelectItem>
