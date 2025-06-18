@@ -2737,19 +2737,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User Management Routes (Super Admin only)
+  // User Management Routes (Super Admin and Admin)
   app.get("/api/admin/users", isAuthenticated, async (req, res) => {
     try {
       if (!req.user || !req.user.claims || !req.user.claims.sub) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
-      if (!currentUser || currentUser.role !== 'super_admin') {
-        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      if (!currentUser || (currentUser.role !== 'super_admin' && currentUser.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
       }
 
       const { users: usersTable } = await import("@shared/schema");
-      const users = await db
+      
+      let usersQuery = db
         .select({
           id: usersTable.id,
           email: usersTable.email,
@@ -2762,10 +2763,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: usersTable.createdAt,
           organizationId: usersTable.organizationId
         })
-        .from(usersTable)
-        .orderBy(asc(usersTable.createdAt));
+        .from(usersTable);
 
-      return res.status(200).json({ users });
+      // If user is admin (not super_admin), only show users from their organization
+      if (currentUser.role === 'admin') {
+        usersQuery = usersQuery.where(eq(usersTable.organizationId, currentUser.organizationId));
+      }
+
+      const users = await usersQuery.orderBy(asc(usersTable.createdAt));
+
+      return res.status(200).json({ users, currentUser: { role: currentUser.role } });
     } catch (err) {
       return handleErrors(err, res);
     }
@@ -2777,12 +2784,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User not authenticated" });
       }
       const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
-      if (!currentUser || currentUser.role !== 'super_admin') {
-        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      if (!currentUser || (currentUser.role !== 'super_admin' && currentUser.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
       }
 
       const userId = req.params.userId;
       const { role } = req.body;
+
+      // Admin users cannot set super_admin role
+      if (currentUser.role === 'admin' && role === 'super_admin') {
+        return res.status(403).json({ message: "Admin users cannot assign super admin role." });
+      }
 
       // Validate role
       const validRoles = ['super_admin', 'admin', 'manager', 'member'];
