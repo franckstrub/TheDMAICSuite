@@ -630,7 +630,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       meanValue, 
       stdDev, 
       lsl, 
-      usl, 
+      usl,
+      data.dataSetTerm,
       zShift
     );
     
