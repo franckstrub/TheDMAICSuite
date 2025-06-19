@@ -16,10 +16,6 @@ import {
   mean, 
   standardDeviation, 
   variance, 
-  calculateCp, 
-  calculateCpk, 
-  calculatePp, 
-  calculatePpk, 
   calculateYield, 
   calculateDPMOFromYield, 
   calculateZScore,
@@ -31,7 +27,8 @@ import {
   calculateIndividualControlLimits,
   calculateMovingRangeControlLimits,
   calculateZScoreLongShortTerm,
-  calculatePerformanceMetrics
+  calculatePerformanceMetrics,
+  calculateCapabilityIndexes
 } from "@/lib/statisticsUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from "recharts";
 
@@ -613,17 +610,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const varianceValue = variance(dataPointsArray);
     const myquartiles= calculateQuartiles(dataPointsArray);
     
-    // Calculate capability indices
-    const cp = calculateCp(dataPointsArray, lsl, usl);
-    const cpk = calculateCpk(dataPointsArray, lsl, usl);
-    const pp = calculatePp(dataPointsArray, lsl, usl);
-    const ppk = calculatePpk(dataPointsArray, lsl, usl);
-    
-    // Calculate yield and performance metrics
-    const yieldPercent = calculateYield(dataPointsArray, lsl, usl);
-    const dpmo = calculateDPMOFromYield(yieldPercent);
-    const zScore = calculateZScore(yieldPercent, zShift);
-    
     // Calculate Long Term and Short Term Z scores with normality test
     const zScoreData = calculateZScoreLongShortTerm(
       dataPointsArray, 
@@ -634,14 +620,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       data.dataSetTerm, 
       zShift
     );
+
+    // Calculate all capability indices at once
+    const capabilityIndexes = calculateCapabilityIndexes(
+      dataPointsArray,
+      meanValue,
+      stdDev,
+      lsl,
+      usl,
+      data.dataSetTerm,
+      zShift
+    );
     
     // Calculate performance metrics for both Long Term and Short Term using Z scores
     const performanceMetrics = calculatePerformanceMetrics(
       zScoreData.zLongTerm || 0, 
       zScoreData.zShortTerm || 0
     );
-    
-
     
     return {
       sampleSize,
@@ -653,9 +648,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       cpk,
       pp,
       ppk,
-      yield: yieldPercent,
-      dpmo,
-      zScore,
       zLongTerm: zScoreData.zLongTerm,
       zShortTerm: zScoreData.zShortTerm,
       zBench: zScoreData.zBench,
@@ -1410,6 +1402,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <div className="text-sm text-yellow-700">
                             {stats.cpk !== null && capabilityIndex === "Cp/Cpk" && (
                               <div>
+                                {stats.cpk >= 1.66 && (
+                                  <p className="text-green-700 font-medium">✓ Process is world-class (Cpk ≥ 1.33)</p>
+                                )}
                                 {stats.cpk >= 1.33 && (
                                   <p className="text-green-700 font-medium">✓ Process is capable (Cpk ≥ 1.33)</p>
                                 )}
@@ -1423,16 +1418,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             )}
                             {capabilityIndex === "Z" && (
                               <div>
-                                {stats.zScore >= 6 && (
+                                {stats.zShortTerm >= 6 && (
                                   <p className="text-green-700 font-medium">✓ World class performance (≥ 6σ)</p>
                                 )}
-                                {stats.zScore >= 4 && stats.zScore < 6 && (
+                                {stats.zShortTerm >= 4 && stats.zShortTerm < 6 && (
                                   <p className="text-blue-700 font-medium">○ Good performance (4-6σ)</p>
                                 )}
-                                {stats.zScore >= 3 && stats.zScore < 4 && (
+                                {stats.zShortTerm >= 3 && stats.zShortTerm < 4 && (
                                   <p className="text-yellow-700 font-medium">⚠ Average performance (3-4σ)</p>
                                 )}
-                                {stats.zScore < 3 && (
+                                {stats.zShortTerm < 3 && (
                                   <p className="text-red-700 font-medium">✗ Poor performance ({'<'} 3σ)</p>
                                 )}
                               </div>
