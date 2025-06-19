@@ -1156,8 +1156,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <Calculator className="h-5 w-5 text-blue-600" />
                           <h3 className="text-lg font-semibold">Process Capability Analysis Results</h3>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className={`grid grid-cols-1 gap-6 ${showPercentage ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
                           {/* Basic Statistics */}
                           <div className="bg-gray-50 p-4 rounded-lg">
                             <h4 className="font-medium text-gray-800 mb-3">Basic Statistics</h4>
@@ -1215,15 +1214,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span className="font-medium">{stats.quartiles?.min?.toFixed(4) || 'N/A'}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Q1:</span>
+                                <span title="Q1 = 1st quartile value = percentile(25%)">Q1:</span>
                                 <span className="font-medium">{stats.quartiles?.q1?.toFixed(4) || 'N/A'}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Median:</span>
+                                <span title="Q2 = 2nd quartile value = percentile(50%)">Median:</span>
                                 <span className="font-medium">{stats.quartiles?.median?.toFixed(4) || 'N/A'}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Q3:</span>
+                                <span title="Q3 = 3rd quartile value = percentile(75%)">Q3:</span>
                                 <span className="font-medium">{stats.quartiles?.q3?.toFixed(4) || 'N/A'}</span>
                               </div>
                               <div className="flex justify-between">
@@ -1231,7 +1230,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span className="font-medium">{stats.quartiles?.max?.toFixed(4) || 'N/A'}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Range:</span>
+                                <span title="Range = Max - Min">Range:</span>
                                 <span className="font-medium">{stats.quartiles ? (stats.quartiles.max - stats.quartiles.min).toFixed(4) : 'N/A'}</span>
                               </div>
                             </div>
@@ -1244,11 +1243,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </h4>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
-                                <span>LSL:</span>
+                                <span title="LSL = Lower Specification Limit">LSL:</span>
                                 <span className="font-medium">{stats.lsl || "N/A"}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>USL:</span>
+                                <span title="USL = Upper Specification Limit">USL:</span>
                                 <span className="font-medium">{stats.usl || "N/A"}</span>
                               </div>
                               {stats.target && !(capabilityIndex === "Cp/Cpk") && (
@@ -1311,24 +1310,38 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           {/* Performance Metrics */}
                           {showPercentage && (
                           <div className="bg-green-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-3">Performance Metrics</h4>
+                            <h4 className="font-medium text-green-800 mb-3">Performance Metrics ({capabilityData[ctq]?.dataSetTerm || "Long Term"})</h4>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
-                                <span>Yield:</span>
+                                <span>Yield ({capabilityData[ctq]?.dataSetTerm || "Long Term"}):</span>
                                 <span className="font-medium">
-                                  {showPercentage ? `${stats.yield.toFixed(2)}%` : stats.yield.toFixed(4)}
+                                  {(stats.yield ).toFixed(
+                                            stats.dpmo <= 1 ? 6
+                                            : stats.dpmo <= 10 ? 5 
+                                            : stats.dpmo <= 100 ? 4 
+                                            : stats.dpmo <= 1000 ? 3 
+                                            : stats.dpmo <= 10000 ? 2 
+                                            : 2
+                                  )}%
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span>DPMO:</span>
+                                <span>% defects ({capabilityData[ctq]?.dataSetTerm || "Long Term"}):</span>
+                                <span className="font-medium">
+                                  {(stats.dpmo * 100 / 1000000).toFixed(
+                                            stats.dpmo <= 1 ? 6
+                                            : stats.dpmo <= 10 ? 5 
+                                            : stats.dpmo <= 100 ? 4 
+                                            : stats.dpmo <= 1000 ? 3 
+                                            : stats.dpmo <= 10000 ? 2 
+                                            : 2
+                                  )}%
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>DPMO ({capabilityData[ctq]?.dataSetTerm || "Long Term"}):</span>
                                 <span className="font-medium">
                                   {Math.round(stats.dpmo).toLocaleString()}
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Z Level:</span>
-                                <span className="font-medium">
-                                  {stats.zScore.toFixed(2)}σ
                                 </span>
                               </div>
                             </div>
@@ -1466,7 +1479,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <ReferenceLine 
                                   y={individualLimits.ucl} 
                                   stroke="#dc2626" 
-                                  strokeDasharray="4 4" 
+                                  //strokeDasharray="4 4" 
                                   label={{ 
                                     value: `UCL=${individualLimits.ucl.toFixed(3)}`, 
                                     position: "insideTopLeft",
@@ -1476,7 +1489,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <ReferenceLine 
                                   y={individualLimits.lcl} 
                                   stroke="#dc2626" 
-                                  strokeDasharray="4 4" 
+                                  //strokeDasharray="4 4" 
                                   label={{ 
                                     value: `LCL=${individualLimits.lcl.toFixed(3)}`, 
                                     position: "insideBottomLeft",
@@ -1505,6 +1518,31 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </div>
                           </div>
 
+                          {/* Density Histogram */}
+                          <div className="bg-white p-4 border rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Density Histogram</h4>
+                            <ResponsiveContainer width="100%" height={250}>
+                              <BarChart data={histogramData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                  dataKey="x" 
+                                  label={{ value: 'Value', position: 'insideBottom', offset: -5 }}
+                                  tickFormatter={(value) => Number(value).toFixed(2)}
+                                />
+                                <YAxis label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }} />
+                                <Tooltip 
+                                  formatter={(value: any) => [value, 'Frequency']}
+                                  labelFormatter={(value) => `Value: ${Number(value).toFixed(3)}`}
+                                />
+                                <Bar dataKey="y" fill="#3b82f6" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                            <div className="text-xs text-gray-600 mt-2">
+                              Mean: {mean(numericValues).toFixed(3)} | 
+                              Std Dev: {standardDeviation(numericValues).toFixed(3)}
+                            </div>
+                          </div>
+
                           {/* Moving Range Control Chart (MR Chart) */}
                           <div className="bg-white p-4 border rounded-lg">
                             <h4 className="font-medium text-gray-800 mb-3">Moving Range Control Chart (MR-Chart)</h4>
@@ -1530,7 +1568,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <ReferenceLine 
                                   y={mrLimits.ucl} 
                                   stroke="#dc2626" 
-                                  strokeDasharray="4 4" 
+                                  //strokeDasharray="4 4" 
                                   label={{ 
                                     value: `UCL=${mrLimits.ucl.toFixed(3)}`, 
                                     position: "insideTopLeft",
@@ -1541,7 +1579,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   <ReferenceLine 
                                     y={mrLimits.lcl} 
                                     stroke="#dc2626" 
-                                    strokeDasharray="4 4" 
+                                    //strokeDasharray="4 4" 
                                     label={{ 
                                       value: `LCL=${mrLimits.lcl.toFixed(3)}`, 
                                       position: "insideBottomLeft",
@@ -1563,31 +1601,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               CL: {mrLimits.centerLine.toFixed(3)} | 
                               UCL: {mrLimits.ucl.toFixed(3)} | 
                               LCL: {mrLimits.lcl.toFixed(3)}
-                            </div>
-                          </div>
-
-                          {/* Density Histogram */}
-                          <div className="bg-white p-4 border rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Density Histogram</h4>
-                            <ResponsiveContainer width="100%" height={250}>
-                              <BarChart data={histogramData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis 
-                                  dataKey="x" 
-                                  label={{ value: 'Value', position: 'insideBottom', offset: -5 }}
-                                  tickFormatter={(value) => Number(value).toFixed(2)}
-                                />
-                                <YAxis label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }} />
-                                <Tooltip 
-                                  formatter={(value: any) => [value, 'Frequency']}
-                                  labelFormatter={(value) => `Value: ${Number(value).toFixed(3)}`}
-                                />
-                                <Bar dataKey="y" fill="#3b82f6" />
-                              </BarChart>
-                            </ResponsiveContainer>
-                            <div className="text-xs text-gray-600 mt-2">
-                              Mean: {mean(numericValues).toFixed(3)} | 
-                              Std Dev: {standardDeviation(numericValues).toFixed(3)}
                             </div>
                           </div>
 
