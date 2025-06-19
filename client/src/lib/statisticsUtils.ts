@@ -254,7 +254,10 @@ export function calculatePerformanceMetrics(
   stdDev: number, 
   lsl: number, 
   usl: number, 
-  zShift: number = 1.5
+  dataSetTerm: "Long Term" | "Short Term",
+  zLongTerm: number,
+  zShortTerm: number,
+  zShift: number,
 ): {
   longTerm: { yield: number; dpmo: number; percentDefects: number; };
   shortTerm: { yield: number; dpmo: number; percentDefects: number; };
@@ -311,8 +314,6 @@ export function calculatePerformanceMetrics(
     }
   };
 }
-
-
 
 /**
  * Normal cumulative distribution function (CDF)
@@ -401,7 +402,7 @@ export function calculateZScoreLongShortTerm(
   lsl: number,
   usl: number,
   dataSetTerm: "Long Term" | "Short Term",
-  zShift: number = 1.5
+  zShift: number,
 ): {
   zLongTerm: number;
   zShortTerm: number;
