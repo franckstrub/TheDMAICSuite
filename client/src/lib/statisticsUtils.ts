@@ -149,17 +149,6 @@ export function calculateCp(values: number[], lsl: number, usl: number): number 
 }
 
 /**
- * Calculate the Defects Per Million Opportunities (DPMO)
- * @param defects Number of defects
- * @param opportunities Number of opportunities for defects
- * @returns The DPMO value
- */
-export function calculateDPMO(defects: number, opportunities: number): number {
-  if (opportunities === 0) return 0;
-  return (defects / opportunities) * 1000000;
-}
-
-/**
  * Calculate the Sigma Level from DPMO
  * @param dpmo Defects Per Million Opportunities
  * @returns The Sigma Level (1-6)
@@ -215,20 +204,6 @@ export function calculatePpk(values: number[], lsl: number, usl: number): number
 }
 
 /**
- * Calculate process yield (percentage within specification limits)
- * @param values Array of process measurements
- * @param lsl Lower Specification Limit
- * @param usl Upper Specification Limit
- * @returns Yield percentage (0-100)
- */
-export function calculateYield(values: number[], lsl: number, usl: number): number {
-  if (values.length === 0) return 0;
-  
-  const withinSpec = values.filter(value => value >= lsl && value <= usl).length;
-  return (withinSpec / values.length) * 100;
-}
-
-/**
  * Calculate DPMO based on yield
  * @param yieldPercent Yield percentage (0-100)
  * @returns DPMO value
@@ -236,6 +211,60 @@ export function calculateYield(values: number[], lsl: number, usl: number): numb
 export function calculateDPMOFromYield(yieldPercent: number): number {
   const defectRate = (100 - yieldPercent) / 100;
   return defectRate * 1000000;
+}
+
+/**
+ * Calculate all capability indexes at once
+ * @param dataPointsArray Array of measurement values
+ * @param meanValue Mean of the values
+ * @param stdDev Standard deviation of the values
+ * @param lsl Lower Specification Limit
+ * @param usl Upper Specification Limit
+ * @param dataSetTerm Data set term (Long Term or Short Term)
+ * @param zShift Z-shift value
+ * @returns Object containing all capability indexes
+ */
+export function calculateCapabilityIndexes(
+  dataPointsArray: number[],
+  meanValue: number,
+  stdDev: number,
+  lsl: number,
+  usl: number,
+  dataSetTerm: "Long Term" | "Short Term",
+  zShift: number
+): {
+  cp: number | null;
+  cpk: number | null;
+  pp: number | null;
+  ppk: number | null;
+} {
+  if (dataPointsArray.length < 30 || lsl >= usl || stdDev === 0) {
+    return { cp: null, cpk: null, pp: null, ppk: null };
+  }
+
+  // Calculate Cp (Process Capability)
+  const cp = (usl - lsl) / (6 * stdDev);
+
+  // Calculate Cpk (Process Capability Index)
+  const cpupper = (usl - meanValue) / (3 * stdDev);
+  const cplower = (meanValue - lsl) / (3 * stdDev);
+  const cpk = Math.min(cpupper, cplower);
+
+  // Calculate Pp (Process Performance)
+  const overallStdDev = standardDeviation(dataPointsArray);
+  const pp = (usl - lsl) / (6 * overallStdDev);
+
+  // Calculate Ppk (Process Performance Index)
+  const ppupper = (usl - meanValue) / (3 * overallStdDev);
+  const pplower = (meanValue - lsl) / (3 * overallStdDev);
+  const ppk = Math.min(ppupper, pplower);
+
+  return {
+    cp: cp > 0 ? cp : null,
+    cpk: cpk > 0 ? cpk : null,
+    pp: pp > 0 ? pp : null,
+    ppk: ppk > 0 ? ppk : null
+  };
 }
 
 /**
@@ -253,13 +282,13 @@ export function calculatePerformanceMetrics(
 } {
   // Calculate Long Term metrics using zLongTerm
   // For a two-sided specification, defect rate is 2 * P(Z < -|z|)
-  const longTermDefectRate = 2 * normalCDF(-Math.abs(zLongTerm));
+  const longTermDefectRate = 1 - normalCDF(zLongTerm);
   const longTermYield = (1 - longTermDefectRate) * 100;
   const longTermDpmo = longTermDefectRate * 1000000;
   const longTermPercentDefects = longTermDefectRate * 100;
 
   // Calculate Short Term metrics using zShortTerm
-  const shortTermDefectRate = 2 * normalCDF(-Math.abs(zShortTerm));
+  const shortTermDefectRate = 1-normalCDF(zShortTerm);
   const shortTermYield = (1 - shortTermDefectRate) * 100;
   const shortTermDpmo = shortTermDefectRate * 1000000;
   const shortTermPercentDefects = shortTermDefectRate * 100;
@@ -429,23 +458,6 @@ export function calculateZScoreLongShortTerm(
     adStatistic: normalityTest.adStatistic,
     pValue: normalityTest.pValue
   };
-}
-
-/**
- * Calculate Z score with shift adjustment
- * @param yieldPercent Yield percentage (0-100)
- * @param shift Z-shift value (typically 1.5)
- * @returns Z score
- */
-export function calculateZScore(yieldPercent: number, shift: number = 1.5): number {
-  const defectRate = (100 - yieldPercent) / 100;
-  
-  if (defectRate <= 0) return 6 + shift;
-  if (defectRate >= 1) return shift;
-  
-  // Using normal distribution inverse (simplified approximation)
-  const z = Math.sqrt(2) * inverseErrorFunction(1 - 2 * defectRate);
-  return Math.max(0, z + shift);
 }
 
 /**
