@@ -629,7 +629,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       lsl,
       usl,
       data.dataSetTerm,
-      zShift
     );
     
     // Calculate performance metrics for both Long Term and Short Term using Z scores
@@ -648,9 +647,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       cpk: capabilityIndexes.cpk,
       pp: capabilityIndexes.pp,
       ppk: capabilityIndexes.ppk,
-      yield: yieldPercent,
-      dpmo,
-      zScore,
       zLongTerm: zScoreData.zLongTerm,
       zShortTerm: zScoreData.zShortTerm,
       zBench: zScoreData.zBench,
@@ -1045,7 +1041,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Z">Z (Sigma Level)</SelectItem>
-                            <SelectItem value="Cp/Cpk">Cp/Cpk (Capability Indices)</SelectItem>
+                            <SelectItem value="Cp/Cpk">Pp/Ppk & Cp/Cpk (Capability Indices)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1244,7 +1240,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           {/* Capability Indices */}
                           <div className="bg-blue-50 p-4 rounded-lg">
                             <h4 className="font-medium text-blue-800 mb-3">
-                              {capabilityIndex === "Cp/Cpk" ? "Cp/Cpk Capability Indices" : "Z values"}
+                              {capabilityIndex === "Cp/Cpk" 
+                                ? "Capability Indices (Pp/Ppk & Cp/Cpk)" 
+                                : stats.isNormal 
+                                  ? "Z values (Normal Data)" 
+                                  : "Z-Equivalent values (Non-Normal Data - Observed defects)"
+                              }
                             </h4>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
@@ -1263,18 +1264,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               {capabilityIndex === "Cp/Cpk" ? (
                                 <>
                                   <div className="flex justify-between">
-                                    <span>Cp:</span>
-                                    <span className="font-medium">
-                                      {stats.cp !== null ? stats.cp.toFixed(3) : "N/A"}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Cpk:</span>
-                                    <span className="font-medium">
-                                      {stats.cpk !== null ? stats.cpk.toFixed(3) : "N/A"}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
                                     <span>Pp:</span>
                                     <span className="font-medium">
                                       {stats.pp !== null ? stats.pp.toFixed(3) : "N/A"}
@@ -1284,6 +1273,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     <span>Ppk:</span>
                                     <span className="font-medium">
                                       {stats.ppk !== null ? stats.ppk.toFixed(3) : "N/A"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Cp:</span>
+                                    <span className="font-medium">
+                                      {stats.cp !== null ? stats.cp.toFixed(3) : "N/A"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Cpk:</span>
+                                    <span className="font-medium">
+                                      {stats.cpk !== null ? stats.cpk.toFixed(3) : "N/A"}
                                     </span>
                                   </div>
                                 </>
@@ -1315,7 +1316,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           {/* Performance Metrics - Long Term and Short Term */}
                           {showPercentage && stats.performanceMetrics && (
                           <div className="bg-green-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-3">Performance Metrics</h4>
+                            <h4 className="font-medium text-green-800 mb-3">
+                              {stats.isNormal && capabilityIndex === "Z" 
+                                  ? "Performance Metrics (Predicted)" 
+                                  : "Performance Metrics (Observed defects)"
+                              }
+                            </h4>
                             <div className="space-y-4">
                               {/* Long Term Metrics */}
                               <div>
