@@ -73,6 +73,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [focusedCell, setFocusedCell] = useState<{ [ctq: string]: number }>({});
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [isStatisticsLoaded, setIsStatisticsLoaded] = useState(false);
+  const [autoSaveTimers, setAutoSaveTimers] = useState<{ [ctq: string]: NodeJS.Timeout }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Add keyboard shortcut handler for Ctrl+Z (matching MSA implementation)
+  // Add keyboard shortcut handler for Ctrl+Z and cleanup auto-save timers
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+Z for undo - works both in and outside input fields
@@ -126,8 +127,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     };
 
     document.addEventListener('keydown', handleKeyboardShortcut);
-    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [activeTab, undoStates]);
+    
+    // Cleanup function to clear all auto-save timers
+    return () => {
+      document.removeEventListener('keydown', handleKeyboardShortcut);
+      Object.values(autoSaveTimers).forEach(timer => {
+        if (timer) clearTimeout(timer);
+      });
+    };
+  }, [activeTab, undoStates, autoSaveTimers]);
 
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
@@ -233,6 +241,58 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     return [];
   };
 
+  // Auto-save function with debouncing
+  const autoSaveDataPoints = async (ctq: string) => {
+    const processCapabilityId = capabilityData[ctq]?.id;
+    if (!processCapabilityId) return;
+    
+    const currentPoints = dataPoints[ctq] || [];
+    const numericValues = currentPoints.map(point => point.dataValue);
+    
+    if (numericValues.length === 0) return;
+    
+    try {
+      await saveDataPointMutation.mutateAsync({
+        processCapabilityId,
+        dataPoints: numericValues
+      });
+      console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
+      
+      // Clear the timer from state to hide the auto-saving indicator
+      setAutoSaveTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[ctq];
+        return newTimers;
+      });
+    } catch (error) {
+      console.error("Auto-save failed:", error);
+      // Clear the timer even if save failed
+      setAutoSaveTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[ctq];
+        return newTimers;
+      });
+    }
+  };
+
+  // Debounced auto-save trigger
+  const triggerAutoSave = (ctq: string) => {
+    // Clear existing timer if any
+    if (autoSaveTimers[ctq]) {
+      clearTimeout(autoSaveTimers[ctq]);
+    }
+    
+    // Set new timer for 2 seconds delay
+    const newTimer = setTimeout(() => {
+      autoSaveDataPoints(ctq);
+    }, 2000);
+    
+    setAutoSaveTimers(prev => ({
+      ...prev,
+      [ctq]: newTimer
+    }));
+  };
+
   // Functions to handle data input for continuous CTQs
   const addDataPointToLocalState = (ctq: string, value: string) => {
     if (!value.trim()) return;
@@ -253,6 +313,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       ...prev,
       [ctq]: ""
     }));
+
+    // Trigger auto-save
+    triggerAutoSave(ctq);
   };
 
   const saveAllDataPoints = async (ctq: string) => {
@@ -394,6 +457,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         title: "Success",
         description: `Pasted ${parsedValues.length} data points from position ${startIndex + 1} to ${startIndex + parsedValues.length}`,
       });
+
+      // Trigger auto-save after paste
+      triggerAutoSave(ctq);
       
     } catch (error) {
       console.error("Error pasting data:", error);
@@ -731,6 +797,208 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             return (
             <TabsContent key={ctq} value={ctq} className="mt-6">
               <div className="space-y-6">
+                
+                {/* Data Input Section for Continuous CTQs */}
+                {ctqWithType.ctqType === "Continuous" && (
+                  <div className="space-y-4">
+                    <div>
+                      <div  className="flex justify-between items-center">
+                      <label className="block text-sm font-medium mb-2">Data Input</label>
+                      {/* Paste from Excel Section */}
+                      
+                          <div className="flex gap-2 mt-2">
+                            <Button
+                              onClick={async () => {
+                                try {
+                                  const clipboardData = await navigator.clipboard.readText();
+                                  if (clipboardData.trim()) {
+                                    // Create a synthetic paste event like MSA does
+                                    const syntheticEvent = {
+                                      preventDefault: () => {},
+                                      clipboardData: {
+                                        getData: (format: string) => clipboardData
+                                      }
+                                    } as unknown as React.ClipboardEvent;
+                                    
+                                    const rawindex = focusedCell[ctq] !== undefined ? focusedCell[ctq] : (dataPoints[ctq] || []).length;
+                                    handlePasteFromExcel(ctq, rawindex, syntheticEvent);
+                                  } else {
+                                    toast({
+                                      title: "No Data Found",
+                                      description: "No data found in clipboard. Please copy data from Excel first.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } catch (error) {
+                                  toast({
+                                    title: "Clipboard Permission Required",
+                                    description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="text-green-700 border-green-300 hover:bg-green-50"
+                            >
+                              📋 Paste data from Excel
+                            </Button>
+                            {undoStates[ctq] && (
+                              <Button
+                                onClick={() => handleUndo(ctq)}
+                                variant="outline"
+                                size="sm"
+                                className="text-orange-700 border-orange-300 hover:bg-orange-50"
+                              >
+                                <Undo className="h-4 w-4 mr-2" />
+                                Undo Paste
+                              </Button>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200 mt-2">
+                            <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
+                            <div>Copy single column of numeric values from Excel</div>
+                            <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table cell to paste</div>
+                          </div>
+                      </div>
+                      <p className="text-xs text-gray-500 pb-1">Enter data values and click Add, then Save Data to persist to database</p>
+                      <div 
+                        className="border rounded-lg overflow-hidden"
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          //const pasteData = e.clipboardData.getData('text');
+                          //handleFocusedCellPaste(ctq, 0, pasteData);
+                        }}
+                        tabIndex={0}
+                      >
+                        <div className="max-h-64 overflow-y-auto">
+                          <table className="w-full">
+                            <thead className="bg-gray-50 sticky top-0">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-r">Index</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Data Value</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {/* Existing data points with editable cells */}
+                              {(dataPoints[ctq] || []).map((point, index) => (
+                                <tr key={index} className="border-t">
+                                  <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">{point.indexNumber}</td>
+                                  <td className="px-4 py-2">
+                                    <Input
+                                      type="number"
+                                      step="any"
+                                      value={point.dataValue}
+                                      onChange={(e) => {
+                                        const newValue = parseFloat(e.target.value);
+                                        if (!isNaN(newValue)) {
+                                          setDataPoints(prev => {
+                                            const updated = [...(prev[ctq] || [])];
+                                            updated[index] = { ...updated[index], dataValue: newValue };
+                                            return { ...prev, [ctq]: updated };
+                                          });
+                                          // Trigger auto-save when cell value changes
+                                          triggerAutoSave(ctq);
+                                        }
+                                      }}
+                                      onFocus={() => {
+                                        setFocusedCell(prev => ({ ...prev, [ctq]: index }));
+                                      }}
+                                      onPaste={(e) => {
+                                        e.preventDefault();
+                                        const pasteData = e.clipboardData.getData('text');
+                                        handleFocusedCellPaste(ctq, index, pasteData);
+                                      }}
+                                      className="border-none p-1 h-8 text-sm w-full"
+                                    />
+                                  </td>
+                                </tr>
+                              ))}
+                              {/* Input row for new data */}
+                              <tr className="border-t">
+                                <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">
+                                  {(dataPoints[ctq] || []).length + 1}
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="flex gap-2">
+                                    <Input
+                                      type="number"
+                                      step="any"
+                                      value={inputValues[ctq] || ""}
+                                      onChange={(e) => handleDataInput(ctq, e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          handleAddDataPoint(ctq);
+                                        }
+                                      }}
+                                      onFocus={() => {
+                                        setFocusedCell(prev => ({ ...prev, [ctq]: (dataPoints[ctq] || []).length }));
+                                      }}
+                                      onPaste={(e) => {
+                                        e.preventDefault();
+                                        const pasteData = e.clipboardData.getData('text');
+                                        handleFocusedCellPaste(ctq, (dataPoints[ctq] || []).length, pasteData);
+                                      }}
+                                      placeholder="Enter numeric value"
+                                      className="border-none p-1 h-8 text-sm flex-1"
+                                    />
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      onClick={() => handleAddDataPoint(ctq)}
+                                      disabled={!inputValues[ctq]?.trim() || isNaN(parseFloat(inputValues[ctq] || ""))}
+                                      className="h-8 px-2 text-xs"
+                                    >
+                                      Add
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      {/* Excel Import Instructions */}
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="font-medium text-sm text-blue-700 mb-1">Excel Import Instructions:</div>
+                        <div className="text-xs text-blue-600">
+                          <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
+                          <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
+                          <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
+                          {/* <p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p> */}
+                          <p>• Data will automatically create new rows if needed</p>
+                        </div>
+                      </div>
+
+                      {/* Auto-save status and manual save button */}
+                      <div className="mt-4 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-gray-500">
+                            Data auto-saves 2 seconds after changes. Click Save Data for immediate save.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {autoSaveTimers[ctq] && (
+                              <span className="text-xs text-orange-600 flex items-center gap-1">
+                                <div className="h-2 w-2 bg-orange-400 rounded-full animate-pulse"></div>
+                                Auto-saving...
+                              </span>
+                            )}
+                            <Button
+                              onClick={() => saveAllDataPoints(ctq)}
+                              disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-1"
+                            >
+                              <Save className="h-3 w-3" />
+                              {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Z-shift Value</label>
@@ -860,196 +1128,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   )}
                 </div>
 
-                {/* Data Input Section for Continuous CTQs */}
-                {ctqWithType.ctqType === "Continuous" && (
-                  <div className="space-y-4">
-                    <div>
-                      <div  className="flex justify-between items-center">
-                      <label className="block text-sm font-medium mb-2">Data Input</label>
-                      {/* Paste from Excel Section */}
-                      
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                              onClick={async () => {
-                                try {
-                                  const clipboardData = await navigator.clipboard.readText();
-                                  if (clipboardData.trim()) {
-                                    // Create a synthetic paste event like MSA does
-                                    const syntheticEvent = {
-                                      preventDefault: () => {},
-                                      clipboardData: {
-                                        getData: (format: string) => clipboardData
-                                      }
-                                    } as unknown as React.ClipboardEvent;
-                                    
-                                    const rawindex = focusedCell[ctq] !== undefined ? focusedCell[ctq] : (dataPoints[ctq] || []).length;
-                                    handlePasteFromExcel(ctq, rawindex, syntheticEvent);
-                                  } else {
-                                    toast({
-                                      title: "No Data Found",
-                                      description: "No data found in clipboard. Please copy data from Excel first.",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                } catch (error) {
-                                  toast({
-                                    title: "Clipboard Permission Required",
-                                    description: "Please allow clipboard access in your browser settings, or use Ctrl+V to paste directly into the table.",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="text-green-700 border-green-300 hover:bg-green-50"
-                            >
-                              📋 Paste data from Excel
-                            </Button>
-                            {undoStates[ctq] && (
-                              <Button
-                                onClick={() => handleUndo(ctq)}
-                                variant="outline"
-                                size="sm"
-                                className="text-orange-700 border-orange-300 hover:bg-orange-50"
-                              >
-                                <Undo className="h-4 w-4 mr-2" />
-                                Undo Paste
-                              </Button>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200 mt-2">
-                            <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
-                            <div>Copy single column of numeric values from Excel</div>
-                            <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table cell to paste</div>
-                          </div>
-                      </div>
-                      <p className="text-xs text-gray-500 pb-1">Enter data values and click Add, then Save Data to persist to database</p>
-                      <div 
-                        className="border rounded-lg overflow-hidden"
-                        onPaste={(e) => {
-                          e.preventDefault();
-                          //const pasteData = e.clipboardData.getData('text');
-                          //handleFocusedCellPaste(ctq, 0, pasteData);
-                        }}
-                        tabIndex={0}
-                      >
-                        <div className="max-h-64 overflow-y-auto">
-                          <table className="w-full">
-                            <thead className="bg-gray-50 sticky top-0">
-                              <tr>
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-r">Index</th>
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Data Value</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {/* Existing data points with editable cells */}
-                              {(dataPoints[ctq] || []).map((point, index) => (
-                                <tr key={index} className="border-t">
-                                  <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">{point.indexNumber}</td>
-                                  <td className="px-4 py-2">
-                                    <Input
-                                      type="number"
-                                      step="any"
-                                      value={point.dataValue}
-                                      onChange={(e) => {
-                                        const newValue = parseFloat(e.target.value);
-                                        if (!isNaN(newValue)) {
-                                          setDataPoints(prev => {
-                                            const updated = [...(prev[ctq] || [])];
-                                            updated[index] = { ...updated[index], dataValue: newValue };
-                                            return { ...prev, [ctq]: updated };
-                                          });
-                                        }
-                                      }}
-                                      onFocus={() => {
-                                        setFocusedCell(prev => ({ ...prev, [ctq]: index }));
-                                      }}
-                                      onPaste={(e) => {
-                                        e.preventDefault();
-                                        const pasteData = e.clipboardData.getData('text');
-                                        handleFocusedCellPaste(ctq, index, pasteData);
-                                      }}
-                                      className="border-none p-1 h-8 text-sm w-full"
-                                    />
-                                  </td>
-                                </tr>
-                              ))}
-                              {/* Input row for new data */}
-                              <tr className="border-t">
-                                <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">
-                                  {(dataPoints[ctq] || []).length + 1}
-                                </td>
-                                <td className="px-4 py-2">
-                                  <div className="flex gap-2">
-                                    <Input
-                                      type="number"
-                                      step="any"
-                                      value={inputValues[ctq] || ""}
-                                      onChange={(e) => handleDataInput(ctq, e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                          handleAddDataPoint(ctq);
-                                        }
-                                      }}
-                                      onFocus={() => {
-                                        setFocusedCell(prev => ({ ...prev, [ctq]: (dataPoints[ctq] || []).length }));
-                                      }}
-                                      onPaste={(e) => {
-                                        e.preventDefault();
-                                        const pasteData = e.clipboardData.getData('text');
-                                        handleFocusedCellPaste(ctq, (dataPoints[ctq] || []).length, pasteData);
-                                      }}
-                                      placeholder="Enter numeric value"
-                                      className="border-none p-1 h-8 text-sm flex-1"
-                                    />
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      onClick={() => handleAddDataPoint(ctq)}
-                                      disabled={!inputValues[ctq]?.trim() || isNaN(parseFloat(inputValues[ctq] || ""))}
-                                      className="h-8 px-2 text-xs"
-                                    >
-                                      Add
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                      {/* Excel Import Instructions */}
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="font-medium text-sm text-blue-700 mb-1">Excel Import Instructions:</div>
-                        <div className="text-xs text-blue-600">
-                          <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
-                          <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
-                          <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
-                          {/* <p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p> */}
-                          <p>• Data will automatically create new rows if needed</p>
-                        </div>
-                      </div>
-
-                      {/* Save Data button */}
-                      <div className="mt-4 space-y-3">
-                        <div className="flex justify-between items-center">
-                          <p className="text-xs text-gray-500">Enter data values and click Add, then Save Data to persist to database</p>
-                          <Button
-                            onClick={() => saveAllDataPoints(ctq)}
-                            disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
-                            size="sm"
-                            variant="outline"
-                            className="flex items-center gap-1"
-                          >
-                            <Save className="h-3 w-3" />
-                            {saveDataPointMutation.isPending ? "Saving..." : "Save Data"}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Statistics Control Buttons for Continuous CTQs */}
                 {ctqWithType.ctqType === "Continuous" && dataPoints[ctq] && dataPoints[ctq].length >= 5 && (
                   <div className="mt-6 flex justify-left">
@@ -1100,6 +1178,31 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span>Variance (σ²):</span>
                                 <span className="font-medium">{stats.variance.toFixed(4)}</span>
                               </div>
+                              <div className="flex justify-between">
+                                  <span title="will test if data follow normal distribution">Normality Test (Anderson Darling):</span>
+                                  <span className={`font-medium text-sm ${stats.isNormal ? 'text-green-600' : 'text-red-600'}`}
+                                    title={stats.isNormal ? "Data follow normal distribution (P-Value ≥ 0.05)" 
+                                    : "Data do not follow normal distribution (P-Value < 0.05)"
+                                    }>
+                                    {stats.isNormal ? 'Pass' : 'Fail'}
+                                  </span>
+                              </div>
+                              {stats.pValue && (
+                                <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span> &nbsp;• AD-Value:</span>
+                                    <span className="font-medium text-sm">
+                                      {stats.adStatistic.toFixed(3)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span> &nbsp;• P-Value:</span>
+                                    <span className="font-medium text-sm">
+                                      {stats.pValue.toFixed(3)}
+                                    </span>
+                                </div>
+                                </div>
+                               )}
                             </div>
                           </div>
 
@@ -1195,31 +1298,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span>Z Short Term:</span>
+                                  <span>Z Short Term (Z-Bench):</span>
                                   <span className="font-medium text-sm">
                                     {stats.zShortTerm ? stats.zShortTerm.toFixed(2) : '0.00'}σ
                                   </span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span>Z.Bench:</span>
-                                  <span className="font-medium text-sm">
-                                    {stats.zBench ? stats.zBench.toFixed(2) : '0.00'}σ
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Normality Test:</span>
-                                  <span className={`font-medium text-sm ${stats.isNormal ? 'text-green-600' : 'text-red-600'}`}>
-                                    {stats.isNormal ? 'Pass' : 'Fail'}
-                                  </span>
-                                </div>
-                                {stats.pValue && (
-                                  <div className="flex justify-between">
-                                    <span>P-Value:</span>
-                                    <span className="font-medium text-sm">
-                                      {stats.pValue.toFixed(3)}
-                                    </span>
-                                  </div>
-                                )}
                               </div>
                               )}
                             </div>
@@ -1307,7 +1390,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   return null;
                 })()}
 
-                {/* Statistical Control Charts */}
+                {/* Statistical Control Charts, Density Histogram and ox Plot */}
                 {ctqWithType.ctqType === "Continuous" && showStatistics[ctq] && (() => {
                   const currentPoints = dataPoints[ctq] || [];
                   const numericValues = currentPoints.map(point => point.dataValue);
@@ -1351,7 +1434,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <div className="mt-6">
                         <div className="flex items-center gap-2 mb-4">
                           <BarChart3 className="h-5 w-5 text-green-600" />
-                          <h3 className="text-lg font-semibold">Statistical Control Charts</h3>
+                          <h3 className="text-lg font-semibold">Statistical Charts</h3>
                         </div>
                         
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1580,10 +1663,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                         <div className="flex items-center gap-2 text-orange-700">
                           <BarChart3 className="h-4 w-4" />
-                          <span className="font-medium">Statistical Control Charts</span>
+                          <span className="font-medium">Statistical Charts</span>
                         </div>
                         <p className="text-sm text-orange-600 mt-2">
-                          Need at least 5 data points for control charts. 
+                          Need at least 5 data points for statistical charts. 
                           Current: {numericValues.length} data points.
                         </p>
                       </div>
