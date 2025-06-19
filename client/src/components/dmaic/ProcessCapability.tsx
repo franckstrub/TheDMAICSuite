@@ -624,27 +624,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const dpmo = calculateDPMOFromYield(yieldPercent);
     const zScore = calculateZScore(yieldPercent, zShift);
     
-    // Calculate performance metrics for both Long Term and Short Term
-    const performanceMetrics = calculatePerformanceMetrics(
-      dataPointsArray, 
-      meanValue, 
-      stdDev, 
-      lsl, 
-      usl,
-      data.dataSetTerm,
-      zShift
-    );
-    
     // Calculate Long Term and Short Term Z scores with normality test
     const zScoreData = calculateZScoreLongShortTerm(
       dataPointsArray, 
       meanValue, 
-      stdDev, 
+      stdDev,
       lsl, 
       usl, 
       data.dataSetTerm, 
       zShift
     );
+    
+    // Calculate performance metrics for both Long Term and Short Term using Z scores
+    const performanceMetrics = calculatePerformanceMetrics(
+      zScoreData.zLongTerm || 0, 
+      zScoreData.zShortTerm || 0
+    );
+    
+
     
     return {
       sampleSize,
