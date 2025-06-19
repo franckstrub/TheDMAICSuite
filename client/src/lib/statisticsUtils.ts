@@ -111,44 +111,6 @@ export function mode(values: number[]): number | null {
 }
 
 /**
- * Calculate the Cpk (Process Capability Index) for a process
- * @param values Array of process measurements
- * @param lsl Lower Specification Limit
- * @param usl Upper Specification Limit
- * @returns The Cpk value or null if insufficient data
- */
-export function calculateCpk(values: number[], lsl: number, usl: number): number | null {
-  if (values.length < 30 || lsl >= usl) return null;
-  
-  const avg = mean(values);
-  const sigma = standardDeviation(values);
-  
-  if (sigma === 0) return null;
-  
-  const cpkUpper = (usl - avg) / (3 * sigma);
-  const cpkLower = (avg - lsl) / (3 * sigma);
-  
-  return Math.min(cpkUpper, cpkLower);
-}
-
-/**
- * Calculate the Cp (Process Capability) for a process
- * @param values Array of process measurements
- * @param lsl Lower Specification Limit
- * @param usl Upper Specification Limit
- * @returns The Cp value or null if insufficient data
- */
-export function calculateCp(values: number[], lsl: number, usl: number): number | null {
-  if (values.length < 30 || lsl >= usl) return null;
-  
-  const sigma = standardDeviation(values);
-  
-  if (sigma === 0) return null;
-  
-  return (usl - lsl) / (6 * sigma);
-}
-
-/**
  * Calculate the Sigma Level from DPMO
  * @param dpmo Defects Per Million Opportunities
  * @returns The Sigma Level (1-6)
@@ -163,54 +125,6 @@ export function calculateSigmaLevel(dpmo: number): number {
   if (dpmo <= 66807) return 3;
   if (dpmo <= 308537) return 2;
   return 1;
-}
-
-/**
- * Calculate the Pp (Process Performance) for a process
- * @param values Array of process measurements
- * @param lsl Lower Specification Limit
- * @param usl Upper Specification Limit
- * @returns The Pp value or null if insufficient data
- */
-export function calculatePp(values: number[], lsl: number, usl: number): number | null {
-  if (values.length < 30 || lsl >= usl) return null;
-  
-  const sigma = standardDeviation(values);
-  
-  if (sigma === 0) return null;
-  
-  return (usl - lsl) / (6 * sigma);
-}
-
-/**
- * Calculate the Ppk (Process Performance Index) for a process
- * @param values Array of process measurements
- * @param lsl Lower Specification Limit
- * @param usl Upper Specification Limit
- * @returns The Ppk value or null if insufficient data
- */
-export function calculatePpk(values: number[], lsl: number, usl: number): number | null {
-  if (values.length < 30 || lsl >= usl) return null;
-  
-  const avg = mean(values);
-  const sigma = standardDeviation(values);
-  
-  if (sigma === 0) return null;
-  
-  const ppkUpper = (usl - avg) / (3 * sigma);
-  const ppkLower = (avg - lsl) / (3 * sigma);
-  
-  return Math.min(ppkUpper, ppkLower);
-}
-
-/**
- * Calculate DPMO based on yield
- * @param yieldPercent Yield percentage (0-100)
- * @returns DPMO value
- */
-export function calculateDPMOFromYield(yieldPercent: number): number {
-  const defectRate = (100 - yieldPercent) / 100;
-  return defectRate * 1000000;
 }
 
 /**
@@ -231,7 +145,6 @@ export function calculateCapabilityIndexes(
   lsl: number,
   usl: number,
   dataSetTerm: "Long Term" | "Short Term",
-  zShift: number
 ): {
   cp: number | null;
   cpk: number | null;
@@ -241,34 +154,47 @@ export function calculateCapabilityIndexes(
   if (dataPointsArray.length < 30 || lsl >= usl || stdDev === 0) {
     return { cp: null, cpk: null, pp: null, ppk: null };
   }
+  if (dataSetTerm === "Long Term") {
+     // Calculate Pp (Process Performance)
+    const pp = (usl - lsl) / (6 * stdDev);
 
-  // Calculate Cp (Process Capability)
-  const cp = (usl - lsl) / (6 * stdDev);
+    // Calculate Ppk (Process Performance Index)
+    const ppupper = (usl - meanValue) / (3 * stdDev);
+    const pplower = (meanValue - lsl) / (3 * stdDev);
+    const ppk = Math.min(ppupper, pplower);
+    const cp = null;
+    const cpk = null;
 
-  // Calculate Cpk (Process Capability Index)
-  const cpupper = (usl - meanValue) / (3 * stdDev);
-  const cplower = (meanValue - lsl) / (3 * stdDev);
-  const cpk = Math.min(cpupper, cplower);
+    return {
+      cp: cp > 0 ? cp : null,
+      cpk: cpk > 0 ? cpk : null,
+      pp: pp > 0 ? pp : null,
+      ppk: ppk > 0 ? ppk : null
+    };
+  }
+  else {
+    // Calculate Cp (Process Capability)
+    const cp = (usl - lsl) / (6 * stdDev);
 
-  // Calculate Pp (Process Performance)
-  const overallStdDev = standardDeviation(dataPointsArray);
-  const pp = (usl - lsl) / (6 * overallStdDev);
-
-  // Calculate Ppk (Process Performance Index)
-  const ppupper = (usl - meanValue) / (3 * overallStdDev);
-  const pplower = (meanValue - lsl) / (3 * overallStdDev);
-  const ppk = Math.min(ppupper, pplower);
-
-  return {
-    cp: cp > 0 ? cp : null,
-    cpk: cpk > 0 ? cpk : null,
-    pp: pp > 0 ? pp : null,
-    ppk: ppk > 0 ? ppk : null
-  };
+    // Calculate Cpk (Process Capability Index)
+    const cpupper = (usl - meanValue) / (3 * stdDev);
+    const cplower = (meanValue - lsl) / (3 * stdDev);
+    const cpk = Math.min(cpupper, cplower);
+    const pp = null;
+    const ppk = null;
+  
+    return {
+      cp: cp > 0 ? cp : null,
+      cpk: cpk > 0 ? cpk : null,
+      pp: pp > 0 ? pp : null,
+      ppk: ppk > 0 ? ppk : null
+    };
+  }
 }
 
+
 /**
- * Calculate performance metrics for both Long Term and Short Term
+ * Calculate performance metrics for both Long Term and Short Term for Normal continuous data
  * @param zLongTerm Long Term Z score
  * @param zShortTerm Short Term Z score
  * @returns Object containing both Long Term and Short Term metrics
@@ -305,6 +231,83 @@ export function calculatePerformanceMetrics(
       percentDefects: Math.max(0, Math.min(100, shortTermPercentDefects))
     }
   };
+}
+/**
+ * Calculate performance metrics for both Long Term and Short Term for non-Normal continuous data
+ * @param zLongTerm Long Term Z score
+ * @param zShortTerm Short Term Z score
+ * @returns Object containing both Long Term and Short Term metrics
+ */
+export function calculateObservedPerformanceMetrics(
+  values: number[],
+  lsl: number,
+  usl: number,
+  dataSetTerm: "Long Term" | "Short Term",
+  zShift: number,
+): {
+  longTerm: { obsyield: number; obsdpmo: number; obspercentDefects: number; };
+  shortTerm: { obsyield: number; obsdpmo: number; obspercentDefects: number; };
+} {
+   // Calculate actual defect counts from the data
+  const calculateDefectRate = (values: number[], lsl: number, usl: number): number => {
+    if (values.length === 0) return 0;
+    
+    const defectCount = values.filter(value => value < lsl || value > usl).length;
+    return defectCount / values.length;
+  };
+
+  // Calculate observed defect rate from actual data
+  const observedDefectRate = calculateDefectRate(values, lsl, usl);
+  // Calculate Long Term metrics using zLongTerm
+  // For a two-sided specification, defect rate is 2 * P(Z < -|z|)
+  if(dataSetTerm="Long Term") {
+    const longTermDefectRate = observedDefectRate;
+    const longTermYield = (1 - longTermDefectRate) * 100;
+    const longTermDpmo = longTermDefectRate * 1000000;
+    const longTermPercentDefects = longTermDefectRate * 100;
+    // Calculate Short Term metrics using z-equivalentLongterm and ShortTerm
+    const ZequivLT = inverseNormCDF(longTermPercentDefects);
+    //find Z-equivalent of observedDefectRate
+    const shortTermDefectRate = 1;
+    const shortTermYield = (1 - shortTermDefectRate) * 100;
+    const shortTermDpmo = shortTermDefectRate * 1000000;
+    const shortTermPercentDefects = shortTermDefectRate * 100;
+    return {
+    longTerm: {
+      obsyield: Math.max(0, Math.min(100, longTermYield)),
+      obsdpmo: Math.max(0, longTermDpmo),
+      obspercentDefects: Math.max(0, Math.min(100, longTermPercentDefects))
+      },
+    shortTerm: {
+      obsyield: Math.max(0, Math.min(100, shortTermYield)),
+      obsdpmo: Math.max(0, shortTermDpmo), 
+      obspercentDefects: Math.max(0, Math.min(100, shortTermPercentDefects))
+      }
+    };
+  }
+  else {
+    const longTermDefectRate = observedDefectRate;
+    const longTermYield = (1 - longTermDefectRate) * 100;
+    const longTermDpmo = longTermDefectRate * 1000000;
+    const longTermPercentDefects = longTermDefectRate * 100;
+    // Calculate Short Term metrics using zShortTerm
+    const shortTermDefectRate = 1;
+    const shortTermYield = (1 - shortTermDefectRate) * 100;
+    const shortTermDpmo = shortTermDefectRate * 1000000;
+    const shortTermPercentDefects = shortTermDefectRate * 100;
+  return {
+    longTerm: {
+      obsyield: Math.max(0, Math.min(100, longTermYield)),
+      obsdpmo: Math.max(0, longTermDpmo),
+      obspercentDefects: Math.max(0, Math.min(100, longTermPercentDefects))
+    },
+    shortTerm: {
+      obsyield: Math.max(0, Math.min(100, shortTermYield)),
+      obsdpmo: Math.max(0, shortTermDpmo), 
+      obspercentDefects: Math.max(0, Math.min(100, shortTermPercentDefects))
+    }
+  };
+  }
 }
 
 /**
@@ -647,4 +650,77 @@ export function getParetoData(categories: string[], values: number[]): {
     values: sortedValues,
     cumulativePercentages
   };
+}
+
+/**
+ * Inverse Normal CDF using Beasley-Springer-Moro algorithm
+ * Calculates the Z value from a percentage of defects
+ * @param p Probability/percentage (0 to 1, where 0.01 = 1% defects)
+ * @returns Z-score corresponding to the given probability
+ */
+export function inverseNormCDF(p: number): number {
+  // Handle edge cases
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  if (p === 0.5) return 0;
+
+  // Use Beasley-Springer-Moro algorithm for inverse normal CDF
+  const a = [
+    -3.969683028665376e+01,
+     2.209460984245205e+02,
+    -2.759285104469687e+02,
+     1.383577518672690e+02,
+    -3.066479806614716e+01,
+     2.506628277459239e+00
+  ];
+
+  const b = [
+    -5.447609879822406e+01,
+     1.615858368580409e+02,
+    -1.556989798598866e+02,
+     6.680131188771972e+01,
+    -1.328068155288572e+01
+  ];
+
+  const c = [
+    -7.784894002430293e-03,
+    -3.223964580411365e-01,
+    -2.400758277161838e+00,
+    -2.549732539343734e+00,
+     4.374664141464968e+00,
+     2.938163982698783e+00
+  ];
+
+  const d = [
+     7.784695709041462e-03,
+     3.224671290700398e-01,
+     2.445134137142996e+00,
+     3.754408661907416e+00
+  ];
+
+  // Define break-points
+  const plow = 0.02425;
+  const phigh = 1 - plow;
+
+  let q, r, val;
+
+  if (p < plow) {
+    // Rational approximation for lower region
+    q = Math.sqrt(-2 * Math.log(p));
+    val = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+          ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+  } else if (p <= phigh) {
+    // Rational approximation for central region
+    q = p - 0.5;
+    r = q * q;
+    val = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+          (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+  } else {
+    // Rational approximation for upper region
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    val = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+           ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+  }
+
+  return val;
 }
