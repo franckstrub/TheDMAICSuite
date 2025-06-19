@@ -239,6 +239,82 @@ export function calculateDPMOFromYield(yieldPercent: number): number {
 }
 
 /**
+ * Calculate performance metrics for both Long Term and Short Term
+ * @param values Array of measurement values
+ * @param mean Mean of the values
+ * @param stdDev Standard deviation of the values
+ * @param lsl Lower Specification Limit
+ * @param usl Upper Specification Limit
+ * @param zShift Z-shift value (typically 1.5)
+ * @returns Object containing both Long Term and Short Term metrics
+ */
+export function calculatePerformanceMetrics(
+  values: number[], 
+  mean: number, 
+  stdDev: number, 
+  lsl: number, 
+  usl: number, 
+  zShift: number = 1.5
+): {
+  longTerm: { yield: number; dpmo: number; percentDefects: number; };
+  shortTerm: { yield: number; dpmo: number; percentDefects: number; };
+} {
+  if (values.length === 0 || stdDev === 0) {
+    return {
+      longTerm: { yield: 0, dpmo: 1000000, percentDefects: 100 },
+      shortTerm: { yield: 0, dpmo: 1000000, percentDefects: 100 }
+    };
+  }
+
+  // Long Term calculations (using actual data)
+  const longTermYield = calculateYield(values, lsl, usl);
+  const longTermDpmo = calculateDPMOFromYield(longTermYield);
+  const longTermPercentDefects = (longTermDpmo * 100) / 1000000;
+
+  // Short Term calculations (theoretical - without shift)
+  // Calculate Z scores for both limits
+  let shortTermYield = 0;
+  
+  if (lsl > 0 && usl > 0) {
+    // Both limits exist
+    const zLower = (lsl - mean) / stdDev;
+    const zUpper = (usl - mean) / stdDev;
+    
+    // Use cumulative standard normal distribution
+    const probLower = normalCDF(zLower);
+    const probUpper = normalCDF(zUpper);
+    
+    shortTermYield = (probUpper - probLower) * 100;
+  } else if (usl > 0) {
+    // Only upper limit
+    const zUpper = (usl - mean) / stdDev;
+    shortTermYield = normalCDF(zUpper) * 100;
+  } else if (lsl > 0) {
+    // Only lower limit
+    const zLower = (lsl - mean) / stdDev;
+    shortTermYield = (1 - normalCDF(zLower)) * 100;
+  }
+
+  const shortTermDpmo = calculateDPMOFromYield(shortTermYield);
+  const shortTermPercentDefects = (shortTermDpmo * 100) / 1000000;
+
+  return {
+    longTerm: {
+      yield: Math.max(0, Math.min(100, longTermYield)),
+      dpmo: Math.max(0, longTermDpmo),
+      percentDefects: Math.max(0, Math.min(100, longTermPercentDefects))
+    },
+    shortTerm: {
+      yield: Math.max(0, Math.min(100, shortTermYield)),
+      dpmo: Math.max(0, shortTermDpmo), 
+      percentDefects: Math.max(0, Math.min(100, shortTermPercentDefects))
+    }
+  };
+}
+
+
+
+/**
  * Normal cumulative distribution function (CDF)
  */
 function normalCDF(x: number): number {
