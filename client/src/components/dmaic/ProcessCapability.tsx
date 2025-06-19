@@ -30,7 +30,8 @@ import {
   calculateMovingRange,
   calculateIndividualControlLimits,
   calculateMovingRangeControlLimits,
-  calculateZScoreLongShortTerm
+  calculateZScoreLongShortTerm,
+  calculatePerformanceMetrics
 } from "@/lib/statisticsUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from "recharts";
 
@@ -653,6 +654,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       isNormal: zScoreData.isNormal,
       adStatistic: zScoreData.adStatistic,
       pValue: zScoreData.pValue,
+      performanceMetrics,
       lsl,
       usl,
       target,
@@ -1307,42 +1309,87 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </div>
                           </div>
 
-                          {/* Performance Metrics */}
-                          {showPercentage && (
+                          {/* Performance Metrics - Long Term and Short Term */}
+                          {showPercentage && stats.performanceMetrics && (
                           <div className="bg-green-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-3">Performance Metrics ({capabilityData[ctq]?.dataSetTerm || "Long Term"})</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Yield ({capabilityData[ctq]?.dataSetTerm || "Long Term"}):</span>
-                                <span className="font-medium">
-                                  {(stats.yield ).toFixed(
-                                            stats.dpmo <= 1 ? 6
-                                            : stats.dpmo <= 10 ? 5 
-                                            : stats.dpmo <= 100 ? 4 
-                                            : stats.dpmo <= 1000 ? 3 
-                                            : stats.dpmo <= 10000 ? 2 
-                                            : 2
-                                  )}%
-                                </span>
+                            <h4 className="font-medium text-green-800 mb-3">Performance Metrics</h4>
+                            <div className="space-y-4">
+                              {/* Long Term Metrics */}
+                              <div>
+                                <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
+                                <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
+                                  <div className="flex justify-between">
+                                    <span>Yield (Long Term):</span>
+                                    <span className="font-medium">
+                                      {(stats.performanceMetrics.longTerm.yield).toFixed(
+                                                stats.performanceMetrics.longTerm.dpmo <= 1 ? 6
+                                                : stats.performanceMetrics.longTerm.dpmo <= 10 ? 5 
+                                                : stats.performanceMetrics.longTerm.dpmo <= 100 ? 4 
+                                                : stats.performanceMetrics.longTerm.dpmo <= 1000 ? 3 
+                                                : stats.performanceMetrics.longTerm.dpmo <= 10000 ? 2 
+                                                : 2
+                                      )}%
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>% defects (Long Term):</span>
+                                    <span className="font-medium">
+                                      {(stats.performanceMetrics.longTerm.percentDefects).toFixed(
+                                                stats.performanceMetrics.longTerm.dpmo <= 1 ? 6
+                                                : stats.performanceMetrics.longTerm.dpmo <= 10 ? 5 
+                                                : stats.performanceMetrics.longTerm.dpmo <= 100 ? 4 
+                                                : stats.performanceMetrics.longTerm.dpmo <= 1000 ? 3 
+                                                : stats.performanceMetrics.longTerm.dpmo <= 10000 ? 2 
+                                                : 2
+                                      )}%
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>DPMO (Long Term):</span>
+                                    <span className="font-medium">
+                                      {Math.round(stats.performanceMetrics.longTerm.dpmo).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex justify-between">
-                                <span>% defects ({capabilityData[ctq]?.dataSetTerm || "Long Term"}):</span>
-                                <span className="font-medium">
-                                  {(stats.dpmo * 100 / 1000000).toFixed(
-                                            stats.dpmo <= 1 ? 6
-                                            : stats.dpmo <= 10 ? 5 
-                                            : stats.dpmo <= 100 ? 4 
-                                            : stats.dpmo <= 1000 ? 3 
-                                            : stats.dpmo <= 10000 ? 2 
-                                            : 2
-                                  )}%
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>DPMO ({capabilityData[ctq]?.dataSetTerm || "Long Term"}):</span>
-                                <span className="font-medium">
-                                  {Math.round(stats.dpmo).toLocaleString()}
-                                </span>
+
+                              {/* Short Term Metrics */}
+                              <div>
+                                <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
+                                <div className="space-y-2 text-sm pl-2 border-l-2 border-blue-200">
+                                  <div className="flex justify-between">
+                                    <span>Yield (Short Term):</span>
+                                    <span className="font-medium">
+                                      {(stats.performanceMetrics.shortTerm.yield).toFixed(
+                                                stats.performanceMetrics.shortTerm.dpmo <= 1 ? 6
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 10 ? 5 
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 100 ? 4 
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 1000 ? 3 
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 10000 ? 2 
+                                                : 2
+                                      )}%
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>% defects (Short Term):</span>
+                                    <span className="font-medium">
+                                      {(stats.performanceMetrics.shortTerm.percentDefects).toFixed(
+                                                stats.performanceMetrics.shortTerm.dpmo <= 1 ? 6
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 10 ? 5 
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 100 ? 4 
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 1000 ? 3 
+                                                : stats.performanceMetrics.shortTerm.dpmo <= 10000 ? 2 
+                                                : 2
+                                      )}%
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>DPMO (Short Term):</span>
+                                    <span className="font-medium">
+                                      {Math.round(stats.performanceMetrics.shortTerm.dpmo).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
