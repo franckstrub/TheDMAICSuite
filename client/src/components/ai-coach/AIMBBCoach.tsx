@@ -60,19 +60,34 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
     try {
       const response = await apiRequest('/api/ai-coach/chat', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ message: userMessage.content })
       });
+
+      console.log('AI Coach response:', response);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: response.message,
+        content: response.message || response.data?.message || 'Sorry, I couldn\'t process your request.',
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: 'I apologize, but I\'m having trouble processing your question right now. Please try again in a moment.',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      
       toast({
         title: "Error",
         description: "Failed to get response from AI Coach. Please try again.",
