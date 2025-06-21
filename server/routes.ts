@@ -1092,8 +1092,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             organizationId: user.organizationId,
             userId,
             projectId: dataset.projectId,
-          action: "delete_dataset",
-          details: `Deleted dataset: ${dataset.name}`
+            action: "delete_dataset",
+            details: `Deleted dataset: ${dataset.name}`
+          });
+        }
         });
       }
       
@@ -1135,8 +1137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: req.body.userId,
             projectId,
             action: "create_data_plan",
-          details: `Created data collection plan for: ${plan.ctq}`
-        });
+            details: `Created data collection plan for: ${plan.ctq}`
+          });
+        }
       }
       
       return res.status(201).json({ plan });
@@ -1163,8 +1166,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: plan.projectId,
-          action: "update_data_plan",
-          details: `Updated data collection plan for: ${plan.ctq}`
+            action: "update_data_plan",
+            details: `Updated data collection plan for: ${plan.ctq}`
+          });
+        }
         });
       }
       
@@ -1196,12 +1201,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (userId && projectId) {
-        await storage.createActivityLog({
-          userId,
-          projectId,
-          action: "delete_data_plan",
-          details: "Deleted a data collection plan"
-        });
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId,
+            projectId,
+            action: "delete_data_plan",
+            details: "Deleted a data collection plan"
+          });
+        }
       }
       
       return res.status(200).json({ success: true });
@@ -1257,12 +1266,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await storage.createStorageConfig(validatedData);
       
       // Log activity
-      await storage.createActivityLog({
-        userId,
-        projectId: null,
-        action: "update_storage_config",
-        details: "Updated storage configuration"
-      });
+      const user = await storage.getUser(userId);
+      if (user) {
+        await storage.createActivityLog({
+          organizationId: user.organizationId,
+          userId,
+          projectId: null,
+          action: "update_storage_config",
+          details: "Updated storage configuration"
+        });
+      }
       
       return res.status(201).json({ config });
     } catch (err) {
@@ -1501,12 +1514,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_risk_assessment",
-          details: "Created project risk assessment"
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId,
+            action: "create_risk_assessment",
+            details: "Created project risk assessment"
+          });
+        }
       }
       
       return res.status(201).json({ risk: sanitizedRisk });
@@ -1623,12 +1640,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: risk.projectId,
-          action: "update_risk_assessment",
-          details: "Updated project risk assessment"
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: risk.projectId,
+            action: "update_risk_assessment",
+            details: "Updated project risk assessment"
+          });
+        }
       }
       
       return res.status(200).json({ risk: sanitizedRisk });
@@ -1809,12 +1830,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: processData.projectId,
-          action: "upload_process_data",
-          details: "Uploaded process data"
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: processData.projectId,
+            action: "upload_process_data",
+            details: "Uploaded process data"
+          });
+        }
       }
       
       return res.status(201).json({ processData });
@@ -1889,12 +1914,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log activity
         if (req.body.userId) {
-          await storage.createActivityLog({
-            userId: req.body.userId,
-            projectId,
-            action: "update_raci_matrix",
-            details: "Updated RACI matrix"
-          });
+          const user = await storage.getUser(req.body.userId);
+          if (user) {
+            await storage.createActivityLog({
+              organizationId: user.organizationId,
+              userId: req.body.userId,
+              projectId,
+              action: "update_raci_matrix",
+              details: "Updated RACI matrix"
+            });
+          }
         }
       } else {
         // Create new matrix
@@ -1902,12 +1931,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log activity
         if (req.body.userId) {
-          await storage.createActivityLog({
-            userId: req.body.userId,
-            projectId,
-            action: "create_raci_matrix",
-            details: "Created RACI matrix"
-          });
+          const user = await storage.getUser(req.body.userId);
+          if (user) {
+            await storage.createActivityLog({
+              organizationId: user.organizationId,
+              userId: req.body.userId,
+              projectId,
+              action: "create_raci_matrix",
+              details: "Created RACI matrix"
+            });
+          }
         }
       }
       
