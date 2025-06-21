@@ -119,6 +119,22 @@ export interface IStorage {
 
 // DatabaseStorage implementation using Drizzle ORM
 export class DatabaseStorage implements IStorage {
+  
+  // AI Coach Chat History methods
+  async createAiCoachChatHistory(chatData: any): Promise<any> {
+    // For now, just return a mock response to prevent crashes
+    return { id: Date.now(), ...chatData, createdAt: new Date() };
+  }
+
+  async getAiCoachChatHistory(organizationId: number, userId: string, limit: number = 50): Promise<any[]> {
+    // For now, return empty array to prevent crashes
+    return [];
+  }
+
+  async deleteAiCoachChatHistory(organizationId: number, userId: string): Promise<void> {
+    // For now, do nothing to prevent crashes
+    return;
+  }
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
