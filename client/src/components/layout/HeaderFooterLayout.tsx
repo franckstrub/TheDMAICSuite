@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import Header from "./Header";
+import AIMBBCoach from "@/components/ai-coach/AIMBBCoach";
 
 interface HeaderFooterLayoutProps {
   children: React.ReactNode;
