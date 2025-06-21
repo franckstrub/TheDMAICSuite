@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Initialize Gemini AI
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "AIzaSyBnsicEhplNpyB-NihS2j9buy6bcV1plU4" });
 
 const LEAN_SIX_SIGMA_CONTEXT = `
 You are an AI Master Black Belt Coach specializing in Lean Six Sigma methodology. You have extensive experience in:

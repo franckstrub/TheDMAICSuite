@@ -77,6 +77,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           </footer>
         </main>
       </div>
+      <AIMBBCoach />
     </div>
   );
 }

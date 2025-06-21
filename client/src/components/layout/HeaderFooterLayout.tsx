@@ -33,6 +33,7 @@ export default function HeaderFooterLayout({ children }: HeaderFooterLayoutProps
           </a>
         </footer>
       </main>
+      <AIMBBCoach />
     </div>
   );
 }
