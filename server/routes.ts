@@ -820,12 +820,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_requirement",
-          details: `Added requirement: ${requirement.requirement}`
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId,
+            action: "create_requirement",
+            details: `Added requirement: ${requirement.requirement}`
+          });
+        }
       }
       
       return res.status(201).json({ requirement });
@@ -846,12 +850,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: requirement.projectId,
-          action: "update_requirement",
-          details: `Updated requirement: ${requirement.requirement}`
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: requirement.projectId,
+            action: "update_requirement",
+            details: `Updated requirement: ${requirement.requirement}`
+          });
+        }
       }
       
       return res.status(200).json({ requirement });
@@ -909,12 +917,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_business_requirement",
-          details: `Added business requirement: ${businessRequirement.requirement}`
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId,
+            action: "create_business_requirement",
+            details: `Added business requirement: ${businessRequirement.requirement}`
+          });
+        }
       }
       
       return res.status(201).json({ businessRequirement });
@@ -935,12 +947,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: businessRequirement.projectId,
-          action: "update_business_requirement",
-          details: `Updated business requirement: ${businessRequirement.requirement}`
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: businessRequirement.projectId,
+            action: "update_business_requirement",
+            details: `Updated business requirement: ${businessRequirement.requirement}`
+          });
+        }
       }
       
       return res.status(200).json({ businessRequirement });
@@ -1009,12 +1025,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dataset = await storage.createDataset(datasetData);
       
       // Log activity
-      await storage.createActivityLog({
-        userId: datasetData.createdBy,
-        projectId: datasetData.projectId,
-        action: "create_dataset",
-        details: `Created dataset: ${dataset.name}`
-      });
+      const user = await storage.getUser(datasetData.createdBy);
+      if (user) {
+        await storage.createActivityLog({
+          organizationId: user.organizationId,
+          userId: datasetData.createdBy,
+          projectId: datasetData.projectId,
+          action: "create_dataset",
+          details: `Created dataset: ${dataset.name}`
+        });
+      }
       
       return res.status(201).json({ dataset });
     } catch (err) {
@@ -1034,12 +1054,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: dataset.projectId,
-          action: "update_dataset",
-          details: `Updated dataset: ${dataset.name}`
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: dataset.projectId,
+            action: "update_dataset",
+            details: `Updated dataset: ${dataset.name}`
+          });
+        }
       }
       
       return res.status(200).json({ dataset });
@@ -1062,9 +1086,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (userId) {
-        await storage.createActivityLog({
-          userId,
-          projectId: dataset.projectId,
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId,
+            projectId: dataset.projectId,
           action: "delete_dataset",
           details: `Deleted dataset: ${dataset.name}`
         });
@@ -1101,10 +1128,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_data_plan",
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId,
+            action: "create_data_plan",
           details: `Created data collection plan for: ${plan.ctq}`
         });
       }
@@ -1127,9 +1157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: plan.projectId,
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: plan.projectId,
           action: "update_data_plan",
           details: `Updated data collection plan for: ${plan.ctq}`
         });
