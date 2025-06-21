@@ -33,7 +33,10 @@ Remember, you're helping users improve their processes and achieve measurable re
 
 export async function generateAICoachResponse(userMessage: string): Promise<string> {
   try {
-    if (!process.env.GEMINI_API_KEY) {
+    console.log("Processing AI coach request for message:", userMessage);
+    
+    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBnsicEhplNpyB-NihS2j9buy6bcV1plU4";
+    if (!apiKey) {
       throw new Error("Gemini API key not configured");
     }
 
@@ -43,16 +46,21 @@ User Question: ${userMessage}
 
 Please provide a helpful, expert response as an AI Master Black Belt Coach:`;
 
+    console.log("Sending request to Gemini API...");
+    
     const response = await ai.models.generateContent({
       model: "gemini-1.5-flash",
       contents: prompt,
     });
 
+    console.log("Gemini API response received:", response.text?.substring(0, 100) + "...");
+
     return response.text || "I apologize, but I'm having trouble processing your question right now. Please try rephrasing your question or ask about a specific Lean Six Sigma topic.";
     
   } catch (error) {
     console.error("Error generating AI coach response:", error);
-    throw new Error("Failed to generate response from AI Coach");
+    console.error("Error details:", error.message);
+    throw new Error(`Failed to generate response from AI Coach: ${error.message}`);
   }
 }
 
