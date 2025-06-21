@@ -7,7 +7,7 @@ import { MessageCircle, Send, X, Minimize2, Maximize2, Trash2, History } from "l
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 // Import the AI coach avatar image
-const aiCoachAvatar = "/attached_assets/AI-MBB-Coach_1750526353279.jpg";
+const aiCoachAvatar = "/ai-coach-avatar.jpg";
 
 interface Message {
   id: string;
