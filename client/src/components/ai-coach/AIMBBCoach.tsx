@@ -215,12 +215,18 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
       <CardHeader className="pb-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img 
-              src={aiCoachAvatar} 
-              alt="AI MBB Coach" 
-              className="w-8 h-8 rounded-full object-cover border-2 border-white"
-            />
-            <CardTitle className="text-sm font-semibold">AI Master Black Belt Coach</CardTitle>
+            <div className="relative">
+              <img 
+                src={aiCoachAvatar} 
+                alt="AI MBB Coach" 
+                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-lg"
+              />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+            </div>
+            <div>
+              <CardTitle className="text-sm font-semibold">AI Master Black Belt Coach</CardTitle>
+              <p className="text-xs text-blue-100">Lean Six Sigma Expert</p>
+            </div>
           </div>
           <div className="flex items-center space-x-1">
             <Button
