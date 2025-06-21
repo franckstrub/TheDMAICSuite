@@ -16,11 +16,10 @@ import {
   mean, 
   standardDeviation, 
   variance, 
-  calculateYield, 
-  calculateDPMOFromYield, 
-  calculateZScore,
   parseNumericValue,
   median,
+  calculateMode,
+  performNormalityTest,
   getHistogramData,
   calculateQuartiles,
   calculateMovingRange,
@@ -28,7 +27,8 @@ import {
   calculateMovingRangeControlLimits,
   calculateZScoreLongShortTerm,
   calculatePerformanceMetrics,
-  calculateCapabilityIndexes
+  calculateCapabilityIndexes,
+  calculateObservedPerformanceMetrics
 } from "@/lib/statisticsUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from "recharts";
 
@@ -586,6 +586,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
+  {/* Helper function to format percentage values */}
+  const formatPercentage = (value, dpmo) => {
+    if (isNaN(value) || value === null || value === undefined) {
+      return "N/A";
+    }
+    const decimalPlaces = dpmo <= 1 ? 6
+      : dpmo <= 10 ? 5
+      : dpmo <= 100 ? 4
+      : dpmo <= 1000 ? 3
+      : dpmo <= 10000 ? 2
+      : 2;
+  
+    return `${value.toFixed(decimalPlaces)}%`;
+    };
+  
   // Calculate process capability statistics
   const calculateProcessCapabilityStats = (ctq: string) => {
     const data = capabilityData[ctq];
@@ -595,9 +610,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       return null;
     }
     
-    const lsl = parseNumericValue(data.lsl);
-    const usl = parseNumericValue(data.usl);
-    const target = parseNumericValue(data.target);
+    const lsl = parseNumericValue(data.lsl, undefined);
+    const usl = parseNumericValue(data.usl, undefined);
+    const target = parseNumericValue(data.target, undefined);
     const zShift = data.zShift || 1.5;
     
     if (lsl === 0 && usl === 0) {
@@ -608,7 +623,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const meanValue = mean(dataPointsArray);
     const stdDev = standardDeviation(dataPointsArray);
     const varianceValue = variance(dataPointsArray);
-    const myquartiles= calculateQuartiles(dataPointsArray);
+    // Perform normality test - will return isNormal, AD value and p_values
+    const normalityTest = performNormalityTest(dataPointsArray, meanValue, stdDev);
+    //normalityTest.isNormal=true;
+    const myquartiles = calculateQuartiles(dataPointsArray);
+    const Mode = calculateMode(dataPointsArray);
     
     // Calculate Long Term and Short Term Z scores with normality test
     const zScoreData = calculateZScoreLongShortTerm(
@@ -633,31 +652,64 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     // Calculate performance metrics for both Long Term and Short Term using Z scores
     const performanceMetrics = calculatePerformanceMetrics(
-      zScoreData.zLongTerm || 0, 
-      zScoreData.zShortTerm || 0
+      zScoreData.zLongTerm || 0,
+      zScoreData.zLSL_LT!,
+      zScoreData.zUSL_LT!,
+      zScoreData.zShortTerm || 0,
+      zScoreData.zLSL_ST!,
+      zScoreData.zUSL_ST!,
     );
-    
+
+    // Calculate all capability indices at once
+    const ObservedPerformanceMetrics = calculateObservedPerformanceMetrics(
+      dataPointsArray,
+      lsl,
+      usl,
+      data.dataSetTerm,
+      zShift,
+    );
+
     return {
       sampleSize,
       mean: meanValue,
       standardDeviation: stdDev,
       variance: varianceValue,
       quartiles: myquartiles,
+      Mode,
       cp: capabilityIndexes.cp,
       cpk: capabilityIndexes.cpk,
       pp: capabilityIndexes.pp,
       ppk: capabilityIndexes.ppk,
       zLongTerm: zScoreData.zLongTerm,
+      zLSL_LT: zScoreData.zLSL_LT,
+      zUSL_LT: zScoreData.zUSL_LT,  
       zShortTerm: zScoreData.zShortTerm,
-      zBench: zScoreData.zBench,
-      isNormal: zScoreData.isNormal,
-      adStatistic: zScoreData.adStatistic,
-      pValue: zScoreData.pValue,
+      zLSL_ST: zScoreData.zLSL_ST,
+      zUSL_ST: zScoreData.zUSL_ST,
+      isNormal: normalityTest.isNormal,
+      adStatistic: normalityTest.adStatistic,
+      pValue: normalityTest.pValue,
       performanceMetrics,
       lsl,
       usl,
       target,
       zShift,
+      obsYieldLT: ObservedPerformanceMetrics.longTerm.obsyield,
+      obsDPMOLT: ObservedPerformanceMetrics.longTerm.obsdpmo,
+      obspercentDefectsLT: ObservedPerformanceMetrics.longTerm.obspercentDefects,
+      obspdLSL_LT: ObservedPerformanceMetrics.longTerm.obspdLSL_LT,
+      obspdUSL_LT: ObservedPerformanceMetrics.longTerm.obspdUSL_LT,
+      ZequivLT: ObservedPerformanceMetrics.longTerm.ZequivLT,
+      ZequivLSL_LT: ObservedPerformanceMetrics.longTerm.ZequivLSL_LT,
+      ZequivUSL_LT: ObservedPerformanceMetrics.longTerm.ZequivUSL_LT,
+      obsYieldST: ObservedPerformanceMetrics.shortTerm.obsyield,
+      obsDPMOST: ObservedPerformanceMetrics.shortTerm.obsdpmo,
+      obspercentDefectsST: ObservedPerformanceMetrics.shortTerm.obspercentDefects,
+      obspdLSL_ST: ObservedPerformanceMetrics.shortTerm.obspdLSL_ST,
+      obspdUSL_ST: ObservedPerformanceMetrics.shortTerm.obspdUSL_ST,
+      ZequivST: ObservedPerformanceMetrics.shortTerm.ZequivST,
+      ZequivLSL_ST: ObservedPerformanceMetrics.shortTerm.ZequivLSL_ST,
+      ZequivUSL_ST: ObservedPerformanceMetrics.shortTerm.ZequivUSL_ST,
     };
   };
 
@@ -1001,6 +1053,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ctqWithType.ctqType === "Continuous" && (
+                <>
+                  <div>
+                        <label className="block text-sm font-medium mb-2">Capability Index</label>
+                        <Select
+                          value={capabilityData[ctq]?.capabilityIndex || "Z"}
+                          onValueChange={(value) => updateCapabilityField(ctq, "capabilityIndex", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Z">Z (Sigma Level)</SelectItem>
+                            <SelectItem value="Cp/Cpk">Pp/Ppk & Cp/Cpk (Capability Indices)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                  </div>
+                  {capabilityData[ctq]?.capabilityIndex === "Z" ? (                  
                   <div>
                     <label className="block text-sm font-medium mb-2">Z-shift Value</label>
                     <Input
@@ -1011,7 +1081,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       placeholder="1.5"
                     />
                   </div>
-
+                  ) : (
+                    <div></div>
+                  )
+                  }
+                </>
+                )
+                }
+                   
                   <div>
                     <label className="block text-sm font-medium mb-2">Data Set Term</label>
                     <Select
@@ -1030,22 +1107,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                   {ctqWithType.ctqType === "Continuous" && (
                     <>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Capability Index</label>
-                        <Select
-                          value={capabilityData[ctq]?.capabilityIndex || "Z"}
-                          onValueChange={(value) => updateCapabilityField(ctq, "capabilityIndex", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Z">Z (Sigma Level)</SelectItem>
-                            <SelectItem value="Cp/Cpk">Pp/Ppk & Cp/Cpk (Capability Indices)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
                       <div>
                         <label className="block text-sm font-medium mb-2">Show Percentage Display</label>
                         <RadioGroup
@@ -1150,315 +1211,574 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   const showPercentage = data?.showPercentage || false;
                   const capabilityIndex = data?.capabilityIndex || "Cp/Cpk";
                   
-                  if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
-                    return (
-                      <div className="mt-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Calculator className="h-5 w-5 text-blue-600" />
-                          <h3 className="text-lg font-semibold">Process Capability Analysis Results</h3>
+if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
+  return (
+    <div className="mt-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Calculator className="h-5 w-5 text-blue-600" />
+        <h3 className="text-lg font-semibold">Process Capability Analysis Results</h3>
+      </div>
+      <div className={`grid grid-cols-1 gap-6 ${showPercentage ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
+        {/* Basic Statistics */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-800 mb-3">Basic Statistics</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Sample Size:</span>
+              <span className="font-medium">{stats.sampleSize}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Mean (X̄):</span>
+              <span className="font-medium">{stats.mean.toFixed(4)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Std Dev (σ):</span>
+              <span className="font-medium">{stats.standardDeviation.toFixed(4)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Variance (σ²):</span>
+              <span className="font-medium">{stats.variance.toFixed(4)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span title="Tests whether data follows normal distribution">Normality Test (Anderson Darling):</span>
+              <span className={`font-medium text-sm ${stats.isNormal ? 'text-green-600' : 'text-red-600'}`}
+                title={stats.isNormal ? "Data follows normal distribution (P-Value ≥ 0.05)" 
+                : "Data does not follow normal distribution (P-Value < 0.05)"
+                }>
+                {stats.isNormal ? 'Pass' : 'Fail'}
+              </span>
+            </div>
+            
+            {stats.pValue && (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-xs"
+                title={"Anderson-Darling test value"}>
+                  <span> &nbsp;• AD-Value:</span>
+                  <span className="font-medium text-xs">
+                    {stats.adStatistic.toFixed(5)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs" title={"Anderson-Darling test p-value"}>
+                  <span> &nbsp;• P-Value:</span>
+                  <span className="font-medium text-xs">
+                    {stats.pValue.toFixed(5)}
+                  </span>
+                </div>
+              </div>
+            )}
+            <div>
+              <Badge variant="default" className={`font-medium text-xs text-center justify-center ${stats.isNormal ? 'text-white bg-green-600 '
+              : 'text-white bg-red-600'}`}
+              
+                title={stats.isNormal ? "Data follows normal distribution (P-Value ≥ 0.05)" 
+                  : "Data does not follow normal distribution (P-Value < 0.05)"
+                  }>
+                {stats.isNormal ? "Data follows normal distribution" 
+                  : "Data does not follow normal distribution"
+                }
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Percentiles */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-800 mb-3">Percentiles</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Min:</span>
+              <span className="font-medium">{stats.quartiles?.min?.toFixed(4) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span title="Q1 = 1st quartile value = percentile(25%)">Q1:</span>
+              <span className="font-medium">{stats.quartiles?.q1?.toFixed(4) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span title="Q2 = 2nd quartile value = percentile(50%)">Median:</span>
+              <span className="font-medium">{stats.quartiles?.median?.toFixed(4) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span title="Q3 = 3rd quartile value = percentile(75%)">Q3:</span>
+              <span className="font-medium">{stats.quartiles?.q3?.toFixed(4) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Max:</span>
+              <span className="font-medium">{stats.quartiles?.max?.toFixed(4) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span title="Range = Max - Min">Range:</span>
+              <span className="font-medium">{stats.quartiles ? (stats.quartiles.max - stats.quartiles.min).toFixed(4) : 'N/A'}</span>
+            </div>
+            <div className="flex justify-between"
+            title="Mode: most frequent value of the distribution">
+              <span>Mode:</span>
+              <span className="font-medium">{stats.Mode?.toFixed(4)}</span>
+            </div>
+          </div>
+        </div>                          
+
+        {/* Capability Indices */}
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <h4 className="font-medium text-blue-800 mb-3">
+            {capabilityIndex === "Cp/Cpk" 
+              ? "Capability Indices (Pp/Ppk & Cp/Cpk)" 
+              : stats.isNormal 
+                ? "Z values" 
+                : "Z-Equivalent values (from observed defects)"
+            }
+          </h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span title="LSL = Lower Specification Limit">LSL:</span>
+              <span className="font-medium">{stats.lsl || "N/A"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span title="USL = Upper Specification Limit">USL:</span>
+              <span className="font-medium">{stats.usl || "N/A"}</span>
+            </div>
+            {/*
+            {stats.target && !(capabilityIndex === "Cp/Cpk") && (
+              <div className="flex justify-between">
+                <span>Target:</span>
+                <span className="font-medium">{stats.target}</span>
+              </div>
+            )}
+              */}
+            {capabilityIndex === "Cp/Cpk" ? (
+              <>
+                <div className="flex justify-between">
+                  <span>Pp:</span>
+                  <span className="font-medium">
+                    {stats.pp !== null ? stats.pp.toFixed(3) : "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Ppk:</span>
+                  <span className="font-medium">
+                    {stats.ppk !== null ? stats.ppk.toFixed(3) : "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Cp:</span>
+                  <span className="font-medium">
+                    {stats.cp !== null ? stats.cp.toFixed(3) : "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Cpk:</span>
+                  <span className="font-medium">
+                    {stats.cpk !== null ? stats.cpk.toFixed(3) : "N/A"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Z-shift:</span>
+                  <span className="font-medium text-sm">
+                    {stats.zShift.toFixed(2)}σ
+                  </span>
+                </div>
+                
+                {stats.isNormal ? (
+                  <>                                
+                    <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
+                    <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
+                    <div className="flex justify-between">
+                      <span>Z Long Term:</span>
+                      <span className="font-medium text-sm">
+                        {stats.zLongTerm ? stats.zLongTerm.toFixed(2) : '0.00'}σ
+                      </span>
+                    </div>
+                    {capabilityData[ctq]?.dataSetTerm === "Long Term" && (
+                      <>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z_LSL LT:</span>
+                          <span className="font-medium text-xs">
+                            {!isNaN(stats.zLSL_LT) ?
+                              stats.zLSL_LT.toFixed(2) + 'σ' : 'N/A'}
+                          </span>
                         </div>
-                        <div className={`grid grid-cols-1 gap-6 ${showPercentage ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
-                          {/* Basic Statistics */}
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Basic Statistics</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Sample Size:</span>
-                                <span className="font-medium">{stats.sampleSize}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Mean (X̄):</span>
-                                <span className="font-medium">{stats.mean.toFixed(4)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Std Dev (σ):</span>
-                                <span className="font-medium">{stats.standardDeviation.toFixed(4)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Variance (σ²):</span>
-                                <span className="font-medium">{stats.variance.toFixed(4)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                  <span title="will test if data follow normal distribution">Normality Test (Anderson Darling):</span>
-                                  <span className={`font-medium text-sm ${stats.isNormal ? 'text-green-600' : 'text-red-600'}`}
-                                    title={stats.isNormal ? "Data follow normal distribution (P-Value ≥ 0.05)" 
-                                    : "Data do not follow normal distribution (P-Value < 0.05)"
-                                    }>
-                                    {stats.isNormal ? 'Pass' : 'Fail'}
-                                  </span>
-                              </div>
-                              {stats.pValue && (
-                                <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span> &nbsp;• AD-Value:</span>
-                                    <span className="font-medium text-sm">
-                                      {stats.adStatistic.toFixed(3)}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span> &nbsp;• P-Value:</span>
-                                    <span className="font-medium text-sm">
-                                      {stats.pValue.toFixed(3)}
-                                    </span>
-                                </div>
-                                </div>
-                               )}
-                            </div>
-                          </div>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z_USL LT:</span>
+                          <span className="font-medium text-xs">
+                            {!isNaN(stats.zUSL_LT) ?
+                              stats.zUSL_LT.toFixed(2)+ 'σ': 'N/A'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    </div>
+                    <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
+                    <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
+                    <div className="flex justify-between">
+                      <span>Z Short Term (Z-Benchmark):</span>
+                      <span className="font-medium text-sm">
+                        {stats.zShortTerm ? stats.zShortTerm.toFixed(2) : '0.00'}σ
+                      </span>
+                    </div>
+                    {capabilityData[ctq]?.dataSetTerm === "Short Term" && (
+                      <>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z_LSL ST:</span>
+                          <span className="font-medium text-xs">
+                            {!isNaN(stats.zLSL_ST) ?
+                             stats.zLSL_ST.toFixed(2) + 'σ' : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z_USL ST:</span>
+                          <span className="font-medium text-xs">
+                            {!isNaN(stats.zUSL_ST) ?
+                            stats.zUSL_ST.toFixed(2) + 'σ': 'N/A'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
+                    <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
+                    <div className="flex justify-between">
+                      <span>Z-Equivalent Long Term:</span>
+                      <span className="font-medium text-sm">
+                        {stats.ZequivLT ? stats.ZequivLT.toFixed(2) : '0.00'}σ
+                      </span>
+                    </div>
+                    {capabilityData[ctq]?.dataSetTerm === "Long Term" && (
+                      <>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z-Equivalent_LSL LT:</span>
+                          <span className="font-medium text-xs">
+                            {stats.ZequivLSL_LT ?
+                             stats.ZequivLSL_LT.toFixed(2) + 'σ' : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z_Equivalent_USL LT:</span>
+                          <span className="font-medium text-xs">
+                            {stats.ZequivUSL_LT ?
+                            stats.ZequivUSL_LT.toFixed(2) + 'σ': 'N/A'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    </div>
+                    <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
+                    <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
+                    <div className="flex justify-between">
+                      <span>Z-Equivalent Short Term (Z-Benchmark):</span>
+                      <span className="font-medium text-sm">
+                        {stats.ZequivST ? stats.ZequivST.toFixed(2) : '0.00'}σ
+                      </span>
+                    </div>
+                    {capabilityData[ctq]?.dataSetTerm === "Short Term" && (
+                      <>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z-Equivalent_LSL ST:</span>
+                          <span className="font-medium text-xs">
+                            {stats.ZequivLSL_ST ?
+                             stats.ZequivLSL_ST.toFixed(2) + 'σ' : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs ml-2">
+                          <span>• Z_Equivalent_USL ST:</span>
+                          <span className="font-medium text-xs">
+                            {stats.ZequivUSL_ST ?
+                            stats.ZequivUSL_ST.toFixed(2) + 'σ': 'N/A'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
-                          {/* Centiles */}
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Percentiles</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Min:</span>
-                                <span className="font-medium">{stats.quartiles?.min?.toFixed(4) || 'N/A'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span title="Q1 = 1st quartile value = percentile(25%)">Q1:</span>
-                                <span className="font-medium">{stats.quartiles?.q1?.toFixed(4) || 'N/A'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span title="Q2 = 2nd quartile value = percentile(50%)">Median:</span>
-                                <span className="font-medium">{stats.quartiles?.median?.toFixed(4) || 'N/A'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span title="Q3 = 3rd quartile value = percentile(75%)">Q3:</span>
-                                <span className="font-medium">{stats.quartiles?.q3?.toFixed(4) || 'N/A'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Max:</span>
-                                <span className="font-medium">{stats.quartiles?.max?.toFixed(4) || 'N/A'}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span title="Range = Max - Min">Range:</span>
-                                <span className="font-medium">{stats.quartiles ? (stats.quartiles.max - stats.quartiles.min).toFixed(4) : 'N/A'}</span>
-                              </div>
-                            </div>
-                          </div>                          
-
-                          {/* Capability Indices */}
-                          <div className="bg-blue-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-blue-800 mb-3">
-                              {capabilityIndex === "Cp/Cpk" 
-                                ? "Capability Indices (Pp/Ppk & Cp/Cpk)" 
-                                : stats.isNormal 
-                                  ? "Z values (Normal Data)" 
-                                  : "Z-Equivalent values (Non-Normal Data - Observed defects)"
-                              }
-                            </h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span title="LSL = Lower Specification Limit">LSL:</span>
-                                <span className="font-medium">{stats.lsl || "N/A"}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span title="USL = Upper Specification Limit">USL:</span>
-                                <span className="font-medium">{stats.usl || "N/A"}</span>
-                              </div>
-                              {stats.target && !(capabilityIndex === "Cp/Cpk") && (
-                                <div className="flex justify-between">
-                                  <span>Target:</span>
-                                  <span className="font-medium">{stats.target}</span>
-                                </div>)}
-                              {capabilityIndex === "Cp/Cpk" ? (
-                                <>
-                                  <div className="flex justify-between">
-                                    <span>Pp:</span>
-                                    <span className="font-medium">
-                                      {stats.pp !== null ? stats.pp.toFixed(3) : "N/A"}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Ppk:</span>
-                                    <span className="font-medium">
-                                      {stats.ppk !== null ? stats.ppk.toFixed(3) : "N/A"}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Cp:</span>
-                                    <span className="font-medium">
-                                      {stats.cp !== null ? stats.cp.toFixed(3) : "N/A"}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Cpk:</span>
-                                    <span className="font-medium">
-                                      {stats.cpk !== null ? stats.cpk.toFixed(3) : "N/A"}
-                                    </span>
-                                  </div>
-                                </>
-                              ) : (
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span>Z-shift:</span>
-                                  <span className="font-medium text-sm">
-                                    {stats.zShift.toFixed(2)}σ
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Z Long Term:</span>
-                                  <span className="font-medium text-sm">
-                                    {stats.zLongTerm ? stats.zLongTerm.toFixed(2) : '0.00'}σ
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Z Short Term (Z-Bench):</span>
-                                  <span className="font-medium text-sm">
-                                    {stats.zShortTerm ? stats.zShortTerm.toFixed(2) : '0.00'}σ
-                                  </span>
-                                </div>
-                              </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Performance Metrics - Long Term and Short Term */}
-                          {showPercentage && stats.performanceMetrics && (
-                          <div className="bg-green-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-3">
-                              {stats.isNormal && capabilityIndex === "Z" 
-                                  ? "Performance Metrics (Predicted)" 
-                                  : "Performance Metrics (Observed defects)"
-                              }
-                            </h4>
-                            <div className="space-y-4">
-                              {/* Long Term Metrics */}
-                              <div>
-                                <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
-                                <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
-                                  <div className="flex justify-between">
-                                    <span>Yield (Long Term):</span>
-                                    <span className="font-medium">
-                                      {(stats.performanceMetrics.longTerm.yield).toFixed(
-                                                stats.performanceMetrics.longTerm.dpmo <= 1 ? 6
-                                                : stats.performanceMetrics.longTerm.dpmo <= 10 ? 5 
-                                                : stats.performanceMetrics.longTerm.dpmo <= 100 ? 4 
-                                                : stats.performanceMetrics.longTerm.dpmo <= 1000 ? 3 
-                                                : stats.performanceMetrics.longTerm.dpmo <= 10000 ? 2 
-                                                : 2
-                                      )}%
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>% defects (Long Term):</span>
-                                    <span className="font-medium">
-                                      {(stats.performanceMetrics.longTerm.percentDefects).toFixed(
-                                                stats.performanceMetrics.longTerm.dpmo <= 1 ? 6
-                                                : stats.performanceMetrics.longTerm.dpmo <= 10 ? 5 
-                                                : stats.performanceMetrics.longTerm.dpmo <= 100 ? 4 
-                                                : stats.performanceMetrics.longTerm.dpmo <= 1000 ? 3 
-                                                : stats.performanceMetrics.longTerm.dpmo <= 10000 ? 2 
-                                                : 2
-                                      )}%
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>DPMO (Long Term):</span>
-                                    <span className="font-medium">
-                                      {Math.round(stats.performanceMetrics.longTerm.dpmo).toLocaleString()}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Short Term Metrics */}
-                              <div>
-                                <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
-                                <div className="space-y-2 text-sm pl-2 border-l-2 border-blue-200">
-                                  <div className="flex justify-between">
-                                    <span>Yield (Short Term):</span>
-                                    <span className="font-medium">
-                                      {(stats.performanceMetrics.shortTerm.yield).toFixed(
-                                                stats.performanceMetrics.shortTerm.dpmo <= 1 ? 6
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 10 ? 5 
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 100 ? 4 
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 1000 ? 3 
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 10000 ? 2 
-                                                : 2
-                                      )}%
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>% defects (Short Term):</span>
-                                    <span className="font-medium">
-                                      {(stats.performanceMetrics.shortTerm.percentDefects).toFixed(
-                                                stats.performanceMetrics.shortTerm.dpmo <= 1 ? 6
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 10 ? 5 
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 100 ? 4 
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 1000 ? 3 
-                                                : stats.performanceMetrics.shortTerm.dpmo <= 10000 ? 2 
-                                                : 2
-                                      )}%
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>DPMO (Short Term):</span>
-                                    <span className="font-medium">
-                                      {Math.round(stats.performanceMetrics.shortTerm.dpmo).toLocaleString()}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+        {/* Performance Metrics - Long Term and Short Term */}
+        {showPercentage && stats.performanceMetrics && (
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h4 className="font-medium text-green-800 mb-3">
+              {stats.isNormal && capabilityIndex === "Z" 
+                ? "Performance Metrics (predicted)" 
+                : "Performance Metrics (observed defects)"
+              }
+            </h4>
+            <div className="space-y-4">
+              {/* Long Term Metrics */}
+              {(capabilityData[ctq]?.capabilityIndex === "Z" || 
+                (capabilityData[ctq]?.capabilityIndex === "Cp/Cpk" &&
+                 capabilityData[ctq]?.dataSetTerm === "Long Term")) && ( 
+                <div>
+                  <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
+                  <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
+                    {/* Yield */}
+                    <div className="flex justify-between">
+                      <span>Yield (Long Term):</span>
+                      {stats.isNormal && capabilityIndex === "Z" ? (                                 
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.performanceMetrics.longTerm.yield,
+                          stats.performanceMetrics.longTerm.dpmo
                         )}
-                        </div>
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.obsYieldLT,
+                          stats.obsDPMOLT
+                          )}
+                        </span> 
+                      )}
+                    </div>
 
-                        {/* Capability Assessment */}
-                        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <h4 className="font-medium text-yellow-800 mb-2">Capability Assessment</h4>
-                          <div className="text-sm text-yellow-700">
-                            {stats.cpk !== null && capabilityIndex === "Cp/Cpk" && (
-                              <div>
-                                {stats.cpk >= 1.66 && (
-                                  <p className="text-green-700 font-medium">✓ Process is world-class (Cpk ≥ 1.33)</p>
-                                )}
-                                {stats.cpk >= 1.33 && (
-                                  <p className="text-green-700 font-medium">✓ Process is capable (Cpk ≥ 1.33)</p>
-                                )}
-                                {stats.cpk >= 1.0 && stats.cpk < 1.33 && (
-                                  <p className="text-yellow-700 font-medium">⚠ Process is marginally capable (1.0 ≤ Cpk {'<'} 1.33)</p>
-                                )}
-                                {stats.cpk < 1.0 && (
-                                  <p className="text-red-700 font-medium">✗ Process is not capable (Cpk {'<'} 1.0)</p>
-                                )}
-                              </div>
-                            )}
-                            {capabilityIndex === "Z" && (
-                              <div>
-                                {stats.zShortTerm >= 6 && (
-                                  <p className="text-green-700 font-medium">✓ World class performance (≥ 6σ)</p>
-                                )}
-                                {stats.zShortTerm >= 4 && stats.zShortTerm < 6 && (
-                                  <p className="text-blue-700 font-medium">○ Good performance (4-6σ)</p>
-                                )}
-                                {stats.zShortTerm >= 3 && stats.zShortTerm < 4 && (
-                                  <p className="text-yellow-700 font-medium">⚠ Average performance (3-4σ)</p>
-                                )}
-                                {stats.zShortTerm < 3 && (
-                                  <p className="text-red-700 font-medium">✗ Poor performance ({'<'} 3σ)</p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                    {/* Percent Defects */}
+                    <div className="flex justify-between">
+                      <span>% defects (Long Term):</span>
+                      {stats.isNormal && capabilityIndex === "Z" ? (
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.performanceMetrics.longTerm.percentDefects,
+                          stats.performanceMetrics.longTerm.dpmo
+                        )}
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.obspercentDefectsLT,
+                          stats.obsDPMOLT
+                          )}
+                        </span> 
+                      )}
+                    </div>
+
+                  {/* LSL Defects - only show for Long Term dataset */}
+                  {capabilityData[ctq]?.dataSetTerm === "Long Term" && (
+                  <div className="flex justify-between text-xs ml-2">
+                    <span>• % defects_LSL:</span>
+                    {stats.isNormal && capabilityIndex === "Z" ? (
+                    <span className="font-medium">
+                    {formatPercentage(
+                    stats.performanceMetrics.longTerm.pdLSL_LT,
+                    stats.performanceMetrics.longTerm.dpmo
+                     )}
+                    </span>
+                    )
+                    :(
+                    <span className="font-medium">
+                    {formatPercentage(
+                    stats.obspdLSL_LT,
+                    stats.obsDPMOLT
+                     )}
+                    </span>
+                    )}
+                  </div>
+                  )}
+
+                  {/* USL Defects - only show for Long Term dataset */}
+                  {capabilityData[ctq]?.dataSetTerm === "Long Term" && (
+                    <div className="flex justify-between text-xs ml-2">
+                      <span>• % defects_USL:</span>
+                      {stats.isNormal && capabilityIndex === "Z" ? (
+                      <span className="font-medium">
+                        {formatPercentage(
+                          stats.performanceMetrics.longTerm.pdUSL_LT,
+                          stats.performanceMetrics.longTerm.dpmo
+                        )}
+                      </span>
+                      ) : (
+                      <span className="font-medium">
+                      {formatPercentage(
+                      stats.obspdUSL_LT,
+                      stats.obsDPMOLT
+                      )}
+                      </span>
+                      )}
+                    </div>
+                  )}
+
+                    {/* DPMO */}
+                    <div className="flex justify-between">
+                      <span>DPMO (Long Term):</span>
+                      {stats.isNormal && capabilityIndex === "Z" ? (
+                        <span className="font-medium">
+                          {Math.round(stats.performanceMetrics.longTerm.dpmo).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {Math.round(stats.obsDPMOLT!).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Short Term Metrics */}
+              {(capabilityData[ctq]?.capabilityIndex === "Z" || 
+                (capabilityData[ctq]?.capabilityIndex === "Cp/Cpk" &&
+                 capabilityData[ctq]?.dataSetTerm === "Short Term")) && ( 
+                <div>
+                  <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
+                  <div className="space-y-2 text-sm pl-2 border-l-2 border-blue-200">
+                    <div className="flex justify-between">
+                      <span>Yield (Short Term):</span>
+                      {stats.isNormal && capabilityIndex === "Z" ? (
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.performanceMetrics.shortTerm.yield,
+                          stats.performanceMetrics.shortTerm.dpmo
+                        )}
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.obsYieldST,
+                          stats.obsDPMOST
+                          )}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex justify-between">
+                      <span>% defects (Short Term):</span>
+                      {stats.isNormal && capabilityIndex === "Z" ? (
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.performanceMetrics.shortTerm.percentDefects,
+                          stats.performanceMetrics.shortTerm.dpmo
+                          )}
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {formatPercentage(
+                          stats.obspercentDefectsST,
+                          stats.obsDPMOST
+                          )}
+                        </span>  
+                      )}
+                    </div>
+                    {/* LSL Defects - only show for Short Term dataset */}
+                    {capabilityData[ctq]?.dataSetTerm === "Short Term" && (
+                      <div className="flex justify-between text-xs ml-2">
+                        <span>• % defects_LSL:</span>
+                        {stats.isNormal && capabilityIndex === "Z" ? (
+                          <span className="font-medium">
+                          {formatPercentage(
+                          stats.performanceMetrics.shortTerm.pdLSL_ST,
+                          stats.performanceMetrics.shortTerm.dpmo
+                          )}
+                        </span>
+                        ) : (
+                         <span className="font-medium">
+                          {formatPercentage(
+                          stats.obspdLSL_ST,
+                          stats.obsDPMOLT
+                          )}
+                        </span> 
+                        )}
                       </div>
-                    );
-                  } else if (dataPoints[ctq]?.length > 0) {
-                    return (
-                      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center gap-2 text-blue-700">
-                          <Calculator className="h-4 w-4" />
-                          <span className="font-medium">Process Capability Analysis</span>
-                        </div>
-                        <p className="text-sm text-blue-600 mt-2">
-                          Need at least 30 data points for statistical analysis. 
-                          Current: {dataPoints[ctq]?.length || 0} data points.
-                        </p>
+                    )}
+
+                    {/* USL Defects - only show for Short Term dataset */}
+                    {capabilityData[ctq]?.dataSetTerm === "Short Term" && (
+                      <div className="flex justify-between text-xs ml-2">
+                        <span>• % defects_USL:</span>
+                        {stats.isNormal && capabilityIndex === "Z" ? (
+                          <span className="font-medium">
+                          {formatPercentage(
+                          stats.performanceMetrics.shortTerm.pdUSL_ST,
+                          stats.performanceMetrics.shortTerm.dpmo
+                        )}
+                        </span>
+                        ) : (
+                          <span className="font-medium">
+                          {formatPercentage(
+                          stats.obspdUSL_ST,
+                          stats.obsDPMOLT
+                          )}
+                        </span> 
+                        )}
                       </div>
-                    );
-                  }
+                    )}
+                    <div className="flex justify-between">
+                      <span>DPMO (Short Term):</span>
+                      {stats.isNormal && capabilityIndex === "Z" ? (
+                        <span className="font-medium">
+                          {Math.round(stats.performanceMetrics.shortTerm.dpmo).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {Math.round(stats.obsDPMOST).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Capability Assessment */}
+      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <h4 className="font-medium text-yellow-800 mb-2">Capability Assessment</h4>
+        <div className="text-sm text-yellow-700">
+          {stats.cpk !== null && capabilityIndex === "Cp/Cpk" && (
+            <div>
+              {stats.cpk >= 1.66 && (
+                <p className="text-green-700 font-medium">✓ Process is world-class (Cpk ≥ 1.33)</p>
+              )}
+              {stats.cpk >= 1.33 && (
+                <p className="text-green-700 font-medium">✓ Process is capable (Cpk ≥ 1.33)</p>
+              )}
+              {stats.cpk >= 1.0 && stats.cpk < 1.33 && (
+                <p className="text-yellow-700 font-medium">⚠ Process is marginally capable (1.0 ≤ Cpk {'<'} 1.33)</p>
+              )}
+              {stats.cpk < 1.0 && (
+                <p className="text-red-700 font-medium">✗ Process is not capable (Cpk {'<'} 1.0)</p>
+              )}
+            </div>
+          )}
+          {capabilityIndex === "Z" && (
+            <div>
+              {stats.zShortTerm >= 6 && (
+                <p className="text-green-700 font-medium">✓ World class performance (≥ 6σ)</p>
+              )}
+              {stats.zShortTerm >= 4 && stats.zShortTerm < 6 && (
+                <p className="text-blue-700 font-medium">○ Good performance (4-6σ)</p>
+              )}
+              {stats.zShortTerm >= 3 && stats.zShortTerm < 4 && (
+                <p className="text-yellow-700 font-medium">⚠ Average performance (3-4σ)</p>
+              )}
+              {stats.zShortTerm < 3 && (
+                <p className="text-red-700 font-medium">✗ Poor performance ({'<'} 3σ)</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+} else if (dataPoints[ctq]?.length > 0) {
+  return (
+    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="flex items-center gap-2 text-blue-700">
+        <Calculator className="h-4 w-4" />
+        <span className="font-medium">Process Capability Analysis</span>
+      </div>
+      <p className="text-sm text-blue-600 mt-2">
+        Need at least 30 data points for statistical analysis. 
+        Current: {dataPoints[ctq]?.length || 0} data points.
+      </p>
+    </div>
+  );
+}
                   return null;
                 })()}
 

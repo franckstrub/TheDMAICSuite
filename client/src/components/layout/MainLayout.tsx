@@ -3,6 +3,7 @@ import { useAppContext } from "@/store/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+import AIMBBCoach from "@/components/ai-coach/AIMBBCoach";
 
 interface MainLayoutProps {
   children: React.ReactNode;

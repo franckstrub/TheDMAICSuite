@@ -6,7 +6,7 @@
  * @param defaultValue Default value if parsing fails
  * @returns Parsed number or default value
  */
-export function parseNumericValue(value: any, defaultValue: number = 0): number {
+export function parseNumericValue(value: any, defaultValue: number | undefined): number | undefined {
   if (value === null || value === undefined) return defaultValue;
   
   if (typeof value === 'number') return value;
@@ -31,7 +31,7 @@ export function mean(values: number[]): number {
  * Calculate the standard deviation of an array of numbers
  */
 export function variance(values: number[]): number {
-  if (values.length === 0) return 0;
+  if (values.length <= 1) return 0; // Need at least 2 values for sample std dev
   
   const avg = mean(values);
   const squareDiffs = values.map(value => {
@@ -39,15 +39,19 @@ export function variance(values: number[]): number {
     return diff * diff;
   });
   
-  const avgSquareDiff = mean(squareDiffs);
-  return avgSquareDiff;
+  // Key difference: divide by (n-1) instead of n for sample standard deviation
+  const sumSquaredDiffs = squareDiffs.reduce((sum, diff) => sum + diff, 0);
+  const sampleVariance = sumSquaredDiffs / (values.length - 1);
+  
+  return sampleVariance;
 }
 
 /**
- * Calculate the standard deviation of an array of numbers
+ * Calculate the SAMPLE standard deviation of an array of numbers
+ * Uses Bessel's correction (divides by n-1 instead of n)
  */
 export function standardDeviation(values: number[]): number {
-  if (values.length === 0) return 0;
+  if (values.length <= 1) return 0; // Need at least 2 values for sample std dev
   
   const avg = mean(values);
   const squareDiffs = values.map(value => {
@@ -55,8 +59,11 @@ export function standardDeviation(values: number[]): number {
     return diff * diff;
   });
   
-  const avgSquareDiff = mean(squareDiffs);
-  return Math.sqrt(avgSquareDiff);
+  // Key difference: divide by (n-1) instead of n for sample standard deviation
+  const sumSquaredDiffs = squareDiffs.reduce((sum, diff) => sum + diff, 0);
+  const sampleVariance = sumSquaredDiffs / (values.length - 1);
+  
+  return Math.sqrt(sampleVariance);
 }
 
 /**
@@ -88,7 +95,7 @@ export function range(values: number[]): number {
 /**
  * Calculate the mode (most frequent value) of an array of numbers
  */
-export function mode(values: number[]): number | null {
+export function calculateMode(values: number[]): number | null {
   if (values.length === 0) return null;
   
   const counts = new Map<number, number>();
@@ -142,8 +149,8 @@ export function calculateCapabilityIndexes(
   dataPointsArray: number[],
   meanValue: number,
   stdDev: number,
-  lsl: number,
-  usl: number,
+  lsl: number | undefined,
+  usl: number | undefined,
   dataSetTerm: "Long Term" | "Short Term",
 ): {
   cp: number | null;
@@ -156,12 +163,30 @@ export function calculateCapabilityIndexes(
   }
   if (dataSetTerm === "Long Term") {
      // Calculate Pp (Process Performance)
-    const pp = (usl - lsl) / (6 * stdDev);
-
+    let pp: number | null;
+    if (!isNaN(usl) && !isNaN(lsl)) {
+      pp = (usl - lsl) / (6 * stdDev);  
+    }
+    else {
+      pp = null;
+    }
+    
     // Calculate Ppk (Process Performance Index)
     const ppupper = (usl - meanValue) / (3 * stdDev);
     const pplower = (meanValue - lsl) / (3 * stdDev);
-    const ppk = Math.min(ppupper, pplower);
+    let ppk: number | null;
+    if (!isNaN(lsl) && !isNaN(usl)) {
+      ppk = Math.min(ppupper, pplower); 
+    }
+    else if (!isNaN(usl)) {
+      ppk = ppupper; 
+    }
+    else if (!isNaN(lsl)) {
+      ppk = pplower; 
+    }
+    else {
+      ppk = null;
+    }
     const cp = null;
     const cpk = null;
 
@@ -174,12 +199,31 @@ export function calculateCapabilityIndexes(
   }
   else {
     // Calculate Cp (Process Capability)
-    const cp = (usl - lsl) / (6 * stdDev);
 
-    // Calculate Cpk (Process Capability Index)
+    let cp: number | null;
+    if (!isNaN(usl) && !isNaN(lsl)) {
+      cp = (usl - lsl) / (6 * stdDev);  
+    }
+    else {
+      cp = null;
+    }
+    
+    // Calculate Cpk (Process Performance Index)
     const cpupper = (usl - meanValue) / (3 * stdDev);
     const cplower = (meanValue - lsl) / (3 * stdDev);
-    const cpk = Math.min(cpupper, cplower);
+    let cpk: number | null;
+    if (!isNaN(lsl) && !isNaN(usl)) {
+      cpk = Math.min(cpupper, cplower); 
+    }
+    else if (!isNaN(usl)) {
+      cpk = cpupper; 
+    }
+    else if (!isNaN(lsl)) {
+      cpk = cplower; 
+    }
+    else {
+      cpk = null;
+    }
     const pp = null;
     const ppk = null;
   
@@ -200,11 +244,15 @@ export function calculateCapabilityIndexes(
  * @returns Object containing both Long Term and Short Term metrics
  */
 export function calculatePerformanceMetrics(
-  zLongTerm: number, 
-  zShortTerm: number
+  zLongTerm: number,
+  zLSL_LT: number,
+  zUSL_LT: number,
+  zShortTerm: number,
+  zLSL_ST: number,
+  zUSL_ST: number,
 ): {
-  longTerm: { yield: number; dpmo: number; percentDefects: number; };
-  shortTerm: { yield: number; dpmo: number; percentDefects: number; };
+  longTerm: { yield: number; dpmo: number; percentDefects: number; pdLSL_LT: number; pdUSL_LT: number };
+  shortTerm: { yield: number; dpmo: number; percentDefects: number; pdLSL_ST: number; pdUSL_ST: number };
 } {
   // Calculate Long Term metrics using zLongTerm
   // For a two-sided specification, defect rate is 2 * P(Z < -|z|)
@@ -212,23 +260,31 @@ export function calculatePerformanceMetrics(
   const longTermYield = (1 - longTermDefectRate) * 100;
   const longTermDpmo = longTermDefectRate * 1000000;
   const longTermPercentDefects = longTermDefectRate * 100;
+  const pdlsl_lt = (1 - normalCDF(zLSL_LT))*100;
+  const pdusl_lt = (1 - normalCDF(zUSL_LT))*100;
 
   // Calculate Short Term metrics using zShortTerm
-  const shortTermDefectRate = 1-normalCDF(zShortTerm);
+  const shortTermDefectRate = 1 - normalCDF(zShortTerm);
   const shortTermYield = (1 - shortTermDefectRate) * 100;
   const shortTermDpmo = shortTermDefectRate * 1000000;
   const shortTermPercentDefects = shortTermDefectRate * 100;
+  const pdlsl_st = (1 - normalCDF(zLSL_ST))*100;
+  const pdusl_st = (1 - normalCDF(zUSL_ST))*100;
 
   return {
     longTerm: {
       yield: Math.max(0, Math.min(100, longTermYield)),
       dpmo: Math.max(0, longTermDpmo),
-      percentDefects: Math.max(0, Math.min(100, longTermPercentDefects))
+      percentDefects: Math.max(0, Math.min(100, longTermPercentDefects)),
+      pdLSL_LT: pdlsl_lt,
+      pdUSL_LT: pdusl_lt
     },
     shortTerm: {
       yield: Math.max(0, Math.min(100, shortTermYield)),
       dpmo: Math.max(0, shortTermDpmo), 
-      percentDefects: Math.max(0, Math.min(100, shortTermPercentDefects))
+      percentDefects: Math.max(0, Math.min(100, shortTermPercentDefects)),
+      pdLSL_ST: pdlsl_st,
+      pdUSL_ST: pdusl_st
     }
   };
 }
@@ -240,82 +296,234 @@ export function calculatePerformanceMetrics(
  */
 export function calculateObservedPerformanceMetrics(
   values: number[],
-  lsl: number,
-  usl: number,
+  lsl: number | undefined,
+  usl: number | undefined,
   dataSetTerm: "Long Term" | "Short Term",
   zShift: number,
 ): {
-  longTerm: { obsyield: number; obsdpmo: number; obspercentDefects: number; };
-  shortTerm: { obsyield: number; obsdpmo: number; obspercentDefects: number; };
+  longTerm: { obsyield: number | undefined; obsdpmo: number | undefined;
+              obspercentDefects: number | undefined; ZequivLT: number | undefined; 
+              obspdLSL_LT: number | undefined; obspdUSL_LT: number | undefined;
+              ZequivLSL_LT: number | undefined; ZequivUSL_LT: number | undefined;
+            };
+  shortTerm: { obsyield: number | undefined; obsdpmo: number | undefined; 
+               obspercentDefects: number | undefined; ZequivST: number | undefined; 
+               obspdLSL_ST: number | undefined; obspdUSL_ST: number | undefined;
+               ZequivLSL_ST: number | undefined; ZequivUSL_ST: number | undefined;
+            };
 } {
    // Calculate actual defect counts from the data
-  const calculateDefectRate = (values: number[], lsl: number, usl: number): number => {
-    if (values.length === 0) return 0;
+  function calculateDefectRate (values: number[], lsl: number, usl: number) : {pdLSL: number; pdUSL: number; ptotal: number} {
+    if (values.length === 0) return { pdLSL: 0, pdUSL: 0, ptotal: 0, };
     
-    const defectCount = values.filter(value => value < lsl || value > usl).length;
-    return defectCount / values.length;
+    const defectCountlsl = values.filter(value => value < lsl).length;
+    const defectCountusl = values.filter(value => value > usl).length;
+    const defectCounttotal = values.filter(value => value < lsl || value > usl).length;
+    //const defectCount = values.filter(value => value < lsl || value > usl).length;
+    
+    return {
+      pdLSL: defectCountlsl / values.length,
+      pdUSL: defectCountusl / values.length,
+      ptotal: defectCounttotal / values.length,
+    };
   };
 
   // Calculate observed defect rate from actual data
-  const observedDefectRate = calculateDefectRate(values, lsl, usl);
+  const observedDefectRate = calculateDefectRate(values, lsl!, usl!);
   // Calculate Long Term metrics using zLongTerm
   // For a two-sided specification, defect rate is 2 * P(Z < -|z|)
-  if(dataSetTerm="Long Term") {
-    const longTermDefectRate = observedDefectRate;
+  if(dataSetTerm === "Long Term") {
+    const longTermDefectRate = observedDefectRate.ptotal;
     const longTermYield = (1 - longTermDefectRate) * 100;
     const longTermDpmo = longTermDefectRate * 1000000;
     const longTermPercentDefects = longTermDefectRate * 100;
+    //const longTermobsdefectLSL = observedDefectRate.pdLSL * 100;
+    //const longTermobsdefectUSL = observedDefectRate.pdUSL * 100;
+
     // Calculate Short Term metrics using z-equivalentLongterm and ShortTerm
-    const ZequivLT = inverseNormCDF(longTermPercentDefects);
     //find Z-equivalent of observedDefectRate
-    const shortTermDefectRate = 1;
-    const shortTermYield = (1 - shortTermDefectRate) * 100;
-    const shortTermDpmo = shortTermDefectRate * 1000000;
-    const shortTermPercentDefects = shortTermDefectRate * 100;
-    return {
-    longTerm: {
-      obsyield: Math.max(0, Math.min(100, longTermYield)),
-      obsdpmo: Math.max(0, longTermDpmo),
-      obspercentDefects: Math.max(0, Math.min(100, longTermPercentDefects))
-      },
-    shortTerm: {
-      obsyield: Math.max(0, Math.min(100, shortTermYield)),
-      obsdpmo: Math.max(0, shortTermDpmo), 
-      obspercentDefects: Math.max(0, Math.min(100, shortTermPercentDefects))
-      }
+    const ZequivLT = inverseNormCDF(1-longTermDefectRate);
+    let ZequivLSL_LT: number | undefined;
+    if (lsl) {
+       ZequivLSL_LT = inverseNormCDF(1-observedDefectRate.pdLSL);
+    }
+    else {
+      ZequivLSL_LT = undefined;
+    };
+    let ZequivUSL_LT: number | undefined;
+    if (usl) {
+       ZequivUSL_LT = inverseNormCDF(1-observedDefectRate.pdUSL);
+    }
+    else {
+       ZequivUSL_LT = undefined;
+    };
+    //const ZequivLSL_LT = inverseNormCDF(1-observedDefectRate.pdLSL);
+    //const ZequivUSL_LT = inverseNormCDF(1-observedDefectRate.pdUSL);
+
+    let shortTermYield: number | undefined;
+    let shortTermDpmo: number | undefined;
+    let shortTermPercentDefects: number | undefined;
+    let ZequivST: number | undefined;
+    if (zShift>0) {
+      ZequivST = ZequivLT + zShift;
+      const shortTermDefectRate = 1-normalCDF(ZequivST);
+      shortTermYield = (1 - shortTermDefectRate) * 100;
+      shortTermDpmo = shortTermDefectRate * 1000000;
+      shortTermPercentDefects = shortTermDefectRate * 100;
+      return {
+        longTerm: {
+        obsyield: Math.max(0, Math.min(100, longTermYield)),
+        obsdpmo: Math.max(0, longTermDpmo),
+        obspercentDefects: Math.max(0, Math.min(100, longTermPercentDefects)),
+        ZequivLT:ZequivLT,
+        obspdLSL_LT: observedDefectRate.pdLSL * 100,
+        obspdUSL_LT: observedDefectRate.pdUSL * 100,
+        ZequivLSL_LT: ZequivLSL_LT,
+        ZequivUSL_LT: ZequivUSL_LT,
+        },
+      shortTerm: {
+        obsyield: Math.max(0, Math.min(100, shortTermYield)),
+        obsdpmo: Math.max(0, shortTermDpmo), 
+        obspercentDefects: Math.max(0, Math.min(100, shortTermPercentDefects)),
+        ZequivST: ZequivST,
+        obspdLSL_ST: undefined,
+        obspdUSL_ST: undefined,
+        ZequivLSL_ST: undefined,
+        ZequivUSL_ST: undefined,
+        }
+      };
+    }
+    else {
+      // no Z_shift
+      // //ZequivST = undefined;
+      //shortTermYield = undefined;
+      //shortTermDpmo = undefined;
+      //shortTermPercentDefects = undefined;
+      return {
+        longTerm: {
+          obsyield: Math.max(0, Math.min(100, longTermYield)),
+          obsdpmo: Math.max(0, longTermDpmo),
+          obspercentDefects: Math.max(0, Math.min(100, longTermPercentDefects)),
+          ZequivLT: ZequivLT,
+          obspdLSL_LT: observedDefectRate.pdLSL * 100,
+          obspdUSL_LT: observedDefectRate.pdUSL * 100,
+          ZequivLSL_LT: ZequivLSL_LT,
+          ZequivUSL_LT: ZequivUSL_LT,
+
+        },
+        shortTerm: {
+          obsyield: undefined,
+          obsdpmo: undefined, 
+          obspercentDefects: undefined,
+          ZequivST: undefined,
+          obspdLSL_ST: undefined,
+          obspdUSL_ST: undefined,
+          ZequivLSL_ST: undefined,
+          ZequivUSL_ST: undefined,
+        }
+      };
     };
   }
+  // Short Term data
   else {
-    const longTermDefectRate = observedDefectRate;
-    const longTermYield = (1 - longTermDefectRate) * 100;
-    const longTermDpmo = longTermDefectRate * 1000000;
-    const longTermPercentDefects = longTermDefectRate * 100;
-    // Calculate Short Term metrics using zShortTerm
-    const shortTermDefectRate = 1;
+    const shortTermDefectRate = observedDefectRate.ptotal;
     const shortTermYield = (1 - shortTermDefectRate) * 100;
     const shortTermDpmo = shortTermDefectRate * 1000000;
     const shortTermPercentDefects = shortTermDefectRate * 100;
-  return {
-    longTerm: {
-      obsyield: Math.max(0, Math.min(100, longTermYield)),
-      obsdpmo: Math.max(0, longTermDpmo),
-      obspercentDefects: Math.max(0, Math.min(100, longTermPercentDefects))
-    },
-    shortTerm: {
-      obsyield: Math.max(0, Math.min(100, shortTermYield)),
-      obsdpmo: Math.max(0, shortTermDpmo), 
-      obspercentDefects: Math.max(0, Math.min(100, shortTermPercentDefects))
+    // Calculate Short Term metrics using zShortTerm
+    // Calculate Short Term metrics using z-equivalentLongterm and ShortTerm
+    //find Z-equivalent of observedDefectRate
+    const ZequivST = inverseNormCDF(1-shortTermDefectRate);
+    let ZequivLSL_ST: number | undefined;
+    if (lsl) {
+       ZequivLSL_ST = inverseNormCDF(1-observedDefectRate.pdLSL);
     }
-  };
+    else {
+      ZequivLSL_ST = undefined;
+    };
+    let ZequivUSL_ST: number | undefined;
+    if (usl) {
+       ZequivUSL_ST = inverseNormCDF(1-observedDefectRate.pdUSL);
+    }
+    else {
+       ZequivUSL_ST = undefined;
+    };
+    let longTermYield: number | undefined;
+    let longTermDpmo: number | undefined;
+    let longTermPercentDefects: number | undefined;
+    let ZequivLT: number | undefined;
+    if (zShift>0) {
+      ZequivLT = ZequivST - zShift; 
+      const longTermDefectRate = 1-normalCDF(ZequivLT);
+      longTermYield = (1 - longTermDefectRate) * 100;
+      longTermDpmo = longTermDefectRate * 1000000;
+      longTermPercentDefects = longTermDefectRate * 100;
+      return {
+        longTerm: {
+          obsyield: Math.max(0, Math.min(100, longTermYield)),
+          obsdpmo: Math.max(0, longTermDpmo),
+          obspercentDefects: Math.max(0, Math.min(100, longTermPercentDefects)),
+          ZequivLT: ZequivLT,
+          obspdLSL_LT: undefined,
+          obspdUSL_LT: undefined,
+          ZequivLSL_LT: undefined,
+          ZequivUSL_LT: undefined,
+        },
+        shortTerm: {
+          obsyield: Math.max(0, Math.min(100, shortTermYield)),
+          obsdpmo: Math.max(0, shortTermDpmo), 
+          obspercentDefects: Math.max(0, Math.min(100, shortTermPercentDefects)),
+          ZequivST: ZequivST,
+          obspdLSL_ST: observedDefectRate.pdLSL * 100,
+          obspdUSL_ST: observedDefectRate.pdUSL * 100,
+          ZequivLSL_ST: ZequivLSL_ST,
+          ZequivUSL_ST: ZequivUSL_ST,
+        }
+      };
+    }
+    else
+    {
+      // no Z_shift
+      //ZequivLT = undefined;
+      //longTermYield = undefined;
+      //longTermDpmo = undefined;
+      //longTermPercentDefects = undefined;
+    
+      return {
+        longTerm: {
+          obsyield: undefined,
+          obsdpmo: undefined,
+          obspercentDefects: undefined,
+          ZequivLT: undefined,
+          obspdLSL_LT: undefined,
+          obspdUSL_LT: undefined,
+          ZequivLSL_LT: undefined,
+          ZequivUSL_LT: undefined,
+          
+        },
+        shortTerm: {
+          obsyield: Math.max(0, Math.min(100, shortTermYield)),
+          obsdpmo: Math.max(0, shortTermDpmo), 
+          obspercentDefects: Math.max(0, Math.min(100, shortTermPercentDefects)),
+          ZequivST: ZequivST,
+          obspdLSL_ST: observedDefectRate.pdLSL * 100,
+          obspdUSL_ST: observedDefectRate.pdUSL * 100,
+          ZequivLSL_ST: ZequivLSL_ST,
+          ZequivUSL_ST: ZequivUSL_ST,
+        }
+      };
+    };  
   }
 }
 
+//--------------------------
 /**
  * Normal cumulative distribution function (CDF)
  */
 function normalCDF(x: number): number {
   // Using the complementary error function approximation
-  return 0.5 * (1 + erf(x / Math.sqrt(2)));
+  const sign = x >= 0 ? 1 : -1;
+  return (0.5 * (1 + sign*erf(Math.abs(x)/ Math.sqrt(2))));
 }
 
 /**
@@ -331,60 +539,85 @@ function erf(x: number): number {
   const p  =  0.3275911;
 
   // Save the sign of x
-  const sign = x >= 0 ? 1 : -1;
+  //const sign = x >= 0 ? 1 : -1;
   x = Math.abs(x);
 
   // A&S formula 7.1.26
   const t = 1.0 / (1.0 + p * x);
   const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
 
-  return sign * y;
+  return y;
 }
 
 /**
  * Perform Anderson-Darling normality test
  */
-export function performNormalityTest(values: number[]): {
+export function performNormalityTest(values: number[], meanval: number, stdeviation: number): {
   isNormal: boolean;
   adStatistic: number;
   pValue: number;
 } {
-  if (values.length < 8) {
+  if (values.length < 2) {
     return { isNormal: false, adStatistic: 0, pValue: 0 };
   }
 
-  const n = values.length;
   const sorted = [...values].sort((a, b) => a - b);
-  const meanVal = mean(values);
-  const stdDev = standardDeviation(values);
   
   // Calculate Anderson-Darling statistic
-  let adSum = 0;
-  for (let i = 0; i < n; i++) {
-    const zi = (sorted[i] - meanVal) / stdDev;
-    const phi = normalCDF(zi);
-    const phiComp = 1 - normalCDF((sorted[n - 1 - i] - meanVal) / stdDev);
-    
-    if (phi > 0 && phi < 1 && phiComp > 0 && phiComp < 1) {
-      adSum += (2 * i + 1) * (Math.log(phi) + Math.log(phiComp));
+  
+  let AD_value = 0;
+  let p_value = 0;
+  let sum_s_alter = 0;
+  let p=0;
+  let log_p = 0;
+  let log_1_minus_p = 0;
+  let s_alter = 0;
+  let Am = 0;
+
+
+  if (values.length>0)
+  {
+    for (let i=0;i<values.length;i++)
+    {
+      let Z=(sorted[i]-meanval)/stdeviation;
+      p=normalCDF(Z);
+      log_p=Math.log(p);
+      log_1_minus_p=Math.log(1-p);
+      s_alter=((2*(i+1)-1)*log_p) +((2*(values.length-(i+1))+1)*log_1_minus_p);
+      // (((2*B9)-1)*BN9)+((2*($BK$9-B9)+1)*BO9)
+      sum_s_alter=sum_s_alter+s_alter;
     }
+    AD_value=-values.length-(sum_s_alter/values.length); // AD value -$BK$9-(BV8/$BK$9)
+    /* A_power2_prime=AD_values[0]*(1+(4/length)-(25/(length*length))); //BT9*(1+(4/$BK$9)-(25/($BK$9*$BK$9)))*/
+    Am=AD_value*(1+(0.75/values.length)+(2.25/(values.length*values.length))); //BT9*(1+(0.75/$BK$9)+(2.25/($BK$9*$BK$9))) 
+    /* IF(BT15<0.2,1-EXP(-13.436+101.14*BT15-223.73*BT15^2),
+        IF(BT15<0.34,1-EXP(-8.318+42.796*BT15-59.938*BT15^2),
+         IF(BT15<0.6,EXP(0.9177-4.279*BT15-1.38*BT15^2),
+         IF(1.2937-5.709*BT15+0.0186*BT15^2<$BS$25,EXP(1.2937-5.709*BT15+0.0186*BT15^2),$BT$23)))) */
+    if(Am<0.2)
+      {
+      p_value=1-Math.exp(-13.436+101.14*Am-223.73*Am**2);
+      }
+    else if (Am<0.34)
+      {
+      p_value=1-Math.exp(-8.318+42.796*Am-59.938*Am**2);
+      }
+    else if (Am<0.6)
+      {
+      p_value=Math.exp(0.9177-4.279*Am-1.38*Am**2);
+      }
+    else
+      {
+        p_value=Math.exp(1.2937-5.709*Am+0.0186*Am**2);
+      }
   }
-  
-  const adStatistic = -n - adSum / n;
-  const adAdjusted = adStatistic * (1 + 0.75/n + 2.25/(n*n));
-  
-  // Critical values for Anderson-Darling test (approximate)
-  const criticalValue = 0.787; // 5% significance level
-  const isNormal = adAdjusted < criticalValue;
-  
-  // Approximate p-value calculation
-  let pValue = 0.05;
-  if (adAdjusted < 0.2) pValue = 0.8;
-  else if (adAdjusted < 0.34) pValue = 0.5;
-  else if (adAdjusted < 0.787) pValue = 0.1;
-  else pValue = 0.01;
-  
-  return { isNormal, adStatistic: adAdjusted, pValue };
+
+  const Threshold = 0.05;
+  let isNormal = true;
+  if (p_value < Threshold) {
+    isNormal= false;
+  }
+  return { isNormal, adStatistic: AD_value, pValue: p_value };
 }
 
 /**
@@ -394,72 +627,87 @@ export function calculateZScoreLongShortTerm(
   values: number[],
   meanVal: number,
   stdDev: number,
-  lsl: number,
-  usl: number,
+  lsl: number | undefined,
+  usl: number | undefined,
   dataSetTerm: "Long Term" | "Short Term",
   zShift: number,
 ): {
   zLongTerm: number;
+  zLSL_LT: number | undefined;
+  zUSL_LT: number | undefined;
   zShortTerm: number;
-  zBench: number;
-  isNormal: boolean;
-  adStatistic: number;
-  pValue: number;
+  zLSL_ST: number | undefined;
+  zUSL_ST: number | undefined;
 } {
   if (values.length === 0 || stdDev === 0) {
     return {
       zLongTerm: 0,
+      zLSL_LT: undefined,
+      zUSL_LT: undefined,
       zShortTerm: 0,
-      zBench: 0,
-      isNormal: false,
-      adStatistic: 0,
-      pValue: 0
+      zLSL_ST: undefined,
+      zUSL_ST: undefined,
     };
   }
-
-  // Perform normality test
-  const normalityTest = performNormalityTest(values);
   
   // Calculate Z values based on specification limits
-  let zLsl = Infinity;
-  let zUsl = Infinity;
+  let zLsl: number | undefined;
+  zLsl=undefined;
+  let zUsl: number | undefined;
+  zUsl= undefined;
+  let zTotal=0;
+  let pdLSL = 0;
+  let pdUSL = 0;
   
-  if (lsl !== 0 && !isNaN(lsl) && isFinite(lsl)) {
-    zLsl = Math.abs(meanVal - lsl) / stdDev;
+  if (lsl !== undefined && !isNaN(lsl)) {
+    zLsl = (meanVal - lsl) / stdDev;
+    zTotal = zLsl;
+    zUsl = undefined;
   }
   
-  if (usl !== 0 && !isNaN(usl) && isFinite(usl)) {
-    zUsl = Math.abs(usl - meanVal) / stdDev;
+  if (usl !== undefined && !isNaN(usl)) {
+    zUsl = (usl - meanVal) / stdDev;
+    zTotal = zUsl;
+    zLsl= undefined;
   }
-  
+  if ((lsl !== undefined && !isNaN(lsl)) && (usl !== undefined && !isNaN(usl))) {
+    pdLSL = 1 - normalCDF(zLsl!);
+    pdUSL = 1 - normalCDF(zUsl!);
+    zTotal = inverseNormCDF(1 - (pdLSL+pdUSL));
+  }
   // Take the minimum Z (worst case) - only consider finite values
-  const validZValues = [zLsl, zUsl].filter(z => isFinite(z));
-  const zMinimum = validZValues.length > 0 ? Math.min(...validZValues) : 0;
+  //const validZValues = [zLsl, zUsl].filter(z => isFinite(z));
+  //const zMinimum = validZValues.length > 0 ? Math.min(...validZValues) : 0;
   
   // Calculate Long Term and Short Term Z scores
-  let zLongTerm = zMinimum;
-  let zShortTerm = zMinimum;
-  
+  let zLongTerm = 0;
+  let zShortTerm = 0;
+  let zLSL_LT = undefined;
+  let zUSL_LT = undefined;
+  let zLSL_ST = undefined;
+  let zUSL_ST = undefined;
+    
   if (dataSetTerm === "Long Term") {
     // Long term data already includes variation
-    zLongTerm = zMinimum;
-    zShortTerm = zMinimum + zShift; // Add shift to get short term equivalent
+    zLongTerm = zTotal;
+    zLSL_LT = zLsl;
+    zUSL_LT = zUsl;
+    zShortTerm = zLongTerm + zShift; // Add shift to get short term Z
   } else {
     // Short term data - add shift to get long term
-    zShortTerm = zMinimum;
-    zLongTerm = Math.max(0, zMinimum - zShift); // Subtract shift for long term
-  }
-  
-  // Z.Bench is typically the short term capability
-  const zBench = zShortTerm;
+    zShortTerm = zTotal;
+    zLongTerm = zShortTerm - zShift; // Subtract shift to get long term Z
+    zLSL_ST = zLsl;
+    zUSL_ST = zUsl;
+    }
   
   return {
-    zLongTerm: Math.max(0, zLongTerm),
-    zShortTerm: Math.max(0, zShortTerm),
-    zBench: Math.max(0, zBench),
-    isNormal: normalityTest.isNormal,
-    adStatistic: normalityTest.adStatistic,
-    pValue: normalityTest.pValue
+    zLongTerm: zLongTerm,
+    zLSL_LT: zLSL_LT,
+    zUSL_LT: zUSL_LT,
+    zShortTerm: zShortTerm,
+    zLSL_ST: zLSL_ST,
+    zUSL_ST: zUSL_ST,    
   };
 }
 
