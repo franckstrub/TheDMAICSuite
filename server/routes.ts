@@ -1169,7 +1169,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             details: `Updated data collection plan for: ${plan.ctq}`
           });
         }
-        });
       }
       
       return res.status(200).json({ plan });
