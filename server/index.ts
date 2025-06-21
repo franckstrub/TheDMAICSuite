@@ -64,6 +64,9 @@ app.use((req, res, next) => {
     // Continue with server startup even if migration fails
   }
   
+  // Serve attached assets
+  app.use("/attached_assets", express.static("attached_assets"));
+  
   const server = await registerRoutes(app);
   
   // Register project routes
