@@ -254,6 +254,30 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // AI Coach Chat endpoint - Added early to ensure proper routing
+  app.post("/api/ai-coach/chat", async (req: Request, res: Response) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      const response = await generateAICoachResponse(message);
+      
+      res.json({ 
+        success: true, 
+        message: response 
+      });
+    } catch (error) {
+      console.error("Error in AI coach chat:", error);
+      res.status(500).json({ 
+        error: "Failed to get response from AI Coach",
+        message: "I apologize, but I'm having trouble processing your question right now. Please try again in a moment."
+      });
+    }
+  });
   // Set up authentication middleware
   await setupAuth(app);
 
@@ -1185,6 +1209,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return handleErrors(err, res);
     }
   });
+
+
 
   // Activity Log routes
   app.get("/api/activity-logs", async (req: Request, res: Response) => {
