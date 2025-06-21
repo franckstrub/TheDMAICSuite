@@ -256,20 +256,40 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // AI Coach Chat endpoint - Added early to ensure proper routing
-  app.post("/api/ai-coach/chat", async (req: Request, res: Response) => {
+  app.post("/api/ai-coach/chat", isAuthenticated, async (req: Request, res: Response) => {
     try {
       console.log("AI Coach endpoint hit with body:", req.body);
       
       const { message } = req.body;
+      const userId = req.user?.claims?.sub;
+      const organizationId = req.user?.organizationId;
       
       if (!message || typeof message !== 'string') {
         console.log("Invalid message received:", message);
         return res.status(400).json({ error: "Message is required" });
       }
 
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: "User authentication required" });
+      }
+
       console.log("Generating AI coach response for:", message);
       const response = await generateAICoachResponse(message);
       console.log("AI coach response generated successfully");
+
+      // Save chat history to database
+      try {
+        await storage.createAiCoachChatHistory({
+          organizationId,
+          userId,
+          question: message,
+          answer: response
+        });
+        console.log("Chat history saved successfully");
+      } catch (historyError) {
+        console.error("Error saving chat history:", historyError);
+        // Don't fail the request if history saving fails
+      }
       
       res.json({ 
         success: true, 
@@ -281,6 +301,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Failed to get response from AI Coach",
         message: `I apologize, but I'm having trouble processing your question right now. Error: ${error.message}. Please try again in a moment.`
+      });
+    }
+  });
+
+  // Get AI Coach Chat History endpoint
+  app.get("/api/ai-coach/history", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const organizationId = req.user?.organizationId;
+      const limit = parseInt(req.query.limit as string) || 50;
+
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: "User authentication required" });
+      }
+
+      const history = await storage.getAiCoachChatHistory(organizationId, userId, limit);
+      
+      res.json({ 
+        success: true, 
+        history: history.reverse() // Reverse to show oldest first
+      });
+    } catch (error) {
+      console.error("Error getting AI coach chat history:", error);
+      res.status(500).json({ 
+        error: "Failed to get chat history"
+      });
+    }
+  });
+
+  // Clear AI Coach Chat History endpoint
+  app.delete("/api/ai-coach/history", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const organizationId = req.user?.organizationId;
+
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: "User authentication required" });
+      }
+
+      await storage.deleteAiCoachChatHistory(organizationId, userId);
+      
+      res.json({ 
+        success: true, 
+        message: "Chat history cleared successfully"
+      });
+    } catch (error) {
+      console.error("Error clearing AI coach chat history:", error);
+      res.status(500).json({ 
+        error: "Failed to clear chat history"
       });
     }
   });
