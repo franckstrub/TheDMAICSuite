@@ -258,13 +258,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Coach Chat endpoint - Added early to ensure proper routing
   app.post("/api/ai-coach/chat", async (req: Request, res: Response) => {
     try {
+      console.log("AI Coach endpoint hit with body:", req.body);
+      
       const { message } = req.body;
       
       if (!message || typeof message !== 'string') {
+        console.log("Invalid message received:", message);
         return res.status(400).json({ error: "Message is required" });
       }
 
+      console.log("Generating AI coach response for:", message);
       const response = await generateAICoachResponse(message);
+      console.log("AI coach response generated successfully");
       
       res.json({ 
         success: true, 
@@ -272,9 +277,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error in AI coach chat:", error);
+      console.error("Error stack:", error.stack);
       res.status(500).json({ 
         error: "Failed to get response from AI Coach",
-        message: "I apologize, but I'm having trouble processing your question right now. Please try again in a moment."
+        message: `I apologize, but I'm having trouble processing your question right now. Error: ${error.message}. Please try again in a moment.`
       });
     }
   });
