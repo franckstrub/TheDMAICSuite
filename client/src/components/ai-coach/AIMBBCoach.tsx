@@ -168,7 +168,7 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
       </CardHeader>
 
       {!isMinimized && (
-        <CardContent className="p-0 flex flex-col h-[450px]">
+        <CardContent className="p-0 flex flex-col h-[430px]">
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
               {messages.map((message) => (

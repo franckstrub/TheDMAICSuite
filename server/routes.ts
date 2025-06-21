@@ -461,12 +461,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const project = await storage.createProject(projectData);
       
       // Log activity
-      await storage.createActivityLog({
-        userId: projectData.createdBy,
-        projectId: project.id,
-        action: "create_project",
-        details: `Created project: ${project.title}`
-      });
+      const user = await storage.getUser(projectData.createdBy);
+      if (user) {
+        await storage.createActivityLog({
+          organizationId: user.organizationId,
+          userId: projectData.createdBy,
+          projectId: project.id,
+          action: "create_project",
+          details: `Created project: ${project.title}`
+        });
+      }
       
       return res.status(201).json({ project });
     } catch (err) {
@@ -486,12 +490,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: project.id,
-          action: "update_project",
-          details: `Updated project: ${project.title}`
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: project.id,
+            action: "update_project",
+            details: `Updated project: ${project.title}`
+          });
+        }
       }
       
       return res.status(200).json({ project });
@@ -521,12 +529,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (userId) {
-        await storage.createActivityLog({
-          userId,
-          projectId: null,
-          action: "delete_project",
-          details: `Deleted project: ${project.title}`
-        });
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId,
+            projectId: null,
+            action: "delete_project",
+            details: `Deleted project: ${project.title}`
+          });
+        }
       }
       
       return res.status(200).json({ success: true });
@@ -595,13 +607,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log activity
         if (req.body.userId) {
-          await storage.createActivityLog({
-            userId: req.body.userId,
-            projectId,
-            action: "create_charter",
-            details: "Created project charter"
-          });
-          console.log("Activity log created for user:", req.body.userId);
+          const user = await storage.getUser(req.body.userId);
+          if (user) {
+            await storage.createActivityLog({
+              organizationId: user.organizationId,
+              userId: req.body.userId,
+              projectId,
+              action: "create_charter",
+              details: "Created project charter"
+            });
+            console.log("Activity log created for user:", req.body.userId);
+          }
         }
         
         return res.status(201).json({ charter });
@@ -672,13 +688,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: charter.projectId,
-          action: "update_charter",
-          details: "Updated project charter"
-        });
-        console.log("Activity log created for user:", req.body.userId);
+        // Get user's organization ID
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: charter.projectId,
+            action: "update_charter",
+            details: "Updated project charter"
+          });
+          console.log("Activity log created for user:", req.body.userId);
+        }
       }
       
       return res.status(200).json({ charter });

@@ -557,6 +557,7 @@ export const activityLogs = pgTable("activity_logs", {
 });
 
 export const insertLogSchema = createInsertSchema(activityLogs).pick({
+  organizationId: true,
   userId: true,
   projectId: true,
   action: true,
