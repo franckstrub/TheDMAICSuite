@@ -261,9 +261,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("AI Coach endpoint hit with body:", req.body);
       
       const { message } = req.body;
-      // For now, use default values until proper auth is implemented
-      const userId = req.user?.claims?.sub || "anonymous";
-      const organizationId = req.user?.organizationId || 1;
       
       if (!message || typeof message !== 'string') {
         console.log("Invalid message received:", message);
@@ -273,20 +270,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Generating AI coach response for:", message);
       const response = await generateAICoachResponse(message);
       console.log("AI coach response generated successfully");
-
-      // Save chat history to database
-      try {
-        await storage.createAiCoachChatHistory({
-          organizationId,
-          userId,
-          question: message,
-          answer: response
-        });
-        console.log("Chat history saved successfully");
-      } catch (historyError) {
-        console.error("Error saving chat history:", historyError);
-        // Don't fail the request if history saving fails
-      }
       
       res.json({ 
         success: true, 
@@ -298,49 +281,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Failed to get response from AI Coach",
         message: `I apologize, but I'm having trouble processing your question right now. Error: ${error.message}. Please try again in a moment.`
-      });
-    }
-  });
-
-  // Get AI Coach Chat History endpoint
-  app.get("/api/ai-coach/history", async (req: Request, res: Response) => {
-    try {
-      // For now, use default values until proper auth is implemented
-      const userId = req.user?.claims?.sub || "anonymous";
-      const organizationId = req.user?.organizationId || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
-
-      const history = await storage.getAiCoachChatHistory(organizationId, userId, limit);
-      
-      res.json({ 
-        success: true, 
-        history: history.reverse() // Reverse to show oldest first
-      });
-    } catch (error) {
-      console.error("Error getting AI coach chat history:", error);
-      res.status(500).json({ 
-        error: "Failed to get chat history"
-      });
-    }
-  });
-
-  // Clear AI Coach Chat History endpoint
-  app.delete("/api/ai-coach/history", async (req: Request, res: Response) => {
-    try {
-      // For now, use default values until proper auth is implemented
-      const userId = req.user?.claims?.sub || "anonymous";
-      const organizationId = req.user?.organizationId || 1;
-
-      await storage.deleteAiCoachChatHistory(organizationId, userId);
-      
-      res.json({ 
-        success: true, 
-        message: "Chat history cleared successfully"
-      });
-    } catch (error) {
-      console.error("Error clearing AI coach chat history:", error);
-      res.status(500).json({ 
-        error: "Failed to clear chat history"
       });
     }
   });

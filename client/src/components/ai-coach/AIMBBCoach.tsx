@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, X, Minimize2, Maximize2, Trash2, History } from "lucide-react";
+import { MessageCircle, Send, X, Minimize2, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 // Import the AI coach avatar image
-const aiCoachAvatar = "/ai-coach-avatar.jpg";
+const aiCoachAvatar = "/attached_assets/AI-MBB-Coach_1750526353279.jpg";
 
 interface Message {
   id: string;
@@ -33,7 +33,6 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -44,81 +43,6 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // Load chat history when component opens
-  useEffect(() => {
-    if (isOpen && !isLoadingHistory) {
-      loadChatHistory();
-    }
-  }, [isOpen]);
-
-  const loadChatHistory = async () => {
-    setIsLoadingHistory(true);
-    try {
-      const response = await fetch('/api/ai-coach/history');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.history.length > 0) {
-          const historyMessages: Message[] = [];
-          
-          data.history.forEach((item: any) => {
-            historyMessages.push({
-              id: `q-${item.id}`,
-              type: 'user',
-              content: item.question,
-              timestamp: new Date(item.createdAt)
-            });
-            historyMessages.push({
-              id: `a-${item.id}`,
-              type: 'assistant',
-              content: item.answer,
-              timestamp: new Date(item.createdAt)
-            });
-          });
-
-          // Keep the welcome message and add history after it
-          setMessages(prev => [
-            prev[0], // Keep welcome message
-            ...historyMessages
-          ]);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
-
-  const clearChatHistory = async () => {
-    try {
-      const response = await fetch('/api/ai-coach/history', {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        // Reset to just the welcome message
-        setMessages([{
-          id: '1',
-          type: 'assistant',
-          content: 'Hello! I\'m your AI Master Black Belt Coach. I\'m here to help you with any Lean Six Sigma questions, methodology guidance, or project support. What would you like to know?',
-          timestamp: new Date()
-        }]);
-        
-        toast({
-          title: "Success",
-          description: "Chat history cleared successfully.",
-        });
-      }
-    } catch (error) {
-      console.error('Error clearing chat history:', error);
-      toast({
-        title: "Error",
-        description: "Failed to clear chat history.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -215,29 +139,14 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
       <CardHeader className="pb-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <img 
-                src={aiCoachAvatar} 
-                alt="AI MBB Coach" 
-                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-lg"
-              />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-            </div>
-            <div>
-              <CardTitle className="text-sm font-semibold">AI Master Black Belt Coach</CardTitle>
-              <p className="text-xs text-blue-100">Lean Six Sigma Expert</p>
-            </div>
+            <img 
+              src={aiCoachAvatar} 
+              alt="AI MBB Coach" 
+              className="w-8 h-8 rounded-full object-cover border-2 border-white"
+            />
+            <CardTitle className="text-sm font-semibold">AI Master Black Belt Coach</CardTitle>
           </div>
           <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearChatHistory}
-              className="text-white hover:bg-blue-500 p-1 h-8 w-8"
-              title="Clear chat history"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
             <Button
               variant="ghost"
               size="sm"
