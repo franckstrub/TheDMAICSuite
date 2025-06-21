@@ -6,7 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, X, Minimize2, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import aiCoachAvatar from "@assets/AI-MBB-Coach_1750526353279.jpg";
+// Import the AI coach avatar image
+const aiCoachAvatar = "/attached_assets/AI-MBB-Coach_1750526353279.jpg";
 
 interface Message {
   id: string;
@@ -58,7 +59,9 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('/api/ai-coach/chat', {
+      console.log('Sending message to AI Coach:', userMessage.content);
+      
+      const response = await fetch('/api/ai-coach/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -66,12 +69,20 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
         body: JSON.stringify({ message: userMessage.content })
       });
 
-      console.log('AI Coach response:', response);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('AI Coach response data:', data);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: response.message || response.data?.message || 'Sorry, I couldn\'t process your request.',
+        content: data.message || 'Sorry, I couldn\'t process your request.',
         timestamp: new Date()
       };
 
@@ -82,7 +93,7 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: 'I apologize, but I\'m having trouble processing your question right now. Please try again in a moment.',
+        content: `I apologize, but I'm having trouble processing your question right now. Error: ${error.message}. Please try again in a moment.`,
         timestamp: new Date()
       };
       
@@ -90,7 +101,7 @@ export default function AIMBBCoach({ className }: AIMBBCoachProps) {
       
       toast({
         title: "Error",
-        description: "Failed to get response from AI Coach. Please try again.",
+        description: `Failed to get response from AI Coach: ${error.message}`,
         variant: "destructive"
       });
     } finally {
