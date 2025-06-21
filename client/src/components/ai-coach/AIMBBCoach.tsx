@@ -7,7 +7,7 @@ import { MessageCircle, Send, X, Minimize2, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 // Import the AI coach avatar image
-const aiCoachAvatar = "/attached_assets/AI-MBB-Coach_1750526353279.jpg";https://replit.com/@franckstrub61/TheDMAICSuite#attached_assets/AI-MBB-Coach%20copy_1750529006758.jpg
+const aiCoachAvatar = "/attached_assets/AI-MBB-Coach copy_1750529331638.jpg";https://replit.com/@franckstrub61/TheDMAICSuite#attached_assets/AI-MBB-Coach%20copy_1750529006758.jpg
 
 interface Message {
   id: string;
