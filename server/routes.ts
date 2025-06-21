@@ -1096,7 +1096,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             details: `Deleted dataset: ${dataset.name}`
           });
         }
-        });
       }
       
       return res.status(200).json({ success: true });
@@ -1860,12 +1859,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: processData.projectId,
-          action: "update_process_data",
-          details: "Updated process data"
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: processData.projectId,
+            action: "update_process_data",
+            details: "Updated process data"
+          });
+        }
       }
       
       return res.status(200).json({ processData });
@@ -1962,12 +1965,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: raciMatrix.projectId,
-          action: "update_raci_matrix",
-          details: "Updated RACI matrix"
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: raciMatrix.projectId,
+            action: "update_raci_matrix",
+            details: "Updated RACI matrix"
+          });
+        }
       }
       
       return res.status(200).json({ raciMatrix });
@@ -2249,12 +2256,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log activity if userId provided
         if (userId) {
-          await storage.createActivityLog({
-            userId,
-            projectId: null,
-            action: "generate_engagement_strategy",
-            details: `Generated engagement strategy for stakeholder: ${stakeholderName}`
-          });
+          const user = await storage.getUser(userId);
+          if (user) {
+            await storage.createActivityLog({
+              organizationId: user.organizationId,
+              userId,
+              projectId: null,
+              action: "generate_engagement_strategy",
+              details: `Generated engagement strategy for stakeholder: ${stakeholderName}`
+            });
+          }
         }
         
         return res.status(200).json({ engagementStrategy });
