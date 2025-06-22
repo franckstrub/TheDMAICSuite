@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator, BarChart3 } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -44,6 +44,7 @@ interface ProcessCapabilityData {
   showPercentage: boolean;
   showZ: boolean; // For attribute CTQs
   conclusion: string;
+  capabilityAssessment?: string; // AI-generated capability assessment
 }
 
 interface DataPoint {
@@ -72,6 +73,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [isStatisticsLoaded, setIsStatisticsLoaded] = useState(false);
   const [autoSaveTimers, setAutoSaveTimers] = useState<{ [ctq: string]: NodeJS.Timeout }>({});
+  const [isGeneratingAssessment, setIsGeneratingAssessment] = useState<{ [ctq: string]: boolean }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -650,6 +652,91 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }));
   };
 
+  // Generate AI Capability Assessment
+  const generateAIAssessment = async (ctq: string) => {
+    try {
+      setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: true }));
+
+      const currentData = dataPoints[ctq] || [];
+      if (currentData.length < 30) {
+        toast({
+          title: "Insufficient Data",
+          description: "At least 30 data points are required for AI capability assessment",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const values = currentData.map(dp => dp.dataValue);
+      const capData = capabilityData[ctq];
+      
+      // Calculate statistics
+      const sampleMean = mean(values);
+      const sampleStd = standardDeviation(values);
+      const normalityResult = performNormalityTest(values);
+      
+      const lsl = parseNumericValue(capData?.lsl);
+      const usl = parseNumericValue(capData?.usl);
+      const target = parseNumericValue(capData?.target);
+      
+      let stats: any = {
+        sampleSize: values.length,
+        mean: sampleMean,
+        standardDeviation: sampleStd,
+        normalityPValue: normalityResult.pValue,
+        isNormal: normalityResult.isNormal,
+      };
+
+      if (capData?.capabilityIndex === "Cp/Cpk" && lsl !== null && usl !== null) {
+        const capabilityResults = calculateCapabilityIndexes(values, lsl, usl, target);
+        stats = { ...stats, ...capabilityResults };
+      } else if (capData?.capabilityIndex === "Z") {
+        const zResults = calculateZScoreLongShortTerm(values, lsl, usl, capData?.zShift || 1.5);
+        stats = { ...stats, ...zResults };
+      }
+
+      // Add observed defect rates if available
+      if (lsl !== null || usl !== null) {
+        const observedMetrics = calculateObservedPerformanceMetrics(values, lsl, usl, capData?.zShift || 1.5);
+        stats.observedDefectRate = observedMetrics.longTerm.obspercentDefects / 100;
+        stats.dpmo = observedMetrics.longTerm.obsdpmo;
+        stats.yield = observedMetrics.longTerm.obsyield;
+      }
+
+      const context = {
+        ctq,
+        capabilityIndex: capData?.capabilityIndex || "Cp/Cpk",
+        lsl: capData?.lsl,
+        usl: capData?.usl,
+        target: capData?.target,
+        zShift: capData?.zShift || 1.5,
+        dataSetTerm: capData?.dataSetTerm || "Long Term"
+      };
+
+      const response = await apiRequest('POST', `/api/projects/${projectId}/process-capability/${ctq}/ai-assessment`, {
+        stats,
+        context
+      });
+
+      updateCapabilityField(ctq, "capabilityAssessment", response.assessment);
+
+      toast({
+        title: "AI Assessment Generated",
+        description: "Capability assessment has been generated successfully",
+      });
+
+    } catch (error) {
+      console.error("Error generating AI assessment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate AI capability assessment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: false }));
+    }
+  };
+
   const getCapabilityStatusBadge = (ctq: string) => {
     const data = capabilityData[ctq];
     if (!data) return <Badge variant="secondary">No Data</Badge>;
@@ -808,6 +895,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         showPercentage: Boolean(data.showPercentage),
         showZ: Boolean(data.showZ),
         conclusion: data.conclusion || "",
+        capabilityAssessment: data.capabilityAssessment || "",
         showStatistics: Boolean(showStatistics[ctq]), // Include current statistics visibility state
       };
       
@@ -2156,6 +2244,39 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       placeholder="Summary of process capability assessment..."
                       rows={3}
                     />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium">Capability Assessment</label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => generateAIAssessment(ctq)}
+                        disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30}
+                        className="flex items-center gap-2"
+                      >
+                        {isGeneratingAssessment[ctq] ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4 text-purple-600" />
+                        )}
+                        {isGeneratingAssessment[ctq] ? "Generating..." : "Generate AI Assessment"}
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={capabilityData[ctq]?.capabilityAssessment || ""}
+                      onChange={(e) => updateCapabilityField(ctq, "capabilityAssessment", e.target.value)}
+                      placeholder="AI-powered capability assessment will appear here..."
+                      rows={6}
+                      className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
+                    />
+                    {(dataPoints[ctq]?.length || 0) < 30 && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        At least 30 data points required for AI assessment (Current: {dataPoints[ctq]?.length || 0})
+                      </p>
+                    )}
                   </div>
                 </div>
 
