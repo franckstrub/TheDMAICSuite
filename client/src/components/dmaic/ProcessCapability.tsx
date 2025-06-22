@@ -181,17 +181,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       const currentAutoSaveTimers = { ...autoSaveTimers };
       const currentIsAutoSaving = { ...isAutoSaving };
       
-      // Invalidate queries without waiting, then restore state immediately
+      // Invalidate queries to refresh capability data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
       
-      // Restore all preserved state
-      setTimeout(() => {
-        setShowStatistics(currentStatsState);
-        setDataPoints(currentDataPoints);
-        setInputValues(currentInputValues);
-        setAutoSaveTimers(currentAutoSaveTimers);
-        setIsAutoSaving(currentIsAutoSaving);
-      }, 100);
+      // Keep the current data points and other state intact - no need to restore since useEffect will preserve them
     },
     onError: (error) => {
       toast({
@@ -585,7 +578,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   useEffect(() => {
     const ctqs = getCtqsWithTypes();
     ctqs.forEach(({ ctq }) => {
-      if (capabilityData[ctq]?.id) {
+      if (capabilityData[ctq]?.id && (!dataPoints[ctq] || dataPoints[ctq].length === 0)) {
+        // Only load data points if we don't already have local data points
         loadDataPointsForCtq(ctq);
       }
     });
