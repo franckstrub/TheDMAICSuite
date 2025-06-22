@@ -343,19 +343,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   useEffect(() => {
     const ctqList = getCtqsWithTypes();
     if (ctqList.length > 0) {
-      const savedTab = localStorage.getItem(`msa-active-tab-${projectId}`);
-      
-      // Check if saved tab still exists in current CTQ list
-      const savedTabExists = savedTab && ctqList.some(ctq => ctq.ctq === savedTab);
-      
-      if (savedTabExists && activeTab !== savedTab) {
-        // Restore saved tab if it exists and is different from current
-        setActiveTab(savedTab);
-      } else if (!activeTab || !ctqList.some(ctq => ctq.ctq === activeTab)) {
-        // Set first CTQ as default if no active tab or current tab doesn't exist
-        const firstCtq = ctqList[0].ctq;
-        setActiveTab(firstCtq);
-        localStorage.setItem(`msa-active-tab-${projectId}`, firstCtq);
+      // Always ensure we have an active tab when CTQs are available
+      if (!activeTab || !ctqList.some(ctq => ctq.ctq === activeTab)) {
+        // Set to saved tab if valid, otherwise first CTQ
+        const savedTab = localStorage.getItem(`msa-active-tab-${projectId}`);
+        const ctqNames = ctqList.map(c => c.ctq);
+        if (savedTab && ctqNames.includes(savedTab)) {
+          setActiveTab(savedTab);
+        } else {
+          const firstCtq = ctqList[0].ctq;
+          setActiveTab(firstCtq);
+          localStorage.setItem(`msa-active-tab-${projectId}`, firstCtq);
+        }
       }
     }
   }, [ctsData, msaDataResponse, projectId, activeTab]);
@@ -495,7 +494,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setAttributeMsaData(initialAttributeData);
       setContinuousMsaData(initialContinuousData);
       
-      // Set first tab as active only if no tab is currently active
+      // Ensure we have an active tab when CTQs are available
       if (ctqsWithTypes.length > 0 && !activeTab) {
         setActiveTab(ctqsWithTypes[0].ctq);
       }
@@ -1095,6 +1094,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         </CardContent>
       </Card>
     );
+  }
+
+  // Ensure we have an active tab when CTQs are available
+  if (!activeTab && ctqList.length > 0) {
+    const firstCtq = ctqList[0].ctq;
+    setActiveTab(firstCtq);
   }
 
   return (
