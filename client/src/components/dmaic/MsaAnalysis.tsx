@@ -1135,13 +1135,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
           {ctqList.map((ctqItem: CtqWithType) => (
             <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-0 border border-gray-200 rounded-lg p-4" >
-              {/* Card number display */}
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-gray-600">
-                  Card {ctqList.findIndex(item => item.ctq === ctqItem.ctq) + 1} of {ctqList.length}
-                </div>
-              </div>
-              
               {ctqItem.ctqType === "Attribute" ? (
                 // Attribute MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
