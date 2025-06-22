@@ -181,14 +181,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       const currentAutoSaveTimers = { ...autoSaveTimers };
       const currentIsAutoSaving = { ...isAutoSaving };
       
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] }).then(() => {
-        // Restore all preserved state after data refresh
+      // Invalidate queries without waiting, then restore state immediately
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
+      
+      // Restore all preserved state
+      setTimeout(() => {
         setShowStatistics(currentStatsState);
         setDataPoints(currentDataPoints);
         setInputValues(currentInputValues);
         setAutoSaveTimers(currentAutoSaveTimers);
         setIsAutoSaving(currentIsAutoSaving);
-      });
+      }, 100);
     },
     onError: (error) => {
       toast({
