@@ -174,17 +174,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         description: "Process capability analysis saved successfully",
       });
       
-      // Preserve current state before invalidating queries
-      const currentStatsState = { ...showStatistics };
-      const currentDataPoints = { ...dataPoints };
-      const currentInputValues = { ...inputValues };
-      const currentAutoSaveTimers = { ...autoSaveTimers };
-      const currentIsAutoSaving = { ...isAutoSaving };
+      // Save any unsaved data points first
+      const ctq = variables.ctq;
+      const currentPoints = dataPoints[ctq] || [];
+      
+      if (currentPoints.length > 0 && data.capability?.id) {
+        // Save data points to database
+        saveDataPointMutation.mutate({
+          processCapabilityId: data.capability.id,
+          dataPoints: currentPoints.map(point => point.dataValue)
+        });
+      }
       
       // Invalidate queries to refresh capability data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
-      
-      // Keep the current data points and other state intact - no need to restore since useEffect will preserve them
     },
     onError: (error) => {
       toast({
