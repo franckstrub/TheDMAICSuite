@@ -137,7 +137,6 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-600">
           {isLoaded ? 'Process Map Editor Ready' : 'Loading Process Map Editor...'}
-          <span className="ml-2 text-xs">({isLoaded ? 'Enabled' : 'Disabled'})</span>
         </div>
         <div className="flex space-x-2">
           <Button
@@ -168,10 +167,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           title="Process Map Editor"
           frameBorder="0"
           allow="camera; microphone; geolocation"
-          onLoad={() => {
-            console.log('Iframe loaded, setting isLoaded to true');
-            setIsLoaded(true);
-          }}
+          onLoad={() => setIsLoaded(true)}
         />
       </div>
       
