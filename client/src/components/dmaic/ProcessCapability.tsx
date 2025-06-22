@@ -682,37 +682,39 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
 
       const capData = capabilityData[ctq];
+      const existingStats = statistics[ctq];
       
-      // Calculate basic statistics
-      const sampleMean = mean(values);
-      const sampleStd = standardDeviation(values);
-      const normalityResult = performNormalityTest(values);
-      
-      const lsl = parseNumericValue(capData?.lsl);
-      const usl = parseNumericValue(capData?.usl);
-      const target = parseNumericValue(capData?.target);
-      
-      let stats: any = {
-        sampleSize: values.length,
-        mean: sampleMean,
-        standardDeviation: sampleStd,
-        normalityPValue: normalityResult.pValue,
-        isNormal: normalityResult.isNormal,
-      };
-
-      // Add capability metrics if possible
-      if (capData?.capabilityIndex === "Cp/Cpk" && lsl !== null && usl !== null) {
-        try {
-          const capabilityResults = calculateCapabilityIndexes(values, lsl, usl, target);
-          stats = { ...stats, ...capabilityResults };
-        } catch (e) {
-          // Continue without capability indices
-        }
+      if (!existingStats) {
+        toast({
+          title: "Statistics Not Available",
+          description: "Please ensure statistics are calculated before generating AI assessment",
+          variant: "destructive",
+        });
+        return;
       }
+
+      // Use existing calculated statistics from the UI
+      const stats = {
+        sampleSize: existingStats.count || values.length,
+        mean: existingStats.mean || 0,
+        standardDeviation: existingStats.standardDeviation || 0,
+        normalityPValue: existingStats.normalityPValue || null,
+        isNormal: existingStats.isNormal || false,
+        cp: existingStats.cp || null,
+        cpk: existingStats.cpk || null,
+        pp: existingStats.pp || null,
+        ppk: existingStats.ppk || null,
+        zShortTerm: existingStats.zShortTerm || null,
+        zLongTerm: existingStats.zLongTerm || null,
+        sigma: existingStats.sigma || null,
+        dpmo: existingStats.dpmo || null,
+        yield: existingStats.yield || null,
+        observedDefectRate: existingStats.observedDefectRate || null
+      };
 
       const context = {
         ctq,
-        capabilityIndex: capData?.capabilityIndex || "Z",
+        capabilityIndex: capData?.capabilityIndex || "Cp/Cpk",
         lsl: capData?.lsl || "",
         usl: capData?.usl || "",
         target: capData?.target || "",
@@ -2308,11 +2310,6 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       {(dataPoints[ctq]?.length || 0) < 30 && (
                         <p className="text-xs text-orange-600 mt-1">
                           At least 30 data points required for AI Capability analysis (Current: {dataPoints[ctq]?.length || 0})
-                        </p>
-                      )}
-                      {!statistics[ctq] && (dataPoints[ctq]?.length || 0) >= 30 && (
-                        <p className="text-xs text-orange-600 mt-1">
-                          Statistics must be calculated first. Please enable "Show Statistics" to calculate metrics.
                         </p>
                       )}
                     </div>
