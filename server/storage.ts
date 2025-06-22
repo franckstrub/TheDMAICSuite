@@ -520,7 +520,7 @@ export class DatabaseStorage implements IStorage {
   async updateGateReviewDeliverable(id: number, deliverable: Partial<GateReviewDeliverable>): Promise<GateReviewDeliverable | undefined> {
     const [updatedDeliverable] = await db
       .update(gateReviewDeliverables)
-      .set(deliverable)
+      .set({ ...deliverable, lastUpdated: new Date() })
       .where(eq(gateReviewDeliverables.id, id))
       .returning();
     return updatedDeliverable || undefined;

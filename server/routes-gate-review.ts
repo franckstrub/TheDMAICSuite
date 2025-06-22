@@ -88,7 +88,9 @@ export function registerGateReviewRoutes(app: Express, dbStorage: any) {
         return res.status(404).json({ error: "Deliverable not found" });
       }
       
-      const updatedDeliverable = await dbStorage.updateGateReviewDeliverable(id, req.body);
+      // Remove lastUpdated from request body to prevent timestamp formatting issues
+      const { lastUpdated, ...updateData } = req.body;
+      const updatedDeliverable = await dbStorage.updateGateReviewDeliverable(id, updateData);
       res.json({ deliverable: updatedDeliverable });
     } catch (error) {
       console.error("Error updating gate review deliverable:", error);
