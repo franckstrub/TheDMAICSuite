@@ -2282,7 +2282,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                             e.stopPropagation();
                             generateAIAssessment(ctq);
                           }}
-                          disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30}
+                          disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30 || !statistics[ctq]}
                           className="flex items-center gap-2"
                         >
                           {isGeneratingAssessment[ctq] ? (
@@ -2308,6 +2308,11 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       {(dataPoints[ctq]?.length || 0) < 30 && (
                         <p className="text-xs text-orange-600 mt-1">
                           At least 30 data points required for AI Capability analysis (Current: {dataPoints[ctq]?.length || 0})
+                        </p>
+                      )}
+                      {!statistics[ctq] && (dataPoints[ctq]?.length || 0) >= 30 && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          Statistics must be calculated first. Please enable "Show Statistics" to calculate metrics.
                         </p>
                       )}
                     </div>
