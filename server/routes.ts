@@ -929,13 +929,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user as any;
       const organizationId = user?.organizationId || 1; // Fallback to default org
       
+      // Debug logging to see what data is being received
+      console.log("Business requirement POST request body:", req.body);
+      console.log("CTQ field value:", req.body.ctq);
+      
       const businessRequirementData: InsertBusinessRequirement = {
         ...req.body,
         projectId,
         organizationId
       };
       
+      console.log("Business requirement data before validation:", businessRequirementData);
       const validatedData = insertBusinessRequirementSchema.parse(businessRequirementData);
+      console.log("Business requirement data after validation:", validatedData);
       const businessRequirement = await storage.createBusinessRequirement(validatedData);
       
       // Log activity
