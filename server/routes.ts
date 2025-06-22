@@ -818,9 +818,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/requirements", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const requirementData: InsertRequirement = {
         ...req.body,
-        projectId
+        projectId,
+        organizationId
       };
       
       const validatedData = insertRequirementSchema.parse(requirementData);
@@ -919,9 +925,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/business-requirements", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const businessRequirementData: InsertBusinessRequirement = {
         ...req.body,
-        projectId
+        projectId,
+        organizationId
       };
       
       const validatedData = insertBusinessRequirementSchema.parse(businessRequirementData);
