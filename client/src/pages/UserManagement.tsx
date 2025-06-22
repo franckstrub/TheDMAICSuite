@@ -345,7 +345,11 @@ export default function UserManagement() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/app')}
+              onClick={() => {
+                setCurrentTab("dashboard");
+                setActivePhase("");
+                navigate('/app');
+              }}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -490,7 +494,11 @@ export default function UserManagement() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/app')}
+              onClick={() => {
+                setCurrentTab("dashboard");
+                setActivePhase("");
+                navigate('/app');
+              }}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
