@@ -738,12 +738,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId,
-          action: "create_sipoc",
-          details: "Created SIPOC diagram"
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId,
+            action: "create_sipoc",
+            details: "Created SIPOC diagram"
+          });
+        }
       }
       
       return res.status(201).json({ sipoc });
@@ -781,12 +785,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (req.body.userId) {
-        await storage.createActivityLog({
-          userId: req.body.userId,
-          projectId: sipoc.projectId,
-          action: "update_sipoc",
-          details: "Updated SIPOC diagram"
-        });
+        const user = await storage.getUser(req.body.userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId: req.body.userId,
+            projectId: sipoc.projectId,
+            action: "update_sipoc",
+            details: "Updated SIPOC diagram"
+          });
+        }
       }
       
       return res.status(200).json({ sipoc });
@@ -878,12 +886,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (userId && projectId) {
-        await storage.createActivityLog({
-          userId,
-          projectId,
-          action: "delete_requirement",
-          details: "Deleted a requirement"
-        });
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId,
+            projectId,
+            action: "delete_requirement",
+            details: "Deleted a requirement"
+          });
+        }
       }
       
       return res.status(200).json({ success: true });
@@ -975,12 +987,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity
       if (userId && projectId) {
-        await storage.createActivityLog({
-          userId,
-          projectId,
-          action: "delete_business_requirement",
-          details: "Deleted a business requirement"
-        });
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId,
+            projectId,
+            action: "delete_business_requirement",
+            details: "Deleted a business requirement"
+          });
+        }
       }
       
       return res.status(200).json({ success: true });
@@ -1781,12 +1797,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log activity if userId provided
       if (userId) {
-        await storage.createActivityLog({
-          userId,
-          projectId,
-          action: "save_elevator_speech",
-          details: "Saved elevator speech in Define phase"
-        });
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.createActivityLog({
+            organizationId: user.organizationId,
+            userId,
+            projectId,
+            action: "save_elevator_speech",
+            details: "Saved elevator speech in Define phase"
+          });
+        }
       }
       
       return res.status(200).json({ 
