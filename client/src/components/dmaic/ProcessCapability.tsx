@@ -548,21 +548,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setCapabilityData(initialData);
       setShowStatistics(statisticsStates);
       
-      // Set active tab to saved or first CTQ if not initialized yet
-      if (!activeTab && ctqs.length > 0 && !hasInitializedTab) {
-        const savedTab = localStorage.getItem(`process-capability-active-tab-${projectId}`);
-        const ctqNames = ctqs.map(c => c.ctq);
-        if (savedTab && ctqNames.includes(savedTab)) {
-          setActiveTab(savedTab);
-        } else {
-          setActiveTab(ctqs[0].ctq);
+      // Always ensure we have an active tab when CTQs are available
+      if (ctqs.length > 0) {
+        if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
+          // Set to saved tab if valid, otherwise first CTQ
+          const savedTab = localStorage.getItem(`process-capability-active-tab-${projectId}`);
+          const ctqNames = ctqs.map(c => c.ctq);
+          if (savedTab && ctqNames.includes(savedTab)) {
+            setActiveTab(savedTab);
+          } else {
+            setActiveTab(ctqs[0].ctq);
+          }
+          setHasInitializedTab(true);
         }
-        setHasInitializedTab(true);
-      }
-      
-      // If no active tab is set but we have CTQs, set the first one as default
-      if (!activeTab && ctqs.length > 0) {
-        setActiveTab(ctqs[0].ctq);
       }
     }
   }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
