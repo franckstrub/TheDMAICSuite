@@ -2178,8 +2178,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId,
       };
       
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       // Validate the stakeholder analysis data
-      const validatedData = insertStakeholderAnalysisItemSchema.parse(analysisData);
+      const validatedData = insertStakeholderAnalysisItemSchema.parse({
+        ...analysisData,
+        organizationId
+      });
       
       // Insert the item
       const [newItem] = await db
@@ -2358,10 +2365,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Insert new characteristics
       if (characteristicsData && characteristicsData.length > 0) {
+        // Get user's organization ID for the characteristics
+        const user = req.user as any;
+        const organizationId = user?.organizationId || 1; // Fallback to default org
+        
         const validatedCharacteristics = characteristicsData.map((char: any) => 
           insertCtsCharacteristicsSchema.parse({
             ...char,
             projectId,
+            organizationId,
             // Convert string values to numeric types for database storage
             targetPercentDefects: char.targetPercentDefects === "" || char.targetPercentDefects === null 
               ? null 
@@ -2519,9 +2531,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = parseInt(req.params.projectId);
       
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       // Clean and validate the payload
       const cleanPayload = {
         projectId,
+        organizationId,
         ctq: req.body.ctq,
         msaType: req.body.msaType || "Attribute Agreement",
         unitAppraisedType: req.body.unitAppraisedType || "Part",
@@ -2577,9 +2594,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const projectId = parseInt(req.params.projectId);
       
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       // Clean and validate the payload for continuous MSA
       const cleanPayload = {
         projectId,
+        organizationId,
         ctq: req.body.ctq,
         msaType: req.body.msaType || "Gage R&R",
         appraiser1Name: req.body.appraiser1Name || null,
