@@ -262,7 +262,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           target: "",
           zShift: 1.5,
           dataSetTerm: "Long Term",
-          capabilityIndex: "Cp/Cpk",
+          capabilityIndex: "Z",
           showPercentage: false,
           showZ: false,
           conclusion: "",
@@ -373,7 +373,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           target: "",
           zShift: 1.5,
           dataSetTerm: "Long Term",
-          capabilityIndex: "Cp/Cpk",
+          capabilityIndex: "Z",
           showPercentage: false,
           showZ: false,
           conclusion: "",
@@ -610,7 +610,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           target: ctsChar?.target || "",
           zShift: 1.5,
           dataSetTerm: "Long Term" as const,
-          capabilityIndex: "Cp/Cpk" as const,
+          capabilityIndex: "Z" as const,
           showPercentage: false,
           showZ: false,
           conclusion: "",
@@ -804,7 +804,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         target: data.target ? String(data.target) : "",
         zShift: Number(data.zShift) || 1.5,
         dataSetTerm: data.dataSetTerm || "Long Term",
-        capabilityIndex: data.capabilityIndex || "Cp/Cpk",
+        capabilityIndex: data.capabilityIndex || "Z",
         showPercentage: Boolean(data.showPercentage),
         showZ: Boolean(data.showZ),
         conclusion: data.conclusion || "",
@@ -1289,7 +1289,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   const stats = calculateProcessCapabilityStats(ctq);
                   const data = capabilityData[ctq];
                   const showPercentage = data?.showPercentage || false;
-                  const capabilityIndex = data?.capabilityIndex || "Cp/Cpk";
+                  const capabilityIndex = data?.capabilityIndex || "Z";
                   
 if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
   return (
