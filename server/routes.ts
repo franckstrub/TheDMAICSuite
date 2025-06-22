@@ -1956,9 +1956,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/raci-matrix", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const raciMatrixInput: InsertRaciMatrix = {
         ...req.body,
-        projectId
+        projectId,
+        organizationId
       };
       
       const validatedData = insertRaciSchema.parse(raciMatrixInput);
