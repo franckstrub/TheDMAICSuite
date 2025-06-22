@@ -174,12 +174,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         description: "Process capability analysis saved successfully",
       });
       
-      // Preserve the current statistics visibility state before invalidating
+      // Preserve current state before invalidating queries
       const currentStatsState = { ...showStatistics };
+      const currentDataPoints = { ...dataPoints };
+      const currentInputValues = { ...inputValues };
+      const currentAutoSaveTimers = { ...autoSaveTimers };
+      const currentIsAutoSaving = { ...isAutoSaving };
       
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] }).then(() => {
-        // Restore statistics visibility state after data refresh
+        // Restore all preserved state after data refresh
         setShowStatistics(currentStatsState);
+        setDataPoints(currentDataPoints);
+        setInputValues(currentInputValues);
+        setAutoSaveTimers(currentAutoSaveTimers);
+        setIsAutoSaving(currentIsAutoSaving);
       });
     },
     onError: (error) => {
