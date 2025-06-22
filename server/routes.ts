@@ -464,7 +464,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(projectData.createdBy);
       if (user) {
         await storage.createActivityLog({
-            organizationId: user.organizationId,
           organizationId: user.organizationId,
           userId: projectData.createdBy,
           projectId: project.id,
@@ -494,7 +493,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.body.userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: project.id,
@@ -534,7 +532,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId,
             projectId: null,
@@ -614,7 +611,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (user) {
             await storage.createActivityLog({
             organizationId: user.organizationId,
-              organizationId: user.organizationId,
               userId: req.body.userId,
               projectId,
               action: "create_charter",
@@ -697,7 +693,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: charter.projectId,
             action: "update_charter",
@@ -747,7 +742,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId,
             action: "create_sipoc",
@@ -795,7 +789,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: sipoc.projectId,
             action: "update_sipoc",
@@ -839,7 +832,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId,
             action: "create_requirement",
@@ -870,7 +862,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: requirement.projectId,
             action: "update_requirement",
@@ -898,7 +889,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId,
             projectId,
@@ -943,7 +933,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId,
             action: "create_business_requirement",
@@ -974,7 +963,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: businessRequirement.projectId,
             action: "update_business_requirement",
@@ -1002,7 +990,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId,
             projectId,
@@ -1058,7 +1045,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user) {
         await storage.createActivityLog({
             organizationId: user.organizationId,
-          organizationId: user.organizationId,
           userId: datasetData.createdBy,
           projectId: datasetData.projectId,
           action: "create_dataset",
@@ -1087,7 +1073,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.body.userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: dataset.projectId,
@@ -1120,7 +1105,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId,
             projectId: dataset.projectId,
@@ -1165,7 +1149,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId,
             action: "create_data_plan",
@@ -1195,7 +1178,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.body.userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: plan.projectId,
@@ -1236,7 +1218,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId,
             projectId,
@@ -1303,7 +1284,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user) {
         await storage.createActivityLog({
             organizationId: user.organizationId,
-          organizationId: user.organizationId,
           userId,
           projectId: null,
           action: "update_storage_config",
@@ -1552,7 +1532,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId,
             action: "create_risk_assessment",
@@ -1678,7 +1657,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.body.userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: risk.projectId,
@@ -1824,7 +1802,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId,
             projectId,
             action: "save_elevator_speech",
@@ -1876,7 +1853,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (user) {
           await storage.createActivityLog({
             organizationId: user.organizationId,
-            organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: processData.projectId,
             action: "upload_process_data",
@@ -1906,7 +1882,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.body.userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: processData.projectId,
@@ -1966,7 +1941,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (user) {
             await storage.createActivityLog({
             organizationId: user.organizationId,
-              organizationId: user.organizationId,
               userId: req.body.userId,
               projectId,
               action: "update_raci_matrix",
@@ -1984,7 +1958,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (user) {
             await storage.createActivityLog({
             organizationId: user.organizationId,
-              organizationId: user.organizationId,
               userId: req.body.userId,
               projectId,
               action: "create_raci_matrix",
@@ -2015,7 +1988,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(req.body.userId);
         if (user) {
           await storage.createActivityLog({
-            organizationId: user.organizationId,
             organizationId: user.organizationId,
             userId: req.body.userId,
             projectId: raciMatrix.projectId,
@@ -2308,7 +2280,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (user) {
             await storage.createActivityLog({
             organizationId: user.organizationId,
-              organizationId: user.organizationId,
               userId,
               projectId: null,
               action: "generate_engagement_strategy",
