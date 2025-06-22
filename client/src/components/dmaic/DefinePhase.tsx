@@ -1376,7 +1376,7 @@ export default function DefinePhase() {
       // Always include at least one row even if empty, to ensure we always have a row in the database
       const businessRequirementsToSave = validBusinessRequirements.length > 0 ? 
         validBusinessRequirements : 
-        [{ requirement: "", businessNeed: "", importance: 3, criticalToQuality: "" }];
+        [{ requirement: "", businessNeed: "", importance: 3, ctq: "" }];
       
       console.log("Saving business requirements:", businessRequirementsToSave);
       
