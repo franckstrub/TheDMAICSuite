@@ -722,12 +722,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         context
       });
 
-      updateCapabilityField(ctq, "capabilityAssessment", response.assessment);
-
-      toast({
-        title: "AI Assessment Generated",
-        description: "Capability assessment has been generated successfully",
-      });
+      if (response.assessment) {
+        updateCapabilityField(ctq, "capabilityAssessment", response.assessment);
+        
+        toast({
+          title: "AI Assessment Generated",
+          description: "Capability assessment has been generated successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "No assessment returned from AI service",
+          variant: "destructive",
+        });
+      }
 
     } catch (error) {
       console.error("Error generating AI assessment:", error);
