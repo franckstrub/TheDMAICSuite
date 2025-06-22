@@ -920,6 +920,7 @@ export type CtqType = typeof ctqTypes[number];
 // CTS Characteristics for DMAIC Measure Phase
 export const ctsCharacteristics = pgTable("cts_characteristics", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(),
   operationalDefinition: text("operational_definition"),
@@ -943,6 +944,7 @@ export type CtsCharacteristics = typeof ctsCharacteristics.$inferSelect;
 // MSA (Measurement System Analysis) for each CTQ
 export const msaAnalysis = pgTable("msa_analysis", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
   msaType: text("msa_type").notNull().default("Gage R&R"), // "Gage R&R", "Attribute Agreement", "Bias Study"
@@ -985,6 +987,7 @@ export type CapabilityIndexType = z.infer<typeof capabilityIndexType>;
 // Process Capability for each CTQ
 export const processCapability = pgTable("process_capability", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
   lsl: text("lsl"), // Lower Specification Limit

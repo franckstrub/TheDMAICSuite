@@ -2417,8 +2417,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = req.user as any;
         const organizationId = user?.organizationId || 1; // Fallback to default org
         
-        const validatedCharacteristics = characteristicsData.map((char: any) => 
-          insertCtsCharacteristicsSchema.parse({
+        const validatedCharacteristics = characteristicsData.map((char: any) => {
+          const characteristicWithOrgId = {
             ...char,
             projectId,
             organizationId,
@@ -2435,8 +2435,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             usl: char.usl === "" || char.usl === null 
               ? null 
               : parseFloat(char.usl),
-          })
-        );
+          };
+          
+          console.log('CTS characteristic with organizationId:', characteristicWithOrgId);
+          return insertCtsCharacteristicsSchema.parse(characteristicWithOrgId);
+        });
         
         const newCharacteristics = await db
           .insert(ctsCharacteristics)
