@@ -475,7 +475,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
         </div>
 
         {/* Admin Panel - Only visible to super_admin,admin and manager users */}
-        {user.role === 'super_admin' || user.role === 'admin' || user.role === 'manager' && (
+        {(user.role === 'super_admin' || user.role === 'admin' || user.role === 'manager') && (
           <div className="mt-6">
             <Card>
               <CardHeader>
