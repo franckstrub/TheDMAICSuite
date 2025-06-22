@@ -243,8 +243,41 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Auto-save function with debouncing
   const autoSaveDataPoints = async (ctq: string) => {
-    const processCapabilityId = capabilityData[ctq]?.id;
-    if (!processCapabilityId) return;
+    let processCapabilityId = capabilityData[ctq]?.id;
+    
+    // If no capability configuration exists, create one first
+    if (!processCapabilityId) {
+      try {
+        const defaultCapabilityData = {
+          ctq: ctq,
+          lsl: "",
+          usl: "",
+          target: "",
+          zShift: 1.5,
+          dataSetTerm: "Long Term",
+          capabilityIndex: "Cp/Cpk",
+          showPercentage: false,
+          showZ: false,
+          conclusion: "",
+          showStatistics: false,
+        };
+        
+        const result = await saveCapabilityMutation.mutateAsync(defaultCapabilityData);
+        processCapabilityId = result.capability.id;
+        
+        // Update local state
+        setCapabilityData(prev => ({
+          ...prev,
+          [ctq]: {
+            ...defaultCapabilityData,
+            id: processCapabilityId
+          }
+        }));
+      } catch (error) {
+        console.error("Failed to create capability configuration for auto-save:", error);
+        return;
+      }
+    }
     
     const currentPoints = dataPoints[ctq] || [];
     const numericValues = currentPoints.map(point => point.dataValue);
@@ -319,15 +352,49 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   };
 
   const saveAllDataPoints = async (ctq: string) => {
-    const processCapabilityId = capabilityData[ctq]?.id;
+    let processCapabilityId = capabilityData[ctq]?.id;
+    
+    // If no capability configuration exists, create one first
     if (!processCapabilityId) {
-      console.error("No process capability ID found for CTQ:", ctq);
-      toast({
-        title: "Error",
-        description: "Process capability configuration not found. Please save the capability settings first.",
-        variant: "destructive",
-      });
-      return;
+      console.log("No process capability ID found, creating configuration first...");
+      try {
+        // Create a default capability configuration
+        const defaultCapabilityData = {
+          ctq: ctq,
+          lsl: "",
+          usl: "",
+          target: "",
+          zShift: 1.5,
+          dataSetTerm: "Long Term",
+          capabilityIndex: "Cp/Cpk",
+          showPercentage: false,
+          showZ: false,
+          conclusion: "",
+          showStatistics: false,
+        };
+        
+        const result = await saveCapabilityMutation.mutateAsync(defaultCapabilityData);
+        processCapabilityId = result.capability.id;
+        
+        // Update local state with the new capability data
+        setCapabilityData(prev => ({
+          ...prev,
+          [ctq]: {
+            ...defaultCapabilityData,
+            id: processCapabilityId
+          }
+        }));
+        
+        console.log("Created capability configuration with ID:", processCapabilityId);
+      } catch (error) {
+        console.error("Error creating capability configuration:", error);
+        toast({
+          title: "Error",
+          description: "Failed to create capability configuration",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     const currentPoints = dataPoints[ctq] || [];
