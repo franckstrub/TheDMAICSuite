@@ -79,6 +79,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     if (savedTab) {
       setActiveTab(savedTab);
     }
+    // Reset initialization state when project changes
+    setHasInitializedTab(false);
   }, [projectId]);
 
   // Save active tab to localStorage whenever it changes
@@ -556,6 +558,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           setActiveTab(ctqs[0].ctq);
         }
         setHasInitializedTab(true);
+      }
+      
+      // If no active tab is set but we have CTQs, set the first one as default
+      if (!activeTab && ctqs.length > 0) {
+        setActiveTab(ctqs[0].ctq);
       }
     }
   }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
