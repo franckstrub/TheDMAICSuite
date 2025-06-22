@@ -1,6 +1,15 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// Initialize the Google AI client with proper API key validation
+let genAI: GoogleGenerativeAI | null = null;
+if (process.env.GOOGLE_AI_API_KEY) {
+  genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+}
+
+// Validate API key at startup
+if (!process.env.GOOGLE_AI_API_KEY) {
+  console.warn("Warning: GOOGLE_AI_API_KEY is missing. AI capability assessment will fail.");
+}
 
 export interface CapabilityStats {
   sampleSize: number;
@@ -35,6 +44,21 @@ export async function generateCapabilityAssessment(
   context: CapabilityContext
 ): Promise<string> {
   try {
+    console.log(`Generating capability assessment for CTQ: "${context.ctq}"`);
+    
+    // Check if API key is available
+    if (!process.env.GOOGLE_AI_API_KEY) {
+      console.error('GOOGLE_AI_API_KEY is not set in environment variables');
+      throw new Error('GOOGLE_AI_API_KEY is missing. Please make sure it is set in your environment variables.');
+    }
+    
+    // Check if Google AI client was initialized
+    if (!genAI) {
+      throw new Error('Google AI client not initialized. Check your API key.');
+    }
+
+    console.log("Using Google AI API to generate capability assessment");
+
     const normalityText = stats.isNormal 
       ? `The data follows a normal distribution (p-value: ${stats.normalityPValue?.toFixed(4) || 'N/A'}).`
       : `The data does NOT follow a normal distribution (p-value: ${stats.normalityPValue?.toFixed(4) || 'N/A'}). Consider data transformation or non-parametric analysis.`;
@@ -74,14 +98,36 @@ Please provide:
 
 Keep the assessment professional, data-driven, and actionable for process improvement teams.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
-      contents: prompt,
-    });
+    console.log("Sending request to Google AI API for capability assessment...");
 
-    return response.text || "Unable to generate capability assessment. Please try again.";
-  } catch (error) {
-    console.error("Error generating capability assessment:", error);
-    throw new Error(`Failed to generate capability assessment: ${error}`);
+    // Create a generative model instance
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Generate content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    console.log("Capability assessment response received from Google AI API");
+    
+    return text || "Unable to generate capability assessment. Please try again.";
+  } catch (error: any) {
+    console.error('Error generating capability assessment with Google AI:', error);
+    
+    // Detailed error handling based on common API errors
+    if (error.status === 401 || error.status === 403) {
+      throw new Error('Authentication failed: Invalid API key. Please check your GOOGLE_AI_API_KEY environment variable.');
+    } else if (error.status === 400) {
+      throw new Error(`Bad request: ${error.message || 'Check if the model name is correct and the request format is valid.'}`);
+    } else if (error.status === 404) {
+      throw new Error('Resource not found: The specified model may not exist or be available.');
+    } else if (error.status === 429) {
+      throw new Error('Rate limit exceeded: Too many requests in a given amount of time.');
+    } else if (error.status >= 500) {
+      throw new Error('Server error: The API is experiencing issues. Please try again later.');
+    } else {
+      console.error('Full error details:', JSON.stringify(error, null, 2));
+      throw new Error(`Failed to generate capability assessment: ${error.message || 'Unknown error'}`);
+    }
   }
 }
