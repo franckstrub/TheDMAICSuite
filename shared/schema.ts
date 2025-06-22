@@ -393,6 +393,7 @@ export const customerRequirements = pgTable("customer_requirements", {
 });
 
 export const insertRequirementSchema = createInsertSchema(customerRequirements).pick({
+  organizationId: true,
   projectId: true,
   requirement: true,
   customerRequirement: true,
@@ -414,6 +415,7 @@ export const businessRequirements = pgTable("business_requirements", {
 });
 
 export const insertBusinessRequirementSchema = createInsertSchema(businessRequirements).pick({
+  organizationId: true,
   projectId: true,
   requirement: true,
   businessNeed: true,

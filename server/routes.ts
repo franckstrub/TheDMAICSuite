@@ -1479,8 +1479,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mitigationPlan2: sanitizedRiskData.mitigationPlan2 ? sanitizedRiskData.mitigationPlan2.substring(0, 30) + '...' : 'empty',
       });
       
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       // Validate the risk data
-      const validatedData = insertRiskSchema.parse(sanitizedRiskData);
+      const validatedData = insertRiskSchema.parse({
+        ...sanitizedRiskData,
+        organizationId
+      });
       
       // Insert risk data
       const [risk] = await db.insert(projectRisks).values(validatedData).returning();
@@ -2491,11 +2498,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.status(200).json(updatedMap);
       } else {
+        // Get user's organization ID
+        const user = req.user as any;
+        const organizationId = user?.organizationId || 1; // Fallback to default org
+        
         // Create new process map
         const [newMap] = await db
           .insert(processMaps)
           .values({
             projectId,
+            organizationId,
             diagramData,
           })
           .returning();
@@ -2739,9 +2751,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/process-capability", async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const payload = insertProcessCapabilitySchema.parse({
         ...req.body,
         projectId,
+        organizationId,
       });
 
       // Check if a process capability record already exists for this CTQ and project
