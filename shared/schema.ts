@@ -1002,6 +1002,7 @@ export const processCapability = pgTable("process_capability", {
   showStatistics: boolean("show_statistics").default(false), // Show/hide statistics section
   dataPoints: jsonb("data_points").$type<number[]>().default([]), // JSON array of numeric data points
   conclusion: text("conclusion"),
+  capabilityAssessment: text("capability_assessment"), // AI-generated capability assessment
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 

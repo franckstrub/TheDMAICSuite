@@ -2947,6 +2947,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate AI Capability Assessment
+  app.post("/api/projects/:projectId/process-capability/:ctq/ai-assessment", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctq = req.params.ctq;
+      const { stats, context } = req.body;
+
+      if (!stats || !context) {
+        return res.status(400).json({ error: "Missing stats or context data" });
+      }
+
+      const assessment = await generateCapabilityAssessment(stats, context);
+
+      // Update the capability assessment in the database
+      const [updatedRecord] = await db
+        .update(processCapability)
+        .set({ 
+          capabilityAssessment: assessment,
+          lastUpdated: new Date()
+        })
+        .where(and(
+          eq(processCapability.projectId, projectId),
+          eq(processCapability.ctq, ctq)
+        ))
+        .returning();
+
+      return res.status(200).json({ 
+        assessment,
+        processCapability: updatedRecord 
+      });
+    } catch (err) {
+      console.error("Error generating AI capability assessment:", err);
+      return res.status(500).json({ 
+        error: "Failed to generate AI capability assessment",
+        details: err instanceof Error ? err.message : "Unknown error"
+      });
+    }
+  });
+
   // Update statistics toggle state for MSA Analysis
   app.patch("/api/projects/:projectId/msa-analysis/:ctq/statistics", async (req, res) => {
     try {
