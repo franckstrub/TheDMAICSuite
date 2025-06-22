@@ -150,21 +150,26 @@ export default function MeasurePhase() {
       
       if (plans && typeof plans === 'object' && 'plans' in plans && (plans as any).plans && (plans as any).plans.length > 0) {
         console.log('Loading existing saved plans:', (plans as any).plans);
-        // Load existing saved plans
-        setDataCollectionPlans((plans as any).plans.map((p: any) => ({
-          id: p.id, // Include the ID for proper updates
-          ctq: p.ctq,
-          operationalDefinition: p.operationalDefinition,
-          dataType: p.dataType,
-          pointOfMeasure: p.pointOfMeasure || "Output",
-          collectionMethod: p.collectionMethod || "Random",
-          collectionMethodComment: p.collectionMethodComment || "",
-          sampleSize: p.sampleSize ? p.sampleSize.toString() : "",
-          datesTimeFrequency: p.datesTimeFrequency || "",
-          measurementSystem: p.measurementSystem || "",
-          dataSource: p.dataSource || "",
-          responsible: p.responsible,
-        })));
+        // Load existing saved plans and sync CTQ types from CTS characteristics
+        const ctsCharacteristics = (ctsData as any)?.characteristics || [];
+        setDataCollectionPlans((plans as any).plans.map((p: any) => {
+          // Find the corresponding CTS characteristic to get the latest CTQ type
+          const ctsChar = ctsCharacteristics.find((char: any) => char.ctq === p.ctq);
+          return {
+            id: p.id, // Include the ID for proper updates
+            ctq: p.ctq,
+            operationalDefinition: p.operationalDefinition,
+            dataType: ctsChar?.ctqType || p.dataType, // Use CTQ type from CTS characteristics if available
+            pointOfMeasure: p.pointOfMeasure || "Output",
+            collectionMethod: p.collectionMethod || "Random",
+            collectionMethodComment: p.collectionMethodComment || "",
+            sampleSize: p.sampleSize ? p.sampleSize.toString() : "",
+            datesTimeFrequency: p.datesTimeFrequency || "",
+            measurementSystem: p.measurementSystem || "",
+            dataSource: p.dataSource || "",
+            responsible: p.responsible,
+          };
+        }));
         setHasLoadedFromServer(true);
       } else if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData && Array.isArray((ctsData as any).characteristics) && (ctsData as any).characteristics.length > 0) {
         console.log('Auto-populating from CTS characteristics:', (ctsData as any).characteristics);
