@@ -756,16 +756,28 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       console.log('Stats:', stats);
       console.log('Context:', context);
 
-      const response = await apiRequest('POST', `/api/projects/${projectId}/process-capability/${ctq}/ai-assessment`, {
-        stats,
-        context
+      const response = await fetch(`/api/projects/${projectId}/process-capability/${ctq}/ai-assessment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          stats,
+          context
+        })
       });
 
-      console.log('AI service response:', response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      if (response && response.assessment) {
+      const data = await response.json();
+      console.log('AI service response:', data);
+
+      if (data && data.assessment && data.assessment.length > 0) {
         console.log('Updating capability field with assessment...');
-        updateCapabilityField(ctq, "capabilityAssessment", response.assessment);
+        updateCapabilityField(ctq, "capabilityAssessment", data.assessment);
         
         // Force a refresh of the capability data from the server
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
@@ -775,10 +787,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           description: "Capability assessment has been generated successfully",
         });
       } else {
-        console.error('Invalid response from AI service:', response);
+        console.error('Invalid response from AI service:', data);
+        const errorMsg = data?.error || "No assessment returned from AI service";
         toast({
           title: "Error", 
-          description: "No assessment returned from AI service",
+          description: errorMsg,
           variant: "destructive",
         });
       }

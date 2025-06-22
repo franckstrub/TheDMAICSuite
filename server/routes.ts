@@ -2975,7 +2975,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       return res.status(200).json({ 
-        assessment,
+        success: true,
+        assessment: assessment,
         processCapability: updatedRecord 
       });
     } catch (err) {
