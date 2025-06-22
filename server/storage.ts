@@ -61,6 +61,12 @@ export interface IStorage {
   createCustomerRequirement(requirement: InsertRequirement): Promise<CustomerRequirement>;
   updateCustomerRequirement(id: number, requirement: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined>;
   deleteCustomerRequirement(id: number): Promise<boolean>;
+  
+  // Legacy Customer Requirements methods (for compatibility)
+  getRequirements(projectId: number): Promise<CustomerRequirement[]>;
+  createRequirement(requirement: InsertRequirement): Promise<CustomerRequirement>;
+  updateRequirement(id: number, requirement: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined>;
+  deleteRequirement(id: number): Promise<boolean>;
 
   // Business Requirements operations
   getBusinessRequirements(projectId: number): Promise<BusinessRequirement[]>;
@@ -311,6 +317,19 @@ export class DatabaseStorage implements IStorage {
   async deleteCustomerRequirement(id: number): Promise<boolean> {
     const result = await db.delete(customerRequirements).where(eq(customerRequirements.id, id));
     return result.rowCount > 0;
+  }
+
+  // Legacy methods for compatibility
+  async createRequirement(requirement: InsertRequirement): Promise<CustomerRequirement> {
+    return this.createCustomerRequirement(requirement);
+  }
+
+  async updateRequirement(id: number, requirement: Partial<CustomerRequirement>): Promise<CustomerRequirement | undefined> {
+    return this.updateCustomerRequirement(id, requirement);
+  }
+
+  async deleteRequirement(id: number): Promise<boolean> {
+    return this.deleteCustomerRequirement(id);
   }
 
   async getBusinessRequirements(projectId: number): Promise<BusinessRequirement[]> {
