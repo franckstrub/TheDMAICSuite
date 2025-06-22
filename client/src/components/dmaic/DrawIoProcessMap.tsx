@@ -25,9 +25,10 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
       if (response.ok) {
         const data = await response.json();
         setDiagramData(data.diagramData || '');
+        console.log('Loaded existing diagram data');
       }
     } catch (error) {
-      console.log('No existing diagram data found');
+      console.log('No existing diagram data found, starting with empty diagram');
     }
   };
 
@@ -75,9 +76,11 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
       
       switch (data.event) {
         case 'init':
+          console.log('Draw.io initialized');
           setIsLoaded(true);
           // Send existing diagram data if available
           if (diagramData && iframeRef.current) {
+            console.log('Loading existing diagram data into editor');
             iframeRef.current.contentWindow?.postMessage(
               JSON.stringify({
                 action: 'load',
@@ -149,8 +152,8 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
     }
   };
 
-  // Draw.io embed URL with configuration - ensure proto=json for proper messaging
-  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=0&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1&configure=1';
+  // Draw.io embed URL with working configuration
+  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=0&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1';
 
   return (
     <div className="w-full">
@@ -187,7 +190,10 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           title="Process Map Editor"
           frameBorder="0"
           allow="camera; microphone; geolocation"
-          onLoad={() => setIsLoaded(true)}
+          onLoad={() => {
+            console.log('Draw.io iframe loaded successfully');
+            setIsLoaded(true);
+          }}
         />
       </div>
       
