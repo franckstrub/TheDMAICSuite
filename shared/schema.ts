@@ -479,6 +479,7 @@ export const dataCollectionPlans = pgTable("data_collection_plans", {
 
 export const insertPlanSchema = createInsertSchema(dataCollectionPlans).pick({
   projectId: true,
+  organizationId: true,
   ctq: true,
   operationalDefinition: true,
   dataType: true,
