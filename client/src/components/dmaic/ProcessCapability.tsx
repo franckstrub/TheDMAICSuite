@@ -671,15 +671,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return;
       }
 
-      const values = currentData.map(dp => dp.dataValue).filter(val => !isNaN(val) && isFinite(val));
-      if (values.length < 30) {
-        toast({
-          title: "Invalid Data",
-          description: "Not enough valid numeric data points for analysis",
-          variant: "destructive",
-        });
-        return;
-      }
+
 
       const capData = capabilityData[ctq];
       const existingStats = statistics[ctq];
@@ -695,7 +687,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
       // Use existing calculated statistics from the UI
       const stats = {
-        sampleSize: existingStats.count || values.length,
+        sampleSize: existingStats.count || currentData.length,
         mean: existingStats.mean || 0,
         standardDeviation: existingStats.standardDeviation || 0,
         normalityPValue: existingStats.normalityPValue || null,
