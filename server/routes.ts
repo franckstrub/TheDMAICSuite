@@ -1048,14 +1048,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/datasets", async (req: Request, res: Response) => {
     try {
-      const datasetData = insertDatasetSchema.parse(req.body);
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
+      const datasetData = insertDatasetSchema.parse({
+        ...req.body,
+        organizationId
+      });
       const dataset = await storage.createDataset(datasetData);
       
       // Log activity
-      const user = await storage.getUser(datasetData.createdBy);
-      if (user) {
+      const datasetUser = await storage.getUser(datasetData.createdBy);
+      if (datasetUser) {
         await storage.createActivityLog({
-            organizationId: user.organizationId,
+            organizationId: datasetUser.organizationId,
           userId: datasetData.createdBy,
           projectId: datasetData.projectId,
           action: "create_dataset",
@@ -1146,9 +1153,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/data-collection-plans", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const planData: InsertPlan = {
         ...req.body,
-        projectId
+        projectId,
+        organizationId
       };
       
       const validatedData = insertPlanSchema.parse(planData);
@@ -1274,9 +1286,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users/:userId/storage-config", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const configData: InsertConfig = {
         ...req.body,
-        userId
+        userId,
+        organizationId
       };
       
       const validatedData = insertConfigSchema.parse(configData);
@@ -1291,10 +1308,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await storage.createStorageConfig(validatedData);
       
       // Log activity
-      const user = await storage.getUser(userId);
-      if (user) {
+      const configUser = await storage.getUser(userId);
+      if (configUser) {
         await storage.createActivityLog({
-            organizationId: user.organizationId,
+            organizationId: configUser.organizationId,
           userId,
           projectId: null,
           action: "update_storage_config",
@@ -1857,9 +1874,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/datasets/:datasetId/process-data", async (req: Request, res: Response) => {
     try {
       const datasetId = parseInt(req.params.datasetId);
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const processDataInput: InsertProcessData = {
         ...req.body,
-        datasetId
+        datasetId,
+        organizationId
       };
       
       const validatedData = insertProcessDataSchema.parse(processDataInput);
