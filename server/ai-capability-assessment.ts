@@ -8,7 +8,7 @@ if (process.env.GOOGLE_AI_API_KEY) {
 
 // Validate API key at startup
 if (!process.env.GOOGLE_AI_API_KEY) {
-  console.warn("Warning: GOOGLE_AI_API_KEY is missing. AI capability assessment will fail.");
+  console.warn("Warning: GOOGLE_AI_API_KEY is missing. AI capability analysis will fail.");
 }
 
 export interface CapabilityStats {
@@ -23,9 +23,10 @@ export interface CapabilityStats {
   zLongTerm?: number;
   sigma?: number;
   dpmo?: number;
-  yield?: number;
-  normalityPValue?: number;
+  //yield?: number;
+  //normalityPValue?: number;
   isNormal?: boolean;
+  percentageDefect?: number;
   observedDefectRate?: number;
 }
 
@@ -44,7 +45,7 @@ export async function generateCapabilityAssessment(
   context: CapabilityContext
 ): Promise<string> {
   try {
-    console.log(`Generating capability assessment for CTQ: "${context.ctq}"`);
+    console.log(`Generating capability analysis for CTQ: "${context.ctq}"`);
     
     // Check if API key is available
     if (!process.env.GOOGLE_AI_API_KEY) {
@@ -57,21 +58,30 @@ export async function generateCapabilityAssessment(
       throw new Error('Google AI client not initialized. Check your API key.');
     }
 
-    console.log("Using Google AI API to generate capability assessment");
+    console.log("Using Google AI API to generate capability assessmen analysist");
 
     const normalityText = stats.isNormal 
-      ? `The data follows a normal distribution (p-value: ${stats.normalityPValue?.toFixed(4) || 'N/A'}).`
-      : `The data does NOT follow a normal distribution (p-value: ${stats.normalityPValue?.toFixed(4) || 'N/A'}). Consider data transformation or non-parametric analysis.`;
+      ? `The data follows a normal distribution.`
+      : `The data does NOT follow a normal distribution. Consider data transformation or non-parametric analysis.`;
 
     const capabilityText = context.capabilityIndex === "Cp/Cpk" 
-      ? `Capability indices: Cp = ${stats.cp?.toFixed(3) || 'N/A'}, Cpk = ${stats.cpk?.toFixed(3) || 'N/A'}, Pp = ${stats.pp?.toFixed(3) || 'N/A'}, Ppk = ${stats.ppk?.toFixed(3) || 'N/A'}`
-      : `Z-values: ${context.dataSetTerm === "Short Term" ? `Z short-term = ${stats.zShortTerm?.toFixed(2) || 'N/A'}` : `Z long-term = ${stats.zLongTerm?.toFixed(2) || 'N/A'}`}`;
+      ? (context.dataSetTerm === "Short Term" ?
+        `Capability indices: Cp = ${stats.cp?.toFixed(3) || 'N/A'}, Cpk = ${stats.cpk?.toFixed(3) || 'N/A'}`
+        :
+        `Pp = ${stats.pp?.toFixed(3) || 'N/A'}, Ppk = ${stats.ppk?.toFixed(3) || 'N/A'}`
+      ) : (
+        `Z short-term = ${stats.zShortTerm?.toFixed(2) || 'N/A'}, Z long-term = ${stats.zLongTerm?.toFixed(2) || 'N/A'}`
+      )
 
-    const defectText = stats.observedDefectRate !== undefined 
-      ? `Observed defect rate: ${(stats.observedDefectRate * 100).toFixed(4)}%`
-      : `Calculated DPMO: ${stats.dpmo?.toFixed(0) || 'N/A'}, Yield: ${((stats.yield || 0) * 100).toFixed(2)}%`;
-
-    const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive capability assessment for the CTQ "${context.ctq}".
+    const defectText = stats.percentageDefect !== undefined && stats.isNormal
+      ? `Calculated defect rate: ${(stats.percentageDefect * 100).toFixed(4)}%`
+      : 
+    
+       stats.observedDefectRate !== undefined ?
+       `Observed defect rate: ${(stats.observedDefectRate * 100).toFixed(4)}%`
+        : ``;
+    
+    const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive capability analysis for the CTQ "${context.ctq}".
 
 Statistical Analysis:
 - Sample size: ${stats.sampleSize}
@@ -87,18 +97,16 @@ Process Context:
 - USL: ${context.usl || 'Not specified'}
 - Target: ${context.target || 'Not specified'}
 - Z-shift: ${context.zShift}
-- Analysis term: ${context.dataSetTerm}
+- Data set term: ${context.dataSetTerm}
 
 Please provide:
 1. Overall capability rating (World-class, Capable, Marginal, Poor)
 2. Key insights about process performance
 3. Statistical interpretation of the results
-4. Specific recommendations for improvement
-5. Risk assessment and implications
 
-Keep the assessment professional, data-driven, and actionable for process improvement teams.`;
+Keep the analysis concise, professional, data-driven, and actionable for process improvement teams.`;
 
-    console.log("Sending request to Google AI API for capability assessment...");
+    console.log("Sending request to Google AI API for capability anaysis...");
 
     // Create a generative model instance
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -108,11 +116,11 @@ Keep the assessment professional, data-driven, and actionable for process improv
     const response = await result.response;
     const text = response.text();
     
-    console.log("Capability assessment response received from Google AI API");
+    console.log("Capability analysis response received from Google AI API");
     
-    return text || "Unable to generate capability assessment. Please try again.";
+    return text || "Unable to generate capability analysis. Please try again.";
   } catch (error: any) {
-    console.error('Error generating capability assessment with Google AI:', error);
+    console.error('Error generating capability analysis with Google AI:', error);
     
     // Detailed error handling based on common API errors
     if (error.status === 401 || error.status === 403) {
