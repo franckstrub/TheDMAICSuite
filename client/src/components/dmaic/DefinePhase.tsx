@@ -1041,6 +1041,36 @@ export default function DefinePhase() {
     refetchOnWindowFocus: true,
     refetchInterval: false, // was 10000. Refetch every 10 seconds to ensure latest data
   });
+
+  // Initialize customer requirements when data is loaded
+  useEffect(() => {
+    if (requirementsData?.requirements && requirementsData.requirements.length > 0) {
+      console.log("Loading customer requirements from API:", requirementsData.requirements);
+      
+      // Sort the requirements data by ID to maintain consistency
+      const sortedRequirements = [...requirementsData.requirements].sort((a, b) => a.id - b.id);
+      
+      // Map and set to state, preserving the ID for later reference
+      const mappedRequirements = sortedRequirements.map((r: any) => ({
+        requirement: r.requirement || "",
+        customerRequirement: r.customerRequirement || "",
+        importance: r.importance || 3,
+        CTS: r.CTS || "",
+        ctq: r.ctq || "",
+        id: r.id,
+      }));
+      
+      console.log("Setting customer requirements state with mapped data:", mappedRequirements);
+      setRequirements(mappedRequirements);
+      
+      // Also set the sessionStorage flag to remember we have requirements for this project
+      sessionStorage.setItem(`project_${projectId}_has_requirements`, 'true');
+    } else if (requirementsData?.requirements && requirementsData.requirements.length === 0) {
+      // If no requirements found, ensure we have at least one empty row
+      console.log("No customer requirements found, setting default empty row");
+      setRequirements([{ requirement: "", customerRequirement: "", importance: 3, CTS: "", ctq: "" }]);
+    }
+  }, [requirementsData, projectId]);
   
   // Initial data load effect for business requirements - triggered on mount and when returning to page
   useEffect(() => {
