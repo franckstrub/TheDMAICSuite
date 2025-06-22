@@ -167,6 +167,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           title="Process Map Editor"
           frameBorder="0"
           allow="camera; microphone; geolocation"
+          onLoad={() => setIsLoaded(true)}
         />
       </div>
       
