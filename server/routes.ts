@@ -2200,11 +2200,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user as any;
       const organizationId = user?.organizationId || 1; // Fallback to default org
       
-      // Validate the stakeholder analysis data
-      const validatedData = insertStakeholderAnalysisItemSchema.parse({
+      // Add organization ID to analysis data
+      const dataWithOrgId = {
         ...analysisData,
         organizationId
-      });
+      };
+      
+      // Validate the stakeholder analysis data
+      const validatedData = insertStakeholderAnalysisItemSchema.parse(dataWithOrgId);
       
       // Insert the item
       const [newItem] = await db
