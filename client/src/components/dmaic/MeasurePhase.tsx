@@ -172,7 +172,7 @@ export default function MeasurePhase() {
         const autoPopulatedPlans = (ctsData as any).characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
           operationalDefinition: characteristic.operationalDefinition || `Specific measurement criteria and procedures for accurately measuring "${characteristic.ctq}"`,
-          dataType: "Continuous", // Default data type
+          dataType: characteristic.ctqType || "Continuous", // Use actual CTQ type from characteristics
           pointOfMeasure: "Output", // Default point of measure
           collectionMethod: "Random", // Default collection method
           collectionMethodComment: "",
@@ -191,19 +191,25 @@ export default function MeasurePhase() {
         
         if (ctqs.length > 0) {
           console.log('Auto-populating from centralized CTQs:', ctqs);
-          const autoPopulatedPlans = ctqs.map((ctq: string) => ({
-            ctq: ctq,
-            operationalDefinition: `Specific measurement criteria and procedures for accurately measuring "${ctq}"`,
-            dataType: "Continuous", // Default data type
-            pointOfMeasure: "Output", // Default point of measure
-            collectionMethod: "Random", // Default collection method
-            collectionMethodComment: "",
-            sampleSize: "",
-            datesTimeFrequency: "",
-            measurementSystem: "",
-            dataSource: "",
-            responsible: ""
-          }));
+          // Get CTQ types from centralized data
+          const ctqsWithTypes = (ctqsData as any)?.ctqs || [];
+          const autoPopulatedPlans = ctqs.map((ctq: string) => {
+            // Find the CTQ in the centralized data to get its type
+            const ctqData = ctqsWithTypes.find((item: any) => item.ctq === ctq);
+            return {
+              ctq: ctq,
+              operationalDefinition: `Specific measurement criteria and procedures for accurately measuring "${ctq}"`,
+              dataType: ctqData?.ctqType || "Continuous", // Use actual CTQ type from centralized data
+              pointOfMeasure: "Output", // Default point of measure
+              collectionMethod: "Random", // Default collection method
+              collectionMethodComment: "",
+              sampleSize: "",
+              datesTimeFrequency: "",
+              measurementSystem: "",
+              dataSource: "",
+              responsible: ""
+            };
+          });
           console.log('Setting auto-populated plans:', autoPopulatedPlans);
           setDataCollectionPlans(autoPopulatedPlans);
         } else {
