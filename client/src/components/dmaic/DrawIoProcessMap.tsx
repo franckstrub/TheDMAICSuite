@@ -33,7 +33,8 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
 
   const saveDiagramData = async (data: string) => {
     try {
-      await fetch(`/api/projects/${projectId}/process-map`, {
+      console.log('Saving diagram data to server:', data.substring(0, 100) + '...');
+      const response = await fetch(`/api/projects/${projectId}/process-map`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,15 +42,21 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
         body: JSON.stringify({ diagramData: data }),
       });
       
-      toast({
-        title: "Success",
-        description: "Process map saved successfully",
-      });
-      
-      if (onSave) {
-        onSave(data);
+      if (response.ok) {
+        console.log('Process map saved successfully');
+        toast({
+          title: "Success",
+          description: "Process map saved successfully",
+        });
+        
+        if (onSave) {
+          onSave(data);
+        }
+      } else {
+        throw new Error(`Server responded with ${response.status}`);
       }
     } catch (error) {
+      console.error('Error saving process map:', error);
       toast({
         title: "Error",
         description: "Failed to save process map",
@@ -90,7 +97,13 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           break;
           
         case 'export':
-          // Handle export events if needed
+          // Handle export events - save the exported diagram
+          console.log('Export event received:', data);
+          if (data.xml) {
+            console.log('Saving exported diagram data');
+            setDiagramData(data.xml);
+            saveDiagramData(data.xml);
+          }
           break;
           
         case 'exit':
@@ -110,12 +123,16 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
   }, [diagramData]);
 
   const handleSave = () => {
+    console.log('Save button clicked, isLoaded:', isLoaded);
     if (iframeRef.current) {
+      console.log('Requesting diagram export from draw.io');
       // Request current diagram data from draw.io
       iframeRef.current.contentWindow?.postMessage(
         JSON.stringify({ action: 'export', format: 'xml' }),
         'https://embed.diagrams.net'
       );
+    } else {
+      console.log('No iframe reference available');
     }
   };
 
