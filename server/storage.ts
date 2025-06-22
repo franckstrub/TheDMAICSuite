@@ -504,6 +504,11 @@ export class DatabaseStorage implements IStorage {
     return await query;
   }
 
+  async getGateReviewDeliverable(id: number): Promise<GateReviewDeliverable | undefined> {
+    const [deliverable] = await db.select().from(gateReviewDeliverables).where(eq(gateReviewDeliverables.id, id));
+    return deliverable || undefined;
+  }
+
   async createGateReviewDeliverable(deliverable: InsertGateReviewDeliverable): Promise<GateReviewDeliverable> {
     const [newDeliverable] = await db
       .insert(gateReviewDeliverables)
