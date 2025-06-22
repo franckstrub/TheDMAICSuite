@@ -658,7 +658,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Generate AI Capability Assessment
   const generateAIAssessment = async (ctq: string) => {
-    console.log('AI Assessment generation started for CTQ:', ctq);
     try {
       setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: true }));
 
@@ -673,8 +672,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
 
       const values = currentData.map(dp => dp.dataValue).filter(val => !isNaN(val) && isFinite(val));
-      const capData = capabilityData[ctq];
-      
       if (values.length < 30) {
         toast({
           title: "Invalid Data",
@@ -683,22 +680,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         });
         return;
       }
+
+      const capData = capabilityData[ctq];
       
-      // Calculate statistics with error handling
-      let sampleMean, sampleStd, normalityResult;
-      try {
-        sampleMean = mean(values);
-        sampleStd = standardDeviation(values);
-        normalityResult = performNormalityTest(values);
-      } catch (error) {
-        console.error("Error calculating statistics:", error);
-        toast({
-          title: "Calculation Error",
-          description: "Failed to calculate statistical measures",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Calculate basic statistics
+      const sampleMean = mean(values);
+      const sampleStd = standardDeviation(values);
+      const normalityResult = performNormalityTest(values);
       
       const lsl = parseNumericValue(capData?.lsl);
       const usl = parseNumericValue(capData?.usl);
@@ -712,74 +700,43 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         isNormal: normalityResult.isNormal,
       };
 
-      // Calculate capability metrics with error handling
-      try {
-        if (capData?.capabilityIndex === "Cp/Cpk" && lsl !== null && usl !== null) {
-          console.log('Calculating Cp/Cpk indices...');
+      // Add capability metrics if possible
+      if (capData?.capabilityIndex === "Cp/Cpk" && lsl !== null && usl !== null) {
+        try {
           const capabilityResults = calculateCapabilityIndexes(values, lsl, usl, target);
           stats = { ...stats, ...capabilityResults };
-        } else if (capData?.capabilityIndex === "Z") {
-          console.log('Calculating Z-score metrics...');
-          const zResults = calculateZScoreLongShortTerm(values, lsl, usl, capData?.zShift || 1.5);
-          stats = { ...stats, ...zResults };
+        } catch (e) {
+          // Continue without capability indices
         }
-      } catch (capError) {
-        console.error('Error calculating capability metrics:', capError);
-        // Continue with basic stats only
-      }
-
-      // Add observed defect rates if available
-      try {
-        if (lsl !== null || usl !== null) {
-          console.log('Calculating observed performance metrics...');
-          const observedMetrics = calculateObservedPerformanceMetrics(values, lsl, usl, capData?.zShift || 1.5);
-          stats.observedDefectRate = observedMetrics.longTerm.obspercentDefects / 100;
-          stats.dpmo = observedMetrics.longTerm.obsdpmo;
-          stats.yield = observedMetrics.longTerm.obsyield;
-        }
-      } catch (obsError) {
-        console.error('Error calculating observed metrics:', obsError);
-        // Continue without observed metrics
       }
 
       const context = {
         ctq,
         capabilityIndex: capData?.capabilityIndex || "Cp/Cpk",
-        lsl: capData?.lsl,
-        usl: capData?.usl,
-        target: capData?.target,
+        lsl: capData?.lsl || "",
+        usl: capData?.usl || "",
+        target: capData?.target || "",
         zShift: capData?.zShift || 1.5,
         dataSetTerm: capData?.dataSetTerm || "Long Term"
       };
 
-      console.log('Sending request to AI service...');
-      console.log('Stats:', stats);
-      console.log('Context:', context);
-
-      const response = await fetch(`/api/projects/${projectId}/process-capability/${ctq}/ai-assessment`, {
+      const response = await fetch(`/api/projects/${projectId}/process-capability/${encodeURIComponent(ctq)}/ai-assessment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({
-          stats,
-          context
-        })
+        body: JSON.stringify({ stats, context })
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Server error: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('AI service response:', data);
 
-      if (data && data.assessment && data.assessment.length > 0) {
-        console.log('Updating capability field with assessment...');
+      if (data?.assessment) {
         updateCapabilityField(ctq, "capabilityAssessment", data.assessment);
-        
-        // Force a refresh of the capability data from the server
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
         
         toast({
@@ -787,28 +744,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           description: "Capability assessment has been generated successfully",
         });
       } else {
-        console.error('Invalid response from AI service:', data);
-        const errorMsg = data?.error || "No assessment returned from AI service";
-        toast({
-          title: "Error", 
-          description: errorMsg,
-          variant: "destructive",
-        });
+        throw new Error("No assessment received from server");
       }
 
     } catch (error) {
-      console.error("Error generating AI assessment:", error);
-      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
       toast({
         title: "Error",
-        description: `Failed to generate AI capability assessment: ${errorMessage}`,
+        description: error instanceof Error ? error.message : "Failed to generate AI assessment",
         variant: "destructive",
       });
     } finally {
-      console.log('AI assessment generation completed for CTQ:', ctq);
       setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: false }));
     }
   };
