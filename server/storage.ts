@@ -112,6 +112,7 @@ export interface IStorage {
   deleteGateReviewDeliverable(id: number): Promise<boolean>;
 
   getGateReviewValidators(projectId: number, phase?: string): Promise<GateReviewValidator[]>;
+  getGateReviewValidator(id: number): Promise<GateReviewValidator | undefined>;
   createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator>;
   updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined>;
   deleteGateReviewValidator(id: number): Promise<boolean>;
@@ -541,6 +542,11 @@ export class DatabaseStorage implements IStorage {
     return await query;
   }
 
+  async getGateReviewValidator(id: number): Promise<GateReviewValidator | undefined> {
+    const [validator] = await db.select().from(gateReviewValidators).where(eq(gateReviewValidators.id, id));
+    return validator || undefined;
+  }
+
   async createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator> {
     const [newValidator] = await db
       .insert(gateReviewValidators)
@@ -552,7 +558,7 @@ export class DatabaseStorage implements IStorage {
   async updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined> {
     const [updatedValidator] = await db
       .update(gateReviewValidators)
-      .set(validator)
+      .set({ ...validator, lastUpdated: new Date() })
       .where(eq(gateReviewValidators.id, id))
       .returning();
     return updatedValidator || undefined;

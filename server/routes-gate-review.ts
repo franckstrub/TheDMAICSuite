@@ -184,7 +184,9 @@ export function registerGateReviewRoutes(app: Express, dbStorage: any) {
         return res.status(404).json({ error: "Validator not found" });
       }
       
-      const updatedValidator = await dbStorage.updateGateReviewValidator(id, req.body);
+      // Remove lastUpdated from request body to prevent timestamp formatting issues
+      const { lastUpdated, ...updateData } = req.body;
+      const updatedValidator = await dbStorage.updateGateReviewValidator(id, updateData);
       res.json({ validator: updatedValidator });
     } catch (error) {
       console.error("Error updating gate review validator:", error);
