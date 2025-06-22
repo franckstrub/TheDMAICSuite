@@ -674,12 +674,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
 
       const capData = capabilityData[ctq];
-      const existingStats = statistics[ctq];
       
-      if (!existingStats) {
+      // Check if statistics are being shown (which means they're calculated)
+      if (!showStatistics[ctq]) {
         toast({
           title: "Statistics Not Available",
-          description: "Please ensure statistics are calculated before generating AI assessment",
+          description: "Please enable 'Show Statistics' to calculate metrics before generating AI assessment",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Use the same calculation function that's used for display
+      const calculatedStats = calculateProcessCapabilityStats(ctq);
+      
+      if (!calculatedStats) {
+        toast({
+          title: "Statistics Not Available",
+          description: "Unable to calculate statistics for this CTQ",
           variant: "destructive",
         });
         return;
@@ -687,21 +699,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
       // Use existing calculated statistics from the UI
       const stats = {
-        sampleSize: existingStats.count || currentData.length,
-        mean: existingStats.mean || 0,
-        standardDeviation: existingStats.standardDeviation || 0,
-        normalityPValue: existingStats.normalityPValue || null,
-        isNormal: existingStats.isNormal || false,
-        cp: existingStats.cp || null,
-        cpk: existingStats.cpk || null,
-        pp: existingStats.pp || null,
-        ppk: existingStats.ppk || null,
-        zShortTerm: existingStats.zShortTerm || null,
-        zLongTerm: existingStats.zLongTerm || null,
-        sigma: existingStats.sigma || null,
-        dpmo: existingStats.dpmo || null,
-        yield: existingStats.yield || null,
-        observedDefectRate: existingStats.observedDefectRate || null
+        sampleSize: calculatedStats.sampleSize,
+        mean: calculatedStats.mean,
+        standardDeviation: calculatedStats.standardDeviation,
+        normalityPValue: calculatedStats.normalityPValue,
+        isNormal: calculatedStats.isNormal,
+        cp: calculatedStats.cp || null,
+        cpk: calculatedStats.cpk || null,
+        pp: calculatedStats.pp || null,
+        ppk: calculatedStats.ppk || null,
+        zShortTerm: calculatedStats.zShortTerm || null,
+        zLongTerm: calculatedStats.zLongTerm || null,
+        sigma: calculatedStats.sigma || null,
+        dpmo: calculatedStats.dpmo || null,
+        yield: calculatedStats.yield || null,
+        observedDefectRate: calculatedStats.observedDefectRate || null
       };
 
       const context = {
@@ -2276,7 +2288,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                             e.stopPropagation();
                             generateAIAssessment(ctq);
                           }}
-                          disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30 || !statistics[ctq]}
+                          disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30 || !showStatistics[ctq]}
                           className="flex items-center gap-2"
                         >
                           {isGeneratingAssessment[ctq] ? (
