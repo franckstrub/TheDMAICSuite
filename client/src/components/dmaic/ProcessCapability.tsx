@@ -662,10 +662,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: true }));
 
       const currentData = dataPoints[ctq] || [];
+      console.log(`AI Assessment - CTQ: ${ctq}, Data points available: ${currentData.length}`);
+      
       if (currentData.length < 30) {
         toast({
           title: "Insufficient Data",
-          description: "At least 30 data points are required for AI capability assessment",
+          description: `At least 30 data points are required for AI capability assessment. Current: ${currentData.length}`,
           variant: "destructive",
         });
         return;
@@ -725,13 +727,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       if (response.assessment) {
         updateCapabilityField(ctq, "capabilityAssessment", response.assessment);
         
+        // Force a refresh of the capability data from the server
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
+        
         toast({
           title: "AI Assessment Generated",
           description: "Capability assessment has been generated successfully",
         });
       } else {
         toast({
-          title: "Error",
+          title: "Error", 
           description: "No assessment returned from AI service",
           variant: "destructive",
         });
@@ -2284,6 +2289,11 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       rows={6}
                       className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
                     />
+                    {capabilityData[ctq]?.capabilityAssessment && (
+                      <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                        <span>✓ AI assessment loaded ({(capabilityData[ctq]?.capabilityAssessment || "").length} characters)</span>
+                      </div>
+                    )}
                     {(dataPoints[ctq]?.length || 0) < 30 && (
                       <p className="text-xs text-orange-600 mt-1">
                         At least 30 data points required for AI assessment (Current: {dataPoints[ctq]?.length || 0})
