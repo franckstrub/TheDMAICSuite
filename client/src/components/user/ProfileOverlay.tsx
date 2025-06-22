@@ -74,7 +74,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
   // Update mutation for profile
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: typeof editedProfile) => {
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch('/api/auth/user', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
