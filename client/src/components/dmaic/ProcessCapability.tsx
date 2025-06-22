@@ -662,8 +662,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: true }));
 
       const currentData = dataPoints[ctq] || [];
-      console.log(`AI Assessment - CTQ: ${ctq}, Data points available: ${currentData.length}`);
-      
       if (currentData.length < 30) {
         toast({
           title: "Insufficient Data",
@@ -673,13 +671,33 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return;
       }
 
-      const values = currentData.map(dp => dp.dataValue);
+      const values = currentData.map(dp => dp.dataValue).filter(val => !isNaN(val) && isFinite(val));
       const capData = capabilityData[ctq];
       
-      // Calculate statistics
-      const sampleMean = mean(values);
-      const sampleStd = standardDeviation(values);
-      const normalityResult = performNormalityTest(values);
+      if (values.length < 30) {
+        toast({
+          title: "Invalid Data",
+          description: "Not enough valid numeric data points for analysis",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Calculate statistics with error handling
+      let sampleMean, sampleStd, normalityResult;
+      try {
+        sampleMean = mean(values);
+        sampleStd = standardDeviation(values);
+        normalityResult = performNormalityTest(values);
+      } catch (error) {
+        console.error("Error calculating statistics:", error);
+        toast({
+          title: "Calculation Error",
+          description: "Failed to calculate statistical measures",
+          variant: "destructive",
+        });
+        return;
+      }
       
       const lsl = parseNumericValue(capData?.lsl);
       const usl = parseNumericValue(capData?.usl);
@@ -2270,7 +2288,11 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => generateAIAssessment(ctq)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          generateAIAssessment(ctq);
+                        }}
                         disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30}
                         className="flex items-center gap-2"
                       >
@@ -2291,7 +2313,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     />
                     {capabilityData[ctq]?.capabilityAssessment && (
                       <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
-                        <span>✓ AI assessment loaded ({(capabilityData[ctq]?.capabilityAssessment || "").length} characters)</span>
+                        <span>✓ AI assessment loaded ({String(capabilityData[ctq]?.capabilityAssessment || "").length} characters)</span>
                       </div>
                     )}
                     {(dataPoints[ctq]?.length || 0) < 30 && (
