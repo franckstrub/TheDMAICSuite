@@ -1403,7 +1403,7 @@ export default function DefinePhase() {
             requirement: r.requirement,
             businessNeed: r.businessNeed || "",
             importance: r.importance,
-            ctq: r.criticalToQuality, // Map the criticalToQuality field to ctq for storage
+            ctq: r.ctq || "", // Use ctq field directly
             userId: user?.id,
           };
           
