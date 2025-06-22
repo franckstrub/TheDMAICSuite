@@ -99,10 +99,13 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
         case 'export':
           // Handle export events - save the exported diagram
           console.log('Export event received:', data);
-          if (data.xml) {
+          if (data.xml || data.data) {
+            const xmlData = data.xml || data.data;
             console.log('Saving exported diagram data');
-            setDiagramData(data.xml);
-            saveDiagramData(data.xml);
+            setDiagramData(xmlData);
+            saveDiagramData(xmlData);
+          } else {
+            console.log('No XML data in export event:', data);
           }
           break;
           
@@ -126,9 +129,9 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
     console.log('Save button clicked, isLoaded:', isLoaded);
     if (iframeRef.current) {
       console.log('Requesting diagram export from draw.io');
-      // Request current diagram data from draw.io
+      // Request current diagram data from draw.io using the correct message format
       iframeRef.current.contentWindow?.postMessage(
-        JSON.stringify({ action: 'export', format: 'xml' }),
+        JSON.stringify({ action: 'export', format: 'xmlsvg', xml: '', embedImages: false }),
         'https://embed.diagrams.net'
       );
     } else {
@@ -146,8 +149,8 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
     }
   };
 
-  // Draw.io embed URL with configuration
-  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=0&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1';
+  // Draw.io embed URL with configuration - ensure proto=json for proper messaging
+  const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=0&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1&configure=1';
 
   return (
     <div className="w-full">
