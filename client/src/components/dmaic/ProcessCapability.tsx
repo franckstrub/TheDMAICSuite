@@ -2269,7 +2269,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium">Capability Assessment</label>
+                      <label className="block text-sm font-medium">Capability Assessment Analysis</label>
                       <Button
                         type="button"
                         variant="outline"
