@@ -148,9 +148,14 @@ export function registerGateReviewRoutes(app: Express, dbStorage: any) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       const validatedData = insertGateReviewValidatorSchema.parse({
         ...req.body,
-        projectId
+        projectId,
+        organizationId
       });
       
       const validator = await dbStorage.createGateReviewValidator(validatedData);
