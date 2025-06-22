@@ -43,7 +43,7 @@ interface ProcessCapabilityData {
   capabilityIndex: "Z" | "Cp/Cpk";
   showPercentage: boolean;
   showZ: boolean; // For attribute CTQs
-  conclusion: string;
+  //conclusion: string;
   capabilityAssessment?: string; // AI-generated capability assessment
 }
 
@@ -267,7 +267,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           capabilityIndex: "Z",
           showPercentage: false,
           showZ: false,
-          conclusion: "",
+          //conclusion: "",
           showStatistics: false,
         };
         
@@ -378,7 +378,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           capabilityIndex: "Z",
           showPercentage: false,
           showZ: false,
-          conclusion: "",
+          //conclusion: "",
           showStatistics: false,
         };
         
@@ -618,7 +618,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           capabilityIndex: "Z" as const,
           showPercentage: false,
           showZ: false,
-          conclusion: "",
+          //conclusion: "",
           capabilityAssessment: "",
         };
         
@@ -665,7 +665,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       if (currentData.length < 30) {
         toast({
           title: "Insufficient Data",
-          description: `At least 30 data points are required for AI capability assessment. Current: ${currentData.length}`,
+          description: `At least 30 data points are required for AI capability analysis. Current: ${currentData.length}`,
           variant: "destructive",
         });
         return;
@@ -712,7 +712,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
       const context = {
         ctq,
-        capabilityIndex: capData?.capabilityIndex || "Cp/Cpk",
+        capabilityIndex: capData?.capabilityIndex || "Z",
         lsl: capData?.lsl || "",
         usl: capData?.usl || "",
         target: capData?.target || "",
@@ -740,17 +740,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
         
         toast({
-          title: "AI Assessment Generated",
-          description: "Capability assessment has been generated successfully",
+          title: "AI Analysis Generated",
+          description: "Capability analysis has been generated successfully",
         });
       } else {
-        throw new Error("No assessment received from server");
+        throw new Error("No Capability analysis received from server");
       }
 
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate AI assessment",
+        description: error instanceof Error ? error.message : "Failed to generate AI Capability analysis",
         variant: "destructive",
       });
     } finally {
@@ -915,7 +915,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         capabilityIndex: data.capabilityIndex || "Z",
         showPercentage: Boolean(data.showPercentage),
         showZ: Boolean(data.showZ),
-        conclusion: data.conclusion || "",
+        //conclusion: data.conclusion || "",
         capabilityAssessment: data.capabilityAssessment || "",
         showStatistics: Boolean(showStatistics[ctq]), // Include current statistics visibility state
       };
@@ -1914,7 +1914,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
         )}
       </div>
 
-      {/* Capability Assessment */}
+      {/* Capability Analysis */}
       <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
         <h4 className="font-medium text-yellow-800 mb-2">Capability Assessment</h4>
         <div className="text-sm text-yellow-700">
@@ -2257,6 +2257,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                 })()}
 
                 <div className="space-y-4">
+                  {/*
                   <div>
                     <label className="block text-sm font-medium mb-2">Conclusion</label>
                     <Textarea
@@ -2266,48 +2267,51 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       rows={3}
                     />
                   </div>
+                  */}
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium">Capability Assessment Analysis</label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          generateAIAssessment(ctq);
-                        }}
-                        disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30}
-                        className="flex items-center gap-2"
-                      >
-                        {isGeneratingAssessment[ctq] ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-4 w-4 text-purple-600" />
-                        )}
-                        {isGeneratingAssessment[ctq] ? "Generating..." : "Generate AI Assessment"}
-                      </Button>
-                    </div>
-                    <Textarea
-                      value={capabilityData[ctq]?.capabilityAssessment || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "capabilityAssessment", e.target.value)}
-                      placeholder="AI-powered capability assessment will appear here..."
-                      rows={6}
-                      className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
-                    />
-                    {capabilityData[ctq]?.capabilityAssessment && (
-                      <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
-                        <span>✓ AI assessment loaded ({String(capabilityData[ctq]?.capabilityAssessment || "").length} characters)</span>
+                  {showStatistics[ctq] && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium">Capability Analysis</label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            generateAIAssessment(ctq);
+                          }}
+                          disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30}
+                          className="flex items-center gap-2"
+                        >
+                          {isGeneratingAssessment[ctq] ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4 text-purple-600" />
+                          )}
+                          {isGeneratingAssessment[ctq] ? "Generating..." : "Generate AI Assessment"}
+                        </Button>
                       </div>
-                    )}
-                    {(dataPoints[ctq]?.length || 0) < 30 && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        At least 30 data points required for AI assessment (Current: {dataPoints[ctq]?.length || 0})
-                      </p>
-                    )}
-                  </div>
+                      <Textarea
+                        value={capabilityData[ctq]?.capabilityAssessment || ""}
+                        onChange={(e) => updateCapabilityField(ctq, "capabilityAssessment", e.target.value)}
+                        placeholder="AI-powered capability analysis will appear here..."
+                        rows={6}
+                        className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
+                      />
+                      {capabilityData[ctq]?.capabilityAssessment && (
+                        <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                          <span>✓ AI capability analysis loaded ({String(capabilityData[ctq]?.capabilityAssessment || "").length} characters)</span>
+                        </div>
+                      )}
+                      {(dataPoints[ctq]?.length || 0) < 30 && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          At least 30 data points required for AI Capability analysis (Current: {dataPoints[ctq]?.length || 0})
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end">
