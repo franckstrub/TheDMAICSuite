@@ -658,6 +658,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Generate AI Capability Assessment
   const generateAIAssessment = async (ctq: string) => {
+    console.log('AI Assessment generation started for CTQ:', ctq);
     try {
       setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: true }));
 
@@ -711,20 +712,34 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         isNormal: normalityResult.isNormal,
       };
 
-      if (capData?.capabilityIndex === "Cp/Cpk" && lsl !== null && usl !== null) {
-        const capabilityResults = calculateCapabilityIndexes(values, lsl, usl, target);
-        stats = { ...stats, ...capabilityResults };
-      } else if (capData?.capabilityIndex === "Z") {
-        const zResults = calculateZScoreLongShortTerm(values, lsl, usl, capData?.zShift || 1.5);
-        stats = { ...stats, ...zResults };
+      // Calculate capability metrics with error handling
+      try {
+        if (capData?.capabilityIndex === "Cp/Cpk" && lsl !== null && usl !== null) {
+          console.log('Calculating Cp/Cpk indices...');
+          const capabilityResults = calculateCapabilityIndexes(values, lsl, usl, target);
+          stats = { ...stats, ...capabilityResults };
+        } else if (capData?.capabilityIndex === "Z") {
+          console.log('Calculating Z-score metrics...');
+          const zResults = calculateZScoreLongShortTerm(values, lsl, usl, capData?.zShift || 1.5);
+          stats = { ...stats, ...zResults };
+        }
+      } catch (capError) {
+        console.error('Error calculating capability metrics:', capError);
+        // Continue with basic stats only
       }
 
       // Add observed defect rates if available
-      if (lsl !== null || usl !== null) {
-        const observedMetrics = calculateObservedPerformanceMetrics(values, lsl, usl, capData?.zShift || 1.5);
-        stats.observedDefectRate = observedMetrics.longTerm.obspercentDefects / 100;
-        stats.dpmo = observedMetrics.longTerm.obsdpmo;
-        stats.yield = observedMetrics.longTerm.obsyield;
+      try {
+        if (lsl !== null || usl !== null) {
+          console.log('Calculating observed performance metrics...');
+          const observedMetrics = calculateObservedPerformanceMetrics(values, lsl, usl, capData?.zShift || 1.5);
+          stats.observedDefectRate = observedMetrics.longTerm.obspercentDefects / 100;
+          stats.dpmo = observedMetrics.longTerm.obsdpmo;
+          stats.yield = observedMetrics.longTerm.obsyield;
+        }
+      } catch (obsError) {
+        console.error('Error calculating observed metrics:', obsError);
+        // Continue without observed metrics
       }
 
       const context = {
@@ -737,12 +752,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         dataSetTerm: capData?.dataSetTerm || "Long Term"
       };
 
+      console.log('Sending request to AI service...');
+      console.log('Stats:', stats);
+      console.log('Context:', context);
+
       const response = await apiRequest('POST', `/api/projects/${projectId}/process-capability/${ctq}/ai-assessment`, {
         stats,
         context
       });
 
-      if (response.assessment) {
+      console.log('AI service response:', response);
+
+      if (response && response.assessment) {
+        console.log('Updating capability field with assessment...');
         updateCapabilityField(ctq, "capabilityAssessment", response.assessment);
         
         // Force a refresh of the capability data from the server
@@ -753,6 +775,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           description: "Capability assessment has been generated successfully",
         });
       } else {
+        console.error('Invalid response from AI service:', response);
         toast({
           title: "Error", 
           description: "No assessment returned from AI service",
@@ -762,12 +785,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
     } catch (error) {
       console.error("Error generating AI assessment:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       toast({
         title: "Error",
-        description: "Failed to generate AI capability assessment",
+        description: `Failed to generate AI capability assessment: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
+      console.log('AI assessment generation completed for CTQ:', ctq);
       setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: false }));
     }
   };
