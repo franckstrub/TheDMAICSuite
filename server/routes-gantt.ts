@@ -59,10 +59,15 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
+      // Get user's organization ID
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
       // Parse and validate the request body
       const taskData = insertGanttTaskSchema.parse({
         ...req.body,
-        projectId
+        projectId,
+        organizationId
       });
       
       const task = await storageToUse.createGanttTask(taskData);
