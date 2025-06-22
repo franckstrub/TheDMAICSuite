@@ -605,7 +605,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         // Check if this CTQ comes from CTS characteristics to auto-populate LSL, USL, target
         const ctsChar = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === ctq);
         
-        initialData[ctq] = existingCapability || {
+        initialData[ctq] = existingCapability ? {
+          ...existingCapability,
+          capabilityAssessment: existingCapability.capabilityAssessment || "",
+        } : {
           ctq: ctq,
           lsl: ctsChar?.lsl || "",
           usl: ctsChar?.usl || "",
@@ -616,6 +619,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           showPercentage: false,
           showZ: false,
           conclusion: "",
+          capabilityAssessment: "",
         };
         
         // Load statistics visibility state from database
