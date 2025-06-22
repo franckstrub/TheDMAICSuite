@@ -779,6 +779,7 @@ export type ProjectCosts = {
 // Stakeholder Analysis Matrix
 export const stakeholderAnalysisItems = pgTable("stakeholder_analysis_items", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   stakeholderName: text("stakeholder_name").notNull(),
   stakeholderRole: text("stakeholder_role"),
