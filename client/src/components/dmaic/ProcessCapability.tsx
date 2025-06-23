@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -610,16 +610,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   const loadDataPointsForCtq = async (ctq: string) => {
     const processCapabilityId = capabilityData[ctq]?.id;
-    if (!processCapabilityId) return;
+    if (!processCapabilityId) {
+      console.log(`No process capability ID found for CTQ: ${ctq}`);
+      return;
+    }
     
     try {
+      console.log(`Loading data points for CTQ: ${ctq}, ID: ${processCapabilityId}`);
       const points = await loadDataPoints(processCapabilityId);
+      console.log(`Loaded ${points.length} data points for CTQ: ${ctq}`, points);
       setDataPoints(prev => ({
         ...prev,
         [ctq]: points
       }));
     } catch (error) {
-      console.error("Failed to load data points:", error);
+      console.error(`Failed to load data points for CTQ: ${ctq}`, error);
     }
   };
 
@@ -629,10 +634,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     ctqs.forEach(({ ctq }) => {
       if (capabilityData[ctq]?.id && (!dataPoints[ctq] || dataPoints[ctq].length === 0)) {
         // Only load data points if we don't already have local data points
+        console.log(`Loading data points for CTQ: ${ctq}, ID: ${capabilityData[ctq]?.id}`);
         loadDataPointsForCtq(ctq);
       }
     });
-  }, [capabilityData]);
+  }, [capabilityData, Object.keys(dataPoints).length]);
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
@@ -1198,7 +1204,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-300"
                                       title="Delete data point"
                                     >
-                                      <Trash2 className="h-3 w-3" />
+                                      <i className="fas fa-trash h-4 w-4"></i>
                                     </Button>
                                   </td>
                                 </tr>
