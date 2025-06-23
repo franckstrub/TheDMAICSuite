@@ -30,7 +30,7 @@ import {
   calculateCapabilityIndexes,
   calculateObservedPerformanceMetrics
 } from "@/lib/statisticsUtils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -2226,6 +2226,32 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
 
                     const histogramData = getHistogramData(numericValues, 8);
                     const quartiles = calculateQuartiles(numericValues);
+                    
+                    // Calculate Gaussian curve data
+                    const dataMean = mean(numericValues);
+                    const dataStdDev = standardDeviation(numericValues);
+                    const gaussMinValue = Math.min(...numericValues);
+                    const gaussMaxValue = Math.max(...numericValues);
+                    const gaussRange = gaussMaxValue - gaussMinValue;
+                    const gaussianPadding = gaussRange * 0.1;
+                    
+                    // Find maximum frequency to scale the Gaussian curve
+                    const maxFrequency = Math.max(...histogramData.map(d => d.y));
+                    
+                    // Generate Gaussian curve points and combine with histogram data
+                    const combinedHistogramData = histogramData.map(bar => {
+                      const x = bar.x;
+                      // Calculate normal distribution probability density
+                      const exponent = -0.5 * Math.pow((x - dataMean) / dataStdDev, 2);
+                      const probability = (1 / (dataStdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+                      // Scale the probability to match histogram frequency scale
+                      const scaledY = probability * maxFrequency * dataStdDev * Math.sqrt(2 * Math.PI) * 0.8;
+                      
+                      return {
+                        ...bar,
+                        gaussian: scaledY
+                      };
+                    });
 
                     // Box plot data
                     const boxPlotData = [
@@ -2363,11 +2389,11 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                             </div>
                           </div>
 
-                          {/* Density Histogram */}
+                          {/* Density Histogram with Gaussian Overlay */}
                           <div className="bg-white p-4 border rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Density Histogram</h4>
+                            <h4 className="font-medium text-gray-800 mb-3">Density Histogram with Normal Distribution</h4>
                             <ResponsiveContainer width="100%" height={250}>
-                              <BarChart data={histogramData}>
+                              <ComposedChart data={combinedHistogramData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis 
                                   dataKey="x" 
@@ -2376,15 +2402,36 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                 />
                                 <YAxis label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }} />
                                 <Tooltip 
-                                  formatter={(value: any) => [value, 'Frequency']}
+                                  formatter={(value: any, name: string) => {
+                                    if (name === 'y') return [value, 'Observed Frequency'];
+                                    if (name === 'gaussian') return [Number(value).toFixed(2), 'Normal Distribution'];
+                                    return [value, name];
+                                  }}
                                   labelFormatter={(value) => `Value: ${Number(value).toFixed(3)}`}
                                 />
-                                <Bar dataKey="y" fill="#3b82f6" />
-                              </BarChart>
+                                <Bar dataKey="y" fill="#3b82f6" name="Observed Frequency" />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="gaussian" 
+                                  stroke="#1e40af" 
+                                  strokeWidth={3}
+                                  dot={false}
+                                  name="Normal Distribution"
+                                />
+                              </ComposedChart>
                             </ResponsiveContainer>
                             <div className="text-xs text-gray-600 mt-2">
-                              Mean: {mean(numericValues).toFixed(3)} | 
-                              Std Dev: {standardDeviation(numericValues).toFixed(3)}
+                              <div>Mean: {mean(numericValues).toFixed(3)} | Std Dev: {standardDeviation(numericValues).toFixed(3)}</div>
+                              <div className="flex items-center gap-4 mt-1">
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-3 bg-blue-500"></div>
+                                  <span>Observed Data</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-1 bg-blue-800"></div>
+                                  <span>Normal Distribution Curve</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -2475,8 +2522,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                           y={cy - 4}
                                           width={8}
                                           height={8}
-                                          fill="black"
-                                          stroke="black"
+                                          fill="blue"
+                                          stroke="blue"
                                           strokeWidth={1}
                                         />
                                       );
