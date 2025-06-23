@@ -164,6 +164,18 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
+      // Get user authentication info
+      const user = req.user as any;
+      if (!user?.claims?.sub) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userId = parseInt(user.claims.sub);
+      const userRecord = await storageToUse.getUser(userId);
+      if (!userRecord?.organizationId) {
+        return res.status(401).json({ error: "User organization not found" });
+      }
+      
       // Get project charter for dates and project leader
       const charter = await debugGetCharter(projectId);
       if (!charter) {
@@ -205,6 +217,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         // Define Phase - Start at project start, end at define milestone
         {
           projectId,
+          organizationId: userRecord.organizationId,
           name: "Define Phase",
           startDate,
           endDate: defineDate || measureDate || analyzeDate || improveDate || controlDate || endDate,
@@ -219,6 +232,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         // Project Kick-Off (sub-task in Define)
         {
           projectId,
+          organizationId: userRecord.organizationId,
           name: "Project Kick-Off Meeting",
           startDate: kickOffDate || startDate,
           endDate: kickOffDate || startDate,
@@ -233,6 +247,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         // Measure Phase
         {
           projectId,
+          organizationId: userRecord.organizationId,
           name: "Measure Phase",
           startDate: defineDate || startDate,
           endDate: measureDate || analyzeDate || improveDate || controlDate || endDate,
@@ -247,6 +262,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         // Analyze Phase
         {
           projectId,
+          organizationId: userRecord.organizationId,
           name: "Analyze Phase",
           startDate: measureDate || defineDate || startDate,
           endDate: analyzeDate || improveDate || controlDate || endDate,
@@ -261,6 +277,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         // Improve Phase
         {
           projectId,
+          organizationId: userRecord.organizationId,
           name: "Improve Phase",
           startDate: analyzeDate || measureDate || defineDate || startDate,
           endDate: improveDate || controlDate || endDate,
@@ -275,6 +292,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         // Control Phase
         {
           projectId,
+          organizationId: userRecord.organizationId,
           name: "Control Phase",
           startDate: improveDate || analyzeDate || measureDate || defineDate || startDate,
           endDate: controlDate || endDate,
@@ -289,6 +307,7 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         // Project Closure (still part of Control Phase)
         {
           projectId,
+          organizationId: userRecord.organizationId,
           name: "Project Closure",
           startDate: controlDate,
           endDate: endDate,
