@@ -26,6 +26,27 @@ export class OrganizationService {
     if (user && user.organizationId) {
       const [existingOrg] = await db.select().from(organizations).where(eq(organizations.id, user.organizationId));
       if (existingOrg) {
+        // Check if we need to update the organization based on new company name
+        if (userData?.companyName && existingOrg.isSystemGenerated && existingOrg.name.includes('Private Individual')) {
+          const enterpriseType = userType === 'enterprise_medium' ? 'enterprise_medium' : 
+                                userType === 'solo_entrepreneur' ? 'solo_entrepreneur' : 'enterprise_small';
+          
+          const maxUsers = enterpriseType === 'enterprise_medium' ? 200 : 
+                          enterpriseType === 'solo_entrepreneur' ? 5 : 50;
+          
+          const [updatedOrg] = await db
+            .update(organizations)
+            .set({
+              name: userData.companyName,
+              type: enterpriseType,
+              maxUsers: maxUsers,
+              isSystemGenerated: false
+            })
+            .where(eq(organizations.id, existingOrg.id))
+            .returning();
+          
+          return updatedOrg;
+        }
         return existingOrg;
       }
     }
