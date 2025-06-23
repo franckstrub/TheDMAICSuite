@@ -594,11 +594,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/charter", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/charter", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
       console.log("Creating charter for project ID:", projectId);
       console.log("Charter request body:", req.body);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       // Fix cashBenefits to workingCapitalGains migration
       const requestBody = {...req.body};
@@ -618,7 +631,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const charterData: InsertCharter = {
         ...requestBody,
-        projectId
+        projectId,
+        organizationId: userRecord.organizationId
       };
       
       console.log("Validating charter data structure...");
