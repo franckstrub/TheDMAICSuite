@@ -2061,9 +2061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizationId: userRecord.organizationId
       };
       
-      console.log("RACI matrix input data:", raciMatrixInput);
       const validatedData = insertRaciSchema.parse(raciMatrixInput);
-      console.log("RACI matrix validated data:", validatedData);
       
       // Check if a RACI matrix already exists for this project
       const existingMatrix = await storage.getRaciMatrix(projectId);
@@ -2087,7 +2085,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } else {
         // Create new matrix
-        console.log("Creating new RACI matrix with data:", validatedData);
         raciMatrix = await storage.createRaciMatrix(validatedData);
         
         // Log activity

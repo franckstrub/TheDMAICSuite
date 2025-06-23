@@ -539,6 +539,7 @@ export const insertConfigSchema = createInsertSchema(storageConfigs).pick({
 // Project RACI Matrix
 export const projectRaciMatrix = pgTable("project_raci_matrix", {
   id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   // Store the matrix as structured JSON with role assignments
   // Each row represents a team member/stakeholder
