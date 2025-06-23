@@ -2409,6 +2409,45 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   }}
                                   labelFormatter={(value) => `Value: ${Number(value).toFixed(3)}`}
                                 />
+                                
+                                {/* Mean vertical line */}
+                                <ReferenceLine 
+                                  x={dataMean} 
+                                  stroke="#dc2626" 
+                                  strokeWidth={2}
+                                  strokeDasharray="5 5"
+                                  label={{ 
+                                    value: `Mean: ${dataMean.toFixed(3)}`, 
+                                    position: "topRight",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "11px" }
+                                  }} 
+                                />
+                                
+                                {/* Standard deviation lines at inflection points */}
+                                <ReferenceLine 
+                                  x={dataMean + dataStdDev} 
+                                  stroke="#059669" 
+                                  strokeWidth={1}
+                                  strokeDasharray="3 3"
+                                  label={{ 
+                                    value: `+1σ: ${(dataMean + dataStdDev).toFixed(3)}`, 
+                                    position: "top",
+                                    style: { fill: "#059669", fontWeight: "bold", fontSize: "10px" }
+                                  }} 
+                                />
+                                
+                                <ReferenceLine 
+                                  x={dataMean - dataStdDev} 
+                                  stroke="#059669" 
+                                  strokeWidth={1}
+                                  strokeDasharray="3 3"
+                                  label={{ 
+                                    value: `-1σ: ${(dataMean - dataStdDev).toFixed(3)}`, 
+                                    position: "top",
+                                    style: { fill: "#059669", fontWeight: "bold", fontSize: "10px" }
+                                  }} 
+                                />
+                                
                                 <Bar dataKey="y" fill="#3b82f6" name="Observed Frequency" />
                                 <Line 
                                   type="monotone" 
@@ -2429,7 +2468,15 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <div className="w-3 h-1 bg-blue-800"></div>
-                                  <span>Normal Distribution Curve</span>
+                                  <span>Normal Distribution</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-1 bg-red-600 border-dashed border-t-2"></div>
+                                  <span>Mean</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-1 bg-green-600 border-dashed border-t-2"></div>
+                                  <span>±1σ</span>
                                 </div>
                               </div>
                             </div>
