@@ -295,9 +295,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
     
     const currentPoints = dataPoints[ctq] || [];
-    const numericValues = currentPoints
-      .map(point => point.dataValue)
-      .filter(value => typeof value === 'number' && !isNaN(value));
+    const numericValues = currentPoints.map(point => point.dataValue);
     
     if (numericValues.length === 0) return;
     
@@ -453,14 +451,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
     
     const currentPoints = dataPoints[ctq] || [];
-    const numericValues = currentPoints
-      .map(point => point.dataValue)
-      .filter(value => typeof value === 'number' && !isNaN(value));
+    const numericValues = currentPoints.map(point => point.dataValue);
     
     if (numericValues.length === 0) {
       toast({
         title: "Warning",
-        description: "No valid data points to save",
+        description: "No data points to save",
         variant: "destructive",
       });
       return;
@@ -854,12 +850,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Calculate process capability statistics
   const calculateProcessCapabilityStats = (ctq: string) => {
     const data = capabilityData[ctq];
-    const rawDataPoints = dataPoints[ctq] || [];
-    
-    // Filter out invalid values (NaN, null, undefined, -1 which indicates invalid conversion)
-    const dataPointsArray = rawDataPoints
-      .map(dp => dp.dataValue)
-      .filter(value => typeof value === 'number' && !isNaN(value) && value !== -1);
+    const dataPointsArray = dataPoints[ctq]?.map(dp => dp.dataValue) || [];
     
     if (!data || dataPointsArray.length < 30) {
       return null;
@@ -1185,8 +1176,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       value={point.dataValue}
                                       onChange={(e) => {
                                         const newValue = parseFloat(e.target.value);
-                                        // Only update if the value is a valid number
-                                        if (!isNaN(newValue)) {
                                           setDataPoints(prev => {
                                             const updated = [...(prev[ctq] || [])];
                                             updated[index] = { ...updated[index], dataValue: newValue };
@@ -1194,7 +1183,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           });
                                           // Trigger auto-save when cell value changes
                                           triggerAutoSave(ctq);
-                                        }
                                       }}
                                       onFocus={() => {
                                         setFocusedCell(prev => ({ ...prev, [ctq]: index }));
@@ -2040,9 +2028,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                 {/* Statistical Control Charts, Density Histogram and ox Plot */}
                 {ctqWithType.ctqType === "Continuous" && showStatistics[ctq] && (() => {
                   const currentPoints = dataPoints[ctq] || [];
-                  const numericValues = currentPoints
-                    .map(point => point.dataValue)
-                    .filter(value => typeof value === 'number' && !isNaN(value) && value !== -1);
+                  const numericValues = currentPoints.map(point => point.dataValue);
                   
                   if (numericValues.length >= 5) {
                     // Prepare data for charts
