@@ -462,21 +462,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userClaims = (req.user as any)?.claims;
       const userId = userClaims?.sub;
       
+      console.log("Project creation - User claims:", userClaims);
+      console.log("Project creation - Request body:", req.body);
+      
       if (!userId) {
         return res.status(400).json({ message: "User not authenticated" });
       }
 
       // Get user record from database to get organization ID
       const userRecord = await storage.getUser(userId);
+      console.log("Project creation - User record:", userRecord);
+      
       if (!userRecord || !userRecord.organizationId) {
         return res.status(400).json({ message: "User organization not found" });
       }
 
-      const projectData = insertProjectSchema.parse({
+      const projectDataToValidate = {
         ...req.body,
         organizationId: userRecord.organizationId,
         createdBy: userId
-      });
+      };
+      
+      console.log("Project creation - Data to validate:", projectDataToValidate);
+      
+      const projectData = insertProjectSchema.parse(projectDataToValidate);
+      
+      console.log("Project creation - Validated data:", projectData);
       
       const project = await storage.createProject(projectData);
       
@@ -491,6 +502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       return res.status(201).json({ project });
     } catch (err) {
+      console.error("Project creation error:", err);
       return handleErrors(err, res);
     }
   });
