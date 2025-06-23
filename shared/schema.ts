@@ -95,6 +95,7 @@ export const updateUserProfileSchema = createInsertSchema(users).pick({
   phoneCountryCode: true,
   companyName: true,
   billingAddress: true,
+  profileImageUrl: true,
 });
 
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
