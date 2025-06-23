@@ -768,12 +768,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/sipoc", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/sipoc", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
       const sipocData: InsertSipoc = {
         ...req.body,
-        projectId
+        projectId,
+        organizationId: userRecord.organizationId
       };
       
       const validatedData = insertSipocSchema.parse(sipocData);
@@ -1996,17 +2011,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/raci-matrix", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/raci-matrix", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
       // Get user's organization ID
-      const user = req.user as any;
-      const organizationId = user?.organizationId || 1; // Fallback to default org
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       const raciMatrixInput: InsertRaciMatrix = {
         ...req.body,
         projectId,
-        organizationId
+        organizationId: userRecord.organizationId
       };
       
       const validatedData = insertRaciSchema.parse(raciMatrixInput);
@@ -2258,17 +2283,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/stakeholder-analysis", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/stakeholder-analysis", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
       const analysisData = {
         ...req.body,
         projectId,
+        organizationId: userRecord.organizationId
       };
-      
-      // Get user's organization ID
-      const user = req.user as any;
-      const organizationId = user?.organizationId || 1; // Fallback to default org
       
       // Add organization ID to analysis data
       const dataWithOrgId = {
