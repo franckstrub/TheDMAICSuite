@@ -795,18 +795,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sipoc = await storage.createSipoc(validatedData);
       
       // Log activity
-      if (req.body.userId) {
-        const user = await storage.getUser(req.body.userId);
-        if (user) {
-          await storage.createActivityLog({
-            organizationId: user.organizationId,
-            userId: req.body.userId,
-            projectId,
-            action: "create_sipoc",
-            details: "Created SIPOC diagram"
-          });
-        }
-      }
+      await storage.createActivityLog({
+        organizationId: userRecord.organizationId,
+        userId: parseInt(userId),
+        projectId,
+        action: "create_sipoc",
+        details: "Created SIPOC diagram"
+      });
       
       return res.status(201).json({ sipoc });
     } catch (err) {
