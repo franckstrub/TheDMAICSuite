@@ -2318,7 +2318,40 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   dataKey="value" 
                                   stroke="#059669" 
                                   strokeWidth={2}
-                                  dot={{ r: 3 }}
+                                  dot={(props) => {
+                                    const { payload, cx, cy } = props;
+                                    if (!payload) return null;
+                                    
+                                    const dataValue = payload.value;
+                                    const isSpecialCause = dataValue > individualLimits.ucl || dataValue < individualLimits.lcl;
+                                    
+                                    if (isSpecialCause) {
+                                      // Black filled square for special cause points
+                                      return (
+                                        <rect
+                                          x={cx - 4}
+                                          y={cy - 4}
+                                          width={8}
+                                          height={8}
+                                          fill="black"
+                                          stroke="black"
+                                          strokeWidth={1}
+                                        />
+                                      );
+                                    } else {
+                                      // Regular green circle for normal points
+                                      return (
+                                        <circle
+                                          cx={cx}
+                                          cy={cy}
+                                          r={3}
+                                          fill="#059669"
+                                          stroke="#059669"
+                                          strokeWidth={1}
+                                        />
+                                      );
+                                    }
+                                  }}
                                   connectNulls={false}
                                 />
                               </LineChart>
