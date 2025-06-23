@@ -1208,17 +1208,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/data-collection-plans", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/data-collection-plans", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
       // Get user's organization ID
-      const user = req.user as any;
-      const organizationId = user?.organizationId || 1; // Fallback to default org
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       const planData: InsertPlan = {
         ...req.body,
         projectId,
-        organizationId
+        organizationId: userRecord.organizationId
       };
       
       const validatedData = insertPlanSchema.parse(planData);
@@ -2480,10 +2490,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/cts-characteristics", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/cts-characteristics", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const characteristicsData = req.body.characteristics;
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       // Clear existing characteristics for this project
       await db
@@ -2492,15 +2515,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Insert new characteristics
       if (characteristicsData && characteristicsData.length > 0) {
-        // Get user's organization ID for the characteristics
-        const user = req.user as any;
-        const organizationId = user?.organizationId || 1; // Fallback to default org
         
         const validatedCharacteristics = characteristicsData.map((char: any) => {
           const characteristicWithOrgId = {
             ...char,
             projectId,
-            organizationId,
+            organizationId: userRecord.organizationId,
             // Convert string values to numeric types for database storage
             targetPercentDefects: char.targetPercentDefects === "" || char.targetPercentDefects === null 
               ? null 
@@ -2871,18 +2891,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/process-capability", async (req, res) => {
+  app.post("/api/projects/:projectId/process-capability", isAuthenticated, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       
       // Get user's organization ID
-      const user = req.user as any;
-      const organizationId = user?.organizationId || 1; // Fallback to default org
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       const payload = insertProcessCapabilitySchema.parse({
         ...req.body,
         projectId,
-        organizationId,
+        organizationId: userRecord.organizationId,
       });
 
       // Check if a process capability record already exists for this CTQ and project
