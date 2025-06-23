@@ -228,6 +228,7 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
     teamMembers: z.array(stakeholderSchema).default([]),
   })
   .pick({
+  organizationId: true,
   projectId: true,
   projectTitle: true, // Add projectTitle to the schema
   projectReferenceNumber: true,
