@@ -343,6 +343,7 @@ export const sipocDiagrams = pgTable("sipoc_diagrams", {
 });
 
 export const insertSipocSchema = createInsertSchema(sipocDiagrams).pick({
+  organizationId: true,
   projectId: true,
   processName: true,
   suppliers: true,
