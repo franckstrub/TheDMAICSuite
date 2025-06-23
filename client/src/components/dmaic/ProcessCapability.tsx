@@ -2397,8 +2397,6 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis 
                                   dataKey="x" 
-                                  type="number"
-                                  domain={['dataMin', 'dataMax']}
                                   label={{ value: 'Value', position: 'insideBottom', offset: -5 }}
                                   tickFormatter={(value) => Number(value).toFixed(2)}
                                 />
@@ -2448,16 +2446,6 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                     position: "top",
                                     style: { fill: "#059669", fontWeight: "bold", fontSize: "10px" }
                                   }} 
-                                />
-                                
-                                <Bar dataKey="y" fill="#3b82f6" name="Observed Frequency" />
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="gaussian" 
-                                  stroke="#1e40af" 
-                                  strokeWidth={3}
-                                  dot={false}
-                                  name="Normal Distribution"
                                 />
                                 
                                 <Bar dataKey="y" fill="#3b82f6" name="Observed Frequency" />
