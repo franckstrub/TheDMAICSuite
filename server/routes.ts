@@ -480,7 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectDataToValidate = {
         ...req.body,
         organizationId: userRecord.organizationId,
-        createdBy: userId
+        createdBy: parseInt(userId)
       };
       
       console.log("Project creation - Data to validate:", projectDataToValidate);
@@ -494,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log activity
       await storage.createActivityLog({
         organizationId: userRecord.organizationId,
-        userId: userId,
+        userId: parseInt(userId),
         projectId: project.id,
         action: "create_project",
         details: `Created project: ${project.title}`
