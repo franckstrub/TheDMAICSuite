@@ -456,34 +456,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects", async (req: Request, res: Response) => {
+  app.post("/api/projects", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      // Get user's organization ID from authentication
-      const user = req.user as any;
-      const organizationId = user?.organizationId;
+      // Get user's ID from authentication claims
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
       
-      if (!organizationId) {
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      // Get user record from database to get organization ID
+      const userRecord = await storage.getUser(userId);
+      if (!userRecord || !userRecord.organizationId) {
         return res.status(400).json({ message: "User organization not found" });
       }
 
       const projectData = insertProjectSchema.parse({
         ...req.body,
-        organizationId
+        organizationId: userRecord.organizationId,
+        createdBy: userId
       });
       
       const project = await storage.createProject(projectData);
       
       // Log activity
-      const userRecord = await storage.getUser(projectData.createdBy);
-      if (userRecord) {
-        await storage.createActivityLog({
-          organizationId: userRecord.organizationId,
-          userId: projectData.createdBy,
-          projectId: project.id,
-          action: "create_project",
-          details: `Created project: ${project.title}`
-        });
-      }
+      await storage.createActivityLog({
+        organizationId: userRecord.organizationId,
+        userId: userId,
+        projectId: project.id,
+        action: "create_project",
+        details: `Created project: ${project.title}`
+      });
       
       return res.status(201).json({ project });
     } catch (err) {
