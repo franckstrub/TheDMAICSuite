@@ -2061,7 +2061,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizationId: userRecord.organizationId
       };
       
+      console.log("RACI matrix input data:", raciMatrixInput);
       const validatedData = insertRaciSchema.parse(raciMatrixInput);
+      console.log("RACI matrix validated data:", validatedData);
       
       // Check if a RACI matrix already exists for this project
       const existingMatrix = await storage.getRaciMatrix(projectId);
@@ -2076,20 +2078,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Log activity
-        if (req.body.userId) {
-          const user = await storage.getUser(req.body.userId);
-          if (user) {
-            await storage.createActivityLog({
-            organizationId: user.organizationId,
-              userId: req.body.userId,
-              projectId,
-              action: "update_raci_matrix",
-              details: "Updated RACI matrix"
-            });
-          }
-        }
+        await storage.createActivityLog({
+          organizationId: userRecord.organizationId,
+          userId: parseInt(userId),
+          projectId,
+          action: "update_raci_matrix",
+          details: "Updated RACI matrix"
+        });
       } else {
         // Create new matrix
+        console.log("Creating new RACI matrix with data:", validatedData);
         raciMatrix = await storage.createRaciMatrix(validatedData);
         
         // Log activity
