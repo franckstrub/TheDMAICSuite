@@ -1471,14 +1471,16 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
               <span className="font-medium">{stats.sampleSize}</span>
             </div>
             <div className="flex justify-between">
-              <span>Mean (X̄):</span>
+              <span>Mean (μ):</span>
               <span className="font-medium">{stats.mean.toFixed(4)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between"
+            title="SQRT( Σ(Xi-μ) / (n-1) )">
               <span>Std Dev (σ):</span>
               <span className="font-medium">{stats.standardDeviation.toFixed(4)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between"
+            title="σ²=σ*σ">
               <span>Variance (σ²):</span>
               <span className="font-medium">{stats.variance.toFixed(4)}</span>
             </div>
@@ -1589,25 +1591,29 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
               */}
             {capabilityIndex === "Cp/Cpk" ? (
               <>
-                <div className="flex justify-between">
+                <div className="flex justify-between"
+                title="Pp: = (USL − LSL) / 6σLT">
                   <span>Pp:</span>
                   <span className="font-medium">
                     {stats.pp !== null ? stats.pp.toFixed(3) : "N/A"}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between"
+                title="Ppk = min[(USL - μ) / 3σLT, (μ - LSL) / 3σLT]">
                   <span>Ppk:</span>
                   <span className="font-medium">
                     {stats.ppk !== null ? stats.ppk.toFixed(3) : "N/A"}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between"
+                  title="Cp: = (USL − LSL) / 6σST">
                   <span>Cp:</span>
                   <span className="font-medium">
                     {stats.cp !== null ? stats.cp.toFixed(3) : "N/A"}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between"
+                title="Cpk = min[(USL - μ) / 3σST, (μ - LSL) / 3σST]">
                   <span>Cpk:</span>
                   <span className="font-medium">
                     {stats.cpk !== null ? stats.cpk.toFixed(3) : "N/A"}
@@ -1627,22 +1633,32 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                   <>                                
                     <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
                     <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
-                    <div className="flex justify-between">
-                      <span>Z Long Term:</span>
-                      <span className="font-medium text-sm">
-                        {stats.zLongTerm ? stats.zLongTerm.toFixed(2) : '0.00'}σ
-                      </span>
-                    </div>
+                    <div 
+                    className="flex justify-between"
+                    title={
+                    capabilityData[ctq]?.dataSetTerm === "Long Term" 
+                    ? "ZLT with Z_USL LT = (USL − μ) / σLT & Z_LSL LT = (μ - LSL) / σLT"
+                    : "ZLT = ZST - Zshift"
+                    }
+                  >
+                  <span>Z Long Term:</span>
+                  <span className="font-medium text-sm">
+                  {stats.zLongTerm ? stats.zLongTerm.toFixed(2) : '0.00'}σ
+                  </span>
+                  </div>
+                  </div>
                     {capabilityData[ctq]?.dataSetTerm === "Long Term" && (
                       <>
-                        <div className="flex justify-between text-xs ml-2">
+                        <div className="flex justify-between text-xs ml-2"
+                        title="Z_LSL LT = (μ - LSL) / σLT">
                           <span>• Z_LSL LT:</span>
                           <span className="font-medium text-xs">
                             {!isNaN(stats.zLSL_LT) ?
                               stats.zLSL_LT.toFixed(2) + 'σ' : 'N/A'}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs ml-2">
+                        <div className="flex justify-between text-xs ml-2"
+                        title="Z_USL LT = (USL - μ) / σLT">
                           <span>• Z_USL LT:</span>
                           <span className="font-medium text-xs">
                             {!isNaN(stats.zUSL_LT) ?
@@ -1651,18 +1667,25 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         </div>
                       </>
                     )}
-                    </div>
+                    
                     <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
                     <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between"
+                    title={
+                    capabilityData[ctq]?.dataSetTerm === "Short Term" 
+                    ? "ZST with ZUSL_ST = (USL − μ) / σST & ZLSL_ST = (μ - LSL) / σST"
+                    : "ZST = ZLT + Zshift"
+                    }>
                       <span>Z Short Term (Z-Benchmark):</span>
                       <span className="font-medium text-sm">
                         {stats.zShortTerm ? stats.zShortTerm.toFixed(2) : '0.00'}σ
                       </span>
                     </div>
+                    </div>
                     {capabilityData[ctq]?.dataSetTerm === "Short Term" && (
                       <>
-                        <div className="flex justify-between text-xs ml-2">
+                        <div className="flex justify-between text-xs ml-2"
+                         title="Z_LSL ST = (μ - LSL) / σST">
                           <span>• Z_LSL ST:</span>
                           <span className="font-medium text-xs">
                             {!isNaN(stats.zLSL_ST) ?
@@ -1671,20 +1694,27 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         </div>
                         <div className="flex justify-between text-xs ml-2">
                           <span>• Z_USL ST:</span>
-                          <span className="font-medium text-xs">
+                          <span className="font-medium text-xs"
+                          title="Z_USL ST = (USL - μ) / σST">
                             {!isNaN(stats.zUSL_ST) ?
                             stats.zUSL_ST.toFixed(2) + 'σ': 'N/A'}
                           </span>
                         </div>
                       </>
                     )}
-                    </div>
                   </>
                 ) : (
                   <>
                     <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
                     <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
-                    <div className="flex justify-between">
+                    <div 
+                    className="flex justify-between"
+                    title={
+                    capabilityData[ctq]?.dataSetTerm === "Long Term" 
+                    ? "ZequivLT with p(d)total_LT = p(d)LSL_LT + p(d)USL_LT"
+                    : "ZLT = ZST - Zshift"
+                    }
+                    >
                       <span>Z-Equivalent Long Term:</span>
                       <span className="font-medium text-sm">
                         {stats.ZequivLT ? stats.ZequivLT.toFixed(2) : '0.00'}σ
@@ -1692,14 +1722,16 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     </div>
                     {capabilityData[ctq]?.dataSetTerm === "Long Term" && (
                       <>
-                        <div className="flex justify-between text-xs ml-2">
+                        <div className="flex justify-between text-xs ml-2"
+                        title="Z-Equivalent_LSL LT = (μ - LSL) / σLT">
                           <span>• Z-Equivalent_LSL LT:</span>
                           <span className="font-medium text-xs">
                             {stats.ZequivLSL_LT ?
                              stats.ZequivLSL_LT.toFixed(2) + 'σ' : 'N/A'}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs ml-2">
+                        <div className="flex justify-between text-xs ml-2"
+                        title="Z-Equivalent_USL LT = (USL - μ) / σLT">
                           <span>• Z_Equivalent_USL LT:</span>
                           <span className="font-medium text-xs">
                             {stats.ZequivUSL_LT ?
@@ -1711,7 +1743,14 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     </div>
                     <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
                     <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
-                    <div className="flex justify-between">
+                    <div 
+                    className="flex justify-between"
+                    title={
+                    capabilityData[ctq]?.dataSetTerm === "Short Term" 
+                    ? "ZequivST with p(d)total_ST = p(d)LSL_ST + p(d)USL_ST"
+                    : "ZST = ZLT + Zshift"
+                    }
+                    >
                       <span>Z-Equivalent Short Term (Z-Benchmark):</span>
                       <span className="font-medium text-sm">
                         {stats.ZequivST ? stats.ZequivST.toFixed(2) : '0.00'}σ
@@ -1719,14 +1758,16 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     </div>
                     {capabilityData[ctq]?.dataSetTerm === "Short Term" && (
                       <>
-                        <div className="flex justify-between text-xs ml-2">
+                        <div className="flex justify-between text-xs ml-2"
+                        title="Z-Equivalent_LSL ST = (μ - LSL) / σST">
                           <span>• Z-Equivalent_LSL ST:</span>
                           <span className="font-medium text-xs">
                             {stats.ZequivLSL_ST ?
                              stats.ZequivLSL_ST.toFixed(2) + 'σ' : 'N/A'}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs ml-2">
+                        <div className="flex justify-between text-xs ml-2"
+                        title="Z-Equivalent_USL ST = (USL - μ) / σST">
                           <span>• Z_Equivalent_USL ST:</span>
                           <span className="font-medium text-xs">
                             {stats.ZequivUSL_ST ?
@@ -1761,7 +1802,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                   <h5 className="font-medium text-green-700 mb-2 text-sm">Long Term</h5>
                   <div className="space-y-2 text-sm pl-2 border-l-2 border-green-200">
                     {/* Yield */}
-                    <div className="flex justify-between">
+                    <div className="flex justify-between"
+                    title="Yield LT = 100% - % defects LT">
                       <span>Yield (Long Term):</span>
                       {stats.isNormal && capabilityIndex === "Z" ? (                                 
                         <span className="font-medium">
@@ -1784,19 +1826,31 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     <div className="flex justify-between">
                       <span>% defects (Long Term):</span>
                       {stats.isNormal && capabilityIndex === "Z" ? (
-                        <span className="font-medium">
+                        <span className="font-medium"
+                        title="% defects LT as read in Z_table with Z LT value">
                           {formatPercentage(
-                          stats.performanceMetrics.longTerm.percentDefects,
-                          stats.performanceMetrics.longTerm.dpmo
-                        )}
+                            stats.performanceMetrics.longTerm.percentDefects,
+                            stats.performanceMetrics.longTerm.dpmo
+                          )}
                         </span>
                       ) : (
-                        <span className="font-medium">
-                          {formatPercentage(
-                          stats.obspercentDefectsLT,
-                          stats.obsDPMOLT
-                          )}
-                        </span> 
+                        capabilityData[ctq]?.dataSetTerm === "Long Term" ? (
+                          <span className="font-medium"
+                          title="Nbr of total defects LT / Nbr of data LT">
+                            {formatPercentage(
+                              stats.obspercentDefectsLT,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        ) : (
+                          <span className="font-medium"
+                          title="% observed defects LT as read in Z_table with Z_Equiv LT value">
+                            {formatPercentage(
+                              stats.obspercentDefectsLT,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        )
                       )}
                     </div>
 
@@ -1805,7 +1859,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                   <div className="flex justify-between text-xs ml-2">
                     <span>• % defects_LSL:</span>
                     {stats.isNormal && capabilityIndex === "Z" ? (
-                    <span className="font-medium">
+                    <span className="font-medium"
+                    title="% defects_LSL LT as read in Z_table with Z_LSL LT value">
                     {formatPercentage(
                     stats.performanceMetrics.longTerm.pdLSL_LT,
                     stats.performanceMetrics.longTerm.dpmo
@@ -1813,13 +1868,24 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     </span>
                     )
                     :(
-                    <span className="font-medium">
-                    {formatPercentage(
-                    stats.obspdLSL_LT,
-                    stats.obsDPMOLT
-                     )}
-                    </span>
-                    )}
+                        capabilityData[ctq]?.dataSetTerm === "Long Term" ? (
+                          <span className="font-medium"
+                          title="Nbr of defects_LSL LT / Nbr of data LT">
+                            {formatPercentage(
+                              stats.obspdLSL_LT,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        ) : (
+                          <span className="font-medium"
+                          title="% observed defects_LSL LT as read in Z_table with Z_Equiv_LSL LT value">
+                            {formatPercentage(
+                              stats.obspdLSL_LT,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        )
+                      )}
                   </div>
                   )}
 
@@ -1828,25 +1894,38 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     <div className="flex justify-between text-xs ml-2">
                       <span>• % defects_USL:</span>
                       {stats.isNormal && capabilityIndex === "Z" ? (
-                      <span className="font-medium">
+                      <span className="font-medium"
+                      title="% defects_USL LT as read in Z_table with Z_USL LT value">
                         {formatPercentage(
                           stats.performanceMetrics.longTerm.pdUSL_LT,
                           stats.performanceMetrics.longTerm.dpmo
                         )}
                       </span>
                       ) : (
-                      <span className="font-medium">
-                      {formatPercentage(
-                      stats.obspdUSL_LT!,
-                      stats.obsDPMOLT!
-                      )}
-                      </span>
+                        capabilityData[ctq]?.dataSetTerm === "Long Term" ? (
+                          <span className="font-medium"
+                          title="Nbr of defects_USL LT / Nbr of data LT">
+                            {formatPercentage(
+                              stats.obspdUSL_LT,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        ) : (
+                          <span className="font-medium"
+                          title="% observed defects_USL LT as read in Z_table with Z_Equiv_USL LT value">
+                            {formatPercentage(
+                              stats.obspdUSL_LT,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        )
                       )}
                     </div>
                   )}
 
                     {/* DPMO */}
-                    <div className="flex justify-between">
+                    <div className="flex justify-between"
+                    title="DPMO LT (Defects Per Million Opportunities) = % defects LT * (1000000/100)">
                       <span>DPMO (Long Term):</span>
                       {stats.isNormal && capabilityIndex === "Z" ? (
                         <span className="font-medium">
@@ -1869,7 +1948,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                 <div>
                   <h5 className="font-medium text-blue-700 mb-2 text-sm">Short Term</h5>
                   <div className="space-y-2 text-sm pl-2 border-l-2 border-blue-200">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between"
+                    title="Yield ST = 100% - % defects ST">
                       <span>Yield (Short Term):</span>
                       {stats.isNormal && capabilityIndex === "Z" ? (
                         <span className="font-medium">
@@ -1890,19 +1970,31 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     <div className="flex justify-between">
                       <span>% defects (Short Term):</span>
                       {stats.isNormal && capabilityIndex === "Z" ? (
-                        <span className="font-medium">
+                        <span className="font-medium"
+                        title="% defects ST as read in Z_table with Z ST value">
                           {formatPercentage(
-                          stats.performanceMetrics.shortTerm.percentDefects,
-                          stats.performanceMetrics.shortTerm.dpmo
+                            stats.performanceMetrics.shortTerm.percentDefects,
+                            stats.performanceMetrics.shortTerm.dpmo
                           )}
                         </span>
                       ) : (
-                        <span className="font-medium">
-                          {formatPercentage(
-                          stats.obspercentDefectsST!,
-                          stats.obsDPMOST!
-                          )}
-                        </span>  
+                        capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
+                          <span className="font-medium"
+                          title="Nbr of total defects ST / Nbr of data ST">
+                            {formatPercentage(
+                              stats.obspercentDefectsST,
+                              stats.obsDPMOST
+                            )}
+                          </span> 
+                        ) : (
+                          <span className="font-medium"
+                          title="% observed defects ST as read in Z_table with Z_Equiv ST value">
+                            {formatPercentage(
+                              stats.obspercentDefectsST,
+                              stats.obsDPMOST
+                            )}
+                          </span> 
+                        )
                       )}
                     </div>
                     {/* LSL Defects - only show for Short Term dataset */}
@@ -1910,20 +2002,32 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       <div className="flex justify-between text-xs ml-2">
                         <span>• % defects_LSL:</span>
                         {stats.isNormal && capabilityIndex === "Z" ? (
-                          <span className="font-medium">
+                          <span className="font-medium"
+                          title="% defects ST as read in Z_table with Z_Equiv ST value">
                           {formatPercentage(
                           stats.performanceMetrics.shortTerm.pdLSL_ST,
                           stats.performanceMetrics.shortTerm.dpmo
                           )}
                         </span>
                         ) : (
-                         <span className="font-medium">
-                          {formatPercentage(
-                          stats.obspdLSL_ST!,
-                          stats.obsDPMOLT!
-                          )}
-                        </span> 
-                        )}
+                        capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
+                          <span className="font-medium"
+                          title="Nbr of defects_LSL ST / Nbr of data ST">
+                            {formatPercentage(
+                              stats.obspdLSL_ST,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        ) : (
+                          <span className="font-medium"
+                          title="% observed defects_LSL ST as read in Z_table with Z_Equiv_LSL ST value">
+                            {formatPercentage(
+                              stats.obspdLSL_ST,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        )
+                      )}
                       </div>
                     )}
 
@@ -1939,16 +2043,28 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         )}
                         </span>
                         ) : (
-                          <span className="font-medium">
-                          {formatPercentage(
-                          stats.obspdUSL_ST!,
-                          stats.obsDPMOLT!
-                          )}
-                        </span> 
-                        )}
+                        capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
+                          <span className="font-medium"
+                          title="Nbr of defects_USL ST / Nbr of data UT">
+                            {formatPercentage(
+                              stats.obspdUSL_ST,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        ) : (
+                          <span className="font-medium"
+                          title="% observed defects_USL ST as read in Z_table with Z_Equiv_USL ST value">
+                            {formatPercentage(
+                              stats.obspdUSL_ST,
+                              stats.obsDPMOLT
+                            )}
+                          </span> 
+                        )
+                      )}
                       </div>
                     )}
-                    <div className="flex justify-between">
+                    <div className="flex justify-between"
+                    title="DPMO ST (Defects Per Million Opportunities) = % defects ST * (1000000/100)">
                       <span>DPMO (Short Term):</span>
                       {stats.isNormal && capabilityIndex === "Z" ? (
                         <span className="font-medium">
@@ -1968,60 +2084,106 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
         )}
       </div>
 
-      {/* Capability Analysis */}
+      {/* Capability Assessment */}
       <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <h4 className="font-medium text-yellow-800 mb-2">Capability Assessment</h4>
-        <div className="text-sm text-yellow-700">
-          {stats.cpk !== null && capabilityIndex === "Cp/Cpk" && (
-            <div>
-              {stats.cpk >= 1.66 && (
-                <p className="text-green-700 font-medium">✓ Process is world-class (Cpk ≥ 1.33)</p>
-              )}
-              {stats.cpk >= 1.33 && (
-                <p className="text-green-700 font-medium">✓ Process is capable (Cpk ≥ 1.33)</p>
-              )}
-              {stats.cpk >= 1.0 && stats.cpk < 1.33 && (
-                <p className="text-yellow-700 font-medium">⚠ Process is marginally capable (1.0 ≤ Cpk {'<'} 1.33)</p>
-              )}
-              {stats.cpk < 1.0 && (
-                <p className="text-red-700 font-medium">✗ Process is not capable (Cpk {'<'} 1.0)</p>
-              )}
-            </div>
-          )}
-          {capabilityIndex === "Z" && (
-            <div>
-              {stats.zShortTerm >= 6 && (
-                <p className="text-green-700 font-medium">✓ World class performance (≥ 6σ)</p>
-              )}
-              {stats.zShortTerm >= 4 && stats.zShortTerm < 6 && (
-                <p className="text-blue-700 font-medium">○ Good performance (4-6σ)</p>
-              )}
-              {stats.zShortTerm >= 3 && stats.zShortTerm < 4 && (
-                <p className="text-yellow-700 font-medium">⚠ Average performance (3-4σ)</p>
-              )}
-              {stats.zShortTerm < 3 && (
-                <p className="text-red-700 font-medium">✗ Poor performance ({'<'} 3σ)</p>
-              )}
-            </div>
-          )}
+          <h4 className="font-medium text-yellow-800 mb-2">Capability Assessment</h4>
+          <div className="text-sm text-yellow-700">
+            {capabilityIndex === "Cp/Cpk" ? (
+              <>
+                {data.dataSetTerm === "Short Term" ? (
+                  <div>
+                    {stats.cpk >= 2 && (
+                      <p className="text-green-700 font-medium">✓ Process is world-class (Cpk ≥ 2)</p>
+                    )}
+                    {stats.cpk >= 1.67 && stats.cpk < 2 && (
+                      <p className="text-green-700 font-medium">✓ Process is excellent (1.67 ≤ Cpk {'<'} 2)</p>
+                    )}
+                    {stats.cpk >= 1.33 && stats.cpk < 1.67 && (
+                      <p className="text-green-700 font-medium">✓ Process is capable (1.33 ≤ Cpk {'<'} 1.67)</p>
+                    )}
+                    {stats.cpk >= 1.0 && stats.cpk < 1.33 && (
+                      <p className="text-yellow-700 font-medium">⚠ Process is marginally capable (1.0 ≤ Cpk {'<'} 1.33)</p>
+                    )}
+                    {stats.cpk < 1.0 && (
+                      <p className="text-red-700 font-medium">✗ Process is not capable (Cpk {'<'} 1.0)</p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    {stats.ppk >= 1.67 && (
+                      <p className="text-green-700 font-medium">✓ Process is world-class (Ppk ≥ 1.67)</p>
+                    )}
+                    {stats.ppk >= 1.33 && stats.ppk < 1.67 && (
+                      <p className="text-green-700 font-medium">✓ Process is capable (1.33 ≤ Ppk {'<'} 1.67)</p>
+                    )}
+                    {stats.ppk >= 1.0 && stats.ppk < 1.33 && (
+                      <p className="text-yellow-700 font-medium">⚠ Process is marginally capable (1.0 ≤ Ppk {'<'} 1.33)</p>
+                    )}
+                    {stats.ppk < 1.0 && (
+                      <p className="text-red-700 font-medium">✗ Process is not capable (Ppk {'<'} 1.0)</p>
+                    )}
+                  </div>  
+                )}
+              </>
+            ) : (
+              <>
+                {stats.isNormal ? (
+                  <div>
+                    {stats.zShortTerm >= 6 && (
+                      <p className="text-green-700 font-medium">✓ World class performance (Zₛₜ ≥ 6σ)</p>
+                    )}
+                    {stats.zShortTerm >= 5 && stats.zShortTerm < 6 && (
+                      <p className="text-blue-700 font-medium">○ Excellent performance (Zₛₜ in [5-6σ] range)</p>
+                    )}
+                    {stats.zShortTerm >= 4 && stats.zShortTerm < 5 && (
+                      <p className="text-blue-700 font-medium">○ Good performance (Zₛₜ in [4-5σ] range)</p>
+                    )}
+                    {stats.zShortTerm >= 3 && stats.zShortTerm < 4 && (
+                      <p className="text-yellow-700 font-medium">⚠ Average performance (Zₛₜ in 3-4σ range)</p>
+                    )}
+                    {stats.zShortTerm < 3 && (
+                      <p className="text-red-700 font-medium">✗ Poor performance (Zₛₜ {'<'} 3σ)</p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    {stats.ZequivST >= 6 && (
+                      <p className="text-green-700 font-medium">✓ World class performance (Zₛₜ ≥ 6σ)</p>
+                    )}
+                    {stats.ZequivST >= 5 && stats.ZequivST < 6 && (
+                      <p className="text-blue-700 font-medium">○ Excellent performance (Zₛₜ in [5-6σ] range)</p>
+                    )}
+                    {stats.ZequivST >= 4 && stats.ZequivST < 5 && (
+                      <p className="text-blue-700 font-medium">○ Good performance (Zₛₜ in [4-5σ] range)</p>
+                    )}
+                    {stats.ZequivST >= 3 && stats.ZequivST < 4 && (
+                      <p className="text-yellow-700 font-medium">⚠ Average performance (Zₛₜ in 3-4σ range)</p>
+                    )}
+                    {stats.ZequivST < 3 && (
+                      <p className="text-red-700 font-medium">✗ Poor performance (Zₛₜ {'<'} 3σ)</p>
+                    )}
+                  </div>
+                )}          
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-} else if (dataPoints[ctq]?.length > 0) {
-  return (
-    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <div className="flex items-center gap-2 text-blue-700">
-        <Calculator className="h-4 w-4" />
-        <span className="font-medium">Process Capability Analysis</span>
-      </div>
-      <p className="text-sm text-blue-600 mt-2">
-        Need at least 30 data points for statistical analysis. 
-        Current: {dataPoints[ctq]?.length || 0} data points.
-      </p>
-    </div>
-  );
-}
+     );
+      } else if (dataPoints[ctq]?.length > 0) {
+                  return (
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-700">
+                        <Calculator className="h-4 w-4" />
+                        <span className="font-medium">Process Capability Analysis</span>
+                      </div>
+                      <p className="text-sm text-blue-600 mt-2">
+                        Need at least 30 data points for statistical analysis. 
+                        Current: {dataPoints[ctq]?.length || 0} data points.
+                      </p>
+                    </div>
+                  );
+                }
                   return null;
                 })()}
 
@@ -2031,7 +2193,17 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                   const numericValues = currentPoints.map(point => point.dataValue);
                   
                   if (numericValues.length >= 5) {
-                    // Prepare data for charts
+                    // Calculate limits first
+                    const individualLimits = calculateIndividualControlLimits(numericValues);
+                    const mrLimits = calculateMovingRangeControlLimits(numericValues);
+                    
+                    // Calculate Y-axis scale limits for Individual chart ONCE, outside of data mapping
+                    const dataRange = Math.max(...numericValues) - Math.min(...numericValues);
+                    const padding = dataRange / 10; // 5% padding on each side
+                    
+                    const YscaleMin = Math.min(individualLimits.lcl, Math.min(...numericValues)) - padding;
+                    const YscaleMax = Math.max(individualLimits.ucl, Math.max(...numericValues)) + padding;
+                    // Prepare data for charts (without YscaleMin/Max in each object)
                     const individualData = numericValues.map((value, index) => ({
                       point: index + 1,
                       value: value,
@@ -2039,6 +2211,13 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                     }));
 
                     const movingRanges = calculateMovingRange(numericValues);
+                    // Calculate Y-axis scale limits for MR-chart ONCE, outside of data mapping
+                    const MR_Range = Math.max(...movingRanges) - Math.min(...movingRanges);
+                    const MRscale_padding = MR_Range / 10; // 10% padding on each side
+                    
+                    const MR_YscaleMin = 0;
+                    const MR_YscaleMax = Math.max(mrLimits.ucl, Math.max(...movingRanges)) + MRscale_padding;
+
                     const movingRangeData = movingRanges.map((range, index) => ({
                       point: index + 2, // MR starts from point 2
                       value: range,
@@ -2047,10 +2226,6 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
 
                     const histogramData = getHistogramData(numericValues, 8);
                     const quartiles = calculateQuartiles(numericValues);
-                    const individualLimits = calculateIndividualControlLimits(numericValues);
-                    const mrLimits = calculateMovingRangeControlLimits(numericValues);
-
-
 
                     // Box plot data
                     const boxPlotData = [
@@ -2082,12 +2257,32 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
                                 <YAxis 
                                   label={{ value: 'Individual Value', angle: -90, position: 'insideBottomLeft' }}
-                                  domain={[
-                                    Math.min(individualLimits.lcl, Math.min(...numericValues)),
-                                    Math.max(individualLimits.ucl, Math.max(...numericValues))
-                                  ]}
+                                  domain={[YscaleMin, YscaleMax]} // Now properly using the calculated values
                                 />
-                                <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Value']} />
+                                <Tooltip 
+                                  formatter={(value: any, name: any, props: any) => {
+                                    const dataValue = Number(value);
+                                    const isSpecialCause = dataValue > individualLimits.ucl || dataValue < individualLimits.lcl;
+                                    
+                                    const result = [dataValue.toFixed(3), 'Value'];
+                                    
+                                    if (isSpecialCause) {
+                                      const violationType = dataValue > individualLimits.ucl ? 'above UCL' : 'below LCL';
+                                      return [
+                                        `${dataValue.toFixed(3)} (${violationType})`,
+                                        'Value - Rule 1: Special Cause Variation'
+                                      ];
+                                    }
+                                    
+                                    return result;
+                                  }}
+                                  labelFormatter={(label) => `Data Point: ${label}`}
+                                  contentStyle={{
+                                    backgroundColor: 'white',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px'
+                                  }}
+                                />
                                 <ReferenceLine 
                                   y={individualLimits.centerLine} 
                                   stroke="#2563eb" 
@@ -2131,12 +2326,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                             <div className="text-xs text-gray-600 mt-2">
                               CL: {individualLimits.centerLine.toFixed(3)} | 
                               UCL: {individualLimits.ucl.toFixed(3)} | 
-                              LCL: {individualLimits.lcl.toFixed(3)} | 
-                              min data: {Math.min(...numericValues)} | 
-                              max data: {Math.max( ...numericValues)} | 
-                              Yscale min: {Math.min(individualLimits.lcl, Math.min(...numericValues))} |
-                              Yscale max: {Math.max(individualLimits.lcl, Math.max(...numericValues))} | 
- 
+                              LCL: {individualLimits.lcl.toFixed(3)} 
                             </div>
                           </div>
 
@@ -2174,7 +2364,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                 <XAxis dataKey="point" label={{ value: 'Data Point', position: 'insideBottom', offset: -5 }} />
                                 <YAxis 
                                   label={{ value: 'Moving Range', angle: -90, position: 'insideBottomLeft' }}
-                                  domain={[0, Math.max(mrLimits.ucl, Math.max(...movingRanges))]}
+                                  domain={[MR_YscaleMin, MR_YscaleMax]}
                                 />
                                 <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Moving Range']} />
                                 <ReferenceLine 
