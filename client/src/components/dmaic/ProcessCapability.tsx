@@ -2252,8 +2252,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         gaussian: scaledY
                       };
                     });
-
-                    // Box plot data
+                    // box plot data
                     const boxPlotData = [
                       {
                         name: ctq,
@@ -2399,6 +2398,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   dataKey="x" 
                                   label={{ value: 'Value', position: 'insideBottom', offset: -5 }}
                                   tickFormatter={(value) => Number(value).toFixed(2)}
+                                  type="number"  // Important for reference lines to work properly
+                                  domain={['dataMin', 'dataMax']}
                                 />
                                 <YAxis label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }} />
                                 <Tooltip 
@@ -2410,6 +2411,15 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   labelFormatter={(value) => `Value: ${Number(value).toFixed(3)}`}
                                 />
                                 
+                                <Bar dataKey="y" fill="#3b82f6" name="Observed Frequency" />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="gaussian" 
+                                  stroke="#1e40af" 
+                                  strokeWidth={3}
+                                  dot={false}
+                                  name="Normal Distribution"
+                                />
                                 {/* Mean vertical line */}
                                 <ReferenceLine 
                                   x={dataMean} 
@@ -2418,7 +2428,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   strokeDasharray="5 5"
                                   label={{ 
                                     value: `Mean: ${dataMean.toFixed(3)}`, 
-                                    position: "topRight",
+                                    position: "middle",
                                     style: { fill: "#dc2626", fontWeight: "bold", fontSize: "11px" }
                                   }} 
                                 />
@@ -2431,7 +2441,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   strokeDasharray="3 3"
                                   label={{ 
                                     value: `+1σ: ${(dataMean + dataStdDev).toFixed(3)}`, 
-                                    position: "top",
+                                    position: "middle",
                                     style: { fill: "#059669", fontWeight: "bold", fontSize: "10px" }
                                   }} 
                                 />
@@ -2443,20 +2453,11 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   strokeDasharray="3 3"
                                   label={{ 
                                     value: `-1σ: ${(dataMean - dataStdDev).toFixed(3)}`, 
-                                    position: "top",
+                                    position: "middle",
                                     style: { fill: "#059669", fontWeight: "bold", fontSize: "10px" }
                                   }} 
                                 />
                                 
-                                <Bar dataKey="y" fill="#3b82f6" name="Observed Frequency" />
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="gaussian" 
-                                  stroke="#1e40af" 
-                                  strokeWidth={3}
-                                  dot={false}
-                                  name="Normal Distribution"
-                                />
                               </ComposedChart>
                             </ResponsiveContainer>
                             <div className="text-xs text-gray-600 mt-2">
@@ -2622,39 +2623,56 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                       {/* Min line */}
                                       <div 
                                         className="absolute w-0.5 h-4 bg-gray-600"
+                                        title={`Min: ${quartiles.min.toFixed(3)}`}
                                         style={{ left: '0%', top: '25%' }}
                                       />
                                       
                                       {/* Q1-Q3 Box */}
                                       <div 
-                                        className="absolute h-full bg-blue-200 border border-blue-400"
+                                        className="absolute h-full bg-blue-200 border border-2 border-blue-400"
                                         style={{
                                           left: '25%',
                                           width: '50%'
                                         }}
                                       />
                                       
+                                      {/* Q1 line */}
+                                      <div 
+                                        className="absolute w-0.5 h-full bg-gray-600"
+                                        title={`Q1: ${quartiles.q1.toFixed(3)}`}
+                                        style={{ left: '25%', top: '0%' }}
+                                      />
+                                      
                                       {/* Median line */}
                                       <div 
                                         className="absolute w-0.5 h-full bg-red-600"
+                                        title={`Median: ${quartiles.median.toFixed(3)}`}
                                         style={{
                                           left: '50%',
                                           top: '0%'
                                         }}
                                       />
+
+                                      {/* Q3 line */}
+                                      <div 
+                                        className="absolute w-0.5 h-full bg-gray-600"
+                                        title={`Q3: ${quartiles.q3.toFixed(3)}`}
+                                        style={{ left: '75%', top: '0%' }}
+                                      />
                                       
                                       {/* Max line */}
                                       <div 
                                         className="absolute w-0.5 h-4 bg-gray-600"
+                                        title={`Max: ${quartiles.max.toFixed(3)}`}
                                         style={{ right: '0%', top: '25%' }}
                                       />
                                       
                                       {/* Mean marker (asterisk) */}
                                       <div 
-                                        className="absolute flex items-center justify-center w-3 h-3 bg-orange-500 text-white text-xs font-bold rounded-full"
+                                        className="absolute flex items-center justify-center w-3 h-3 bg-blue-500 text-white text-xs font-bold rounded-full pt-[3px]"
                                         style={{
-                                          left: `${((dataMean - quartiles.min) / (quartiles.max - quartiles.min)) * 100}%`,
-                                          top: '12.5%',
+                                          left: `${12.5+((dataMean - quartiles.min) / (quartiles.max - quartiles.min)) * 100}%`,
+                                          top: '25%',
                                           transform: 'translateX(-50%)'
                                         }}
                                         title={`Mean: ${dataMean.toFixed(3)}`}
@@ -2675,9 +2693,10 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                 </div>
                                 <div className="text-center text-xs text-orange-600 mt-1">
                                   <span className="inline-flex items-center gap-1">
-                                    <span className="w-3 h-3 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center">*</span>
+                                    <span className="w-3 h-3 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center pt-[3px]">*</span>
                                     Mean: {dataMean.toFixed(3)}
                                   </span>
+                                  <span><br></br>IQR (Q3-Q1): {(quartiles.q3-quartiles.q1).toFixed(2)}</span>
                                 </div>
                               </div>
                             </div>

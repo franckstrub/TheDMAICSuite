@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Calendar, Edit, Save, X, Shield, UserCheck, Settings, Users, Phone } from "lucide-react";
+import { User, Mail, Calendar, Edit, Save, X, Shield, UserCheck, Settings, Users, Phone, Camera, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,6 +63,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editedProfile, setEditedProfile] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -106,6 +107,40 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
     },
   });
 
+  // Profile image upload mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('profileImage', file);
+
+      const response = await fetch('/api/auth/upload-profile-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Profile image updated",
+        description: "Your profile image has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to upload profile image. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Image upload error:', error);
+    },
+  });
+
   // Reset form when user data changes or when starting to edit
   const handleStartEdit = () => {
     setEditedProfile({
@@ -131,6 +166,37 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
       phoneCountryCode: user?.phoneCountryCode || "",
       companyName: user?.companyName || "",
     });
+  };
+
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      uploadImageMutation.mutate(file);
+    }
   };
 
   if (isLoading) {
@@ -231,16 +297,43 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
-                  <Avatar className="h-24 w-24 mb-4">
-                    <AvatarImage 
-                      src={user.profileImageUrl || undefined} 
-                      alt={getDisplayName()}
-                      className="object-cover"
+                  <div className="relative mb-4">
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage 
+                        src={user.profileImageUrl || undefined} 
+                        alt={getDisplayName()}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="text-xl bg-blue-100 text-blue-700">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    {/* Profile Image Upload Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-white shadow-md hover:bg-gray-50"
+                      onClick={handleImageUpload}
+                      disabled={uploadImageMutation.isPending}
+                      title="Change profile picture"
+                    >
+                      {uploadImageMutation.isPending ? (
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                      ) : (
+                        <Camera className="h-3 w-3" />
+                      )}
+                    </Button>
+                    
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
                     />
-                    <AvatarFallback className="text-xl bg-blue-100 text-blue-700">
-                      {getInitials()}
-                    </AvatarFallback>
-                  </Avatar>
+                  </div>
                   
                   <h2 className="text-xl font-semibold text-gray-900 mb-1">
                     {getDisplayName()}
