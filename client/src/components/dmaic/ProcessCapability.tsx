@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw, Trash2 } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -2648,6 +2648,19 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                         className="absolute w-0.5 h-4 bg-gray-600"
                                         style={{ right: '0%', top: '25%' }}
                                       />
+                                      
+                                      {/* Mean marker (asterisk) */}
+                                      <div 
+                                        className="absolute flex items-center justify-center w-3 h-3 bg-orange-500 text-white text-xs font-bold rounded-full"
+                                        style={{
+                                          left: `${((dataMean - quartiles.min) / (quartiles.max - quartiles.min)) * 100}%`,
+                                          top: '12.5%',
+                                          transform: 'translateX(-50%)'
+                                        }}
+                                        title={`Mean: ${dataMean.toFixed(3)}`}
+                                      >
+                                        *
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -2659,6 +2672,12 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   <span>Med: {quartiles.median.toFixed(2)}</span>
                                   <span>Q3: {quartiles.q3.toFixed(2)}</span>
                                   <span>Max: {quartiles.max.toFixed(2)}</span>
+                                </div>
+                                <div className="text-center text-xs text-orange-600 mt-1">
+                                  <span className="inline-flex items-center gap-1">
+                                    <span className="w-3 h-3 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center">*</span>
+                                    Mean: {dataMean.toFixed(3)}
+                                  </span>
                                 </div>
                               </div>
                             </div>
