@@ -26,16 +26,8 @@ export interface CapabilityStats {
   isNormal?: boolean;
   percentageDefectLT?: number;
   percentageDefectST?: number;
-  pdLSL_LT?: number;
-  pdUSL_LT?: number;
-  pdLSL_ST?: number;
-  pdUSL_ST?: number;
-  observedDefectRateLT?: number;
-  observedDefectRateST?: number;
-  obspdLSL_LT?: number;
-  obspdUSL_LT?: number;
-  obspdLSL_ST?: number;
-  obspdUSL_ST?: number;
+  pdLSL?: number;
+  pdUSL?: number;
 }
 
 export interface CapabilityContext {
@@ -66,7 +58,7 @@ export async function generateCapabilityAssessment(
       throw new Error('Google AI client not initialized. Check your API key.');
     }
 
-    console.log("Using Google AI API to generate capability assessmen analysist");
+    console.log("Using Google AI API to generate capability assessment analysis");
 
     const normalityText = stats.isNormal 
       ? `The data follows a normal distribution.`
@@ -82,15 +74,30 @@ export async function generateCapabilityAssessment(
           `Z short-term = ${stats.zShortTerm?.toFixed(2) || 'N/A'}, Z_LSL short term = ${stats.zLSL?.toFixed(2) || 'N/A'}, Z_USL short term = ${stats.zUSL?.toFixed(2) || 'N/A'}, Z long-term = ${stats.zLongTerm?.toFixed(2) || 'N/A'}`
           :
           `Z short-term = ${stats.zShortTerm?.toFixed(2) || 'N/A'}, Z long-term = ${stats.zLongTerm?.toFixed(2) || 'N/A'}, Z_LSL long term = ${stats.zLSL?.toFixed(2) || 'N/A'}, Z_USL long term = ${stats.zUSL?.toFixed(2) || 'N/A'}`       
-        )
+        ) ;
 
-    const defectText = stats.percentageDefectST !== undefined && stats.percentageDefectLT !== undefined && stats.isNormal ?
-    `Calculated defect rate Short Term: ${(stats.percentageDefectST * 100).toFixed(4)}%. 
-     Calculated defect rate Long Term: ${(stats.percentageDefectLT * 100).toFixed(4)}%` :
-       stats.observedDefectRateST !== undefined && stats.observedDefectRateLT !== undefined ?
-       `Observed defect rate: Short Term ${(stats.observedDefectRateST * 100).toFixed(4)}%, 
-        Observed defect rate Long Term: ${(stats.observedDefectRateLT * 100).toFixed(4)}%` :
-       'Defect rate data not available';
+    const defectText = stats.percentageDefectST !== undefined
+      ? stats.isNormal 
+        ? (
+            context.capabilityIndex === "Z"  
+              ? `Short Term Calculated defect rate: ${(stats.percentageDefectST!).toFixed(4)}%. 
+                 Long Term Calculated defect rate: ${(stats.percentageDefectLT!).toFixed(4)}%`
+              : (  
+                  context.dataSetTerm === "Short Term"
+                    ? `Short Term Calculated defect rate: ${(stats.percentageDefectST!).toFixed(4)}%`
+                    : `Long Term Calculated defect rate: ${(stats.percentageDefectLT!).toFixed(4)}%`
+                )
+          ) : (
+            context.capabilityIndex === "Z"  
+              ? `Short Term Observed defect rate: ${(stats.percentageDefectST!).toFixed(4)}%, 
+                 Long Term Observed defect rate: ${(stats.percentageDefectLT!).toFixed(4)}%`
+              : (
+                  context.dataSetTerm === "Short Term"
+                    ? `Short Term Observed defect rate: ${(stats.percentageDefectST!).toFixed(4)}%`
+                    : `Long Term Observed defect rate: ${(stats.percentageDefectLT!).toFixed(4)}%`
+                )
+          )
+      : "";
     
     const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive capability analysis for the CTQ "${context.ctq}".
 
@@ -117,7 +124,7 @@ Please provide:
 
 Keep the analysis concise, professional, data-driven, and actionable for process improvement teams.`;
 
-    console.log("Sending request to Google AI API for capability anaysis...");
+    console.log("Sending request to Google AI API for capability analysis...");
 
     // Create a generative model instance
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
