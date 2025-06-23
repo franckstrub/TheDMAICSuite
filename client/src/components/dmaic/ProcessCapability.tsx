@@ -43,7 +43,7 @@ interface ProcessCapabilityData {
   capabilityIndex: "Z" | "Cp/Cpk";
   showPercentage: boolean;
   showZ: boolean; // For attribute CTQs
-  //conclusion: string;
+  showStatistics: boolean;
   capabilityAssessment?: string; // AI-generated capability assessment
 }
 
@@ -257,19 +257,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     // If no capability configuration exists, create one first
     if (!processCapabilityId) {
       try {
-        const defaultCapabilityData = {
-          ctq: ctq,
-          lsl: "",
-          usl: "",
-          target: "",
-          zShift: 1.5,
-          dataSetTerm: "Long Term",
-          capabilityIndex: "Z",
-          showPercentage: false,
-          showZ: false,
-          //conclusion: "",
-          showStatistics: false,
-        };
+        const defaultCapabilityData: Omit<ProcessCapabilityData, 'id'> = {
+                ctq: ctq,
+                lsl: "",
+                usl: "",
+                target: "",
+                zShift: 1.5,
+                dataSetTerm: "Long Term", // Now properly typed as literal
+                capabilityIndex: "Z", // Now properly typed as literal
+                showPercentage: false,
+                showZ: false,
+                showStatistics: false,
+                capabilityAssessment: "",
+            };
         
         const result = await saveCapabilityMutation.mutateAsync(defaultCapabilityData);
         processCapabilityId = result.capability.id;
@@ -288,6 +288,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
     }
     
+    // ADD THIS: Type guard to ensure processCapabilityId is defined
+    if (!processCapabilityId) {
+      console.error("Process capability ID is still undefined after creation attempt");
+      return;
+    }
+    
     const currentPoints = dataPoints[ctq] || [];
     const numericValues = currentPoints.map(point => point.dataValue);
     
@@ -295,7 +301,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     try {
       await saveDataPointMutation.mutateAsync({
-        processCapabilityId,
+        processCapabilityId, // Now TypeScript knows this is definitely a number
         dataPoints: numericValues
       });
       console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
@@ -360,6 +366,33 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     triggerAutoSave(ctq);
   };
 
+  // Function to delete a data point
+  const handleDeleteDataPoint = (ctq: string, index: number) => {
+    setDataPoints(prev => {
+      const currentPoints = prev[ctq] || [];
+      const updatedPoints = currentPoints.filter((_, i) => i !== index);
+      
+      // Re-index the remaining points
+      const reindexedPoints = updatedPoints.map((point, i) => ({
+        ...point,
+        indexNumber: i + 1
+      }));
+      
+      return {
+        ...prev,
+        [ctq]: reindexedPoints
+      };
+    });
+
+    // Trigger auto-save after deletion
+    triggerAutoSave(ctq);
+    
+    toast({
+      title: "Data Point Deleted",
+      description: "The data point has been removed and the list has been re-indexed.",
+    });
+  };
+
   const saveAllDataPoints = async (ctq: string) => {
     let processCapabilityId = capabilityData[ctq]?.id;
     
@@ -368,19 +401,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       console.log("No process capability ID found, creating configuration first...");
       try {
         // Create a default capability configuration
-        const defaultCapabilityData = {
-          ctq: ctq,
-          lsl: "",
-          usl: "",
-          target: "",
-          zShift: 1.5,
-          dataSetTerm: "Long Term",
-          capabilityIndex: "Z",
-          showPercentage: false,
-          showZ: false,
-          //conclusion: "",
-          showStatistics: false,
-        };
+       const defaultCapabilityData: Omit<ProcessCapabilityData, 'id'> = {
+                ctq: ctq,
+                lsl: "",
+                usl: "",
+                target: "",
+                zShift: 1.5,
+                dataSetTerm: "Long Term", // Now properly typed as literal
+                capabilityIndex: "Z", // Now properly typed as literal
+                showPercentage: false,
+                showZ: false,
+                showStatistics: false,
+                capabilityAssessment: "",
+            };
         
         const result = await saveCapabilityMutation.mutateAsync(defaultCapabilityData);
         processCapabilityId = result.capability.id;
@@ -406,6 +439,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
     }
     
+    // ADD THIS: Type guard to ensure processCapabilityId is defined
+    if (!processCapabilityId) {
+      console.error("Process capability ID is still undefined after creation attempt");
+      toast({
+        title: "Error",
+        description: "Failed to obtain process capability ID",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const currentPoints = dataPoints[ctq] || [];
     const numericValues = currentPoints.map(point => point.dataValue);
     
@@ -423,7 +467,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     try {
       // Save all data points as JSON array to database
       await saveDataPointMutation.mutateAsync({
-        processCapabilityId,
+        processCapabilityId, // Now TypeScript knows this is definitely a number
         dataPoints: numericValues
       });
       
@@ -618,7 +662,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           capabilityIndex: "Z" as const,
           showPercentage: false,
           showZ: false,
-          //conclusion: "",
+          showStatistics: false,
           capabilityAssessment: "",
         };
         
@@ -702,28 +746,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         sampleSize: calculatedStats.sampleSize,
         mean: calculatedStats.mean,
         standardDeviation: calculatedStats.standardDeviation,
-        //normalityPValue: calculatedStats.normalityPValue,  
         cp: calculatedStats.cp || null,
         cpk: calculatedStats.cpk || null,
         pp: calculatedStats.pp || null,
         ppk: calculatedStats.ppk || null,
         zShortTerm: calculatedStats.isNormal ? calculatedStats.zShortTerm || null : calculatedStats.ZequivST || null,
         zLongTerm: calculatedStats.isNormal ? calculatedStats.zLongTerm || null : calculatedStats.ZequivST || null,
-        isNormal: calculatedStats.isNormal,
         zLSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.zLSL_LT || null : calculatedStats.zLSL_ST || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.ZequivLSL_LT || null : calculatedStats.ZequivLSL_ST || null),
         zUSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.zUSL_LT || null : calculatedStats.zUSL_ST || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.ZequivUSL_LT || null : calculatedStats.ZequivUSL_ST || null),       
-        percentageDefectLT: calculatedStats.performanceMetrics.longTerm.percentDefects || null,
-        percentageDefectST: calculatedStats.performanceMetrics.shortTerm.percentDefects || null,
-        pdLSL_LT: calculatedStats.performanceMetrics.longTerm.pdLSL_LT || null,
-        pdUSL_LT: calculatedStats.performanceMetrics.longTerm.pdUSL_LT || null,
-        pdLSL_ST: calculatedStats.performanceMetrics.shortTerm.pdLSL_ST || null,
-        pdUSL_ST: calculatedStats.performanceMetrics.shortTerm.pdUSL_ST || null,
-        observedDefectRateLT: calculatedStats.obspercentDefectsLT || null,
-        observedDefectRateST: calculatedStats.obspercentDefectsLT || null,
-        obspdLSL_LT: calculatedStats.obspdLSL_LT || null,
-        obspdUSL_LT: calculatedStats.obspdUSL_LT || null,
-        obspdLSL_ST: calculatedStats.obspdLSL_ST || null,
-        obspdUSL_ST: calculatedStats.obspdUSL_ST || null,
+        isNormal: calculatedStats.isNormal,
+        percentageDefectLT: calculatedStats.isNormal ? calculatedStats.performanceMetrics.longTerm.percentDefects || null : calculatedStats.obspercentDefectsLT || null,
+        percentageDefectST: calculatedStats.isNormal ? calculatedStats.performanceMetrics.shortTerm.percentDefects || null : calculatedStats.obspercentDefectsST || null,
+        pdLSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.performanceMetrics.longTerm.pdLSL_LT || null : calculatedStats.performanceMetrics.shortTerm.pdLSL_ST  || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.obspdLSL_LT || null : calculatedStats.obspdLSL_ST || null),
+        pdUSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.performanceMetrics.longTerm.pdUSL_LT || null : calculatedStats.performanceMetrics.shortTerm.pdUSL_ST  || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.obspdUSL_LT || null : calculatedStats.obspdUSL_ST || null)
+        
       };
 
       const context = {
@@ -791,7 +827,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   };
 
   {/* Helper function to format percentage values */}
-  const formatPercentage = (value, dpmo) => {
+  const formatPercentage = (value: number, dpmo: number) => {
     if (isNaN(value) || value === null || value === undefined) {
       return "N/A";
     }
@@ -931,7 +967,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         capabilityIndex: data.capabilityIndex || "Z",
         showPercentage: Boolean(data.showPercentage),
         showZ: Boolean(data.showZ),
-        //conclusion: data.conclusion || "",
         capabilityAssessment: data.capabilityAssessment || "",
         showStatistics: Boolean(showStatistics[ctq]), // Include current statistics visibility state
       };
@@ -1011,31 +1046,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         </p>
       </CardHeader>
       <CardContent>
-        {/*
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-auto overflow-x-auto" style={{ gridTemplateColumns: `repeat(${ctqList.length}, minmax(200px, 1fr))` }}>
-            {ctqList.map((ctq: string) => (
-              <TabsTrigger 
-                key={ctq} 
-                value={ctq}
-                className="flex flex-col items-center gap-1 p-3"
-              >
-                <span className="font-medium truncate max-w-[150px]">{ctq}</span>
-                {getCapabilityStatusBadge(ctq)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          */}
-          {/* Only show scroll indicator if 5+ CTQs exist */}
-                  {getCtqsWithTypes().length >= 6 && (
+      {/* Only show scroll indicator if 5+ CTQs exist */}
+      {getCtqsWithTypes().length >= 6 && (
                    <div className="relative">
                     <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
                     ← Scroll horizontally →
                     </div>
                   </div>
                 )}
-                  <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
-                    <div className="w-full overflow-x-auto">         
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
+          <div className="w-full overflow-x-auto">         
                       <TabsList className="flex w-max min-w-full justify-start">
                         {getCtqsWithTypes().map((ctqWithType: CtqWithType) => (
                           <TabsTrigger 
@@ -1048,7 +1068,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           </TabsTrigger>
                         ))}
                       </TabsList>
-                    </div>
+          </div>
           
           {getCtqsWithTypes().map((ctqWithType: CtqWithType) => {
             const ctq = ctqWithType.ctq;
@@ -1135,12 +1155,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               <tr>
                                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-r">Index</th>
                                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Data Value</th>
+                                <th className="px-4 py-2 text-center text-sm font-medium text-gray-700 w-20">Actions</th>
                               </tr>
                             </thead>
                             <tbody>
                               {/* Existing data points with editable cells */}
                               {(dataPoints[ctq] || []).map((point, index) => (
-                                <tr key={index} className="border-t">
+                                <tr key={index} className="border-t hover:bg-gray-50">
                                   <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">{point.indexNumber}</td>
                                   <td className="px-4 py-2">
                                     <Input
@@ -1149,7 +1170,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       value={point.dataValue}
                                       onChange={(e) => {
                                         const newValue = parseFloat(e.target.value);
-                                        if (!isNaN(newValue)) {
                                           setDataPoints(prev => {
                                             const updated = [...(prev[ctq] || [])];
                                             updated[index] = { ...updated[index], dataValue: newValue };
@@ -1157,7 +1177,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           });
                                           // Trigger auto-save when cell value changes
                                           triggerAutoSave(ctq);
-                                        }
                                       }}
                                       onFocus={() => {
                                         setFocusedCell(prev => ({ ...prev, [ctq]: index }));
@@ -1170,10 +1189,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       className="border-none p-1 h-8 text-sm w-full"
                                     />
                                   </td>
+                                  <td className="px-4 py-2 text-center">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleDeleteDataPoint(ctq, index)}
+                                      className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-300"
+                                      title="Delete data point"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </td>
                                 </tr>
                               ))}
                               {/* Input row for new data */}
-                              <tr className="border-t">
+                              <tr className="border-t bg-blue-50">
                                 <td className="px-4 py-2 text-sm text-gray-600 border-r bg-gray-50">
                                   {(dataPoints[ctq] || []).length + 1}
                                 </td>
@@ -1211,6 +1242,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     </Button>
                                   </div>
                                 </td>
+                                <td className="px-4 py-2"></td>
                               </tr>
                             </tbody>
                           </table>
@@ -1799,8 +1831,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       ) : (
                       <span className="font-medium">
                       {formatPercentage(
-                      stats.obspdUSL_LT,
-                      stats.obsDPMOLT
+                      stats.obspdUSL_LT!,
+                      stats.obsDPMOLT!
                       )}
                       </span>
                       )}
@@ -1843,8 +1875,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       ) : (
                         <span className="font-medium">
                           {formatPercentage(
-                          stats.obsYieldST,
-                          stats.obsDPMOST
+                          stats.obsYieldST!,
+                          stats.obsDPMOST!
                           )}
                         </span>
                       )}
@@ -1861,8 +1893,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                       ) : (
                         <span className="font-medium">
                           {formatPercentage(
-                          stats.obspercentDefectsST,
-                          stats.obsDPMOST
+                          stats.obspercentDefectsST!,
+                          stats.obsDPMOST!
                           )}
                         </span>  
                       )}
@@ -1881,8 +1913,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         ) : (
                          <span className="font-medium">
                           {formatPercentage(
-                          stats.obspdLSL_ST,
-                          stats.obsDPMOLT
+                          stats.obspdLSL_ST!,
+                          stats.obsDPMOLT!
                           )}
                         </span> 
                         )}
@@ -1903,8 +1935,8 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         ) : (
                           <span className="font-medium">
                           {formatPercentage(
-                          stats.obspdUSL_ST,
-                          stats.obsDPMOLT
+                          stats.obspdUSL_ST!,
+                          stats.obsDPMOLT!
                           )}
                         </span> 
                         )}
@@ -1918,7 +1950,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         </span>
                       ) : (
                         <span className="font-medium">
-                          {Math.round(stats.obsDPMOST).toLocaleString()}
+                          {Math.round(stats.obsDPMOST!).toLocaleString()}
                         </span>
                       )}
                     </div>
@@ -2273,18 +2305,6 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                 })()}
 
                 <div className="space-y-4">
-                  {/*
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Conclusion</label>
-                    <Textarea
-                      value={capabilityData[ctq]?.conclusion || ""}
-                      onChange={(e) => updateCapabilityField(ctq, "conclusion", e.target.value)}
-                      placeholder="Summary of process capability assessment..."
-                      rows={3}
-                    />
-                  </div>
-                  */}
-
                   {showStatistics[ctq] && (
                     <div>
                       <div className="flex items-center justify-between mb-2">
