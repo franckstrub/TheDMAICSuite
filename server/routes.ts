@@ -1104,15 +1104,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/datasets", async (req: Request, res: Response) => {
+  app.post("/api/datasets", isAuthenticated, async (req: Request, res: Response) => {
     try {
       // Get user's organization ID
-      const user = req.user as any;
-      const organizationId = user?.organizationId || 1; // Fallback to default org
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       const datasetData = insertDatasetSchema.parse({
         ...req.body,
-        organizationId
+        organizationId: userRecord.organizationId
       });
       const dataset = await storage.createDataset(datasetData);
       
@@ -1522,9 +1531,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/risks", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/risks", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       // Extract and sanitize fields that we want to save
       const sanitizedRiskData = {
@@ -2617,10 +2639,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/process-map", async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/process-map", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const { diagramData } = req.body;
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
       
       // Check if process map already exists
       const [existingMap] = await db
@@ -2641,16 +2676,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.status(200).json(updatedMap);
       } else {
-        // Get user's organization ID
-        const user = req.user as any;
-        const organizationId = user?.organizationId || 1; // Fallback to default org
-        
         // Create new process map
         const [newMap] = await db
           .insert(processMaps)
           .values({
             projectId,
-            organizationId,
+            organizationId: userRecord.organizationId,
             diagramData,
           })
           .returning();
