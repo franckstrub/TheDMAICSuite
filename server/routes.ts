@@ -2093,18 +2093,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         raciMatrix = await storage.createRaciMatrix(validatedData);
         
         // Log activity
-        if (req.body.userId) {
-          const user = await storage.getUser(req.body.userId);
-          if (user) {
-            await storage.createActivityLog({
-            organizationId: user.organizationId,
-              userId: req.body.userId,
-              projectId,
-              action: "create_raci_matrix",
-              details: "Created RACI matrix"
-            });
-          }
-        }
+        await storage.createActivityLog({
+          organizationId: userRecord.organizationId,
+          userId: parseInt(userId),
+          projectId,
+          action: "create_raci_matrix",
+          details: "Created RACI matrix"
+        });
       }
       
       return res.status(201).json({ raciMatrix, isUpdate });
@@ -2333,14 +2328,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizationId: userRecord.organizationId
       };
       
-      // Add organization ID to analysis data
-      const dataWithOrgId = {
-        ...analysisData,
-        organizationId
-      };
-      
       // Validate the stakeholder analysis data
-      const validatedData = insertStakeholderAnalysisItemSchema.parse(dataWithOrgId);
+      const validatedData = insertStakeholderAnalysisItemSchema.parse(analysisData);
       
       // Insert the item
       const [newItem] = await db

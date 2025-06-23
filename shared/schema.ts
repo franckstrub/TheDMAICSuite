@@ -548,6 +548,7 @@ export const projectRaciMatrix = pgTable("project_raci_matrix", {
 });
 
 export const insertRaciSchema = createInsertSchema(projectRaciMatrix).pick({
+  organizationId: true,
   projectId: true,
   raciData: true,
 });
