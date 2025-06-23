@@ -641,6 +641,7 @@ export const projectRisks = pgTable("project_risks", {
 });
 
 export const insertRiskSchema = createInsertSchema(projectRisks).pick({
+  organizationId: true,
   projectId: true,
   
   riskName: true,
