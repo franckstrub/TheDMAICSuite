@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
@@ -9,14 +9,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, User, Settings, LogOut, HelpCircle } from "lucide-react";
+import { ChevronDown, User, Settings, LogOut, HelpCircle, Camera } from "lucide-react";
 import { useLocation } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import ProfileOverlay from "./ProfileOverlay";
 
 export default function UserDropdown() {
   const { user, isAuthenticated } = useAuth();
   const [location, navigate] = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const handleProfileClick = () => {
     setProfileOpen(true);
@@ -28,6 +33,71 @@ export default function UserDropdown() {
 
   const handleSignOut = () => {
     window.location.href = '/api/logout';
+  };
+
+  // Profile image upload mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('profileImage', file);
+
+      const response = await fetch('/api/auth/upload-profile-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Profile image updated",
+        description: "Your profile image has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to upload profile image. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Image upload error:', error);
+    },
+  });
+
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      uploadImageMutation.mutate(file);
+    }
   };
 
   if (!isAuthenticated || !user) {
@@ -93,6 +163,11 @@ export default function UserDropdown() {
             <User className="mr-2 h-4 w-4" />
             Your Profile
           </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={handleImageUpload} className="cursor-pointer" disabled={uploadImageMutation.isPending}>
+            <Camera className="mr-2 h-4 w-4" />
+            {uploadImageMutation.isPending ? 'Uploading...' : 'Change Profile Picture'}
+          </DropdownMenuItem>
           
           <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
             <Settings className="mr-2 h-4 w-4" />
@@ -111,6 +186,15 @@ export default function UserDropdown() {
       <ProfileOverlay 
         open={profileOpen} 
         onClose={() => setProfileOpen(false)} 
+      />
+
+      {/* Hidden file input for quick profile image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
       />
     </>
   );
