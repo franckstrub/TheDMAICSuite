@@ -1434,7 +1434,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 </div>
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
-                {ctqWithType.ctqType === "Continuous" && dataPoints[ctq] && dataPoints[ctq].length >= 5 && (
+                {ctqWithType.ctqType === "Continuous" && dataPoints[ctq] && dataPoints[ctq].length >= 3 && (
                   <div className="mt-6 flex justify-left">
                     <Button
                       onClick={() => toggleStatistics(ctq)}
@@ -1444,6 +1444,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <Calculator className="h-4 w-4" />
                       {showStatistics[ctq] ? "Hide Statistics" : "Calculate Process Capability Statistics"}
                     </Button>
+                    {dataPoints[ctq].length < 30 && (
+                      <div className="ml-3 text-sm text-amber-600 flex items-center">
+                        <span className="mr-1">⚠</span>
+                        Need {30 - dataPoints[ctq].length} more data points for full capability analysis
+                      </div>
+                    )}
                   </div>
                 )}
 
