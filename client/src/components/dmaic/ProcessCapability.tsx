@@ -2399,7 +2399,30 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   label={{ value: 'Moving Range', angle: -90, position: 'insideBottomLeft' }}
                                   domain={[MR_YscaleMin, MR_YscaleMax]}
                                 />
-                                <Tooltip formatter={(value: any) => [Number(value).toFixed(3), 'Moving Range']} />
+                                <Tooltip 
+                                  formatter={(value: any, name: any, props: any) => {
+                                    const dataValue = Number(value);
+                                    const isSpecialCause = dataValue > mrLimits.ucl || dataValue < mrLimits.lcl;
+                                    
+                                    const result = [dataValue.toFixed(3), 'Moving Range'];
+                                    
+                                    if (isSpecialCause) {
+                                      const violationType = dataValue > mrLimits.ucl ? 'above UCL' : 'below LCL';
+                                      return [
+                                        `${dataValue.toFixed(3)} (${violationType})`,
+                                        'Moving Range - Rule 1: Special Cause Variation'
+                                      ];
+                                    }
+                                    
+                                    return result;
+                                  }}
+                                  labelFormatter={(label) => `Data Point: ${label}`}
+                                  contentStyle={{
+                                    backgroundColor: 'white',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px'
+                                  }}
+                                />
                                 <ReferenceLine 
                                   y={mrLimits.centerLine} 
                                   stroke="#2563eb" 
@@ -2437,7 +2460,40 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                                   dataKey="value" 
                                   stroke="#7c3aed" 
                                   strokeWidth={2}
-                                  dot={{ r: 3 }}
+                                  dot={(props) => {
+                                    const { payload, cx, cy } = props;
+                                    if (!payload) return null;
+                                    
+                                    const dataValue = payload.value;
+                                    const isSpecialCause = dataValue > mrLimits.ucl || dataValue < mrLimits.lcl;
+                                    
+                                    if (isSpecialCause) {
+                                      // Black filled square for special cause points
+                                      return (
+                                        <rect
+                                          x={cx - 4}
+                                          y={cy - 4}
+                                          width={8}
+                                          height={8}
+                                          fill="black"
+                                          stroke="black"
+                                          strokeWidth={1}
+                                        />
+                                      );
+                                    } else {
+                                      // Regular purple circle for normal points
+                                      return (
+                                        <circle
+                                          cx={cx}
+                                          cy={cy}
+                                          r={3}
+                                          fill="#7c3aed"
+                                          stroke="#7c3aed"
+                                          strokeWidth={1}
+                                        />
+                                      );
+                                    }
+                                  }}
                                   connectNulls={false}
                                 />
                               </LineChart>
