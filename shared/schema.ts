@@ -124,6 +124,7 @@ export const projects = pgTable("projects", {
 });
 
 export const insertProjectSchema = createInsertSchema(projects).pick({
+  organizationId: true,
   title: true,
   description: true,
   projectType: true,

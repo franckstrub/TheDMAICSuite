@@ -458,14 +458,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/projects", async (req: Request, res: Response) => {
     try {
-      const projectData = insertProjectSchema.parse(req.body);
+      // Get user's organization ID from authentication
+      const user = req.user as any;
+      const organizationId = user?.organizationId;
+      
+      if (!organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+
+      const projectData = insertProjectSchema.parse({
+        ...req.body,
+        organizationId
+      });
+      
       const project = await storage.createProject(projectData);
       
       // Log activity
-      const user = await storage.getUser(projectData.createdBy);
-      if (user) {
+      const userRecord = await storage.getUser(projectData.createdBy);
+      if (userRecord) {
         await storage.createActivityLog({
-          organizationId: user.organizationId,
+          organizationId: userRecord.organizationId,
           userId: projectData.createdBy,
           projectId: project.id,
           action: "create_project",
