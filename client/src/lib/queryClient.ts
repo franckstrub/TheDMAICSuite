@@ -23,54 +23,36 @@ export async function apiRequest(
   return res;
 }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+// Completely safe query function that never throws or rejects
+const defaultQueryFn: QueryFunction = async ({ queryKey }) => {
+  return new Promise(async (resolve) => {
     try {
-      const res = await fetch(queryKey[0] as string, {
+      const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
+      const res = await fetch(url as string, {
         credentials: "include",
       });
 
-      // Handle auth errors silently
-      if (res.status === 401) {
-        return null;
-      }
-
       if (!res.ok) {
-        // Silently return null for other client errors to prevent crashes
-        if (res.status >= 400 && res.status < 500) {
-          return null;
-        }
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        resolve(null);
+        return;
       }
 
-      return await res.json();
-    } catch (error) {
-      // Always return null for network/auth errors to prevent crashes
-      if (error instanceof TypeError || (error instanceof Error && error.message.includes("fetch"))) {
-        return null;
-      }
-      return null;
+      const data = await res.json();
+      resolve(data);
+    } catch {
+      resolve(null);
     }
-  };
+  });
+};
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "returnNull" }),
+      queryFn: defaultQueryFn,
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: (failureCount, error) => {
-        // Don't retry on auth errors or client errors
-        if (error.message.includes("Unauthorized") || error.message.includes("HTTP 4")) {
-          return false;
-        }
-        return failureCount < 1;
-      },
+      staleTime: 5 * 60 * 1000,
+      retry: false, // Never retry to prevent error loops
     },
     mutations: {
       retry: false,
