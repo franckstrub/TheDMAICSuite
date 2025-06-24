@@ -29,16 +29,32 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      // Handle auth errors silently
+      if (res.status === 401) {
+        return null;
+      }
+
+      if (!res.ok) {
+        // Silently return null for other client errors to prevent crashes
+        if (res.status >= 400 && res.status < 500) {
+          return null;
+        }
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      return await res.json();
+    } catch (error) {
+      // Always return null for network/auth errors to prevent crashes
+      if (error instanceof TypeError || (error instanceof Error && error.message.includes("fetch"))) {
+        return null;
+      }
       return null;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
@@ -47,13 +63,13 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 5 * 60 * 1000, // 5 minutes
       retry: (failureCount, error) => {
-        // Don't retry on auth errors
-        if (error.message.includes("Unauthorized")) {
+        // Don't retry on auth errors or client errors
+        if (error.message.includes("Unauthorized") || error.message.includes("HTTP 4")) {
           return false;
         }
-        return failureCount < 2;
+        return failureCount < 1;
       },
     },
     mutations: {
