@@ -23,25 +23,29 @@ export async function apiRequest(
   return res;
 }
 
-// Completely safe query function that never throws or rejects
+// Ultra-safe query function that never fails
 const defaultQueryFn: QueryFunction = async ({ queryKey }) => {
-  return new Promise(async (resolve) => {
-    try {
-      const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
-      const res = await fetch(url as string, {
-        credentials: "include",
-      });
+  return new Promise((resolve) => {
+    const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
+    
+    // Use setTimeout to ensure async execution and prevent blocking
+    setTimeout(async () => {
+      try {
+        const res = await fetch(url as string, {
+          credentials: "include",
+        });
 
-      if (!res.ok) {
+        if (!res.ok) {
+          resolve(null);
+          return;
+        }
+
+        const data = await res.json();
+        resolve(data);
+      } catch {
         resolve(null);
-        return;
       }
-
-      const data = await res.json();
-      resolve(data);
-    } catch {
-      resolve(null);
-    }
+    }, 0);
   });
 };
 
@@ -52,10 +56,12 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000,
-      retry: false, // Never retry to prevent error loops
+      retry: false,
+      throwOnError: false, // Never throw errors
     },
     mutations: {
       retry: false,
+      throwOnError: false,
     },
   },
 });
