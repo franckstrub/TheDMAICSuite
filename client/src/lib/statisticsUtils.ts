@@ -826,7 +826,7 @@ export function assessProcessVariation(values: number[]): {
   // Generate assessment text
   let assessment = "";
   if (isInControl && isStable) {
-    assessment = "Process is in statistical control and stable. All data points and moving ranges are within control limits.";
+    assessment = "Process is in statistical control and stable. All data points are within control limits and moving ranges are acceptable.";
   } else {
     const issues: string[] = [];
     
