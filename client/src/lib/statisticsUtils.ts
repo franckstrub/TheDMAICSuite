@@ -774,6 +774,85 @@ export function calculateMovingRange(values: number[]): number[] {
 }
 
 /**
+ * Assess process variation to determine if process is in control and stable
+ * @param values Array of data values
+ * @returns Process variation assessment object
+ */
+export function assessProcessVariation(values: number[]): {
+  isInControl: boolean;
+  isStable: boolean;
+  outOfControlPoints: number[];
+  unstableRanges: number[];
+  individualLimits: { centerLine: number; ucl: number; lcl: number };
+  movingRangeLimits: { centerLine: number; ucl: number; lcl: number };
+  assessment: string;
+} {
+  if (values.length < 2) {
+    return {
+      isInControl: true,
+      isStable: true,
+      outOfControlPoints: [],
+      unstableRanges: [],
+      individualLimits: { centerLine: 0, ucl: 0, lcl: 0 },
+      movingRangeLimits: { centerLine: 0, ucl: 0, lcl: 0 },
+      assessment: "Insufficient data for process variation analysis"
+    };
+  }
+
+  // Calculate control limits
+  const individualLimits = calculateIndividualControlLimits(values);
+  const movingRanges = calculateMovingRange(values);
+  const movingRangeLimits = calculateMovingRangeControlLimits(values);
+
+  // Check for out of control points (Rule 1: any point exceeds UCL or LCL)
+  const outOfControlPoints: number[] = [];
+  values.forEach((value, index) => {
+    if (value > individualLimits.ucl || value < individualLimits.lcl) {
+      outOfControlPoints.push(index + 1); // 1-based indexing for user display
+    }
+  });
+
+  // Check for unstable ranges (Rule 2: any moving range exceeds MR UCL)
+  const unstableRanges: number[] = [];
+  movingRanges.forEach((range, index) => {
+    if (range > movingRangeLimits.ucl) {
+      unstableRanges.push(index + 2); // +2 because moving range starts from point 2
+    }
+  });
+
+  const isInControl = outOfControlPoints.length === 0;
+  const isStable = unstableRanges.length === 0;
+
+  // Generate assessment text
+  let assessment = "";
+  if (isInControl && isStable) {
+    assessment = "Process is in statistical control and stable. All data points are within control limits and moving ranges are acceptable.";
+  } else {
+    const issues: string[] = [];
+    
+    if (!isInControl) {
+      issues.push(`Process is OUT OF CONTROL: ${outOfControlPoints.length} data point(s) exceed individual control limits (points: ${outOfControlPoints.join(", ")})`);
+    }
+    
+    if (!isStable) {
+      issues.push(`Process is UNSTABLE: ${unstableRanges.length} moving range(s) exceed the moving range UCL (between points: ${unstableRanges.map(p => `${p-1}-${p}`).join(", ")})`);
+    }
+    
+    assessment = issues.join(". ") + ". Process improvement actions are recommended before conducting capability analysis.";
+  }
+
+  return {
+    isInControl,
+    isStable,
+    outOfControlPoints,
+    unstableRanges,
+    individualLimits,
+    movingRangeLimits,
+    assessment
+  };
+}
+
+/**
  * Calculate control limits for Individual chart
  * @param values Array of values
  * @returns Control limits object

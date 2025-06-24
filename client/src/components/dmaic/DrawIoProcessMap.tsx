@@ -182,14 +182,16 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
         </div>
       </div>
       
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border border-gray-200 rounded-lg iframe-container">
         <iframe
+          /*sandbox="allow-scripts allow-forms allow-same-origin"*/
+          scrolling="no"
           ref={iframeRef}
           src={drawIoUrl}
-          className="w-full h-[600px]"
+          className="w-full h-[600px] my-iframe"
           title="Process Map Editor"
           frameBorder="0"
-          allow="camera; microphone; geolocation"
+          /*allow="camera; microphone; geolocation"*/
           onLoad={() => {
             console.log('Draw.io iframe loaded successfully');
             setIsLoaded(true);

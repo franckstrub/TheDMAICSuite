@@ -527,3 +527,23 @@
   border-bottom: none;
 }
 
+/* MyComponent.css */
+.iframe-container {
+  position: relative; /* Essential for absolute positioning of child */
+  width: 100%; /* Adjust as needed */
+  margin: 0 auto; /* Center the container */
+  /*padding-top: 50px; /* Example: Push content down from the top */
+  height: 600px; /* Set a height or let content define it */
+  /*border: 1px solid #ccc; */
+  overflow: hidden !important;
+  display: block; /* Removes extra spacing */
+}
+
+.my-iframe {
+  position: absolute; /* Position within the relative container */
+  /*top: 20px; /* Example: 20px from the top of the container */
+  /*left: 20px; /* Example: 20px from the left of the container */
+  width: calc(100% - 0px); /* Adjust width to fit container */
+  height: calc(100% - 0px); /* Adjust height to fit container */
+  border: none;
+}
