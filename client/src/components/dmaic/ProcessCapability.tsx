@@ -2213,47 +2213,9 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                       variant={variationAnalysis.isStable ? "default" : "destructive"}
                       className={variationAnalysis.isStable ? "bg-green-600 text-white" : "bg-red-600 text-white"}
                     >
-                      {variationAnalysis.isStable ? "STABLE" : "UNSTABLE"}
+                      {variationAnalysis.isStable ? " STABLE " : "  UNSTABLE  "}
                     </Badge>
                   </div>
-
-                  {/* Control Limits Info */}
-                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
-                    <div>
-                      <span className="font-medium">Individual Chart Limits:</span>
-                      <div className="ml-2">
-                        <div>UCL: {variationAnalysis.individualLimits.ucl.toFixed(4)}</div>
-                        <div>CL: {variationAnalysis.individualLimits.centerLine.toFixed(4)}</div>
-                        <div>LCL: {variationAnalysis.individualLimits.lcl.toFixed(4)}</div>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="font-medium">Moving Range Limits:</span>
-                      <div className="ml-2">
-                        <div>UCL: {variationAnalysis.movingRangeLimits.ucl.toFixed(4)}</div>
-                        <div>CL: {variationAnalysis.movingRangeLimits.centerLine.toFixed(4)}</div>
-                        <div>LCL: {variationAnalysis.movingRangeLimits.lcl.toFixed(4)}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Out of Control Points */}
-                  {variationAnalysis.outOfControlPoints.length > 0 && (
-                    <div className="p-2 bg-red-50 border border-red-200 rounded">
-                      <span className="text-sm font-medium text-red-800">
-                        Out of Control Points: {variationAnalysis.outOfControlPoints.join(", ")}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Unstable Ranges */}
-                  {variationAnalysis.unstableRanges.length > 0 && (
-                    <div className="p-2 bg-red-50 border border-red-200 rounded">
-                      <span className="text-sm font-medium text-red-800">
-                        Unstable Ranges (between points): {variationAnalysis.unstableRanges.map(p => `${p-1}-${p}`).join(", ")}
-                      </span>
-                    </div>
-                  )}
 
                   {/* Assessment */}
                   <div className="text-sm text-purple-700">
