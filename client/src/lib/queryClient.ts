@@ -23,45 +23,35 @@ export async function apiRequest(
   return res;
 }
 
-// Completely safe query function
-const defaultQueryFn: QueryFunction = async ({ queryKey }) => {
-  const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
-  
-  // Handle auth endpoints specially for development
-  if (typeof url === 'string' && url.includes('/api/auth/user')) {
-    return { id: 1, username: "dev-user", email: "dev@example.com", organizationId: 1 };
-  }
-  
-  // Block login endpoints to prevent crashes
-  if (typeof url === 'string' && url.includes('/api/login')) {
-    return null;
-  }
-  
-  try {
-    const res = await fetch(url as string, {
+type UnauthorizedBehavior = "returnNull" | "throw";
+export const getQueryFn: <T>(options: {
+  on401: UnauthorizedBehavior;
+}) => QueryFunction<T> =
+  ({ on401: unauthorizedBehavior }) =>
+  async ({ queryKey }) => {
+    const res = await fetch(queryKey[0] as string, {
       credentials: "include",
     });
-    
-    if (!res.ok) return null;
+
+    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      return null;
+    }
+
+    await throwIfResNotOk(res);
     return await res.json();
-  } catch {
-    return null;
-  }
-};
+  };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: defaultQueryFn,
+      queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000,
+      staleTime: Infinity,
       retry: false,
-      throwOnError: false, // Never throw errors
     },
     mutations: {
       retry: false,
-      throwOnError: false,
     },
   },
 });
