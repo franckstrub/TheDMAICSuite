@@ -2098,6 +2098,53 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
         )}
       </div>
 
+      {/* Process Variation Analysis */}
+      {(() => {
+        const currentPoints = dataPoints[ctq] || [];
+        const numericValues = currentPoints.map(point => point.dataValue);
+        const variationAnalysis = assessProcessVariation(numericValues);
+        
+        return (
+          <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <h4 className="font-medium text-purple-800 mb-2">Process Variation Analysis</h4>
+            <div className="text-sm text-purple-700">
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`inline-block w-3 h-3 rounded-full ${variationAnalysis.isInControl ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                  <span className="font-medium">
+                    Process Control: {variationAnalysis.isInControl ? 'IN CONTROL' : 'OUT OF CONTROL'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-block w-3 h-3 rounded-full ${variationAnalysis.isStable ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                  <span className="font-medium">
+                    Process Stability: {variationAnalysis.isStable ? 'STABLE' : 'UNSTABLE'}
+                  </span>
+                </div>
+              </div>
+              
+              {!variationAnalysis.isInControl && (
+                <div className="mb-2 p-2 bg-red-100 border-l-4 border-red-500 rounded">
+                  <span className="font-medium text-red-800">Out of Control Points:</span>
+                  <span className="text-red-700"> {variationAnalysis.outOfControlPoints.join(', ')}</span>
+                </div>
+              )}
+              
+              {!variationAnalysis.isStable && (
+                <div className="mb-2 p-2 bg-orange-100 border-l-4 border-orange-500 rounded">
+                  <span className="font-medium text-orange-800">Unstable Ranges between points:</span>
+                  <span className="text-orange-700"> {variationAnalysis.unstableRanges.map(p => `${p-1}-${p}`).join(', ')}</span>
+                </div>
+              )}
+              
+              <p className={`mt-2 ${variationAnalysis.isInControl && variationAnalysis.isStable ? 'text-green-700' : 'text-red-700'}`}>
+                {variationAnalysis.assessment}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Capability Assessment */}
       <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h4 className="font-medium text-yellow-800 mb-2">Capability Assessment</h4>
