@@ -28,7 +28,8 @@ import {
   calculateZScoreLongShortTerm,
   calculatePerformanceMetrics,
   calculateCapabilityIndexes,
-  calculateObservedPerformanceMetrics
+  calculateObservedPerformanceMetrics,
+  assessProcessVariation
 } from "@/lib/statisticsUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
 
@@ -712,10 +713,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setIsGeneratingAssessment(prev => ({ ...prev, [ctq]: true }));
 
       const currentData = dataPoints[ctq] || [];
-      if (currentData.length < 30) {
+      if (currentData.length < 25) {
         toast({
           title: "Insufficient Data",
-          description: `At least 30 data points are required for AI capability analysis. Current: ${currentData.length}`,
+          description: `At least 25 data points are required for AI capability analysis. Current: ${currentData.length}`,
           variant: "destructive",
         });
         return;
@@ -852,7 +853,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const data = capabilityData[ctq];
     const dataPointsArray = dataPoints[ctq]?.map(dp => dp.dataValue) || [];
     
-    if (!data || dataPointsArray.length < 30) {
+    if (!data || dataPointsArray.length < 25) {
       return null;
     }
     
@@ -1451,10 +1452,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         Need at least 3 data points to calculate statistics
                       </div>
                     )}
-                    {dataPoints[ctq] && dataPoints[ctq].length >= 3 && dataPoints[ctq].length < 30 && (
+                    {dataPoints[ctq] && dataPoints[ctq].length >= 3 && dataPoints[ctq].length < 25 && (
                       <div className="ml-3 text-sm text-amber-600 flex items-center">
                         <span className="mr-1">⚠</span>
-                        Need {30 - dataPoints[ctq].length} more data points for full capability analysis
+                        Need {25 - dataPoints[ctq].length} more data points for full capability analysis
                       </div>
                     )}
                   </div>
@@ -1467,7 +1468,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   const showPercentage = data?.showPercentage || false;
                   const capabilityIndex = data?.capabilityIndex || "Z";
                   
-if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
+if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
   return (
     <div className="mt-6">
       <div className="flex items-center gap-2 mb-4">
@@ -2181,6 +2182,90 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
             )}
           </div>
         </div>
+
+        {/* Process Variation Analysis */}
+        {(() => {
+          const currentPoints = dataPoints[ctq] || [];
+          const numericValues = currentPoints.map(point => point.dataValue);
+          
+          if (numericValues.length >= 3) {
+            const variationAnalysis = assessProcessVariation(numericValues);
+            
+            return (
+              <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <h4 className="font-medium text-purple-800 mb-3">Process Variation Analysis</h4>
+                <div className="space-y-3">
+                  {/* Control Status */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Process Control Status:</span>
+                    <Badge 
+                      variant={variationAnalysis.isInControl ? "default" : "destructive"}
+                      className={variationAnalysis.isInControl ? "bg-green-600 text-white" : "bg-red-600 text-white"}
+                    >
+                      {variationAnalysis.isInControl ? "IN CONTROL" : "OUT OF CONTROL"}
+                    </Badge>
+                  </div>
+
+                  {/* Stability Status */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Process Stability Status:</span>
+                    <Badge 
+                      variant={variationAnalysis.isStable ? "default" : "destructive"}
+                      className={variationAnalysis.isStable ? "bg-green-600 text-white" : "bg-red-600 text-white"}
+                    >
+                      {variationAnalysis.isStable ? "STABLE" : "UNSTABLE"}
+                    </Badge>
+                  </div>
+
+                  {/* Control Limits Info */}
+                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                    <div>
+                      <span className="font-medium">Individual Chart Limits:</span>
+                      <div className="ml-2">
+                        <div>UCL: {variationAnalysis.individualLimits.ucl.toFixed(4)}</div>
+                        <div>CL: {variationAnalysis.individualLimits.centerLine.toFixed(4)}</div>
+                        <div>LCL: {variationAnalysis.individualLimits.lcl.toFixed(4)}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-medium">Moving Range Limits:</span>
+                      <div className="ml-2">
+                        <div>UCL: {variationAnalysis.movingRangeLimits.ucl.toFixed(4)}</div>
+                        <div>CL: {variationAnalysis.movingRangeLimits.centerLine.toFixed(4)}</div>
+                        <div>LCL: {variationAnalysis.movingRangeLimits.lcl.toFixed(4)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Out of Control Points */}
+                  {variationAnalysis.outOfControlPoints.length > 0 && (
+                    <div className="p-2 bg-red-50 border border-red-200 rounded">
+                      <span className="text-sm font-medium text-red-800">
+                        Out of Control Points: {variationAnalysis.outOfControlPoints.join(", ")}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Unstable Ranges */}
+                  {variationAnalysis.unstableRanges.length > 0 && (
+                    <div className="p-2 bg-red-50 border border-red-200 rounded">
+                      <span className="text-sm font-medium text-red-800">
+                        Unstable Ranges (between points): {variationAnalysis.unstableRanges.map(p => `${p-1}-${p}`).join(", ")}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Assessment */}
+                  <div className="text-sm text-purple-700">
+                    <p className="font-medium mb-1">Assessment:</p>
+                    <p>{variationAnalysis.assessment}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
      );
       } else if (dataPoints[ctq]?.length > 0) {
@@ -2191,7 +2276,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                         <span className="font-medium">Process Capability Analysis</span>
                       </div>
                       <p className="text-sm text-blue-600 mt-2">
-                        Need at least 30 data points for statistical analysis. 
+                        Need at least 25 data points for statistical analysis. 
                         Current: {dataPoints[ctq]?.length || 0} data points.
                       </p>
                     </div>
@@ -2205,7 +2290,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                   const currentPoints = dataPoints[ctq] || [];
                   const numericValues = currentPoints.map(point => point.dataValue);
                   
-                  if (numericValues.length >= 5) {
+                  if (numericValues.length >= 3) {
                     // Calculate limits first
                     const individualLimits = calculateIndividualControlLimits(numericValues);
                     const mrLimits = calculateMovingRangeControlLimits(numericValues);
@@ -2725,7 +2810,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                           <span className="font-medium">Statistical Charts</span>
                         </div>
                         <p className="text-sm text-orange-600 mt-2">
-                          Need at least 5 data points for statistical charts. 
+                          Need at least 3 data points for statistical charts. 
                           Current: {numericValues.length} data points.
                         </p>
                       </div>
@@ -2748,7 +2833,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                             e.stopPropagation();
                             generateAIAssessment(ctq);
                           }}
-                          disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 30 || !showStatistics[ctq]}
+                          disabled={isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 25 || !showStatistics[ctq]}
                           className="flex items-center gap-2"
                         >
                           {isGeneratingAssessment[ctq] ? (
@@ -2771,9 +2856,9 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 30) {
                           <span>✓ AI capability analysis loaded ({String(capabilityData[ctq]?.capabilityAssessment || "").length} characters)</span>
                         </div>
                       )}
-                      {(dataPoints[ctq]?.length || 0) < 30 && (
+                      {(dataPoints[ctq]?.length || 0) < 25 && (
                         <p className="text-xs text-orange-600 mt-1">
-                          At least 30 data points required for AI Capability analysis (Current: {dataPoints[ctq]?.length || 0})
+                          At least 25 data points required for AI Capability analysis (Current: {dataPoints[ctq]?.length || 0})
                         </p>
                       )}
                     </div>
