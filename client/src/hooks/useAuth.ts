@@ -10,8 +10,8 @@ export function useAuth() {
   });
 
   return {
-    user: null, // Return null to simulate unauthenticated state
+    user: { id: 1, username: "dev-user", email: "dev@example.com", organizationId: 1 }, // Mock user for development
     isLoading: false,
-    isAuthenticated: false, // Always unauthenticated to prevent auth-related crashes
+    isAuthenticated: true, // Always authenticated for development
   };
 }

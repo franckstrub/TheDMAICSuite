@@ -27,8 +27,13 @@ export async function apiRequest(
 const defaultQueryFn: QueryFunction = async ({ queryKey }) => {
   const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
   
-  // Block all auth endpoints to prevent crashes
-  if (typeof url === 'string' && (url.includes('/api/auth') || url.includes('/api/login'))) {
+  // Handle auth endpoints specially for development
+  if (typeof url === 'string' && url.includes('/api/auth/user')) {
+    return { id: 1, username: "dev-user", email: "dev@example.com", organizationId: 1 };
+  }
+  
+  // Block login endpoints to prevent crashes
+  if (typeof url === 'string' && url.includes('/api/login')) {
     return null;
   }
   
