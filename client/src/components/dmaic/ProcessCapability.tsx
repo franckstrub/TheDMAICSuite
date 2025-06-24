@@ -2186,12 +2186,15 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
         {/* Process Variation Analysis */}
         {(() => {
           const currentPoints = dataPoints[ctq] || [];
-          const numericValues = currentPoints.map(point => point.dataValue);
+          const numericValues = currentPoints
+            .map(point => parseFloat(point.dataValue))
+            .filter(value => !isNaN(value));
           
           if (numericValues.length >= 3) {
-            const variationAnalysis = assessProcessVariation(numericValues);
-            
-            return (
+            try {
+              const variationAnalysis = assessProcessVariation(numericValues);
+              
+              return (
               <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                 <h4 className="font-medium text-purple-800 mb-3">Process Variation Analysis</h4>
                 <div className="space-y-3">
@@ -2263,6 +2266,15 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                 </div>
               </div>
             );
+            } catch (error) {
+              console.error('Process variation analysis error:', error);
+              return (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <h4 className="font-medium text-red-800 mb-2">Process Variation Analysis Error</h4>
+                  <p className="text-sm text-red-600">Unable to perform variation analysis. Please check your data.</p>
+                </div>
+              );
+            }
           }
           return null;
         })()}
