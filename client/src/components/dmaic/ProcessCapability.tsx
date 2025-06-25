@@ -1024,61 +1024,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Auto-calculate when specific value fields change
   const autoCalculateOnValueChange = (ctq: string, field: string) => {
     console.log('autoCalculateOnValueChange called for CTQ:', ctq, 'field:', field);
-    
-    // Get the most current data from state
-    setCapabilityData(currentData => {
-      const data = currentData[ctq];
-      if (!data) {
-        console.log('No data found for CTQ:', ctq);
-        return currentData;
+    const data = capabilityData[ctq];
+    if (!data) return;
+
+    // Only calculate for specific analysis types when their fields change
+    if (field === 'nonConformityUnits' || field === 'totalUnits') {
+      if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
+        console.log('Auto-calculating Non-Conformity for CTQ:', ctq);
+        calculateIndividualAnalysis(ctq, "NonConformity");
       }
+    }
 
-      console.log('Current data for CTQ:', ctq, data);
-
-      // Only calculate for specific analysis types when their fields change
-      if (field === 'nonConformityUnits' || field === 'totalUnits') {
-        if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
-          console.log('Auto-calculating Non-Conformity for CTQ:', ctq, 'Units:', data.nonConformityUnits, 'Total:', data.totalUnits);
-          calculateIndividualAnalysis(ctq, "NonConformity");
-        } else {
-          console.log('Non-Conformity conditions not met:', {
-            enabled: data.enableNonConformity,
-            units: data.nonConformityUnits,
-            total: data.totalUnits
-          });
-        }
+    if (field === 'dpmoDefects' || field === 'dpmoUnits' || field === 'dpmoOpportunitiesPerUnit') {
+      if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
+        console.log('Auto-calculating DPMO for CTQ:', ctq);
+        calculateIndividualAnalysis(ctq, "DPMO");
       }
+    }
 
-      if (field === 'dpmoDefects' || field === 'dpmoUnits' || field === 'dpmoOpportunitiesPerUnit') {
-        if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0 && data.dpmoOpportunitiesPerUnit > 0) {
-          console.log('Auto-calculating DPMO for CTQ:', ctq);
-          calculateIndividualAnalysis(ctq, "DPMO");
-        } else {
-          console.log('DPMO conditions not met:', {
-            enabled: data.enableDpmo,
-            defects: data.dpmoDefects,
-            units: data.dpmoUnits,
-            opportunities: data.dpmoOpportunitiesPerUnit
-          });
-        }
+    if (field === 'oeeAvailability' || field === 'oeePerformance' || field === 'oeeQuality') {
+      if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+        console.log('Auto-calculating OEE for CTQ:', ctq);
+        calculateIndividualAnalysis(ctq, "OEE");
       }
-
-      if (field === 'oeeAvailability' || field === 'oeePerformance' || field === 'oeeQuality') {
-        if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
-          console.log('Auto-calculating OEE for CTQ:', ctq);
-          calculateIndividualAnalysis(ctq, "OEE");
-        } else {
-          console.log('OEE conditions not met:', {
-            enabled: data.enableOee,
-            availability: data.oeeAvailability,
-            performance: data.oeePerformance,
-            quality: data.oeeQuality
-          });
-        }
-      }
-
-      return currentData;
-    });
+    }
   };
 
   // Helper functions for attribute CTQ analysis
