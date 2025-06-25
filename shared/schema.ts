@@ -1009,6 +1009,16 @@ export const processCapability = pgTable("process_capability", {
   showStatistics: boolean("show_statistics").default(false), // Show/hide statistics section
   dataPoints: jsonb("data_points").$type<number[]>().default([]), // JSON array of numeric data points
 
+  // Attribute CTQ specific fields
+  attributeAnalysisType: text("attribute_analysis_type").default("NonConformity"), // NonConformity, DPMO, RTY, OEE, ParetoDefects
+  defects: integer("defects"), // Number of defects
+  opportunities: integer("opportunities"), // Total opportunities for NonConformity
+  units: integer("units"), // Number of units for DPMO
+  opportunitiesPerUnit: integer("opportunities_per_unit"), // Opportunities per unit for DPMO
+  availability: real("availability"), // Availability percentage for OEE
+  performance: real("performance"), // Performance percentage for OEE
+  quality: real("quality"), // Quality percentage for OEE
+
   capabilityAssessment: text("capability_assessment"), // AI-generated capability assessment
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });

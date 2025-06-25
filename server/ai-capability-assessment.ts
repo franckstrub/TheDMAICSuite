@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { boolean } from "drizzle-orm/mysql-core";
 
 // Initialize the Google AI client with proper API key validation
 let genAI: GoogleGenerativeAI | null = null;
@@ -28,6 +29,8 @@ export interface CapabilityStats {
   percentageDefectST?: number;
   pdLSL?: number;
   pdUSL?: number;
+  isInControl: boolean;
+  isStable: boolean;
 }
 
 export interface CapabilityContext {
@@ -98,7 +101,9 @@ export async function generateCapabilityAssessment(
                 )
           )
       : "";
-    
+    const variationText = stats.isStable
+      ? (stats.isInControl ? `The process is stable and in control.` : `The process is out of control.`)
+      : (stats.isInControl ? `The process is unstable.` : `The process is unstable and out of control.`)
     const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive capability analysis for the CTQ "${context.ctq}".
 
 Statistical Analysis:
@@ -108,6 +113,7 @@ Statistical Analysis:
 - ${normalityText}
 - ${capabilityText}
 - ${defectText}
+- ${variationText}
 
 Process Context:
 - Capability index method: ${context.capabilityIndex}
@@ -123,7 +129,6 @@ Please provide:
 3. Statistical interpretation of the results
 
 Keep the analysis concise, professional, data-driven, and actionable for process improvement teams.`;
-
     console.log("Sending request to Google AI API for capability analysis...");
 
     // Create a generative model instance
