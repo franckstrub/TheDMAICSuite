@@ -750,13 +750,38 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
 
   const updateCapabilityField = (ctq: string, field: keyof ProcessCapabilityData, value: any) => {
-    setCapabilityData(prev => ({
-      ...prev,
-      [ctq]: {
-        ...prev[ctq],
-        [field]: value,
-      },
-    }));
+    setCapabilityData(prev => {
+      const updated = {
+        ...prev,
+        [ctq]: {
+          ...prev[ctq],
+          [field]: value,
+        },
+      };
+      
+      // Clear any existing timeout for this CTQ
+      if (autoSaveTimers[ctq]) {
+        clearTimeout(autoSaveTimers[ctq]);
+      }
+      
+      // Set new timeout for auto-save
+      const timer = setTimeout(() => {
+        saveCapabilityData(ctq, updated[ctq]);
+      }, 1000); // 1 second delay
+      
+      setAutoSaveTimers(prev => ({
+        ...prev,
+        [ctq]: timer
+      }));
+      
+      // Auto-calculate if the field affects calculations
+      if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeAvailability', 'oeePerformance', 'oeeQuality'].includes(field)) {
+        console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
+        setTimeout(() => autoCalculateAnalysis(ctq), 100);
+      }
+      
+      return updated;
+    });
   };
 
   // Generate AI Capability Assessment
@@ -989,21 +1014,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Auto-calculate when data changes
   const autoCalculateAnalysis = (ctq: string) => {
+    console.log('autoCalculateAnalysis called for CTQ:', ctq);
     const data = capabilityData[ctq];
-    if (!data) return;
+    if (!data) {
+      console.log('No data found for CTQ:', ctq);
+      return;
+    }
+
+    console.log('CTQ data:', data);
 
     // Auto-calculate Non-Conformity if data is available
     if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
+      console.log('Auto-calculating Non-Conformity for CTQ:', ctq);
       calculateIndividualAnalysis(ctq, "NonConformity");
     }
 
     // Auto-calculate DPMO if data is available
     if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
+      console.log('Auto-calculating DPMO for CTQ:', ctq);
       calculateIndividualAnalysis(ctq, "DPMO");
     }
 
     // Auto-calculate OEE if data is available
     if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+      console.log('Auto-calculating OEE for CTQ:', ctq);
       calculateIndividualAnalysis(ctq, "OEE");
     }
   };
