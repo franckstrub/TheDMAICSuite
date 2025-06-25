@@ -1706,9 +1706,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                <label className="block text-sm font-medium mb-2">Number of Non-Conform Units</label>
                                 <Input
                                   type="number"
                                   min="0"
@@ -1732,16 +1732,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   value={capabilityData[ctq]?.dpmoUnits || ""}
                                   onChange={(e) => updateCapabilityField(ctq, "dpmoUnits", parseInt(e.target.value) || 1)}
                                   placeholder="e.g., 500"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-2">Opportunities Per Unit</label>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  value={capabilityData[ctq]?.dpmoOpportunitiesPerUnit || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "dpmoOpportunitiesPerUnit", parseInt(e.target.value) || 1)}
-                                  placeholder="e.g., 10"
                                 />
                               </div>
                             </div>
