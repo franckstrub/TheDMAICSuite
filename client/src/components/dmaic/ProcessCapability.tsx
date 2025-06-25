@@ -31,7 +31,16 @@ import {
   calculateObservedPerformanceMetrics,
   assessProcessVariation
 } from "@/lib/statisticsUtils";
+import {
+  calculateNonConformity,
+  calculateDPMO,
+  calculateRolledThroughputYield,
+  calculateOEE,
+  calculateParetoOfDefects,
+  calculateZEquivalentFromDefectRate
+} from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
+import { Stats } from "fs";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -765,7 +774,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         percentageDefectLT: calculatedStats.isNormal ? calculatedStats.performanceMetrics.longTerm.percentDefects || null : calculatedStats.obspercentDefectsLT || null,
         percentageDefectST: calculatedStats.isNormal ? calculatedStats.performanceMetrics.shortTerm.percentDefects || null : calculatedStats.obspercentDefectsST || null,
         pdLSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.performanceMetrics.longTerm.pdLSL_LT || null : calculatedStats.performanceMetrics.shortTerm.pdLSL_ST  || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.obspdLSL_LT || null : calculatedStats.obspdLSL_ST || null),
-        pdUSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.performanceMetrics.longTerm.pdUSL_LT || null : calculatedStats.performanceMetrics.shortTerm.pdUSL_ST  || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.obspdUSL_LT || null : calculatedStats.obspdUSL_ST || null)
+        pdUSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.performanceMetrics.longTerm.pdUSL_LT || null : calculatedStats.performanceMetrics.shortTerm.pdUSL_ST  || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.obspdUSL_LT || null : calculatedStats.obspdUSL_ST || null),
+        isStable:calculatedStats.isStable,
+        isInControl:calculatedStats.isInControl,
         
       };
 
@@ -915,6 +926,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       data.dataSetTerm,
       zShift,
     );
+    const currentPoints = dataPoints[ctq] || [];
+    const numericValues = currentPoints.map(point => point.dataValue);
+    const variationAnalysis = assessProcessVariation(numericValues);
 
     return {
       sampleSize,
@@ -957,6 +971,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       ZequivST: ObservedPerformanceMetrics.shortTerm.ZequivST,
       ZequivLSL_ST: ObservedPerformanceMetrics.shortTerm.ZequivLSL_ST,
       ZequivUSL_ST: ObservedPerformanceMetrics.shortTerm.ZequivUSL_ST,
+      isStable: variationAnalysis.isStable,
+      isInControl: variationAnalysis.isInControl,
+      assessment: variationAnalysis.assessment,
     };
   };
 
@@ -1372,27 +1389,48 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   )}
 
                   {ctqWithType.ctqType === "Attribute" && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Show Z</label>
-                      <RadioGroup
-                        value={capabilityData[ctq]?.showZ ? "true" : "false"}
-                        onValueChange={(value) => updateCapabilityField(ctq, "showZ", value === "true")}
-                        className="flex flex-row space-x-4 mt-2"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="false" id={`${ctq}-showz-no`} />
-                          <Label htmlFor={`${ctq}-showz-no`}>No</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="true" id={`${ctq}-showz-yes`} />
-                          <Label htmlFor={`${ctq}-showz-yes`}>Yes</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Show Z</label>
+                        <RadioGroup
+                          value={capabilityData[ctq]?.showZ ? "true" : "false"}
+                          onValueChange={(value) => updateCapabilityField(ctq, "showZ", value === "true")}
+                          className="flex flex-row space-x-4 mt-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="false" id={`${ctq}-showz-no`} />
+                            <Label htmlFor={`${ctq}-showz-no`}>No</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="true" id={`${ctq}-showz-yes`} />
+                            <Label htmlFor={`${ctq}-showz-yes`}>Yes</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Attribute Analysis Type</label>
+                        <Select
+                          value={capabilityData[ctq]?.attributeAnalysisType || "NonConformity"}
+                          onValueChange={(value) => updateCapabilityField(ctq, "attributeAnalysisType", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="NonConformity">Non Conformity</SelectItem>
+                            <SelectItem value="DPMO">DPMO (Defects Per Million Opportunities)</SelectItem>
+                            <SelectItem value="RTY">Rolled Throughput Yield (RTY)</SelectItem>
+                            <SelectItem value="OEE">Overall Equipment Effectiveness (OEE)</SelectItem>
+                            <SelectItem value="ParetoDefects">Pareto of Defects</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
                   )}
                 </div>
 
-                <div className={`grid grid-cols-1 gap-4 ${ctqWithType.ctqType === "Continuous" ? "md:grid-cols-3" : "md:grid-cols-1"}`}>
+                <div className={`grid grid-cols-1 gap-4 ${ctqWithType.ctqType === "Continuous" ? "md:grid-cols-3" : ctqWithType.ctqType === "Attribute" ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
                   {ctqWithType.ctqType === "Continuous" && (
                     <>
                       <div>
@@ -1432,6 +1470,283 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </div>
                     </>
                   )}
+
+                  {ctqWithType.ctqType === "Attribute" && (
+                    <>
+                      {(() => {
+                        const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
+                        
+                        switch (analysisType) {
+                          case "NonConformity":
+                            return (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={capabilityData[ctq]?.defects || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "defects", parseInt(e.target.value) || 0)}
+                                    placeholder="e.g., 5"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Total Opportunities</label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={capabilityData[ctq]?.opportunities || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "opportunities", parseInt(e.target.value) || 1)}
+                                    placeholder="e.g., 100"
+                                  />
+                                </div>
+                              </>
+                            );
+                          
+                          case "DPMO":
+                            return (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={capabilityData[ctq]?.defects || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "defects", parseInt(e.target.value) || 0)}
+                                    placeholder="e.g., 5"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Number of Units</label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={capabilityData[ctq]?.units || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "units", parseInt(e.target.value) || 1)}
+                                    placeholder="e.g., 50"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Opportunities per Unit</label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={capabilityData[ctq]?.opportunitiesPerUnit || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "opportunitiesPerUnit", parseInt(e.target.value) || 1)}
+                                    placeholder="e.g., 4"
+                                  />
+                                </div>
+                              </>
+                            );
+                            
+                          case "OEE":
+                            return (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Availability (%)</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={capabilityData[ctq]?.availability || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "availability", parseFloat(e.target.value) || 0)}
+                                    placeholder="e.g., 85.5"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Performance (%)</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={capabilityData[ctq]?.performance || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "performance", parseFloat(e.target.value) || 0)}
+                                    placeholder="e.g., 92.3"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Quality (%)</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={capabilityData[ctq]?.quality || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "quality", parseFloat(e.target.value) || 0)}
+                                    placeholder="e.g., 96.8"
+                                  />
+                                </div>
+                              </>
+                            );
+                            
+                          default:
+                            return null;
+                        }
+                      })()}
+                    </>
+                  )}
+                </div>
+
+                {/* Calculate Statistics Button for Attribute CTQs */}
+                {ctqWithType.ctqType === "Attribute" && (
+                  <div className="flex justify-between items-center mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => handleCalculateStatistics(ctq)}
+                      disabled={!canCalculateAttributeStatistics(ctq)}
+                      className="flex items-center gap-2"
+                    >
+                      <Calculator className="h-4 w-4" />
+                      Calculate Statistics
+                    </Button>
+                    {(() => {
+                      const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
+                      const missingFields = getMissingAttributeFields(ctq, analysisType);
+                      if (missingFields.length > 0) {
+                        return (
+                          <div className="ml-3 text-sm text-amber-600 flex items-center">
+                            <span className="mr-1">⚠</span>
+                            Missing: {missingFields.join(", ")}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                )}
+
+                {/* Attribute CTQ Analysis Results */}
+                {ctqWithType.ctqType === "Attribute" && showStatistics[ctq] && (() => {
+                  const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
+                  const results = calculateAttributeResults(ctq, analysisType);
+                  
+                  if (!results) return null;
+
+                  return (
+                    <div className="mt-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Calculator className="h-5 w-5 text-blue-600" />
+                        <h3 className="text-lg font-semibold">Attribute CTQ Analysis Results</h3>
+                      </div>
+                      
+                      {analysisType === "NonConformity" && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">Non Conformity Analysis</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Non Conformity Rate:</span>
+                                <span className="font-medium">{results.nonConformityRate.toFixed(2)}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Conformity Rate:</span>
+                                <span className="font-medium">{results.conformityRate.toFixed(2)}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Defect Rate:</span>
+                                <span className="font-medium">{results.defectRate.toFixed(4)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {capabilityData[ctq]?.showZ && (
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                              <h4 className="font-medium text-blue-800 mb-3">Z-Equivalent</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Z-Equivalent:</span>
+                                  <span className="font-medium">{results.zEquivalent.toFixed(2)}σ</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {analysisType === "DPMO" && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">DPMO Analysis</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>DPMO:</span>
+                                <span className="font-medium">{Math.round(results.dpmo).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>DPU (Defects Per Unit):</span>
+                                <span className="font-medium">{results.dpu.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>DPO (Defects Per Opportunity):</span>
+                                <span className="font-medium">{results.dpo.toFixed(6)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Total Opportunities:</span>
+                                <span className="font-medium">{results.totalOpportunities}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {capabilityData[ctq]?.showZ && (
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                              <h4 className="font-medium text-blue-800 mb-3">Z-Equivalent</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Z-Equivalent:</span>
+                                  <span className="font-medium">{results.zEquivalent.toFixed(2)}σ</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {analysisType === "OEE" && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-gray-800 mb-3">OEE Analysis</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Overall Equipment Effectiveness:</span>
+                                <span className="font-medium">{results.oeePercentage.toFixed(1)}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Availability:</span>
+                                <span className="font-medium">{results.availabilityPercentage.toFixed(1)}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Performance:</span>
+                                <span className="font-medium">{results.performancePercentage.toFixed(1)}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Quality:</span>
+                                <span className="font-medium">{results.qualityPercentage.toFixed(1)}%</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-green-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-green-800 mb-3">OEE Classification</h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Classification:</span>
+                                <span className={`font-medium ${
+                                  results.classification === "World Class" ? "text-green-700" :
+                                  results.classification === "Good" ? "text-blue-700" :
+                                  results.classification === "Fair" ? "text-yellow-700" : "text-red-700"
+                                }`}>
+                                  {results.classification}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 </div>
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
@@ -1565,12 +1880,15 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
               <span className="font-medium">{stats.quartiles?.max?.toFixed(4) || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
-              <span title="Range = Max - Min">Range:</span>
+              <span title="IQR = [Q3 - Q1]">IQR:</span>
+              <span className="font-medium">{stats.quartiles ? (stats.quartiles.q3 - stats.quartiles.q1).toFixed(4) : 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span title="Range = [Max - Min] of data">Range:</span>
               <span className="font-medium">{stats.quartiles ? (stats.quartiles.max - stats.quartiles.min).toFixed(4) : 'N/A'}</span>
             </div>
-            <div className="flex justify-between"
-            title="Mode: most frequent value of the distribution">
-              <span>Mode:</span>
+            <div className="flex justify-between">
+              <span title="Mode: most frequent value of the distribution">Mode:</span>
               <span className="font-medium">{stats.Mode?.toFixed(4)}</span>
             </div>
           </div>
@@ -2097,53 +2415,64 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
           </div>
         )}
       </div>
-
       {/* Process Variation Analysis */}
-      {(() => {
-        const currentPoints = dataPoints[ctq] || [];
-        const numericValues = currentPoints.map(point => point.dataValue);
-        const variationAnalysis = assessProcessVariation(numericValues);
-        
-        return (
-          <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-            <h4 className="font-medium text-purple-800 mb-2">Process Variation Analysis</h4>
-            <div className="text-sm text-purple-700">
-              <div className="mb-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`inline-block w-3 h-3 rounded-full ${variationAnalysis.isInControl ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  <span className="font-medium">
-                    Process Control: {variationAnalysis.isInControl ? 'IN CONTROL' : 'OUT OF CONTROL'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`inline-block w-3 h-3 rounded-full ${variationAnalysis.isStable ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  <span className="font-medium">
-                    Process Stability: {variationAnalysis.isStable ? 'STABLE' : 'UNSTABLE'}
-                  </span>
-                </div>
-              </div>
+        {(() => {
+          const currentPoints = dataPoints[ctq] || [];
+          const numericValues = currentPoints.map(point => point.dataValue);
+          
+          if (numericValues.length >= 3) {
+            const variationAnalysis = assessProcessVariation(numericValues);
+            
+            return (
+              <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <h4 className="font-medium text-purple-800 mb-3">Process Variation Analysis</h4>
               
-              {!variationAnalysis.isInControl && (
-                <div className="mb-2 p-2 bg-red-100 border-l-4 border-red-500 rounded">
-                  <span className="font-medium text-red-800">Out of Control Points:</span>
-                  <span className="text-red-700"> {variationAnalysis.outOfControlPoints.join(', ')}</span>
-                </div>
-              )}
-              
-              {!variationAnalysis.isStable && (
-                <div className="mb-2 p-2 bg-orange-100 border-l-4 border-orange-500 rounded">
-                  <span className="font-medium text-orange-800">Unstable Ranges between points:</span>
-                  <span className="text-orange-700"> {variationAnalysis.unstableRanges.map(p => `${p-1}-${p}`).join(', ')}</span>
-                </div>
-              )}
-              
-              <p className={`mt-2 ${variationAnalysis.isInControl && variationAnalysis.isStable ? 'text-green-700' : 'text-red-700'}`}>
-                {variationAnalysis.assessment}
-              </p>
+              {/* Table with 3 columns, 2 rows */}
+              <table className="w-full border-collapse border border-purple-200">
+                <tbody>
+                  {/* Row 1: Process Control Status */}
+                  <tr>
+                    <td className="py-2 pl-2 pr-4 text-sm font-medium text-purple-700 w-2/9">
+                      Process Control Status:
+                    </td>
+                    <td className="py-2 px-2 w-1/9">
+                      <Badge 
+                        variant={variationAnalysis.isInControl ? "default" : "destructive"}
+                        className={variationAnalysis.isInControl ? "bg-green-600 text-white" : "bg-red-600 text-white"}
+                      >
+                        {variationAnalysis.isInControl ? "IN CONTROL" : "OUT OF CONTROL"}
+                      </Badge>
+                    </td>
+                    <td className="py-2 pl-4 text-sm text-purple-700 w-2/3 border border-purple-200 rounded-lg" rowSpan={2}>
+                      <div>
+                        <p className="font-medium mb-1">Assessment:</p>
+                        <p>{variationAnalysis.assessment}</p>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 2: Process Stability Status */}
+                  <tr>
+                    <td className="py-2 pl-2 pr-4 text-sm font-medium text-purple-700 w-2/9">
+                      Process Stability Status:
+                    </td>
+                    <td className="py-2 px-6 w-1/9">
+                      <Badge 
+                        variant={variationAnalysis.isStable ? "default" : "destructive"}
+                        className={variationAnalysis.isStable ? "bg-green-600 text-white" : "bg-red-600 text-white"}
+                      >
+                        {variationAnalysis.isStable ? "STABLE" : "UNSTABLE"}
+                      </Badge>
+                    </td>
+                    {/* Third column spans both rows due to rowSpan={2} above */}
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
-        );
-      })()}
+            );
+          }
+          return null;
+        })()}
 
       {/* Capability Assessment */}
       <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -2229,52 +2558,6 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
             )}
           </div>
         </div>
-
-        {/* Process Variation Analysis */}
-        {(() => {
-          const currentPoints = dataPoints[ctq] || [];
-          const numericValues = currentPoints.map(point => point.dataValue);
-          
-          if (numericValues.length >= 3) {
-            const variationAnalysis = assessProcessVariation(numericValues);
-            
-            return (
-              <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                <h4 className="font-medium text-purple-800 mb-3">Process Variation Analysis</h4>
-                <div className="space-y-3">
-                  {/* Control Status */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Process Control Status:</span>
-                    <Badge 
-                      variant={variationAnalysis.isInControl ? "default" : "destructive"}
-                      className={variationAnalysis.isInControl ? "bg-green-600 text-white" : "bg-red-600 text-white"}
-                    >
-                      {variationAnalysis.isInControl ? "IN CONTROL" : "OUT OF CONTROL"}
-                    </Badge>
-                  </div>
-
-                  {/* Stability Status */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Process Stability Status:</span>
-                    <Badge 
-                      variant={variationAnalysis.isStable ? "default" : "destructive"}
-                      className={variationAnalysis.isStable ? "bg-green-600 text-white" : "bg-red-600 text-white"}
-                    >
-                      {variationAnalysis.isStable ? " STABLE " : "  UNSTABLE  "}
-                    </Badge>
-                  </div>
-
-                  {/* Assessment */}
-                  <div className="text-sm text-purple-700">
-                    <p className="font-medium mb-1">Assessment:</p>
-                    <p>{variationAnalysis.assessment}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-          return null;
-        })()}
       </div>
      );
       } else if (dataPoints[ctq]?.length > 0) {
@@ -2340,7 +2623,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                     const gaussMinValue = Math.min(...numericValues);
                     const gaussMaxValue = Math.max(...numericValues);
                     const gaussRange = gaussMaxValue - gaussMinValue;
-                    const gaussianPadding = gaussRange * 0.1;
+                    const gaussianPadding = gaussRange * 0.05;
                     
                     // Find maximum frequency to scale the Gaussian curve
                     const maxFrequency = Math.max(...histogramData.map(d => d.y));
@@ -2359,6 +2642,10 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                         gaussian: scaledY
                       };
                     });
+                    const lsl= capabilityData[ctq]?.lsl;
+                    const usl= capabilityData[ctq]?.usl;
+                    const lslpos= 100 * (parseFloat(lsl)-quartiles.min)/dataRange;
+                    const uslpos= 100 * (parseFloat(usl)-quartiles.min)/dataRange;
                     // box plot data
                     const boxPlotData = [
                       {
@@ -2368,7 +2655,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                         median: quartiles.median,
                         q3: quartiles.q3,
                         max: quartiles.max,
-                        outliers: [] // Could add outlier detection later
+                        outliers: [], // Could add outlier detection later
                       }
                     ];
 
@@ -2506,7 +2793,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                   label={{ value: 'Value', position: 'insideBottom', offset: -5 }}
                                   tickFormatter={(value) => Number(value).toFixed(2)}
                                   type="number"  // Important for reference lines to work properly
-                                  domain={['dataMin', 'dataMax']}
+                                  domain={[gaussMinValue - gaussianPadding, gaussMaxValue + gaussianPadding]}
                                 />
                                 <YAxis label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }} />
                                 <Tooltip 
@@ -2530,13 +2817,55 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                 {/* Mean vertical line */}
                                 <ReferenceLine 
                                   x={dataMean} 
-                                  stroke="#dc2626" 
+                                  stroke="green" 
+                                  strokeWidth={2}
+                                  //strokeDasharray="5 5"
+                                  label={{ 
+                                    value: `Mean: ${dataMean.toFixed(3)}`, 
+                                    position: "insideTop",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "11px" }
+                                  }} 
+                                />
+
+                                {/* Stdev horizontal line */}
+                                {/*<ReferenceLine 
+                                  y={maxFrequency * 0.241970725 / 0.3939} 
+                                  //yMax: max_count * 0.241970725 / 0.3939
+                                  stroke="green" 
                                   strokeWidth={2}
                                   strokeDasharray="5 5"
                                   label={{ 
-                                    value: `Mean: ${dataMean.toFixed(3)}`, 
-                                    position: "middle",
+                                    value: `StDev: ${dataStdDev.toFixed(3)}`, 
+                                    position: "insideTop",
                                     style: { fill: "#dc2626", fontWeight: "bold", fontSize: "11px" }
+                                  }} 
+                                /> */}
+
+                                {/* LSL */}
+                                <ReferenceLine 
+                                  x={lsl} 
+                                  //stroke="#dc2626" 
+                                  stroke= "red"
+                                  strokeWidth={3}
+                                  //strokeDasharray="5 5"
+                                  label={{ 
+                                    value: `LSL: ${lsl}`, 
+                                    position: "insideTop",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "10px" }
+                                  }} 
+                                />
+                                
+                                {/* USL */}
+                                <ReferenceLine 
+                                  x={usl} 
+                                  //stroke="#dc2626" 
+                                  stroke= "red"
+                                  strokeWidth={3}
+                                  //strokeDasharray="5 5"
+                                  label={{ 
+                                    value: `USL: ${usl}`, 
+                                    position: "insideTop",
+                                    style: { fill: "#dc2626", fontWeight: "bold", fontSize: "10px" }
                                   }} 
                                 />
                                 
@@ -2549,7 +2878,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                   label={{ 
                                     value: `+1σ: ${(dataMean + dataStdDev).toFixed(3)}`, 
                                     position: "middle",
-                                    style: { fill: "#059669", fontWeight: "bold", fontSize: "10px" }
+                                    style: { fill: "black", fontWeight: "bold", fontSize: "10px" }
                                   }} 
                                 />
                                 
@@ -2561,14 +2890,14 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                   label={{ 
                                     value: `-1σ: ${(dataMean - dataStdDev).toFixed(3)}`, 
                                     position: "middle",
-                                    style: { fill: "#059669", fontWeight: "bold", fontSize: "10px" }
+                                    style: { fill: "black", fontWeight: "bold", fontSize: "10px" }
                                   }} 
                                 />
                                 
                               </ComposedChart>
                             </ResponsiveContainer>
                             <div className="text-xs text-gray-600 mt-2">
-                              <div>Mean: {mean(numericValues).toFixed(3)} | Std Dev: {standardDeviation(numericValues).toFixed(3)}</div>
+                              <div>Mean: {mean(numericValues).toFixed(3)} | Std Dev: {standardDeviation(numericValues).toFixed(3)} | LSL: {lsl} | USL: {usl}</div>
                               <div className="flex items-center gap-4 mt-1">
                                 <div className="flex items-center gap-1">
                                   <div className="w-3 h-3 bg-blue-500"></div>
@@ -2579,12 +2908,20 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                   <span>Normal Distribution</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <div className="w-3 h-1 bg-red-600 border-dashed border-t-2"></div>
+                                  <div className="w-3 h-1 bg-green-600 border-dashed border-t-2"></div>
                                   <span>Mean</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <div className="w-3 h-1 bg-green-600 border-dashed border-t-2"></div>
                                   <span>±1σ</span>
+                                </div>
+                              <div className="flex items-center gap-1">
+                                  <div className="w-3 h-1 bg-red-600 border-dashed border-t-2"></div>
+                                  <span>LSL</span>
+                                </div>
+                              <div className="flex items-center gap-1">
+                                  <div className="w-3 h-1 bg-red-600 border-dashed border-t-2"></div>
+                                  <span>USL</span>
                                 </div>
                               </div>
                             </div>
@@ -2733,7 +3070,31 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                         title={`Min: ${quartiles.min.toFixed(3)}`}
                                         style={{ left: '0%', top: '25%' }}
                                       />
-                                      
+
+                                      {/* LSL line */}
+                                      {lslpos !== null && lslpos >= 0 && lslpos <= 100 && (
+                                      <div>
+                                        <div 
+                                        className="absolute w-0.5 h-full bg-red-600"
+                                        title={`LSL: ${lsl}`}
+                                        style={{ left: `${lslpos}%`, height: '100%' }}
+                                        />
+                                        {/* LSL label */}
+                                        <div 
+                                        className="absolute text-xs font-semibold text-red-600 bg-white px-1 py-0.5 rounded shadow border"
+                                        style={{ 
+                                          left: `${Math.max(0, Math.min(85, lslpos))}%`,
+                                          top: '-28px',
+                                          transform: lslpos > 85 ? 'translateX(-100%)' : lslpos < 15 ? 'translateX(0%)' : 'translateX(-50%)',
+                                          whiteSpace: 'nowrap',
+                                          zIndex: 10
+                                        }}
+                                      >
+                                        LSL: {lsl}
+                                        </div>
+                                      </div>
+                                      )}
+
                                       {/* Q1-Q3 Box */}
                                       <div 
                                         className="absolute h-full bg-blue-200 border border-2 border-blue-400"
@@ -2752,20 +3113,45 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                       
                                       {/* Median line */}
                                       <div 
-                                        className="absolute w-0.5 h-full bg-red-600"
+                                        className="absolute w-0.5 h-full bg-blue-400"
                                         title={`Median: ${quartiles.median.toFixed(3)}`}
                                         style={{
                                           left: '50%',
                                           top: '0%'
                                         }}
                                       />
-
+                                                                            
                                       {/* Q3 line */}
                                       <div 
                                         className="absolute w-0.5 h-full bg-gray-600"
                                         title={`Q3: ${quartiles.q3.toFixed(3)}`}
                                         style={{ left: '75%', top: '0%' }}
                                       />
+                                                                            
+                                      {/* USL line */}
+                                      {uslpos !== null && uslpos >= 0 && uslpos <= 100 && (
+                                      <div>
+                                        <div 
+                                        className="absolute w-0.5 h-full bg-red-600"
+                                        title={`USL: ${usl}`}
+                                        style={{ left: `${uslpos}%`, top: '0%' }}
+                                        />
+                                    
+                                      {/* USL label */}
+                                        <div 
+                                        className="absolute text-xs font-semibold text-red-600 bg-white px-1 py-0.5 rounded shadow border"
+                                        style={{ 
+                                          left: `${Math.max(0, Math.min(85, uslpos))}%`,
+                                          top: '-28px',
+                                          transform: uslpos > 85 ? 'translateX(-100%)' : uslpos < 15 ? 'translateX(0%)' : 'translateX(-50%)',
+                                          whiteSpace: 'nowrap',
+                                          zIndex: 10
+                                        }}
+                                        >
+                                        USL: {usl}
+                                        </div>
+                                      </div>
+                                      )}
                                       
                                       {/* Max line */}
                                       <div 
@@ -2791,7 +3177,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                 </div>
                                 
                                 {/* Labels */}
-                                <div className="flex justify-between text-xs text-gray-600 mt-2">
+                                <div className="flex justify-between text-xs text-gray-600 mt-2 pl-4 pr-4">
                                   <span>Min: {quartiles.min.toFixed(2)}</span>
                                   <span>Q1: {quartiles.q1.toFixed(2)}</span>
                                   <span>Med: {quartiles.median.toFixed(2)}</span>
@@ -2801,9 +3187,9 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
                                 <div className="text-center text-xs text-orange-600 mt-1">
                                   <span className="inline-flex items-center gap-1">
                                     <span className="w-3 h-3 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center pt-[3px]">*</span>
-                                    Mean: {dataMean.toFixed(3)}
+                                    Mean: {dataMean.toFixed(3)} | LSL: {lsl} | USL: {usl}
                                   </span>
-                                  <span><br></br>IQR (Q3-Q1): {(quartiles.q3-quartiles.q1).toFixed(2)}</span>
+                                  <span><br></br>IQR [Q3-Q1]: {(quartiles.q3-quartiles.q1).toFixed(3)}</span>
                                 </div>
                               </div>
                             </div>
