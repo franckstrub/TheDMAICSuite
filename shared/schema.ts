@@ -1009,6 +1009,13 @@ export const processCapability = pgTable("process_capability", {
   showStatistics: boolean("show_statistics").default(false), // Show/hide statistics section
   dataPoints: jsonb("data_points").$type<number[]>().default([]), // JSON array of numeric data points
 
+  // Attribute CTQ analysis type enablers (boolean fields)
+  enableNonConformity: boolean("enable_non_conformity").default(false),
+  enableDpmo: boolean("enable_dpmo").default(false),
+  enableRty: boolean("enable_rty").default(false),
+  enableOee: boolean("enable_oee").default(false),
+  enablePareto: boolean("enable_pareto").default(false),
+
   // Attribute CTQ specific fields
   attributeAnalysisType: text("attribute_analysis_type").default("NonConformity"), // NonConformity, DPMO, RTY, OEE, ParetoDefects
   defects: integer("defects"), // Number of defects

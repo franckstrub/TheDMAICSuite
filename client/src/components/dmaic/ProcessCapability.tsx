@@ -56,7 +56,12 @@ interface ProcessCapabilityData {
   showZ: boolean; // For attribute CTQs
   showStatistics: boolean;
   capabilityAssessment?: string; // AI-generated capability assessment
-  selectedAnalysisTypes?: string[]; // For cumulative attribute analysis selection
+  // Boolean enablers for each analysis type
+  enableNonConformity?: boolean;
+  enableDpmo?: boolean;
+  enableRty?: boolean;
+  enableOee?: boolean;
+  enablePareto?: boolean;
   // Non-Conformity Analysis fields
   nonConformityDefects?: number;
   nonConformityOpportunities?: number;
@@ -685,6 +690,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         initialData[ctq] = existingCapability ? {
           ...existingCapability,
           capabilityAssessment: existingCapability.capabilityAssessment || "",
+          enableNonConformity: existingCapability.enableNonConformity || false,
+          enableDpmo: existingCapability.enableDpmo || false,
+          enableRty: existingCapability.enableRty || false,
+          enableOee: existingCapability.enableOee || false,
+          enablePareto: existingCapability.enablePareto || false,
         } : {
           ctq: ctq,
           lsl: ctsChar?.lsl || "",
@@ -697,6 +707,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           showZ: false,
           showStatistics: false,
           capabilityAssessment: "",
+          enableNonConformity: false,
+          enableDpmo: false,
+          enableRty: false,
+          enableOee: false,
+          enablePareto: false,
         };
         
         // Load statistics visibility state from database
@@ -1514,14 +1529,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id={`${ctq}-nonconformity`}
-                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("NonConformity") || false}
-                              onCheckedChange={(checked) => {
-                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
-                                const newTypes = checked 
-                                  ? [...currentTypes, "NonConformity"]
-                                  : currentTypes.filter(type => type !== "NonConformity");
-                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
-                              }}
+                              checked={capabilityData[ctq]?.enableNonConformity || false}
+                              onCheckedChange={(checked) => updateCapabilityField(ctq, "enableNonConformity", checked)}
                             />
                             <Label htmlFor={`${ctq}-nonconformity`} className="text-sm font-medium text-gray-700">
                               Non Conformity Analysis
@@ -1530,14 +1539,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id={`${ctq}-dpmo`}
-                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("DPMO") || false}
-                              onCheckedChange={(checked) => {
-                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
-                                const newTypes = checked 
-                                  ? [...currentTypes, "DPMO"]
-                                  : currentTypes.filter(type => type !== "DPMO");
-                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
-                              }}
+                              checked={capabilityData[ctq]?.enableDpmo || false}
+                              onCheckedChange={(checked) => updateCapabilityField(ctq, "enableDpmo", checked)}
                             />
                             <Label htmlFor={`${ctq}-dpmo`} className="text-sm font-medium text-gray-700">
                               DPMO (Defects Per Million Opportunities)
@@ -1546,14 +1549,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id={`${ctq}-rty`}
-                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("RTY") || false}
-                              onCheckedChange={(checked) => {
-                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
-                                const newTypes = checked 
-                                  ? [...currentTypes, "RTY"]
-                                  : currentTypes.filter(type => type !== "RTY");
-                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
-                              }}
+                              checked={capabilityData[ctq]?.enableRty || false}
+                              onCheckedChange={(checked) => updateCapabilityField(ctq, "enableRty", checked)}
                             />
                             <Label htmlFor={`${ctq}-rty`} className="text-sm font-medium text-gray-700">
                               Rolled Throughput Yield
@@ -1562,14 +1559,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id={`${ctq}-oee`}
-                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("OEE") || false}
-                              onCheckedChange={(checked) => {
-                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
-                                const newTypes = checked 
-                                  ? [...currentTypes, "OEE"]
-                                  : currentTypes.filter(type => type !== "OEE");
-                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
-                              }}
+                              checked={capabilityData[ctq]?.enableOee || false}
+                              onCheckedChange={(checked) => updateCapabilityField(ctq, "enableOee", checked)}
                             />
                             <Label htmlFor={`${ctq}-oee`} className="text-sm font-medium text-gray-700">
                               Overall Equipment Effectiveness (OEE)
@@ -1578,14 +1569,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id={`${ctq}-pareto`}
-                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("ParetoDefects") || false}
-                              onCheckedChange={(checked) => {
-                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
-                                const newTypes = checked 
-                                  ? [...currentTypes, "ParetoDefects"]
-                                  : currentTypes.filter(type => type !== "ParetoDefects");
-                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
-                              }}
+                              checked={capabilityData[ctq]?.enablePareto || false}
+                              onCheckedChange={(checked) => updateCapabilityField(ctq, "enablePareto", checked)}
                             />
                             <Label htmlFor={`${ctq}-pareto`} className="text-sm font-medium text-gray-700">
                               Pareto of Defects
@@ -1641,8 +1626,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   {/* Individual Analysis Cards for Attribute CTQs */}
                   {ctqWithType.ctqType === "Attribute" && (
                     <div className="space-y-6">
-                      {capabilityData[ctq]?.selectedAnalysisTypes?.map((analysisType) => (
-                        <Card key={analysisType} className="p-4 bg-blue-50 border-blue-200">
+                      {/* Non-Conformity Analysis */}
+                      {capabilityData[ctq]?.enableNonConformity && (
+                        <Card key="nonconformity" className="p-4 bg-blue-50 border-blue-200">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <Calculator className="h-5 w-5 text-blue-600" />
@@ -1771,7 +1757,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </div>
                           </CardContent>
                         </Card>
-                      )) || []}
+                      )}
                     </div>
                   )}
 
