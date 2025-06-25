@@ -367,9 +367,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Debounced auto-save trigger
   const triggerAutoSave = (ctq: string) => {
     // Clear existing timer if any
-    if (autoSaveTimers[ctq]) {
-      clearTimeout(autoSaveTimers[ctq]);
-    }
+
     
     // Set new timer for 2 seconds delay
     const newTimer = setTimeout(() => {
@@ -730,11 +728,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setCapabilityData(initialData);
       setShowStatistics(statisticsStates);
       
-      // Auto-calculate analysis for loaded data after a delay
+      // Auto-calculate analysis for loaded data that has values
       setTimeout(() => {
         Object.keys(initialData).forEach(ctq => {
-          console.log('Auto-calculating analysis for loaded CTQ:', ctq);
-          autoCalculateAnalysis(ctq);
+          const data = initialData[ctq];
+          // Only auto-calculate if there are actual values to calculate with
+          if ((data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) ||
+              (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) ||
+              (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality)) {
+            console.log('Auto-calculating analysis for loaded CTQ with values:', ctq);
+            autoCalculateAnalysis(ctq);
+          }
         });
       }, 300);
       
@@ -765,10 +769,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         },
       };
       
-      // Auto-calculate if the field affects calculations
+      // Auto-calculate if the field affects calculations and has meaningful values
       if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeAvailability', 'oeePerformance', 'oeeQuality'].includes(field)) {
-        console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
-        setTimeout(() => autoCalculateAnalysis(ctq), 100);
+        const data = updated[ctq];
+        // Only trigger calculation if we have enough data for at least one analysis
+        if ((data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) ||
+            (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0 && data.dpmoOpportunitiesPerUnit > 0) ||
+            (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality)) {
+          console.log('Field changed with valid data, triggering calculation:', field, 'for CTQ:', ctq);
+          setTimeout(() => autoCalculateAnalysis(ctq), 100);
+        }
       }
       
       return updated;
@@ -1008,33 +1018,32 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Auto-calculate when data changes
-  const autoCalculateAnalysis = (ctq: string) => {
-    console.log('autoCalculateAnalysis called for CTQ:', ctq);
+  // Auto-calculate when specific value fields change
+  const autoCalculateOnValueChange = (ctq: string, field: string) => {
+    console.log('autoCalculateOnValueChange called for CTQ:', ctq, 'field:', field);
     const data = capabilityData[ctq];
-    if (!data) {
-      console.log('No data found for CTQ:', ctq);
-      return;
+    if (!data) return;
+
+    // Only calculate for specific analysis types when their fields change
+    if (field === 'nonConformityUnits' || field === 'totalUnits') {
+      if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
+        console.log('Auto-calculating Non-Conformity for CTQ:', ctq);
+        calculateIndividualAnalysis(ctq, "NonConformity");
+      }
     }
 
-    console.log('CTQ data:', data);
-
-    // Auto-calculate Non-Conformity if data is available
-    if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
-      console.log('Auto-calculating Non-Conformity for CTQ:', ctq);
-      calculateIndividualAnalysis(ctq, "NonConformity");
+    if (field === 'dpmoDefects' || field === 'dpmoUnits' || field === 'dpmoOpportunitiesPerUnit') {
+      if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
+        console.log('Auto-calculating DPMO for CTQ:', ctq);
+        calculateIndividualAnalysis(ctq, "DPMO");
+      }
     }
 
-    // Auto-calculate DPMO if data is available
-    if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
-      console.log('Auto-calculating DPMO for CTQ:', ctq);
-      calculateIndividualAnalysis(ctq, "DPMO");
-    }
-
-    // Auto-calculate OEE if data is available
-    if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
-      console.log('Auto-calculating OEE for CTQ:', ctq);
-      calculateIndividualAnalysis(ctq, "OEE");
+    if (field === 'oeeAvailability' || field === 'oeePerformance' || field === 'oeeQuality') {
+      if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+        console.log('Auto-calculating OEE for CTQ:', ctq);
+        calculateIndividualAnalysis(ctq, "OEE");
+      }
     }
   };
 
@@ -1566,12 +1575,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             Data auto-saves 2 seconds after changes. Click Save Data for immediate save.
                           </p>
                           <div className="flex items-center gap-2">
-                            {autoSaveTimers[ctq] && (
-                              <span className="text-xs text-orange-600 flex items-center gap-1">
-                                <div className="h-2 w-2 bg-orange-400 rounded-full animate-pulse"></div>
-                                Auto-saving...
-                              </span>
-                            )}
+
                             <Button
                               onClick={() => saveAllDataPoints(ctq)}
                               disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
