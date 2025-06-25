@@ -63,8 +63,8 @@ interface ProcessCapabilityData {
   enableOee?: boolean;
   enablePareto?: boolean;
   // Non-Conformity Analysis fields
-  nonConformityDefects?: number;
-  nonConformityOpportunities?: number;
+  nonConformityUnits?: number;
+  totalUnits?: number;
   // DPMO Analysis fields
   dpmoDefects?: number;
   dpmoUnits?: number;
