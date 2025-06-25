@@ -250,12 +250,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Mutation to save data points (JSON array)
   const saveDataPointMutation = useMutation({
-    mutationFn: async ({ processCapabilityId, dataPoints }: { processCapabilityId: number, dataPoints: number[] }) => {   
+    mutationFn: async ({ processCapabilityId, dataPoints }: { processCapabilityId: number, dataPoints: number[] }) => {
+      console.log("Mutation function called with:", { processCapabilityId, dataPoints });
       const response = await apiRequest('POST', `/api/process-capability/${processCapabilityId}/data`, { dataPoints });
+      console.log("API response:", response);
       return response;
     },
     onSuccess: (data) => {
-      // console.log("Mutation succeeded:", data);
+      console.log("Mutation succeeded:", data);
       // Don't show toast here as it's handled in saveAllDataPoints
     },
     onError: (error) => {
@@ -343,9 +345,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         processCapabilityId, // Now TypeScript knows this is definitely a number
         dataPoints: numericValues
       });
-      //console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
+      console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
       
-      {/* // Clear the timer from state to hide the auto-saving indicator
+      // Clear the timer from state to hide the auto-saving indicator
       setAutoSaveTimers(prev => {
         const newTimers = { ...prev };
         delete newTimers[ctq];
@@ -361,7 +363,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       });
     }
   };
-  */}
 
   // Debounced auto-save trigger
   const triggerAutoSave = (ctq: string) => {
@@ -498,7 +499,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       return;
     }
     
-    //console.log("Saving data points:", { processCapabilityId, numericValues });
+    console.log("Saving data points:", { processCapabilityId, numericValues });
     
     try {
       // Save all data points as JSON array to database
@@ -651,9 +652,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
     
     try {
-      //console.log(`Loading data points for CTQ: ${ctq}, ID: ${processCapabilityId}`);
+      console.log(`Loading data points for CTQ: ${ctq}, ID: ${processCapabilityId}`);
       const points = await loadDataPoints(processCapabilityId);
-      //console.log(`Loaded ${points.length} data points for CTQ: ${ctq}`, points);
+      console.log(`Loaded ${points.length} data points for CTQ: ${ctq}`, points);
       setDataPoints(prev => ({
         ...prev,
         [ctq]: points
@@ -669,7 +670,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     ctqs.forEach(({ ctq }) => {
       if (capabilityData[ctq]?.id && (!dataPoints[ctq] || dataPoints[ctq].length === 0)) {
         // Only load data points if we don't already have local data points
-        //console.log(`Loading data points for CTQ: ${ctq}, ID: ${capabilityData[ctq]?.id}`);
+        console.log(`Loading data points for CTQ: ${ctq}, ID: ${capabilityData[ctq]?.id}`);
         loadDataPointsForCtq(ctq);
       }
     });
@@ -744,11 +745,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Auto-calculate analysis when capability data is loaded and state is updated
   useEffect(() => {
     if (Object.keys(capabilityData).length > 0) {
-      //console.log('Running initialization auto-calculation after state update...');
+      console.log('Running initialization auto-calculation after state update...');
       setTimeout(() => {
         Object.keys(capabilityData).forEach(ctq => {
           const data = capabilityData[ctq];
-          {/*console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
+          console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
             enableNonConformity: data.enableNonConformity,
             nonConformityUnits: data.nonConformityUnits,
             totalUnits: data.totalUnits,
@@ -761,23 +762,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             oeePerformance: data.oeePerformance,
             oeeQuality: data.oeeQuality
           });
-          */}
 
           // Auto-calculate Non-Conformity if data is available
           if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
-            //console.log(`Auto-calculating Non-Conformity for loaded CTQ: ${ctq}`);
+            console.log(`Auto-calculating Non-Conformity for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "NonConformity");
           }
           
           // Auto-calculate DPMO if data is available
           if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0) {
-            //console.log(`Auto-calculating DPMO for loaded CTQ: ${ctq}`);
+            console.log(`Auto-calculating DPMO for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "DPMO");
           }
           
           // Auto-calculate OEE if data is available
           if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
-            //console.log(`Auto-calculating OEE for loaded CTQ: ${ctq}`);
+            console.log(`Auto-calculating OEE for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "OEE");
           }
         });
@@ -797,7 +797,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       
       // Auto-calculate if the field affects calculations and has meaningful values
       if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeAvailability', 'oeePerformance', 'oeeQuality'].includes(field)) {
-        //console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
+        console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
         setTimeout(() => autoCalculateOnValueChange(ctq, field), 100);
       }
       
@@ -966,10 +966,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         // Use inverseNormCDF(1 - defectRate) to get Z equivalent
         // This gives us the Z value corresponding to the conformity rate
         const conformityRate = 1 - defectRate;
-        //console.log('Calculating Z value for conformity rate:', conformityRate);
+        console.log('Calculating Z value for conformity rate:', conformityRate);
         if (typeof inverseNormCDF === 'function') {
           zValue = inverseNormCDF(conformityRate);
-          //console.log('Raw Z value:', zValue);
+          console.log('Raw Z value:', zValue);
         } else {
           console.error('inverseNormCDF function not available');
           zValue = null;
@@ -1006,10 +1006,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           const results = calculateNonConformityResults(ctq);
           if (results) {
             // Update the capability data with calculated results
-            //console.log('Updating capability data with results:', results);
+            console.log('Updating capability data with results:', results);
             updateCapabilityField(ctq, "calculatedNonConformityRate", results.nonConformityRate);
             updateCapabilityField(ctq, "calculatedZValue", results.zValue);
-            //console.log('Updated Z value in state:', results.zValue);
+            console.log('Updated Z value in state:', results.zValue);
           }
           break;
           
