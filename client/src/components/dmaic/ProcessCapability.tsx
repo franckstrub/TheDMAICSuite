@@ -41,7 +41,8 @@ import {
 } from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Stats } from "fs";
+import { inverseNormCDF } from "@/lib/statisticsUtils";
+import { toast } from "@/hooks/use-toast";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -732,6 +733,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setCapabilityData(initialData);
       setShowStatistics(statisticsStates);
       
+      // Auto-calculate analysis for loaded data after a delay
+      setTimeout(() => {
+        Object.keys(initialData).forEach(ctq => {
+          console.log('Auto-calculating analysis for loaded CTQ:', ctq);
+          autoCalculateAnalysis(ctq);
+        });
+      }, 300);
+      
       // Always ensure we have an active tab when CTQs are available
       if (ctqs.length > 0) {
         if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
@@ -946,8 +955,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         // This gives us the Z value corresponding to the conformity rate
         const conformityRate = 1 - defectRate;
         console.log('Calculating Z value for conformity rate:', conformityRate);
-        zValue = inverseNormCDF(conformityRate);
-        console.log('Raw Z value:', zValue);
+        if (typeof inverseNormCDF === 'function') {
+          zValue = inverseNormCDF(conformityRate);
+          console.log('Raw Z value:', zValue);
+        } else {
+          console.error('inverseNormCDF function not available');
+          zValue = null;
+        }
         
         // Adjust for short term vs long term
         if (data.dataSetTerm === "Short Term") {
@@ -1841,13 +1855,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       {capabilityData[ctq].calculatedNonConformityRate.toFixed(2)}%
                                     </span>
                                   </div>
-                                  {capabilityData[ctq]?.showZ && capabilityData[ctq]?.calculatedZValue !== undefined && capabilityData[ctq]?.calculatedZValue !== null && (
+                                  {capabilityData[ctq]?.showZ && (
                                     <div>
                                       <span className="font-medium">
                                         Z {capabilityData[ctq]?.dataSetTerm === "Long Term" ? "Long Term" : "Short Term"}: 
                                       </span>
                                       <span className="text-blue-700 ml-1">
-                                        {capabilityData[ctq].calculatedZValue.toFixed(2)}
+                                        {capabilityData[ctq]?.calculatedZValue !== undefined && capabilityData[ctq]?.calculatedZValue !== null
+                                          ? capabilityData[ctq].calculatedZValue.toFixed(2)
+                                          : 'Calculating...'}
                                       </span>
                                     </div>
                                   )}
