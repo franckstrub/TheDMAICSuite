@@ -905,36 +905,34 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
     const nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
     
-    // Calculate Z equivalent from defect rate
+    // Calculate Z equivalent from defect rate using inverse normal CDF
     const defectRate = data.nonConformityUnits / data.totalUnits;
     let zValue = null;
     
     if (defectRate > 0 && defectRate < 1) {
-      // Use inverse normal cumulative distribution to get Z value
-      // For one-sided specification (defect rate)
-      const ppm = defectRate * 1000000;
-      
-      // Approximate Z calculation based on defect rate
-      if (defectRate <= 0.5) {
-        // Use inverse normal approximation
-        const t = Math.sqrt(-2 * Math.log(defectRate));
-        const c0 = 2.515517, c1 = 0.802853, c2 = 0.010328;
-        const d1 = 1.432788, d2 = 0.189269, d3 = 0.001308;
-        zValue = t - (c0 + c1 * t + c2 * t * t) / (1 + d1 * t + d2 * t * t + d3 * t * t * t);
-      } else {
-        zValue = 0; // High defect rate corresponds to low Z
-      }
-      
-      // Adjust for short term vs long term
-      if (data.dataSetTerm === "Short Term") {
-        // Z short term is typically 1.5 sigma higher than long term
-        zValue = zValue + (data.zShift || 1.5);
+      try {
+        // Use inverseNormCDF(1 - defectRate) to get Z equivalent
+        // This gives us the Z value corresponding to the conformity rate
+        const conformityRate = 1 - defectRate;
+        zValue = inverseNormCDF(conformityRate);
+        
+        // Adjust for short term vs long term
+        if (data.dataSetTerm === "Short Term") {
+          // Z short term is typically 1.5 sigma higher than long term
+          zValue = zValue + (data.zShift || 1.5);
+        }
+        
+        // Ensure positive Z value
+        zValue = Math.abs(zValue);
+      } catch (error) {
+        console.error('Error calculating Z value:', error);
+        zValue = null;
       }
     }
 
     return {
       nonConformityRate,
-      zValue: zValue ? Math.abs(zValue) : null
+      zValue
     };
   };
 
