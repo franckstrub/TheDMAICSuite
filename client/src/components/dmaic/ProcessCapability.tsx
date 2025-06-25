@@ -15,7 +15,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { 
   mean, 
   standardDeviation, 
+  variance,
   parseNumericValue,
+  median,
+  calculateMode,
   performNormalityTest,
   getHistogramData,
   calculateQuartiles,
@@ -39,6 +42,7 @@ import {
 } from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/hooks/use-toast";
 
 interface ProcessCapabilityData {
   id?: number;
