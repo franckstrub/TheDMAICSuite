@@ -66,9 +66,9 @@ export function calculateDPMO(defects: number, units: number, opportunitiesPerUn
 }
 
 /**
- * Calculate Rolled Throughput Yield (RTY)
+ * Calculate Rolled Throughput Yield
  * @param processSteps Array of process steps with their yield rates
- * @returns RTY and related metrics
+ * @returns Rolled Throughput Yield and related metrics
  */
 export function calculateRolledThroughputYield(processSteps: Array<{
   stepName: string;
@@ -87,8 +87,8 @@ export function calculateRolledThroughputYield(processSteps: Array<{
 } {
   if (processSteps.length === 0) {
     return {
-      rty: 1,
-      rtyPercentage: 100,
+      rolledThroughputYield: 1,
+      rolledThroughputYieldPercentage: 100,
       individualYields: [],
       totalDefects: 0,
       totalUnits: 0
@@ -110,8 +110,8 @@ export function calculateRolledThroughputYield(processSteps: Array<{
   const totalUnits = processSteps.reduce((sum, step) => sum + step.total, 0);
 
   return {
-    rty: Math.max(0, Math.min(1, rty)),
-    rtyPercentage: Math.max(0, Math.min(100, rty * 100)),
+    rolledThroughputYield: Math.max(0, Math.min(1, rty)),
+    rolledThroughputYieldPercentage: Math.max(0, Math.min(100, rty * 100)),
     individualYields,
     totalDefects,
     totalUnits
