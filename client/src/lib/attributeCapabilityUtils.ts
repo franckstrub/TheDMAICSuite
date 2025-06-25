@@ -97,12 +97,12 @@ export function calculateRolledThroughputYield(processSteps: Array<{
 
   let rty = 1;
   const individualYields = processSteps.map(step => {
-    const yield = step.total > 0 ? step.passed / step.total : 0;
-    rty *= yield;
+    const yieldRate = step.total > 0 ? step.passed / step.total : 0;
+    rty *= yieldRate;
     return {
       stepName: step.stepName,
-      yield,
-      yieldPercentage: yield * 100
+      yield: yieldRate,
+      yieldPercentage: yieldRate * 100
     };
   });
 
@@ -234,15 +234,15 @@ export function calculateZEquivalentFromDefectRate(defectRate: number): number {
   
   // Convert defect rate to Z-score using inverse normal distribution
   // This is an approximation for attribute data
-  const yieldRate = 1 - defectRate;
+  const processYield = 1 - defectRate;
   
   // Simple approximation for Z-score from yield
-  if (yieldRate >= 0.9999966) return 6; // 6 sigma
-  if (yieldRate >= 0.999968) return 5; // 5 sigma
-  if (yieldRate >= 0.9987) return 4; // 4 sigma
-  if (yieldRate >= 0.9772) return 3; // 3 sigma
-  if (yieldRate >= 0.9545) return 2; // 2 sigma
-  if (yieldRate >= 0.8413) return 1; // 1 sigma
+  if (processYield >= 0.9999966) return 6; // 6 sigma
+  if (processYield >= 0.999968) return 5; // 5 sigma
+  if (processYield >= 0.9987) return 4; // 4 sigma
+  if (processYield >= 0.9772) return 3; // 3 sigma
+  if (processYield >= 0.9545) return 2; // 2 sigma
+  if (processYield >= 0.8413) return 1; // 1 sigma
   
   return 0; // Below 1 sigma
 }
