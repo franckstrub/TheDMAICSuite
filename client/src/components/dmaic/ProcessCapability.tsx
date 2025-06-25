@@ -730,26 +730,42 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       
       // Auto-calculate analysis for loaded data that has values
       setTimeout(() => {
+        console.log('Running initialization auto-calculation...');
         Object.keys(initialData).forEach(ctq => {
           const data = initialData[ctq];
-          // Only auto-calculate if there are actual values to calculate with
-          if ((data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) ||
-              (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) ||
-              (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality)) {
-            console.log('Auto-calculating analysis for loaded CTQ with values:', ctq);
-            // Auto-calculate each enabled analysis type
-            if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
-              calculateIndividualAnalysis(ctq, "NonConformity");
-            }
-            if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
-              calculateIndividualAnalysis(ctq, "DPMO");
-            }
-            if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
-              calculateIndividualAnalysis(ctq, "OEE");
-            }
+          console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
+            enableNonConformity: data.enableNonConformity,
+            nonConformityUnits: data.nonConformityUnits,
+            totalUnits: data.totalUnits,
+            enableDpmo: data.enableDpmo,
+            dpmoDefects: data.dpmoDefects,
+            dpmoUnits: data.dpmoUnits,
+            dpmoOpportunitiesPerUnit: data.dpmoOpportunitiesPerUnit,
+            enableOee: data.enableOee,
+            oeeAvailability: data.oeeAvailability,
+            oeePerformance: data.oeePerformance,
+            oeeQuality: data.oeeQuality
+          });
+
+          // Auto-calculate Non-Conformity if data is available
+          if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
+            console.log(`Auto-calculating Non-Conformity for loaded CTQ: ${ctq}`);
+            calculateIndividualAnalysis(ctq, "NonConformity");
+          }
+          
+          // Auto-calculate DPMO if data is available
+          if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0) {
+            console.log(`Auto-calculating DPMO for loaded CTQ: ${ctq}`);
+            calculateIndividualAnalysis(ctq, "DPMO");
+          }
+          
+          // Auto-calculate OEE if data is available
+          if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+            console.log(`Auto-calculating OEE for loaded CTQ: ${ctq}`);
+            calculateIndividualAnalysis(ctq, "OEE");
           }
         });
-      }, 300);
+      }, 1000);
       
       // Always ensure we have an active tab when CTQs are available
       if (ctqs.length > 0) {
