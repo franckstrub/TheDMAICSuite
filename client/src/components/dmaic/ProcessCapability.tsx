@@ -111,7 +111,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [focusedCell, setFocusedCell] = useState<{ [ctq: string]: number }>({});
   const [showStatistics, setShowStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [isStatisticsLoaded, setIsStatisticsLoaded] = useState(false);
-  const [autoSaveTimers, setAutoSaveTimers] = useState<{ [ctq: string]: NodeJS.Timeout }>({});
+
   const [isGeneratingAssessment, setIsGeneratingAssessment] = useState<{ [ctq: string]: boolean }>({});
 
   // Load last active tab from localStorage on component mount
@@ -169,14 +169,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     
-    // Cleanup function to clear all auto-save timers
+    // Cleanup function
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcut);
-      Object.values(autoSaveTimers).forEach(timer => {
-        if (timer) clearTimeout(timer);
-      });
     };
-  }, [activeTab, undoStates, autoSaveTimers]);
+  }, [activeTab, undoStates]);
 
   // Load CTQs from centralized endpoint
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
@@ -767,21 +764,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           [field]: value,
         },
       };
-      
-      // Clear any existing timeout for this CTQ
-      if (autoSaveTimers[ctq]) {
-        clearTimeout(autoSaveTimers[ctq]);
-      }
-      
-      // Set new timeout for auto-save
-      const timer = setTimeout(() => {
-        saveCapabilityMutation.mutate(updated[ctq]);
-      }, 1000); // 1 second delay
-      
-      setAutoSaveTimers(prev => ({
-        ...prev,
-        [ctq]: timer
-      }));
       
       // Auto-calculate if the field affects calculations
       if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeAvailability', 'oeePerformance', 'oeeQuality'].includes(field)) {
