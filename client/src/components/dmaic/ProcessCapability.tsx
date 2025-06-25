@@ -1650,127 +1650,155 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <Calculator className="h-5 w-5 text-blue-600" />
-                              {analysisType === "NonConformity" ? "Non-Conformity Analysis" :
-                               analysisType === "DPMO" ? "DPMO Analysis" :
-                               analysisType === "RTY" ? "Rolled Throughput Yield Analysis" :
-                               analysisType === "OEE" ? "Overall Equipment Effectiveness" :
-                               analysisType === "ParetoDefects" ? "Pareto of Defects Analysis" : analysisType}
+                              Non-Conformity Analysis
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            {analysisType === "NonConformity" && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    value={capabilityData[ctq]?.nonConformityDefects || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "nonConformityDefects", parseInt(e.target.value) || 0)}
-                                    placeholder="e.g., 5"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Total Opportunities</label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={capabilityData[ctq]?.nonConformityOpportunities || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "nonConformityOpportunities", parseInt(e.target.value) || 1)}
-                                    placeholder="e.g., 100"
-                                  />
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={capabilityData[ctq]?.nonConformityDefects || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "nonConformityDefects", parseInt(e.target.value) || 0)}
+                                  placeholder="e.g., 5"
+                                />
                               </div>
-                            )}
-
-                            {analysisType === "DPMO" && (
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    value={capabilityData[ctq]?.dpmoDefects || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "dpmoDefects", parseInt(e.target.value) || 0)}
-                                    placeholder="e.g., 8"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Number of Units</label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={capabilityData[ctq]?.dpmoUnits || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "dpmoUnits", parseInt(e.target.value) || 1)}
-                                    placeholder="e.g., 500"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Opportunities Per Unit</label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={capabilityData[ctq]?.dpmoOpportunitiesPerUnit || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "dpmoOpportunitiesPerUnit", parseInt(e.target.value) || 1)}
-                                    placeholder="e.g., 10"
-                                  />
-                                </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Total Opportunities</label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={capabilityData[ctq]?.nonConformityOpportunities || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "nonConformityOpportunities", parseInt(e.target.value) || 1)}
+                                  placeholder="e.g., 100"
+                                />
                               </div>
-                            )}
-
-                            {analysisType === "OEE" && (
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Availability (%)</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    value={capabilityData[ctq]?.oeeAvailability || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "oeeAvailability", parseFloat(e.target.value) || 0)}
-                                    placeholder="e.g., 85.5"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Performance (%)</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    value={capabilityData[ctq]?.oeePerformance || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "oeePerformance", parseFloat(e.target.value) || 0)}
-                                    placeholder="e.g., 90.2"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Quality (%)</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    value={capabilityData[ctq]?.oeeQuality || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "oeeQuality", parseFloat(e.target.value) || 0)}
-                                    placeholder="e.g., 98.7"
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Calculate Button for Each Analysis */}
+                            </div>
                             <div className="mt-4 flex justify-end">
                               <Button 
-                                onClick={() => calculateIndividualAnalysis(ctq, analysisType)}
+                                onClick={() => calculateIndividualAnalysis(ctq, "NonConformity")}
                                 className="flex items-center gap-2"
                               >
                                 <Calculator className="h-4 w-4" />
-                                Calculate {analysisType === "NonConformity" ? "Non-Conformity" :
-                                         analysisType === "DPMO" ? "DPMO" :
-                                         analysisType === "RTY" ? "RTY" :
-                                         analysisType === "OEE" ? "OEE" :
-                                         analysisType === "ParetoDefects" ? "Pareto" : analysisType}
+                                Calculate Non-Conformity
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* DPMO Analysis */}
+                      {capabilityData[ctq]?.enableDpmo && (
+                        <Card key="dpmo" className="p-4 bg-green-50 border-green-200">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Calculator className="h-5 w-5 text-green-600" />
+                              DPMO Analysis
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={capabilityData[ctq]?.dpmoDefects || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "dpmoDefects", parseInt(e.target.value) || 0)}
+                                  placeholder="e.g., 8"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Number of Units</label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={capabilityData[ctq]?.dpmoUnits || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "dpmoUnits", parseInt(e.target.value) || 1)}
+                                  placeholder="e.g., 500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Opportunities Per Unit</label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={capabilityData[ctq]?.dpmoOpportunitiesPerUnit || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "dpmoOpportunitiesPerUnit", parseInt(e.target.value) || 1)}
+                                  placeholder="e.g., 10"
+                                />
+                              </div>
+                            </div>
+                            <div className="mt-4 flex justify-end">
+                              <Button 
+                                onClick={() => calculateIndividualAnalysis(ctq, "DPMO")}
+                                className="flex items-center gap-2"
+                              >
+                                <Calculator className="h-4 w-4" />
+                                Calculate DPMO
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* OEE Analysis */}
+                      {capabilityData[ctq]?.enableOee && (
+                        <Card key="oee" className="p-4 bg-purple-50 border-purple-200">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Calculator className="h-5 w-5 text-purple-600" />
+                              Overall Equipment Effectiveness (OEE)
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Availability (%)</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="0.1"
+                                  value={capabilityData[ctq]?.oeeAvailability || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeAvailability", parseFloat(e.target.value) || 0)}
+                                  placeholder="e.g., 85.5"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Performance (%)</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="0.1"
+                                  value={capabilityData[ctq]?.oeePerformance || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeePerformance", parseFloat(e.target.value) || 0)}
+                                  placeholder="e.g., 90.2"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Quality (%)</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="0.1"
+                                  value={capabilityData[ctq]?.oeeQuality || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeQuality", parseFloat(e.target.value) || 0)}
+                                  placeholder="e.g., 98.7"
+                                />
+                              </div>
+                            </div>
+                            <div className="mt-4 flex justify-end">
+                              <Button 
+                                onClick={() => calculateIndividualAnalysis(ctq, "OEE")}
+                                className="flex items-center gap-2"
+                              >
+                                <Calculator className="h-4 w-4" />
+                                Calculate OEE
                               </Button>
                             </div>
                           </CardContent>
