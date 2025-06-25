@@ -1490,22 +1490,43 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2">Attribute Analysis Type</label>
-                        <Select
+                        <label className="block text-sm font-medium mb-3">Attribute Analysis Type</label>
+                        <RadioGroup
                           value={capabilityData[ctq]?.attributeAnalysisType || "NonConformity"}
                           onValueChange={(value) => updateCapabilityField(ctq, "attributeAnalysisType", value)}
+                          className="space-y-3"
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="NonConformity">Non Conformity</SelectItem>
-                            <SelectItem value="DPMO">DPMO (Defects Per Million Opportunities)</SelectItem>
-                            <SelectItem value="RTY">Rolled Throughput Yield (RTY)</SelectItem>
-                            <SelectItem value="OEE">Overall Equipment Effectiveness (OEE)</SelectItem>
-                            <SelectItem value="ParetoDefects">Pareto of Defects</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="NonConformity" id={`${ctq}-nonconformity`} />
+                            <Label htmlFor={`${ctq}-nonconformity`} className="text-sm font-medium text-gray-700">
+                              Non Conformity Analysis
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="DPMO" id={`${ctq}-dpmo`} />
+                            <Label htmlFor={`${ctq}-dpmo`} className="text-sm font-medium text-gray-700">
+                              DPMO (Defects Per Million Opportunities)
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="RTY" id={`${ctq}-rty`} />
+                            <Label htmlFor={`${ctq}-rty`} className="text-sm font-medium text-gray-700">
+                              Rolled Throughput Yield
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="OEE" id={`${ctq}-oee`} />
+                            <Label htmlFor={`${ctq}-oee`} className="text-sm font-medium text-gray-700">
+                              Overall Equipment Effectiveness (OEE)
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="ParetoDefects" id={`${ctq}-pareto`} />
+                            <Label htmlFor={`${ctq}-pareto`} className="text-sm font-medium text-gray-700">
+                              Pareto of Defects
+                            </Label>
+                          </div>
+                        </RadioGroup>
                       </div>
                     </>
                   )}
