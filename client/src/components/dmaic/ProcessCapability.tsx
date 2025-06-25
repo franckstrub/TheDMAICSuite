@@ -1656,29 +1656,29 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                <label className="block text-sm font-medium mb-2">Number of Non-Conform Units</label>
                                 <Input
                                   type="number"
                                   min="0"
-                                  value={capabilityData[ctq]?.nonConformityDefects !== undefined ? capabilityData[ctq]?.nonConformityDefects : ""}
+                                  value={capabilityData[ctq]?.nonConformityUnits !== undefined ? capabilityData[ctq]?.nonConformityUnits : ""}
                                   onChange={(e) => {
                                     const value = e.target.value;
                                     if (value === "" || value === null) {
-                                      updateCapabilityField(ctq, "nonConformityDefects", undefined);
+                                      updateCapabilityField(ctq, "nonConformityUnits", undefined);
                                     } else {
-                                      updateCapabilityField(ctq, "nonConformityDefects", parseInt(value));
+                                      updateCapabilityField(ctq, "nonConformityUnits", parseInt(value));
                                     }
                                   }}
                                   placeholder="e.g., 0"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Total Opportunities</label>
+                                <label className="block text-sm font-medium mb-2">Number of Units</label>
                                 <Input
                                   type="number"
                                   min="1"
-                                  value={capabilityData[ctq]?.nonConformityOpportunities || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "nonConformityOpportunities", parseInt(e.target.value) || 1)}
+                                  value={capabilityData[ctq]?.totalUnits || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "totalUnits", parseInt(e.target.value) || 1)}
                                   placeholder="e.g., 100"
                                 />
                               </div>
