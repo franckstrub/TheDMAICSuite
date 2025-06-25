@@ -15,10 +15,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { 
   mean, 
   standardDeviation, 
-  variance, 
   parseNumericValue,
-  median,
-  calculateMode,
   performNormalityTest,
   getHistogramData,
   calculateQuartiles,
@@ -29,7 +26,8 @@ import {
   calculatePerformanceMetrics,
   calculateCapabilityIndexes,
   calculateObservedPerformanceMetrics,
-  assessProcessVariation
+  assessProcessVariation,
+  inverseNormCDF
 } from "@/lib/statisticsUtils";
 import {
   calculateNonConformity,
@@ -41,8 +39,6 @@ import {
 } from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
-import { inverseNormCDF } from "@/lib/statisticsUtils";
-import { toast } from "@/hooks/use-toast";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -1595,7 +1591,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <div className="mt-4 space-y-3">
                         <div className="flex justify-between items-center">
                           <p className="text-xs text-gray-500">
-                            Data auto-saves 2 seconds after changes. Click Save Data for immediate save.
+                            Click Save Data to save your data points.
                           </p>
                           <div className="flex items-center gap-2">
 
