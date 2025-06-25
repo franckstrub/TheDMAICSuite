@@ -105,7 +105,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 23, 2025. Fixed DMAIC WBS Gantt generation with proper authentication and organization isolation
 - June 23, 2025. Improved Process Capability UI - Calculate Statistics button always visible with proper state management
 - June 25, 2025. Added comprehensive process variation analysis for continuous CTQs with control and stability assessment
-- June 25, 2025. Implemented complete attribute CTQ process capability analysis with Non Conformity, DPMO, RTY, OEE, and Pareto calculations
+- June 25, 2025. Implemented complete attribute CTQ process capability analysis with Non Conformity, DPMO, Rolled Throughput Yield, OEE, and Pareto calculations
 
 ## User Preferences
 
