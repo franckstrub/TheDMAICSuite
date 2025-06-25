@@ -1660,9 +1660,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <Input
                                   type="number"
                                   min="0"
-                                  value={capabilityData[ctq]?.nonConformityDefects || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "nonConformityDefects", parseInt(e.target.value) || 0)}
-                                  placeholder="e.g., 5"
+                                  value={capabilityData[ctq]?.nonConformityDefects !== undefined ? capabilityData[ctq]?.nonConformityDefects : ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === "" || value === null) {
+                                      updateCapabilityField(ctq, "nonConformityDefects", undefined);
+                                    } else {
+                                      updateCapabilityField(ctq, "nonConformityDefects", parseInt(value));
+                                    }
+                                  }}
+                                  placeholder="e.g., 0"
                                 />
                               </div>
                               <div>
@@ -1705,9 +1712,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <Input
                                   type="number"
                                   min="0"
-                                  value={capabilityData[ctq]?.dpmoDefects || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "dpmoDefects", parseInt(e.target.value) || 0)}
-                                  placeholder="e.g., 8"
+                                  value={capabilityData[ctq]?.dpmoDefects !== undefined ? capabilityData[ctq]?.dpmoDefects : ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === "" || value === null) {
+                                      updateCapabilityField(ctq, "dpmoDefects", undefined);
+                                    } else {
+                                      updateCapabilityField(ctq, "dpmoDefects", parseInt(value));
+                                    }
+                                  }}
+                                  placeholder="e.g., 0"
                                 />
                               </div>
                               <div>
