@@ -737,7 +737,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
               (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) ||
               (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality)) {
             console.log('Auto-calculating analysis for loaded CTQ with values:', ctq);
-            autoCalculateAnalysis(ctq);
+            // Auto-calculate each enabled analysis type
+            if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
+              calculateIndividualAnalysis(ctq, "NonConformity");
+            }
+            if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
+              calculateIndividualAnalysis(ctq, "DPMO");
+            }
+            if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+              calculateIndividualAnalysis(ctq, "OEE");
+            }
           }
         });
       }, 300);
@@ -771,14 +780,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       
       // Auto-calculate if the field affects calculations and has meaningful values
       if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeAvailability', 'oeePerformance', 'oeeQuality'].includes(field)) {
-        const data = updated[ctq];
-        // Only trigger calculation if we have enough data for at least one analysis
-        if ((data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) ||
-            (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0 && data.dpmoOpportunitiesPerUnit > 0) ||
-            (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality)) {
-          console.log('Field changed with valid data, triggering calculation:', field, 'for CTQ:', ctq);
-          setTimeout(() => autoCalculateAnalysis(ctq), 100);
-        }
+        console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
+        setTimeout(() => autoCalculateOnValueChange(ctq, field), 100);
       }
       
       return updated;
@@ -1484,7 +1487,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             return { ...prev, [ctq]: updated };
                                           });
                                           // Trigger auto-save when cell value changes
-                                          triggerAutoSave(ctq);
+                                  
                                       }}
                                       onFocus={() => {
                                         setFocusedCell(prev => ({ ...prev, [ctq]: index }));
