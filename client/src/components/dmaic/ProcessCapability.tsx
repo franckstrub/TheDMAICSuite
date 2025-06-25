@@ -67,6 +67,12 @@ interface ProcessCapabilityData {
   totalUnits?: number;
   // DPMO Analysis fields
   dpmoDefects?: number;
+  
+  // Calculated results
+  calculatedNonConformityRate?: number;
+  calculatedZValue?: number;
+  calculatedDPMO?: number;
+  calculatedOEE?: number;
   dpmoUnits?: number;
   dpmoOpportunitiesPerUnit?: number;
   // RTY Analysis fields
