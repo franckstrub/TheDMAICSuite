@@ -2922,7 +2922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ctq, lsl, usl, target, zShift, dataSetTerm, capabilityIndex, 
         showPercentage, showZ, showStatistics, capabilityAssessment,
         enableNonConformity, enableDpmo, enableRty, enableOee, enablePareto,
-        nonConformityDefects, nonConformityOpportunities,
+        nonConformityUnits, totalUnits,
         dpmoDefects, dpmoUnits, dpmoOpportunitiesPerUnit,
         oeeAvailability, oeePerformance, oeeQuality
       } = req.body;
