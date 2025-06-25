@@ -1017,8 +1017,8 @@ export const processCapability = pgTable("process_capability", {
   enablePareto: boolean("enable_pareto").default(false),
 
   // Non-Conformity Analysis fields
-  nonConformityDefects: integer("non_conformity_defects"),
-  nonConformityOpportunities: integer("non_conformity_opportunities"),
+  nonConformityUnits: integer("non_conformity_units"),
+  totalUnits: integer("total_units"),
   // DPMO Analysis fields
   dpmoDefects: integer("dpmo_defects"),
   dpmoUnits: integer("dpmo_units"),
