@@ -437,7 +437,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     // If no capability configuration exists, create one first
     if (!processCapabilityId) {
-      console.log("No process capability ID found, creating configuration first...");
+
       try {
         // Create a default capability configuration
        const defaultCapabilityData: Omit<ProcessCapabilityData, 'id'> = {
@@ -466,9 +466,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           }
         }));
         
-        console.log("Created capability configuration with ID:", processCapabilityId);
+
       } catch (error) {
-        console.error("Error creating capability configuration:", error);
         toast({
           title: "Error",
           description: "Failed to create capability configuration",
@@ -480,7 +479,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     // ADD THIS: Type guard to ensure processCapabilityId is defined
     if (!processCapabilityId) {
-      console.error("Process capability ID is still undefined after creation attempt");
       toast({
         title: "Error",
         description: "Failed to obtain process capability ID",
@@ -518,7 +516,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         description: `Saved ${numericValues.length} data points`,
       });
     } catch (error) {
-      console.error("Failed to save data points:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Error",
@@ -1032,7 +1029,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           break;
       }
     } catch (error) {
-      console.error('Error in calculateIndividualAnalysis:', error);
       toast({
         title: "Calculation Error",
         description: "An error occurred during calculation.",
@@ -1043,28 +1039,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Auto-calculate when specific value fields change
   const autoCalculateOnValueChange = (ctq: string, field: string) => {
-    console.log('autoCalculateOnValueChange called for CTQ:', ctq, 'field:', field);
     const data = capabilityData[ctq];
     if (!data) return;
 
     // Only calculate for specific analysis types when their fields change
     if (field === 'nonConformityUnits' || field === 'totalUnits') {
       if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
-        console.log('Auto-calculating Non-Conformity for CTQ:', ctq);
         calculateIndividualAnalysis(ctq, "NonConformity");
       }
     }
 
     if (field === 'dpmoDefects' || field === 'dpmoUnits' || field === 'dpmoOpportunitiesPerUnit') {
       if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0) {
-        console.log('Auto-calculating DPMO for CTQ:', ctq);
         calculateIndividualAnalysis(ctq, "DPMO");
       }
     }
 
     if (field === 'oeeAvailability' || field === 'oeePerformance' || field === 'oeeQuality') {
       if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
-        console.log('Auto-calculating OEE for CTQ:', ctq);
         calculateIndividualAnalysis(ctq, "OEE");
       }
     }
