@@ -40,6 +40,7 @@ import {
   calculateZEquivalentFromDefectRate
 } from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Stats } from "fs";
 
 interface ProcessCapabilityData {
@@ -55,6 +56,14 @@ interface ProcessCapabilityData {
   showZ: boolean; // For attribute CTQs
   showStatistics: boolean;
   capabilityAssessment?: string; // AI-generated capability assessment
+  selectedAnalysisTypes?: string[]; // For cumulative attribute analysis selection
+  defects?: number;
+  opportunities?: number;
+  units?: number;
+  opportunitiesPerUnit?: number;
+  availability?: number;
+  performance?: number;
+  quality?: number;
 }
 
 interface DataPoint {
@@ -862,51 +871,53 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Helper functions for attribute CTQ analysis
   const canCalculateAttributeStatistics = (ctq: string): boolean => {
     const data = capabilityData[ctq];
-    if (!data) return false;
+    if (!data || !data.selectedAnalysisTypes || data.selectedAnalysisTypes.length === 0) return false;
     
-    const analysisType = data.attributeAnalysisType || "NonConformity";
-    
-    switch (analysisType) {
-      case "NonConformity":
-        return (data.defects !== undefined && data.defects >= 0) && 
-               (data.opportunities !== undefined && data.opportunities > 0);
-      case "DPMO":
-        return (data.defects !== undefined && data.defects >= 0) && 
-               (data.units !== undefined && data.units > 0) && 
-               (data.opportunitiesPerUnit !== undefined && data.opportunitiesPerUnit > 0);
-      case "OEE":
-        return (data.availability !== undefined && data.availability >= 0 && data.availability <= 100) && 
-               (data.performance !== undefined && data.performance >= 0 && data.performance <= 100) && 
-               (data.quality !== undefined && data.quality >= 0 && data.quality <= 100);
-      default:
-        return false;
-    }
+    return data.selectedAnalysisTypes.some(analysisType => {
+      switch (analysisType) {
+        case "NonConformity":
+          return (data.defects !== undefined && data.defects >= 0) && 
+                 (data.opportunities !== undefined && data.opportunities > 0);
+        case "DPMO":
+          return (data.defects !== undefined && data.defects >= 0) && 
+                 (data.units !== undefined && data.units > 0) && 
+                 (data.opportunitiesPerUnit !== undefined && data.opportunitiesPerUnit > 0);
+        case "OEE":
+          return (data.availability !== undefined && data.availability >= 0 && data.availability <= 100) && 
+                 (data.performance !== undefined && data.performance >= 0 && data.performance <= 100) && 
+                 (data.quality !== undefined && data.quality >= 0 && data.quality <= 100);
+        default:
+          return false;
+      }
+    });
   };
 
-  const getMissingAttributeFields = (ctq: string, analysisType: string): string[] => {
+  const getMissingAttributeFields = (ctq: string): string[] => {
     const data = capabilityData[ctq];
     const missing: string[] = [];
     
-    if (!data) return ["All fields"];
+    if (!data || !data.selectedAnalysisTypes) return ["Select analysis types"];
     
-    switch (analysisType) {
-      case "NonConformity":
-        if (data.defects === undefined || data.defects < 0) missing.push("Defects");
-        if (data.opportunities === undefined || data.opportunities <= 0) missing.push("Opportunities");
-        break;
-      case "DPMO":
-        if (data.defects === undefined || data.defects < 0) missing.push("Defects");
-        if (data.units === undefined || data.units <= 0) missing.push("Units");
-        if (data.opportunitiesPerUnit === undefined || data.opportunitiesPerUnit <= 0) missing.push("Opportunities per Unit");
-        break;
-      case "OEE":
-        if (data.availability === undefined || data.availability < 0 || data.availability > 100) missing.push("Availability");
-        if (data.performance === undefined || data.performance < 0 || data.performance > 100) missing.push("Performance");
-        if (data.quality === undefined || data.quality < 0 || data.quality > 100) missing.push("Quality");
-        break;
-    }
+    data.selectedAnalysisTypes.forEach(analysisType => {
+      switch (analysisType) {
+        case "NonConformity":
+          if (data.defects === undefined || data.defects < 0) missing.push("Defects (for Non Conformity)");
+          if (data.opportunities === undefined || data.opportunities <= 0) missing.push("Opportunities (for Non Conformity)");
+          break;
+        case "DPMO":
+          if (data.defects === undefined || data.defects < 0) missing.push("Defects (for DPMO)");
+          if (data.units === undefined || data.units <= 0) missing.push("Units (for DPMO)");
+          if (data.opportunitiesPerUnit === undefined || data.opportunitiesPerUnit <= 0) missing.push("Opportunities per Unit (for DPMO)");
+          break;
+        case "OEE":
+          if (data.availability === undefined || data.availability < 0 || data.availability > 100) missing.push("Availability (for OEE)");
+          if (data.performance === undefined || data.performance < 0 || data.performance > 100) missing.push("Performance (for OEE)");
+          if (data.quality === undefined || data.quality < 0 || data.quality > 100) missing.push("Quality (for OEE)");
+          break;
+      }
+    });
     
-    return missing;
+    return [...new Set(missing)]; // Remove duplicates
   };
 
   const calculateAttributeResults = (ctq: string, analysisType: string) => {
@@ -1490,43 +1501,89 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-3">Attribute Analysis Type</label>
-                        <RadioGroup
-                          value={capabilityData[ctq]?.attributeAnalysisType || "NonConformity"}
-                          onValueChange={(value) => updateCapabilityField(ctq, "attributeAnalysisType", value)}
-                          className="space-y-3"
-                        >
+                        <label className="block text-sm font-medium mb-3">Attribute Analysis Types (Select Multiple)</label>
+                        <div className="space-y-3">
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="NonConformity" id={`${ctq}-nonconformity`} />
+                            <Checkbox
+                              id={`${ctq}-nonconformity`}
+                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("NonConformity") || false}
+                              onCheckedChange={(checked) => {
+                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
+                                const newTypes = checked 
+                                  ? [...currentTypes, "NonConformity"]
+                                  : currentTypes.filter(type => type !== "NonConformity");
+                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
+                              }}
+                            />
                             <Label htmlFor={`${ctq}-nonconformity`} className="text-sm font-medium text-gray-700">
                               Non Conformity Analysis
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="DPMO" id={`${ctq}-dpmo`} />
+                            <Checkbox
+                              id={`${ctq}-dpmo`}
+                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("DPMO") || false}
+                              onCheckedChange={(checked) => {
+                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
+                                const newTypes = checked 
+                                  ? [...currentTypes, "DPMO"]
+                                  : currentTypes.filter(type => type !== "DPMO");
+                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
+                              }}
+                            />
                             <Label htmlFor={`${ctq}-dpmo`} className="text-sm font-medium text-gray-700">
                               DPMO (Defects Per Million Opportunities)
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="RTY" id={`${ctq}-rty`} />
+                            <Checkbox
+                              id={`${ctq}-rty`}
+                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("RTY") || false}
+                              onCheckedChange={(checked) => {
+                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
+                                const newTypes = checked 
+                                  ? [...currentTypes, "RTY"]
+                                  : currentTypes.filter(type => type !== "RTY");
+                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
+                              }}
+                            />
                             <Label htmlFor={`${ctq}-rty`} className="text-sm font-medium text-gray-700">
                               Rolled Throughput Yield
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="OEE" id={`${ctq}-oee`} />
+                            <Checkbox
+                              id={`${ctq}-oee`}
+                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("OEE") || false}
+                              onCheckedChange={(checked) => {
+                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
+                                const newTypes = checked 
+                                  ? [...currentTypes, "OEE"]
+                                  : currentTypes.filter(type => type !== "OEE");
+                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
+                              }}
+                            />
                             <Label htmlFor={`${ctq}-oee`} className="text-sm font-medium text-gray-700">
                               Overall Equipment Effectiveness (OEE)
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="ParetoDefects" id={`${ctq}-pareto`} />
+                            <Checkbox
+                              id={`${ctq}-pareto`}
+                              checked={capabilityData[ctq]?.selectedAnalysisTypes?.includes("ParetoDefects") || false}
+                              onCheckedChange={(checked) => {
+                                const currentTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
+                                const newTypes = checked 
+                                  ? [...currentTypes, "ParetoDefects"]
+                                  : currentTypes.filter(type => type !== "ParetoDefects");
+                                updateCapabilityField(ctq, "selectedAnalysisTypes", newTypes);
+                              }}
+                            />
                             <Label htmlFor={`${ctq}-pareto`} className="text-sm font-medium text-gray-700">
                               Pareto of Defects
                             </Label>
                           </div>
-                        </RadioGroup>
+                        </div>
                       </div>
                     </>
                   )}
@@ -1574,6 +1631,114 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   )}
 
                   {ctqWithType.ctqType === "Attribute" && (
+                    <>
+                      {(() => {
+                        const selectedTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
+                        const needsDefectsAndOpportunities = selectedTypes.includes("NonConformity");
+                        const needsDPMOFields = selectedTypes.includes("DPMO");
+                        const needsOEEFields = selectedTypes.includes("OEE");
+                        
+                        return (
+                          <>
+                            {(needsDefectsAndOpportunities || needsDPMOFields) && (
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={capabilityData[ctq]?.defects || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "defects", parseInt(e.target.value) || 0)}
+                                  placeholder="e.g., 5"
+                                />
+                              </div>
+                            )}
+                            
+                            {needsDefectsAndOpportunities && (
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Total Opportunities</label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={capabilityData[ctq]?.opportunities || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "opportunities", parseInt(e.target.value) || 1)}
+                                  placeholder="e.g., 100"
+                                />
+                              </div>
+                            )}
+                            
+                            {needsDPMOFields && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Number of Units Inspected</label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={capabilityData[ctq]?.units || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "units", parseInt(e.target.value) || 1)}
+                                    placeholder="e.g., 500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Opportunities Per Unit</label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={capabilityData[ctq]?.opportunitiesPerUnit || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "opportunitiesPerUnit", parseInt(e.target.value) || 1)}
+                                    placeholder="e.g., 10"
+                                  />
+                                </div>
+                              </>
+                            )}
+                            
+                            {needsOEEFields && (
+                              <>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Availability (%)</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={capabilityData[ctq]?.availability || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "availability", parseFloat(e.target.value) || 0)}
+                                    placeholder="e.g., 85.5"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Performance (%)</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={capabilityData[ctq]?.performance || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "performance", parseFloat(e.target.value) || 0)}
+                                    placeholder="e.g., 90.2"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Quality (%)</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={capabilityData[ctq]?.quality || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "quality", parseFloat(e.target.value) || 0)}
+                                    placeholder="e.g., 98.7"
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </>
+                  )}
+
+                  {/* Legacy single analysis type support - can be removed later */}
+                  {false && ctqWithType.ctqType === "Attribute" && (
                     <>
                       {(() => {
                         const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
