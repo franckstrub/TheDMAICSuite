@@ -1656,7 +1656,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                <label className="block text-sm font-medium mb-2">Number of Non-Conform Units</label>
                                 <Input
                                   type="number"
                                   min="0"
@@ -1673,7 +1673,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Total Opportunities</label>
+                                <label className="block text-sm font-medium mb-2">Number of Units</label>
                                 <Input
                                   type="number"
                                   min="1"
