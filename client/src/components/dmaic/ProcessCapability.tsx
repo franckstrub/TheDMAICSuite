@@ -57,13 +57,21 @@ interface ProcessCapabilityData {
   showStatistics: boolean;
   capabilityAssessment?: string; // AI-generated capability assessment
   selectedAnalysisTypes?: string[]; // For cumulative attribute analysis selection
-  defects?: number;
-  opportunities?: number;
-  units?: number;
-  opportunitiesPerUnit?: number;
-  availability?: number;
-  performance?: number;
-  quality?: number;
+  // Non-Conformity Analysis fields
+  nonConformityDefects?: number;
+  nonConformityOpportunities?: number;
+  // DPMO Analysis fields
+  dpmoDefects?: number;
+  dpmoUnits?: number;
+  dpmoOpportunitiesPerUnit?: number;
+  // RTY Analysis fields
+  rtyProcessSteps?: Array<{stepName: string; passed: number; total: number}>;
+  // OEE Analysis fields
+  oeeAvailability?: number;
+  oeePerformance?: number;
+  oeeQuality?: number;
+  // Pareto Analysis fields
+  paretoDefectCategories?: Array<{category: string; count: number}>;
 }
 
 interface DataPoint {
@@ -1630,51 +1638,66 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     </>
                   )}
 
+                  {/* Individual Analysis Cards for Attribute CTQs */}
                   {ctqWithType.ctqType === "Attribute" && (
-                    <>
-                      {(() => {
-                        const selectedTypes = capabilityData[ctq]?.selectedAnalysisTypes || [];
-                        const needsDefectsAndOpportunities = selectedTypes.includes("NonConformity");
-                        const needsDPMOFields = selectedTypes.includes("DPMO");
-                        const needsOEEFields = selectedTypes.includes("OEE");
-                        
-                        return (
-                          <>
-                            {(needsDefectsAndOpportunities || needsDPMOFields) && (
-                              <div>
-                                <label className="block text-sm font-medium mb-2">Number of Defects</label>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={capabilityData[ctq]?.defects || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "defects", parseInt(e.target.value) || 0)}
-                                  placeholder="e.g., 5"
-                                />
-                              </div>
-                            )}
-                            
-                            {needsDefectsAndOpportunities && (
-                              <div>
-                                <label className="block text-sm font-medium mb-2">Total Opportunities</label>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  value={capabilityData[ctq]?.opportunities || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "opportunities", parseInt(e.target.value) || 1)}
-                                  placeholder="e.g., 100"
-                                />
-                              </div>
-                            )}
-                            
-                            {needsDPMOFields && (
-                              <>
+                    <div className="space-y-6">
+                      {capabilityData[ctq]?.selectedAnalysisTypes?.map((analysisType) => (
+                        <Card key={analysisType} className="p-4 bg-blue-50 border-blue-200">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Calculator className="h-5 w-5 text-blue-600" />
+                              {analysisType === "NonConformity" ? "Non-Conformity Analysis" :
+                               analysisType === "DPMO" ? "DPMO Analysis" :
+                               analysisType === "RTY" ? "Rolled Throughput Yield Analysis" :
+                               analysisType === "OEE" ? "Overall Equipment Effectiveness" :
+                               analysisType === "ParetoDefects" ? "Pareto of Defects Analysis" : analysisType}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {analysisType === "NonConformity" && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                  <label className="block text-sm font-medium mb-2">Number of Units Inspected</label>
+                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={capabilityData[ctq]?.nonConformityDefects || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "nonConformityDefects", parseInt(e.target.value) || 0)}
+                                    placeholder="e.g., 5"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Total Opportunities</label>
                                   <Input
                                     type="number"
                                     min="1"
-                                    value={capabilityData[ctq]?.units || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "units", parseInt(e.target.value) || 1)}
+                                    value={capabilityData[ctq]?.nonConformityOpportunities || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "nonConformityOpportunities", parseInt(e.target.value) || 1)}
+                                    placeholder="e.g., 100"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {analysisType === "DPMO" && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={capabilityData[ctq]?.dpmoDefects || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "dpmoDefects", parseInt(e.target.value) || 0)}
+                                    placeholder="e.g., 8"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Number of Units</label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={capabilityData[ctq]?.dpmoUnits || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "dpmoUnits", parseInt(e.target.value) || 1)}
                                     placeholder="e.g., 500"
                                   />
                                 </div>
@@ -1683,16 +1706,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   <Input
                                     type="number"
                                     min="1"
-                                    value={capabilityData[ctq]?.opportunitiesPerUnit || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "opportunitiesPerUnit", parseInt(e.target.value) || 1)}
+                                    value={capabilityData[ctq]?.dpmoOpportunitiesPerUnit || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "dpmoOpportunitiesPerUnit", parseInt(e.target.value) || 1)}
                                     placeholder="e.g., 10"
                                   />
                                 </div>
-                              </>
+                              </div>
                             )}
-                            
-                            {needsOEEFields && (
-                              <>
+
+                            {analysisType === "OEE" && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                   <label className="block text-sm font-medium mb-2">Availability (%)</label>
                                   <Input
@@ -1700,8 +1723,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     min="0"
                                     max="100"
                                     step="0.1"
-                                    value={capabilityData[ctq]?.availability || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "availability", parseFloat(e.target.value) || 0)}
+                                    value={capabilityData[ctq]?.oeeAvailability || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "oeeAvailability", parseFloat(e.target.value) || 0)}
                                     placeholder="e.g., 85.5"
                                   />
                                 </div>
@@ -1712,8 +1735,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     min="0"
                                     max="100"
                                     step="0.1"
-                                    value={capabilityData[ctq]?.performance || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "performance", parseFloat(e.target.value) || 0)}
+                                    value={capabilityData[ctq]?.oeePerformance || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "oeePerformance", parseFloat(e.target.value) || 0)}
                                     placeholder="e.g., 90.2"
                                   />
                                 </div>
@@ -1724,17 +1747,32 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     min="0"
                                     max="100"
                                     step="0.1"
-                                    value={capabilityData[ctq]?.quality || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "quality", parseFloat(e.target.value) || 0)}
+                                    value={capabilityData[ctq]?.oeeQuality || ""}
+                                    onChange={(e) => updateCapabilityField(ctq, "oeeQuality", parseFloat(e.target.value) || 0)}
                                     placeholder="e.g., 98.7"
                                   />
                                 </div>
-                              </>
+                              </div>
                             )}
-                          </>
-                        );
-                      })()}
-                    </>
+
+                            {/* Calculate Button for Each Analysis */}
+                            <div className="mt-4 flex justify-end">
+                              <Button 
+                                onClick={() => calculateIndividualAnalysis(ctq, analysisType)}
+                                className="flex items-center gap-2"
+                              >
+                                <Calculator className="h-4 w-4" />
+                                Calculate {analysisType === "NonConformity" ? "Non-Conformity" :
+                                         analysisType === "DPMO" ? "DPMO" :
+                                         analysisType === "RTY" ? "RTY" :
+                                         analysisType === "OEE" ? "OEE" :
+                                         analysisType === "ParetoDefects" ? "Pareto" : analysisType}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )) || []}
+                    </div>
                   )}
 
                   {/* Legacy single analysis type support - can be removed later */}
