@@ -844,7 +844,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  {/* Helper function to format percentage values */}
+  // Helper function to format percentage values
   const formatPercentage = (value: number, dpmo: number) => {
     if (isNaN(value) || value === null || value === undefined) {
       return "N/A";
@@ -857,7 +857,88 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       : 2;
   
     return `${value.toFixed(decimalPlaces)}%`;
-    };
+  };
+
+  // Helper functions for attribute CTQ analysis
+  const canCalculateAttributeStatistics = (ctq: string): boolean => {
+    const data = capabilityData[ctq];
+    if (!data) return false;
+    
+    const analysisType = data.attributeAnalysisType || "NonConformity";
+    
+    switch (analysisType) {
+      case "NonConformity":
+        return (data.defects !== undefined && data.defects >= 0) && 
+               (data.opportunities !== undefined && data.opportunities > 0);
+      case "DPMO":
+        return (data.defects !== undefined && data.defects >= 0) && 
+               (data.units !== undefined && data.units > 0) && 
+               (data.opportunitiesPerUnit !== undefined && data.opportunitiesPerUnit > 0);
+      case "OEE":
+        return (data.availability !== undefined && data.availability >= 0 && data.availability <= 100) && 
+               (data.performance !== undefined && data.performance >= 0 && data.performance <= 100) && 
+               (data.quality !== undefined && data.quality >= 0 && data.quality <= 100);
+      default:
+        return false;
+    }
+  };
+
+  const getMissingAttributeFields = (ctq: string, analysisType: string): string[] => {
+    const data = capabilityData[ctq];
+    const missing: string[] = [];
+    
+    if (!data) return ["All fields"];
+    
+    switch (analysisType) {
+      case "NonConformity":
+        if (data.defects === undefined || data.defects < 0) missing.push("Defects");
+        if (data.opportunities === undefined || data.opportunities <= 0) missing.push("Opportunities");
+        break;
+      case "DPMO":
+        if (data.defects === undefined || data.defects < 0) missing.push("Defects");
+        if (data.units === undefined || data.units <= 0) missing.push("Units");
+        if (data.opportunitiesPerUnit === undefined || data.opportunitiesPerUnit <= 0) missing.push("Opportunities per Unit");
+        break;
+      case "OEE":
+        if (data.availability === undefined || data.availability < 0 || data.availability > 100) missing.push("Availability");
+        if (data.performance === undefined || data.performance < 0 || data.performance > 100) missing.push("Performance");
+        if (data.quality === undefined || data.quality < 0 || data.quality > 100) missing.push("Quality");
+        break;
+    }
+    
+    return missing;
+  };
+
+  const calculateAttributeResults = (ctq: string, analysisType: string) => {
+    const data = capabilityData[ctq];
+    if (!data) return null;
+    
+    switch (analysisType) {
+      case "NonConformity": {
+        const defects = data.defects || 0;
+        const opportunities = data.opportunities || 1;
+        const results = calculateNonConformity(defects, opportunities);
+        const zEquivalent = calculateZEquivalentFromDefectRate(results.defectRate);
+        return { ...results, zEquivalent };
+      }
+      case "DPMO": {
+        const defects = data.defects || 0;
+        const units = data.units || 1;
+        const opportunitiesPerUnit = data.opportunitiesPerUnit || 1;
+        const results = calculateDPMO(defects, units, opportunitiesPerUnit);
+        const zEquivalent = calculateZEquivalentFromDefectRate(results.dpo);
+        return { ...results, zEquivalent };
+      }
+      case "OEE": {
+        const availability = (data.availability || 0) / 100;
+        const performance = (data.performance || 0) / 100;
+        const quality = (data.quality || 0) / 100;
+        return calculateOEE(availability, performance, quality);
+      }
+      default:
+        return null;
+    }
+  };
   
   // Calculate process capability statistics
   const calculateProcessCapabilityStats = (ctq: string) => {
@@ -1747,7 +1828,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     </div>
                   );
                 })()}
-                </div>
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
                 {ctqWithType.ctqType === "Continuous" && (
