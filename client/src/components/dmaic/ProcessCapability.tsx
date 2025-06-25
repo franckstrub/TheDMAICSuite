@@ -896,6 +896,104 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     return `${value.toFixed(decimalPlaces)}%`;
   };
 
+  // Function to calculate individual analysis
+  const calculateIndividualAnalysis = (ctq: string, analysisType: string) => {
+    console.log('Calculate Individual Analysis called:', { ctq, analysisType });
+    
+    const data = capabilityData[ctq];
+    console.log('Data for CTQ:', data);
+    
+    if (!data) {
+      console.log('No data found for CTQ:', ctq);
+      toast({
+        title: "Missing Data",
+        description: "No data available for this CTQ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let results = "";
+    
+    try {
+      switch (analysisType) {
+        case "NonConformity":
+          console.log('NonConformity data:', { 
+            nonConformityUnits: data.nonConformityUnits, 
+            totalUnits: data.totalUnits 
+          });
+          
+          if (data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
+            const percentage = (data.nonConformityUnits / data.totalUnits) * 100;
+            results = `Non-Conformity Rate: ${percentage.toFixed(2)}%`;
+          } else {
+            console.log('Missing or invalid NonConformity data');
+            results = null;
+          }
+          break;
+          
+        case "DPMO":
+          console.log('DPMO data:', { 
+            dpmoDefects: data.dpmoDefects, 
+            dpmoUnits: data.dpmoUnits,
+            dpmoOpportunitiesPerUnit: data.dpmoOpportunitiesPerUnit
+          });
+          
+          if (data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0 && data.dpmoOpportunitiesPerUnit > 0) {
+            const totalOpportunities = data.dpmoUnits * data.dpmoOpportunitiesPerUnit;
+            const dpmo = (data.dpmoDefects / totalOpportunities) * 1000000;
+            results = `DPMO: ${Math.round(dpmo)}`;
+          } else {
+            console.log('Missing or invalid DPMO data');
+            results = null;
+          }
+          break;
+          
+        case "OEE":
+          console.log('OEE data:', { 
+            oeeAvailability: data.oeeAvailability, 
+            oeePerformance: data.oeePerformance,
+            oeeQuality: data.oeeQuality
+          });
+          
+          if (data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+            const oee = (data.oeeAvailability / 100) * (data.oeePerformance / 100) * (data.oeeQuality / 100) * 100;
+            results = `OEE: ${oee.toFixed(1)}%`;
+          } else {
+            console.log('Missing or invalid OEE data');
+            results = null;
+          }
+          break;
+          
+        default:
+          console.log('Unknown analysis type:', analysisType);
+          results = null;
+      }
+      
+      console.log('Calculation results:', results);
+      
+      if (results) {
+        toast({
+          title: `${analysisType} Results`,
+          description: results,
+        });
+      } else {
+        toast({
+          title: "Missing Data",
+          description: `Please fill in all required fields for ${analysisType} analysis`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error in calculateIndividualAnalysis:', error);
+      toast({
+        title: "Calculation Error",
+        description: "An error occurred during calculation. Please check the console for details.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Helper functions for attribute CTQ analysis
   const canCalculateAttributeStatistics = (ctq: string): boolean => {
     const data = capabilityData[ctq];
