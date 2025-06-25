@@ -728,11 +728,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setCapabilityData(initialData);
       setShowStatistics(statisticsStates);
       
-      // Auto-calculate analysis for loaded data that has values
+      // Always ensure we have an active tab when CTQs are available
+      if (ctqs.length > 0) {
+        if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
+          // Set to saved tab if valid, otherwise first CTQ
+          const savedTab = localStorage.getItem(`process-capability-active-tab-${projectId}`);
+          const ctqNames = ctqs.map(c => c.ctq);
+          if (savedTab && ctqNames.includes(savedTab)) {
+            setActiveTab(savedTab);
+          } else {
+            setActiveTab(ctqs[0].ctq);
+          }
+          setHasInitializedTab(true);
+        }
+      }
+    }
+  }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
+
+  // Auto-calculate analysis when capability data is loaded and state is updated
+  useEffect(() => {
+    if (Object.keys(capabilityData).length > 0) {
+      console.log('Running initialization auto-calculation after state update...');
       setTimeout(() => {
-        console.log('Running initialization auto-calculation...');
-        Object.keys(initialData).forEach(ctq => {
-          const data = initialData[ctq];
+        Object.keys(capabilityData).forEach(ctq => {
+          const data = capabilityData[ctq];
           console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
             enableNonConformity: data.enableNonConformity,
             nonConformityUnits: data.nonConformityUnits,
@@ -765,24 +784,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             calculateIndividualAnalysis(ctq, "OEE");
           }
         });
-      }, 1000);
-      
-      // Always ensure we have an active tab when CTQs are available
-      if (ctqs.length > 0) {
-        if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
-          // Set to saved tab if valid, otherwise first CTQ
-          const savedTab = localStorage.getItem(`process-capability-active-tab-${projectId}`);
-          const ctqNames = ctqs.map(c => c.ctq);
-          if (savedTab && ctqNames.includes(savedTab)) {
-            setActiveTab(savedTab);
-          } else {
-            setActiveTab(ctqs[0].ctq);
-          }
-          setHasInitializedTab(true);
-        }
-      }
+      }, 500);
     }
-  }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
+  }, [capabilityData]);
 
   const updateCapabilityField = (ctq: string, field: keyof ProcessCapabilityData, value: any) => {
     setCapabilityData(prev => {
