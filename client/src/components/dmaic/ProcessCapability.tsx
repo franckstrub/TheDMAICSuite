@@ -896,101 +896,107 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     return `${value.toFixed(decimalPlaces)}%`;
   };
 
-  // Function to calculate individual analysis
-  const calculateIndividualAnalysis = (ctq: string, analysisType: string) => {
-    console.log('Calculate Individual Analysis called:', { ctq, analysisType });
-    
+  // Function to calculate Non-Conformity analysis results
+  const calculateNonConformityResults = (ctq: string) => {
     const data = capabilityData[ctq];
-    console.log('Data for CTQ:', data);
-    
-    if (!data) {
-      console.log('No data found for CTQ:', ctq);
-      toast({
-        title: "Missing Data",
-        description: "No data available for this CTQ",
-        variant: "destructive",
-      });
-      return;
+    if (!data || data.nonConformityUnits === undefined || !data.totalUnits || data.totalUnits <= 0) {
+      return null;
     }
 
-    let results = "";
+    const nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
     
+    // Calculate Z equivalent from defect rate
+    const defectRate = data.nonConformityUnits / data.totalUnits;
+    let zValue = null;
+    
+    if (defectRate > 0 && defectRate < 1) {
+      // Use inverse normal cumulative distribution to get Z value
+      // For one-sided specification (defect rate)
+      const ppm = defectRate * 1000000;
+      
+      // Approximate Z calculation based on defect rate
+      if (defectRate <= 0.5) {
+        // Use inverse normal approximation
+        const t = Math.sqrt(-2 * Math.log(defectRate));
+        const c0 = 2.515517, c1 = 0.802853, c2 = 0.010328;
+        const d1 = 1.432788, d2 = 0.189269, d3 = 0.001308;
+        zValue = t - (c0 + c1 * t + c2 * t * t) / (1 + d1 * t + d2 * t * t + d3 * t * t * t);
+      } else {
+        zValue = 0; // High defect rate corresponds to low Z
+      }
+      
+      // Adjust for short term vs long term
+      if (data.dataSetTerm === "Short Term") {
+        // Z short term is typically 1.5 sigma higher than long term
+        zValue = zValue + (data.zShift || 1.5);
+      }
+    }
+
+    return {
+      nonConformityRate,
+      zValue: zValue ? Math.abs(zValue) : null
+    };
+  };
+
+  // Function to calculate individual analysis and update state
+  const calculateIndividualAnalysis = (ctq: string, analysisType: string) => {
+    const data = capabilityData[ctq];
+    if (!data) return;
+
     try {
       switch (analysisType) {
         case "NonConformity":
-          console.log('NonConformity data:', { 
-            nonConformityUnits: data.nonConformityUnits, 
-            totalUnits: data.totalUnits 
-          });
-          
-          if (data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
-            const percentage = (data.nonConformityUnits / data.totalUnits) * 100;
-            results = `Non-Conformity Rate: ${percentage.toFixed(2)}%`;
-          } else {
-            console.log('Missing or invalid NonConformity data');
-            results = null;
+          const results = calculateNonConformityResults(ctq);
+          if (results) {
+            // Update the capability data with calculated results
+            updateCapabilityField(ctq, "calculatedNonConformityRate", results.nonConformityRate);
+            updateCapabilityField(ctq, "calculatedZValue", results.zValue);
           }
           break;
           
         case "DPMO":
-          console.log('DPMO data:', { 
-            dpmoDefects: data.dpmoDefects, 
-            dpmoUnits: data.dpmoUnits,
-            dpmoOpportunitiesPerUnit: data.dpmoOpportunitiesPerUnit
-          });
-          
           if (data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0 && data.dpmoOpportunitiesPerUnit > 0) {
             const totalOpportunities = data.dpmoUnits * data.dpmoOpportunitiesPerUnit;
             const dpmo = (data.dpmoDefects / totalOpportunities) * 1000000;
-            results = `DPMO: ${Math.round(dpmo)}`;
-          } else {
-            console.log('Missing or invalid DPMO data');
-            results = null;
+            updateCapabilityField(ctq, "calculatedDPMO", dpmo);
           }
           break;
           
         case "OEE":
-          console.log('OEE data:', { 
-            oeeAvailability: data.oeeAvailability, 
-            oeePerformance: data.oeePerformance,
-            oeeQuality: data.oeeQuality
-          });
-          
           if (data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
             const oee = (data.oeeAvailability / 100) * (data.oeePerformance / 100) * (data.oeeQuality / 100) * 100;
-            results = `OEE: ${oee.toFixed(1)}%`;
-          } else {
-            console.log('Missing or invalid OEE data');
-            results = null;
+            updateCapabilityField(ctq, "calculatedOEE", oee);
           }
           break;
-          
-        default:
-          console.log('Unknown analysis type:', analysisType);
-          results = null;
-      }
-      
-      console.log('Calculation results:', results);
-      
-      if (results) {
-        toast({
-          title: `${analysisType} Results`,
-          description: results,
-        });
-      } else {
-        toast({
-          title: "Missing Data",
-          description: `Please fill in all required fields for ${analysisType} analysis`,
-          variant: "destructive",
-        });
       }
     } catch (error) {
       console.error('Error in calculateIndividualAnalysis:', error);
       toast({
         title: "Calculation Error",
-        description: "An error occurred during calculation. Please check the console for details.",
+        description: "An error occurred during calculation.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Auto-calculate when data changes
+  const autoCalculateAnalysis = (ctq: string) => {
+    const data = capabilityData[ctq];
+    if (!data) return;
+
+    // Auto-calculate Non-Conformity if data is available
+    if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
+      calculateIndividualAnalysis(ctq, "NonConformity");
+    }
+
+    // Auto-calculate DPMO if data is available
+    if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
+      calculateIndividualAnalysis(ctq, "DPMO");
+    }
+
+    // Auto-calculate OEE if data is available
+    if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+      calculateIndividualAnalysis(ctq, "OEE");
     }
   };
 
@@ -1781,6 +1787,32 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                               </div>
                             </div>
+                            
+                            {/* Results Display */}
+                            {capabilityData[ctq]?.calculatedNonConformityRate !== undefined && (
+                              <div className="mt-4 p-3 bg-blue-100 rounded-lg border">
+                                <h4 className="font-semibold text-blue-800 mb-2">Results:</h4>
+                                <div className="space-y-1 text-sm">
+                                  <div>
+                                    <span className="font-medium">Non-Conform Rate: </span>
+                                    <span className="text-blue-700">
+                                      {capabilityData[ctq].calculatedNonConformityRate.toFixed(2)}%
+                                    </span>
+                                  </div>
+                                  {capabilityData[ctq]?.showZ && capabilityData[ctq]?.calculatedZValue && (
+                                    <div>
+                                      <span className="font-medium">
+                                        Z {capabilityData[ctq]?.dataSetTerm === "Long Term" ? "Long Term" : "Short Term"}: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq].calculatedZValue.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="mt-4 flex justify-end">
                               <Button 
                                 onClick={() => calculateIndividualAnalysis(ctq, "NonConformity")}
@@ -1843,6 +1875,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                               </div>
                             </div>
+                            
+                            {/* Results Display */}
+                            {capabilityData[ctq]?.calculatedDPMO !== undefined && (
+                              <div className="mt-4 p-3 bg-green-100 rounded-lg border">
+                                <h4 className="font-semibold text-green-800 mb-2">Results:</h4>
+                                <div className="space-y-1 text-sm">
+                                  <div>
+                                    <span className="font-medium">DPMO: </span>
+                                    <span className="text-green-700">
+                                      {Math.round(capabilityData[ctq].calculatedDPMO).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="mt-4 flex justify-end">
                               <Button 
                                 onClick={() => calculateIndividualAnalysis(ctq, "DPMO")}
@@ -1904,6 +1952,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                               </div>
                             </div>
+                            
+                            {/* Results Display */}
+                            {capabilityData[ctq]?.calculatedOEE !== undefined && (
+                              <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
+                                <h4 className="font-semibold text-purple-800 mb-2">Results:</h4>
+                                <div className="space-y-1 text-sm">
+                                  <div>
+                                    <span className="font-medium">OEE: </span>
+                                    <span className="text-purple-700">
+                                      {capabilityData[ctq].calculatedOEE.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="mt-4 flex justify-end">
                               <Button 
                                 onClick={() => calculateIndividualAnalysis(ctq, "OEE")}
@@ -1917,124 +1981,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         </Card>
                       )}
                     </div>
-                  )}
-
-                  {/* Legacy single analysis type support - can be removed later */}
-                  {false && ctqWithType.ctqType === "Attribute" && (
-                    <>
-                      {(() => {
-                        const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
-                        
-                        switch (analysisType) {
-                          case "NonConformity":
-                            return (
-                              <>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    value={capabilityData[ctq]?.defects || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "defects", parseInt(e.target.value) || 0)}
-                                    placeholder="e.g., 5"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Total Opportunities</label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={capabilityData[ctq]?.opportunities || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "opportunities", parseInt(e.target.value) || 1)}
-                                    placeholder="e.g., 100"
-                                  />
-                                </div>
-                              </>
-                            );
-                          
-                          case "DPMO":
-                            return (
-                              <>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Number of Defects</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    value={capabilityData[ctq]?.defects || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "defects", parseInt(e.target.value) || 0)}
-                                    placeholder="e.g., 5"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Number of Units</label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={capabilityData[ctq]?.units || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "units", parseInt(e.target.value) || 1)}
-                                    placeholder="e.g., 50"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Opportunities per Unit</label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={capabilityData[ctq]?.opportunitiesPerUnit || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "opportunitiesPerUnit", parseInt(e.target.value) || 1)}
-                                    placeholder="e.g., 4"
-                                  />
-                                </div>
-                              </>
-                            );
-                            
-                          case "OEE":
-                            return (
-                              <>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Availability (%)</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    value={capabilityData[ctq]?.availability || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "availability", parseFloat(e.target.value) || 0)}
-                                    placeholder="e.g., 85.5"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Performance (%)</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    value={capabilityData[ctq]?.performance || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "performance", parseFloat(e.target.value) || 0)}
-                                    placeholder="e.g., 92.3"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Quality (%)</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    value={capabilityData[ctq]?.quality || ""}
-                                    onChange={(e) => updateCapabilityField(ctq, "quality", parseFloat(e.target.value) || 0)}
-                                    placeholder="e.g., 96.8"
-                                  />
-                                </div>
-                              </>
-                            );
-                            
-                          default:
-                            return null;
-                        }
-                      })()}
-                    </>
                   )}
                 </div>
 
