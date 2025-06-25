@@ -2918,8 +2918,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User organization not found" });
       }
       
+      const { 
+        ctq, lsl, usl, target, zShift, dataSetTerm, capabilityIndex, 
+        showPercentage, showZ, showStatistics, capabilityAssessment,
+        enableNonConformity, enableDpmo, enableRty, enableOee, enablePareto,
+        nonConformityDefects, nonConformityOpportunities,
+        dpmoDefects, dpmoUnits, dpmoOpportunitiesPerUnit,
+        oeeAvailability, oeePerformance, oeeQuality
+      } = req.body;
+
       const payload = insertProcessCapabilitySchema.parse({
-        ...req.body,
+        ctq,
+        lsl: lsl || null,
+        usl: usl || null,
+        target: target || null,
+        zShift: zShift || 1.5,
+        dataSetTerm: dataSetTerm || "Long Term",
+        capabilityIndex: capabilityIndex || "Cp/Cpk",
+        showPercentage: showPercentage || false,
+        showZ: showZ || false,
+        showStatistics: showStatistics || false,
+        capabilityAssessment: capabilityAssessment || null,
+        enableNonConformity: enableNonConformity || false,
+        enableDpmo: enableDpmo || false,
+        enableRty: enableRty || false,
+        enableOee: enableOee || false,
+        enablePareto: enablePareto || false,
+        nonConformityDefects: nonConformityDefects || null,
+        nonConformityOpportunities: nonConformityOpportunities || null,
+        dpmoDefects: dpmoDefects || null,
+        dpmoUnits: dpmoUnits || null,
+        dpmoOpportunitiesPerUnit: dpmoOpportunitiesPerUnit || null,
+        oeeAvailability: oeeAvailability || null,
+        oeePerformance: oeePerformance || null,
+        oeeQuality: oeeQuality || null,
         projectId,
         organizationId: userRecord.organizationId,
       });
