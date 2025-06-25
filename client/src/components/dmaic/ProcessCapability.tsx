@@ -1029,14 +1029,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
     // Only calculate for specific analysis types when their fields change
     if (field === 'nonConformityUnits' || field === 'totalUnits') {
-      if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits) {
+      if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
         console.log('Auto-calculating Non-Conformity for CTQ:', ctq);
         calculateIndividualAnalysis(ctq, "NonConformity");
       }
     }
 
     if (field === 'dpmoDefects' || field === 'dpmoUnits' || field === 'dpmoOpportunitiesPerUnit') {
-      if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit) {
+      if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0) {
         console.log('Auto-calculating DPMO for CTQ:', ctq);
         calculateIndividualAnalysis(ctq, "DPMO");
       }
