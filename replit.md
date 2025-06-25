@@ -107,6 +107,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 25, 2025. Added comprehensive process variation analysis for continuous CTQs with control and stability assessment
 - June 25, 2025. Implemented complete attribute CTQ process capability analysis with Non Conformity, DPMO, Rolled Throughput Yield, OEE, and Pareto calculations
 - June 25, 2025. Fixed Non-Conformity Z value calculation using inverseNormCDF function and implemented auto-calculation on data changes without auto-save
+- June 25, 2025. Fixed process capability database schema to properly track CTQs with ctq_id foreign key, analysis_type field, and unique constraint ensuring one analysis per CTQ
 
 ## User Preferences
 
