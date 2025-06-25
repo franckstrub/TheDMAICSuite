@@ -914,7 +914,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         // Use inverseNormCDF(1 - defectRate) to get Z equivalent
         // This gives us the Z value corresponding to the conformity rate
         const conformityRate = 1 - defectRate;
+        console.log('Calculating Z value for conformity rate:', conformityRate);
         zValue = inverseNormCDF(conformityRate);
+        console.log('Raw Z value:', zValue);
         
         // Adjust for short term vs long term
         if (data.dataSetTerm === "Short Term") {
@@ -947,8 +949,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           const results = calculateNonConformityResults(ctq);
           if (results) {
             // Update the capability data with calculated results
+            console.log('Updating capability data with results:', results);
             updateCapabilityField(ctq, "calculatedNonConformityRate", results.nonConformityRate);
             updateCapabilityField(ctq, "calculatedZValue", results.zValue);
+            console.log('Updated Z value in state:', results.zValue);
           }
           break;
           
@@ -1797,7 +1801,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       {capabilityData[ctq].calculatedNonConformityRate.toFixed(2)}%
                                     </span>
                                   </div>
-                                  {capabilityData[ctq]?.showZ && capabilityData[ctq]?.calculatedZValue && (
+                                  {capabilityData[ctq]?.showZ && capabilityData[ctq]?.calculatedZValue !== undefined && capabilityData[ctq]?.calculatedZValue !== null && (
                                     <div>
                                       <span className="font-medium">
                                         Z {capabilityData[ctq]?.dataSetTerm === "Long Term" ? "Long Term" : "Short Term"}: 
