@@ -301,6 +301,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 showZ: false,
                 showStatistics: false,
                 capabilityAssessment: "",
+                enableNonConformity: false,
+                enableDpmo: false,
+                enableRty: false,
+                enableOee: false,
+                enablePareto: false,
             };
         
         const result = await saveCapabilityMutation.mutateAsync(defaultCapabilityData);
@@ -1108,6 +1113,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         showZ: Boolean(data.showZ),
         capabilityAssessment: data.capabilityAssessment || "",
         showStatistics: Boolean(showStatistics[ctq]), // Include current statistics visibility state
+        enableNonConformity: Boolean(data.enableNonConformity),
+        enableDpmo: Boolean(data.enableDpmo),
+        enableRty: Boolean(data.enableRty),
+        enableOee: Boolean(data.enableOee),
+        enablePareto: Boolean(data.enablePareto),
+        nonConformityDefects: data.nonConformityDefects,
+        nonConformityOpportunities: data.nonConformityOpportunities,
+        dpmoDefects: data.dpmoDefects,
+        dpmoUnits: data.dpmoUnits,
+        dpmoOpportunitiesPerUnit: data.dpmoOpportunitiesPerUnit,
+        oeeAvailability: data.oeeAvailability,
+        oeePerformance: data.oeePerformance,
+        oeeQuality: data.oeeQuality
       };
       
       saveCapabilityMutation.mutate(transformedData);

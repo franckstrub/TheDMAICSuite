@@ -1016,15 +1016,21 @@ export const processCapability = pgTable("process_capability", {
   enableOee: boolean("enable_oee").default(false),
   enablePareto: boolean("enable_pareto").default(false),
 
-  // Attribute CTQ specific fields
-  attributeAnalysisType: text("attribute_analysis_type").default("NonConformity"), // NonConformity, DPMO, RTY, OEE, ParetoDefects
-  defects: integer("defects"), // Number of defects
-  opportunities: integer("opportunities"), // Total opportunities for NonConformity
-  units: integer("units"), // Number of units for DPMO
-  opportunitiesPerUnit: integer("opportunities_per_unit"), // Opportunities per unit for DPMO
-  availability: real("availability"), // Availability percentage for OEE
-  performance: real("performance"), // Performance percentage for OEE
-  quality: real("quality"), // Quality percentage for OEE
+  // Non-Conformity Analysis fields
+  nonConformityDefects: integer("non_conformity_defects"),
+  nonConformityOpportunities: integer("non_conformity_opportunities"),
+  // DPMO Analysis fields
+  dpmoDefects: integer("dpmo_defects"),
+  dpmoUnits: integer("dpmo_units"),
+  dpmoOpportunitiesPerUnit: integer("dpmo_opportunities_per_unit"),
+  // RTY Analysis fields
+  rtyProcessSteps: json("rty_process_steps").$type<Array<{stepName: string; passed: number; total: number}>>(),
+  // OEE Analysis fields
+  oeeAvailability: real("oee_availability"),
+  oeePerformance: real("oee_performance"),
+  oeeQuality: real("oee_quality"),
+  // Pareto Analysis fields
+  paretoDefectCategories: json("pareto_defect_categories").$type<Array<{category: string; count: number}>>(),
 
   capabilityAssessment: text("capability_assessment"), // AI-generated capability assessment
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
