@@ -766,7 +766,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       
       // Set new timeout for auto-save
       const timer = setTimeout(() => {
-        saveCapabilityData(ctq, updated[ctq]);
+        saveCapabilityMutation.mutate(updated[ctq]);
       }, 1000); // 1 second delay
       
       setAutoSaveTimers(prev => ({
