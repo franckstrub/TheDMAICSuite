@@ -998,9 +998,9 @@ export const processCapability = pgTable("process_capability", {
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
-  lsl: text("lsl"), // Lower Specification Limit
-  usl: text("usl"), // Upper Specification Limit
-  target: text("target"), // Target value
+  lsl: text("lsl"), // Lower Specification Limit (optional for attribute CTQs)
+  usl: text("usl"), // Upper Specification Limit (optional for attribute CTQs)
+  target: text("target"), // Target value (optional for attribute CTQs)
   zShift: real("z_shift").default(1.5), // Z-shift value (default 1.5)
   dataSetTerm: text("data_set_term").$type<DataSetTermType>().default("Long Term"), // Data set term (Long Term or Short Term)
   capabilityIndex: text("capability_index").$type<CapabilityIndexType>().default("Cp/Cpk"), // Z or Cp/Cpk

@@ -1103,9 +1103,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       // Transform data to match schema expectations
       const transformedData = {
         ctq: data.ctq,
-        lsl: data.lsl ? String(data.lsl) : "",
-        usl: data.usl ? String(data.usl) : "",
-        target: data.target ? String(data.target) : "",
+        lsl: (data.lsl && data.lsl.trim() !== '') ? String(data.lsl) : null,
+        usl: (data.usl && data.usl.trim() !== '') ? String(data.usl) : null,
+        target: (data.target && data.target.trim() !== '') ? String(data.target) : null,
         zShift: Number(data.zShift) || 1.5,
         dataSetTerm: data.dataSetTerm || "Long Term",
         capabilityIndex: data.capabilityIndex || "Z",

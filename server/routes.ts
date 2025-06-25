@@ -2927,11 +2927,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         oeeAvailability, oeePerformance, oeeQuality
       } = req.body;
 
-      const payload = insertProcessCapabilitySchema.parse({
+      // Prepare the data object, handling empty strings as null for optional fields
+      const processedData = {
         ctq,
-        lsl: lsl || null,
-        usl: usl || null,
-        target: target || null,
+        lsl: (lsl && lsl.trim() !== '') ? lsl : null,
+        usl: (usl && usl.trim() !== '') ? usl : null,
+        target: (target && target.trim() !== '') ? target : null,
         zShift: zShift || 1.5,
         dataSetTerm: dataSetTerm || "Long Term",
         capabilityIndex: capabilityIndex || "Cp/Cpk",
@@ -2954,7 +2955,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         oeeQuality: oeeQuality || null,
         projectId,
         organizationId: userRecord.organizationId,
-      });
+      };
+
+      const payload = insertProcessCapabilitySchema.parse(processedData);
 
       // Check if a process capability record already exists for this CTQ and project
       const existingCapability = await db
