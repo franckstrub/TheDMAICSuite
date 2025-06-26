@@ -118,6 +118,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const [isStatisticsLoaded, setIsStatisticsLoaded] = useState(false);
 
   const [isGeneratingAssessment, setIsGeneratingAssessment] = useState<{ [ctq: string]: boolean }>({});
+  const [autoSaveTimers, setAutoSaveTimers] = useState<{ [ctq: string]: NodeJS.Timeout }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -372,7 +373,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Debounced auto-save trigger
   const triggerAutoSave = (ctq: string) => {
     // Clear existing timer if any
-
+    if (autoSaveTimers[ctq]) {
+      clearTimeout(autoSaveTimers[ctq]);
+    }
     
     // Set new timer for 2 seconds delay
     const newTimer = setTimeout(() => {
@@ -669,17 +672,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Load data points when process capability data is loaded
+  // Load data points when process capability data is loaded (only once)
   useEffect(() => {
     const ctqs = getCtqsWithTypes();
     ctqs.forEach(({ ctq }) => {
-      if (capabilityData[ctq]?.id && (!dataPoints[ctq] || dataPoints[ctq].length === 0)) {
-        // Only load data points if we don't already have local data points
-        //console.log(`Loading data points for CTQ: ${ctq}, ID: ${capabilityData[ctq]?.id}`);
+      if (capabilityData[ctq]?.id && !dataPoints[ctq]) {
+        // Only load data points if we don't already have data points for this CTQ
         loadDataPointsForCtq(ctq);
       }
     });
-  }, [capabilityData, Object.keys(dataPoints).length]);
+  }, [capabilityData]);
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
