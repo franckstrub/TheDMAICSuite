@@ -2921,11 +2921,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { 
         ctq, lsl, usl, target, zShift, dataSetTerm, capabilityIndex, 
         showPercentage, showZ, showStatistics, capabilityAssessment,
-        enableNonConformity, enableDpmo, enableRty, enableOee, enablePareto,
+        enableNonConformity, enableDpmo, enableRty, enableOee, enablePareto, enableDpu,
         nonConformityUnits, totalUnits,
         dpmoDefects, dpmoUnits, dpmoOpportunitiesPerUnit,
         rtyProcessSteps, oeeScheduledTime, oeeAvailableTime, oeeNominalCapacity, 
-        oeePartsManufactured, oeeBadParts, paretoDefectCategories
+        oeePartsManufactured, oeeBadParts, paretoDefectCategories,
+        dpuDefects, dpuUnits
       } = req.body;
 
       // Prepare the data object, handling empty strings as null for optional fields
@@ -2946,6 +2947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         enableRty: enableRty || false,
         enableOee: enableOee || false,
         enablePareto: enablePareto || false,
+        enableDpu: enableDpu || false,
         nonConformityUnits: nonConformityUnits !== undefined ? nonConformityUnits : null,
         totalUnits: totalUnits || null,
         dpmoDefects: dpmoDefects !== undefined ? dpmoDefects : null,
@@ -2958,6 +2960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         oeePartsManufactured: oeePartsManufactured || null,
         oeeBadParts: oeeBadParts || null,
         paretoDefectCategories: paretoDefectCategories || null,
+        dpuDefects: dpuDefects !== undefined ? dpuDefects : null,
+        dpuUnits: dpuUnits || null,
         projectId,
         organizationId: userRecord.organizationId,
       };
