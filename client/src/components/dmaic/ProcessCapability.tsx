@@ -2423,7 +2423,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                      {paretoResults.chartData.map((item, index) => (
+                                      {paretoResults.sortedCategories.map((item, index) => (
                                         <tr key={index}>
                                           <td className="px-4 py-2 text-sm font-medium text-gray-900">
                                             {item.category}
@@ -2432,10 +2432,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             {item.count}
                                           </td>
                                           <td className="px-4 py-2 text-sm text-gray-500">
-                                            {item.percentage}%
+                                            {item.percentage.toFixed(1)}%
                                           </td>
                                           <td className="px-4 py-2 text-sm text-gray-500">
-                                            {item.cumulative}%
+                                            {item.cumulativePercentage.toFixed(1)}%
                                           </td>
                                         </tr>
                                       ))}
@@ -2448,8 +2448,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   <h4 className="font-medium text-indigo-900 mb-2">Key Insights</h4>
                                   <ul className="text-sm text-indigo-800 space-y-1">
                                     <li>• Total Defects: {paretoResults.totalDefects}</li>
-                                    <li>• Top Category: {paretoResults.chartData[0]?.category} ({paretoResults.chartData[0]?.percentage}%)</li>
-                                    <li>• 80% Rule: First {paretoResults.chartData.findIndex(item => item.cumulative >= 80) + 1} categories account for 80% of defects</li>
+                                    <li>• Top Category: {paretoResults.sortedCategories[0]?.category} ({paretoResults.sortedCategories[0]?.percentage.toFixed(1)}%)</li>
+                                    <li>• 80% Rule: First {paretoResults.sortedCategories.findIndex(item => item.cumulativePercentage >= 80) + 1} categories account for 80% of defects</li>
+                                    <li>• Vital Few: {paretoResults.vitalFew.join(', ')}</li>
                                   </ul>
                                 </div>
                               </div>
