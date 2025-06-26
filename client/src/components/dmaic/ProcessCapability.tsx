@@ -264,7 +264,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       // Don't show toast here as it's handled in saveAllDataPoints
     },
     onError: (error) => {
-      console.error("Mutation failed:", error);
+
       // Don't show toast here as it's handled in saveAllDataPoints
     },
   });
@@ -327,14 +327,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           }
         }));
       } catch (error) {
-        console.error("Failed to create capability configuration for auto-save:", error);
+
         return;
       }
     }
     
     // ADD THIS: Type guard to ensure processCapabilityId is defined
     if (!processCapabilityId) {
-      console.error("Process capability ID is still undefined after creation attempt");
+
       return;
     }
     
@@ -357,7 +357,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return newTimers;
       });
     } catch (error) {
-      console.error("Auto-save failed:", error);
+
       // Clear the timer even if save failed
       setAutoSaveTimers(prev => {
         const newTimers = { ...prev };
@@ -621,7 +621,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       triggerAutoSave(ctq);
       
     } catch (error) {
-      console.error("Error pasting data:", error);
+
       toast({
         title: "Error",
         description: "Failed to paste data. Please try again.",
@@ -650,7 +650,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const loadDataPointsForCtq = async (ctq: string) => {
     const processCapabilityId = capabilityData[ctq]?.id;
     if (!processCapabilityId) {
-      console.log(`No process capability ID found for CTQ: ${ctq}`);
+
       return;
     }
     
@@ -663,7 +663,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         [ctq]: points
       }));
     } catch (error) {
-      console.error(`Failed to load data points for CTQ: ${ctq}`, error);
+
     }
   };
 
@@ -1394,7 +1394,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         showStatistics: newState
       });
     } catch (error) {
-      console.error('Failed to save statistics toggle state:', error);
+
       // Revert the state on error
       setShowStatistics(prev => ({
         ...prev,
