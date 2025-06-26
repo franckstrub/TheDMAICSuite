@@ -12,12 +12,14 @@ import { Label } from "@/components/ui/label";
 import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { formatPercentage } from './ProcessCapabilityContinuous';
+import { calculateNonConformityResults } from './ProcessCapabilityAttribute';
+import { calculateDPMOResults } from './ProcessCapabilityAttribute';
 import { 
   mean, 
   standardDeviation, 
   variance,
   parseNumericValue,
-  median,
   calculateMode,
   performNormalityTest,
   getHistogramData,
@@ -38,7 +40,6 @@ import {
   calculateRolledThroughputYield,
   calculateOEE,
   calculateParetoOfDefects,
-  calculateZEquivalentFromDefectRate
 } from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -337,7 +338,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     // ADD THIS: Type guard to ensure processCapabilityId is defined
     if (!processCapabilityId) {
-
       return;
     }
     
@@ -756,21 +756,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       setTimeout(() => {
         Object.keys(capabilityData).forEach(ctq => {
           const data = capabilityData[ctq];
-          {/*
-            // console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
-            enableNonConformity: data.enableNonConformity,
-            nonConformityUnits: data.nonConformityUnits,
-            totalUnits: data.totalUnits,
-            enableDpmo: data.enableDpmo,
-            dpmoDefects: data.dpmoDefects,
-            dpmoUnits: data.dpmoUnits,
-            dpmoOpportunitiesPerUnit: data.dpmoOpportunitiesPerUnit,
-            enableOee: data.enableOee,
-            oeeAvailability: data.oeeAvailability,
-            oeePerformance: data.oeePerformance,
-            oeeQuality: data.oeeQuality
-          });
-          */}
 
           // Auto-calculate Non-Conformity if data is available
           if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
@@ -830,8 +815,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return;
       }
 
-
-
       const capData = capabilityData[ctq];
       
       // Check if statistics are being shown (which means they're calculated)
@@ -875,8 +858,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         pdLSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.performanceMetrics.longTerm.pdLSL_LT || null : calculatedStats.performanceMetrics.shortTerm.pdLSL_ST  || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.obspdLSL_LT || null : calculatedStats.obspdLSL_ST || null),
         pdUSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.performanceMetrics.longTerm.pdUSL_LT || null : calculatedStats.performanceMetrics.shortTerm.pdUSL_ST  || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.obspdUSL_LT || null : calculatedStats.obspdUSL_ST || null),
         isStable:calculatedStats.isStable,
-        isInControl:calculatedStats.isInControl,
-        
+        isInControl:calculatedStats.isInControl,       
       };
 
       const context = {
@@ -943,137 +925,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Helper function to format percentage values
-  const formatPercentage = (value: number, dpmo: number) => {
-    if (isNaN(value) || value === null || value === undefined) {
-      return "N/A";
-    }
-    const decimalPlaces = dpmo <= 1 ? 6
-      : dpmo <= 10 ? 5
-      : dpmo <= 100 ? 4
-      : dpmo <= 1000 ? 3
-      : dpmo <= 10000 ? 2
-      : 2;
-  
-    return `${value.toFixed(decimalPlaces)}%`;
-  };
-
-  // Function to calculate Non-Conformity analysis results
-  const calculateNonConformityResults = (ctq: string) => {
-    const data = capabilityData[ctq];
-    if (!data || data.nonConformityUnits === undefined || !data.totalUnits || data.totalUnits <= 0) {
-      return null;
-    }
-
-    const nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
-    
-    // Calculate Z equivalent from defect rate using inverse normal CDF
-    const defectRate = data.nonConformityUnits / data.totalUnits;
-    let zValue = null;
-    let zValue_LT=null;
-    let zValue_ST=null;
-    
-    if (defectRate > 0 && defectRate < 1) {
-      try {
-        // Use inverseNormCDF(1 - defectRate) to get Z equivalent
-        // This gives us the Z value corresponding to the conformity rate
-        const conformityRate = 1 - defectRate;
-        //console.log('Calculating Z value for conformity rate:', conformityRate);
-        if (typeof inverseNormCDF === 'function') {
-          zValue = inverseNormCDF(conformityRate);
-          //console.log('Raw Z value:', zValue);
-        } else {
-          console.error('inverseNormCDF function not available');
-          zValue = null;
-        }
-        
-        // Adjust for short term vs long term
-        if (data.dataSetTerm === "Short Term") {
-          // Z short term is typically 1.5 sigma higher than long term
-          zValue_ST = zValue;
-          zValue_LT = zValue_ST - (data.zShift || 1.5);
-        }
-        else {
-          // Z long term term is typically 1.5 sigma lower than short term
-          zValue_LT = zValue;
-          zValue_ST = zValue_LT + (data.zShift || 1.5);
-        }
-        
-        // Ensure positive Z value
-        //zValue = Math.abs(zValue);
-      } catch (error) {
-        console.error('Error calculating Z value:', error);
-        zValue = null;
-        zValue_LT = null;
-        zValue_ST = null;
-      }
-    }
-
-    return {
-      nonConformityRate,
-      zValue_LT,
-      zValue_ST
-    };
-  };
-
-   // Function to calculate Non-Conformity analysis results
-  const calculateDPMOResults = (ctq: string) => {
-    const data = capabilityData[ctq];
-    if (!data || data.dpmoDefects === undefined || !data.dpmoUnits || data.dpmoUnits <= 0 || !data.dpmoOpportunitiesPerUnit || data.dpmoOpportunitiesPerUnit<=0) {
-      return null;
-    }
-    //const nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
-    
-    // Calculate Z equivalent from defect rate using inverse normal CDF
-    const dpo = data.dpmoDefects / (data.dpmoUnits * data.dpmoOpportunitiesPerUnit);
-    //const dpmo = 1000000 * dpo);
-    
-    let zValue = null;
-    let zDPMOValue_LT=null;
-    let zDPMOValue_ST=null;
-    
-    if (dpo > 0 && dpo < 1) {
-      try {
-        // Use inverseNormCDF(1 - defectRate) to get Z equivalent
-        // This gives us the Z value corresponding to the conformity rate
-        //const conformityRate = 1 - defectRate;
-        //console.log('Calculating Z value for conformity rate:', conformityRate);
-        if (typeof inverseNormCDF === 'function') {
-          zValue = inverseNormCDF(1 - dpo);
-          //console.log('Raw Z value:', zValue);
-        } else {
-          console.error('inverseNormCDF function not available');
-          zValue = null;
-        }
-        
-        // Adjust for short term vs long term
-        if (data.dataSetTerm === "Short Term") {
-          // Z short term is typically 1.5 sigma higher than long term
-          zDPMOValue_ST = zValue;
-          zDPMOValue_LT = zDPMOValue_ST - (data.zShift || 1.5);
-        }
-        else {
-          // Z long term term is typically 1.5 sigma lower than short term
-          zDPMOValue_LT = zValue;
-          zDPMOValue_ST = zDPMOValue_LT + (data.zShift || 1.5);
-        }
-        
-        // Ensure positive Z value
-        //zValue = Math.abs(zValue);
-      } catch (error) {
-        console.error('Error calculating Z value:', error);
-        zValue = null;
-        zDPMOValue_LT = null;
-        zDPMOValue_ST = null;
-      }
-    }
-
-    return {
-      zDPMOValue_LT,
-      zDPMOValue_ST
-    };
-  };
-
   // Function to calculate individual analysis and update state
   const calculateIndividualAnalysis = (ctq: string, analysisType: string) => {
     const data = capabilityData[ctq];
@@ -1082,7 +933,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     try {
       switch (analysisType) {
         case "NonConformity":
-          const results = calculateNonConformityResults(ctq);
+          const results = calculateNonConformityResults(ctq, capabilityData);
           if (results) {
             // Update the capability data with calculated results
             //console.log('Updating capability data with results:', results);
@@ -1099,7 +950,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             const dpmo = (data.dpmoDefects / totalOpportunities) * 1000000;
             updateCapabilityField(ctq, "calculatedDPMO", dpmo);
           }
-          const results2 = calculateDPMOResults(ctq);
+          const results2 = calculateDPMOResults(ctq, capabilityData);
           if (results2) {
             // Update the capability data with calculated results
             //console.log('Updating capability data with results:', results);
@@ -1116,7 +967,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
               data.oeeAvailableTime,
               data.oeeNominalCapacity,
               data.oeePartsManufactured,
-              data.oeeBadParts || 0
+              data.oeeBadParts || 0,
             );
             
             updateCapabilityField(ctq, "calculatedOEE", oeeResults.oeePercentage);
@@ -1219,16 +1070,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         const defects = data.defects || 0;
         const opportunities = data.opportunities || 1;
         const results = calculateNonConformity(defects, opportunities);
-        const zEquivalent = calculateZEquivalentFromDefectRate(results.defectRate);
-        return { ...results, zEquivalent };
+        //const zEquivalent = calculateZEquivalentFromDefectRate(results.defectRate);
+        return { ...results  }; {/*, zEquivalent*/}
       }
       case "DPMO": {
         const defects = data.defects || 0;
         const units = data.units || 1;
         const opportunitiesPerUnit = data.opportunitiesPerUnit || 1;
         const results = calculateDPMO(defects, units, opportunitiesPerUnit);
-        const zEquivalent = calculateZEquivalentFromDefectRate(results.dpo);
-        return { ...results, zEquivalent };
+        //const zEquivalent = calculateZEquivalentFromDefectRate(results.dpo);
+        return { ...results }; {/*, zEquivalent*/}
       }
       case "OEE": {
         const scheduledTime = data.oeeScheduledTime || 0;
@@ -2000,18 +1851,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 </div>
                               </div>
                             )}
-                            
-                            {/*
-                            <div className="mt-4 flex justify-end">
-                              <Button 
-                                onClick={() => calculateIndividualAnalysis(ctq, "NonConformity")}
-                                className="flex items-center gap-2"
-                              >
-                                <Calculator className="h-4 w-4" />
-                                Calculate Non-Conformity
-                              </Button>
-                            </div>
-                            */}
                           </CardContent>
                         </Card>
                       )}
@@ -2104,18 +1943,6 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 </div>
                               </div>
                             )}
-                            
-                            {/*
-                            <div className="mt-4 flex justify-end">
-                              <Button 
-                                onClick={() => calculateIndividualAnalysis(ctq, "DPMO")}
-                                className="flex items-center gap-2"
-                              >
-                                <Calculator className="h-4 w-4" />
-                                Calculate DPMO
-                              </Button>
-                            </div>
-                            */}
                           </CardContent>
                         </Card>
                       )}
@@ -2205,7 +2032,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 data.oeeAvailableTime,
                                 data.oeeNominalCapacity,
                                 data.oeePartsManufactured,
-                                data.oeeBadParts || 0
+                                data.oeeBadParts || 0,
                               );
                               
                               // Calculate performance time and quality time from OEE results
@@ -2250,186 +2077,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 </div>
                               );
                             })()}
-                            {/*}
-                            <div className="mt-4 flex justify-end">
-                              <Button 
-                                onClick={() => calculateIndividualAnalysis(ctq, "OEE")}
-                                className="flex items-center gap-2"
-                              >
-                                <Calculator className="h-4 w-4" />
-                                Calculate OEE
-                              </Button>
-                            </div>
-                            */}
                           </CardContent>
                         </Card>
                       )}
                     </div>
                   )}
                 </div>
-
-                {/* Calculate Statistics Button for Attribute CTQs */}
-                {/*
-                {ctqWithType.ctqType === "Attribute" && (
-                  <div className="flex justify-between items-center mt-4">
-                    <Button
-                      type="button"
-                      onClick={() => handleCalculateStatistics(ctq)}
-                      disabled={!canCalculateAttributeStatistics(ctq)}
-                      className="flex items-center gap-2"
-                    >
-                      <Calculator className="h-4 w-4" />
-                      Calculate Statistics
-                    </Button>
-                    {(() => {
-                      const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
-                      const missingFields = getMissingAttributeFields(ctq, analysisType);
-                      if (missingFields.length > 0) {
-                        return (
-                          <div className="ml-3 text-sm text-amber-600 flex items-center">
-                            <span className="mr-1">⚠</span>
-                            Missing: {missingFields.join(", ")}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                )}
-                  */}
-
-                {/* Attribute CTQ Analysis Results */}
-                {/*
-                {ctqWithType.ctqType === "Attribute" && showStatistics[ctq] && (() => {
-                  const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
-                  const results = calculateAttributeResults(ctq, analysisType);
-                  
-                  if (!results) return null;
-
-                  return (
-                    <div className="mt-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Calculator className="h-5 w-5 text-blue-600" />
-                        <h3 className="text-lg font-semibold">Attribute CTQ Analysis Results</h3>
-                      </div>
-                      
-                      {analysisType === "NonConformity" && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">Non Conformity Analysis</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Non Conformity Rate:</span>
-                                <span className="font-medium">{results.nonConformityRate.toFixed(2)}%</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Conformity Rate:</span>
-                                <span className="font-medium">{results.conformityRate.toFixed(2)}%</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Defect Rate:</span>
-                                <span className="font-medium">{results.defectRate.toFixed(4)}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {capabilityData[ctq]?.showZ && (
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                              <h4 className="font-medium text-blue-800 mb-3">Z-Equivalent</h4>
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span>Z-Equivalent:</span>
-                                  <span className="font-medium">{results.zEquivalent.toFixed(2)}σ</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {analysisType === "DPMO" && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">DPMO Analysis</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>DPMO:</span>
-                                <span className="font-medium">{Math.round(results.dpmo).toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>DPU (Defects Per Unit):</span>
-                                <span className="font-medium">{results.dpu.toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>DPO (Defects Per Opportunity):</span>
-                                <span className="font-medium">{results.dpo.toFixed(6)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Total Opportunities:</span>
-                                <span className="font-medium">{results.totalOpportunities}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {capabilityData[ctq]?.showZ && (
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                              <h4 className="font-medium text-blue-800 mb-3">Z-Equivalent</h4>
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span>Z-Equivalent:</span>
-                                  <span className="font-medium">{results.zEquivalent.toFixed(2)}σ</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {analysisType === "OEE" && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-gray-800 mb-3">OEE Analysis</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Overall Equipment Effectiveness:</span>
-                                <span className="font-medium">{results.oeePercentage.toFixed(1)}%</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Availability:</span>
-                                <span className="font-medium">{results.availabilityPercentage.toFixed(1)}%</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Performance:</span>
-                                <span className="font-medium">{results.performancePercentage.toFixed(1)}%</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Quality:</span>
-                                <span className="font-medium">{results.qualityPercentage.toFixed(1)}%</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-green-50 p-4 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-3">OEE Classification</h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span>Classification:</span>
-                                <span className={`font-medium ${
-                                  results.classification === "World Class" ? "text-green-700" :
-                                  results.classification === "Good" ? "text-blue-700" :
-                                  results.classification === "Fair" ? "text-yellow-700" : "text-red-700"
-                                }`}>
-                                  {results.classification}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-                */}
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
                 {ctqWithType.ctqType === "Continuous" && (
@@ -3511,8 +3164,7 @@ if (stats && dataPoints[ctq] && dataPoints[ctq].length >= 25) {
 
                                 {/* Stdev horizontal line */}
                                 {/*<ReferenceLine 
-                                  y={maxFrequency * 0.241970725 / 0.3939} 
-                                  //yMax: max_count * 0.241970725 / 0.3939
+                                  y={maxFrequency * 0.241970725 / 0.3939} median
                                   stroke="green" 
                                   strokeWidth={2}
                                   strokeDasharray="5 5"
