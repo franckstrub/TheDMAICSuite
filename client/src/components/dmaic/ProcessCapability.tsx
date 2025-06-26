@@ -1107,15 +1107,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           break;
           
         case "OEE":
-          if (data.oeeScheduledTime && data.oeeAvailableTime && data.oeeGoodCount && 
+          if (data.oeeScheduledTime && data.oeeAvailableTime && 
               data.oeeNominalCapacity && data.oeePartsManufactured) {
             const oeeResults = calculateOEE(
               data.oeeScheduledTime,
               data.oeeAvailableTime,
-              data.oeeGoodCount,
               data.oeeNominalCapacity,
               data.oeePartsManufactured,
-              data.oeeBadCounts || 0
+              data.oeeBadParts || 0
             );
             
             updateCapabilityField(ctq, "calculatedOEE", oeeResults.oeePercentage);
@@ -1401,10 +1400,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         dpmoOpportunitiesPerUnit: data.dpmoOpportunitiesPerUnit,
         oeeScheduledTime: data.oeeScheduledTime,
         oeeAvailableTime: data.oeeAvailableTime,
-        oeeGoodCount: data.oeeGoodCount,
         oeeNominalCapacity: data.oeeNominalCapacity,
         oeePartsManufactured: data.oeePartsManufactured,
-        oeeBadCounts: data.oeeBadCounts
+        oeeBadParts: data.oeeBadParts
       };
       
       saveCapabilityMutation.mutate(transformedData);
@@ -2155,18 +2153,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                                 <span className="text-xs text-gray-500">hours</span>
                               </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-2">Good Count</label>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="1"
-                                  value={capabilityData[ctq]?.oeeGoodCount || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeeGoodCount", parseInt(e.target.value) || 0)}
-                                  placeholder="e.g., 80"
-                                />
-                                <span className="text-xs text-gray-500">parts/hour</span>
-                              </div>
+
                               <div>
                                 <label className="block text-sm font-medium mb-2">Nominal production capacity</label>
                                 <Input
@@ -2192,13 +2179,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span className="text-xs text-gray-500">PARTS</span>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Bad Counts</label>
+                                <label className="block text-sm font-medium mb-2">Bad Parts</label>
                                 <Input
                                   type="number"
                                   min="0"
                                   step="1"
-                                  value={capabilityData[ctq]?.oeeBadCounts || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeeBadCounts", parseInt(e.target.value) || 0)}
+                                  value={capabilityData[ctq]?.oeeBadParts || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeBadParts", parseInt(e.target.value) || 0)}
                                   placeholder="e.g., 3"
                                 />
                                 <span className="text-xs text-gray-500">DEFECTIVE PARTS</span>
@@ -2209,15 +2196,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             {(() => {
                               const data = capabilityData[ctq];
                               if (!data?.enableOee || !data.oeeScheduledTime || !data.oeeAvailableTime || 
-                                  !data.oeeGoodCount || !data.oeeNominalCapacity || !data.oeePartsManufactured) return null;
+                                  !data.oeeNominalCapacity || !data.oeePartsManufactured) return null;
                               
                               const oeeResults = calculateOEE(
                                 data.oeeScheduledTime,
                                 data.oeeAvailableTime,
-                                data.oeeGoodCount,
                                 data.oeeNominalCapacity,
                                 data.oeePartsManufactured,
-                                data.oeeBadCounts || 0
+                                data.oeeBadParts || 0
                               );
                               
                               // Calculate performance time and quality time from OEE results
