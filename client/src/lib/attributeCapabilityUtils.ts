@@ -87,8 +87,8 @@ export function calculateRolledThroughputYield(processSteps: Array<{
 } {
   if (processSteps.length === 0) {
     return {
-      rolledThroughputYield: 1,
-      rolledThroughputYieldPercentage: 100,
+      rty: 1,
+      rtyPercentage: 100,
       individualYields: [],
       totalDefects: 0,
       totalUnits: 0
@@ -101,7 +101,7 @@ export function calculateRolledThroughputYield(processSteps: Array<{
     rty *= yieldRate;
     return {
       stepName: step.stepName,
-      yield: yieldRate,
+      yieldRate: yieldRate,
       yieldPercentage: yieldRate * 100
     };
   });
@@ -110,8 +110,8 @@ export function calculateRolledThroughputYield(processSteps: Array<{
   const totalUnits = processSteps.reduce((sum, step) => sum + step.total, 0);
 
   return {
-    rolledThroughputYield: Math.max(0, Math.min(1, rty)),
-    rolledThroughputYieldPercentage: Math.max(0, Math.min(100, rty * 100)),
+    rty: Math.max(0, Math.min(1, rty)),
+    rtyPercentage: Math.max(0, Math.min(100, rty * 100)),
     individualYields,
     totalDefects,
     totalUnits
