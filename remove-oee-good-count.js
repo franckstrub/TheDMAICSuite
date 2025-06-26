@@ -6,8 +6,8 @@
  * Run with: node remove-oee-good-count.js
  */
 
-const { neonConfig, Pool } = require('@neondatabase/serverless');
-const ws = require('ws');
+import { neonConfig, Pool } from '@neondatabase/serverless';
+import ws from 'ws';
 
 neonConfig.webSocketConstructor = ws;
 
