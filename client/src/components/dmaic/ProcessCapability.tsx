@@ -2107,6 +2107,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             <div>
                               <label className="block text-sm font-medium mb-2">Process Steps</label>
                               <div className="space-y-3">
+                                {(capabilityData[ctq]?.rtyProcessSteps || []).length === 0 && (
+                                  <div className="text-center py-4">
+                                    <p className="text-gray-500 text-sm mb-3">No process steps added yet</p>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        updateCapabilityField(ctq, "rtyProcessSteps", [
+                                          { stepName: "", passed: 0, total: 0 }
+                                        ]);
+                                      }}
+                                    >
+                                      Add First Step
+                                    </Button>
+                                  </div>
+                                )}
                                 {(capabilityData[ctq]?.rtyProcessSteps || []).map((step, index) => (
                                   <div key={index} className="grid grid-cols-3 gap-2 items-center">
                                     <Input
