@@ -84,10 +84,9 @@ interface ProcessCapabilityData {
   // OEE Analysis fields - New input fields
   oeeScheduledTime?: number;
   oeeAvailableTime?: number;
-  oeeGoodCount?: number;
   oeeNominalCapacity?: number;
   oeePartsManufactured?: number;
-  oeeBadCounts?: number;
+  oeeBadParts?: number;
   // Pareto Analysis fields
   paretoDefectCategories?: Array<{category: string; count: number}>;
 }
@@ -1150,9 +1149,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
     }
 
-    if (['oeeScheduledTime', 'oeeAvailableTime', 'oeeGoodCount', 'oeeNominalCapacity', 'oeePartsManufactured', 'oeeBadCounts'].includes(field)) {
+    if (['oeeScheduledTime', 'oeeAvailableTime', 'oeeNominalCapacity', 'oeePartsManufactured', 'oeeBadParts'].includes(field)) {
       if (data.enableOee && data.oeeScheduledTime && data.oeeAvailableTime && 
-          data.oeeGoodCount && data.oeeNominalCapacity && data.oeePartsManufactured) {
+          data.oeeNominalCapacity && data.oeePartsManufactured) {
         calculateIndividualAnalysis(ctq, "OEE");
       }
     }
@@ -1233,7 +1232,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       case "OEE": {
         const scheduledTime = data.oeeScheduledTime || 0;
         const availableTime = data.oeeAvailableTime || 0;
-        const goodCount = data.oeeGoodCount || 0;
+        const goodCount = (data.oeePartsManufactured || 0) - (data.oeeBadParts || 0);
         const nominalCapacity = data.oeeNominalCapacity || 0;
         const partsManufactured = data.oeePartsManufactured || 0;
         
