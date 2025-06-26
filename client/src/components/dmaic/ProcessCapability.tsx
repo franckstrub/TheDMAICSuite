@@ -1727,6 +1727,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             Pareto of Defects
                           </Label>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`${ctq}-dpu`}
+                            checked={capabilityData[ctq]?.enableDpu || false}
+                            onCheckedChange={(checked) => updateCapabilityField(ctq, "enableDpu", checked)}
+                          />
+                          <Label htmlFor={`${ctq}-dpu`} className="text-sm font-medium text-gray-700">
+                            DPU (Defects per Unit)
+                          </Label>
+                        </div>
                       </div>
                     </div>
                   </>
@@ -2257,7 +2267,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                   {/* Pareto Analysis */}
                   {capabilityData[ctq]?.enablePareto && (
-                    <Card key="pareto" className="p-4 bg-indigo-50 border-indigo-200">
+                    <Card key="pareto" className="p-4 bg-indigo-50 border-indigo-200 w-[1044px]">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-lg flex items-center gap-2">
                           <BarChart3 className="h-5 w-5 text-indigo-600" />

@@ -1015,6 +1015,7 @@ export const processCapability = pgTable("process_capability", {
   enableRty: boolean("enable_rty").default(false),
   enableOee: boolean("enable_oee").default(false),
   enablePareto: boolean("enable_pareto").default(false),
+  enableDpu: boolean("enable_dpu").default(false),
 
   // Non-Conformity Analysis fields
   nonConformityUnits: integer("non_conformity_units"),
@@ -1033,6 +1034,9 @@ export const processCapability = pgTable("process_capability", {
   oeeBadParts: integer("oee_bad_parts"), // Number of bad/defective parts
   // Pareto Analysis fields
   paretoDefectCategories: json("pareto_defect_categories").$type<Array<{category: string; count: number}>>(),
+  // DPU Analysis fields
+  dpuDefects: integer("dpu_defects"),
+  dpuUnits: integer("dpu_units"),
 
   capabilityAssessment: text("capability_assessment"), // AI-generated capability assessment
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),

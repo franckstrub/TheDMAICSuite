@@ -184,6 +184,57 @@ export function calculateOEE(
  * @param defectCategories Array of defect categories with their counts
  * @returns Pareto analysis with cumulative percentages
  */
+/**
+ * Calculate DPU (Defects per Unit) analysis
+ * @param defects Number of defects
+ * @param units Number of units
+ * @returns DPU calculation results
+ */
+export function calculateDPU(
+  defects: number = 0,
+  units: number = 0
+): {
+  dpu: number;
+  classification: string;
+  interpretation: string;
+} {
+  if (units === 0) {
+    return {
+      dpu: 0,
+      classification: "No Data",
+      interpretation: "Cannot calculate DPU without units"
+    };
+  }
+
+  const dpu = defects / units;
+  
+  let classification = "Excellent";
+  let interpretation = "";
+
+  if (dpu === 0) {
+    classification = "Perfect";
+    interpretation = "Zero defects per unit - perfect quality";
+  } else if (dpu <= 0.01) {
+    classification = "Excellent";
+    interpretation = "Very low defect rate - excellent quality";
+  } else if (dpu <= 0.05) {
+    classification = "Good";
+    interpretation = "Low defect rate - good quality";
+  } else if (dpu <= 0.1) {
+    classification = "Fair";
+    interpretation = "Moderate defect rate - improvement needed";
+  } else {
+    classification = "Poor";
+    interpretation = "High defect rate - significant improvement required";
+  }
+
+  return {
+    dpu: Math.max(0, dpu),
+    classification,
+    interpretation
+  };
+}
+
 export function calculateParetoOfDefects(defectCategories: Array<{
   category: string;
   count: number;
