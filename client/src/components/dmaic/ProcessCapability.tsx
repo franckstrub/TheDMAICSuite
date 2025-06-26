@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatPercentage } from './ProcessCapabilityContinuous';
@@ -2253,6 +2253,211 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         </CardContent>
                       </Card>
                     </div>
+                  )}
+
+                  {/* Pareto Analysis */}
+                  {capabilityData[ctq]?.enablePareto && (
+                    <Card key="pareto" className="p-4 bg-indigo-50 border-indigo-200">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <BarChart3 className="h-5 w-5 text-indigo-600" />
+                          Pareto of Defects
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Data Entry Table */}
+                          <div>
+                            <label className="block text-sm font-medium mb-3">Defect Categories Data</label>
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div>Category of Defects</div>
+                                <div>Number of Defects</div>
+                                <div>Actions</div>
+                              </div>
+                              
+                              {/* Add First Category Button */}
+                              {(!capabilityData[ctq]?.paretoDefectCategories || capabilityData[ctq]?.paretoDefectCategories?.length === 0) && (
+                                <div className="text-center py-4">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      updateCapabilityField(ctq, "paretoDefectCategories", [
+                                        { category: "", count: 0 }
+                                      ]);
+                                    }}
+                                  >
+                                    Add First Category
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {/* Categories Rows */}
+                              {(capabilityData[ctq]?.paretoDefectCategories || []).map((item, index) => (
+                                <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                                  <Input
+                                    placeholder="e.g., Documentation Errors"
+                                    value={item.category}
+                                    onChange={(e) => {
+                                      const updatedCategories = [...(capabilityData[ctq]?.paretoDefectCategories || [])];
+                                      updatedCategories[index] = { ...item, category: e.target.value };
+                                      updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
+                                    }}
+                                  />
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    placeholder="e.g., 42"
+                                    value={item.count || ""}
+                                    onChange={(e) => {
+                                      const value = parseInt(e.target.value) || 0;
+                                      const updatedCategories = [...(capabilityData[ctq]?.paretoDefectCategories || [])];
+                                      updatedCategories[index] = { ...item, count: value };
+                                      updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      const updatedCategories = [...(capabilityData[ctq]?.paretoDefectCategories || [])];
+                                      updatedCategories.splice(index, 1);
+                                      updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              
+                              {/* Add Category Button */}
+                              {(capabilityData[ctq]?.paretoDefectCategories || []).length > 0 && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                      updateCapabilityField(ctq, "paretoDefectCategories", [
+                                        ...currentCategories,
+                                        { category: "", count: 0 }
+                                      ]);
+                                    }}
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Add Category
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Pareto Chart */}
+                          {(() => {
+                            const categories = capabilityData[ctq]?.paretoDefectCategories || [];
+                            const validCategories = categories.filter(item => item.category && item.count > 0);
+                            
+                            if (validCategories.length === 0) return null;
+
+                            const paretoResults = calculateParetoOfDefects(validCategories);
+                            
+                            return (
+                              <div className="space-y-4">
+                                <div className="h-80 border border-gray-200 rounded-md p-4">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart
+                                      data={paretoResults.sortedCategories}
+                                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                    >
+                                      <CartesianGrid strokeDasharray="3 3" />
+                                      <XAxis 
+                                        dataKey="category" 
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={80}
+                                        interval={0}
+                                      />
+                                      <YAxis yAxisId="left" orientation="left" />
+                                      <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                                      <Tooltip />
+                                      <Legend />
+                                      <Bar 
+                                        yAxisId="left" 
+                                        dataKey="count" 
+                                        fill="#8884d8" 
+                                        name="Count" 
+                                      />
+                                      <Line 
+                                        yAxisId="right" 
+                                        type="monotone" 
+                                        dataKey="cumulativePercentage" 
+                                        stroke="#ff7300" 
+                                        strokeWidth={3}
+                                        name="Cumulative %" 
+                                      />
+                                    </ComposedChart>
+                                  </ResponsiveContainer>
+                                </div>
+
+                                {/* Results Table */}
+                                <div className="overflow-x-auto">
+                                  <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                      <tr>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Category
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Count
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Percentage
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                          Cumulative %
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                      {paretoResults.chartData.map((item, index) => (
+                                        <tr key={index}>
+                                          <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                                            {item.category}
+                                          </td>
+                                          <td className="px-4 py-2 text-sm text-gray-500">
+                                            {item.count}
+                                          </td>
+                                          <td className="px-4 py-2 text-sm text-gray-500">
+                                            {item.percentage}%
+                                          </td>
+                                          <td className="px-4 py-2 text-sm text-gray-500">
+                                            {item.cumulative}%
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+
+                                {/* Key Insights */}
+                                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                  <h4 className="font-medium text-indigo-900 mb-2">Key Insights</h4>
+                                  <ul className="text-sm text-indigo-800 space-y-1">
+                                    <li>• Total Defects: {paretoResults.totalDefects}</li>
+                                    <li>• Top Category: {paretoResults.chartData[0]?.category} ({paretoResults.chartData[0]?.percentage}%)</li>
+                                    <li>• 80% Rule: First {paretoResults.chartData.findIndex(item => item.cumulative >= 80) + 1} categories account for 80% of defects</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
 
