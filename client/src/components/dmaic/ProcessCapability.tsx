@@ -2276,26 +2276,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <div>Actions</div>
                               </div>
                               
-                              {/* Add First Category Button */}
-                              {(!capabilityData[ctq]?.paretoDefectCategories || capabilityData[ctq]?.paretoDefectCategories?.length === 0) && (
-                                <div className="text-center py-4">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      updateCapabilityField(ctq, "paretoDefectCategories", [
-                                        { category: "", count: 0 }
-                                      ]);
-                                    }}
-                                  >
-                                    Add First Category
-                                  </Button>
-                                </div>
-                              )}
-                              
-                              {/* Categories Rows */}
-                              {(capabilityData[ctq]?.paretoDefectCategories || []).map((item, index) => (
+                              {/* Categories Rows - Always show at least one empty row */}
+                              {(capabilityData[ctq]?.paretoDefectCategories?.length > 0 ? capabilityData[ctq].paretoDefectCategories : [{ category: "", count: 0 }]).map((item, index) => (
                                 <div key={index} className="grid grid-cols-3 gap-2 items-center">
                                   <Input
                                     placeholder="e.g., Documentation Errors"
