@@ -2966,11 +2966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizationId: userRecord.organizationId,
       };
 
-      console.log('DPU Debug - Request body enableDpu:', enableDpu);
-      console.log('DPU Debug - Processed data enableDpu:', processedData.enableDpu);
-      
       const payload = insertProcessCapabilitySchema.parse(processedData);
-      console.log('DPU Debug - Parsed payload enableDpu:', payload.enableDpu);
 
       // Check if a process capability record already exists for this CTQ and project
       const existingCapability = await db
