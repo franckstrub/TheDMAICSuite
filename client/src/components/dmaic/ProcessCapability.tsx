@@ -2482,16 +2482,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               <Input
                                 type="number"
                                 min="0"
-                                step="1"
-                                value={capabilityData[ctq]?.dpuDefects || ""}
+                                value={capabilityData[ctq]?.dpuDefects !== undefined ? capabilityData[ctq]?.dpuDefects : ""}
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                  if (value === "" || value === "0" || (!isNaN(Number(value)) && Number(value) >= 0)) {
-                                    updateCapabilityField(ctq, "dpuDefects", value === "" ? undefined : Number(value));
+                                  if (value === "" || value === null) {
+                                    updateCapabilityField(ctq, "dpuDefects", undefined);
+                                  } else {
+                                    updateCapabilityField(ctq, "dpuDefects", parseInt(value));
                                   }
                                 }}
-                                placeholder="Enter total number of defects"
-                                className="w-full"
+                                placeholder="e.g., 0"
                               />
                             </div>
                             <div>
