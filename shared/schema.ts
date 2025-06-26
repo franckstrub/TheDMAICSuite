@@ -1031,10 +1031,7 @@ export const processCapability = pgTable("process_capability", {
   oeeGoodCount: integer("oee_good_count"), // Good count parts/hour
   oeeNominalCapacity: integer("oee_nominal_capacity"), // Nominal production capacity parts/hour
   oeePartsManufactured: integer("oee_parts_manufactured"), // Number of parts manufactured
-  // OEE Analysis fields - Legacy (keep for backward compatibility)
-  oeeAvailability: real("oee_availability"),
-  oeePerformance: real("oee_performance"),
-  oeeQuality: real("oee_quality"),
+  oeeBadCounts: integer("oee_bad_counts"), // Number of bad/defective parts
   // Pareto Analysis fields
   paretoDefectCategories: json("pareto_defect_categories").$type<Array<{category: string; count: number}>>(),
 

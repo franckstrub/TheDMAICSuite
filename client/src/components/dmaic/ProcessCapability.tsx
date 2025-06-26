@@ -87,10 +87,7 @@ interface ProcessCapabilityData {
   oeeGoodCount?: number;
   oeeNominalCapacity?: number;
   oeePartsManufactured?: number;
-  // OEE Analysis fields - Legacy (keep for backward compatibility)
-  oeeAvailability?: number;
-  oeePerformance?: number;
-  oeeQuality?: number;
+  oeeBadCounts?: number;
   // Pareto Analysis fields
   paretoDefectCategories?: Array<{category: string; count: number}>;
 }
@@ -1110,8 +1107,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           break;
           
         case "OEE":
-          if (data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
-            const oee = (data.oeeAvailability / 100) * (data.oeePerformance / 100) * (data.oeeQuality / 100) * 100;
+          if (data.oeeScheduledTime && data.oeeAvailableTime && data.oeeGoodCount && 
+              data.oeeNominalCapacity && data.oeePartsManufactured) {
+            // Calculate OEE percentages
+            const availability = (data.oeeAvailableTime / data.oeeScheduledTime) * 100;
+            const performance = (data.oeeGoodCount / (data.oeeNominalCapacity * data.oeeAvailableTime)) * 100;
+            const quality = data.oeeBadCounts ? 
+              ((data.oeePartsManufactured - data.oeeBadCounts) / data.oeePartsManufactured) * 100 : 
+              100; // If no bad counts specified, assume 100% quality
+            const oee = (availability / 100) * (performance / 100) * (quality / 100) * 100;
+            
             updateCapabilityField(ctq, "calculatedOEE", oee);
           }
           break;
@@ -2180,6 +2185,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   placeholder="e.g., 20"
                                 />
                                 <span className="text-xs text-gray-500">PARTS</span>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Bad Counts</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={capabilityData[ctq]?.oeeBadCounts || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeBadCounts", parseInt(e.target.value) || 0)}
+                                  placeholder="e.g., 3"
+                                />
+                                <span className="text-xs text-gray-500">DEFECTIVE PARTS</span>
                               </div>
                             </div>
                             
