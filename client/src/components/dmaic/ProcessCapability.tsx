@@ -1110,15 +1110,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         case "OEE":
           if (data.oeeScheduledTime && data.oeeAvailableTime && data.oeeGoodCount && 
               data.oeeNominalCapacity && data.oeePartsManufactured) {
-            // Calculate OEE percentages
-            const availability = (data.oeeAvailableTime / data.oeeScheduledTime) * 100;
-            const performance = (data.oeeGoodCount / (data.oeeNominalCapacity * data.oeeAvailableTime)) * 100;
-            const quality = data.oeeBadCounts ? 
-              ((data.oeePartsManufactured - data.oeeBadCounts) / data.oeePartsManufactured) * 100 : 
-              100; // If no bad counts specified, assume 100% quality
-            const oee = (availability / 100) * (performance / 100) * (quality / 100) * 100;
+            const oeeResults = calculateOEE(
+              data.oeeScheduledTime,
+              data.oeeAvailableTime,
+              data.oeeGoodCount,
+              data.oeeNominalCapacity,
+              data.oeePartsManufactured,
+              data.oeeBadCounts || 0
+            );
             
-            updateCapabilityField(ctq, "calculatedOEE", oee);
+            updateCapabilityField(ctq, "calculatedOEE", oeeResults.oeePercentage);
           }
           break;
       }
@@ -2207,17 +2208,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             
                             {/* Results Display */}
                             {(() => {
-                              const oeeResults = calculateIndividualAnalysis(capabilityData[ctq], "OEE");
-                              if (!oeeResults || !capabilityData[ctq]?.enableOee) return null;
+                              const data = capabilityData[ctq];
+                              if (!data?.enableOee || !data.oeeScheduledTime || !data.oeeAvailableTime || 
+                                  !data.oeeGoodCount || !data.oeeNominalCapacity || !data.oeePartsManufactured) return null;
                               
-                              const scheduledTime = capabilityData[ctq]?.oeeScheduledTime || 0;
-                              const availableTime = capabilityData[ctq]?.oeeAvailableTime || 0;
-                              const goodCount = capabilityData[ctq]?.oeeGoodCount || 0;
-                              const nominalCapacity = capabilityData[ctq]?.oeeNominalCapacity || 0;
+                              const oeeResults = calculateOEE(
+                                data.oeeScheduledTime,
+                                data.oeeAvailableTime,
+                                data.oeeGoodCount,
+                                data.oeeNominalCapacity,
+                                data.oeePartsManufactured,
+                                data.oeeBadCounts || 0
+                              );
                               
-                              // Calculate performance time and quality time
-                              const performanceTime = nominalCapacity > 0 ? (goodCount / nominalCapacity) * scheduledTime : 0;
-                              const qualityTime = performanceTime; // Quality time equals performance time in this context
+                              // Calculate performance time and quality time from OEE results
+                              const performanceTime = oeeResults.performanceTime;
+                              const qualityTime = oeeResults.qualityTime;
                               
                               return (
                                 <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
@@ -2238,19 +2244,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     <div className="space-y-2">
                                       <div className="flex justify-between">
                                         <span className="font-medium">AVAILABILITY %</span>
-                                        <span className="text-purple-700">{oeeResults.availability.toFixed(2)}</span>
+                                        <span className="text-purple-700">{oeeResults.availabilityPercentage.toFixed(2)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="font-medium">PERFORMANCE %</span>
-                                        <span className="text-purple-700">{oeeResults.performance.toFixed(2)}</span>
+                                        <span className="text-purple-700">{oeeResults.performancePercentage.toFixed(2)}</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="font-medium">QUALITY %</span>
-                                        <span className="text-purple-700">{oeeResults.quality.toFixed(2)}</span>
+                                        <span className="text-purple-700">{oeeResults.qualityPercentage.toFixed(2)}</span>
                                       </div>
                                       <div className="flex justify-between border-t pt-2">
                                         <span className="font-bold">OEE %</span>
-                                        <span className="text-purple-700 font-bold">{oeeResults.oee.toFixed(2)}</span>
+                                        <span className="text-purple-700 font-bold">{oeeResults.oeePercentage.toFixed(2)}</span>
                                       </div>
                                     </div>
                                   </div>
