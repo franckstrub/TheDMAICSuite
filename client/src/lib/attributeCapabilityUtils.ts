@@ -131,10 +131,9 @@ export function calculateRolledThroughputYield(processSteps: Array<{
 export function calculateOEE(
   scheduledTime: number,
   availableTime: number,
-  goodCount: number,
   nominalCapacity: number,
   partsManufactured: number,
-  badCounts: number = 0
+  badParts: number = 0
 ): {
   oee: number;
   oeePercentage: number;
