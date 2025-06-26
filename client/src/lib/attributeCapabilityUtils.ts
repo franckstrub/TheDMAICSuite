@@ -151,7 +151,7 @@ export function calculateOEE(
   
   const availability = scheduledTime > 0 ? availableTime / scheduledTime : 0;
   const performance = (nominalCapacity > 0 && availableTime > 0) ? 
-    goodCount / (nominalCapacity * availableTime) : 0;
+    partsManufactured / (nominalCapacity * availableTime) : 0;
   const quality = partsManufactured > 0 ? 
     goodCount / partsManufactured : 1;
   
@@ -240,28 +240,4 @@ export function calculateParetoOfDefects(defectCategories: Array<{
     vitalFew,
     trivialMany
   };
-}
-
-/**
- * Calculate Z-score equivalent from defect rate for attribute data
- * @param defectRate Defect rate (0-1)
- * @returns Z-score equivalent
- */
-export function calculateZEquivalentFromDefectRate(defectRate: number): number {
-  if (defectRate <= 0) return 6; // Perfect quality
-  if (defectRate >= 1) return 0; // 100% defects
-  
-  // Convert defect rate to Z-score using inverse normal distribution
-  // This is an approximation for attribute data
-  const processYield = 1 - defectRate;
-  
-  // Simple approximation for Z-score from yield
-  if (processYield >= 0.9999966) return 6; // 6 sigma
-  if (processYield >= 0.999968) return 5; // 5 sigma
-  if (processYield >= 0.9987) return 4; // 4 sigma
-  if (processYield >= 0.9772) return 3; // 3 sigma
-  if (processYield >= 0.9545) return 2; // 2 sigma
-  if (processYield >= 0.8413) return 1; // 1 sigma
-  
-  return 0; // Below 1 sigma
 }
