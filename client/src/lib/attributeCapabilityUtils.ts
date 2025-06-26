@@ -146,11 +146,14 @@ export function calculateOEE(
   classification: string;
 } {
   // Calculate OEE components from production inputs
+  // Good count is automatically calculated from parts manufactured minus bad parts
+  const goodCount = Math.max(0, partsManufactured - badParts);
+  
   const availability = scheduledTime > 0 ? availableTime / scheduledTime : 0;
   const performance = (nominalCapacity > 0 && availableTime > 0) ? 
     goodCount / (nominalCapacity * availableTime) : 0;
   const quality = partsManufactured > 0 ? 
-    (partsManufactured - badCounts) / partsManufactured : 1;
+    goodCount / partsManufactured : 1;
   
   const oee = availability * performance * quality;
   
