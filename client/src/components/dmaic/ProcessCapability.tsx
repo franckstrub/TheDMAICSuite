@@ -1257,6 +1257,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         enableRty: Boolean(data.enableRty),
         enableOee: Boolean(data.enableOee),
         enablePareto: Boolean(data.enablePareto),
+        enableDpu: Boolean(data.enableDpu),
         nonConformityUnits: data.nonConformityUnits,
         totalUnits: data.totalUnits,
         dpmoDefects: data.dpmoDefects,
@@ -1268,7 +1269,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         oeePartsManufactured: data.oeePartsManufactured,
         oeeBadParts: data.oeeBadParts,
         rtyProcessSteps: data.rtyProcessSteps || [],
-        paretoDefectCategories: data.paretoDefectCategories || []
+        paretoDefectCategories: data.paretoDefectCategories || [],
+        dpuDefects: data.dpuDefects,
+        dpuUnits: data.dpuUnits
       };
       
       saveCapabilityMutation.mutate(transformedData);
