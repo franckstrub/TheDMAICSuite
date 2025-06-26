@@ -71,8 +71,11 @@ interface ProcessCapabilityData {
   
   // Calculated results
   calculatedNonConformityRate?: number;
-  calculatedZValue?: number;
+  calculatedZValue_LT?: number;
+  calculatedZValue_ST?: number;
   calculatedDPMO?: number;
+  calculatedDPMO_Z_LT?: number;
+  calculatedDPMO_Z_ST?: number;
   calculatedOEE?: number;
   dpmoUnits?: number;
   dpmoOpportunitiesPerUnit?: number;
@@ -251,13 +254,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Mutation to save data points (JSON array)
   const saveDataPointMutation = useMutation({
     mutationFn: async ({ processCapabilityId, dataPoints }: { processCapabilityId: number, dataPoints: number[] }) => {
-      console.log("Mutation function called with:", { processCapabilityId, dataPoints });
+      //console.log("Mutation function called with:", { processCapabilityId, dataPoints });
       const response = await apiRequest('POST', `/api/process-capability/${processCapabilityId}/data`, { dataPoints });
-      console.log("API response:", response);
+      //console.log("API response:", response);
       return response;
     },
     onSuccess: (data) => {
-      console.log("Mutation succeeded:", data);
+      {/*console.log("Mutation succeeded:", data);*/}
       // Don't show toast here as it's handled in saveAllDataPoints
     },
     onError: (error) => {
@@ -345,7 +348,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         processCapabilityId, // Now TypeScript knows this is definitely a number
         dataPoints: numericValues
       });
-      console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
+      //console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
       
       // Clear the timer from state to hide the auto-saving indicator
       setAutoSaveTimers(prev => {
@@ -499,7 +502,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       return;
     }
     
-    console.log("Saving data points:", { processCapabilityId, numericValues });
+    //console.log("Saving data points:", { processCapabilityId, numericValues });
     
     try {
       // Save all data points as JSON array to database
@@ -652,9 +655,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
     
     try {
-      console.log(`Loading data points for CTQ: ${ctq}, ID: ${processCapabilityId}`);
+      //console.log(`Loading data points for CTQ: ${ctq}, ID: ${processCapabilityId}`);
       const points = await loadDataPoints(processCapabilityId);
-      console.log(`Loaded ${points.length} data points for CTQ: ${ctq}`, points);
+      //console.log(`Loaded ${points.length} data points for CTQ: ${ctq}`, points);
       setDataPoints(prev => ({
         ...prev,
         [ctq]: points
@@ -670,7 +673,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     ctqs.forEach(({ ctq }) => {
       if (capabilityData[ctq]?.id && (!dataPoints[ctq] || dataPoints[ctq].length === 0)) {
         // Only load data points if we don't already have local data points
-        console.log(`Loading data points for CTQ: ${ctq}, ID: ${capabilityData[ctq]?.id}`);
+        //console.log(`Loading data points for CTQ: ${ctq}, ID: ${capabilityData[ctq]?.id}`);
         loadDataPointsForCtq(ctq);
       }
     });
@@ -745,11 +748,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Auto-calculate analysis when capability data is loaded and state is updated
   useEffect(() => {
     if (Object.keys(capabilityData).length > 0) {
-      console.log('Running initialization auto-calculation after state update...');
+      //console.log('Running initialization auto-calculation after state update...');
       setTimeout(() => {
         Object.keys(capabilityData).forEach(ctq => {
           const data = capabilityData[ctq];
-          console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
+          {/*
+            console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
             enableNonConformity: data.enableNonConformity,
             nonConformityUnits: data.nonConformityUnits,
             totalUnits: data.totalUnits,
@@ -762,22 +766,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             oeePerformance: data.oeePerformance,
             oeeQuality: data.oeeQuality
           });
+          */}
 
           // Auto-calculate Non-Conformity if data is available
           if (data.enableNonConformity && data.nonConformityUnits !== undefined && data.totalUnits && data.totalUnits > 0) {
-            console.log(`Auto-calculating Non-Conformity for loaded CTQ: ${ctq}`);
+            //console.log(`Auto-calculating Non-Conformity for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "NonConformity");
           }
           
           // Auto-calculate DPMO if data is available
           if (data.enableDpmo && data.dpmoDefects !== undefined && data.dpmoUnits && data.dpmoOpportunitiesPerUnit && data.dpmoUnits > 0) {
-            console.log(`Auto-calculating DPMO for loaded CTQ: ${ctq}`);
+            //console.log(`Auto-calculating DPMO for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "DPMO");
           }
           
           // Auto-calculate OEE if data is available
           if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
-            console.log(`Auto-calculating OEE for loaded CTQ: ${ctq}`);
+            //console.log(`Auto-calculating OEE for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "OEE");
           }
         });
@@ -797,7 +802,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       
       // Auto-calculate if the field affects calculations and has meaningful values
       if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeAvailability', 'oeePerformance', 'oeeQuality'].includes(field)) {
-        console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
+        //console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
         setTimeout(() => autoCalculateOnValueChange(ctq, field), 100);
       }
       
@@ -960,16 +965,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     // Calculate Z equivalent from defect rate using inverse normal CDF
     const defectRate = data.nonConformityUnits / data.totalUnits;
     let zValue = null;
+    let zValue_LT=null;
+    let zValue_ST=null;
     
     if (defectRate > 0 && defectRate < 1) {
       try {
         // Use inverseNormCDF(1 - defectRate) to get Z equivalent
         // This gives us the Z value corresponding to the conformity rate
         const conformityRate = 1 - defectRate;
-        console.log('Calculating Z value for conformity rate:', conformityRate);
+        //console.log('Calculating Z value for conformity rate:', conformityRate);
         if (typeof inverseNormCDF === 'function') {
           zValue = inverseNormCDF(conformityRate);
-          console.log('Raw Z value:', zValue);
+          //console.log('Raw Z value:', zValue);
         } else {
           console.error('inverseNormCDF function not available');
           zValue = null;
@@ -978,20 +985,87 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         // Adjust for short term vs long term
         if (data.dataSetTerm === "Short Term") {
           // Z short term is typically 1.5 sigma higher than long term
-          zValue = zValue + (data.zShift || 1.5);
+          zValue_ST = zValue;
+          zValue_LT = zValue_ST - (data.zShift || 1.5);
+        }
+        else {
+          // Z long term term is typically 1.5 sigma lower than short term
+          zValue_LT = zValue;
+          zValue_ST = zValue_LT + (data.zShift || 1.5);
         }
         
         // Ensure positive Z value
-        zValue = Math.abs(zValue);
+        //zValue = Math.abs(zValue);
       } catch (error) {
         console.error('Error calculating Z value:', error);
         zValue = null;
+        zValue_LT = null;
+        zValue_ST = null;
       }
     }
 
     return {
       nonConformityRate,
-      zValue
+      zValue_LT,
+      zValue_ST
+    };
+  };
+
+   // Function to calculate Non-Conformity analysis results
+  const calculateDPMOResults = (ctq: string) => {
+    const data = capabilityData[ctq];
+    if (!data || data.dpmoDefects === undefined || !data.dpmoUnits || data.dpmoUnits <= 0 || !data.dpmoOpportunitiesPerUnit || data.dpmoOpportunitiesPerUnit<=0) {
+      return null;
+    }
+    //const nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
+    
+    // Calculate Z equivalent from defect rate using inverse normal CDF
+    const dpo = data.dpmoDefects / (data.dpmoUnits * data.dpmoOpportunitiesPerUnit);
+    //const dpmo = 1000000 * dpo);
+    
+    let zValue = null;
+    let zDPMOValue_LT=null;
+    let zDPMOValue_ST=null;
+    
+    if (dpo > 0 && dpo < 1) {
+      try {
+        // Use inverseNormCDF(1 - defectRate) to get Z equivalent
+        // This gives us the Z value corresponding to the conformity rate
+        //const conformityRate = 1 - defectRate;
+        //console.log('Calculating Z value for conformity rate:', conformityRate);
+        if (typeof inverseNormCDF === 'function') {
+          zValue = inverseNormCDF(1 - dpo);
+          //console.log('Raw Z value:', zValue);
+        } else {
+          console.error('inverseNormCDF function not available');
+          zValue = null;
+        }
+        
+        // Adjust for short term vs long term
+        if (data.dataSetTerm === "Short Term") {
+          // Z short term is typically 1.5 sigma higher than long term
+          zDPMOValue_ST = zValue;
+          zDPMOValue_LT = zDPMOValue_ST - (data.zShift || 1.5);
+        }
+        else {
+          // Z long term term is typically 1.5 sigma lower than short term
+          zDPMOValue_LT = zValue;
+          zDPMOValue_ST = zDPMOValue_LT + (data.zShift || 1.5);
+        }
+        
+        // Ensure positive Z value
+        //zValue = Math.abs(zValue);
+      } catch (error) {
+        console.error('Error calculating Z value:', error);
+        zValue = null;
+        zDPMOValue_LT = null;
+        zDPMOValue_ST = null;
+      }
+    }
+
+    return {
+      zDPMOValue_LT,
+      zDPMOValue_ST
     };
   };
 
@@ -1006,10 +1080,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           const results = calculateNonConformityResults(ctq);
           if (results) {
             // Update the capability data with calculated results
-            console.log('Updating capability data with results:', results);
+            //console.log('Updating capability data with results:', results);
             updateCapabilityField(ctq, "calculatedNonConformityRate", results.nonConformityRate);
-            updateCapabilityField(ctq, "calculatedZValue", results.zValue);
-            console.log('Updated Z value in state:', results.zValue);
+            updateCapabilityField(ctq, "calculatedZValue_LT", results.zValue_LT);
+            updateCapabilityField(ctq, "calculatedZValue_ST", results.zValue_ST);
+            //console.log('Updated Z value in state:', results.zValue);
           }
           break;
           
@@ -1018,6 +1093,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             const totalOpportunities = data.dpmoUnits * data.dpmoOpportunitiesPerUnit;
             const dpmo = (data.dpmoDefects / totalOpportunities) * 1000000;
             updateCapabilityField(ctq, "calculatedDPMO", dpmo);
+          }
+          const results2 = calculateDPMOResults(ctq);
+          if (results2) {
+            // Update the capability data with calculated results
+            //console.log('Updating capability data with results:', results);
+            updateCapabilityField(ctq, "calculatedDPMO_Z_LT", results2.zDPMOValue_LT);
+            updateCapabilityField(ctq, "calculatedDPMO_Z_ST", results2.zDPMOValue_ST);
           }
           break;
           
@@ -1855,23 +1937,40 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     <span className="text-blue-700">
                                       {capabilityData[ctq].calculatedNonConformityRate.toFixed(2)}%
                                     </span>
+                                    <span className="ml-4 font-medium">Non-Conform PPM: </span>
+                                    <span className="text-blue-700">
+                                      {(capabilityData[ctq].calculatedNonConformityRate*10000).toFixed(0)}
+                                    </span>
                                   </div>
                                   {capabilityData[ctq]?.showZ && (
+                                  <div>
                                     <div>
                                       <span className="font-medium">
-                                        Z {capabilityData[ctq]?.dataSetTerm === "Long Term" ? "Long Term" : "Short Term"}: 
+                                        Z Long Term: 
                                       </span>
                                       <span className="text-blue-700 ml-1">
-                                        {capabilityData[ctq]?.calculatedZValue !== undefined && capabilityData[ctq]?.calculatedZValue !== null
-                                          ? capabilityData[ctq].calculatedZValue.toFixed(2)
+                                        {capabilityData[ctq]?.calculatedZValue_LT !== undefined && capabilityData[ctq]?.calculatedZValue_LT !== null
+                                          ? capabilityData[ctq].calculatedZValue_LT.toFixed(2)
                                           : 'Calculating...'}
                                       </span>
                                     </div>
+                                    <div>
+                                      <span className="font-medium">
+                                        Z Short Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedZValue_ST !== undefined && capabilityData[ctq]?.calculatedZValue_ST !== null
+                                          ? capabilityData[ctq].calculatedZValue_ST.toFixed(2)
+                                          : 'Calculating...'}
+                                      </span>
+                                    </div>
+                                  </div>
                                   )}
                                 </div>
                               </div>
                             )}
                             
+                            {/*
                             <div className="mt-4 flex justify-end">
                               <Button 
                                 onClick={() => calculateIndividualAnalysis(ctq, "NonConformity")}
@@ -1881,6 +1980,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 Calculate Non-Conformity
                               </Button>
                             </div>
+                            */}
                           </CardContent>
                         </Card>
                       )}
@@ -1924,7 +2024,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Opportunities Per Unit</label>
+                                <label className="block text-sm font-medium mb-2">Opportunities of Defect Per Unit</label>
                                 <Input
                                   type="number"
                                   min="1"
@@ -1946,10 +2046,35 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       {Math.round(capabilityData[ctq].calculatedDPMO).toLocaleString()}
                                     </span>
                                   </div>
+                                  {capabilityData[ctq]?.showZ && (
+                                  <div>
+                                    <div>
+                                      <span className="font-medium">
+                                        Z Long Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_Z_LT !== undefined && capabilityData[ctq]?.calculatedDPMO_Z_LT !== null
+                                          ? capabilityData[ctq].calculatedDPMO_Z_LT.toFixed(2)
+                                          : 'Calculating...'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">
+                                        Z Short Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_Z_ST !== undefined && capabilityData[ctq]?.calculatedDPMO_Z_ST !== null
+                                          ? capabilityData[ctq].calculatedDPMO_Z_ST.toFixed(2)
+                                          : 'Calculating...'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  )}
                                 </div>
                               </div>
                             )}
                             
+                            {/*
                             <div className="mt-4 flex justify-end">
                               <Button 
                                 onClick={() => calculateIndividualAnalysis(ctq, "DPMO")}
@@ -1959,6 +2084,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 Calculate DPMO
                               </Button>
                             </div>
+                            */}
                           </CardContent>
                         </Card>
                       )}
@@ -2026,7 +2152,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 </div>
                               </div>
                             )}
-                            
+                            {/*}
                             <div className="mt-4 flex justify-end">
                               <Button 
                                 onClick={() => calculateIndividualAnalysis(ctq, "OEE")}
@@ -2036,6 +2162,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 Calculate OEE
                               </Button>
                             </div>
+                            */}
                           </CardContent>
                         </Card>
                       )}
@@ -2044,6 +2171,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 </div>
 
                 {/* Calculate Statistics Button for Attribute CTQs */}
+                {/*
                 {ctqWithType.ctqType === "Attribute" && (
                   <div className="flex justify-between items-center mt-4">
                     <Button
@@ -2070,8 +2198,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     })()}
                   </div>
                 )}
+                  */}
 
                 {/* Attribute CTQ Analysis Results */}
+                {/*
                 {ctqWithType.ctqType === "Attribute" && showStatistics[ctq] && (() => {
                   const analysisType = capabilityData[ctq]?.attributeAnalysisType || "NonConformity";
                   const results = calculateAttributeResults(ctq, analysisType);
@@ -2201,6 +2331,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     </div>
                   );
                 })()}
+                */}
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
                 {ctqWithType.ctqType === "Continuous" && (
