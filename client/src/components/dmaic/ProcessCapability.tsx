@@ -2082,6 +2082,145 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       )}
                     </div>
                   )}
+
+                  {/* RTY (Rolled Throughput Yield) Card */}
+                  {ctqWithType.ctqType === "Attribute" && capabilityData[ctq]?.enableRty && (
+                    <div className="mt-4">
+                      <Card className="bg-green-50 border-green-200">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-green-800 text-sm flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4" />
+                            Rolled Throughput Yield (RTY)
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {/* Process Steps Input */}
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Process Steps</label>
+                              <div className="space-y-3">
+                                {(capabilityData[ctq]?.rtyProcessSteps || []).map((step, index) => (
+                                  <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                                    <Input
+                                      placeholder="Step name"
+                                      value={step.stepName}
+                                      onChange={(e) => {
+                                        const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
+                                        updatedSteps[index] = { ...step, stepName: e.target.value };
+                                        updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                      }}
+                                    />
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      placeholder="Passed units"
+                                      value={step.passed || ""}
+                                      onChange={(e) => {
+                                        const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
+                                        updatedSteps[index] = { ...step, passed: parseInt(e.target.value) || 0 };
+                                        updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                      }}
+                                    />
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      placeholder="Total units"
+                                      value={step.total || ""}
+                                      onChange={(e) => {
+                                        const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
+                                        updatedSteps[index] = { ...step, total: parseInt(e.target.value) || 0 };
+                                        updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                      updateCapabilityField(ctq, "rtyProcessSteps", [
+                                        ...currentSteps,
+                                        { stepName: "", passed: 0, total: 0 }
+                                      ]);
+                                    }}
+                                  >
+                                    Add Step
+                                  </Button>
+                                  {(capabilityData[ctq]?.rtyProcessSteps || []).length > 0 && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                        updateCapabilityField(ctq, "rtyProcessSteps", currentSteps.slice(0, -1));
+                                      }}
+                                    >
+                                      Remove Step
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* RTY Results Display */}
+                            {(() => {
+                              const processSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                              if (processSteps.length === 0 || !processSteps.some(step => step.total > 0)) return null;
+                              
+                              const rtyResults = calculateRolledThroughputYield(processSteps);
+                              
+                              return (
+                                <div className="mt-4 p-3 bg-green-100 rounded-lg border">
+                                  <h4 className="font-semibold text-green-800 mb-3">RTY Analysis Results</h4>
+                                  
+                                  {/* Individual Step Yields */}
+                                  <div className="mb-4">
+                                    <h5 className="font-medium text-green-700 mb-2">Individual Step Yields</h5>
+                                    <div className="space-y-1 text-sm">
+                                      {rtyResults.individualYields.map((stepYield, index) => (
+                                        <div key={index} className="flex justify-between">
+                                          <span>{stepYield.stepName || `Step ${index + 1}`}:</span>
+                                          <span className="text-green-700 font-medium">{stepYield.yieldPercentage.toFixed(2)}%</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Overall RTY */}
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">Total Units:</span>
+                                        <span className="text-green-700">{rtyResults.totalUnits}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">Total Defects:</span>
+                                        <span className="text-green-700">{rtyResults.totalDefects}</span>
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">RTY (Decimal):</span>
+                                        <span className="text-green-700">{rtyResults.rty.toFixed(4)}</span>
+                                      </div>
+                                      <div className="flex justify-between border-t pt-2">
+                                        <span className="font-bold">RTY Percentage:</span>
+                                        <span className="text-green-700 font-bold">{rtyResults.rtyPercentage.toFixed(2)}%</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
                 </div>
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
