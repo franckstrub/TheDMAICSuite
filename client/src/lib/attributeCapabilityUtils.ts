@@ -119,13 +119,23 @@ export function calculateRolledThroughputYield(processSteps: Array<{
 }
 
 /**
- * Calculate Overall Equipment Effectiveness (OEE)
- * @param availability Availability rate (0-1)
- * @param performance Performance rate (0-1)  
- * @param quality Quality rate (0-1)
+ * Calculate Overall Equipment Effectiveness (OEE) from production inputs
+ * @param scheduledTime Total scheduled production time in hours
+ * @param availableTime Available time for production in hours
+ * @param goodCount Good count (parts per hour)
+ * @param nominalCapacity Nominal production capacity (parts per hour)
+ * @param partsManufactured Total number of parts manufactured
+ * @param badCounts Number of bad/defective parts (default: 0)
  * @returns OEE and related metrics
  */
-export function calculateOEE(availability: number, performance: number, quality: number): {
+export function calculateOEE(
+  scheduledTime: number,
+  availableTime: number,
+  goodCount: number,
+  nominalCapacity: number,
+  partsManufactured: number,
+  badCounts: number = 0
+): {
   oee: number;
   oeePercentage: number;
   availability: number;
@@ -136,6 +146,13 @@ export function calculateOEE(availability: number, performance: number, quality:
   qualityPercentage: number;
   classification: string;
 } {
+  // Calculate OEE components from production inputs
+  const availability = scheduledTime > 0 ? availableTime / scheduledTime : 0;
+  const performance = (nominalCapacity > 0 && availableTime > 0) ? 
+    goodCount / (nominalCapacity * availableTime) : 0;
+  const quality = partsManufactured > 0 ? 
+    (partsManufactured - badCounts) / partsManufactured : 1;
+  
   const oee = availability * performance * quality;
   
   let classification = "Poor";

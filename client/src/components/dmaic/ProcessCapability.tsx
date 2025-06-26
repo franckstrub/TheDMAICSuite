@@ -784,7 +784,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           }
           
           // Auto-calculate OEE if data is available
-          if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+          if (data.enableOee && data.oeeScheduledTime && data.oeeAvailableTime && 
+              data.oeeGoodCount && data.oeeNominalCapacity && data.oeePartsManufactured) {
             //console.log(`Auto-calculating OEE for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "OEE");
           }
@@ -804,7 +805,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       };
       
       // Auto-calculate if the field affects calculations and has meaningful values
-      if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeAvailability', 'oeePerformance', 'oeeQuality'].includes(field)) {
+      if (['nonConformityUnits', 'totalUnits', 'dpmoDefects', 'dpmoUnits', 'dpmoOpportunitiesPerUnit', 'oeeScheduledTime', 'oeeAvailableTime', 'oeeGoodCount', 'oeeNominalCapacity', 'oeePartsManufactured', 'oeeBadCounts'].includes(field)) {
         //console.log('Field changed that affects calculations:', field, 'for CTQ:', ctq);
         setTimeout(() => autoCalculateOnValueChange(ctq, field), 100);
       }
@@ -1148,8 +1149,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
     }
 
-    if (field === 'oeeAvailability' || field === 'oeePerformance' || field === 'oeeQuality') {
-      if (data.enableOee && data.oeeAvailability && data.oeePerformance && data.oeeQuality) {
+    if (['oeeScheduledTime', 'oeeAvailableTime', 'oeeGoodCount', 'oeeNominalCapacity', 'oeePartsManufactured', 'oeeBadCounts'].includes(field)) {
+      if (data.enableOee && data.oeeScheduledTime && data.oeeAvailableTime && 
+          data.oeeGoodCount && data.oeeNominalCapacity && data.oeePartsManufactured) {
         calculateIndividualAnalysis(ctq, "OEE");
       }
     }
@@ -1397,9 +1399,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         dpmoDefects: data.dpmoDefects,
         dpmoUnits: data.dpmoUnits,
         dpmoOpportunitiesPerUnit: data.dpmoOpportunitiesPerUnit,
-        oeeAvailability: data.oeeAvailability,
-        oeePerformance: data.oeePerformance,
-        oeeQuality: data.oeeQuality
+        oeeScheduledTime: data.oeeScheduledTime,
+        oeeAvailableTime: data.oeeAvailableTime,
+        oeeGoodCount: data.oeeGoodCount,
+        oeeNominalCapacity: data.oeeNominalCapacity,
+        oeePartsManufactured: data.oeePartsManufactured,
+        oeeBadCounts: data.oeeBadCounts
       };
       
       saveCapabilityMutation.mutate(transformedData);
