@@ -285,6 +285,7 @@ export default function AttributeProcessCapability({
       
       results.nonConformity = {
         ...nonConformityResult,
+        rate: nonConformityResult.defectRate,
         zValueLT,
         zValueST
       };
