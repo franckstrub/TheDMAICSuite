@@ -151,7 +151,7 @@ export function calculateOEE(
   
   const availability = scheduledTime > 0 ? availableTime / scheduledTime : 0;
   const performance = (nominalCapacity > 0 && availableTime > 0) ? 
-    partsManufactured / (nominalCapacity * availableTime) : 0;
+    goodCount / (nominalCapacity * availableTime) : 0;
   const quality = partsManufactured > 0 ? 
     goodCount / partsManufactured : 1;
   
