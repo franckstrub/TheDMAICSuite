@@ -72,7 +72,7 @@ export function calculateDPMO(defects: number, units: number, opportunitiesPerUn
  */
 export function calculateRolledThroughputYield(processSteps: Array<{
   stepName: string;
-  passed: number;
+  passed: number | undefined;
   total: number;
 }>): {
   rty: number;
@@ -97,16 +97,20 @@ export function calculateRolledThroughputYield(processSteps: Array<{
 
   let rty = 1;
   const individualYields = processSteps.map(step => {
-    const yieldRate = step.total > 0 ? step.passed / step.total : 0;
+    const passedUnits = step.passed !== undefined ? step.passed : 0;
+    const yieldRate = step.total > 0 ? passedUnits / step.total : 0;
     rty *= yieldRate;
     return {
       stepName: step.stepName,
-      yieldRate: yieldRate,
+      yield: yieldRate,
       yieldPercentage: yieldRate * 100
     };
   });
 
-  const totalDefects = processSteps.reduce((sum, step) => sum + (step.total - step.passed), 0);
+  const totalDefects = processSteps.reduce((sum, step) => {
+    const passedUnits = step.passed !== undefined ? step.passed : 0;
+    return sum + (step.total - passedUnits);
+  }, 0);
   const totalUnits = processSteps.reduce((sum, step) => sum + step.total, 0);
 
   return {

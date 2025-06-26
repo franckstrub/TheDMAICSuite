@@ -1024,7 +1024,7 @@ export const processCapability = pgTable("process_capability", {
   dpmoUnits: integer("dpmo_units"),
   dpmoOpportunitiesPerUnit: integer("dpmo_opportunities_per_unit"),
   // RTY Analysis fields
-  rtyProcessSteps: json("rty_process_steps").$type<Array<{stepName: string; passed: number; total: number}>>(),
+  rtyProcessSteps: json("rty_process_steps").$type<Array<{stepName: string; passed: number | undefined; total: number}>>(),
   // OEE Analysis fields - Input fields
   oeeScheduledTime: real("oee_scheduled_time"), // Scheduled production time in hours
   oeeAvailableTime: real("oee_available_time"), // Available time in hours
