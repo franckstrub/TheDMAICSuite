@@ -2276,21 +2276,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <div>Actions</div>
                               </div>
                               
-                              {/* Add First Category Button */}
+                              {/* Empty Row #1 when no data exists */}
                               {(!capabilityData[ctq]?.paretoDefectCategories || capabilityData[ctq]?.paretoDefectCategories?.length === 0) && (
-                                <div className="text-center py-4">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      updateCapabilityField(ctq, "paretoDefectCategories", [
-                                        { category: "", count: 0 }
-                                      ]);
-                                    }}
-                                  >
-                                    Add First Category
-                                  </Button>
+                                <div className="grid grid-cols-3 gap-2 items-center py-2 border border-dashed border-gray-300 rounded bg-gray-50">
+                                  <div className="text-center text-gray-400 text-sm">Click Add Category to start</div>
+                                  <div className="text-center text-gray-400 text-sm">-</div>
+                                  <div className="text-center text-gray-400 text-sm">Row #1</div>
                                 </div>
                               )}
                               
