@@ -2139,10 +2139,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       type="number"
                                       min="0"
                                       placeholder="Passed units (can be 0)"
-                                      value={step.passed || ""}
+                                      value={step.passed !== undefined ? step.passed : ""}
                                       onChange={(e) => {
                                         const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
-                                        updatedSteps[index] = { ...step, passed: parseInt(e.target.value) || 0 };
+                                        const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                        updatedSteps[index] = { ...step, passed: isNaN(value) ? 0 : value };
                                         updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                       }}
                                     />
