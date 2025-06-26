@@ -1,108 +1,12 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { 
-  mean, 
-  standardDeviation, 
-  variance,
-  parseNumericValue,
-  median,
-  calculateMode,
-  performNormalityTest,
-  getHistogramData,
-  calculateQuartiles,
-  calculateMovingRange,
-  calculateIndividualControlLimits,
-  calculateMovingRangeControlLimits,
-  calculateZScoreLongShortTerm,
-  calculatePerformanceMetrics,
-  calculateCapabilityIndexes,
-  calculateObservedPerformanceMetrics,
-  assessProcessVariation,
-  inverseNormCDF
-} from "@/lib/statisticsUtils";
-import {
-  calculateNonConformity,
-  calculateDPMO,
-  calculateRolledThroughputYield,
-  calculateOEE,
-  calculateParetoOfDefects,
-  calculateZEquivalentFromDefectRate
-} from "@/lib/attributeCapabilityUtils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/hooks/use-toast";
+import MainProcessCapability from "./MainProcessCapability";
 
-interface ProcessCapabilityData {
-  id?: number;
-  ctq: string;
-  lsl: string;
-  usl: string;
-  target: string;
-  zShift: number;
-  dataSetTerm: "Long Term" | "Short Term";
-  capabilityIndex: "Z" | "Cp/Cpk";
-  showPercentage: boolean;
-  showZ: boolean; // For attribute CTQs
-  showStatistics: boolean;
-  capabilityAssessment?: string; // AI-generated capability assessment
-  // Boolean enablers for each analysis type
-  enableNonConformity?: boolean;
-  enableDpmo?: boolean;
-  enableRty?: boolean;
-  enableOee?: boolean;
-  enablePareto?: boolean;
-  // Non-Conformity Analysis fields
-  nonConformityUnits?: number;
-  totalUnits?: number;
-  // DPMO Analysis fields
-  dpmoDefects?: number;
-  
-  // Calculated results
-  calculatedNonConformityRate?: number;
-  calculatedZValue_LT?: number;
-  calculatedZValue_ST?: number;
-  calculatedDPMO?: number;
-  calculatedDPMO_Z_LT?: number;
-  calculatedDPMO_Z_ST?: number;
-  calculatedOEE?: number;
-  dpmoUnits?: number;
-  dpmoOpportunitiesPerUnit?: number;
-  // RTY Analysis fields
-  rtyProcessSteps?: Array<{stepName: string; passed: number; total: number}>;
-  // OEE Analysis fields
-  oeeAvailability?: number;
-  oeePerformance?: number;
-  oeeQuality?: number;
-  // Pareto Analysis fields
-  paretoDefectCategories?: Array<{category: string; count: number}>;
-}
-
-interface DataPoint {
-  id?: number;
-  indexNumber: number;
-  dataValue: number;
-}
-interface CtqWithType {
-  ctq: string;
-  ctqType: "Attribute" | "Continuous";
-}
 interface ProcessCapabilityProps {
   projectId: number;
 }
 
 export default function ProcessCapability({ projectId }: ProcessCapabilityProps) {
+  return <MainProcessCapability projectId={projectId} />;
+}
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [capabilityData, setCapabilityData] = useState<{ [ctq: string]: ProcessCapabilityData }>({});
