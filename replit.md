@@ -108,6 +108,8 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 25, 2025. Implemented complete attribute CTQ process capability analysis with Non Conformity, DPMO, Rolled Throughput Yield, OEE, and Pareto calculations
 - June 25, 2025. Fixed Non-Conformity Z value calculation using inverseNormCDF function and implemented auto-calculation on data changes without auto-save
 - June 25, 2025. Fixed process capability database schema to properly track CTQs with ctq_id foreign key, analysis_type field, and unique constraint ensuring one analysis per CTQ
+- June 26, 2025. Updated OEE card input structure from availability/performance/quality percentages to production-based inputs: scheduled time, available time, good count, nominal capacity, and parts manufactured
+- June 26, 2025. Enhanced OEE results display to show calculated PERFORMANCE TIME, QUALITY TIME, AVAILABILITY %, PERFORMANCE %, QUALITY %, and OEE % with proper formulas
 
 ## User Preferences
 

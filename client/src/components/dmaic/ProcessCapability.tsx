@@ -759,7 +759,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         Object.keys(capabilityData).forEach(ctq => {
           const data = capabilityData[ctq];
           {/*
-            console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
+            // console.log(`Checking CTQ ${ctq} for auto-calculation:`, {
             enableNonConformity: data.enableNonConformity,
             nonConformityUnits: data.nonConformityUnits,
             totalUnits: data.totalUnits,
@@ -2184,43 +2184,57 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </div>
                             
                             {/* Results Display */}
-                            {capabilityData[ctq]?.calculatedOEE !== undefined && (
-                              <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
-                                <h4 className="font-semibold text-purple-800 mb-2">OEE (Overall Efficiency Effectiveness)</h4>
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">PERFORMANCE TIME</span>
-                                      <span className="text-purple-700">6.6</span>
-                                      <span className="text-xs text-gray-500">hours</span>
+                            {(() => {
+                              const oeeResults = calculateIndividualAnalysis(capabilityData[ctq], "OEE");
+                              if (!oeeResults || !capabilityData[ctq]?.enableOee) return null;
+                              
+                              const scheduledTime = capabilityData[ctq]?.oeeScheduledTime || 0;
+                              const availableTime = capabilityData[ctq]?.oeeAvailableTime || 0;
+                              const goodCount = capabilityData[ctq]?.oeeGoodCount || 0;
+                              const nominalCapacity = capabilityData[ctq]?.oeeNominalCapacity || 0;
+                              
+                              // Calculate performance time and quality time
+                              const performanceTime = nominalCapacity > 0 ? (goodCount / nominalCapacity) * scheduledTime : 0;
+                              const qualityTime = performanceTime; // Quality time equals performance time in this context
+                              
+                              return (
+                                <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
+                                  <h4 className="font-semibold text-purple-800 mb-2">OEE (Overall Equipment Effectiveness)</h4>
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">PERFORMANCE TIME</span>
+                                        <span className="text-purple-700">{performanceTime.toFixed(1)}</span>
+                                        <span className="text-xs text-gray-500">hours</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">QUALITY TIME</span>
+                                        <span className="text-purple-700">{qualityTime.toFixed(1)}</span>
+                                        <span className="text-xs text-gray-500">hours</span>
+                                      </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">QUALITY TIME</span>
-                                      <span className="text-purple-700">6.6</span>
-                                      <span className="text-xs text-gray-500">hours</span>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">AVAILABILITY %</span>
-                                      <span className="text-purple-700">87.50</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">PERFORMANCE %</span>
-                                      <span className="text-purple-700">97.14</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">QUALITY %</span>
-                                      <span className="text-purple-700">97.06</span>
-                                    </div>
-                                    <div className="flex justify-between border-t pt-2">
-                                      <span className="font-bold">OEE %</span>
-                                      <span className="text-purple-700 font-bold">82.50</span>
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">AVAILABILITY %</span>
+                                        <span className="text-purple-700">{oeeResults.availability.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">PERFORMANCE %</span>
+                                        <span className="text-purple-700">{oeeResults.performance.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">QUALITY %</span>
+                                        <span className="text-purple-700">{oeeResults.quality.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex justify-between border-t pt-2">
+                                        <span className="font-bold">OEE %</span>
+                                        <span className="text-purple-700 font-bold">{oeeResults.oee.toFixed(2)}</span>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })()}
                             {/*}
                             <div className="mt-4 flex justify-end">
                               <Button 
