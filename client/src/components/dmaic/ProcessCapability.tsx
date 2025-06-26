@@ -43,6 +43,7 @@ import {
   calculateRolledThroughputYield,
   calculateOEE,
   calculateParetoOfDefects,
+  calculateDPU,
 } from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,6 +71,7 @@ interface ProcessCapabilityData {
   enableRty?: boolean;
   enableOee?: boolean;
   enablePareto?: boolean;
+  enableDpu?: boolean;
   // Non-Conformity Analysis fields
   nonConformityUnits?: number;
   totalUnits?: number;
@@ -96,6 +98,9 @@ interface ProcessCapabilityData {
   oeeBadParts?: number;
   // Pareto Analysis fields
   paretoDefectCategories?: Array<{category: string; count: number}>;
+  // DPU Analysis fields
+  dpuDefects?: number;
+  dpuUnits?: number;
 }
 
 interface DataPoint {
