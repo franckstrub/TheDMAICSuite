@@ -784,7 +784,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           
           // Auto-calculate OEE if data is available
           if (data.enableOee && data.oeeScheduledTime && data.oeeAvailableTime && 
-              data.oeeGoodCount && data.oeeNominalCapacity && data.oeePartsManufactured) {
+              data.oeeNominalCapacity && data.oeePartsManufactured) {
             //console.log(`Auto-calculating OEE for loaded CTQ: ${ctq}`);
             calculateIndividualAnalysis(ctq, "OEE");
           }
@@ -2207,8 +2207,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               );
                               
                               // Calculate performance time and quality time from OEE results
-                              const performanceTime = oeeResults.performanceTime;
-                              const qualityTime = oeeResults.qualityTime;
+                              const performanceTime = oeeResults.performance * data.oeeAvailableTime!;
+                              const qualityTime = oeeResults.quality * performanceTime;
                               
                               return (
                                 <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
