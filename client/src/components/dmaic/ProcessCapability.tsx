@@ -2277,14 +2277,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               </div>
                               
                               {/* Categories Rows - Always show at least one empty row */}
-                              {(capabilityData[ctq]?.paretoDefectCategories?.length > 0 ? capabilityData[ctq].paretoDefectCategories : [{ category: "", count: 0 }]).map((item, index) => (
+                              {(capabilityData[ctq]?.paretoDefectCategories && capabilityData[ctq].paretoDefectCategories.length > 0 
+                                ? capabilityData[ctq].paretoDefectCategories 
+                                : [{ category: "", count: 0 }]
+                              ).map((item, index) => (
                                 <div key={index} className="grid grid-cols-3 gap-2 items-center">
                                   <Input
                                     placeholder="e.g., Documentation Errors"
                                     value={item.category}
                                     onChange={(e) => {
-                                      const updatedCategories = [...(capabilityData[ctq]?.paretoDefectCategories || [])];
-                                      updatedCategories[index] = { ...item, category: e.target.value };
+                                      const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                      const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
+                                      updatedCategories[index] = { ...updatedCategories[index], category: e.target.value };
                                       updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
                                     }}
                                   />
@@ -2295,8 +2299,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     value={item.count || ""}
                                     onChange={(e) => {
                                       const value = parseInt(e.target.value) || 0;
-                                      const updatedCategories = [...(capabilityData[ctq]?.paretoDefectCategories || [])];
-                                      updatedCategories[index] = { ...item, count: value };
+                                      const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                      const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
+                                      updatedCategories[index] = { ...updatedCategories[index], count: value };
                                       updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
                                     }}
                                   />
@@ -2315,26 +2320,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 </div>
                               ))}
                               
-                              {/* Add Category Button */}
-                              {(capabilityData[ctq]?.paretoDefectCategories || []).length > 0 && (
-                                <div className="flex gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                      updateCapabilityField(ctq, "paretoDefectCategories", [
-                                        ...currentCategories,
-                                        { category: "", count: 0 }
-                                      ]);
-                                    }}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Add Category
-                                  </Button>
-                                </div>
-                              )}
+                              {/* Add Category Button - Always visible */}
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                    updateCapabilityField(ctq, "paretoDefectCategories", [
+                                      ...currentCategories,
+                                      { category: "", count: 0 }
+                                    ]);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Add
+                                </Button>
+                              </div>
                             </div>
                           </div>
 
