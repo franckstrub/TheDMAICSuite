@@ -2924,7 +2924,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         enableNonConformity, enableDpmo, enableRty, enableOee, enablePareto,
         nonConformityUnits, totalUnits,
         dpmoDefects, dpmoUnits, dpmoOpportunitiesPerUnit,
-        oeeAvailability, oeePerformance, oeeQuality
+        rtyProcessSteps, oeeScheduledTime, oeeAvailableTime, oeeNominalCapacity, 
+        oeePartsManufactured, oeeBadParts, paretoDefectCategories
       } = req.body;
 
       // Prepare the data object, handling empty strings as null for optional fields
@@ -2950,9 +2951,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dpmoDefects: dpmoDefects !== undefined ? dpmoDefects : null,
         dpmoUnits: dpmoUnits || null,
         dpmoOpportunitiesPerUnit: dpmoOpportunitiesPerUnit || null,
-        oeeAvailability: oeeAvailability || null,
-        oeePerformance: oeePerformance || null,
-        oeeQuality: oeeQuality || null,
+        rtyProcessSteps: rtyProcessSteps || null,
+        oeeScheduledTime: oeeScheduledTime || null,
+        oeeAvailableTime: oeeAvailableTime || null,
+        oeeNominalCapacity: oeeNominalCapacity || null,
+        oeePartsManufactured: oeePartsManufactured || null,
+        oeeBadParts: oeeBadParts || null,
+        paretoDefectCategories: paretoDefectCategories || null,
         projectId,
         organizationId: userRecord.organizationId,
       };
