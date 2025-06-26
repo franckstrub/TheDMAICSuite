@@ -1025,7 +1025,13 @@ export const processCapability = pgTable("process_capability", {
   dpmoOpportunitiesPerUnit: integer("dpmo_opportunities_per_unit"),
   // RTY Analysis fields
   rtyProcessSteps: json("rty_process_steps").$type<Array<{stepName: string; passed: number; total: number}>>(),
-  // OEE Analysis fields
+  // OEE Analysis fields - Input fields
+  oeeScheduledTime: real("oee_scheduled_time"), // Scheduled production time in hours
+  oeeAvailableTime: real("oee_available_time"), // Available time in hours
+  oeeGoodCount: integer("oee_good_count"), // Good count parts/hour
+  oeeNominalCapacity: integer("oee_nominal_capacity"), // Nominal production capacity parts/hour
+  oeePartsManufactured: integer("oee_parts_manufactured"), // Number of parts manufactured
+  // OEE Analysis fields - Legacy (keep for backward compatibility)
   oeeAvailability: real("oee_availability"),
   oeePerformance: real("oee_performance"),
   oeeQuality: real("oee_quality"),

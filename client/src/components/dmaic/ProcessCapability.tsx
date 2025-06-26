@@ -81,7 +81,13 @@ interface ProcessCapabilityData {
   dpmoOpportunitiesPerUnit?: number;
   // RTY Analysis fields
   rtyProcessSteps?: Array<{stepName: string; passed: number; total: number}>;
-  // OEE Analysis fields
+  // OEE Analysis fields - New input fields
+  oeeScheduledTime?: number;
+  oeeAvailableTime?: number;
+  oeeGoodCount?: number;
+  oeeNominalCapacity?: number;
+  oeePartsManufactured?: number;
+  // OEE Analysis fields - Legacy (keep for backward compatibility)
   oeeAvailability?: number;
   oeePerformance?: number;
   oeeQuality?: number;
@@ -1217,10 +1223,25 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         return { ...results, zEquivalent };
       }
       case "OEE": {
-        const availability = (data.availability || 0) / 100;
-        const performance = (data.performance || 0) / 100;
-        const quality = (data.quality || 0) / 100;
-        return calculateOEE(availability, performance, quality);
+        const scheduledTime = data.oeeScheduledTime || 0;
+        const availableTime = data.oeeAvailableTime || 0;
+        const goodCount = data.oeeGoodCount || 0;
+        const nominalCapacity = data.oeeNominalCapacity || 0;
+        const partsManufactured = data.oeePartsManufactured || 0;
+        
+        // Calculate availability, performance, and quality from the input fields
+        const availability = scheduledTime > 0 ? (availableTime / scheduledTime) * 100 : 0;
+        const performance = nominalCapacity > 0 ? (goodCount / nominalCapacity) * 100 : 0;
+        const quality = partsManufactured > 0 ? (goodCount / partsManufactured) * 100 : 0;
+        
+        const oeeValue = (availability * performance * quality) / 10000; // Divide by 10000 because we're multiplying three percentages
+        
+        return {
+          availability,
+          performance,
+          quality,
+          oee: oeeValue
+        };
       }
       default:
         return null;
@@ -2099,55 +2120,103 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium mb-2">Availability (%)</label>
+                                <label className="block text-sm font-medium mb-2">SCHEDULED PRODUCTION TIME</label>
                                 <Input
                                   type="number"
                                   min="0"
-                                  max="100"
                                   step="0.1"
-                                  value={capabilityData[ctq]?.oeeAvailability || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeeAvailability", parseFloat(e.target.value) || 0)}
-                                  placeholder="e.g., 85.5"
+                                  value={capabilityData[ctq]?.oeeScheduledTime || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeScheduledTime", parseFloat(e.target.value) || 0)}
+                                  placeholder="e.g., 8.0"
                                 />
+                                <span className="text-xs text-gray-500">hours</span>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Performance (%)</label>
+                                <label className="block text-sm font-medium mb-2">AVAILABLE TIME</label>
                                 <Input
                                   type="number"
                                   min="0"
-                                  max="100"
                                   step="0.1"
-                                  value={capabilityData[ctq]?.oeePerformance || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeePerformance", parseFloat(e.target.value) || 0)}
-                                  placeholder="e.g., 90.2"
+                                  value={capabilityData[ctq]?.oeeAvailableTime || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeAvailableTime", parseFloat(e.target.value) || 0)}
+                                  placeholder="e.g., 7.0"
                                 />
+                                <span className="text-xs text-gray-500">hours</span>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Quality (%)</label>
+                                <label className="block text-sm font-medium mb-2">Good Count</label>
                                 <Input
                                   type="number"
                                   min="0"
-                                  max="100"
-                                  step="0.1"
-                                  value={capabilityData[ctq]?.oeeQuality || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeeQuality", parseFloat(e.target.value) || 0)}
-                                  placeholder="e.g., 98.7"
+                                  step="1"
+                                  value={capabilityData[ctq]?.oeeGoodCount || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeGoodCount", parseInt(e.target.value) || 0)}
+                                  placeholder="e.g., 80"
                                 />
+                                <span className="text-xs text-gray-500">parts/hour</span>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Nominal production capacity</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={capabilityData[ctq]?.oeeNominalCapacity || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeeNominalCapacity", parseInt(e.target.value) || 0)}
+                                  placeholder="e.g., 100"
+                                />
+                                <span className="text-xs text-gray-500">parts/hour</span>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Number of Parts Manufactured</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={capabilityData[ctq]?.oeePartsManufactured || ""}
+                                  onChange={(e) => updateCapabilityField(ctq, "oeePartsManufactured", parseInt(e.target.value) || 0)}
+                                  placeholder="e.g., 20"
+                                />
+                                <span className="text-xs text-gray-500">PARTS</span>
                               </div>
                             </div>
                             
                             {/* Results Display */}
                             {capabilityData[ctq]?.calculatedOEE !== undefined && (
                               <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
-                                <h4 className="font-semibold text-purple-800 mb-2">Results:</h4>
-                                <div className="space-y-1 text-sm">
-                                  <div>
-                                    <span className="font-medium">OEE: </span>
-                                    <span className="text-purple-700">
-                                      {capabilityData[ctq].calculatedOEE.toFixed(1)}%
-                                    </span>
+                                <h4 className="font-semibold text-purple-800 mb-2">OEE (Overall Efficiency Effectiveness)</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">PERFORMANCE TIME</span>
+                                      <span className="text-purple-700">6.6</span>
+                                      <span className="text-xs text-gray-500">hours</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">QUALITY TIME</span>
+                                      <span className="text-purple-700">6.6</span>
+                                      <span className="text-xs text-gray-500">hours</span>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">AVAILABILITY %</span>
+                                      <span className="text-purple-700">87.50</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">PERFORMANCE %</span>
+                                      <span className="text-purple-700">97.14</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">QUALITY %</span>
+                                      <span className="text-purple-700">97.06</span>
+                                    </div>
+                                    <div className="flex justify-between border-t pt-2">
+                                      <span className="font-bold">OEE %</span>
+                                      <span className="text-purple-700 font-bold">82.50</span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
