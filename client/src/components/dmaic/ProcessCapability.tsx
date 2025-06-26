@@ -1261,7 +1261,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         oeeAvailableTime: data.oeeAvailableTime,
         oeeNominalCapacity: data.oeeNominalCapacity,
         oeePartsManufactured: data.oeePartsManufactured,
-        oeeBadParts: data.oeeBadParts
+        oeeBadParts: data.oeeBadParts,
+        rtyProcessSteps: data.rtyProcessSteps || [],
+        paretoDefectCategories: data.paretoDefectCategories || []
       };
       
       saveCapabilityMutation.mutate(transformedData);
@@ -2105,13 +2107,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             <div>
                               <label className="block text-sm font-medium mb-2">Process Steps</label>
                               <div className="space-y-3">
-                                {(() => {
-                                  const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
-                                  // Auto-initialize first step if none exist and RTY is enabled
-                                  if (currentSteps.length === 0 && capabilityData[ctq]?.enableRty) {
-                                    const initialStep = [{ stepName: "", passed: 0, total: 0 }];
-                                    updateCapabilityField(ctq, "rtyProcessSteps", initialStep);
-                                    return initialStep.map((step, index) => (
+                                {(capabilityData[ctq]?.rtyProcessSteps || []).map((step, index) => (
                                   <div key={index} className="grid grid-cols-3 gap-2 items-center">
                                     <Input
                                       placeholder="Step name"
