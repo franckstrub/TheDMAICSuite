@@ -2460,6 +2460,114 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       </CardContent>
                     </Card>
                   )}
+
+                  {/* DPU (Defects per Unit) Analysis */}
+                  {capabilityData[ctq]?.enableDpu && (
+                    <Card key="dpu" className="p-4 bg-purple-50 border-purple-200 w-[1044px]">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Calculator className="h-5 w-5 text-purple-600" />
+                          DPU (Defects per Unit) Analysis
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Input Fields */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Number of Defects</label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={capabilityData[ctq]?.dpuDefects || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === "" || value === "0" || (!isNaN(Number(value)) && Number(value) >= 0)) {
+                                    updateCapabilityField(ctq, "dpuDefects", value === "" ? undefined : Number(value));
+                                  }
+                                }}
+                                placeholder="Enter total number of defects"
+                                className="w-full"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Number of Units</label>
+                              <Input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={capabilityData[ctq]?.dpuUnits || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === "" || (!isNaN(Number(value)) && Number(value) > 0)) {
+                                    updateCapabilityField(ctq, "dpuUnits", value === "" ? undefined : Number(value));
+                                  }
+                                }}
+                                placeholder="Enter total number of units"
+                                className="w-full"
+                              />
+                            </div>
+                          </div>
+
+                          {/* DPU Results Display */}
+                          {(() => {
+                            const defects = capabilityData[ctq]?.dpuDefects || 0;
+                            const units = capabilityData[ctq]?.dpuUnits || 0;
+                            
+                            if (units === 0) return null;
+                            
+                            const dpuResults = calculateDPU(defects, units);
+                            
+                            return (
+                              <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
+                                <h4 className="font-semibold text-purple-800 mb-3">DPU Analysis Results</h4>
+                                
+                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">DPU:</span>
+                                      <span className="text-purple-700 font-bold">{dpuResults.dpu.toFixed(4)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">Classification:</span>
+                                      <span className={`font-medium ${
+                                        dpuResults.classification === 'Perfect' ? 'text-green-700' :
+                                        dpuResults.classification === 'Excellent' ? 'text-blue-700' :
+                                        dpuResults.classification === 'Good' ? 'text-yellow-700' :
+                                        dpuResults.classification === 'Fair' ? 'text-orange-700' :
+                                        'text-red-700'
+                                      }`}>
+                                        {dpuResults.classification}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">Total Defects:</span>
+                                      <span className="text-purple-700">{defects}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">Total Units:</span>
+                                      <span className="text-purple-700">{units}</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="col-span-1">
+                                    <div className="p-2 bg-purple-50 border border-purple-200 rounded">
+                                      <h5 className="font-medium text-purple-900 mb-1">Interpretation</h5>
+                                      <p className="text-xs text-purple-800">{dpuResults.interpretation}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
