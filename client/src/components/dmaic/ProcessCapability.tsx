@@ -2138,7 +2138,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     <Input
                                       type="number"
                                       min="0"
-                                      placeholder="Passed units"
+                                      placeholder="Passed units (can be 0)"
                                       value={step.passed || ""}
                                       onChange={(e) => {
                                         const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
@@ -2148,13 +2148,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     />
                                     <Input
                                       type="number"
-                                      min="0"
-                                      placeholder="Total units"
+                                      min="1"
+                                      placeholder="Total units (must be > 0)"
                                       value={step.total || ""}
                                       onChange={(e) => {
-                                        const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
-                                        updatedSteps[index] = { ...step, total: parseInt(e.target.value) || 0 };
-                                        updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                        const value = parseInt(e.target.value) || 0;
+                                        if (value > 0) {
+                                          const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
+                                          updatedSteps[index] = { ...step, total: value };
+                                          updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                        }
                                       }}
                                     />
                                   </div>
