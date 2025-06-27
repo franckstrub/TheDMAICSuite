@@ -6,7 +6,7 @@
  * @param defaultValue Default value if parsing fails
  * @returns Parsed number or default value
  */
-export function parseNumericValue(value: any, defaultValue: number | null): number | null {
+export function parseNumericValue(value: any, defaultValue: number | undefined): number | undefined {
   if (value === null || value === undefined) return defaultValue;
   
   if (typeof value === 'number') return value;
@@ -296,20 +296,20 @@ export function calculatePerformanceMetrics(
  */
 export function calculateObservedPerformanceMetrics(
   values: number[],
-  lsl: number | null,
-  usl: number | null,
+  lsl: number | undefined,
+  usl: number | undefined,
   dataSetTerm: "Long Term" | "Short Term",
   zShift: number,
 ): {
-  longTerm: { obsyield: number | null; obsdpmo: number | null;
-              obspercentDefects: number | null; ZequivLT: number | null; 
-              obspdLSL_LT: number | null; obspdUSL_LT: number | null;
-              ZequivLSL_LT: number | null; ZequivUSL_LT: number | null;
+  longTerm: { obsyield: number | undefined; obsdpmo: number | undefined;
+              obspercentDefects: number | undefined; ZequivLT: number | undefined; 
+              obspdLSL_LT: number | undefined; obspdUSL_LT: number | undefined;
+              ZequivLSL_LT: number | undefined; ZequivUSL_LT: number | undefined;
             };
-  shortTerm: { obsyield: number | null; obsdpmo: number | null; 
-               obspercentDefects: number | null; ZequivST: number | null; 
-               obspdLSL_ST: number | null; obspdUSL_ST: number | null;
-               ZequivLSL_ST: number | null; ZequivUSL_ST: number | null;
+  shortTerm: { obsyield: number | undefined; obsdpmo: number | undefined; 
+               obspercentDefects: number | undefined; ZequivST: number | undefined; 
+               obspdLSL_ST: number | undefined; obspdUSL_ST: number | undefined;
+               ZequivLSL_ST: number | undefined; ZequivUSL_ST: number | undefined;
             };
 } {
    // Calculate actual defect counts from the data
@@ -343,27 +343,27 @@ export function calculateObservedPerformanceMetrics(
     // Calculate Short Term metrics using z-equivalentLongterm and ShortTerm
     //find Z-equivalent of observedDefectRate
     const ZequivLT = inverseNormCDF(1-longTermDefectRate);
-    let ZequivLSL_LT: number | null;
+    let ZequivLSL_LT: number | undefined;
     if (lsl) {
        ZequivLSL_LT = inverseNormCDF(1-observedDefectRate.pdLSL);
     }
     else {
-      ZequivLSL_LT = null;
+      ZequivLSL_LT = undefined;
     };
-    let ZequivUSL_LT: number | null;
+    let ZequivUSL_LT: number | undefined;
     if (usl) {
        ZequivUSL_LT = inverseNormCDF(1-observedDefectRate.pdUSL);
     }
     else {
-       ZequivUSL_LT = null;
+       ZequivUSL_LT = undefined;
     };
     //const ZequivLSL_LT = inverseNormCDF(1-observedDefectRate.pdLSL);
     //const ZequivUSL_LT = inverseNormCDF(1-observedDefectRate.pdUSL);
 
-    let shortTermYield: number | null;
-    let shortTermDpmo: number | null;
-    let shortTermPercentDefects: number | null;
-    let ZequivST: number | null;
+    let shortTermYield: number | undefined;
+    let shortTermDpmo: number | undefined;
+    let shortTermPercentDefects: number | undefined;
+    let ZequivST: number | undefined;
     if (zShift>0) {
       ZequivST = ZequivLT + zShift;
       const shortTermDefectRate = 1-normalCDF(ZequivST);
@@ -412,14 +412,14 @@ export function calculateObservedPerformanceMetrics(
 
         },
         shortTerm: {
-          obsyield: null,
-          obsdpmo: null, 
-          obspercentDefects: null,
-          ZequivST: null,
-          obspdLSL_ST: null,
-          obspdUSL_ST: null,
-          ZequivLSL_ST: null,
-          ZequivUSL_ST: null,
+          obsyield: undefined,
+          obsdpmo: undefined, 
+          obspercentDefects: undefined,
+          ZequivST: undefined,
+          obspdLSL_ST: undefined,
+          obspdUSL_ST: undefined,
+          ZequivLSL_ST: undefined,
+          ZequivUSL_ST: undefined,
         }
       };
     };
@@ -434,24 +434,24 @@ export function calculateObservedPerformanceMetrics(
     // Calculate Short Term metrics using z-equivalentLongterm and ShortTerm
     //find Z-equivalent of observedDefectRate
     const ZequivST = inverseNormCDF(1-shortTermDefectRate);
-    let ZequivLSL_ST: number | null;
+    let ZequivLSL_ST: number | undefined;
     if (lsl) {
        ZequivLSL_ST = inverseNormCDF(1-observedDefectRate.pdLSL);
     }
     else {
-      ZequivLSL_ST = null;
+      ZequivLSL_ST = undefined;
     };
-    let ZequivUSL_ST: number | null;
+    let ZequivUSL_ST: number | undefined;
     if (usl) {
        ZequivUSL_ST = inverseNormCDF(1-observedDefectRate.pdUSL);
     }
     else {
-       ZequivUSL_ST = null;
+       ZequivUSL_ST = undefined;
     };
-    let longTermYield: number | null;
-    let longTermDpmo: number | null;
-    let longTermPercentDefects: number | null;
-    let ZequivLT: number | null;
+    let longTermYield: number | undefined;
+    let longTermDpmo: number | undefined;
+    let longTermPercentDefects: number | undefined;
+    let ZequivLT: number | undefined;
     if (zShift>0) {
       ZequivLT = ZequivST - zShift; 
       const longTermDefectRate = 1-normalCDF(ZequivLT);
@@ -627,50 +627,50 @@ export function calculateZScoreLongShortTerm(
   values: number[],
   meanVal: number,
   stdDev: number,
-  lsl: number | null,
-  usl: number | null,
+  lsl: number | undefined,
+  usl: number | undefined,
   dataSetTerm: "Long Term" | "Short Term",
   zShift: number,
 ): {
   zLongTerm: number;
-  zLSL_LT: number | null;
-  zUSL_LT: number | null;
+  zLSL_LT: number | undefined;
+  zUSL_LT: number | undefined;
   zShortTerm: number;
-  zLSL_ST: number | null;
-  zUSL_ST: number | null;
+  zLSL_ST: number | undefined;
+  zUSL_ST: number | undefined;
 } {
   if (values.length === 0 || stdDev === 0) {
     return {
       zLongTerm: 0,
-      zLSL_LT: null,
-      zUSL_LT: null,
+      zLSL_LT: undefined,
+      zUSL_LT: undefined,
       zShortTerm: 0,
-      zLSL_ST: null,
-      zUSL_ST: null,
+      zLSL_ST: undefined,
+      zUSL_ST: undefined,
     };
   }
   
   // Calculate Z values based on specification limits
-  let zLsl: number | null;
-  zLsl=null;
-  let zUsl: number | null;
-  zUsl= null;
+  let zLsl: number | undefined;
+  zLsl=undefined;
+  let zUsl: number | undefined;
+  zUsl= undefined;
   let zTotal=0;
   let pdLSL = 0;
   let pdUSL = 0;
   
-  if (lsl !== null && !isNaN(lsl)) {
+  if (lsl !== undefined && !isNaN(lsl)) {
     zLsl = (meanVal - lsl) / stdDev;
     zTotal = zLsl;
-    zUsl = null;
+    zUsl = undefined;
   }
   
-  if (usl !== null && !isNaN(usl)) {
+  if (usl !== undefined && !isNaN(usl)) {
     zUsl = (usl - meanVal) / stdDev;
     zTotal = zUsl;
-    zLsl= null;
+    zLsl= undefined;
   }
-  if ((lsl !== null && !isNaN(lsl)) && (usl !== null && !isNaN(usl))) {
+  if ((lsl !== undefined && !isNaN(lsl)) && (usl !== undefined && !isNaN(usl))) {
     pdLSL = 1 - normalCDF(zLsl!);
     pdUSL = 1 - normalCDF(zUsl!);
     zTotal = inverseNormCDF(1 - (pdLSL+pdUSL));
@@ -682,10 +682,10 @@ export function calculateZScoreLongShortTerm(
   // Calculate Long Term and Short Term Z scores
   let zLongTerm = 0;
   let zShortTerm = 0;
-  let zLSL_LT: number | null = null;
-  let zUSL_LT: number | null = null;
-  let zLSL_ST: number | null = null;
-  let zUSL_ST: number | null = null;
+  let zLSL_LT = undefined;
+  let zUSL_LT = undefined;
+  let zLSL_ST = undefined;
+  let zUSL_ST = undefined;
     
   if (dataSetTerm === "Long Term") {
     // Long term data already includes variation

@@ -303,11 +303,11 @@ interface ProcessCapabilityStats {
   cpk: number | null;
   zShift: number;
   zLongTerm: number | null;
-  zLSL_LT: number | null;
-  zUSL_LT: number | null;
+  zLSL_LT: number;
+  zUSL_LT: number;
   zShortTerm: number | null;
-  zLSL_ST: number | null;
-  zUSL_ST: number | null;
+  zLSL_ST: number;
+  zUSL_ST: number;
   ZequivLT: number | null;
   ZequivLSL_LT: number | null;
   ZequivUSL_LT: number | null;
