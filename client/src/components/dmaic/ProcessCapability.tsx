@@ -94,7 +94,7 @@ interface ProcessCapabilityData {
   dpmoUnits?: number;
   dpmoOpportunitiesPerUnit?: number;
   // RTY Analysis fields
-  rtyProcessSteps?: Array<{stepName: string; passed: number | undefined; total: number}>;
+  rtyProcessSteps?: Array<{stepName: string; passed: number | null; total: number}>;
   // OEE Analysis fields - New input fields
   oeeScheduledTime?: number;
   oeeAvailableTime?: number;
@@ -102,7 +102,7 @@ interface ProcessCapabilityData {
   oeePartsManufactured?: number;
   oeeBadParts?: number;
   // Pareto Analysis fields
-  paretoDefectCategories?: Array<{category: string; count: number | undefined}>;
+  paretoDefectCategories?: Array<{category: string; count: number | null}>;
   // DPU Analysis fields
   dpuDefects?: number;
   dpuUnits?: number;
@@ -1259,7 +1259,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         oeeNominalCapacity: data.oeeNominalCapacity,
         oeePartsManufactured: data.oeePartsManufactured,
         oeeBadParts: data.oeeBadParts,
-        rtyProcessSteps: data.rtyProcessSteps || [],
+        rtyProcessSteps: (data.rtyProcessSteps || []).map(step => ({
+          ...step,
+          passed: step.passed === undefined ? null : step.passed
+        })),
         paretoDefectCategories: (data.paretoDefectCategories || []).map(item => ({
           ...item,
           count: item.count === undefined ? null : item.count
@@ -2446,7 +2449,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   {/* Categories Rows - Always show at least one empty row */}
                                   {(capabilityData[ctq]?.paretoDefectCategories && capabilityData[ctq].paretoDefectCategories.length > 0 
                                     ? capabilityData[ctq].paretoDefectCategories 
-                                    : [{ category: "", count: undefined }]
+                                    : [{ category: "", count: null }]
                                   ).map((item, index) => (
                                     <div key={index} className="grid grid-cols-3 gap-2 items-center">
                                       <Input
@@ -2463,14 +2466,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         type="number"
                                         min="0"
                                         placeholder="e.g., 0"
-                                        value={item.count !== undefined ? item.count : ""}
+                                        value={item.count !== null ? item.count : ""}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                          const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: undefined }];
+                                          const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: null }];
                                           
                                           if (value === "" || value === null) {
-                                            updatedCategories[index] = { ...updatedCategories[index], count: undefined };
+                                            updatedCategories[index] = { ...updatedCategories[index], count: null };
                                           } else {
                                             updatedCategories[index] = { ...updatedCategories[index], count: parseInt(value) };
                                           }
@@ -2502,7 +2505,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
                                         updateCapabilityField(ctq, "paretoDefectCategories", [
                                           ...currentCategories,
-                                          { category: "", count: undefined }
+                                          { category: "", count: null }
                                         ]);
                                       }}
                                     >
