@@ -520,7 +520,7 @@ export function calculateObservedPerformanceMetrics(
 /**
  * Normal cumulative distribution function (CDF)
  */
-function normalCDF(x: number): number {
+export function normalCDF(x: number): number {
   // Using the complementary error function approximation
   const sign = x >= 0 ? 1 : -1;
   return (0.5 * (1 + sign*erf(Math.abs(x)/ Math.sqrt(2))));
@@ -1050,4 +1050,19 @@ export function inverseNormCDF(p: number): number {
   }
 
   return val;
-}
+};
+// Helper function to format percentage values
+  export function formatdpu (dpu: number) {
+    if (isNaN(dpu) || dpu === null || dpu === undefined) {
+      return "N/A";
+    }
+    const decimalPlaces = dpu <= 0.000001 ? 8
+      : dpu <= 0.00001 ? 7
+      : dpu <= 0.0001 ? 6
+      : dpu <= 0.001 ? 5
+      : dpu <= 0.10 ? 4
+      : dpu <= 1 ? 3
+      : 3;
+  
+    return dpu.toFixed(decimalPlaces);
+  };
