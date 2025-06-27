@@ -102,7 +102,7 @@ interface ProcessCapabilityData {
   oeePartsManufactured?: number;
   oeeBadParts?: number;
   // Pareto Analysis fields
-  paretoDefectCategories?: Array<{category: string; count: number}>;
+  paretoDefectCategories?: Array<{category: string; count: number | undefined}>;
   // DPU Analysis fields
   dpuDefects?: number;
   dpuUnits?: number;
@@ -2443,7 +2443,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   {/* Categories Rows - Always show at least one empty row */}
                                   {(capabilityData[ctq]?.paretoDefectCategories && capabilityData[ctq].paretoDefectCategories.length > 0 
                                     ? capabilityData[ctq].paretoDefectCategories 
-                                    : [{ category: "", count: 0 }]
+                                    : [{ category: "", count: undefined }]
                                   ).map((item, index) => (
                                     <div key={index} className="grid grid-cols-3 gap-2 items-center">
                                       <Input
@@ -2459,18 +2459,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       <Input
                                         type="number"
                                         min="0"
-                                        placeholder="Number of defects (can be 0)"
-                                        value={item.count !== undefined && item.count !== null ? item.count : ""}
+                                        placeholder="e.g., 0"
+                                        value={item.count !== undefined ? item.count : ""}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                          const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
+                                          const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: undefined }];
                                           
                                           if (value === "" || value === null) {
-                                            updatedCategories[index] = { ...updatedCategories[index], count: 0 };
+                                            updatedCategories[index] = { ...updatedCategories[index], count: undefined };
                                           } else {
-                                            const parsedValue = parseInt(value);
-                                            updatedCategories[index] = { ...updatedCategories[index], count: isNaN(parsedValue) ? 0 : parsedValue };
+                                            updatedCategories[index] = { ...updatedCategories[index], count: parseInt(value) };
                                           }
                                           updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
                                         }}
@@ -2500,7 +2499,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
                                         updateCapabilityField(ctq, "paretoDefectCategories", [
                                           ...currentCategories,
-                                          { category: "", count: 0 }
+                                          { category: "", count: undefined }
                                         ]);
                                       }}
                                     >
@@ -2514,11 +2513,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               {/* Pareto Chart */}
                               {(() => {
                                 const categories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                const validCategories = categories.filter(item => item.category && item.count > 0);
+                                const validCategories = categories.filter(item => item.category && item.count !== undefined && item.count > 0);
                                 
                                 if (validCategories.length === 0) return null;
 
-                                const paretoResults = calculateParetoOfDefects(validCategories);
+                                const paretoResults = calculateParetoOfDefects(validCategories as Array<{category: string; count: number}>);
                                 
                                 return (
                                   <div className="space-y-4">
