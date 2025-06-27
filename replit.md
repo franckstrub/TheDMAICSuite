@@ -117,6 +117,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 26, 2025. Implemented comprehensive Pareto Chart functionality with data entry table for defect categorization, interactive visualization with dual Y-axes (count and percentage), cumulative percentage curve, results table, and key insights including 80% rule analysis
 - June 26, 2025. Fixed DPU (Defects per Unit) data persistence issue by adding missing enableDpu and DPU fields to data transformation in ProcessCapability component - DPU checkbox now properly saves to database
 - June 26, 2025. Enhanced DPU defects input field with same logic as DPMO defects - allows entering 0 values with proper undefined handling and consistent placeholder text
+- June 26, 2025. Improved RTY (Rolled Throughput Yield) interface - shows empty first row when no data exists, removed "Add first step" button, added individual delete buttons for each row, and updated grid layout from 3 to 4 columns
 
 ## User Preferences
 

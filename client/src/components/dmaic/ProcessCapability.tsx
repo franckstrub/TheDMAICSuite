@@ -3,18 +3,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+//import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator, BarChart3, Sparkles, RefreshCw, Trash2, Plus } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator, BarChart3, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { formatPercentage } from './ProcessCapabilityContinuous';
-import { calculateNonConformityResults } from './ProcessCapabilityAttribute';
-import { calculateDPMOResults } from './ProcessCapabilityAttribute';
+//import { formatPercentage } from './ProcessCapabilityContinuous';
+import { calculateNonConformityResults } from '@/components/dmaic/ProcessCapabilityAttribute';
+import { calculateDPMOResults } from '@/components/dmaic/ProcessCapabilityAttribute';
+import { calculateDPUResults } from '@/components/dmaic/ProcessCapabilityAttribute';
 import { 
   mean, 
   standardDeviation, 
@@ -35,8 +36,8 @@ import {
   inverseNormCDF
 } from "@/lib/statisticsUtils";
 import React from 'react';
-import {ProcessCapabilityContinuousCards} from './ProcessCapabilityContinuous'; 
-import StatisticalCharts from './StatisticalCharts';
+import {ProcessCapabilityContinuousCards} from '@/components/dmaic/ProcessCapabilityContinuous'; 
+import StatisticalCharts from '@/components/dmaic/StatisticalCharts';
 import {
   calculateNonConformity,
   calculateDPMO,
@@ -46,11 +47,13 @@ import {
   calculateDPU,
 } from "@/lib/attributeCapabilityUtils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine, ComposedChart } from "recharts";
+//import { LineChart, BarChart, ReferenceLine } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/hooks/use-toast";
-import { ProcessVariationPanel } from "./ProcessCapabilityContinuous";
-import { LogicCapabilityAssessment } from "./ProcessCapabilityContinuous";
+//import { toast } from "@/hooks/use-toast";
+//import { ProcessVariationPanel } from "./ProcessCapabilityContinuous";
+//import { LogicCapabilityAssessment } from "./ProcessCapabilityContinuous";
 import AIAnalysisSection from "./ProcessCapabilityContinuous"
+import {formatdpu} from "@/lib/statisticsUtils";
 
 interface ProcessCapabilityData {
   id?: number;
@@ -85,6 +88,8 @@ interface ProcessCapabilityData {
   calculatedDPMO?: number;
   calculatedDPMO_Z_LT?: number;
   calculatedDPMO_Z_ST?: number;
+  calculatedDPMO_LT?: number;
+  calculatedDPMO_ST?: number;
   calculatedOEE?: number;
   dpmoUnits?: number;
   dpmoOpportunitiesPerUnit?: number;
@@ -101,6 +106,10 @@ interface ProcessCapabilityData {
   // DPU Analysis fields
   dpuDefects?: number;
   dpuUnits?: number;
+  calculatedDPU_Z_LT?: number;
+  calculatedDPU_Z_ST?: number;
+  calculatedDPU_LT?: number;
+  calculatedDPU_ST?: number;
 }
 
 interface DataPoint {
@@ -328,6 +337,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 enableRty: false,
                 enableOee: false,
                 enablePareto: false,
+                enableDpu: false,
             };
         
         const result = await saveCapabilityMutation.mutateAsync(defaultCapabilityData);
@@ -717,6 +727,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           enableRty: existingCapability.enableRty || false,
           enableOee: existingCapability.enableOee || false,
           enablePareto: existingCapability.enablePareto || false,
+          enableDpu: existingCapability.enableDpu || false,
         } : {
           ctq: ctq,
           lsl: ctsChar?.lsl || "",
@@ -734,6 +745,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           enableRty: false,
           enableOee: false,
           enablePareto: false,
+          enableDpu: false
         };
         
         // Load statistics visibility state from database
@@ -780,6 +792,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             calculateIndividualAnalysis(ctq, "DPMO");
           }
           
+          // Auto-calculate DPU if data is available
+          if (data.enableDpu && data.dpuDefects !== undefined && data.dpuUnits && data.dpuUnits > 0) {
+            //console.log(`Auto-calculating DPU for loaded CTQ: ${ctq}`);
+            calculateIndividualAnalysis(ctq, "DPU");
+          }
+
           // Auto-calculate OEE if data is available
           if (data.enableOee && data.oeeScheduledTime && data.oeeAvailableTime && 
               data.oeeNominalCapacity && data.oeePartsManufactured) {
@@ -965,11 +983,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           if (results2) {
             // Update the capability data with calculated results
             //console.log('Updating capability data with results:', results);
-            updateCapabilityField(ctq, "calculatedDPMO_Z_LT", results2.zDPMOValue_LT);
-            updateCapabilityField(ctq, "calculatedDPMO_Z_ST", results2.zDPMOValue_ST);
+            updateCapabilityField(ctq, "calculatedDPMO_Z_LT", results2.zDPMOValue_LT); 
+            updateCapabilityField(ctq, "calculatedDPMO_Z_ST", results2.zDPMOValue_ST);            
+            updateCapabilityField(ctq, "calculatedDPMO_LT", results2.DPMOValue_LT);
+            updateCapabilityField(ctq, "calculatedDPMO_ST", results2.DPMOValue_ST);
           }
           break;
-          
+
+        case "DPU":
+          if (data.dpuDefects !== undefined && data.dpuUnits && data.dpuUnits > 0 ) {
+            const totalOpportunities = data.dpuUnits;
+            const dpu = (data.dpuDefects / totalOpportunities);
+            updateCapabilityField(ctq, "calculatedDPU", dpu);
+          }
+          const results3 = calculateDPUResults(ctq, capabilityData);
+          if (results3) {
+            // Update the capability data with calculated results
+            //console.log('Updating capability data with results:', results);
+            updateCapabilityField(ctq, "calculatedDPU_Z_LT", results3.zDPUValue_LT); 
+            updateCapabilityField(ctq, "calculatedDPU_Z_ST", results3.zDPUValue_ST);            
+            updateCapabilityField(ctq, "calculatedDPU_LT", results3.DPUValue_LT);
+            updateCapabilityField(ctq, "calculatedDPU_ST", results3.DPUValue_ST);
+          }
+          break;
+
         case "OEE":
           if (data.oeeScheduledTime && data.oeeAvailableTime && 
               data.oeeNominalCapacity && data.oeePartsManufactured) {
@@ -1012,64 +1049,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
     }
 
+    if (field === 'dpuDefects' || field === 'dpuUnits' ) {
+      if (data.enableDpu && data.dpuDefects !== undefined && data.dpuUnits && data.dpuUnits > 0) {
+        calculateIndividualAnalysis(ctq, "DPU");
+      }
+    }
+
     if (['oeeScheduledTime', 'oeeAvailableTime', 'oeeNominalCapacity', 'oeePartsManufactured', 'oeeBadParts'].includes(field)) {
       if (data.enableOee && data.oeeScheduledTime && data.oeeAvailableTime && 
           data.oeeNominalCapacity && data.oeePartsManufactured) {
         calculateIndividualAnalysis(ctq, "OEE");
       }
     }
-  };
-
-  // Helper functions for attribute CTQ analysis
-  const canCalculateAttributeStatistics = (ctq: string): boolean => {
-    const data = capabilityData[ctq];
-    if (!data || !data.selectedAnalysisTypes || data.selectedAnalysisTypes.length === 0) return false;
-    
-    return data.selectedAnalysisTypes.some(analysisType => {
-      switch (analysisType) {
-        case "NonConformity":
-          return (data.defects !== undefined && data.defects >= 0) && 
-                 (data.opportunities !== undefined && data.opportunities > 0);
-        case "DPMO":
-          return (data.defects !== undefined && data.defects >= 0) && 
-                 (data.units !== undefined && data.units > 0) && 
-                 (data.opportunitiesPerUnit !== undefined && data.opportunitiesPerUnit > 0);
-        case "OEE":
-          return (data.availability !== undefined && data.availability >= 0 && data.availability <= 100) && 
-                 (data.performance !== undefined && data.performance >= 0 && data.performance <= 100) && 
-                 (data.quality !== undefined && data.quality >= 0 && data.quality <= 100);
-        default:
-          return false;
-      }
-    });
-  };
-
-  const getMissingAttributeFields = (ctq: string): string[] => {
-    const data = capabilityData[ctq];
-    const missing: string[] = [];
-    
-    if (!data || !data.selectedAnalysisTypes) return ["Select analysis types"];
-    
-    data.selectedAnalysisTypes.forEach(analysisType => {
-      switch (analysisType) {
-        case "NonConformity":
-          if (data.defects === undefined || data.defects < 0) missing.push("Defects (for Non Conformity)");
-          if (data.opportunities === undefined || data.opportunities <= 0) missing.push("Opportunities (for Non Conformity)");
-          break;
-        case "DPMO":
-          if (data.defects === undefined || data.defects < 0) missing.push("Defects (for DPMO)");
-          if (data.units === undefined || data.units <= 0) missing.push("Units (for DPMO)");
-          if (data.opportunitiesPerUnit === undefined || data.opportunitiesPerUnit <= 0) missing.push("Opportunities per Unit (for DPMO)");
-          break;
-        case "OEE":
-          if (data.availability === undefined || data.availability < 0 || data.availability > 100) missing.push("Availability (for OEE)");
-          if (data.performance === undefined || data.performance < 0 || data.performance > 100) missing.push("Performance (for OEE)");
-          if (data.quality === undefined || data.quality < 0 || data.quality > 100) missing.push("Quality (for OEE)");
-          break;
-      }
-    });
-    
-    return [...new Set(missing)]; // Remove duplicates
   };
 
   const calculateAttributeResults = (ctq: string, analysisType: string) => {
@@ -1087,7 +1078,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       case "DPMO": {
         const defects = data.defects || 0;
         const units = data.units || 1;
-        const opportunitiesPerUnit = data.opportunitiesPerUnit || 1;
+        const opportunitiesPerUnit = data.dpmoOpportunitiesPerUnit || 1;
         const results = calculateDPMO(defects, units, opportunitiesPerUnit);
         //const zEquivalent = calculateZEquivalentFromDefectRate(results.dpo);
         return { ...results }; {/*, zEquivalent*/}
@@ -1618,11 +1609,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   </div>
                   ) : (
                     <div></div>
-                  )
-                  }
+                  )}
                 </>
-                )
-                }
+                )}
                    
                 <div>
                   <label className="block text-sm font-medium mb-2">Data Set Term</label>
@@ -1683,9 +1672,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-3">Attribute Analysis Types (Select Multiple)</label>
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
+                     <label className="block text-sm font-medium mb-3">Attribute Analysis Types (Select Multiple)</label>
+                      
+                     <div className="w-[1040px]">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+                        <div className="flex items-center space-x-2 ml-3">
                           <Checkbox
                             id={`${ctq}-nonconformity`}
                             checked={capabilityData[ctq]?.enableNonConformity || false}
@@ -1695,7 +1686,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             Non Conformity Analysis
                           </Label>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 ml-3">
                           <Checkbox
                             id={`${ctq}-dpmo`}
                             checked={capabilityData[ctq]?.enableDpmo || false}
@@ -1705,37 +1696,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             DPMO (Defects Per Million Opportunities)
                           </Label>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${ctq}-rty`}
-                            checked={capabilityData[ctq]?.enableRty || false}
-                            onCheckedChange={(checked) => updateCapabilityField(ctq, "enableRty", checked)}
-                          />
-                          <Label htmlFor={`${ctq}-rty`} className="text-sm font-medium text-gray-700">
-                            Rolled Throughput Yield
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${ctq}-oee`}
-                            checked={capabilityData[ctq]?.enableOee || false}
-                            onCheckedChange={(checked) => updateCapabilityField(ctq, "enableOee", checked)}
-                          />
-                          <Label htmlFor={`${ctq}-oee`} className="text-sm font-medium text-gray-700">
-                            Overall Equipment Effectiveness (OEE)
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${ctq}-pareto`}
-                            checked={capabilityData[ctq]?.enablePareto || false}
-                            onCheckedChange={(checked) => updateCapabilityField(ctq, "enablePareto", checked)}
-                          />
-                          <Label htmlFor={`${ctq}-pareto`} className="text-sm font-medium text-gray-700">
-                            Pareto of Defects
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 ml-3">
                           <Checkbox
                             id={`${ctq}-dpu`}
                             checked={capabilityData[ctq]?.enableDpu || false}
@@ -1745,15 +1706,46 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             DPU (Defects per Unit)
                           </Label>
                         </div>
+                        <div className="flex items-center space-x-2 ml-3">
+                          <Checkbox
+                            id={`${ctq}-rty`}
+                            checked={capabilityData[ctq]?.enableRty || false}
+                            onCheckedChange={(checked) => updateCapabilityField(ctq, "enableRty", checked)}
+                          />
+                          <Label htmlFor={`${ctq}-rty`} className="text-sm font-medium text-gray-700">
+                            RTY (Rolled Throughput Yield)
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-3">
+                          <Checkbox
+                            id={`${ctq}-oee`}
+                            checked={capabilityData[ctq]?.enableOee || false}
+                            onCheckedChange={(checked) => updateCapabilityField(ctq, "enableOee", checked)}
+                          />
+                          <Label htmlFor={`${ctq}-oee`} className="text-sm font-medium text-gray-700">
+                            OEE (Overall Equipment Effectiveness)
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-3">
+                          <Checkbox
+                            id={`${ctq}-pareto`}
+                            checked={capabilityData[ctq]?.enablePareto || false}
+                            onCheckedChange={(checked) => updateCapabilityField(ctq, "enablePareto", checked)}
+                          />
+                          <Label htmlFor={`${ctq}-pareto`} className="text-sm font-medium text-gray-700">
+                            Pareto of Defects
+                          </Label>
+                        </div>
                       </div>
+                     </div>
                     </div>
                   </>
                 )}
                 </div>
 
-                <div className={`grid grid-cols-1 gap-4 ${ctqWithType.ctqType === "Continuous" ? "md:grid-cols-3" : ctqWithType.ctqType === "Attribute" ? "md:grid-cols-2" : "md:grid-cols-1"}`}>
                   {ctqWithType.ctqType === "Continuous" && (
                     <>
+                    <div className={`grid grid-cols-1 gap-4 md:grid-cols-3`}>
                       <div>
                         <label className="block text-sm font-medium mb-2">LSL (Lower Spec Limit)</label>
                         <Input
@@ -1789,15 +1781,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         />
                         <p className="text-xs text-gray-500 mt-1">Default from CTS Characteristics</p>
                       </div>
+                    </div>
                     </>
-                  )}
+                  )} 
 
-                  {/* Individual Analysis Cards for Attribute CTQs */}
+                  {/* Individual Analysis Cards for Attribute CTQs */}                      
                   {ctqWithType.ctqType === "Attribute" && (
-                    <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                  
                       {/* Non-Conformity Analysis */}
                       {capabilityData[ctq]?.enableNonConformity && (
-                        <Card key="nonconformity" className="p-4 bg-blue-50 border-blue-200">
+                        <Card key="nonconformity" className="p-2 bg-blue-50 border-blue-200">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <Calculator className="h-5 w-5 text-blue-600" />
@@ -1824,7 +1818,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Number of Units</label>
+                                <label className="block text-sm font-medium mb-7">Number of Units</label>
                                 <Input
                                   type="number"
                                   min="1"
@@ -1837,15 +1831,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             
                             {/* Results Display */}
                             {capabilityData[ctq]?.calculatedNonConformityRate !== undefined && (
-                              <div className="mt-4 p-3 bg-blue-100 rounded-lg border">
+                              <div className="mt-4 p-2 bg-blue-100 rounded-lg border">
                                 <h4 className="font-semibold text-blue-800 mb-2">Results:</h4>
                                 <div className="space-y-1 text-sm">
                                   <div>
                                     <span className="font-medium">Non-Conform Rate: </span>
                                     <span className="text-blue-700">
                                       {capabilityData[ctq].calculatedNonConformityRate.toFixed(2)}%
+                                      <br></br>
                                     </span>
-                                    <span className="ml-4 font-medium">Non-Conform PPM: </span>
+                                    <span className="font-medium">Non-Conform PPM: </span>
                                     <span className="text-blue-700">
                                       {(capabilityData[ctq].calculatedNonConformityRate*10000).toFixed(0)}
                                     </span>
@@ -1883,7 +1878,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                       {/* DPMO Analysis */}
                       {capabilityData[ctq]?.enableDpmo && (
-                        <Card key="dpmo" className="p-4 bg-green-50 border-green-200">
+                        <Card key="dpmo" className="p-2 bg-green-50 border-green-200">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <Calculator className="h-5 w-5 text-green-600" />
@@ -1891,7 +1886,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                               <div>
                                 <label className="block text-sm font-medium mb-2">Number of Defects</label>
                                 <Input
@@ -1920,7 +1915,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Opportunities of Defect Per Unit</label>
+                                <label className="block text-sm font-medium">Opportunities</label>
+                                <label className="block text-[10px] font-normal mb-[13px]">of defect per unit</label>
                                 <Input
                                   type="number"
                                   min="1"
@@ -1953,14 +1949,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           ? capabilityData[ctq].calculatedDPMO_Z_LT.toFixed(2)
                                           : 'Calculating...'}
                                       </span>
+                                      <span className="font-medium ml-4">
+                                        <br></br>DPMO Long Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_LT !== undefined && capabilityData[ctq]?.calculatedDPMO_LT !== null
+                                          ? capabilityData[ctq].calculatedDPMO_LT.toLocaleString()
+                                          : 'Calculating...'}
+                                      </span>
                                     </div>
-                                    <div>
+                                    <div className="mt-2">
                                       <span className="font-medium">
                                         Z Short Term: 
                                       </span>
                                       <span className="text-blue-700 ml-1">
                                         {capabilityData[ctq]?.calculatedDPMO_Z_ST !== undefined && capabilityData[ctq]?.calculatedDPMO_Z_ST !== null
                                           ? capabilityData[ctq].calculatedDPMO_Z_ST.toFixed(2)
+                                          : 'Calculating...'}
+                                      </span>
+                                      <span className="font-medium ml-4">
+                                        <br></br>DPMO Short Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_ST !== undefined && capabilityData[ctq]?.calculatedDPMO_ST !== null
+                                          ? capabilityData[ctq].calculatedDPMO_ST.toLocaleString()
                                           : 'Calculating...'}
                                       </span>
                                     </div>
@@ -1973,9 +1985,301 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         </Card>
                       )}
 
+                      {/* DPU (Defects per Unit) Analysis */}
+                      {capabilityData[ctq]?.enableDpu && (
+                        <Card key="dpu" className="p-2 bg-purple-50 border-purple-200">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Calculator className="h-5 w-5 text-purple-600" />
+                              DPU Analysis
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              {/* Input Fields */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-7">Number of Defects</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={capabilityData[ctq]?.dpuDefects !== undefined ? capabilityData[ctq]?.dpuDefects : ""}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (value === "" || value === null) {
+                                        updateCapabilityField(ctq, "dpuDefects", undefined);
+                                      } else {
+                                        updateCapabilityField(ctq, "dpuDefects", parseInt(value));
+                                      }
+                                    }}
+                                    placeholder="e.g., 0"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-7">Number of Units</label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={capabilityData[ctq]?.dpuUnits || ""}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (value === "" || (!isNaN(Number(value)) && Number(value) > 0)) {
+                                        updateCapabilityField(ctq, "dpuUnits", value === "" ? undefined : Number(value));
+                                      }
+                                    }}
+                                    placeholder="Enter total number of units"
+                                    className="w-full"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* DPU Results Display */}
+                              {(() => {
+                                const defects = capabilityData[ctq]?.dpuDefects || 0;
+                                const units = capabilityData[ctq]?.dpuUnits || 0;
+                                if (units === 0) return null;
+                                const dpuResults = calculateDPU(defects, units);
+                                
+                                return (
+                                  <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
+                                    <h4 className="font-semibold text-purple-800 mb-2">Results:</h4>
+                                    
+                                    <div className="grid grid-cols-1 gap-4 text-sm">
+                                      <div className="space-y-1">
+                                        <div className="flex justify-left">
+                                          <span className="font-medium">DPU:</span>
+                                          <span className="ml-1 text-purple-700 font-bold">{formatdpu(dpuResults.dpu)}</span>
+                                        </div>
+
+                                        {capabilityData[ctq]?.showZ && (
+                                        <div>
+                                          <div>
+                                            <span className="font-medium">
+                                              Z Long Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_Z_LT !== undefined && capabilityData[ctq]?.calculatedDPU_Z_LT !== null
+                                                ? capabilityData[ctq].calculatedDPU_Z_LT.toFixed(2)
+                                                : 'Calculating...'}
+                                            </span>
+                                            <span className="font-medium ml-4">
+                                              <br></br>DPU Long Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_LT !== undefined && capabilityData[ctq]?.calculatedDPU_LT !== null
+                                                ? formatdpu(capabilityData[ctq].calculatedDPU_LT)
+                                                : 'Calculating...'}
+                                            </span>
+                                          </div>
+                                          <div className="mt-2">
+                                            <span className="font-medium">
+                                              Z Short Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_Z_ST !== undefined && capabilityData[ctq]?.calculatedDPU_Z_ST !== null
+                                                ? capabilityData[ctq].calculatedDPU_Z_ST.toFixed(2)
+                                                : 'Calculating...'}
+                                            </span>
+                                            <span className="font-medium ml-4">
+                                              <br></br>DPU Short Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_ST !== undefined && capabilityData[ctq]?.calculatedDPU_ST !== null
+                                                ? formatdpu(capabilityData[ctq].calculatedDPU_ST)
+                                                : 'Calculating...'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        )}
+
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* RTY (Rolled Throughput Yield) Card */}
+                        {capabilityData[ctq]?.enableRty && (
+                          <div className="mt-0">
+                            <Card className="bg-green-50 border-green-200 p-2">
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-green-800 text-lg flex items-center gap-2">
+                                  <TrendingUp className="h-5 w-5" />
+                                  Rolled Throughput Yield (RTY)
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-4">
+                                  {/* Process Steps Input */}
+                                  <div>
+                                    <label className="block text-sm font-medium mb-2">Process Steps</label>
+                                    <div className="space-y-3">
+                                      {/* Show empty first row when no data exists, otherwise show all existing steps */}
+                                      {(capabilityData[ctq]?.rtyProcessSteps || [{ stepName: "", passed: undefined, total: 0 }]).map((step, index) => (
+                                        <div key={index} className="grid grid-cols-4 gap-2 items-center">
+                                          <Input
+                                            placeholder="Step name"
+                                            value={step.stepName}
+                                            onChange={(e) => {
+                                              const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                              const updatedSteps = [...currentSteps];
+                                              
+                                              // If this is the first row and no data exists yet, initialize the array
+                                              if (currentSteps.length === 0) {
+                                                updatedSteps[0] = { stepName: e.target.value, passed: undefined, total: 0 };
+                                              } else {
+                                                updatedSteps[index] = { ...step, stepName: e.target.value };
+                                              }
+                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                            }}
+                                          />
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            placeholder="Passed units (can be 0)"
+                                            value={step.passed !== undefined ? step.passed : ""}
+                                            onChange={(e) => {
+                                              const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                              const updatedSteps = [...currentSteps];
+                                              const value = e.target.value;
+                                              
+                                              // If this is the first row and no data exists yet, initialize the array
+                                              if (currentSteps.length === 0) {
+                                                if (value === "" || value === null) {
+                                                  updatedSteps[0] = { stepName: step.stepName, passed: undefined, total: step.total };
+                                                } else {
+                                                  updatedSteps[0] = { stepName: step.stepName, passed: parseInt(value), total: step.total };
+                                                }
+                                              } else {
+                                                if (value === "" || value === null) {
+                                                  updatedSteps[index] = { ...step, passed: undefined };
+                                                } else {
+                                                  updatedSteps[index] = { ...step, passed: parseInt(value) };
+                                                }
+                                              }
+                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                            }}
+                                          />
+                                          <Input
+                                            type="number"
+                                            min="1"
+                                            placeholder="Total units (must be > 0)"
+                                            value={step.total || ""}
+                                            onChange={(e) => {
+                                              const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                              const updatedSteps = [...currentSteps];
+                                              const value = parseInt(e.target.value) || 0;
+                                              
+                                              // If this is the first row and no data exists yet, initialize the array
+                                              if (currentSteps.length === 0) {
+                                                updatedSteps[0] = { stepName: step.stepName, passed: step.passed, total: value };
+                                              } else if (value > 0) {
+                                                updatedSteps[index] = { ...step, total: value };
+                                              }
+                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                            }}
+                                          />
+                                          {/* Delete button - only show if there are actual steps in the array */}
+                                          {(capabilityData[ctq]?.rtyProcessSteps || []).length > 0 && (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                                const updatedSteps = currentSteps.filter((_, i) => i !== index);
+                                                updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
+                                              }}
+                                              className="px-2"
+                                            >
+                                              ×
+                                            </Button>
+                                          )}
+                                        </div>
+                                      ))}
+                                      <div className="flex gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                            updateCapabilityField(ctq, "rtyProcessSteps", [
+                                              ...currentSteps,
+                                              { stepName: "", passed: undefined, total: 0 }
+                                            ]);
+                                          }}
+                                        >
+                                          Add Step
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* RTY Results Display */}
+                                  {(() => {
+                                    const processSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                    if (processSteps.length === 0 || !processSteps.some(step => step.total > 0)) return null;
+                                    
+                                    const rtyResults = calculateRolledThroughputYield(processSteps);
+                                    
+                                    return (
+                                      <div className="mt-4 p-3 bg-green-100 rounded-lg border">
+                                        <h4 className="font-semibold text-green-800 mb-3">RTY Analysis Results</h4>
+                                        
+                                        {/* Individual Step Yields */}
+                                        <div className="mb-4">
+                                          <h5 className="font-medium text-green-700 mb-2">Individual Step Yields</h5>
+                                          <div className="space-y-1 text-sm">
+                                            {rtyResults.individualYields.map((stepYield, index) => (
+                                              <div key={index} className="flex justify-between">
+                                                <span>{stepYield.stepName || `Step ${index + 1}`}:</span>
+                                                <span className="text-green-700 font-medium">{stepYield.yieldPercentage.toFixed(2)}%</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Overall RTY */}
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                          <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                              <span className="font-medium">Total Units:</span>
+                                              <span className="text-green-700">{rtyResults.totalUnits}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                              <span className="font-medium">Total Defects:</span>
+                                              <span className="text-green-700">{rtyResults.totalDefects}</span>
+                                            </div>
+                                          </div>
+                                          <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                              <span className="font-medium">RTY (Decimal):</span>
+                                              <span className="text-green-700">{rtyResults.rty.toFixed(4)}</span>
+                                            </div>
+                                            <div className="flex justify-between border-t pt-2">
+                                              <span className="font-bold">RTY Percentage:</span>
+                                              <span className="text-green-700 font-bold">{rtyResults.rtyPercentage.toFixed(2)}%</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        )}
+
                       {/* OEE Analysis */}
                       {capabilityData[ctq]?.enableOee && (
-                        <Card key="oee" className="p-4 bg-purple-50 border-purple-200">
+                        <Card key="oee" className="p-2 bg-purple-50 border-purple-200">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <Calculator className="h-5 w-5 text-purple-600" />
@@ -2105,473 +2409,202 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             })()}
                           </CardContent>
                         </Card>
-                      )}
-                    </div>
-                  )}
+                        )}
 
-                  {/* RTY (Rolled Throughput Yield) Card */}
-                  {ctqWithType.ctqType === "Attribute" && capabilityData[ctq]?.enableRty && (
-                    <div className="mt-4">
-                      <Card className="bg-green-50 border-green-200">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-green-800 text-sm flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4" />
-                            Rolled Throughput Yield (RTY)
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {/* Process Steps Input */}
-                            <div>
-                              <label className="block text-sm font-medium mb-2">Process Steps</label>
-                              <div className="space-y-3">
-                                {(capabilityData[ctq]?.rtyProcessSteps || []).length === 0 && (
-                                  <div className="text-center py-4">
-                                    <p className="text-gray-500 text-sm mb-3">No process steps added yet</p>
+                      {/* Pareto Analysis */}
+                      {capabilityData[ctq]?.enablePareto && (
+                        <div className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-3">
+                        <Card key="pareto" className="p-2 bg-indigo-50 border-indigo-200 w-[1044px]">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <BarChart3 className="h-5 w-5 text-indigo-600" />
+                              Pareto of Defects
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              {/* Data Entry Table */}
+                              <div>
+                                <label className="block text-sm font-medium mb-3">Defect Categories Data</label>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <div>Category of Defects</div>
+                                    <div>Number of Defects</div>
+                                    <div>Actions</div>
+                                  </div>
+                                  
+                                  {/* Categories Rows - Always show at least one empty row */}
+                                  {(capabilityData[ctq]?.paretoDefectCategories && capabilityData[ctq].paretoDefectCategories.length > 0 
+                                    ? capabilityData[ctq].paretoDefectCategories 
+                                    : [{ category: "", count: 0 }]
+                                  ).map((item, index) => (
+                                    <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                                      <Input
+                                        placeholder="e.g., Documentation Errors"
+                                        value={item.category}
+                                        onChange={(e) => {
+                                          const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                          const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
+                                          updatedCategories[index] = { ...updatedCategories[index], category: e.target.value };
+                                          updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
+                                        }}
+                                      />
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        placeholder="e.g., 42"
+                                        value={item.count || ""}
+                                        onChange={(e) => {
+                                          const value = parseInt(e.target.value) || 0;
+                                          const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                          const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
+                                          updatedCategories[index] = { ...updatedCategories[index], count: value };
+                                          updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
+                                        }}
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          const updatedCategories = [...(capabilityData[ctq]?.paretoDefectCategories || [])];
+                                          updatedCategories.splice(index, 1);
+                                          updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
+                                        }}
+                                      >
+                                      <i className="fas fa-trash h-4 w-4"></i>
+                                      </Button>
+                                    </div>
+                                  ))}
+                                  
+                                  {/* Add Category Button - Always visible */}
+                                  <div className="flex gap-2">
                                     <Button
                                       type="button"
                                       variant="outline"
                                       size="sm"
                                       onClick={() => {
-                                        updateCapabilityField(ctq, "rtyProcessSteps", [
-                                          { stepName: "", passed: 0, total: 0 }
+                                        const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                        updateCapabilityField(ctq, "paretoDefectCategories", [
+                                          ...currentCategories,
+                                          { category: "", count: 0 }
                                         ]);
                                       }}
                                     >
-                                      Add First Step
+                                      <Plus className="h-4 w-4 mr-1" />
+                                      Add
                                     </Button>
                                   </div>
-                                )}
-                                {(capabilityData[ctq]?.rtyProcessSteps || []).map((step, index) => (
-                                  <div key={index} className="grid grid-cols-3 gap-2 items-center">
-                                    <Input
-                                      placeholder="Step name"
-                                      value={step.stepName}
-                                      onChange={(e) => {
-                                        const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
-                                        updatedSteps[index] = { ...step, stepName: e.target.value };
-                                        updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
-                                      }}
-                                    />
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      placeholder="Passed units (can be 0)"
-                                      value={step.passed !== undefined ? step.passed : ""}
-                                      onChange={(e) => {
-                                        const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
-                                        const value = e.target.value;
-                                        if (value === "" || value === null) {
-                                          updatedSteps[index] = { ...step, passed: undefined };
-                                        } else {
-                                          updatedSteps[index] = { ...step, passed: parseInt(value) };
-                                        }
-                                        updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
-                                      }}
-                                    />
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      placeholder="Total units (must be > 0)"
-                                      value={step.total || ""}
-                                      onChange={(e) => {
-                                        const value = parseInt(e.target.value) || 0;
-                                        if (value > 0) {
-                                          const updatedSteps = [...(capabilityData[ctq]?.rtyProcessSteps || [])];
-                                          updatedSteps[index] = { ...step, total: value };
-                                          updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
-                                        }
-                                      }}
-                                    />
-                                  </div>
-                                ))}
-                                <div className="flex gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
-                                      updateCapabilityField(ctq, "rtyProcessSteps", [
-                                        ...currentSteps,
-                                        { stepName: "", passed: 0, total: 0 }
-                                      ]);
-                                    }}
-                                  >
-                                    Add Step
-                                  </Button>
-                                  {(capabilityData[ctq]?.rtyProcessSteps || []).length > 0 && (
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
-                                        updateCapabilityField(ctq, "rtyProcessSteps", currentSteps.slice(0, -1));
-                                      }}
-                                    >
-                                      Remove Step
-                                    </Button>
-                                  )}
                                 </div>
                               </div>
-                            </div>
-                            
-                            {/* RTY Results Display */}
-                            {(() => {
-                              const processSteps = capabilityData[ctq]?.rtyProcessSteps || [];
-                              if (processSteps.length === 0 || !processSteps.some(step => step.total > 0)) return null;
-                              
-                              const rtyResults = calculateRolledThroughputYield(processSteps);
-                              
-                              return (
-                                <div className="mt-4 p-3 bg-green-100 rounded-lg border">
-                                  <h4 className="font-semibold text-green-800 mb-3">RTY Analysis Results</h4>
-                                  
-                                  {/* Individual Step Yields */}
-                                  <div className="mb-4">
-                                    <h5 className="font-medium text-green-700 mb-2">Individual Step Yields</h5>
-                                    <div className="space-y-1 text-sm">
-                                      {rtyResults.individualYields.map((stepYield, index) => (
-                                        <div key={index} className="flex justify-between">
-                                          <span>{stepYield.stepName || `Step ${index + 1}`}:</span>
-                                          <span className="text-green-700 font-medium">{stepYield.yieldPercentage.toFixed(2)}%</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Overall RTY */}
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div className="space-y-2">
-                                      <div className="flex justify-between">
-                                        <span className="font-medium">Total Units:</span>
-                                        <span className="text-green-700">{rtyResults.totalUnits}</span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="font-medium">Total Defects:</span>
-                                        <span className="text-green-700">{rtyResults.totalDefects}</span>
-                                      </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <div className="flex justify-between">
-                                        <span className="font-medium">RTY (Decimal):</span>
-                                        <span className="text-green-700">{rtyResults.rty.toFixed(4)}</span>
-                                      </div>
-                                      <div className="flex justify-between border-t pt-2">
-                                        <span className="font-bold">RTY Percentage:</span>
-                                        <span className="text-green-700 font-bold">{rtyResults.rtyPercentage.toFixed(2)}%</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
 
-                  {/* Pareto Analysis */}
-                  {capabilityData[ctq]?.enablePareto && (
-                    <Card key="pareto" className="p-4 bg-indigo-50 border-indigo-200 w-[1044px]">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <BarChart3 className="h-5 w-5 text-indigo-600" />
-                          Pareto of Defects
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {/* Data Entry Table */}
-                          <div>
-                            <label className="block text-sm font-medium mb-3">Defect Categories Data</label>
-                            <div className="space-y-2">
-                              <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <div>Category of Defects</div>
-                                <div>Number of Defects</div>
-                                <div>Actions</div>
-                              </div>
-                              
-                              {/* Categories Rows - Always show at least one empty row */}
-                              {(capabilityData[ctq]?.paretoDefectCategories && capabilityData[ctq].paretoDefectCategories.length > 0 
-                                ? capabilityData[ctq].paretoDefectCategories 
-                                : [{ category: "", count: 0 }]
-                              ).map((item, index) => (
-                                <div key={index} className="grid grid-cols-3 gap-2 items-center">
-                                  <Input
-                                    placeholder="e.g., Documentation Errors"
-                                    value={item.category}
-                                    onChange={(e) => {
-                                      const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                      const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
-                                      updatedCategories[index] = { ...updatedCategories[index], category: e.target.value };
-                                      updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
-                                    }}
-                                  />
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    placeholder="e.g., 42"
-                                    value={item.count || ""}
-                                    onChange={(e) => {
-                                      const value = parseInt(e.target.value) || 0;
-                                      const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                      const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
-                                      updatedCategories[index] = { ...updatedCategories[index], count: value };
-                                      updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
-                                    }}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      const updatedCategories = [...(capabilityData[ctq]?.paretoDefectCategories || [])];
-                                      updatedCategories.splice(index, 1);
-                                      updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
-                              
-                              {/* Add Category Button - Always visible */}
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                    updateCapabilityField(ctq, "paretoDefectCategories", [
-                                      ...currentCategories,
-                                      { category: "", count: 0 }
-                                    ]);
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  Add
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Pareto Chart */}
-                          {(() => {
-                            const categories = capabilityData[ctq]?.paretoDefectCategories || [];
-                            const validCategories = categories.filter(item => item.category && item.count > 0);
-                            
-                            if (validCategories.length === 0) return null;
-
-                            const paretoResults = calculateParetoOfDefects(validCategories);
-                            
-                            return (
-                              <div className="space-y-4">
-                                <div className="h-80 border border-gray-200 rounded-md p-4">
-                                  <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart
-                                      data={paretoResults.sortedCategories}
-                                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                                    >
-                                      <CartesianGrid strokeDasharray="3 3" />
-                                      <XAxis 
-                                        dataKey="category" 
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={80}
-                                        interval={0}
-                                      />
-                                      <YAxis yAxisId="left" orientation="left" />
-                                      <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-                                      <Tooltip />
-                                      <Legend />
-                                      <Bar 
-                                        yAxisId="left" 
-                                        dataKey="count" 
-                                        fill="#8884d8" 
-                                        name="Count" 
-                                      />
-                                      <Line 
-                                        yAxisId="right" 
-                                        type="monotone" 
-                                        dataKey="cumulativePercentage" 
-                                        stroke="#ff7300" 
-                                        strokeWidth={3}
-                                        name="Cumulative %" 
-                                      />
-                                    </ComposedChart>
-                                  </ResponsiveContainer>
-                                </div>
-
-                                {/* Results Table */}
-                                <div className="overflow-x-auto">
-                                  <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                      <tr>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Category
-                                        </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Count
-                                        </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Percentage
-                                        </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Cumulative %
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                      {paretoResults.sortedCategories.map((item, index) => (
-                                        <tr key={index}>
-                                          <td className="px-4 py-2 text-sm font-medium text-gray-900">
-                                            {item.category}
-                                          </td>
-                                          <td className="px-4 py-2 text-sm text-gray-500">
-                                            {item.count}
-                                          </td>
-                                          <td className="px-4 py-2 text-sm text-gray-500">
-                                            {item.percentage.toFixed(1)}%
-                                          </td>
-                                          <td className="px-4 py-2 text-sm text-gray-500">
-                                            {item.cumulativePercentage.toFixed(1)}%
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-
-                                {/* Key Insights */}
-                                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-                                  <h4 className="font-medium text-indigo-900 mb-2">Key Insights</h4>
-                                  <ul className="text-sm text-indigo-800 space-y-1">
-                                    <li>• Total Defects: {paretoResults.totalDefects}</li>
-                                    <li>• Top Category: {paretoResults.sortedCategories[0]?.category} ({paretoResults.sortedCategories[0]?.percentage.toFixed(1)}%)</li>
-                                    <li>• 80% Rule: First {paretoResults.sortedCategories.findIndex(item => item.cumulativePercentage >= 80) + 1} categories account for 80% of defects</li>
-                                    <li>• Vital Few: {paretoResults.vitalFew.join(', ')}</li>
-                                  </ul>
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* DPU (Defects per Unit) Analysis */}
-                  {capabilityData[ctq]?.enableDpu && (
-                    <Card key="dpu" className="p-4 bg-purple-50 border-purple-200 w-[1044px]">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Calculator className="h-5 w-5 text-purple-600" />
-                          DPU (Defects per Unit) Analysis
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {/* Input Fields */}
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium mb-2">Number of Defects</label>
-                              <Input
-                                type="number"
-                                min="0"
-                                value={capabilityData[ctq]?.dpuDefects !== undefined ? capabilityData[ctq]?.dpuDefects : ""}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (value === "" || value === null) {
-                                    updateCapabilityField(ctq, "dpuDefects", undefined);
-                                  } else {
-                                    updateCapabilityField(ctq, "dpuDefects", parseInt(value));
-                                  }
-                                }}
-                                placeholder="e.g., 0"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium mb-2">Number of Units</label>
-                              <Input
-                                type="number"
-                                min="1"
-                                step="1"
-                                value={capabilityData[ctq]?.dpuUnits || ""}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (value === "" || (!isNaN(Number(value)) && Number(value) > 0)) {
-                                    updateCapabilityField(ctq, "dpuUnits", value === "" ? undefined : Number(value));
-                                  }
-                                }}
-                                placeholder="Enter total number of units"
-                                className="w-full"
-                              />
-                            </div>
-                          </div>
-
-                          {/* DPU Results Display */}
-                          {(() => {
-                            const defects = capabilityData[ctq]?.dpuDefects || 0;
-                            const units = capabilityData[ctq]?.dpuUnits || 0;
-                            
-                            if (units === 0) return null;
-                            
-                            const dpuResults = calculateDPU(defects, units);
-                            
-                            return (
-                              <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
-                                <h4 className="font-semibold text-purple-800 mb-3">DPU Analysis Results</h4>
+                              {/* Pareto Chart */}
+                              {(() => {
+                                const categories = capabilityData[ctq]?.paretoDefectCategories || [];
+                                const validCategories = categories.filter(item => item.category && item.count > 0);
                                 
-                                <div className="grid grid-cols-3 gap-4 text-sm">
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">DPU:</span>
-                                      <span className="text-purple-700 font-bold">{dpuResults.dpu.toFixed(4)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">Classification:</span>
-                                      <span className={`font-medium ${
-                                        dpuResults.classification === 'Perfect' ? 'text-green-700' :
-                                        dpuResults.classification === 'Excellent' ? 'text-blue-700' :
-                                        dpuResults.classification === 'Good' ? 'text-yellow-700' :
-                                        dpuResults.classification === 'Fair' ? 'text-orange-700' :
-                                        'text-red-700'
-                                      }`}>
-                                        {dpuResults.classification}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">Total Defects:</span>
-                                      <span className="text-purple-700">{defects}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">Total Units:</span>
-                                      <span className="text-purple-700">{units}</span>
-                                    </div>
-                                  </div>
+                                if (validCategories.length === 0) return null;
 
-                                  <div className="col-span-1">
-                                    <div className="p-2 bg-purple-50 border border-purple-200 rounded">
-                                      <h5 className="font-medium text-purple-900 mb-1">Interpretation</h5>
-                                      <p className="text-xs text-purple-800">{dpuResults.interpretation}</p>
+                                const paretoResults = calculateParetoOfDefects(validCategories);
+                                
+                                return (
+                                  <div className="space-y-4">
+                                    <div className="h-80 border border-gray-200 rounded-md p-4">
+                                      <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart
+                                          data={paretoResults.sortedCategories}
+                                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                        >
+                                          <CartesianGrid strokeDasharray="3 3" />
+                                          <XAxis 
+                                            dataKey="category" 
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={80}
+                                            interval={0}
+                                          />
+                                          <YAxis yAxisId="left" orientation="left" />
+                                          <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                                          <Tooltip />
+                                          <Legend />
+                                          <Bar 
+                                            yAxisId="left" 
+                                            dataKey="count" 
+                                            fill="#8884d8" 
+                                            name="Count" 
+                                          />
+                                          <Line 
+                                            yAxisId="right" 
+                                            type="monotone" 
+                                            dataKey="cumulativePercentage" 
+                                            stroke="#ff7300" 
+                                            strokeWidth={3}
+                                            name="Cumulative %" 
+                                          />
+                                        </ComposedChart>
+                                      </ResponsiveContainer>
+                                    </div>
+
+                                    {/* Results Table */}
+                                    <div className="overflow-x-auto">
+                                      <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                          <tr>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Category
+                                            </th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Count
+                                            </th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Percentage
+                                            </th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                              Cumulative %
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                          {paretoResults.sortedCategories.map((item, index) => (
+                                            <tr key={index}>
+                                              <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                                                {item.category}
+                                              </td>
+                                              <td className="px-4 py-2 text-sm text-gray-500">
+                                                {item.count}
+                                              </td>
+                                              <td className="px-4 py-2 text-sm text-gray-500">
+                                                {item.percentage.toFixed(1)}%
+                                              </td>
+                                              <td className="px-4 py-2 text-sm text-gray-500">
+                                                {item.cumulativePercentage.toFixed(1)}%
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+
+                                    {/* Key Insights */}
+                                    <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                      <h4 className="font-medium text-indigo-900 mb-2">Key Insights</h4>
+                                      <ul className="text-sm text-indigo-800 space-y-1">
+                                        <li>• Total Defects: {paretoResults.totalDefects}</li>
+                                        <li>• Top Category: {paretoResults.sortedCategories[0]?.category} ({paretoResults.sortedCategories[0]?.percentage.toFixed(1)}%)</li>
+                                        <li>• 80% Rule: First {paretoResults.sortedCategories.findIndex(item => item.cumulativePercentage >= 80) + 1} categories account for 80% of defects</li>
+                                        <li>• Vital Few: {paretoResults.vitalFew.join(', ')}</li>
+                                      </ul>
                                     </div>
                                   </div>
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                                );
+                              })()}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                      )}
+                  </div>
+                )}
 
                 {/* Statistics Control Buttons for Continuous CTQs */}
                 <div>                  
