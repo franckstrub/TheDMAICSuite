@@ -2459,13 +2459,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       <Input
                                         type="number"
                                         min="0"
-                                        placeholder="e.g., 42"
-                                        value={item.count || ""}
+                                        placeholder="Number of defects (can be 0)"
+                                        value={item.count !== undefined && item.count !== null ? item.count : ""}
                                         onChange={(e) => {
-                                          const value = parseInt(e.target.value) || 0;
+                                          const value = e.target.value;
                                           const currentCategories = capabilityData[ctq]?.paretoDefectCategories || [];
                                           const updatedCategories = currentCategories.length > 0 ? [...currentCategories] : [{ category: "", count: 0 }];
-                                          updatedCategories[index] = { ...updatedCategories[index], count: value };
+                                          
+                                          if (value === "" || value === null) {
+                                            updatedCategories[index] = { ...updatedCategories[index], count: 0 };
+                                          } else {
+                                            const parsedValue = parseInt(value);
+                                            updatedCategories[index] = { ...updatedCategories[index], count: isNaN(parsedValue) ? 0 : parsedValue };
+                                          }
                                           updateCapabilityField(ctq, "paretoDefectCategories", updatedCategories);
                                         }}
                                       />
