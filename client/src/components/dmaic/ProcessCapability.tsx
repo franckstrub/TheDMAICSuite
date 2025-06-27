@@ -58,9 +58,9 @@ import {formatdpu} from "@/lib/statisticsUtils";
 interface ProcessCapabilityData {
   id?: number;
   ctq: string;
-  lsl: string | null;
-  usl: string | null;
-  target: string | null;
+  lsl: string;
+  usl: string;
+  target: string;
   zShift: number;
   dataSetTerm: "Long Term" | "Short Term";
   capabilityIndex: "Z" | "Cp/Cpk";
@@ -106,7 +106,6 @@ interface ProcessCapabilityData {
   // DPU Analysis fields
   dpuDefects?: number;
   dpuUnits?: number;
-  calculatedDPU?: number;
   calculatedDPU_Z_LT?: number;
   calculatedDPU_Z_ST?: number;
   calculatedDPU_LT?: number;
@@ -1119,9 +1118,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       return null;
     }
     
-    const lsl = parseNumericValue(data.lsl, null);
-    const usl = parseNumericValue(data.usl, null);
-    const target = parseNumericValue(data.target, null);
+    const lsl = parseNumericValue(data.lsl, undefined);
+    const usl = parseNumericValue(data.usl, undefined);
+    const target = parseNumericValue(data.target, undefined);
     const zShift = data.zShift || 1.5;
     
     if (lsl === 0 && usl === 0) {
@@ -1162,7 +1161,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     // Calculate performance metrics for both Long Term and Short Term using Z scores
     const performanceMetrics = calculatePerformanceMetrics(
       zScoreData.zLongTerm || 0,
-      zScoreData.zShortTerm || 0
+      zScoreData.zLSL_LT!,
+      zScoreData.zUSL_LT!,
+      zScoreData.zShortTerm || 0,
+      zScoreData.zLSL_ST!,
+      zScoreData.zUSL_ST!,
     );
 
     // Calculate all capability indices at once
@@ -2130,7 +2133,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       {/* Show empty first row when no data exists, otherwise show all existing steps */}
                                       {(capabilityData[ctq]?.rtyProcessSteps && capabilityData[ctq]?.rtyProcessSteps.length > 0 
                                         ? capabilityData[ctq]?.rtyProcessSteps 
-                                        : [{ stepName: "", passed: null, total: 0 }]
+                                        : [{ stepName: "", passed: undefined, total: 0 }]
                                       ).map((step, index) => (
                                         <div key={index} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
                                           <Input
@@ -2142,13 +2145,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               
                                               // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
-                                                updatedSteps[0] = { stepName: e.target.value, passed: null, total: 0 };
+                                                updatedSteps[0] = { stepName: e.target.value, passed: undefined, total: 0 };
                                               } else {
-                                                updatedSteps[index] = { 
-                                                  stepName: e.target.value, 
-                                                  passed: step.passed !== undefined ? step.passed : null, 
-                                                  total: step.total 
-                                                };
+                                                updatedSteps[index] = { ...step, stepName: e.target.value };
                                               }
                                               updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
@@ -2157,7 +2156,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             type="number"
                                             min="0"
                                             placeholder="Passed units (can be 0)"
-                                            value={step.passed !== null ? (step.passed?.toString() || "") : ""}
+                                            value={step.passed !== undefined ? step.passed : ""}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
                                               const updatedSteps = [...currentSteps];
@@ -2166,13 +2165,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
                                                 if (value === "" || value === null) {
-                                                  updatedSteps[0] = { stepName: step.stepName, passed: null, total: step.total };
+                                                  updatedSteps[0] = { stepName: step.stepName, passed: undefined, total: step.total };
                                                 } else {
                                                   updatedSteps[0] = { stepName: step.stepName, passed: parseInt(value), total: step.total };
                                                 }
                                               } else {
                                                 if (value === "" || value === null) {
-                                                  updatedSteps[index] = { ...step, passed: null };
+                                                  updatedSteps[index] = { ...step, passed: undefined };
                                                 } else {
                                                   updatedSteps[index] = { ...step, passed: parseInt(value) };
                                                 }
@@ -2192,13 +2191,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               
                                               // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
-                                                updatedSteps[0] = { stepName: step.stepName, passed: step.passed !== undefined ? step.passed : null, total: value };
+                                                updatedSteps[0] = { stepName: step.stepName, passed: step.passed, total: value };
                                               } else if (value > 0) {
-                                                updatedSteps[index] = { 
-                                                  stepName: step.stepName, 
-                                                  passed: step.passed !== undefined ? step.passed : null, 
-                                                  total: value 
-                                                };
+                                                updatedSteps[index] = { ...step, total: value };
                                               }
                                               updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
