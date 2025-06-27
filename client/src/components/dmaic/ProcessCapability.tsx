@@ -1263,10 +1263,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           ...step,
           passed: step.passed === undefined ? null : step.passed
         })),
-        paretoDefectCategories: (data.paretoDefectCategories || []).map(item => ({
-          ...item,
-          count: item.count === undefined ? null : item.count
-        })),
+        paretoDefectCategories: (data.paretoDefectCategories || [])
+          .filter(item => item.category.trim() !== '') // Remove empty categories
+          .map(item => ({
+            ...item,
+            count: item.count === undefined ? null : item.count
+          })),
         dpuDefects: data.dpuDefects,
         dpuUnits: data.dpuUnits
       };
@@ -2519,7 +2521,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               {/* Pareto Chart */}
                               {(() => {
                                 const categories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                const validCategories = categories.filter(item => item.category && item.count !== undefined && item.count >= 0);
+                                const validCategories = categories.filter(item => item.category && item.count !== null && item.count !== undefined && item.count >= 0);
                                 
                                 if (validCategories.length === 0) return null;
 

@@ -120,7 +120,8 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 26, 2025. Improved RTY (Rolled Throughput Yield) interface - shows empty first row when no data exists, removed "Add first step" button, added individual delete buttons for each row, and updated grid layout from 3 to 4 columns
 - June 27, 2025. Fixed RTY empty row display issue for CTB#3 by updating display logic and input handlers to properly show and initialize empty first row when no data exists
 - June 27, 2025. Enhanced OEE bad parts input field with same logic as DPMO defects - allows entering 0 values with proper undefined handling for empty fields, enabling accurate OEE calculations when no defective parts exist
-- June 27, 2025. Enhanced Pareto analysis defects input field with exact same logic as DPMO defects - shows empty field when cleared (not zero), allows entering 0 values, uses undefined for empty state, and matches DPMO placeholder text exactly
+- June 27, 2025. Fixed process capability save validation error by updating schema to handle null values instead of undefined for JSON serialization - Pareto and RTY fields now properly save with null handling for empty values
+- June 27, 2025. Enhanced Pareto analysis defects input field with exact same logic as DPMO defects - shows empty field when cleared (not zero), allows entering 0 values, uses null for empty state to fix JSON serialization, and matches DPMO placeholder text exactly
 
 ## User Preferences
 
