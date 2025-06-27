@@ -2102,11 +2102,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           </CardContent>
                         </Card>
                       )}
-
+                  </div>
+                  )}
+                  {ctqWithType.ctqType === "Attribute" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
                       {/* RTY (Rolled Throughput Yield) Card */}
                         {capabilityData[ctq]?.enableRty && (
                           <div className="mt-0">
-                            <Card className="bg-green-50 border-green-200 p-2">
+                            <Card className="bg-green-50 border-green-200 min-h-full p-1">
                               <CardHeader className="pb-3">
                                 <CardTitle className="text-green-800 text-lg flex items-center gap-2">
                                   <TrendingUp className="h-5 w-5" />
@@ -2124,23 +2127,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         ? capabilityData[ctq]?.rtyProcessSteps 
                                         : [{ stepName: "", passed: undefined, total: 0 }]
                                       ).map((step, index) => (
-                                        <div key={index} className="grid grid-cols-4 gap-2 items-center">
+                                        <div key={index} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
                                           <Input
                                             placeholder="Step name"
                                             value={step.stepName}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                              const updatedSteps = [...currentSteps];
                                               
-                                              // If no data exists yet, create the first step
+                                              // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
-                                                updateCapabilityField(ctq, "rtyProcessSteps", [
-                                                  { stepName: e.target.value, passed: undefined, total: 0 }
-                                                ]);
+                                                updatedSteps[0] = { stepName: e.target.value, passed: undefined, total: 0 };
                                               } else {
-                                                const updatedSteps = [...currentSteps];
                                                 updatedSteps[index] = { ...step, stepName: e.target.value };
-                                                updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                               }
+                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
                                           />
                                           <Input
@@ -2150,25 +2151,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             value={step.passed !== undefined ? step.passed : ""}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                              const updatedSteps = [...currentSteps];
                                               const value = e.target.value;
                                               
-                                              // If no data exists yet, create the first step
+                                              // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
-                                                const newStep = {
-                                                  stepName: step.stepName,
-                                                  passed: value === "" || value === null ? undefined : parseInt(value),
-                                                  total: step.total
-                                                };
-                                                updateCapabilityField(ctq, "rtyProcessSteps", [newStep]);
+                                                if (value === "" || value === null) {
+                                                  updatedSteps[0] = { stepName: step.stepName, passed: undefined, total: step.total };
+                                                } else {
+                                                  updatedSteps[0] = { stepName: step.stepName, passed: parseInt(value), total: step.total };
+                                                }
                                               } else {
-                                                const updatedSteps = [...currentSteps];
                                                 if (value === "" || value === null) {
                                                   updatedSteps[index] = { ...step, passed: undefined };
                                                 } else {
                                                   updatedSteps[index] = { ...step, passed: parseInt(value) };
                                                 }
-                                                updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                               }
+                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
                                           />
                                           <Input
@@ -2178,37 +2178,32 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             value={step.total || ""}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
+                                              const updatedSteps = [...currentSteps];
                                               const value = parseInt(e.target.value) || 0;
                                               
-                                              // If no data exists yet, create the first step
+                                              // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
-                                                const newStep = {
-                                                  stepName: step.stepName,
-                                                  passed: step.passed,
-                                                  total: value
-                                                };
-                                                updateCapabilityField(ctq, "rtyProcessSteps", [newStep]);
+                                                updatedSteps[0] = { stepName: step.stepName, passed: step.passed, total: value };
                                               } else if (value > 0) {
-                                                const updatedSteps = [...currentSteps];
                                                 updatedSteps[index] = { ...step, total: value };
-                                                updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                               }
+                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
                                           />
                                           {/* Delete button - only show if there are actual steps in the array */}
                                           {(capabilityData[ctq]?.rtyProcessSteps || []).length > 0 && (
                                             <Button
                                               type="button"
-                                              variant="outline"
-                                              size="sm"
+                                              variant="secondary"
+                                              size="icon"
                                               onClick={() => {
                                                 const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
                                                 const updatedSteps = currentSteps.filter((_, i) => i !== index);
                                                 updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                               }}
-                                              className="px-2"
+                                              className="w-10 h-10"
                                             >
-                                              ×
+                                              <i className="fas fa-trash h-4 w-4"></i>
                                             </Button>
                                           )}
                                         </div>
@@ -2250,36 +2245,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             {rtyResults.individualYields.map((stepYield, index) => (
                                               <div key={index} className="flex justify-between">
                                                 <span>{stepYield.stepName || `Step ${index + 1}`}:</span>
-                                                <span className="text-green-700 font-medium">{stepYield.yieldPercentage.toFixed(2)}%</span>
+                                                <span className="text-green-700 font-medium">Y<sub>TP{index}</sub>: {stepYield.yieldPercentage.toFixed(2)}%</span>
                                               </div>
                                             ))}
                                           </div>
                                         </div>
                                         
                                         {/* Overall RTY */}
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                          <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                              <span className="font-medium">Total Units:</span>
-                                              <span className="text-green-700">{rtyResults.totalUnits}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                              <span className="font-medium">Total Defects:</span>
-                                              <span className="text-green-700">{rtyResults.totalDefects}</span>
-                                            </div>
-                                          </div>
-                                          <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                              <span className="font-medium">RTY (Decimal):</span>
-                                              <span className="text-green-700">{rtyResults.rty.toFixed(4)}</span>
-                                            </div>
                                             <div className="flex justify-between border-t pt-2">
                                               <span className="font-bold">RTY Percentage:</span>
-                                              <span className="text-green-700 font-bold">{rtyResults.rtyPercentage.toFixed(2)}%</span>
+                                              <span className="text-green-700 font-bold">Y<sub>RT</sub>: {rtyResults.rtyPercentage.toFixed(2)}%</span>
                                             </div>
                                           </div>
-                                        </div>
-                                      </div>
                                     );
                                   })()}
                                 </div>
@@ -2300,7 +2277,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <CardContent>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium mb-2">SCHEDULED PRODUCTION TIME</label>
+                                <label className="block text-sm font-medium mb-2">Scheduled Production Time</label>
                                 <Input
                                   type="number"
                                   min="0"
@@ -2312,7 +2289,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span className="text-xs text-gray-500">hours</span>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">AVAILABLE TIME</label>
+                                <label className="block text-sm font-medium mb-2">Available Time</label>
                                 <Input
                                   type="number"
                                   min="0"
@@ -2325,7 +2302,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               </div>
 
                               <div>
-                                <label className="block text-sm font-medium mb-2">Nominal production capacity</label>
+                                <label className="block text-sm font-medium mb-2">Nominal Production Capacity</label>
                                 <Input
                                   type="number"
                                   min="0"
@@ -2346,19 +2323,26 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   onChange={(e) => updateCapabilityField(ctq, "oeePartsManufactured", parseInt(e.target.value) || 0)}
                                   placeholder="e.g., 20"
                                 />
-                                <span className="text-xs text-gray-500">PARTS</span>
+                                <span className="text-xs text-gray-500">parts manufactured</span>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Bad Parts</label>
+                                <label className="block text-sm font-medium mb-2">Non-Conform Parts</label>
                                 <Input
                                   type="number"
                                   min="0"
                                   step="1"
-                                  value={capabilityData[ctq]?.oeeBadParts || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeeBadParts", parseInt(e.target.value) || 0)}
-                                  placeholder="e.g., 3"
+                                  value={capabilityData[ctq]?.oeeBadParts !== undefined ? capabilityData[ctq]?.oeeBadParts : ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === "" || value === null) {
+                                      updateCapabilityField(ctq, "oeeBadParts", undefined);
+                                    } else {
+                                      updateCapabilityField(ctq, "oeeBadParts", parseInt(value));
+                                    }
+                                  }}
+                                  placeholder="Number of bad parts (can be 0)"
                                 />
-                                <span className="text-xs text-gray-500">DEFECTIVE PARTS</span>
+                                <span className="text-xs text-gray-500">defective parts/scrap</span>
                               </div>
                             </div>
                             
@@ -2377,14 +2361,26 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               );
                               
                               // Calculate performance time and quality time from OEE results
+                              const scheduledTime = data.oeeScheduledTime!;
+                              const availableTime = data.oeeAvailableTime!;
                               const performanceTime = oeeResults.performance * data.oeeAvailableTime!;
                               const qualityTime = oeeResults.quality * performanceTime;
                               
                               return (
                                 <div className="mt-4 p-3 bg-purple-100 rounded-lg border">
                                   <h4 className="font-semibold text-purple-800 mb-2">OEE (Overall Equipment Effectiveness)</h4>
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div className="space-y-2">
+                                  <div className="grid grid-cols-1 gap-4 text-sm">
+                                    {/*<div className="space-y-2">
+                                      *<div className="flex justify-between">
+                                        <span className="font-medium">SCHEDULED TIME</span>
+                                        <span className="text-purple-700">{scheduledTime.toFixed(1)}</span>
+                                        <span className="text-xs text-gray-500">hours</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">AVAILABLE TIME</span>
+                                        <span className="text-purple-700">{availableTime.toFixed(1)}</span>
+                                        <span className="text-xs text-gray-500">hours</span>
+                                      </div>
                                       <div className="flex justify-between">
                                         <span className="font-medium">PERFORMANCE TIME</span>
                                         <span className="text-purple-700">{performanceTime.toFixed(1)}</span>
@@ -2395,23 +2391,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         <span className="text-purple-700">{qualityTime.toFixed(1)}</span>
                                         <span className="text-xs text-gray-500">hours</span>
                                       </div>
-                                    </div>
+                                    </div>*/}
                                     <div className="space-y-2">
                                       <div className="flex justify-between">
                                         <span className="font-medium">AVAILABILITY %</span>
-                                        <span className="text-purple-700">{oeeResults.availabilityPercentage.toFixed(2)}</span>
+                                        <span className="text-purple-700">{oeeResults.availabilityPercentage.toFixed(2)}%</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="font-medium">PERFORMANCE %</span>
-                                        <span className="text-purple-700">{oeeResults.performancePercentage.toFixed(2)}</span>
+                                        <span className="text-purple-700">{oeeResults.performancePercentage.toFixed(2)}%</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="font-medium">QUALITY %</span>
-                                        <span className="text-purple-700">{oeeResults.qualityPercentage.toFixed(2)}</span>
+                                        <span className="text-purple-700">{oeeResults.qualityPercentage.toFixed(2)}%</span>
                                       </div>
                                       <div className="flex justify-between border-t pt-2">
                                         <span className="font-bold">OEE %</span>
-                                        <span className="text-purple-700 font-bold">{oeeResults.oeePercentage.toFixed(2)}</span>
+                                        <span className="text-purple-700 font-bold">{oeeResults.oeePercentage.toFixed(2)}%</span>
                                       </div>
                                     </div>
                                   </div>
