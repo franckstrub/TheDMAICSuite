@@ -1119,9 +1119,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       return null;
     }
     
-    const lsl = parseNumericValue(data.lsl, undefined);
-    const usl = parseNumericValue(data.usl, undefined);
-    const target = parseNumericValue(data.target, undefined);
+    const lsl = parseNumericValue(data.lsl, null);
+    const usl = parseNumericValue(data.usl, null);
+    const target = parseNumericValue(data.target, null);
     const zShift = data.zShift || 1.5;
     
     if (lsl === 0 && usl === 0) {
@@ -2134,7 +2134,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       {/* Show empty first row when no data exists, otherwise show all existing steps */}
                                       {(capabilityData[ctq]?.rtyProcessSteps && capabilityData[ctq]?.rtyProcessSteps.length > 0 
                                         ? capabilityData[ctq]?.rtyProcessSteps 
-                                        : [{ stepName: "", passed: undefined, total: 0 }]
+                                        : [{ stepName: "", passed: null, total: 0 }]
                                       ).map((step, index) => (
                                         <div key={index} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
                                           <Input

@@ -6,7 +6,7 @@
  * @param defaultValue Default value if parsing fails
  * @returns Parsed number or default value
  */
-export function parseNumericValue(value: any, defaultValue: number | undefined): number | undefined {
+export function parseNumericValue(value: any, defaultValue: number | null): number | null {
   if (value === null || value === undefined) return defaultValue;
   
   if (typeof value === 'number') return value;
@@ -627,17 +627,17 @@ export function calculateZScoreLongShortTerm(
   values: number[],
   meanVal: number,
   stdDev: number,
-  lsl: number | undefined,
-  usl: number | undefined,
+  lsl: number | null,
+  usl: number | null,
   dataSetTerm: "Long Term" | "Short Term",
   zShift: number,
 ): {
   zLongTerm: number;
-  zLSL_LT: number | undefined;
-  zUSL_LT: number | undefined;
+  zLSL_LT: number | null;
+  zUSL_LT: number | null;
   zShortTerm: number;
-  zLSL_ST: number | undefined;
-  zUSL_ST: number | undefined;
+  zLSL_ST: number | null;
+  zUSL_ST: number | null;
 } {
   if (values.length === 0 || stdDev === 0) {
     return {
