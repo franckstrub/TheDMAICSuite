@@ -981,14 +981,14 @@ export function getParetoData(categories: string[], values: number[]): {
 
 /**
  * Inverse Normal CDF using Beasley-Springer-Moro algorithm
- * Calculates the Z value from a percentage of defects
+ * Calculates the Z value from a probability of defects
  * @param p Probability/percentage (0 to 1, where 0.01 = 1% defects)
  * @returns Z-score corresponding to the given probability
  */
 export function inverseNormCDF(p: number): number {
   // Handle edge cases
-  if (p <= 0) return -Infinity;
-  if (p >= 1) return Infinity;
+  if (p <= 0.00000000000001) return -Infinity;
+  if (p >= (1-0.00000000000001)) return Infinity;
   if (p === 0.5) return 0;
 
   // Use Beasley-Springer-Moro algorithm for inverse normal CDF

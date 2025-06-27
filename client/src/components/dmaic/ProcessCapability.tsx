@@ -1260,7 +1260,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         oeePartsManufactured: data.oeePartsManufactured,
         oeeBadParts: data.oeeBadParts,
         rtyProcessSteps: data.rtyProcessSteps || [],
-        paretoDefectCategories: data.paretoDefectCategories || [],
+        paretoDefectCategories: (data.paretoDefectCategories || []).map(item => ({
+          ...item,
+          count: item.count === undefined ? null : item.count
+        })),
         dpuDefects: data.dpuDefects,
         dpuUnits: data.dpuUnits
       };
@@ -2432,12 +2435,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             <div className="space-y-4">
                               {/* Data Entry Table */}
                               <div>
-                                <label className="block text-sm font-medium mb-3">Defect Categories Data</label>
+                                <label className="block text-sm font-medium mb-3">Defect Categories</label>
                                 <div className="space-y-2">
                                   <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     <div>Category of Defects</div>
                                     <div>Number of Defects</div>
-                                    <div>Actions</div>
+                                    <div className="text-center">Action</div>
                                   </div>
                                   
                                   {/* Categories Rows - Always show at least one empty row */}
@@ -2513,7 +2516,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               {/* Pareto Chart */}
                               {(() => {
                                 const categories = capabilityData[ctq]?.paretoDefectCategories || [];
-                                const validCategories = categories.filter(item => item.category && item.count !== undefined && item.count > 0);
+                                const validCategories = categories.filter(item => item.category && item.count !== undefined && item.count >= 0);
                                 
                                 if (validCategories.length === 0) return null;
 
@@ -2521,8 +2524,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 
                                 return (
                                   <div className="space-y-4">
-                                    <div className="h-80 border border-gray-200 rounded-md p-4">
-                                      <ResponsiveContainer width="100%" height="100%">
+                                    <div className="h-[400px] border border-gray-200 rounded-md pt-1 pb-6">
+                                      <h3 className="text-lg font-semibold text-center">PARETO of DEFECTS</h3>
+                                      <ResponsiveContainer width="100%" height="100%">  
                                         <ComposedChart
                                           data={paretoResults.sortedCategories}
                                           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -2530,13 +2534,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           <CartesianGrid strokeDasharray="3 3" />
                                           <XAxis 
                                             dataKey="category" 
-                                            angle={-45}
+                                            angle={-30}
                                             textAnchor="end"
-                                            height={80}
+                                            height={100}
                                             interval={0}
                                           />
-                                          <YAxis yAxisId="left" orientation="left" />
-                                          <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
+                                          <YAxis yAxisId="left" orientation="left" 
+                                          label={{ value: 'Count', position: 'insideTop', offset: -20 }}/>
+                                          <YAxis yAxisId="right" orientation="right" domain={[0, 100]} 
+                                          label={{ value: '%', position: 'insideTop', offset: -20 }}/>
                                           <Tooltip />
                                           <Legend />
                                           <Bar 
@@ -2559,19 +2565,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                                     {/* Results Table */}
                                     <div className="overflow-x-auto">
-                                      <table className="min-w-full divide-y divide-gray-200">
+                                      <table className="min-w-full divide-y divide-gray-200 mt-4">
                                         <thead className="bg-gray-50">
                                           <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                               Category
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-2 text-left text-xs font-boldm text-gray-500 uppercase tracking-wider">
                                               Count
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                               Percentage
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                               Cumulative %
                                             </th>
                                           </tr>
@@ -2603,8 +2609,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       <ul className="text-sm text-indigo-800 space-y-1">
                                         <li>• Total Defects: {paretoResults.totalDefects}</li>
                                         <li>• Top Category: {paretoResults.sortedCategories[0]?.category} ({paretoResults.sortedCategories[0]?.percentage.toFixed(1)}%)</li>
-                                        <li>• 80% Rule: First {paretoResults.sortedCategories.findIndex(item => item.cumulativePercentage >= 80) + 1} categories account for 80% of defects</li>
-                                        <li>• Vital Few: {paretoResults.vitalFew.join(', ')}</li>
+                                        <li>• 80% Rule: First {paretoResults.sortedCategories.findIndex(item => item.cumulativePercentage >= 80) + 1} categories account for 80%+ of defects</li>
+                                        <li title="Categories that contribute the most to overall defect rate">• Vital Few: {paretoResults.vitalFew.join(', ')}</li>
                                       </ul>
                                     </div>
                                   </div>
