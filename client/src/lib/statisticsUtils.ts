@@ -296,20 +296,20 @@ export function calculatePerformanceMetrics(
  */
 export function calculateObservedPerformanceMetrics(
   values: number[],
-  lsl: number | undefined,
-  usl: number | undefined,
+  lsl: number | null,
+  usl: number | null,
   dataSetTerm: "Long Term" | "Short Term",
   zShift: number,
 ): {
-  longTerm: { obsyield: number | undefined; obsdpmo: number | undefined;
-              obspercentDefects: number | undefined; ZequivLT: number | undefined; 
-              obspdLSL_LT: number | undefined; obspdUSL_LT: number | undefined;
-              ZequivLSL_LT: number | undefined; ZequivUSL_LT: number | undefined;
+  longTerm: { obsyield: number | null; obsdpmo: number | null;
+              obspercentDefects: number | null; ZequivLT: number | null; 
+              obspdLSL_LT: number | null; obspdUSL_LT: number | null;
+              ZequivLSL_LT: number | null; ZequivUSL_LT: number | null;
             };
-  shortTerm: { obsyield: number | undefined; obsdpmo: number | undefined; 
-               obspercentDefects: number | undefined; ZequivST: number | undefined; 
-               obspdLSL_ST: number | undefined; obspdUSL_ST: number | undefined;
-               ZequivLSL_ST: number | undefined; ZequivUSL_ST: number | undefined;
+  shortTerm: { obsyield: number | null; obsdpmo: number | null; 
+               obspercentDefects: number | null; ZequivST: number | null; 
+               obspdLSL_ST: number | null; obspdUSL_ST: number | null;
+               ZequivLSL_ST: number | null; ZequivUSL_ST: number | null;
             };
 } {
    // Calculate actual defect counts from the data
@@ -343,27 +343,27 @@ export function calculateObservedPerformanceMetrics(
     // Calculate Short Term metrics using z-equivalentLongterm and ShortTerm
     //find Z-equivalent of observedDefectRate
     const ZequivLT = inverseNormCDF(1-longTermDefectRate);
-    let ZequivLSL_LT: number | undefined;
+    let ZequivLSL_LT: number | null;
     if (lsl) {
        ZequivLSL_LT = inverseNormCDF(1-observedDefectRate.pdLSL);
     }
     else {
-      ZequivLSL_LT = undefined;
+      ZequivLSL_LT = null;
     };
-    let ZequivUSL_LT: number | undefined;
+    let ZequivUSL_LT: number | null;
     if (usl) {
        ZequivUSL_LT = inverseNormCDF(1-observedDefectRate.pdUSL);
     }
     else {
-       ZequivUSL_LT = undefined;
+       ZequivUSL_LT = null;
     };
     //const ZequivLSL_LT = inverseNormCDF(1-observedDefectRate.pdLSL);
     //const ZequivUSL_LT = inverseNormCDF(1-observedDefectRate.pdUSL);
 
-    let shortTermYield: number | undefined;
-    let shortTermDpmo: number | undefined;
-    let shortTermPercentDefects: number | undefined;
-    let ZequivST: number | undefined;
+    let shortTermYield: number | null;
+    let shortTermDpmo: number | null;
+    let shortTermPercentDefects: number | null;
+    let ZequivST: number | null;
     if (zShift>0) {
       ZequivST = ZequivLT + zShift;
       const shortTermDefectRate = 1-normalCDF(ZequivST);
@@ -412,14 +412,14 @@ export function calculateObservedPerformanceMetrics(
 
         },
         shortTerm: {
-          obsyield: undefined,
-          obsdpmo: undefined, 
-          obspercentDefects: undefined,
-          ZequivST: undefined,
-          obspdLSL_ST: undefined,
-          obspdUSL_ST: undefined,
-          ZequivLSL_ST: undefined,
-          ZequivUSL_ST: undefined,
+          obsyield: null,
+          obsdpmo: null, 
+          obspercentDefects: null,
+          ZequivST: null,
+          obspdLSL_ST: null,
+          obspdUSL_ST: null,
+          ZequivLSL_ST: null,
+          ZequivUSL_ST: null,
         }
       };
     };
@@ -434,24 +434,24 @@ export function calculateObservedPerformanceMetrics(
     // Calculate Short Term metrics using z-equivalentLongterm and ShortTerm
     //find Z-equivalent of observedDefectRate
     const ZequivST = inverseNormCDF(1-shortTermDefectRate);
-    let ZequivLSL_ST: number | undefined;
+    let ZequivLSL_ST: number | null;
     if (lsl) {
        ZequivLSL_ST = inverseNormCDF(1-observedDefectRate.pdLSL);
     }
     else {
-      ZequivLSL_ST = undefined;
+      ZequivLSL_ST = null;
     };
-    let ZequivUSL_ST: number | undefined;
+    let ZequivUSL_ST: number | null;
     if (usl) {
        ZequivUSL_ST = inverseNormCDF(1-observedDefectRate.pdUSL);
     }
     else {
-       ZequivUSL_ST = undefined;
+       ZequivUSL_ST = null;
     };
-    let longTermYield: number | undefined;
-    let longTermDpmo: number | undefined;
-    let longTermPercentDefects: number | undefined;
-    let ZequivLT: number | undefined;
+    let longTermYield: number | null;
+    let longTermDpmo: number | null;
+    let longTermPercentDefects: number | null;
+    let ZequivLT: number | null;
     if (zShift>0) {
       ZequivLT = ZequivST - zShift; 
       const longTermDefectRate = 1-normalCDF(ZequivLT);
