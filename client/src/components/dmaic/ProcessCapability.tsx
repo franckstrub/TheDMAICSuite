@@ -2120,22 +2120,27 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     <label className="block text-sm font-medium mb-2">Process Steps</label>
                                     <div className="space-y-3">
                                       {/* Show empty first row when no data exists, otherwise show all existing steps */}
-                                      {(capabilityData[ctq]?.rtyProcessSteps || [{ stepName: "", passed: undefined, total: 0 }]).map((step, index) => (
+                                      {(capabilityData[ctq]?.rtyProcessSteps && capabilityData[ctq]?.rtyProcessSteps.length > 0 
+                                        ? capabilityData[ctq]?.rtyProcessSteps 
+                                        : [{ stepName: "", passed: undefined, total: 0 }]
+                                      ).map((step, index) => (
                                         <div key={index} className="grid grid-cols-4 gap-2 items-center">
                                           <Input
                                             placeholder="Step name"
                                             value={step.stepName}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
-                                              const updatedSteps = [...currentSteps];
                                               
-                                              // If this is the first row and no data exists yet, initialize the array
+                                              // If no data exists yet, create the first step
                                               if (currentSteps.length === 0) {
-                                                updatedSteps[0] = { stepName: e.target.value, passed: undefined, total: 0 };
+                                                updateCapabilityField(ctq, "rtyProcessSteps", [
+                                                  { stepName: e.target.value, passed: undefined, total: 0 }
+                                                ]);
                                               } else {
+                                                const updatedSteps = [...currentSteps];
                                                 updatedSteps[index] = { ...step, stepName: e.target.value };
+                                                updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                               }
-                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
                                           />
                                           <Input
@@ -2145,24 +2150,25 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             value={step.passed !== undefined ? step.passed : ""}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
-                                              const updatedSteps = [...currentSteps];
                                               const value = e.target.value;
                                               
-                                              // If this is the first row and no data exists yet, initialize the array
+                                              // If no data exists yet, create the first step
                                               if (currentSteps.length === 0) {
-                                                if (value === "" || value === null) {
-                                                  updatedSteps[0] = { stepName: step.stepName, passed: undefined, total: step.total };
-                                                } else {
-                                                  updatedSteps[0] = { stepName: step.stepName, passed: parseInt(value), total: step.total };
-                                                }
+                                                const newStep = {
+                                                  stepName: step.stepName,
+                                                  passed: value === "" || value === null ? undefined : parseInt(value),
+                                                  total: step.total
+                                                };
+                                                updateCapabilityField(ctq, "rtyProcessSteps", [newStep]);
                                               } else {
+                                                const updatedSteps = [...currentSteps];
                                                 if (value === "" || value === null) {
                                                   updatedSteps[index] = { ...step, passed: undefined };
                                                 } else {
                                                   updatedSteps[index] = { ...step, passed: parseInt(value) };
                                                 }
+                                                updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                               }
-                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
                                           />
                                           <Input
@@ -2172,16 +2178,21 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             value={step.total || ""}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
-                                              const updatedSteps = [...currentSteps];
                                               const value = parseInt(e.target.value) || 0;
                                               
-                                              // If this is the first row and no data exists yet, initialize the array
+                                              // If no data exists yet, create the first step
                                               if (currentSteps.length === 0) {
-                                                updatedSteps[0] = { stepName: step.stepName, passed: step.passed, total: value };
+                                                const newStep = {
+                                                  stepName: step.stepName,
+                                                  passed: step.passed,
+                                                  total: value
+                                                };
+                                                updateCapabilityField(ctq, "rtyProcessSteps", [newStep]);
                                               } else if (value > 0) {
+                                                const updatedSteps = [...currentSteps];
                                                 updatedSteps[index] = { ...step, total: value };
+                                                updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                               }
-                                              updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
                                           />
                                           {/* Delete button - only show if there are actual steps in the array */}
