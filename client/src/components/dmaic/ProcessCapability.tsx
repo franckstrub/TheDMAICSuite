@@ -94,7 +94,7 @@ interface ProcessCapabilityData {
   dpmoUnits?: number;
   dpmoOpportunitiesPerUnit?: number;
   // RTY Analysis fields
-  rtyProcessSteps?: Array<{stepName: string; passed: number | null; total: number}>;
+  rtyProcessSteps?: Array<{stepName: string; passed: number | undefined; total: number}>;
   // OEE Analysis fields - New input fields
   oeeScheduledTime?: number;
   oeeAvailableTime?: number;
@@ -2157,7 +2157,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             type="number"
                                             min="0"
                                             placeholder="Passed units (can be 0)"
-                                            value={step.passed !== undefined ? step.passed : ""}
+                                            value={step.passed !== undefined ? step.passed.toString() : ""}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
                                               const updatedSteps = [...currentSteps];
