@@ -2148,7 +2148,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               if (currentSteps.length === 0) {
                                                 updatedSteps[0] = { stepName: e.target.value, passed: null, total: 0 };
                                               } else {
-                                                updatedSteps[index] = { ...step, stepName: e.target.value };
+                                                updatedSteps[index] = { 
+                                                  stepName: e.target.value, 
+                                                  passed: step.passed !== undefined ? step.passed : null, 
+                                                  total: step.total 
+                                                };
                                               }
                                               updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
@@ -2194,7 +2198,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               if (currentSteps.length === 0) {
                                                 updatedSteps[0] = { stepName: step.stepName, passed: step.passed !== undefined ? step.passed : null, total: value };
                                               } else if (value > 0) {
-                                                updatedSteps[index] = { ...step, total: value };
+                                                updatedSteps[index] = { 
+                                                  stepName: step.stepName, 
+                                                  passed: step.passed !== undefined ? step.passed : null, 
+                                                  total: value 
+                                                };
                                               }
                                               updateCapabilityField(ctq, "rtyProcessSteps", updatedSteps);
                                             }}
