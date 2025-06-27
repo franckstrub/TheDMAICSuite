@@ -58,9 +58,9 @@ import {formatdpu} from "@/lib/statisticsUtils";
 interface ProcessCapabilityData {
   id?: number;
   ctq: string;
-  lsl: string;
-  usl: string;
-  target: string;
+  lsl: string | null;
+  usl: string | null;
+  target: string | null;
   zShift: number;
   dataSetTerm: "Long Term" | "Short Term";
   capabilityIndex: "Z" | "Cp/Cpk";
@@ -106,6 +106,7 @@ interface ProcessCapabilityData {
   // DPU Analysis fields
   dpuDefects?: number;
   dpuUnits?: number;
+  calculatedDPU?: number;
   calculatedDPU_Z_LT?: number;
   calculatedDPU_Z_ST?: number;
   calculatedDPU_LT?: number;
