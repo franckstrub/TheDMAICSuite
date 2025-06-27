@@ -94,7 +94,7 @@ interface ProcessCapabilityData {
   dpmoUnits?: number;
   dpmoOpportunitiesPerUnit?: number;
   // RTY Analysis fields
-  rtyProcessSteps?: Array<{stepName: string; passed: number | undefined; total: number}>;
+  rtyProcessSteps?: Array<{stepName: string; passed: number | null; total: number}>;
   // OEE Analysis fields - New input fields
   oeeScheduledTime?: number;
   oeeAvailableTime?: number;
@@ -2146,7 +2146,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               
                                               // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
-                                                updatedSteps[0] = { stepName: e.target.value, passed: undefined, total: 0 };
+                                                updatedSteps[0] = { stepName: e.target.value, passed: null, total: 0 };
                                               } else {
                                                 updatedSteps[index] = { ...step, stepName: e.target.value };
                                               }
@@ -2157,7 +2157,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             type="number"
                                             min="0"
                                             placeholder="Passed units (can be 0)"
-                                            value={step.passed !== undefined ? step.passed.toString() : ""}
+                                            value={step.passed !== null ? (step.passed?.toString() || "") : ""}
                                             onChange={(e) => {
                                               const currentSteps = capabilityData[ctq]?.rtyProcessSteps || [];
                                               const updatedSteps = [...currentSteps];
@@ -2166,13 +2166,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
                                                 if (value === "" || value === null) {
-                                                  updatedSteps[0] = { stepName: step.stepName, passed: undefined, total: step.total };
+                                                  updatedSteps[0] = { stepName: step.stepName, passed: null, total: step.total };
                                                 } else {
                                                   updatedSteps[0] = { stepName: step.stepName, passed: parseInt(value), total: step.total };
                                                 }
                                               } else {
                                                 if (value === "" || value === null) {
-                                                  updatedSteps[index] = { ...step, passed: undefined };
+                                                  updatedSteps[index] = { ...step, passed: null };
                                                 } else {
                                                   updatedSteps[index] = { ...step, passed: parseInt(value) };
                                                 }
@@ -2192,7 +2192,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                               
                                               // If this is the first row and no data exists yet, initialize the array
                                               if (currentSteps.length === 0) {
-                                                updatedSteps[0] = { stepName: step.stepName, passed: step.passed, total: value };
+                                                updatedSteps[0] = { stepName: step.stepName, passed: step.passed !== undefined ? step.passed : null, total: value };
                                               } else if (value > 0) {
                                                 updatedSteps[index] = { ...step, total: value };
                                               }
