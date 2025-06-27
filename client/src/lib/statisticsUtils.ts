@@ -642,35 +642,35 @@ export function calculateZScoreLongShortTerm(
   if (values.length === 0 || stdDev === 0) {
     return {
       zLongTerm: 0,
-      zLSL_LT: undefined,
-      zUSL_LT: undefined,
+      zLSL_LT: null,
+      zUSL_LT: null,
       zShortTerm: 0,
-      zLSL_ST: undefined,
-      zUSL_ST: undefined,
+      zLSL_ST: null,
+      zUSL_ST: null,
     };
   }
   
   // Calculate Z values based on specification limits
-  let zLsl: number | undefined;
-  zLsl=undefined;
-  let zUsl: number | undefined;
-  zUsl= undefined;
+  let zLsl: number | null;
+  zLsl=null;
+  let zUsl: number | null;
+  zUsl= null;
   let zTotal=0;
   let pdLSL = 0;
   let pdUSL = 0;
   
-  if (lsl !== undefined && !isNaN(lsl)) {
+  if (lsl !== null && !isNaN(lsl)) {
     zLsl = (meanVal - lsl) / stdDev;
     zTotal = zLsl;
-    zUsl = undefined;
+    zUsl = null;
   }
   
-  if (usl !== undefined && !isNaN(usl)) {
+  if (usl !== null && !isNaN(usl)) {
     zUsl = (usl - meanVal) / stdDev;
     zTotal = zUsl;
-    zLsl= undefined;
+    zLsl= null;
   }
-  if ((lsl !== undefined && !isNaN(lsl)) && (usl !== undefined && !isNaN(usl))) {
+  if ((lsl !== null && !isNaN(lsl)) && (usl !== null && !isNaN(usl))) {
     pdLSL = 1 - normalCDF(zLsl!);
     pdUSL = 1 - normalCDF(zUsl!);
     zTotal = inverseNormCDF(1 - (pdLSL+pdUSL));
@@ -682,10 +682,10 @@ export function calculateZScoreLongShortTerm(
   // Calculate Long Term and Short Term Z scores
   let zLongTerm = 0;
   let zShortTerm = 0;
-  let zLSL_LT = undefined;
-  let zUSL_LT = undefined;
-  let zLSL_ST = undefined;
-  let zUSL_ST = undefined;
+  let zLSL_LT: number | null = null;
+  let zUSL_LT: number | null = null;
+  let zLSL_ST: number | null = null;
+  let zUSL_ST: number | null = null;
     
   if (dataSetTerm === "Long Term") {
     // Long term data already includes variation

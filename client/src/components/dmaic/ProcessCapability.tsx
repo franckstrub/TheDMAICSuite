@@ -1162,11 +1162,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     // Calculate performance metrics for both Long Term and Short Term using Z scores
     const performanceMetrics = calculatePerformanceMetrics(
       zScoreData.zLongTerm || 0,
-      zScoreData.zLSL_LT!,
-      zScoreData.zUSL_LT!,
-      zScoreData.zShortTerm || 0,
-      zScoreData.zLSL_ST!,
-      zScoreData.zUSL_ST!,
+      zScoreData.zShortTerm || 0
     );
 
     // Calculate all capability indices at once
