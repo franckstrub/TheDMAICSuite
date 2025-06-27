@@ -1025,7 +1025,7 @@ export const processCapability = pgTable("process_capability", {
   dpmoUnits: integer("dpmo_units"),
   dpmoOpportunitiesPerUnit: integer("dpmo_opportunities_per_unit"),
   // RTY Analysis fields
-  rtyProcessSteps: json("rty_process_steps").$type<Array<{stepName: string; passed: number | undefined; total: number}>>(),
+  rtyProcessSteps: json("rty_process_steps").$type<Array<{stepName: string; passed: number | null; total: number}>>(),
   // OEE Analysis fields - Input fields
   oeeScheduledTime: real("oee_scheduled_time"), // Scheduled production time in hours
   oeeAvailableTime: real("oee_available_time"), // Available time in hours
@@ -1033,7 +1033,7 @@ export const processCapability = pgTable("process_capability", {
   oeePartsManufactured: integer("oee_parts_manufactured"), // Number of parts manufactured
   oeeBadParts: integer("oee_bad_parts"), // Number of bad/defective parts
   // Pareto Analysis fields
-  paretoDefectCategories: json("pareto_defect_categories").$type<Array<{category: string; count: number}>>(),
+  paretoDefectCategories: json("pareto_defect_categories").$type<Array<{category: string; count: number | null}>>(),
   // DPU Analysis fields
   dpuDefects: integer("dpu_defects"),
   dpuUnits: integer("dpu_units"),
