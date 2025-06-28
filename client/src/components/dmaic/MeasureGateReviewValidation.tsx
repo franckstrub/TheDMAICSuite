@@ -111,13 +111,6 @@ const getDefaultmeasureDeliverables = (projectType?: string): Omit<Deliverable, 
   },
   {
     phase: "measure",
-    name: "Control Plan",
-    description: "Updated Control Plan for current state",
-    isRequired: "Required",
-    isCompleted: false
-  },
-  {
-    phase: "measure",
     name: "Gate Review",
     description: "Gate review meeting to proceed to Analyze phase",
     isRequired: "Required",
