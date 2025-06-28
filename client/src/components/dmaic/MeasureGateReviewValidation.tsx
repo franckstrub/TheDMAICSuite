@@ -190,7 +190,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
 
   // Fetch existing deliverables
   const { data: deliverablesData, isLoading: isLoadingDeliverables } = useQuery<DeliverablesResponse>({
-    queryKey: [`/api/projects/${projectId}/gate-review-deliverables`],
+    queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/gate-review-deliverables?phase=${phase}`);
       if (!response.ok) {
@@ -203,7 +203,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
 
   // Fetch existing validators
   const { data: validatorsData, isLoading: isLoadingValidators } = useQuery<ValidatorsResponse>({
-    queryKey: [`/api/projects/${projectId}/gate-review-validators`],
+    queryKey: [`/api/projects/${projectId}/gate-review-validators`, phase],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/gate-review-validators?phase=${phase}`);
       if (!response.ok) {
@@ -240,8 +240,8 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       }
 
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`, phase] });
 
       toast({
         title: "Success",
