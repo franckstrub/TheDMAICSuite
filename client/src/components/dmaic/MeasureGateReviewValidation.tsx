@@ -189,29 +189,35 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
   }
 
   // Fetch existing deliverables
-  const { data: deliverablesData, isLoading: isLoadingDeliverables } = useQuery<DeliverablesResponse>({
+  const { data: deliverablesData, isLoading: isLoadingDeliverables, error: deliverablesError } = useQuery<DeliverablesResponse>({
     queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/gate-review-deliverables?phase=${phase}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch deliverables');
+        console.error(`API error: ${response.status} ${response.statusText}`);
+        // If API fails, return empty array to trigger default initialization
+        return { deliverables: [] };
       }
       return response.json();
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    retry: false // Don't retry failed requests
   });
 
   // Fetch existing validators
-  const { data: validatorsData, isLoading: isLoadingValidators } = useQuery<ValidatorsResponse>({
+  const { data: validatorsData, isLoading: isLoadingValidators, error: validatorsError } = useQuery<ValidatorsResponse>({
     queryKey: [`/api/projects/${projectId}/gate-review-validators`, phase],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}/gate-review-validators?phase=${phase}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch validators');
+        console.error(`Validators API error: ${response.status} ${response.statusText}`);
+        // If API fails, return empty array to trigger default initialization
+        return { validators: [] };
       }
       return response.json();
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    retry: false // Don't retry failed requests
   });
 
   // Save data to backend

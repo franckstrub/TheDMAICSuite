@@ -19,7 +19,7 @@ import {
   type GanttTask, type InsertGanttTask
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, asc } from "drizzle-orm";
 import { organizationService } from "./organizationService";
 
 // Type for User select operations
