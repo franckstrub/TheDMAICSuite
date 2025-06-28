@@ -254,37 +254,25 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
   // Save data to backend
   const saveData = async () => {
     try {
-      console.log("Starting save operation...");
-      console.log("Deliverables to save:", deliverables);
-      console.log("Validators to save:", validators);
-
       // Process all deliverables
       for (const deliverable of deliverables) {
-        console.log("Processing deliverable:", deliverable.name, "ID:", deliverable.id);
         if (deliverable.id) {
           // Update existing deliverable
-          console.log("Updating existing deliverable:", deliverable.id);
           await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
         } else {
           // Create new deliverable
-          console.log("Creating new deliverable:", deliverable.name);
-          const result = await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
-          console.log("Created deliverable result:", result);
+          await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
         }
       }
 
       // Process all validators
       for (const validator of validators) {
-        console.log("Processing validator:", validator.validatorName, "ID:", validator.id);
         if (validator.id) {
           // Update existing validator
-          console.log("Updating existing validator:", validator.id);
           await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
         } else {
           // Create new validator
-          console.log("Creating new validator:", validator.validatorName);
-          const result = await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
-          console.log("Created validator result:", result);
+          await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
 
@@ -296,14 +284,11 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
         title: "Success",
         description: "Gate review data saved successfully",
       });
-      
-      console.log("Save operation completed successfully");
     } catch (error) {
       console.error("Error saving gate review data:", error);
-      console.error("Error details:", error.message);
       toast({
         title: "Error",
-        description: `Failed to save gate review data: ${error.message}`,
+        description: "Failed to save gate review data",
         variant: "destructive"
       });
     }
