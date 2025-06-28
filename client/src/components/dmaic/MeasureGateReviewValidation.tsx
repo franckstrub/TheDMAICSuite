@@ -268,21 +268,14 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
   // Save data to backend
   const saveData = async () => {
     try {
-      console.log("Starting save with deliverables:", deliverables.length, "validators:", validators.length);
-      const savedDeliverables: Deliverable[] = [];
-      
       // Process all deliverables
       for (const deliverable of deliverables) {
         if (deliverable.id) {
           // Update existing deliverable
-          console.log("Updating deliverable:", deliverable.name, "ID:", deliverable.id);
-          const result = await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
-          savedDeliverables.push(result.deliverable);
+          await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
         } else {
           // Create new deliverable (including default ones without IDs)
-          console.log("Creating new deliverable:", deliverable.name);
-          const result = await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
-          savedDeliverables.push(result.deliverable);
+          await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
         }
       }
 
@@ -290,17 +283,12 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       for (const validator of validators) {
         if (validator.id) {
           // Update existing validator
-          console.log("Updating validator:", validator.validatorName, "ID:", validator.id);
           await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
         } else {
           // Create new validator
-          console.log("Creating new validator:", validator.validatorName);
           await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
-
-      // Update local state with saved deliverables (now with IDs)
-      setDeliverables(savedDeliverables);
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase] });
@@ -310,8 +298,6 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
         title: "Success",
         description: "Gate review data saved successfully",
       });
-      
-      console.log("Save completed successfully, saved", savedDeliverables.length, "deliverables");
     } catch (error) {
       console.error("Error saving gate review data:", error);
       toast({
@@ -745,9 +731,11 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
   //   ? Math.round((deliverables.filter(d => d.isCompleted).length / deliverables.length) * 100)
   //   : 0;
 // Calculate completion percentage
-  const deliverableCompletionPercentage = deliverables.length
-    ? Math.round((deliverables.filter(d => (d.isCompleted && d.isRequired !== "Optional")).length / 
-    deliverables.filter(d => d.isRequired !== "Optional").length) * 100) : 0;
+  const requiredDeliverables = deliverables.filter(d => d.isRequired !== "Optional");
+  const completedRequiredDeliverables = deliverables.filter(d => d.isCompleted && d.isRequired !== "Optional");
+  const deliverableCompletionPercentage = requiredDeliverables.length > 0
+    ? Math.round((completedRequiredDeliverables.length / requiredDeliverables.length) * 100) 
+    : 0;
 
   // Overall validation status
   const overallApproved = validators.length > 0 && 
