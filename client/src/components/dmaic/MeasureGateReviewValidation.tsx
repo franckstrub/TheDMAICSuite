@@ -263,40 +263,27 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     }
   };
 
-  // Initialize gate review with deliverables if they exist else create default delievrables
+  // Initialize gate review with deliverables if they exist else create default deliverables
   // based on project type
   useEffect(() => {
     let projectType;
-    //Get project  type from charter or Project
+    //Get project type from charter or Project
     if (charter?.charter) {
       projectType = charter.charter.projectType;
     } else if (project?.project) {
       projectType = project.project.projectType;
     }
     console.log("projectType for deliverables:", projectType);
-  
-    // function to create default deliverables with project ID
-    const createDefaultDeliverables = () => {
-      console.log("Creating default deliverables");
-      return defaultmeasureDeliverables.map(deliverable => ({
-        ...deliverable,
-        projectId: parseInt(projectId || "0")
-      }));
-    };
 
-    if (!deliverablesData) {
-      console.log("No deliverables data yet");
+    // If data is still loading, wait
+    if (isLoadingDeliverables || isLoadingValidators) {
+      console.log("Still loading data...");
       return;
     }
 
-    if (!deliverablesData.deliverables || !Array.isArray(deliverablesData.deliverables)) {
-      console.log("Deliverables data structure is unexpected:", deliverablesData);
-      return;
-    }
-
-    if (deliverablesData.deliverables.length === 0) {
+    // If API failed or returned empty, initialize with defaults
+    if (!deliverablesData || !deliverablesData.deliverables || deliverablesData.deliverables.length === 0) {
       console.log("No deliverables found, creating defaults based on project type");
-      // If no deliverables exist yet, use & create the defaults
       const measureDefaults = getDefaultmeasureDeliverables(projectType);
       setDefaultmeasureDeliverables(measureDefaults);
       
@@ -308,6 +295,17 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       
       setDeliverables(defaultsWithProjectId);
       console.log("Created measure phase deliverables:", defaultsWithProjectId.length);
+      
+      // Initialize validators too
+      if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
+        const defaultValidators = getDefaultMeasureValidators();
+        const validatorsWithProjectId = defaultValidators.map(validator => ({
+          ...validator,
+          projectId: parseInt(projectId || "0")
+        }));
+        setValidators(validatorsWithProjectId);
+        console.log("Created default validators:", validatorsWithProjectId.length);
+      }
       return;
     }
 
