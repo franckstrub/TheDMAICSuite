@@ -405,108 +405,24 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
 
     console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
     setDeliverables(orderedDeliverables);
-  }, [deliverablesData, projectId, charter, project]);
 
-  // Initialize validators from charter if none exist
-  useEffect(() => {
-    console.log("Validators data received:", validatorsData);
-    console.log("Charter data:", charter);
-
+    // Also handle validators from existing data
     if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
-      console.log("Setting validators from data:", validatorsData.validators);
-
-      // measure the default validator roles in the preferred order
-      const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Coach"];
-
-      // Keep track of all existing validators by role or ID
-      const existingStandardByRole = new Map<string, Validator>();
-      const customValidators: Validator[] = [];
-
-      // First identify standard vs custom validators
-      validatorsData.validators.forEach((validator: Validator) => {
-        if (standardRoles.includes(validator.validatorRole)) {
-          existingStandardByRole.set(validator.validatorRole, validator);
-        } else {
-          customValidators.push(validator);
-        }
-      });
-
-      // Start building our ordered list with standard validators first
-      const orderedValidators: Validator[] = [];
-
-      // Add standard validators in their predefined order
-      standardRoles.forEach(role => {
-        if (existingStandardByRole.has(role)) {
-          orderedValidators.push(existingStandardByRole.get(role)!);
-        }
-      });
-
-      // Sort custom validators by ID to preserve their order of addition
-      // This maintains consistent ordering even when navigating between pages
-      customValidators.sort((a, b) => {
-        // If IDs are available, use them to determine insertion order
-        if (a.id && b.id) {
-          return a.id - b.id;
-        }
-        // Otherwise, preserve the order from the API response
-        return 0;
-      });
-
-      // Add the custom validators to our ordered list
-      orderedValidators.push(...customValidators);
-
-      console.log("Ordered validators with preserved custom order:", orderedValidators);
-      setValidators(orderedValidators);
-    } else if (charter && 'charter' in charter) {
-      console.log("No validators found, creating defaults from charter");
-      // If no validators exist yet but we have charter data, create default validators
-      // from the project charter's key stakeholders
-      const defaultValidators: Validator[] = [];
-      const charterData = charter.charter;
-
-      if (charterData.sponsor) {
-        defaultValidators.push({
-          projectId: parseInt(projectId || "0"),
-          phase: "measure",
-          validatorName: charterData.sponsor,
-          validatorRole: "Sponsor",
-          status: "Pending"
-        });
-      }
-
-      if (charterData.projectLeader) {
-        defaultValidators.push({
-          projectId: parseInt(projectId || "0"),
-          phase: "measure",
-          validatorName: charterData.projectLeader,
-          validatorRole: "Project Leader",
-          status: "Pending"
-        });
-      }
-
-      if (charterData.financialController) {
-        defaultValidators.push({
-          projectId: parseInt(projectId || "0"),
-          phase: "measure",
-          validatorName: charterData.financialController,
-          validatorRole: "Financial Controller",
-          status: "Pending"
-        });
-      }
-
-      if (charterData.projectCoach) {
-        defaultValidators.push({
-          projectId: parseInt(projectId || "0"),
-          phase: "measure",
-          validatorName: charterData.projectCoach,
-          validatorRole: "Coach",
-          status: "Pending"
-        });
-      }
-
-      setValidators(defaultValidators);
+      console.log("Setting validators from existing data:", validatorsData.validators);
+      setValidators(validatorsData.validators);
+    } else if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
+      // Initialize with default validators if none exist
+      const defaultValidators = getDefaultMeasureValidators();
+      const validatorsWithProjectId = defaultValidators.map(validator => ({
+        ...validator,
+        projectId: parseInt(projectId || "0")
+      }));
+      setValidators(validatorsWithProjectId);
+      console.log("Created default measure validators:", validatorsWithProjectId.length);
     }
-  }, [validatorsData, charter, projectId]);
+  }, [deliverablesData, validatorsData, projectId, charter, project, isLoadingDeliverables, isLoadingValidators]);
+
+
 
   // Toggle completion status of a deliverable
   const toggleDeliverableCompletion = (index: number) => {
