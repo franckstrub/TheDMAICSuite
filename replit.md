@@ -122,6 +122,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 27, 2025. Enhanced OEE bad parts input field with same logic as DPMO defects - allows entering 0 values with proper undefined handling for empty fields, enabling accurate OEE calculations when no defective parts exist
 - June 27, 2025. Fixed process capability save validation error by updating schema to handle null values instead of undefined for JSON serialization - Pareto and RTY fields now properly save with null handling for empty values
 - June 27, 2025. Enhanced Pareto analysis defects input field with exact same logic as DPMO defects - shows empty field when cleared (not zero), allows entering 0 values, uses null for empty state to fix JSON serialization, and matches DPMO placeholder text exactly
+- June 28, 2025. Fixed Measure Validation checklist loading Define deliverables instead of Measure deliverables - corrected database query WHERE clause logic to properly filter by phase, updated initialization logic to use fresh measure defaults, and ensured proper phase filtering in gate review API routes
 
 ## User Preferences
 

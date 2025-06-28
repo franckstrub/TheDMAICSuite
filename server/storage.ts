@@ -496,13 +496,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGateReviewDeliverables(projectId: number, phase?: string): Promise<GateReviewDeliverable[]> {
-    let query = db.select().from(gateReviewDeliverables).where(eq(gateReviewDeliverables.projectId, projectId));
+    let whereConditions = [eq(gateReviewDeliverables.projectId, projectId)];
     
     if (phase) {
-      query = query.where(and(eq(gateReviewDeliverables.projectId, projectId), eq(gateReviewDeliverables.phase, phase)));
+      whereConditions.push(eq(gateReviewDeliverables.phase, phase));
     }
     
-    return await query;
+    return await db
+      .select()
+      .from(gateReviewDeliverables)
+      .where(and(...whereConditions))
+      .orderBy(asc(gateReviewDeliverables.id));
   }
 
   async getGateReviewDeliverable(id: number): Promise<GateReviewDeliverable | undefined> {
