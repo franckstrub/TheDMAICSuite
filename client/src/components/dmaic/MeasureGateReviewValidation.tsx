@@ -157,34 +157,60 @@ const getDefaultmeasureDeliverables = (projectType?: string): Omit<Deliverable, 
   return baseDeliverables;
 };
 
-// Function to get default validators for measure phase
-const getDefaultMeasureValidators = (): Omit<Validator, 'id' | 'projectId'>[] => {
-  return [
-    {
+// Function to get default validators for measure phase based on charter data
+const getDefaultMeasureValidators = (charter?: Charter): Omit<Validator, 'id' | 'projectId'>[] => {
+  const defaultValidators: Omit<Validator, 'id' | 'projectId'>[] = [];
+  
+  if (!charter) {
+    return defaultValidators;
+  }
+
+  // Only create validators for fields that actually have data
+  if (charter.sponsor) {
+    defaultValidators.push({
       phase: "measure",
-      validatorName: "Project Sponsor",
+      validatorName: charter.sponsor,
       validatorRole: "Sponsor",
       status: "Pending",
       comments: null,
       validatedDate: null
-    },
-    {
+    });
+  }
+
+  if (charter.projectLeader) {
+    defaultValidators.push({
       phase: "measure",
-      validatorName: "Process Owner",
-      validatorRole: "Process Owner",
+      validatorName: charter.projectLeader,
+      validatorRole: "Project Leader",
       status: "Pending",
       comments: null,
       validatedDate: null
-    },
-    {
+    });
+  }
+
+  if (charter.financialController) {
+    defaultValidators.push({
       phase: "measure",
-      validatorName: "Quality Manager",
-      validatorRole: "Quality Manager",
+      validatorName: charter.financialController,
+      validatorRole: "Financial Controller",
       status: "Pending",
       comments: null,
       validatedDate: null
-    }
-  ];
+    });
+  }
+
+  if (charter.projectCoach) {
+    defaultValidators.push({
+      phase: "measure",
+      validatorName: charter.projectCoach,
+      validatorRole: "Coach",
+      status: "Pending",
+      comments: null,
+      validatedDate: null
+    });
+  }
+
+  return defaultValidators;
 };
 
 interface MeasurGateReviewValidationProps {
@@ -343,7 +369,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       
       // Initialize validators too
       if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
-        const defaultValidators = getDefaultMeasureValidators();
+        const defaultValidators = getDefaultMeasureValidators(charter?.charter);
         const validatorsWithProjectId = defaultValidators.map(validator => ({
           ...validator,
           projectId: parseInt(projectId || "0")
@@ -426,7 +452,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       setValidators(validatorsData.validators);
     } else if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
       // Initialize with default validators if none exist
-      const defaultValidators = getDefaultMeasureValidators();
+      const defaultValidators = getDefaultMeasureValidators(charter?.charter);
       const validatorsWithProjectId = defaultValidators.map(validator => ({
         ...validator,
         projectId: parseInt(projectId || "0")
