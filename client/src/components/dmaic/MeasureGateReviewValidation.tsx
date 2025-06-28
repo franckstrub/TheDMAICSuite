@@ -109,8 +109,22 @@ const getDefaultmeasureDeliverables = (projectType?: string): Omit<Deliverable, 
     isRequired: "Required",
     isCompleted: false
   },
-  
+  {
+    phase: "measure",
+    name: "Control Plan",
+    description: "Updated Control Plan for current state",
+    isRequired: "Required",
+    isCompleted: false
+  },
+  {
+    phase: "measure",
+    name: "Gate Review",
+    description: "Gate review meeting to proceed to Analyze phase",
+    isRequired: "Required",
+    isCompleted: false
+  }
  ];
+ 
  // Add Green Belt and Black Belt specific deliverables
   if (projectType === "Green Belt" || projectType === "Black Belt") {
     const greenBeltDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
@@ -254,14 +268,21 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
   // Save data to backend
   const saveData = async () => {
     try {
+      console.log("Starting save with deliverables:", deliverables.length, "validators:", validators.length);
+      const savedDeliverables: Deliverable[] = [];
+      
       // Process all deliverables
       for (const deliverable of deliverables) {
         if (deliverable.id) {
           // Update existing deliverable
-          await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
+          console.log("Updating deliverable:", deliverable.name, "ID:", deliverable.id);
+          const result = await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
+          savedDeliverables.push(result.deliverable);
         } else {
-          // Create new deliverable
-          await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
+          // Create new deliverable (including default ones without IDs)
+          console.log("Creating new deliverable:", deliverable.name);
+          const result = await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
+          savedDeliverables.push(result.deliverable);
         }
       }
 
@@ -269,12 +290,17 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       for (const validator of validators) {
         if (validator.id) {
           // Update existing validator
+          console.log("Updating validator:", validator.validatorName, "ID:", validator.id);
           await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
         } else {
           // Create new validator
+          console.log("Creating new validator:", validator.validatorName);
           await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
         }
       }
+
+      // Update local state with saved deliverables (now with IDs)
+      setDeliverables(savedDeliverables);
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase] });
@@ -284,6 +310,8 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
         title: "Success",
         description: "Gate review data saved successfully",
       });
+      
+      console.log("Save completed successfully, saved", savedDeliverables.length, "deliverables");
     } catch (error) {
       console.error("Error saving gate review data:", error);
       toast({
