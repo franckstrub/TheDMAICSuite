@@ -1051,7 +1051,24 @@ export function inverseNormCDF(p: number): number {
 
   return val;
 };
-// Helper function to format percentage values
+// Helper function to format non-conformity rate values
+  export function formatnonconformrate (nonconformrate: number) {
+    if (isNaN(nonconformrate) || nonconformrate === null || nonconformrate === undefined) {
+      return "N/A";
+    }
+    const decimalPlaces = nonconformrate === 0  || nonconformrate === null ? 0
+      : nonconformrate <= 0.001 ? 6
+      : nonconformrate <= 0.01 ? 5
+      : nonconformrate <= 0.1 ? 4
+      : nonconformrate <= 1 ? 3
+      : nonconformrate <= 10 ? 2
+      : nonconformrate < 100 ? 1
+      : 0;
+  
+    return nonconformrate.toFixed(decimalPlaces);
+  };
+
+// Helper function to format dpu values
   export function formatdpu (dpu: number) {
     if (isNaN(dpu) || dpu === null || dpu === undefined) {
       return "N/A";
