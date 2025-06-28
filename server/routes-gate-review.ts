@@ -32,17 +32,21 @@ export function registerGateReviewRoutes(app: Express, dbStorage: any) {
   app.get("/api/projects/:projectId/gate-review-deliverables", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const phase = req.query.phase as string || 'define'; // Default to define phase if not specified
+      const phase = req.query.phase as string;
+      
+      console.log(`Getting deliverables for project ${projectId}, phase: ${phase}`);
       
       if (isNaN(projectId)) {
         return res.status(400).json({ error: "Invalid project ID" });
       }
       
       const deliverables = await dbStorage.getGateReviewDeliverables(projectId, phase);
+      console.log(`Found ${deliverables.length} deliverables for phase ${phase}`);
       res.json({ deliverables });
     } catch (error) {
       console.error("Error getting gate review deliverables:", error);
-      res.status(500).json({ error: "Failed to get gate review deliverables" });
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ error: "Failed to get gate review deliverables", details: error.message });
     }
   });
 
