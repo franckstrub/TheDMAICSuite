@@ -142,6 +142,37 @@ const getDefaultmeasureDeliverables = (projectType?: string): Omit<Deliverable, 
 
   return baseDeliverables;
 };
+
+// Function to get default validators for measure phase
+const getDefaultMeasureValidators = (): Omit<Validator, 'id' | 'projectId'>[] => {
+  return [
+    {
+      phase: "measure",
+      validatorName: "Project Sponsor",
+      validatorRole: "Sponsor",
+      status: "Pending",
+      comments: null,
+      validatedDate: null
+    },
+    {
+      phase: "measure",
+      validatorName: "Process Owner",
+      validatorRole: "Process Owner",
+      status: "Pending",
+      comments: null,
+      validatedDate: null
+    },
+    {
+      phase: "measure",
+      validatorName: "Quality Manager",
+      validatorRole: "Quality Manager",
+      status: "Pending",
+      comments: null,
+      validatedDate: null
+    }
+  ];
+};
+
 interface MeasurGateReviewValidationProps {
   projectId: number;
 }
