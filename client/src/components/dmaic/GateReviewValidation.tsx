@@ -450,36 +450,32 @@ export default function GateReviewValidation() {
       const defaultValidators: Validator[] = [];
       const charterData = charter.charter;
 
-      if (charterData.sponsor) {
-        defaultValidators.push({
-          projectId: parseInt(projectId || "0"),
-          phase: "define",
-          validatorName: charterData.sponsor,
-          validatorRole: "Sponsor",
-          status: "Pending"
-        });
-      }
+      // Always create these 3 essential validators for gate review
+      defaultValidators.push({
+        projectId: parseInt(projectId || "0"),
+        phase: "define",
+        validatorName: charterData.sponsor || "Project Sponsor",
+        validatorRole: "Sponsor",
+        status: "Pending"
+      });
 
-      if (charterData.projectLeader) {
-        defaultValidators.push({
-          projectId: parseInt(projectId || "0"),
-          phase: "define",
-          validatorName: charterData.projectLeader,
-          validatorRole: "Project Leader",
-          status: "Pending"
-        });
-      }
+      defaultValidators.push({
+        projectId: parseInt(projectId || "0"),
+        phase: "define",
+        validatorName: charterData.projectLeader || "Project Leader",
+        validatorRole: "Project Leader",
+        status: "Pending"
+      });
 
-      if (charterData.financialController) {
-        defaultValidators.push({
-          projectId: parseInt(projectId || "0"),
-          phase: "define",
-          validatorName: charterData.financialController,
-          validatorRole: "Financial Controller",
-          status: "Pending"
-        });
-      }
+      defaultValidators.push({
+        projectId: parseInt(projectId || "0"),
+        phase: "define",
+        validatorName: charterData.financialController || "Financial Controller",
+        validatorRole: "Financial Controller",
+        status: "Pending"
+      });
 
+      // Optional fourth validator if coach is specified
       if (charterData.projectCoach) {
         defaultValidators.push({
           projectId: parseInt(projectId || "0"),
