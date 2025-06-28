@@ -335,7 +335,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     const orderedDeliverables: Deliverable[] = [];
 
     // First add all default deliverables, either from DB or default template
-    defaultmeasureDeliverables.forEach(defaultDeliverable => {
+    measureDefaults.forEach(defaultDeliverable => {
       if (existingDefaultNames.has(defaultDeliverable.name)) {
         // Find the existing default deliverable in the database data
         const existingDeliverable = deliverablesData.deliverables.find(
@@ -370,7 +370,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
 
     console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
     setDeliverables(orderedDeliverables);
-  }, [deliverablesData, projectId, defaultmeasureDeliverables]);
+  }, [deliverablesData, projectId, charter, project]);
 
   // Initialize validators from charter if none exist
   useEffect(() => {
