@@ -501,17 +501,27 @@ export class DatabaseStorage implements IStorage {
 
   // Gate review operations
   async getGateReviewDeliverables(projectId: number, phase?: string): Promise<GateReviewDeliverable[]> {
-    let whereConditions = [eq(gateReviewDeliverables.projectId, projectId)];
-    
-    if (phase) {
-      whereConditions.push(eq(gateReviewDeliverables.phase, phase));
+    try {
+      if (phase) {
+        return await db
+          .select()
+          .from(gateReviewDeliverables)
+          .where(and(
+            eq(gateReviewDeliverables.projectId, projectId),
+            eq(gateReviewDeliverables.phase, phase)
+          ))
+          .orderBy(asc(gateReviewDeliverables.id));
+      } else {
+        return await db
+          .select()
+          .from(gateReviewDeliverables)
+          .where(eq(gateReviewDeliverables.projectId, projectId))
+          .orderBy(asc(gateReviewDeliverables.id));
+      }
+    } catch (error) {
+      console.error('Error in getGateReviewDeliverables:', error);
+      throw error;
     }
-    
-    return await db
-      .select()
-      .from(gateReviewDeliverables)
-      .where(and(...whereConditions))
-      .orderBy(asc(gateReviewDeliverables.id));
   }
 
   async getGateReviewDeliverable(id: number): Promise<GateReviewDeliverable | undefined> {
