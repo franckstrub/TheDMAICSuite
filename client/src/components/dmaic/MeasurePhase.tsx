@@ -25,6 +25,7 @@ import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
 import CtsCharacteristics from '@/components/dmaic/CtsCharacteristics';
 import MsaAnalysis from '@/components/dmaic/MsaAnalysis';
 import ProcessCapability from '@/components/dmaic/ProcessCapability';
+import MeasureGateReviewValidation from '@/components/dmaic/MeasureGateReviewValidation';
 
 export default function MeasurePhase() {
   const { user, currentProject } = useAppContext();
@@ -928,170 +929,14 @@ export default function MeasurePhase() {
         </CardContent>
       </Card>
       
-      {/* </div><div className="grid grid-cols-1 md:grid-cols-2 gap-6">*/}
-        
-        {/* Measurement System Analysis */}
-        {/*}
-        <Card>
-          <CardHeader>
-            <CardTitle>Measurement System Analysis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
-              Evaluate the measurement system's ability to provide accurate data.
-            </p>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="msa-metric">Select Metric</Label>
-                <Select defaultValue={msaMetric} onValueChange={setMsaMetric}>
-                  <SelectTrigger id="msa-metric">
-                    <SelectValue placeholder="Select metric" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Processing Time">Processing Time</SelectItem>
-                    <SelectItem value="Defect Rate">Defect Rate</SelectItem>
-                    <SelectItem value="Customer Wait Time">Customer Wait Time</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="appraisers">Number of Appraisers</Label>
-                  <Input
-                    id="appraisers"
-                    type="number"
-                    value={numAppraisers}
-                    onChange={(e) => setNumAppraisers(parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="parts">Number of Parts</Label>
-                  <Input
-                    id="parts"
-                    type="number"
-                    value={numParts}
-                    onChange={(e) => setNumParts(parseInt(e.target.value))}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="trials">Number of Trials</Label>
-                  <Input
-                    id="trials"
-                    type="number"
-                    value={numTrials}
-                    onChange={(e) => setNumTrials(parseInt(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="analysis-type">Analysis Type</Label>
-                  <Select defaultValue={analysisType} onValueChange={setAnalysisType}>
-                    <SelectTrigger id="analysis-type">
-                      <SelectValue placeholder="Select analysis type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Continuous Data (Gage R&R)">Continuous Data (Gage R&R)</SelectItem>
-                      <SelectItem value="Attribute Data (Kappa)">Attribute Data (Kappa)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-yellow-50 rounded-md">
-                  <p className="text-sm text-yellow-700">% R&R</p>
-                  <p className="text-xl font-semibold">18.2%</p>
-                </div>
-                <div className="text-center p-3 bg-green-50 rounded-md">
-                  <p className="text-sm text-green-700">Kappa Value</p>
-                  <p className="text-xl font-semibold">0.75</p>
-                </div>
-              </div>
-              <Button className="w-full" onClick={handleRunMSA}>
-                Run MSA Analysis
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        */}
-        {/* Process Capability Analysis */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Process Capability Analysis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
-              Assess how well a process meets customer specifications.
-            </p>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="metric">Select Metric</Label>
-                <Select defaultValue={selectedMetric} onValueChange={setSelectedMetric}>
-                  <SelectTrigger id="metric">
-                    <SelectValue placeholder="Select metric" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Processing Time">Processing Time</SelectItem>
-                    <SelectItem value="Defect Rate">Defect Rate</SelectItem>
-                    <SelectItem value="Customer Wait Time">Customer Wait Time</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="lsl">Lower Specification Limit</Label>
-                  <Input
-                    id="lsl"
-                    type="number"
-                    placeholder="0"
-                    value={lsl}
-                    onChange={(e) => setLsl(parseFloat(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="usl">Upper Specification Limit</Label>
-                  <Input
-                    id="usl"
-                    type="number"
-                    placeholder="10"
-                    value={usl}
-                    onChange={(e) => setUsl(parseFloat(e.target.value))}
-                  />
-                </div>
-              </div>
-              <div className="h-64 border border-gray-200 rounded-md">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={histogramData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="value" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" name="Frequency" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm text-gray-700">Cp Index</p>
-                  <p className="text-xl font-semibold">{cp ? cp.toFixed(2) : "N/A"}</p>
-                </div>
-                <div className="text-center p-3 bg-gray-50 rounded-md">
-                  <p className="text-sm text-gray-700">Cpk Index</p>
-                  <p className="text-xl font-semibold">{cpk ? cpk.toFixed(2) : "N/A"}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      */}
       {/* MSA (Measurement System Analysis) - One tab per CTQ */}
       <MsaAnalysis projectId={projectId} />
       
       {/* Process Capability - One tab per CTQ */}
       <ProcessCapability projectId={projectId} />
+
+      {/* Measure Gate Review and Validation - One per project */}
+      <MeasureGateReviewValidation projectId={projectId} />
     </div>
   );
 }

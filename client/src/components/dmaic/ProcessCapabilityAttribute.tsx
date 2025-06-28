@@ -1,16 +1,19 @@
-{/*   Attribbute CTQ Process Capability Utils */}
+{/*   Attribute CTQ Process Capability Utils */}
 import { 
     normalCDF, inverseNormCDF,
 } from "@/lib/statisticsUtils";
+import { infiniteQueryOptions } from "@tanstack/react-query";
 
 // Function to calculate Non-Conformity analysis results
+
   export const calculateNonConformityResults = (ctq: string, capabilityData: any) => {
     const data = capabilityData[ctq];
     if (!data || data.nonConformityUnits === undefined || !data.totalUnits || data.totalUnits <= 0) {
       return null;
     }
 
-    const nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
+    let nonConformityRate=0;
+    nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
     
     // Calculate Z equivalent from defect rate using inverse normal CDF
     const defectRate = data.nonConformityUnits / data.totalUnits;
@@ -53,6 +56,16 @@ import {
         zValue_ST = null;
       }
     }
+    else if (defectRate <= 0 ) {
+      nonConformityRate = 100;
+      zValue_LT = -Infinity;
+      zValue_ST = -Infinity;
+    }
+    else {
+      nonConformityRate = 0;
+      zValue_LT = Infinity;
+      zValue_ST = Infinity;
+    }
 
     return {
       nonConformityRate,
@@ -64,7 +77,7 @@ import {
   // Function to calculate Non-Conformity analysis results
     export const calculateDPMOResults = (ctq: string, capabilityData: any) => {
       const data = capabilityData[ctq];
-      if (!data || data.dpmoDefects === undefined || !data.dpmoUnits || data.dpmoUnits <= 0 || !data.dpmoOpportunitiesPerUnit || data.dpmoOpportunitiesPerUnit<=0) {
+      if (!data || data.dpmoDefects === undefined || data.dpmoDefects < 0 ||!data.dpmoUnits || data.dpmoUnits <= 0 || !data.dpmoOpportunitiesPerUnit || data.dpmoOpportunitiesPerUnit<=0) {
         return null;
       }
       //const nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
@@ -120,7 +133,18 @@ import {
           DPMOValue_ST = null;
         }
       }
-  
+      else if (dpo <= 0 ) {
+        zDPMOValue_LT = Infinity;
+        zDPMOValue_ST = Infinity;
+        DPMOValue_LT = null;
+        DPMOValue_ST = null;
+      }
+      else {
+        zDPMOValue_LT = -Infinity;
+        zDPMOValue_ST = -Infinity;
+        DPMOValue_LT = 1000000;
+        DPMOValue_ST = 1000000;
+      }
       return {
         zDPMOValue_LT,
         zDPMOValue_ST,
@@ -184,6 +208,18 @@ import {
           DPUValue_LT = null;
           DPUValue_ST = null;
         }
+      }
+      else if (dpu <= 0 ) {
+        zDPUValue_LT = Infinity;
+        zDPUValue_ST = Infinity;
+        DPUValue_LT = null;
+        DPUValue_ST = null;
+      }
+      else {
+        zDPUValue_LT = -Infinity;
+        zDPUValue_ST = -Infinity;
+        DPUValue_LT = 1;
+        DPUValue_ST = 1;
       }
   
       return {

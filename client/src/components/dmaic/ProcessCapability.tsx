@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { calculateNonConformityResults } from '@/components/dmaic/ProcessCapabilityAttribute';
 import { calculateDPMOResults } from '@/components/dmaic/ProcessCapabilityAttribute';
 import { calculateDPUResults } from '@/components/dmaic/ProcessCapabilityAttribute';
+import {formatnonconformrate} from '@/lib/statisticsUtils';
 import { 
   mean, 
   standardDeviation, 
@@ -1753,7 +1754,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                   {ctqWithType.ctqType === "Continuous" && (
                     <>
-                    <div className={`grid grid-cols-1 gap-4 md:grid-cols-3`}>
+                    <div className={`w-full max-w-screen-xl grid grid-cols-1 gap-4 md:grid-cols-3`}>
                       <div>
                         <label className="block text-sm font-medium mb-2">LSL (Lower Spec Limit)</label>
                         <Input
@@ -1845,7 +1846,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   <div>
                                     <span className="font-medium">Non-Conform Rate: </span>
                                     <span className="text-blue-700">
-                                      {capabilityData[ctq].calculatedNonConformityRate.toFixed(2)}%
+                                      {formatnonconformrate(capabilityData[ctq].calculatedNonConformityRate)}%
                                       <br></br>
                                     </span>
                                     <span className="font-medium">Non-Conform PPM: </span>
@@ -2113,7 +2114,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                   </div>
                   )}
                   {ctqWithType.ctqType === "Attribute" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 space-x-0 space-y-0">
                       {/* RTY (Rolled Throughput Yield) Card */}
                         {capabilityData[ctq]?.enableRty && (
                           <div className="mt-0">
@@ -2275,7 +2276,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                       {/* OEE Analysis */}
                       {capabilityData[ctq]?.enableOee && (
-                        <Card key="oee" className="p-2 bg-purple-50 border-purple-200">
+                        <Card key="oee" className="p-0 m-0 bg-purple-50 border-purple-200">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <Calculator className="h-5 w-5 text-purple-600" />
@@ -2425,11 +2426,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           </CardContent>
                         </Card>
                         )}
-
+                     
                       {/* Pareto Analysis */}
                       {capabilityData[ctq]?.enablePareto && (
-                        <div className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-3">
-                        <Card key="pareto" className="p-2 bg-indigo-50 border-indigo-200 w-[1044px]">
+                        <div className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-3 pr-4">
+                        {(capabilityData[ctq]?.enableNonConformity || capabilityData[ctq]?.enableDpmo || capabilityData[ctq]?.enableDpu || capabilityData[ctq]?.enableRty || capabilityData[ctq]?.enableOee) && (
+                          <div className="flex justify-end mt-4 mb-4 mr-2">
+                          <Button 
+                            onClick={() => saveCapability(ctq)}
+                            disabled={saveCapabilityMutation.isPending}
+                            className="flex items-center gap-2"
+                            >
+                            <Save className="h-4 w-4" />
+                            {saveCapabilityMutation.isPending ? "Saving..." : "Save Process Capability"}
+                          </Button>
+                          </div>
+                        )}
+                        <Card key="pareto" className="bg-indigo-50 border-indigo-200 w-full">
                           <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <BarChart3 className="h-5 w-5 text-indigo-600" />
