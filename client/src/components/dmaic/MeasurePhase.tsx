@@ -952,7 +952,7 @@ export default function MeasurePhase() {
           </CardContent>
         </Card>
       )}
-
+      
       {/* MSA (Measurement System Analysis) - One tab per CTQ */}
       <MsaAnalysis projectId={projectId} />
       
@@ -961,6 +961,7 @@ export default function MeasurePhase() {
 
       {/* Measure Gate Review and Validation - One per project */}
       <MeasureGateReviewValidation projectId={projectId} />
+      
     </div>
   );
 }
