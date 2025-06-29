@@ -141,6 +141,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   const [isGeneratingAssessment, setIsGeneratingAssessment] = useState<{ [ctq: string]: boolean }>({});
   const [autoSaveTimers, setAutoSaveTimers] = useState<{ [ctq: string]: NodeJS.Timeout }>({});
+  
+  // State for tracking Process Capability visibility for White Belt and Yellow Belt projects
+  const [showProcessCapability, setShowProcessCapability] = useState<{ [ctq: string]: boolean }>({});
 
   // Load last active tab from localStorage on component mount
   useEffect(() => {
@@ -152,6 +155,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     setHasInitializedTab(false);
   }, [projectId]);
 
+  // Initialize showProcessCapability state from localStorage
+  useEffect(() => {
+    const ctqs = getCTQs();
+    if (ctqs.length > 0) {
+      const initialShowState: { [ctq: string]: boolean } = {};
+      ctqs.forEach(ctqWithType => {
+        const ctq = ctqWithType.ctq;
+        const savedState = localStorage.getItem(`process-capability-show-${projectId}-${ctq}`);
+        initialShowState[ctq] = savedState === 'true';
+      });
+      setShowProcessCapability(initialShowState);
+    }
+  }, [projectId, ctqsData, ctsData]);
+
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tabValue: string) => {
     setActiveTab(tabValue);
@@ -160,6 +177,16 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Track tab initialization to prevent overriding saved tabs
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
+
+  // Function to toggle Process Capability visibility for White Belt and Yellow Belt projects
+  const toggleProcessCapabilityVisibility = (ctq: string) => {
+    const newState = !showProcessCapability[ctq];
+    setShowProcessCapability(prev => ({
+      ...prev,
+      [ctq]: newState
+    }));
+    localStorage.setItem(`process-capability-show-${projectId}-${ctq}`, String(newState));
+  };
 
   // Function to handle undo operation
   const handleUndo = (ctq: string) => {
@@ -218,6 +245,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Load existing Process Capability data
   const { data: capabilityDataResponse, isLoading: capabilityLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/process-capability`],
+    enabled: !!projectId,
+  });
+
+  // Load project charter to check project type
+  const { data: charter } = useQuery({
+    queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!projectId,
   });
 
