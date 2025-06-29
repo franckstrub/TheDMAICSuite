@@ -19,7 +19,7 @@ import {
   type GanttTask, type InsertGanttTask
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, gte, sql } from "drizzle-orm";
 import { organizationService } from "./organizationService";
 
 // Type for User select operations
@@ -584,6 +584,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createGanttTask(task: InsertGanttTask): Promise<GanttTask> {
+    // If a sequence is provided, increment all existing tasks with sequence >= this value
+    if (task.sequence !== undefined) {
+      await db
+        .update(ganttTasks)
+        .set({ 
+          sequence: sql`${ganttTasks.sequence} + 1`,
+          lastUpdated: new Date()
+        })
+        .where(
+          and(
+            eq(ganttTasks.projectId, task.projectId),
+            gte(ganttTasks.sequence, task.sequence)
+          )
+        );
+    }
+
     const [newTask] = await db
       .insert(ganttTasks)
       .values(task)
