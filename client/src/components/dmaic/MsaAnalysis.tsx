@@ -1190,8 +1190,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   {ctqItem.ctqType === "Attribute" ? (
                 // Attribute MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
-                  {/* Analysis Type Selector - Only for Green Belt and Black Belt */}
-                  {!isSimplifiedView && (
+                  {/* Analysis Type Selector - Available for all project types when MSA is shown */}
+                  {(
                     <div className="mb-6">
                       <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
                       <div className="flex gap-4">
@@ -1550,8 +1550,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
               ) : (
                 // Continuous MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
-                  {/* Analysis Type Selector - Only for Green Belt and Black Belt */}
-                  {!isSimplifiedView && (
+                  {/* Analysis Type Selector - Available for all project types when MSA is shown */}
+                  {(
                     <div className="mb-6">
                       <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
                       <div className="flex gap-4">
