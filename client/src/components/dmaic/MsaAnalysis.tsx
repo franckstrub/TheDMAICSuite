@@ -1190,8 +1190,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   {ctqItem.ctqType === "Attribute" ? (
                 // Attribute MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
-                  {/* Analysis Type Selector - Available for all project types when MSA is shown */}
-                  <div className="mb-6">
+                  {/* Analysis Type Selector - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && (
+                    <div className="mb-6">
                       <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
                       <div className="flex gap-4">
                         <label className="flex items-center cursor-pointer">
@@ -1228,8 +1229,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   )}
 
-                  {/* Simplified Analysis Card - Show only when simple is explicitly selected */}
-                  {attributeAnalysisType[ctqItem.ctq] === 'simple' && (
+                  {/* Simplified Analysis Card - Always show for simplified view or when simple is selected */}
+                  {(isSimplifiedView || attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
                     <>
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Measurement System Simplified Analysis</h3>
@@ -1246,7 +1247,10 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             value={attributeMsaData[ctqItem.ctq]?.justification || ""}
                             onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "justification", e.target.value)}
                             className="w-full flex min-h-[150px]"
-                            placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate? Precision: Explain why the measurement system is precise? Accuracy: Explain why the measurement system is accurate?"
+                            placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
+
+ . Precision: Explain why the measurement system is precise?
+ . Accuracy: Explain why the measurement system is accurate?"
                             title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
                           />
                         </div>
@@ -1264,9 +1268,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </>
                   )}
 
-                  {/* Attribute Agreement Analysis Content - Show when agreement analysis is selected */}
-                  {attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
+                  {/* Attribute Agreement Analysis Content - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
                     <div className="space-y-4">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
+                        <p className="text-sm text-gray-600">
+                          Complete statistical analysis of measurement system agreement between appraisers for attribute data.
+                        </p>
+                      </div>
+
+                  {!isSimplifiedView && (
+                    <>
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
                         <p className="text-sm text-gray-600">
@@ -1525,7 +1538,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                        {saveAttributeMsaMutation.isPending ? "Saving..." : "Save Attribute MSA Study"}
                         </Button>
                         </div>
+                      </div>
                       )}
+                      
+                    </>
+                  )}
                     </div>
                   )}
 
@@ -1533,16 +1550,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
               ) : (
                 // Continuous MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
-                  {/* Analysis Type Selector - Available for all project types when MSA is shown */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name={`continuous-analysis-type-${ctqItem.ctq}`}
-                          value="simple"
-                          checked={continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]}
+                  {/* Analysis Type Selector - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`continuous-analysis-type-${ctqItem.ctq}`}
+                            value="simple"
+                            checked={continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]}
                             onChange={() => {
                               const newTypes = { ...continuousAnalysisType, [ctqItem.ctq]: 'simple' as const };
                               setContinuousAnalysisType(newTypes);
@@ -1571,8 +1589,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   )}
 
-                  {/* Simplified Analysis Card - Show only when simple is explicitly selected */}
-                  {continuousAnalysisType[ctqItem.ctq] === 'simple' && (
+                  {/* Simplified Analysis Card - Always show for simplified view or when simple is selected */}
+                  {(isSimplifiedView || continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]) && (
                     <>
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Measurement System Simplified Analysis</h3>
@@ -1610,8 +1628,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </>
                   )}
 
-                  {/* Gage R&R Analysis Content - Show when gage_rr analysis is selected */}
-                  {continuousAnalysisType[ctqItem.ctq] === 'gage_rr' && (
+                  {/* Gage R&R Analysis Content - Only for Green Belt and Black Belt */}
+                  {!isSimplifiedView && continuousAnalysisType[ctqItem.ctq] === 'gage_rr' && (
                     <div className="space-y-4">
                       <div className="bg-green-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Gage R&R MSA Analysis</h3>
