@@ -1151,7 +1151,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       )}
 
       {/* Gantt Chart */}
-      <div className="gantt-wrapper overflow-x-auto overflow-y-auto max-h-[600px]">
+      <div className="gantt-wrapper overflow-x-auto overflow-y-auto max-h-[800px]">
         <div className="min-w-full relative">
           {/* Date Headers - First Two Rows are Frozen */}
           <div className="flex border-b sticky top-0 z-30 bg-white">
