@@ -1268,8 +1268,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </>
                   )}
 
-                  {/* Attribute Agreement Analysis Content - Only for Green Belt and Black Belt */}
-                  {!isSimplifiedView && attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
+                  {/* Attribute Agreement Analysis Content - Show when agreement analysis is selected */}
+                  {attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
                     <div className="space-y-4">
                       <div className="bg-green-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
@@ -1628,8 +1628,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </>
                   )}
 
-                  {/* Gage R&R Analysis Content - Only for Green Belt and Black Belt */}
-                  {!isSimplifiedView && continuousAnalysisType[ctqItem.ctq] === 'gage_rr' && (
+                  {/* Gage R&R Analysis Content - Show when gage_rr analysis is selected */}
+                  {continuousAnalysisType[ctqItem.ctq] === 'gage_rr' && (
                     <div className="space-y-4">
                       <div className="bg-green-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Gage R&R MSA Analysis</h3>
