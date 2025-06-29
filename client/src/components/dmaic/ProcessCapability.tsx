@@ -157,7 +157,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Initialize showProcessCapability state from localStorage
   useEffect(() => {
-    if (ctqsData && ctsData) {
+    if (ctqsData && ctsData && projectData && !ctqsLoading && !projectLoading) {
       // Use centralized CTQs endpoint which aggregates from all sources
       if ((ctqsData as any)?.ctqs?.length > 0) {
         const ctqs = (ctqsData as any).ctqs.map((item: any) => item.ctq);
@@ -171,7 +171,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         }
       }
     }
-  }, [projectId, ctqsData, ctsData]);
+  }, [projectId, ctqsData, ctsData, projectData, ctqsLoading, projectLoading]);
 
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tabValue: string) => {
@@ -1347,7 +1347,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  if (ctqsLoading || capabilityLoading) {
+  if (ctqsLoading || capabilityLoading || projectLoading) {
     return (
       <Card>
         <CardHeader>
@@ -1358,6 +1358,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">Loading process capability data...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Ensure data is available before calling getCTQs
+  if (!ctqsData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Process Capability
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">Loading CTQ data...</div>
         </CardContent>
       </Card>
     );
