@@ -1,6 +1,6 @@
 import { users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements, datasets, dataCollectionPlans, storageConfigs, projectRaciMatrix, activityLogs, processData, projectRisks, stakeholderAnalysisItems, gateReviewDeliverables, gateReviewValidators, ganttTasks, type User, type UpsertUser, type Project, type Charter, type SipocDiagram, type CustomerRequirement, type BusinessRequirement, type Dataset, type DataCollectionPlan, type StorageConfig, type RaciMatrix, type ActivityLog, type ProcessData, type Risk, type StakeholderAnalysisItem, type GateReviewDeliverable, type GateReviewValidator, type GanttTask } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { eq, desc, asc, and, gt, sql } from "drizzle-orm";
 import type { Request, Response } from "express";
 
 export interface IStorage {
@@ -609,7 +609,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteGanttTask(id: number): Promise<void> {
+    // First, get the task to know its sequence and project
+    const [taskToDelete] = await db.select().from(ganttTasks).where(eq(ganttTasks.id, id));
+    
+    if (!taskToDelete) {
+      return;
+    }
+
+    // Delete the task
     await db.delete(ganttTasks).where(eq(ganttTasks.id, id));
+    
+    // Decrement sequence for all tasks with sequence greater than the deleted task
+    await db
+      .update(ganttTasks)
+      .set({ 
+        sequence: sql`${ganttTasks.sequence} - 1`,
+        lastUpdated: new Date()
+      })
+      .where(
+        and(
+          eq(ganttTasks.projectId, taskToDelete.projectId),
+          gt(ganttTasks.sequence, taskToDelete.sequence)
+        )
+      );
   }
 
   async reorderGanttTasks(projectId: number, taskUpdates: any[]): Promise<void> {
