@@ -1229,8 +1229,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   )}
 
-                  {/* Simplified Analysis Card - Always show for simplified view or when simple is selected */}
-                  {(isSimplifiedView || attributeAnalysisType[ctqItem.ctq] === 'simple' || !attributeAnalysisType[ctqItem.ctq]) && (
+                  {/* Simplified Analysis Card - Show when simple is selected or when no analysis type is set */}
+                  {(attributeAnalysisType[ctqItem.ctq] === 'simple' || (!attributeAnalysisType[ctqItem.ctq] && isSimplifiedView)) && (
                     <>
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Measurement System Simplified Analysis</h3>
@@ -1589,8 +1589,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
                   )}
 
-                  {/* Simplified Analysis Card - Always show for simplified view or when simple is selected */}
-                  {(isSimplifiedView || continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]) && (
+                  {/* Simplified Analysis Card - Show when simple is selected or when no analysis type is set */}
+                  {(continuousAnalysisType[ctqItem.ctq] === 'simple' || (!continuousAnalysisType[ctqItem.ctq] && isSimplifiedView)) && (
                     <>
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Measurement System Simplified Analysis</h3>
