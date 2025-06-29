@@ -119,6 +119,7 @@ export interface IStorage {
 
   // Gantt Task operations
   getGanttTasks(projectId: number): Promise<GanttTask[]>;
+  getGanttTask(id: number): Promise<GanttTask | undefined>;
   createGanttTask(task: InsertGanttTask): Promise<GanttTask>;
   updateGanttTask(id: number, task: Partial<GanttTask>): Promise<GanttTask | undefined>;
   deleteGanttTask(id: number): Promise<boolean>;
@@ -575,6 +576,11 @@ export class DatabaseStorage implements IStorage {
 
   async getGanttTasks(projectId: number): Promise<GanttTask[]> {
     return await db.select().from(ganttTasks).where(eq(ganttTasks.projectId, projectId));
+  }
+
+  async getGanttTask(id: number): Promise<GanttTask | undefined> {
+    const [task] = await db.select().from(ganttTasks).where(eq(ganttTasks.id, id));
+    return task || undefined;
   }
 
   async createGanttTask(task: InsertGanttTask): Promise<GanttTask> {
