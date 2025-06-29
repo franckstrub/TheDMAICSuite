@@ -91,10 +91,10 @@ export default function UserDropdown() {
       }
 
       // Validate file size (50MB limit)
-      if (file.size > 50 * 1024 * 1024) {
+      if (file.size > 10 * 1024 * 1024) {
         toast({
           title: "File too large",
-          description: "The selected image exceeds the 50MB limit. Please choose a smaller image.",
+          description: "The selected image exceeds the 10MB limit. Please choose a smaller image.",
           variant: "destructive",
         });
         // Clear the file input
