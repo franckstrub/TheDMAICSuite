@@ -1271,15 +1271,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   {/* Attribute Agreement Analysis Content - Show when agreement analysis is selected */}
                   {attributeAnalysisType[ctqItem.ctq] === 'agreement' && (
                     <div className="space-y-4">
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
-                        <p className="text-sm text-gray-600">
-                          Complete statistical analysis of measurement system agreement between appraisers for attribute data.
-                        </p>
-                      </div>
-
-                  {!isSimplifiedView && (
-                    <>
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Attribute Agreement Analysis</h3>
                         <p className="text-sm text-gray-600">
@@ -1539,10 +1530,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         </Button>
                         </div>
                       </div>
-                      )}
-                      
-                    </>
-                  )}
                     </div>
                   )}
 
