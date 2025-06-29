@@ -1191,8 +1191,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 // Attribute MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
                   {/* Analysis Type Selector - Available for all project types when MSA is shown */}
-                  {(
-                    <div className="mb-6">
+                  <div className="mb-6">
                       <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
                       <div className="flex gap-4">
                         <label className="flex items-center cursor-pointer">
@@ -1529,7 +1528,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                        {saveAttributeMsaMutation.isPending ? "Saving..." : "Save Attribute MSA Study"}
                         </Button>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
 
