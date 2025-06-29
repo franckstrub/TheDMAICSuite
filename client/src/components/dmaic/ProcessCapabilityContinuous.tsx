@@ -44,55 +44,83 @@ export default function AIAnalysisSection({
   const isDisabled =
     isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 25;
 
+  // Calculate dynamic rows based on content length
+  const calculateRows = (text: string): number => {
+    if (!text || text.trim() === "") return 6; // Default minimum rows
+    
+    const lineBreaks = (text.match(/\n/g) || []).length;
+    const textLength = text.length;
+    
+    // Estimate characters per line (approximately 80-100 characters per line in a textarea)
+    const estimatedCharsPerLine = 85;
+    const estimatedLines = Math.ceil(textLength / estimatedCharsPerLine);
+    
+    // Use the greater of line breaks + 1 or estimated lines, with min 6 and max 20
+    const calculatedRows = Math.max(lineBreaks + 1, estimatedLines);
+    return Math.min(Math.max(calculatedRows, 6), 20);
+  };
+
+  const assessmentText = capabilityData[ctq]?.capabilityAssessment || "";
+  const dynamicRows = calculateRows(assessmentText);
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium">Capability Analysis</label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            generateAIAssessment(ctq);
-          }}
-          disabled={isDisabled}
-          className="flex items-center gap-2"
-        >
-          {isGeneratingAssessment[ctq] ? (
-            <RefreshCw className="h-4 w-4 animate-spin" />
-          ) : (
+    <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg shadow-sm">
+      <div className="p-4 pb-3 border-b border-purple-200">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-purple-600" />
-          )}
-          {isGeneratingAssessment[ctq] ? "Generating..." : "Generate AI Assessment"}
-        </Button>
-      </div>
-
-      <Textarea
-        value={capabilityData[ctq]?.capabilityAssessment || ""}
-        onChange={(e) =>
-          updateCapabilityField(ctq, "capabilityAssessment", e.target.value)
-        }
-        placeholder="AI-powered capability analysis will appear here..."
-        rows={6}
-        className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
-      />
-
-      {capabilityData[ctq]?.capabilityAssessment && (
-        <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
-          ✓ AI capability analysis loaded (
-          {String(capabilityData[ctq]?.capabilityAssessment || "").length}{" "}
-          characters)
+            AI Capability Analysis
+          </h3>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              generateAIAssessment(ctq);
+            }}
+            disabled={isDisabled}
+            className="flex items-center gap-2"
+          >
+            {isGeneratingAssessment[ctq] ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 text-purple-600" />
+            )}
+            {isGeneratingAssessment[ctq] ? "Generating..." : "Generate Assessment"}
+          </Button>
         </div>
-      )}
+      </div>
+      
+      <div className="p-4 pt-3">
+        <Textarea
+          value={assessmentText}
+          onChange={(e) =>
+            updateCapabilityField(ctq, "capabilityAssessment", e.target.value)
+          }
+          placeholder="AI-powered capability analysis will appear here..."
+          rows={dynamicRows}
+          className="bg-white/80 border-purple-200 resize-y min-h-[150px] w-full"
+          style={{ 
+            height: 'auto',
+            minHeight: '150px',
+            maxHeight: '600px'
+          }}
+        />
 
-      {(dataPoints[ctq]?.length || 0) < 25 && (
-        <p className="text-xs text-orange-600 mt-1">
-          At least 25 data points required for AI Capability analysis (Current:{" "}
-          {dataPoints[ctq]?.length || 0})
-        </p>
-      )}
+        {assessmentText && (
+          <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+            ✓ AI analysis loaded ({assessmentText.length} characters, auto-adjusted to {dynamicRows} rows)
+          </div>
+        )}
+
+        {(dataPoints[ctq]?.length || 0) < 25 && (
+          <div className="mt-2 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded p-2">
+            At least 25 data points required for AI analysis (Current: {dataPoints[ctq]?.length || 0})
+          </div>
+        )}
+      </div>
     </div>
   )}
   ;
