@@ -246,6 +246,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     enabled: !!projectId,
   });
 
+  // Fetch project data to determine project type
+  const { data: projectData, isLoading: projectLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}`],
+    enabled: !!projectId,
+  });
+
   // Fetch project charter to determine project type
   const { data: charter } = useQuery({
     queryKey: ['/api/projects', projectId, 'charter'],
@@ -1359,6 +1365,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   const ctqList = getCTQs();
 
+  // Determine project type for conditional display
+  const projectType = projectData?.project?.projectType || charter?.charter?.projectType;
+  const isSimplifiedView = projectType === "White Belt" || projectType === "Yellow Belt";
+
   if (ctqList.length === 0) {
     return (
       <Card>
@@ -1418,7 +1428,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             return (
             <TabsContent key={ctq} value={ctq} className="mt-6">
               {/* Show/Hide Process Capability Button for White Belt and Yellow Belt projects */}
-              {(charter?.charter?.projectType === 'White Belt' || charter?.charter?.projectType === 'Yellow Belt') && !showProcessCapability[ctq] && (
+              {isSimplifiedView && !showProcessCapability[ctq] && (
                 <div className="text-center py-8">
                   <Button 
                     onClick={() => toggleProcessCapabilityVisibility(ctq)}
@@ -1430,10 +1440,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
               )}
               
               {/* Process Capability Content - Always show for Green/Black Belt, conditionally for White/Yellow Belt */}
-              {(charter?.charter?.projectType !== 'White Belt' && charter?.charter?.projectType !== 'Yellow Belt') || showProcessCapability[ctq] ? (
+              {!isSimplifiedView || showProcessCapability[ctq] ? (
                 <div>
                   {/* Hide Process Capability Button for White Belt and Yellow Belt projects when content is shown */}
-                  {(charter?.charter?.projectType === 'White Belt' || charter?.charter?.projectType === 'Yellow Belt') && showProcessCapability[ctq] && (
+                  {isSimplifiedView && showProcessCapability[ctq] && (
                     <div className="mb-4 text-right">
                       <Button 
                         onClick={() => toggleProcessCapabilityVisibility(ctq)}
