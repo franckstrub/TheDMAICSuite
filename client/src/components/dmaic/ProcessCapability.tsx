@@ -242,17 +242,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     enabled: !!projectId,
   });
 
+  // Fetch project charter to determine project type
+  const { data: charter } = useQuery({
+    queryKey: ['/api/projects', projectId, 'charter'],
+    enabled: !!projectId
+  });
+
   // Load existing Process Capability data
   const { data: capabilityDataResponse, isLoading: capabilityLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/process-capability`],
     enabled: !!projectId,
   });
 
-  // Load project charter to check project type
-  const { data: charter } = useQuery({
-    queryKey: [`/api/projects/${projectId}/charter`],
-    enabled: !!projectId,
-  });
+
 
   // Save Process Capability mutation
   const saveCapabilityMutation = useMutation({
@@ -1410,7 +1412,35 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             const ctq = ctqWithType.ctq;
             return (
             <TabsContent key={ctq} value={ctq} className="mt-6">
-              <div className="space-y-6">
+              {/* Show/Hide Process Capability Button for White Belt and Yellow Belt projects */}
+              {(charter?.charter?.projectType === 'White Belt' || charter?.charter?.projectType === 'Yellow Belt') && !showProcessCapability[ctq] && (
+                <div className="text-center py-8">
+                  <Button 
+                    onClick={() => toggleProcessCapabilityVisibility(ctq)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Show Process Capability
+                  </Button>
+                </div>
+              )}
+              
+              {/* Process Capability Content - Always show for Green/Black Belt, conditionally for White/Yellow Belt */}
+              {(charter?.charter?.projectType !== 'White Belt' && charter?.charter?.projectType !== 'Yellow Belt') || showProcessCapability[ctq] ? (
+                <div>
+                  {/* Hide Process Capability Button for White Belt and Yellow Belt projects when content is shown */}
+                  {(charter?.charter?.projectType === 'White Belt' || charter?.charter?.projectType === 'Yellow Belt') && showProcessCapability[ctq] && (
+                    <div className="mb-4 text-right">
+                      <Button 
+                        onClick={() => toggleProcessCapabilityVisibility(ctq)}
+                        variant="outline"
+                        className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                      >
+                        Hide Process Capability
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-6">
                 
                 {/* Data Input Section for Continuous CTQs */}
                 {ctqWithType.ctqType === "Continuous" && (
@@ -2753,7 +2783,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     {saveCapabilityMutation.isPending ? "Saving..." : "Save Process Capability"}
                   </Button>
                 </div>
-              </div>
+                </div>
+                </div>
+              ) : null}
             </TabsContent>
             );
           })}
