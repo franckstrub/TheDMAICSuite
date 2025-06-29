@@ -742,6 +742,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Load data points when process capability data is loaded (only once)
   useEffect(() => {
+    if (!ctsData || ctqsLoading || projectLoading) return;
+    
     const ctqs = getCtqsWithTypes();
     ctqs.forEach(({ ctq }) => {
       if (capabilityData[ctq]?.id && !dataPoints[ctq]) {
@@ -749,10 +751,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         loadDataPointsForCtq(ctq);
       }
     });
-  }, [capabilityData]);
+  }, [capabilityData, ctsData, ctqsLoading, projectLoading]);
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
+    if (!ctsData || ctqsLoading || projectLoading) return;
+    
     const ctqs = getCtqsWithTypes();
     if (ctqs.length > 0) {
       const initialData: { [ctq: string]: ProcessCapabilityData } = {};
@@ -817,7 +821,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         }
       }
     }
-  }, [ctqsData, capabilityDataResponse, ctsData, activeTab]);
+  }, [ctqsData, capabilityDataResponse, ctsData, activeTab, ctqsLoading, projectLoading]);
 
   // Auto-calculate analysis when capability data is loaded and state is updated
   useEffect(() => {
