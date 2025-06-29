@@ -99,6 +99,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [hasCalculatedStatistics, setHasCalculatedStatistics] = useState<{ [ctq: string]: boolean }>({});
   const [attributeAnalysisType, setAttributeAnalysisType] = useState<{ [ctq: string]: 'simple' | 'agreement' }>({});
   const [continuousAnalysisType, setContinuousAnalysisType] = useState<{ [ctq: string]: 'simple' | 'gage_rr' }>({});
+  const [showMsaContent, setShowMsaContent] = useState<{ [ctq: string]: boolean }>({});
 
   // Load last active tab and statistics state from localStorage on component mount
   useEffect(() => {
@@ -163,6 +164,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         console.warn("Failed to parse saved continuous analysis types:", error);
       }
     }
+
+    // Load saved MSA show/hide state for White Belt and Yellow Belt projects
+    const savedMsaShowState = localStorage.getItem(`msa-show-content-${projectId}`);
+    if (savedMsaShowState) {
+      try {
+        const parsedState = JSON.parse(savedMsaShowState);
+        setShowMsaContent(parsedState);
+      } catch (error) {
+        console.warn("Failed to parse saved MSA show content state:", error);
+      }
+    }
   }, [projectId]);
 
   // Save attribute statistics show/hide state to localStorage whenever it changes
@@ -178,6 +190,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       localStorage.setItem(`msa-show-continuous-stats-${projectId}`, JSON.stringify(showContinuousStatistics));
     }
   }, [showContinuousStatistics, projectId]);
+
+  // Save MSA show/hide state to localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(showMsaContent).length > 0) {
+      localStorage.setItem(`msa-show-content-${projectId}`, JSON.stringify(showMsaContent));
+    }
+  }, [showMsaContent, projectId]);
 
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
@@ -1140,7 +1159,35 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
           {ctqList.map((ctqItem: CtqWithType) => (
             <TabsContent key={ctqItem.ctq} value={ctqItem.ctq} className="mt-0 border border-gray-200 rounded-lg p-4" >
-              {ctqItem.ctqType === "Attribute" ? (
+              {/* Show/Hide MSA Button for White Belt and Yellow Belt projects */}
+              {isSimplifiedView && !showMsaContent[ctqItem.ctq] && (
+                <div className="text-center py-8">
+                  <Button 
+                    onClick={() => setShowMsaContent(prev => ({ ...prev, [ctqItem.ctq]: true }))}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Show MSA
+                  </Button>
+                </div>
+              )}
+              
+              {/* MSA Content - Always show for Green/Black Belt, conditionally for White/Yellow Belt */}
+              {(!isSimplifiedView || showMsaContent[ctqItem.ctq]) && (
+                <div>
+                  {/* Hide MSA Button for White Belt and Yellow Belt projects when content is shown */}
+                  {isSimplifiedView && showMsaContent[ctqItem.ctq] && (
+                    <div className="mb-4 text-right">
+                      <Button 
+                        onClick={() => setShowMsaContent(prev => ({ ...prev, [ctqItem.ctq]: false }))}
+                        variant="outline"
+                        className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                      >
+                        Hide MSA
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {ctqItem.ctqType === "Attribute" ? (
                 // Attribute MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
                   {/* Analysis Type Selector - Only for Green Belt and Black Belt */}
@@ -1999,6 +2046,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                   )}
                     </div>
                   )}
+                </div>
+              )}
                 </div>
               )}
             </TabsContent>

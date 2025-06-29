@@ -13,6 +13,12 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../../lib/queryClient';
 import { useToast } from '../../hooks/use-toast';
 import { cn } from '../../lib/utils';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Define the task interface
 export interface GanttTask {
@@ -1730,6 +1736,30 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           </div>
         </div>
       </div>
+      
+      {/* Information message for dragging task in Gantt */}
+    
+        <Card className="mt-3 mb-1 border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-blue-800">
+                  Gantt Guidelines
+                </h3>
+                <p className="mt-1 text-sm text-blue-700">
+                You can <strong>drag any task within the Gantt tasks list.</strong> Use the dragging icon{' '}
+                <GripVertical size={14} className="inline text-gray-400" /> within the Gantt area.
+                <div>Added tasks will be put at the bottom of the Gantt by default.</div>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
       {/* Task Form Overlay - Compressed */}
       {showAddTaskOverlay && (
