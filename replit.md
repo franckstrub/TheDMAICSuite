@@ -137,6 +137,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 29, 2025. Resolved authentication duplicate email constraint violation - changed upsertUser conflict resolution from users.id to users.email target to properly handle existing user logins without database crashes
 - June 29, 2025. Fixed PayloadTooLargeError for project charter saves - increased Express request size limit from default to 50MB for both JSON and URL-encoded data to handle large project charter content
 - June 29, 2025. Implemented comprehensive client-side payload validation - added 50MB file size validation to all image upload components (DefinePhase, UserDropdown, ProfileOverlay) with user-friendly error messages and automatic file input clearing to prevent server payload errors before upload
+- June 29, 2025. Enhanced Process Capability AI analysis window with auto-adjusting height - implemented dynamic row calculation based on AI response text length (minimum 6 rows, maximum 20 rows), improved card layout with proper header/content sections, and added character count display with responsive height adjustment for optimal user experience
 
 ## User Preferences
 
