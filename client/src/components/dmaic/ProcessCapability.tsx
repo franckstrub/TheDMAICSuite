@@ -155,30 +155,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     setHasInitializedTab(false);
   }, [projectId]);
 
-  // Initialize showProcessCapability state from localStorage
-  useEffect(() => {
-    // Early return if any data is still loading or undefined
-    if (ctqsLoading || projectLoading || !ctqsData || !ctsData || !projectData) {
-      return;
-    }
 
-    try {
-      // Use centralized CTQs endpoint which aggregates from all sources
-      if ((ctqsData as any)?.ctqs?.length > 0) {
-        const ctqs = (ctqsData as any).ctqs.map((item: any) => item.ctq);
-        if (ctqs.length > 0) {
-          const initialShowState: { [ctq: string]: boolean } = {};
-          ctqs.forEach((ctq: string) => {
-            const savedState = localStorage.getItem(`process-capability-show-${projectId}-${ctq}`);
-            initialShowState[ctq] = savedState === 'true';
-          });
-          setShowProcessCapability(initialShowState);
-        }
-      }
-    } catch (error) {
-      console.warn('Error initializing Process Capability show state:', error);
-    }
-  }, [projectId, ctqsData, ctsData, projectData, ctqsLoading, projectLoading]);
 
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tabValue: string) => {
@@ -271,7 +248,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     enabled: !!projectId,
   });
 
+  // Initialize showProcessCapability state from localStorage after queries are loaded
+  useEffect(() => {
+    // Early return if any data is still loading or undefined
+    if (ctqsLoading || projectLoading || !ctqsData || !ctsData || !projectData) {
+      return;
+    }
 
+    try {
+      // Use centralized CTQs endpoint which aggregates from all sources
+      if ((ctqsData as any)?.ctqs?.length > 0) {
+        const ctqs = (ctqsData as any).ctqs.map((item: any) => item.ctq);
+        if (ctqs.length > 0) {
+          const initialShowState: { [ctq: string]: boolean } = {};
+          ctqs.forEach((ctq: string) => {
+            const savedState = localStorage.getItem(`process-capability-show-${projectId}-${ctq}`);
+            initialShowState[ctq] = savedState === 'true';
+          });
+          setShowProcessCapability(initialShowState);
+        }
+      }
+    } catch (error) {
+      console.warn('Error initializing Process Capability show state:', error);
+    }
+  }, [projectId, ctqsData, ctsData, projectData, ctqsLoading, projectLoading]);
 
   // Save Process Capability mutation
   const saveCapabilityMutation = useMutation({
