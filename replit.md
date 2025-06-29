@@ -128,6 +128,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 28, 2025. Fixed Measure deliverables persistence issues - completed default deliverables function with all 7 proper Measure phase deliverables (Process Map, CTS Characteristics, Data Collection Plan, MSA, Process Capability, Control Plan, Gate Review), enhanced save function to properly create default deliverables without IDs in database, cleaned up TypeScript errors in completion percentage calculation, and verified all deliverables now save correctly with POST 201 responses
 - June 28, 2025. Applied consistent charter-based validator logic across both Define and Measure phases - validators now only display for charter fields containing actual data, eliminating placeholder validators for empty fields. Both phases now accurately reflect authentic project data from charter instead of using synthetic placeholders
 - June 28, 2025. Added informational message in Measure phase for White Belt and Yellow Belt projects - displays blue information card explaining that MSA and Process Capability studies are optional for these project types, helping users understand they can skip these sections based on project requirements
+- June 29, 2025. Enhanced Gantt chart container with flexible height system - replaced fixed 600px height with responsive min-h-[600px] max-h-[80vh] design that auto-adjusts to accommodate growing task lists while maintaining optimal viewport usage
 
 ## User Preferences
 

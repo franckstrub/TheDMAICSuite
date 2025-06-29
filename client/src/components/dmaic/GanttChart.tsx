@@ -160,12 +160,8 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   // Handle tasks data when it changes
   useEffect(() => {
     if (tasksData && tasksData.tasks) {
-      console.log('Received tasks:', tasksData.tasks);
-      console.log('Task count:', tasksData.tasks.length);
       // Sort tasks by sequence number to ensure proper order
       const sortedTasks = [...tasksData.tasks].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-      console.log('Sorted tasks:', sortedTasks);
-      console.log('Setting tasks to state:', sortedTasks.length);
       setTasks(sortedTasks);
     }
   }, [tasksData]);
@@ -1151,7 +1147,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       )}
 
       {/* Gantt Chart */}
-      <div className="gantt-wrapper overflow-x-auto overflow-y-auto max-h-[800px]">
+      <div className="gantt-wrapper overflow-x-auto overflow-y-auto min-h-[600px] max-h-[80vh]">
         <div className="min-w-full relative">
           {/* Date Headers - First Two Rows are Frozen */}
           <div className="flex border-b sticky top-0 z-30 bg-white">
