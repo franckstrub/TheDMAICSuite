@@ -161,7 +161,9 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   useEffect(() => {
     if (tasksData && tasksData.tasks) {
       console.log('Received tasks:', tasksData.tasks);
-      setTasks(tasksData.tasks || []);
+      // Sort tasks by sequence number to ensure proper order
+      const sortedTasks = [...tasksData.tasks].sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+      setTasks(sortedTasks);
     }
   }, [tasksData]);
   
