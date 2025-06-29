@@ -1538,16 +1538,15 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                 // Continuous MSA Analysis Interface with Choice Selector
                 <div className="space-y-4">
                   {/* Analysis Type Selector - Available for all project types when MSA is shown */}
-                  {(
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
-                      <div className="flex gap-4">
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="radio"
-                            name={`continuous-analysis-type-${ctqItem.ctq}`}
-                            value="simple"
-                            checked={continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium mb-3">Select Analysis Type:</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`continuous-analysis-type-${ctqItem.ctq}`}
+                          value="simple"
+                          checked={continuousAnalysisType[ctqItem.ctq] === 'simple' || !continuousAnalysisType[ctqItem.ctq]}
                             onChange={() => {
                               const newTypes = { ...continuousAnalysisType, [ctqItem.ctq]: 'simple' as const };
                               setContinuousAnalysisType(newTypes);
