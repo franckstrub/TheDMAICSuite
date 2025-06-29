@@ -614,8 +614,38 @@ export default function DefinePhase() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      setIsImageLoading(true);
       const file = files[0];
+      
+      // Check file size (50MB limit)
+      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "The selected image exceeds the 50MB limit. Please choose a smaller image.",
+          variant: "destructive",
+        });
+        // Clear the file input
+        if (event.target) {
+          event.target.value = '';
+        }
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        // Clear the file input
+        if (event.target) {
+          event.target.value = '';
+        }
+        return;
+      }
+      
+      setIsImageLoading(true);
       const reader = new FileReader();
       
       reader.onload = (e) => {

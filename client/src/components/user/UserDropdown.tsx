@@ -83,16 +83,24 @@ export default function UserDropdown() {
           description: "Please select an image file.",
           variant: "destructive",
         });
+        // Clear the file input
+        if (event.target) {
+          event.target.value = '';
+        }
         return;
       }
 
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
+      // Validate file size (50MB limit)
+      if (file.size > 50 * 1024 * 1024) {
         toast({
           title: "File too large",
-          description: "Please select an image smaller than 5MB.",
+          description: "The selected image exceeds the 50MB limit. Please choose a smaller image.",
           variant: "destructive",
         });
+        // Clear the file input
+        if (event.target) {
+          event.target.value = '';
+        }
         return;
       }
 
