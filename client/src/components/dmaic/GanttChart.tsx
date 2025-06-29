@@ -616,15 +616,49 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
       // Update task sequence numbers and save to server
       try {
-        // Update sequence numbers for all tasks based on new order
-        const updatedTasks = newTasks.map((task, index) => ({
-          ...task,
-          sequence: index + 1
-        }));
+        const draggedTask = tasks[draggedIndex];
+        const originalSequence = draggedTask.sequence || draggedIndex + 1;
+        const newSequence = dropTargetIndex + 1;
+        
+        const tasksToUpdate: GanttTask[] = [];
+        
+        // Update sequences for affected tasks only
+        const updatedTasks = newTasks.map((task, index) => {
+          const newTask = { ...task };
+          
+          if (index === dropTargetIndex) {
+            // The moved task gets the new sequence
+            newTask.sequence = newSequence;
+            tasksToUpdate.push(newTask);
+          } else {
+            // Keep original sequence for all other tasks initially
+            const originalTask = tasks.find(t => t.id === task.id);
+            if (originalTask) {
+              newTask.sequence = originalTask.sequence;
+            }
+            
+            // Adjust sequences only for tasks that need to shift
+            if (originalSequence < newSequence) {
+              // Moving task down: decrement sequences of tasks between original and new position
+              if (newTask.sequence && newTask.sequence > originalSequence && newTask.sequence <= newSequence && task.id !== draggedTask.id) {
+                newTask.sequence = newTask.sequence - 1;
+                tasksToUpdate.push(newTask);
+              }
+            } else if (originalSequence > newSequence) {
+              // Moving task up: increment sequences of tasks between new and original position
+              if (newTask.sequence && newTask.sequence >= newSequence && newTask.sequence < originalSequence && task.id !== draggedTask.id) {
+                newTask.sequence = newTask.sequence + 1;
+                tasksToUpdate.push(newTask);
+              }
+            }
+          }
+          
+          return newTask;
+        });
 
-        // Update each task's sequence on the server
+        // Update only the affected tasks on the server
         await Promise.all(
-          updatedTasks.map(async (task) => {
+          tasksToUpdate.map(async (task) => {
             if (task.id) {
               await apiRequest("PUT", `/api/gantt-tasks/${task.id}`, {
                 ...task,
