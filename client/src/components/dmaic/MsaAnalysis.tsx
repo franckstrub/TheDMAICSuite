@@ -495,6 +495,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             tolerance: existingMsa.tolerance,
             repetitions: existingMsa.repetitions || 2,
             numberOfAppraisers: existingMsa.numberOfAppraisers || 2,
+            justification: existingMsa.justification || "",
           } : {
             ctq: ctq,
             appraiser1Name: "",
@@ -506,6 +507,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             repetitions: 2,
             numberOfAppraisers: 2,
             studyDateTime: new Date().toISOString(),
+            justification: "",
           };
         }
       });
