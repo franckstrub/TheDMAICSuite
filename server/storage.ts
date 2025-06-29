@@ -19,7 +19,7 @@ import {
   type GanttTask, type InsertGanttTask
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, gte, sql } from "drizzle-orm";
+import { eq, and, desc, asc, gte, gt, sql } from "drizzle-orm";
 import { organizationService } from "./organizationService";
 
 // Type for User select operations
@@ -617,7 +617,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteGanttTask(id: number): Promise<boolean> {
+    // First, get the task to know its sequence and project
+    const [taskToDelete] = await db.select().from(ganttTasks).where(eq(ganttTasks.id, id));
+    
+    if (!taskToDelete) {
+      return false;
+    }
+
+    // Delete the task
     const result = await db.delete(ganttTasks).where(eq(ganttTasks.id, id));
+    
+    if (result.rowCount > 0) {
+      // Decrement sequence for all tasks with sequence greater than the deleted task
+      await db
+        .update(ganttTasks)
+        .set({ 
+          sequence: sql`${ganttTasks.sequence} - 1`,
+          lastUpdated: new Date()
+        })
+        .where(
+          and(
+            eq(ganttTasks.projectId, taskToDelete.projectId),
+            gt(ganttTasks.sequence, taskToDelete.sequence)
+          )
+        );
+    }
+    
     return result.rowCount > 0;
   }
 }
