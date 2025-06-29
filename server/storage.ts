@@ -575,7 +575,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGanttTasks(projectId: number): Promise<GanttTask[]> {
-    return await db.select().from(ganttTasks).where(eq(ganttTasks.projectId, projectId));
+    return await db.select().from(ganttTasks).where(eq(ganttTasks.projectId, projectId)).orderBy(asc(ganttTasks.sequence));
   }
 
   async getGanttTask(id: number): Promise<GanttTask | undefined> {
