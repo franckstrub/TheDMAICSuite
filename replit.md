@@ -135,6 +135,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 29, 2025. Successfully implemented Process Capability conditional display for White Belt and Yellow Belt projects - displays "Show Process Capability" button instead of card content by default, toggles to "Hide Process Capability" when expanded, with localStorage persistence for user preferences across sessions, and fixed initialization crashes by adding comprehensive null checks and proper data loading guards to prevent accessing ctqsData before initialization
 - June 29, 2025. Fixed MSA justification field persistence issue for continuous CTQ analysis - added missing justification field to continuous MSA POST/PUT API routes and updated frontend initialization logic to properly load existing justification data from database
 - June 29, 2025. Resolved authentication duplicate email constraint violation - changed upsertUser conflict resolution from users.id to users.email target to properly handle existing user logins without database crashes
+- June 29, 2025. Fixed PayloadTooLargeError for project charter saves - increased Express request size limit from default to 50MB for both JSON and URL-encoded data to handle large project charter content
 
 ## User Preferences
 
