@@ -158,15 +158,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Initialize showProcessCapability state from localStorage
   useEffect(() => {
     if (ctqsData && ctsData) {
-      const ctqs = getCTQs();
-      if (ctqs.length > 0) {
-        const initialShowState: { [ctq: string]: boolean } = {};
-        ctqs.forEach(ctqWithType => {
-          const ctq = ctqWithType.ctq;
-          const savedState = localStorage.getItem(`process-capability-show-${projectId}-${ctq}`);
-          initialShowState[ctq] = savedState === 'true';
-        });
-        setShowProcessCapability(initialShowState);
+      // Use centralized CTQs endpoint which aggregates from all sources
+      if ((ctqsData as any)?.ctqs?.length > 0) {
+        const ctqs = (ctqsData as any).ctqs.map((item: any) => item.ctq);
+        if (ctqs.length > 0) {
+          const initialShowState: { [ctq: string]: boolean } = {};
+          ctqs.forEach((ctq: string) => {
+            const savedState = localStorage.getItem(`process-capability-show-${projectId}-${ctq}`);
+            initialShowState[ctq] = savedState === 'true';
+          });
+          setShowProcessCapability(initialShowState);
+        }
       }
     }
   }, [projectId, ctqsData, ctsData]);
@@ -334,7 +336,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Get CTQs from centralized endpoint
   const getCTQs = () => {
     // Use centralized CTQs endpoint which aggregates from all sources
-    if ((ctqsData as any)?.ctqs?.length > 0) {
+    if (ctqsData && (ctqsData as any)?.ctqs?.length > 0) {
       return (ctqsData as any).ctqs.map((item: any) => item.ctq);
     }
     
@@ -342,7 +344,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   };
   // Get CTQs with types from CTS characteristics
   const getCtqsWithTypes = (): CtqWithType[] => {
-    if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData) {
+    if (!ctsData) return [];
+    if (typeof ctsData === 'object' && 'characteristics' in ctsData) {
       return (ctsData as any).characteristics.map((item: any) => ({
         ctq: item.ctq,
         ctqType: item.ctqType || "Continuous"
