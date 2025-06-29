@@ -157,15 +157,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Initialize showProcessCapability state from localStorage
   useEffect(() => {
-    const ctqs = getCTQs();
-    if (ctqs.length > 0) {
-      const initialShowState: { [ctq: string]: boolean } = {};
-      ctqs.forEach(ctqWithType => {
-        const ctq = ctqWithType.ctq;
-        const savedState = localStorage.getItem(`process-capability-show-${projectId}-${ctq}`);
-        initialShowState[ctq] = savedState === 'true';
-      });
-      setShowProcessCapability(initialShowState);
+    if (ctqsData && ctsData) {
+      const ctqs = getCTQs();
+      if (ctqs.length > 0) {
+        const initialShowState: { [ctq: string]: boolean } = {};
+        ctqs.forEach(ctqWithType => {
+          const ctq = ctqWithType.ctq;
+          const savedState = localStorage.getItem(`process-capability-show-${projectId}-${ctq}`);
+          initialShowState[ctq] = savedState === 'true';
+        });
+        setShowProcessCapability(initialShowState);
+      }
     }
   }, [projectId, ctqsData, ctsData]);
 
