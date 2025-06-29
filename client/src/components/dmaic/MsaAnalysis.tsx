@@ -1246,10 +1246,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                             value={attributeMsaData[ctqItem.ctq]?.justification || ""}
                             onChange={(e) => updateAttributeMsaField(ctqItem.ctq, "justification", e.target.value)}
                             className="w-full flex min-h-[150px]"
-                            placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate?
-
- . Precision: Explain why the measurement system is precise?
- . Accuracy: Explain why the measurement system is accurate?"
+                            placeholder="Enter explanations to justify why the Measurement System is Precise and Accurate? Precision: Explain why the measurement system is precise? Accuracy: Explain why the measurement system is accurate?"
                             title="Are your data reliable? Can anyone measure the same thing and get the same result (Precision)? Does your data represents the true value or are they biased (Accuracy)? Please justify here."
                           />
                         </div>
