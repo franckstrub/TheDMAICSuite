@@ -98,8 +98,22 @@ export function registerGanttRoutes(app: Express, dbStorage: any = null) {
         return res.status(404).json({ error: "Task not found" });
       }
       
+      // Process the update data to handle date fields properly
+      const updateData = { ...req.body };
+      
+      // Convert date strings to Date objects for timestamp fields
+      if (updateData.startDate && typeof updateData.startDate === 'string') {
+        updateData.startDate = new Date(updateData.startDate);
+      }
+      if (updateData.endDate && typeof updateData.endDate === 'string') {
+        updateData.endDate = new Date(updateData.endDate);
+      }
+      if (updateData.lastUpdated && typeof updateData.lastUpdated === 'string') {
+        updateData.lastUpdated = new Date(updateData.lastUpdated);
+      }
+      
       // Update the task
-      const updatedTask = await storageToUse.updateGanttTask(id, req.body);
+      const updatedTask = await storageToUse.updateGanttTask(id, updateData);
       if (!updatedTask) {
         return res.status(500).json({ error: "Failed to update task" });
       }
