@@ -131,6 +131,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 29, 2025. Enhanced Gantt chart container with flexible height system - replaced fixed 600px height with responsive min-h-[600px] max-h-[80vh] design that auto-adjusts to accommodate growing task lists while maintaining optimal viewport usage
 - June 29, 2025. Fixed Gantt task sequence management system - implemented automatic sequence incrementing when inserting new tasks, added proper database ordering with orderBy(asc(ganttTasks.sequence)), resolved duplicate sequence issues, and ensured tasks display in correct order for proper drag-and-drop functionality
 - June 29, 2025. Implemented Gantt task deletion sequence decrement logic - when deleting a task, all subsequent tasks with higher sequence numbers automatically decrement by 1, eliminating gaps and maintaining continuous sequence ordering for optimal user experience
+- June 29, 2025. Implemented MSA Analysis conditional display for White Belt and Yellow Belt projects - displays "Show MSA" button instead of card content by default, toggles to "Hide MSA" when expanded, with localStorage persistence for user preferences across sessions
 
 ## User Preferences
 
