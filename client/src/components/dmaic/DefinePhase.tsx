@@ -617,11 +617,11 @@ export default function DefinePhase() {
       const file = files[0];
       
       // Check file size (50MB limit)
-      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
       if (file.size > maxSize) {
         toast({
           title: "File too large",
-          description: "The selected image exceeds the 50MB limit. Please choose a smaller image.",
+          description: "The selected image exceeds the 10MB limit. Please choose a smaller image.",
           variant: "destructive",
         });
         // Clear the file input
