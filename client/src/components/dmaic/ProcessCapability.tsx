@@ -157,7 +157,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Initialize showProcessCapability state from localStorage
   useEffect(() => {
-    if (ctqsData && ctsData && projectData && !ctqsLoading && !projectLoading) {
+    // Early return if any data is still loading or undefined
+    if (ctqsLoading || projectLoading || !ctqsData || !ctsData || !projectData) {
+      return;
+    }
+
+    try {
       // Use centralized CTQs endpoint which aggregates from all sources
       if ((ctqsData as any)?.ctqs?.length > 0) {
         const ctqs = (ctqsData as any).ctqs.map((item: any) => item.ctq);
@@ -170,6 +175,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
           setShowProcessCapability(initialShowState);
         }
       }
+    } catch (error) {
+      console.warn('Error initializing Process Capability show state:', error);
     }
   }, [projectId, ctqsData, ctsData, projectData, ctqsLoading, projectLoading]);
 
