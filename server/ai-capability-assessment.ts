@@ -138,18 +138,18 @@ Keep the analysis concise, professional, data-driven, and actionable for process
     
     let result;
     if (chartImages && chartImages.length > 0) {
-      // Generate content with images
-      const parts = [
-        { text: prompt },
-        ...chartImages.map((imageData: string) => ({
-          inlineData: {
-            data: imageData.split(',')[1], // Remove data:image/png;base64, prefix
-            mimeType: "image/png",
-          }
-        }))
-      ];
+      // Generate content with images - use the new format
+      const imageParts = chartImages.map((imageData: string) => ({
+        inlineData: {
+          data: imageData.split(',')[1], // Remove data:image/png;base64, prefix
+          mimeType: "image/png",
+        }
+      }));
       
-      result = await model.generateContent([{ parts }]);
+      result = await model.generateContent([
+        prompt,
+        ...imageParts
+      ]);
     } else {
       // Generate content with text only
       result = await model.generateContent(prompt);
