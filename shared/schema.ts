@@ -997,7 +997,8 @@ export const processCapability = pgTable("process_capability", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
-  ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id), // Foreign key to CTS characteristics
+  ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics (kept for backward compatibility)
   lsl: text("lsl"), // Lower Specification Limit (optional for attribute CTQs)
   usl: text("usl"), // Upper Specification Limit (optional for attribute CTQs)
   target: text("target"), // Target value (optional for attribute CTQs)
