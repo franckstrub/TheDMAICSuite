@@ -12,7 +12,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { PlusCircle, Trash2, AlertTriangle } from "lucide-react";
 
 interface CtsCharacteristic {
   id?: number;
@@ -35,6 +46,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
   const { toast } = useToast();
   const [characteristics, setCharacteristics] = useState<CtsCharacteristic[]>([]);
   const [availableCtqs, setAvailableCtqs] = useState<{ctq: string, source: string}[]>([]);
+  const [deletingCtqIndex, setDeletingCtqIndex] = useState<number | null>(null);
 
   // Load existing CTS characteristics
   const { data: ctsData, isLoading: ctsLoading } = useQuery({
@@ -76,6 +88,32 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       toast({
         title: "Error",
         description: "Failed to save CTS characteristics",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // CTQ deletion mutation with cascade deletion
+  const deleteCTQMutation = useMutation({
+    mutationFn: async (ctqId: number) => {
+      const response = await apiRequest('DELETE', `/api/projects/${projectId}/cts-characteristics/${ctqId}/cascade`);
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "CTQ and all related data deleted successfully",
+      });
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/cts-characteristics`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete CTQ",
         variant: "destructive",
       });
     },
@@ -192,6 +230,18 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
   };
 
   const removeCharacteristic = (index: number) => {
+    const characteristic = characteristics[index];
+    
+    // If the CTQ has an ID (exists in database), show confirmation dialog
+    if (characteristic.id) {
+      setDeletingCtqIndex(index);
+    } else {
+      // For new CTQs without ID, delete immediately
+      performLocalDeletion(index);
+    }
+  };
+
+  const performLocalDeletion = (index: number) => {
     const newCharacteristics = characteristics.filter((_, i) => i !== index);
     
     // If we're removing the last characteristic, add an empty one for manual entry
@@ -210,6 +260,29 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
     }
     
     setCharacteristics(newCharacteristics);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingCtqIndex === null) return;
+    
+    const characteristic = characteristics[deletingCtqIndex];
+    
+    if (characteristic.id) {
+      try {
+        await deleteCTQMutation.mutateAsync(characteristic.id);
+        performLocalDeletion(deletingCtqIndex);
+      } catch (error) {
+        // Error is handled by the mutation
+      }
+    } else {
+      performLocalDeletion(deletingCtqIndex);
+    }
+    
+    setDeletingCtqIndex(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeletingCtqIndex(null);
   };
 
   const handleSave = () => {
@@ -419,6 +492,48 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
           <p>• For Continuous CTQs, specify Operational Definition, Unit of Measure, Targeted % of Defects, Mean Target, LSL (Lower Specification Limit), and USL (Upper Specification Limit)</p>
           <p>• For Attribute CTQs, only Operational Definition and Targeted % of Defects are applicable</p>
         </div>
+
+        {/* CTQ Deletion Confirmation Dialog */}
+        <AlertDialog open={deletingCtqIndex !== null} onOpenChange={() => setDeletingCtqIndex(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                Delete CTQ - Data Loss Warning
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p>
+                  You are about to delete the CTQ "{deletingCtqIndex !== null ? characteristics[deletingCtqIndex]?.ctq : ''}" 
+                  and all its associated data.
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <p className="font-medium text-red-800 mb-2">This action will permanently delete:</p>
+                  <ul className="text-red-700 text-sm space-y-1">
+                    <li>• All MSA (Measurement System Analysis) data for this CTQ</li>
+                    <li>• All Process Capability analysis and data points for this CTQ</li>
+                    <li>• All statistical calculations and results for this CTQ</li>
+                    <li>• The CTQ definition from CTS characteristics</li>
+                  </ul>
+                </div>
+                <p className="font-medium">
+                  This action cannot be undone. Are you sure you want to continue?
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelDelete}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleteCTQMutation.isPending}
+              >
+                {deleteCTQMutation.isPending ? "Deleting..." : "Delete CTQ & All Data"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
