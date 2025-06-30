@@ -28,6 +28,7 @@ import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { ZodError } from "zod";
 // Using Google AI for mitigation plan, elevator speech, and engagement strategy generation
+import { generateCapabilityAssessment } from "./ai-capability-assessment";
 import { generateMitigationPlan, generateElevatorSpeech, generateEngagementStrategy } from "./googleai";
 import { organizationService } from "./organizationService";
 import { registerGateReviewRoutes } from "./routes-gate-review";
@@ -3691,7 +3692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:projectId/ai-capability-analysis", isAuthenticated, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const { ctq, chartImages } = req.body;
+      const { ctq, chartImages, stats, context } = req.body;
 
       if (!chartImages || !Array.isArray(chartImages) || chartImages.length !== 4) {
         return res.status(400).json({ 
@@ -3699,59 +3700,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Initialize Gemini AI
-      const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY!);
+      if (!stats || !context) {
+        return res.status(400).json({ 
+          error: "Statistical data and context are required for analysis" 
+        });
+      }
 
-      // Prepare the prompt for statistical analysis
-      const analysisPrompt = `As a Lean Six Sigma process capability expert, analyze the four statistical graphs in attached images for the CTQ "${ctq}":
-
-1. Histogram - shows data distribution
-2. Box Plot - shows quartiles and outliers  
-3. Individuals Control Chart - shows process control over time
-4. Moving Range Chart - shows process variation over time
-
-Please provide a comprehensive capability assessment covering:
-
-**Process Stability Analysis:**
-- Control chart interpretation (in-control vs out-of-control signals)
-- Special cause variation identification
-- Process predictability assessment
-
-**Distribution Analysis:**
-- Normality assessment from histogram
-- Outlier identification from box plot
-- Data spread and central tendency
-
-**Capability Assessment:**
-- Overall process capability evaluation
-- Recommendations for improvement
-- Risk areas requiring attention
-
-**Key Insights:**
-- Most critical findings
-- Immediate action items
-- Long-term improvement suggestions
-
-Provide actionable, specific recommendations based on what you observe in these charts.`;
-
-      // Prepare content with images for Gemini - separate text and images
-      const parts = [
-        { text: analysisPrompt },
-        ...chartImages.map((imageData: string) => ({
-          inlineData: {
-            data: imageData.split(',')[1], // Remove data:image/png;base64, prefix
-            mimeType: "image/png",
-          }
-        }))
-      ];
-
-      // Call Gemini 1.5 Pro for image analysis
-      const response = await genAI.models.generateContent({
-        model: "gemini-1.5-pro",
-        contents: [{ parts }],
-      });
-
-      const assessment = response.text || "Unable to generate analysis";
+      // Use the existing AI capability assessment function with chart images
+      const assessment = await generateCapabilityAssessment(stats, context, chartImages);
 
       // Save the assessment to the process capability record
       const user = req.user as any;
@@ -3781,14 +3737,27 @@ Provide actionable, specific recommendations based on what you observe in these 
 
       return res.status(200).json({ 
         assessment,
-        message: "AI capability analysis completed successfully"
+        message: "AI analysis completed successfully"
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI Capability Analysis Error:', error);
+      
+      // Handle specific API errors with user-friendly messages
+      let errorMessage = "Failed to generate AI analysis";
+      if (error.status === 429) {
+        errorMessage = "Rate limit exceeded. Please try again in a few minutes.";
+      } else if (error.status === 401 || error.status === 403) {
+        errorMessage = "Authentication failed. Please check your API key.";
+      } else if (error.status === 400) {
+        errorMessage = "Invalid request format. Please try again.";
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      }
+      
       return res.status(500).json({ 
-        error: "Failed to generate AI capability analysis",
-        details: error instanceof Error ? error.message : "Unknown error"
+        error: errorMessage,
+        details: error.message 
       });
     }
   });
