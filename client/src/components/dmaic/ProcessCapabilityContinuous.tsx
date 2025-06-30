@@ -89,7 +89,7 @@ export default function AIAnalysisSection({
 
       // Prepare statistical data and context for AI analysis
       const currentData = dataPoints[ctq] || [];
-      const numericValues = currentData.map(dp => dp.value);
+      const numericValues = currentData.map(dp => dp.dataValue);
       const capData = capabilityData[ctq] || {};
 
       const stats = {
