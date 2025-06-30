@@ -23,14 +23,10 @@ export const formatPercentage = (value: number, dpmo: number) => {
 
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Sparkles, RefreshCw, Camera } from "lucide-react";
-import html2canvas from "html2canvas";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Sparkles, RefreshCw } from "lucide-react";
 
 interface Props {
   ctq: string;
-  projectId: string | number;
   dataPoints: { [ctq: string]: { indexNumber: number; dataValue: number }[] };
   capabilityData: { [ctq: string]: any };
   showStatistics: { [ctq: string]: boolean };
@@ -42,7 +38,6 @@ interface Props {
 // note: default allows you to use it in a component without {} !!!!. You are allowed only 1 default function
 export default function AIAnalysisSection({
   ctq,
-  projectId,
   dataPoints,
   capabilityData,
   showStatistics,
@@ -50,137 +45,10 @@ export default function AIAnalysisSection({
   generateAIAssessment,
   updateCapabilityField,
 }: Props) {
-  const { toast } = useToast();
-  
   if (!showStatistics[ctq]) return null;
 
   const isDisabled =
     isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 25;
-
-  // Function to capture chart images and send to Gemini 1.5 API
-  const generateAIGraphAnalysis = async () => {
-    try {
-      // Capture four statistical charts
-      const chartSelectors = [
-        `[data-chart-type="histogram"][data-ctq="${ctq}"]`,
-        `[data-chart-type="boxplot"][data-ctq="${ctq}"]`, 
-        `[data-chart-type="individuals"][data-ctq="${ctq}"]`,
-        `[data-chart-type="moving-range"][data-ctq="${ctq}"]`
-      ];
-
-      const chartImages: string[] = [];
-
-      for (const selector of chartSelectors) {
-        const chartElement = document.querySelector(selector) as HTMLElement;
-        if (chartElement) {
-          const canvas = await html2canvas(chartElement, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            useCORS: true,
-            allowTaint: false
-          });
-          chartImages.push(canvas.toDataURL('image/png'));
-        }
-      }
-
-      if (chartImages.length !== 4) {
-        throw new Error(`Only ${chartImages.length} charts captured, need 4 charts`);
-      }
-
-      // Prepare statistical data and context for AI analysis
-      const currentData = dataPoints[ctq] || [];
-      const numericValues = currentData.map(dp => dp.dataValue);
-      const capData = capabilityData[ctq] || {};
-
-      const stats = {
-        sampleSize: numericValues.length,
-        mean: numericValues.length > 0 ? numericValues.reduce((a, b) => a + b, 0) / numericValues.length : 0,
-        standardDeviation: numericValues.length > 1 ? Math.sqrt(numericValues.reduce((acc, val, _, arr) => {
-          const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-          return acc + Math.pow(val - mean, 2);
-        }, 0) / (numericValues.length - 1)) : 0,
-        cp: capData.cp,
-        cpk: capData.cpk,
-        pp: capData.pp,
-        ppk: capData.ppk,
-        zShortTerm: capData.zShortTerm,
-        zLongTerm: capData.zLongTerm,
-        zLSL: capData.zLSL,
-        zUSL: capData.zUSL,
-        isNormal: true, // Will be determined by AI from histogram
-        percentageDefectLT: capData.percentageDefectLT,
-        percentageDefectST: capData.percentageDefectST,
-        pdLSL: capData.pdLSL,
-        pdUSL: capData.pdUSL,
-        isInControl: true, // Will be determined by AI from control charts
-        isStable: true // Will be determined by AI from control charts
-      };
-
-      const context = {
-        ctq,
-        capabilityIndex: capData.capabilityIndex || "Z",
-        lsl: capData.lsl || "",
-        usl: capData.usl || "",
-        target: capData.target || "",
-        zShift: capData.zShift || 1.5,
-        dataSetTerm: capData.dataSetTerm || "Long Term"
-      };
-
-      // Send to AI analysis endpoint
-      const response = await fetch(`/api/projects/${projectId}/ai-capability-analysis`, {
-        method: 'POST',
-        body: JSON.stringify({
-          ctq,
-          chartImages,
-          stats,
-          context
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to generate AI analysis');
-      }
-
-      const result = await response.json();
-      
-      // Update the capability assessment field
-      updateCapabilityField(ctq, "capabilityAssessment", result.assessment);
-      
-      toast({
-        title: "AI Analysis Generated",
-        description: "Capability analysis with chart analysis has been generated successfully",
-      });
-
-    } catch (error: any) {
-      console.error('AI Graph Analysis Error:', error);
-      
-      // Provide user-friendly error messages
-      let errorMessage = "Failed to generate AI analysis";
-      if (error.message?.includes("Rate limit exceeded") || error.status === 429) {
-        errorMessage = "Rate limit exceeded. Please try again in a few minutes.";
-      } else if (error.message?.includes("Authentication failed") || error.status === 401 || error.status === 403) {
-        errorMessage = "Authentication failed. Please check your API key.";
-      } else if (error.message?.includes("charts captured")) {
-        errorMessage = "Could not capture all required charts. Please ensure all charts are visible.";
-      } else if (error.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
-      }
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      
-      updateCapabilityField(ctq, "capabilityAssessment", 
-        `Error generating AI analysis: ${errorMessage}`
-      );
-    }
-  };
 
   // Calculate dynamic rows based on content length
   const calculateRows = (text: string): number => {
@@ -216,7 +84,7 @@ export default function AIAnalysisSection({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              generateAIGraphAnalysis();
+              generateAIAssessment(ctq);
             }}
             disabled={isDisabled}
             className="flex items-center gap-2"

@@ -45,8 +45,7 @@ export interface CapabilityContext {
 
 export async function generateCapabilityAssessment(
   stats: CapabilityStats,
-  context: CapabilityContext,
-  chartImages?: string[]
+  context: CapabilityContext
 ): Promise<string> {
   try {
     console.log(`Generating capability analysis for CTQ: "${context.ctq}"`);
@@ -129,33 +128,14 @@ Please provide:
 2. Key insights about process performance
 3. Statistical interpretation of the results
 
-Keep the analysis concise, professional, data-driven, and actionable for process improvement teams. Use the 4 statistical graphs image to complement your analysis.`;
+Keep the analysis concise, professional, data-driven, and actionable for process improvement teams.`;
     console.log("Sending request to Google AI API for capability analysis...");
 
-    // Create a generative model instance - use Pro for image analysis, Flash for text only
-    chartImages.length = 0;
-    const modelName = chartImages && chartImages.length > 0 ? "gemini-1.5-pro" : "gemini-1.5-flash";
-    const model = genAI.getGenerativeModel({ model: modelName });
+    // Create a generative model instance
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    let result;
-    if (chartImages && chartImages.length > 0) {
-      // Generate content with images - use the new format
-      const imageParts = chartImages.map((imageData: string) => ({
-        inlineData: {
-          data: imageData.split(',')[1], // Remove data:image/png;base64, prefix
-          mimeType: "image/png",
-        }
-      }));
-      
-      result = await model.generateContent([
-        prompt,
-        ...imageParts
-      ]);
-    } else {
-      // Generate content with text only
-      result = await model.generateContent(prompt);
-    }
-    
+    // Generate content
+    const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
     
