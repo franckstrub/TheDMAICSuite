@@ -35,6 +35,7 @@ import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
 import { generateAICoachResponse } from "./ai-coach";
 import { generateCapabilityAssessment } from "./ai-capability-assessment";
+import { GoogleGenAI } from "@google/genai";
 
 // Fallback engagement strategy generator
 function generateFallbackEngagementStrategy(
