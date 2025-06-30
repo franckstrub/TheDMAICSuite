@@ -2509,15 +2509,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User organization not found" });
       }
       
-      // Clear existing characteristics for this project
-      await db
-        .delete(ctsCharacteristics)
+      // Get existing characteristics for this project
+      const existingCharacteristics = await db
+        .select()
+        .from(ctsCharacteristics)
         .where(eq(ctsCharacteristics.projectId, projectId));
+
+      // Create a map of existing characteristics by CTQ name for quick lookup
+      const existingByCtq = new Map(existingCharacteristics.map(char => [char.ctq, char]));
       
-      // Insert new characteristics
+      let updatedCharacteristics = [];
+      
       if (characteristicsData && characteristicsData.length > 0) {
         
-        const validatedCharacteristics = characteristicsData.map((char: any) => {
+        for (const char of characteristicsData) {
           const characteristicWithOrgId = {
             ...char,
             projectId,
@@ -2537,16 +2542,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
               : parseFloat(char.usl),
           };
           
-          console.log('CTS characteristic with organizationId:', characteristicWithOrgId);
-          return insertCtsCharacteristicsSchema.parse(characteristicWithOrgId);
-        });
+          const existingChar = existingByCtq.get(char.ctq);
+          
+          if (existingChar) {
+            // Update existing characteristic (preserves the ID for foreign key references)
+            const [updatedChar] = await db
+              .update(ctsCharacteristics)
+              .set({
+                ctqType: characteristicWithOrgId.ctqType,
+                target: characteristicWithOrgId.target,
+                lsl: characteristicWithOrgId.lsl,
+                usl: characteristicWithOrgId.usl,
+                targetPercentDefects: characteristicWithOrgId.targetPercentDefects,
+                lastUpdated: new Date()
+              })
+              .where(eq(ctsCharacteristics.id, existingChar.id))
+              .returning();
+            
+            updatedCharacteristics.push(updatedChar);
+            existingByCtq.delete(char.ctq); // Remove from map to track what was processed
+          } else {
+            // Insert new characteristic
+            const validatedChar = insertCtsCharacteristicsSchema.parse(characteristicWithOrgId);
+            const [newChar] = await db
+              .insert(ctsCharacteristics)
+              .values(validatedChar)
+              .returning();
+            
+            updatedCharacteristics.push(newChar);
+          }
+        }
         
-        const newCharacteristics = await db
-          .insert(ctsCharacteristics)
-          .values(validatedCharacteristics)
-          .returning();
+        // Delete characteristics that are no longer in the submitted data
+        // Only delete if they're not referenced by process capability records
+        for (const [ctq, existingChar] of existingByCtq) {
+          try {
+            await db
+              .delete(ctsCharacteristics)
+              .where(eq(ctsCharacteristics.id, existingChar.id));
+          } catch (error) {
+            // If deletion fails due to foreign key constraint, just skip it
+            // The characteristic will remain but won't be displayed in the UI
+            console.warn(`Cannot delete CTS characteristic ${ctq} (ID: ${existingChar.id}) due to foreign key references`);
+          }
+        }
         
-        return res.status(201).json({ characteristics: newCharacteristics });
+        return res.status(201).json({ characteristics: updatedCharacteristics });
       }
       
       return res.status(200).json({ characteristics: [] });
