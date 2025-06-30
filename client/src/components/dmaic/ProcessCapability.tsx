@@ -1299,9 +1299,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const saveCapability = (ctq: string) => {
     const data = capabilityData[ctq];
     if (data) {
+      // Find CTQ ID from CTS characteristics for proper foreign key relationship
+      const ctqCharacteristic = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === ctq);
+      const ctqId = ctqCharacteristic?.id;
+      
       // Transform data to match schema expectations
       const transformedData = {
         ctq: data.ctq,
+        ctqId: ctqId, // Include CTQ ID for proper foreign key relationship
         lsl: (data.lsl && data.lsl.trim() !== '') ? String(data.lsl) : null,
         usl: (data.usl && data.usl.trim() !== '') ? String(data.usl) : null,
         target: (data.target && data.target.trim() !== '') ? String(data.target) : null,
