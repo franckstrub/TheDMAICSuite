@@ -1455,10 +1455,12 @@ export default function DefinePhase() {
       });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
       
-      // Invalidate CTQ-related queries to refresh CTS characteristics and data collection plan
+      // Invalidate CTQ-related queries to refresh CTS characteristics, data collection plan, MSA Analysis, and Process Capability
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/cts-characteristics`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
       
       // Set the flag in sessionStorage to remember we have requirements for this project
       sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
@@ -1562,10 +1564,12 @@ export default function DefinePhase() {
         // Also invalidate the query to ensure consistency
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
         
-        // Invalidate CTQ-related queries to refresh CTS characteristics and data collection plan
+        // Invalidate CTQ-related queries to refresh CTS characteristics, data collection plan, MSA Analysis, and Process Capability
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/cts-characteristics`] });
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
       } catch (error) {
         console.error("Error fetching requirements after save:", error);
       }

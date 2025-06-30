@@ -139,6 +139,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 29, 2025. Implemented comprehensive client-side payload validation - added 50MB file size validation to all image upload components (DefinePhase, UserDropdown, ProfileOverlay) with user-friendly error messages and automatic file input clearing to prevent server payload errors before upload
 - June 29, 2025. Enhanced Process Capability AI analysis window with auto-adjusting height - implemented dynamic row calculation based on AI response text length (minimum 6 rows, maximum 20 rows), improved card layout with proper header/content sections, and added character count display with responsive height adjustment for optimal user experience
 - June 30, 2025. Fixed CTS characteristics and data collection plan auto-refresh issue - when adding customer requirements with CTS defined in Define phase, CTQ data now automatically updates in Measure phase components without requiring page refresh through comprehensive cache invalidation of CTQ-related queries and updated data collection plan initialization logic to respond to CTQ data changes
+- June 30, 2025. Enhanced CTQ auto-refresh for MSA Analysis and Process Capability components - added comprehensive cache invalidation for msa-analysis and process-capability queries in both customer requirements and business requirements save mutations, ensuring all Measure phase components automatically display new CTQs when added in Define phase
 
 ## User Preferences
 
