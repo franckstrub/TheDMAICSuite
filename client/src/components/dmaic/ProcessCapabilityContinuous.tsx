@@ -23,10 +23,13 @@ export const formatPercentage = (value: number, dpmo: number) => {
 
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Sparkles, RefreshCw } from "lucide-react";
+import { Sparkles, RefreshCw, Camera } from "lucide-react";
+import html2canvas from "html2canvas";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Props {
   ctq: string;
+  projectId: string | number;
   dataPoints: { [ctq: string]: { indexNumber: number; dataValue: number }[] };
   capabilityData: { [ctq: string]: any };
   showStatistics: { [ctq: string]: boolean };
@@ -38,6 +41,7 @@ interface Props {
 // note: default allows you to use it in a component without {} !!!!. You are allowed only 1 default function
 export default function AIAnalysisSection({
   ctq,
+  projectId,
   dataPoints,
   capabilityData,
   showStatistics,
@@ -49,6 +53,65 @@ export default function AIAnalysisSection({
 
   const isDisabled =
     isGeneratingAssessment[ctq] || (dataPoints[ctq]?.length || 0) < 25;
+
+  // Function to capture chart images and send to Gemini 1.5 API
+  const generateAIGraphAnalysis = async () => {
+    try {
+      // Capture four statistical charts
+      const chartSelectors = [
+        `[data-chart-type="histogram"][data-ctq="${ctq}"]`,
+        `[data-chart-type="boxplot"][data-ctq="${ctq}"]`, 
+        `[data-chart-type="individuals"][data-ctq="${ctq}"]`,
+        `[data-chart-type="moving-range"][data-ctq="${ctq}"]`
+      ];
+
+      const chartImages: string[] = [];
+
+      for (const selector of chartSelectors) {
+        const chartElement = document.querySelector(selector) as HTMLElement;
+        if (chartElement) {
+          const canvas = await html2canvas(chartElement, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            useCORS: true,
+            allowTaint: false
+          });
+          chartImages.push(canvas.toDataURL('image/png'));
+        }
+      }
+
+      if (chartImages.length !== 4) {
+        throw new Error(`Only ${chartImages.length} charts captured, need 4 charts`);
+      }
+
+      // Send to AI analysis endpoint
+      const response = await fetch(`/api/projects/${projectId}/ai-capability-analysis`, {
+        method: 'POST',
+        body: JSON.stringify({
+          ctq,
+          chartImages
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate AI analysis');
+      }
+
+      const result = await response.json();
+      
+      // Update the capability assessment field
+      updateCapabilityField(ctq, "capabilityAssessment", result.assessment);
+
+    } catch (error) {
+      console.error('AI Graph Analysis Error:', error);
+      updateCapabilityField(ctq, "capabilityAssessment", 
+        `Error generating AI analysis: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  };
 
   // Calculate dynamic rows based on content length
   const calculateRows = (text: string): number => {
@@ -84,7 +147,7 @@ export default function AIAnalysisSection({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              generateAIAssessment(ctq);
+              generateAIGraphAnalysis();
             }}
             disabled={isDisabled}
             className="flex items-center gap-2"
