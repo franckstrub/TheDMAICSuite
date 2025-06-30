@@ -133,6 +133,7 @@ Keep the analysis concise, professional, data-driven, and actionable for process
     console.log("Sending request to Google AI API for capability analysis...");
 
     // Create a generative model instance - use Pro for image analysis, Flash for text only
+    chartImages.length = 0;
     const modelName = chartImages && chartImages.length > 0 ? "gemini-1.5-pro" : "gemini-1.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
     

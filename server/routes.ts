@@ -35,7 +35,6 @@ import { registerGateReviewRoutes } from "./routes-gate-review";
 import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
 import { generateAICoachResponse } from "./ai-coach";
-import { generateCapabilityAssessment } from "./ai-capability-assessment";
 import { GoogleGenAI } from "@google/genai";
 
 // Fallback engagement strategy generator
@@ -3689,7 +3688,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Capability Analysis route - analyzes four statistical graphs with Gemini 1.5
-  app.post("/api/projects/:projectId/ai-capability-analysis", isAuthenticated, async (req, res) => {
+  {/*
+    app.post("/api/projects/:projectId/ai-capability-analysis", isAuthenticated, async (req, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
       const { ctq, chartImages, stats, context } = req.body;
@@ -3761,6 +3761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  */}
 
   // Create http server
   // Register the Gate Review routes
