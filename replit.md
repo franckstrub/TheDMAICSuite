@@ -142,6 +142,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 30, 2025. Enhanced CTQ auto-refresh for MSA Analysis and Process Capability components - added comprehensive cache invalidation for msa-analysis and process-capability queries in both customer requirements and business requirements save mutations, ensuring all Measure phase components automatically display new CTQs when added in Define phase
 - June 30, 2025. Fixed critical Process Capability data loss bug by implementing CTQ ID foreign key relationship - added ctq_id column to process_capability table with foreign key to cts_characteristics.id, updated backend routes to handle CTQ ID relationships for data persistence, migrated existing 5 records successfully, and enhanced frontend to include CTQ IDs in all save operations ensuring process capability data persists when CTQ names change
 - June 30, 2025. Fixed foreign key constraint violation in CTS characteristics updates - replaced "delete all and recreate" approach with "update existing or insert new" logic to preserve CTQ IDs that process capability records reference, preventing database constraint errors when saving CTS characteristics modifications
+- June 30, 2025. Fixed CTS characteristics creating duplicates instead of updating existing records - changed backend matching logic from CTQ names to CTQ IDs, ensuring modifications to CTQ names properly update existing records instead of creating new ones
 
 ## User Preferences
 
