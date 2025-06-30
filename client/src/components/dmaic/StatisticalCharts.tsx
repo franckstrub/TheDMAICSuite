@@ -169,7 +169,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Individual Control Chart (I Chart) */}
-        <div className="bg-white p-4 border rounded-lg" data-chart-type="individuals" data-ctq={ctq}>
+        <div className="bg-white p-4 border rounded-lg">
           <h4 className="font-medium text-gray-800 mb-3">Individual Control Chart (I-Chart)</h4>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={individualData}>
@@ -280,7 +280,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
         </div>
 
         {/* Density Histogram with Gaussian Overlay */}
-        <div className="bg-white p-4 border rounded-lg" data-chart-type="histogram" data-ctq={ctq}>
+        <div className="bg-white p-4 border rounded-lg">
           <h4 className="font-medium text-gray-800 mb-3">Density Histogram with Normal Distribution</h4>
           <ResponsiveContainer width="100%" height={250}>
             <ComposedChart data={combinedHistogramData}>
@@ -410,7 +410,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
         </div>
 
         {/* Moving Range Control Chart (MR Chart) */}
-        <div className="bg-white p-4 border rounded-lg" data-chart-type="moving-range" data-ctq={ctq}>
+        <div className="bg-white p-4 border rounded-lg">
           <h4 className="font-medium text-gray-800 mb-3">Moving Range Control Chart (MR-Chart)</h4>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={movingRangeData}>
@@ -521,7 +521,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
         </div>
 
         {/* Box Plot */}
-        <div className="bg-white p-4 border rounded-lg" data-chart-type="boxplot" data-ctq={ctq}>
+        <div className="bg-white p-4 border rounded-lg">
           <h4 className="font-medium text-gray-800 mb-3">Box Plot</h4>
           <div className="h-[250px] flex items-center justify-center">
             <div className="relative w-full max-w-md">

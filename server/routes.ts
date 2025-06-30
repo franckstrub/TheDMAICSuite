@@ -28,14 +28,13 @@ import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { ZodError } from "zod";
 // Using Google AI for mitigation plan, elevator speech, and engagement strategy generation
-import { generateCapabilityAssessment } from "./ai-capability-assessment";
 import { generateMitigationPlan, generateElevatorSpeech, generateEngagementStrategy } from "./googleai";
 import { organizationService } from "./organizationService";
 import { registerGateReviewRoutes } from "./routes-gate-review";
 import { registerGanttRoutes } from "./routes-gantt";
 import { permanentlyDeleteProject, cleanupOrphanedProjectData } from "./cascade-project-delete";
 import { generateAICoachResponse } from "./ai-coach";
-import { GoogleGenAI } from "@google/genai";
+import { generateCapabilityAssessment } from "./ai-capability-assessment";
 
 // Fallback engagement strategy generator
 function generateFallbackEngagementStrategy(
@@ -3686,82 +3685,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return handleErrors(err, res);
     }
   });
-
-  // AI Capability Analysis route - analyzes four statistical graphs with Gemini 1.5
-  {/*
-    app.post("/api/projects/:projectId/ai-capability-analysis", isAuthenticated, async (req, res) => {
-    try {
-      const projectId = parseInt(req.params.projectId);
-      const { ctq, chartImages, stats, context } = req.body;
-
-      if (!chartImages || !Array.isArray(chartImages) || chartImages.length !== 4) {
-        return res.status(400).json({ 
-          error: "Four chart images are required (histogram, box plot, individuals chart, moving range chart)" 
-        });
-      }
-
-      if (!stats || !context) {
-        return res.status(400).json({ 
-          error: "Statistical data and context are required for analysis" 
-        });
-      }
-
-      // Use the existing AI capability assessment function with chart images
-      const assessment = await generateCapabilityAssessment(stats, context, chartImages);
-
-      // Save the assessment to the process capability record
-      const user = req.user as any;
-      const organizationId = user?.organizationId || 1;
-
-      // Find the process capability record to update
-      const [existingRecord] = await db
-        .select()
-        .from(processCapability)
-        .where(and(
-          eq(processCapability.projectId, projectId),
-          eq(processCapability.ctq, ctq),
-          eq(processCapability.organizationId, organizationId)
-        ))
-        .limit(1);
-
-      if (existingRecord) {
-        // Update existing record with AI assessment
-        await db
-          .update(processCapability)
-          .set({
-            capabilityAssessment: assessment,
-            lastUpdated: new Date()
-          })
-          .where(eq(processCapability.id, existingRecord.id));
-      }
-
-      return res.status(200).json({ 
-        assessment,
-        message: "AI analysis completed successfully"
-      });
-
-    } catch (error: any) {
-      console.error('AI Capability Analysis Error:', error);
-      
-      // Handle specific API errors with user-friendly messages
-      let errorMessage = "Failed to generate AI analysis";
-      if (error.status === 429) {
-        errorMessage = "Rate limit exceeded. Please try again in a few minutes.";
-      } else if (error.status === 401 || error.status === 403) {
-        errorMessage = "Authentication failed. Please check your API key.";
-      } else if (error.status === 400) {
-        errorMessage = "Invalid request format. Please try again.";
-      } else if (error.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
-      }
-      
-      return res.status(500).json({ 
-        error: errorMessage,
-        details: error.message 
-      });
-    }
-  });
-  */}
 
   // Create http server
   // Register the Gate Review routes
