@@ -3703,7 +3703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY!);
 
       // Prepare the prompt for statistical analysis
-      const analysisPrompt = `As a Lean Six Sigma process capability expert, analyze these four statistical charts for the CTQ "${ctq}":
+      const analysisPrompt = `As a Lean Six Sigma process capability expert, analyze the four statistical graphs in attached images for the CTQ "${ctq}":
 
 1. Histogram - shows data distribution
 2. Box Plot - shows quartiles and outliers  
