@@ -59,6 +59,7 @@ import {formatdpu} from "@/lib/statisticsUtils";
 interface ProcessCapabilityData {
   id?: number;
   ctq: string;
+  ctqId?: number; // Foreign key to CTS characteristics
   lsl: string;
   usl: string;
   target: string;
@@ -374,8 +375,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     // If no capability configuration exists, create one first
     if (!processCapabilityId) {
       try {
+        // Find CTQ ID from CTS characteristics
+        const ctqCharacteristic = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === ctq);
+        const ctqId = ctqCharacteristic?.id;
+        
         const defaultCapabilityData: Omit<ProcessCapabilityData, 'id'> = {
                 ctq: ctq,
+                ctqId: ctqId, // Include CTQ ID for proper foreign key relationship
                 lsl: "",
                 usl: "",
                 target: "",
@@ -522,9 +528,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     if (!processCapabilityId) {
 
       try {
+        // Find CTQ ID from CTS characteristics
+        const ctqCharacteristic = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === ctq);
+        const ctqId = ctqCharacteristic?.id;
+        
         // Create a default capability configuration
        const defaultCapabilityData: Omit<ProcessCapabilityData, 'id'> = {
                 ctq: ctq,
+                ctqId: ctqId, // Include CTQ ID for proper foreign key relationship
                 lsl: "",
                 usl: "",
                 target: "",
