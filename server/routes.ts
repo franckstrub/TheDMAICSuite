@@ -3687,6 +3687,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Capability Analysis route - analyzes four statistical graphs with Gemini 1.5
+  app.post("/api/projects/:projectId/ai-capability-analysis", isAuthenticated, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const { ctq, chartImages } = req.body;
+
+      if (!chartImages || !Array.isArray(chartImages) || chartImages.length !== 4) {
+        return res.status(400).json({ 
+          error: "Four chart images are required (histogram, box plot, individuals chart, moving range chart)" 
+        });
+      }
+
+      // Initialize Gemini AI
+      const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY!);
+
+      // Prepare the prompt for statistical analysis
+      const analysisPrompt = `As a Lean Six Sigma process capability expert, analyze these four statistical charts for the CTQ "${ctq}":
+
+1. Histogram - shows data distribution
+2. Box Plot - shows quartiles and outliers  
+3. Individuals Control Chart - shows process control over time
+4. Moving Range Chart - shows process variation over time
+
+Please provide a comprehensive capability assessment covering:
+
+**Process Stability Analysis:**
+- Control chart interpretation (in-control vs out-of-control signals)
+- Special cause variation identification
+- Process predictability assessment
+
+**Distribution Analysis:**
+- Normality assessment from histogram
+- Outlier identification from box plot
+- Data spread and central tendency
+
+**Capability Assessment:**
+- Overall process capability evaluation
+- Recommendations for improvement
+- Risk areas requiring attention
+
+**Key Insights:**
+- Most critical findings
+- Immediate action items
+- Long-term improvement suggestions
+
+Provide actionable, specific recommendations based on what you observe in these charts.`;
+
+      // Prepare content with images for Gemini
+      const contents = [
+        analysisPrompt,
+        ...chartImages.map((imageData: string, index: number) => {
+          const chartNames = ["Histogram", "Box Plot", "Individuals Chart", "Moving Range Chart"];
+          return {
+            inlineData: {
+              data: imageData.split(',')[1], // Remove data:image/png;base64, prefix
+              mimeType: "image/png",
+            },
+            text: `Chart ${index + 1}: ${chartNames[index]}`
+          };
+        })
+      ];
+
+      // Call Gemini 1.5 Pro for image analysis
+      const response = await genAI.models.generateContent({
+        model: "gemini-1.5-pro",
+        contents: [{ parts: contents }],
+      });
+
+      const assessment = response.text || "Unable to generate analysis";
+
+      // Save the assessment to the process capability record
+      const user = req.user as any;
+      const organizationId = user?.organizationId || 1;
+
+      // Find the process capability record to update
+      const [existingRecord] = await db
+        .select()
+        .from(processCapability)
+        .where(and(
+          eq(processCapability.projectId, projectId),
+          eq(processCapability.ctq, ctq),
+          eq(processCapability.organizationId, organizationId)
+        ))
+        .limit(1);
+
+      if (existingRecord) {
+        // Update existing record with AI assessment
+        await db
+          .update(processCapability)
+          .set({
+            capabilityAssessment: assessment,
+            lastUpdated: new Date()
+          })
+          .where(eq(processCapability.id, existingRecord.id));
+      }
+
+      return res.status(200).json({ 
+        assessment,
+        message: "AI capability analysis completed successfully"
+      });
+
+    } catch (error) {
+      console.error('AI Capability Analysis Error:', error);
+      return res.status(500).json({ 
+        error: "Failed to generate AI capability analysis",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
