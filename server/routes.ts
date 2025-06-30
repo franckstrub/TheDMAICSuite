@@ -2515,10 +2515,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(ctsCharacteristics)
         .where(eq(ctsCharacteristics.projectId, projectId));
 
-      // Create a map of existing characteristics by CTQ name for quick lookup
-      const existingByCtq = new Map(existingCharacteristics.map(char => [char.ctq, char]));
+      // Create a map of existing characteristics by ID for quick lookup
+      const existingById = new Map(existingCharacteristics.map(char => [char.id, char]));
       
       let updatedCharacteristics = [];
+      const processedIds = new Set();
       
       if (characteristicsData && characteristicsData.length > 0) {
         
@@ -2542,25 +2543,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
               : parseFloat(char.usl),
           };
           
-          const existingChar = existingByCtq.get(char.ctq);
-          
-          if (existingChar) {
+          if (char.id && existingById.has(char.id)) {
             // Update existing characteristic (preserves the ID for foreign key references)
             const [updatedChar] = await db
               .update(ctsCharacteristics)
               .set({
+                ctq: characteristicWithOrgId.ctq,
+                operationalDefinition: characteristicWithOrgId.operationalDefinition,
                 ctqType: characteristicWithOrgId.ctqType,
+                unit: characteristicWithOrgId.unit,
                 target: characteristicWithOrgId.target,
                 lsl: characteristicWithOrgId.lsl,
                 usl: characteristicWithOrgId.usl,
                 targetPercentDefects: characteristicWithOrgId.targetPercentDefects,
                 lastUpdated: new Date()
               })
-              .where(eq(ctsCharacteristics.id, existingChar.id))
+              .where(eq(ctsCharacteristics.id, char.id))
               .returning();
             
             updatedCharacteristics.push(updatedChar);
-            existingByCtq.delete(char.ctq); // Remove from map to track what was processed
+            processedIds.add(char.id);
           } else {
             // Insert new characteristic
             const validatedChar = insertCtsCharacteristicsSchema.parse(characteristicWithOrgId);
@@ -2570,20 +2572,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .returning();
             
             updatedCharacteristics.push(newChar);
+            if (newChar.id) processedIds.add(newChar.id);
           }
         }
         
         // Delete characteristics that are no longer in the submitted data
         // Only delete if they're not referenced by process capability records
-        for (const [ctq, existingChar] of existingByCtq) {
-          try {
-            await db
-              .delete(ctsCharacteristics)
-              .where(eq(ctsCharacteristics.id, existingChar.id));
-          } catch (error) {
-            // If deletion fails due to foreign key constraint, just skip it
-            // The characteristic will remain but won't be displayed in the UI
-            console.warn(`Cannot delete CTS characteristic ${ctq} (ID: ${existingChar.id}) due to foreign key references`);
+        for (const [id, existingChar] of existingById) {
+          if (!processedIds.has(id)) {
+            try {
+              await db
+                .delete(ctsCharacteristics)
+                .where(eq(ctsCharacteristics.id, id));
+            } catch (error) {
+              // If deletion fails due to foreign key constraint, just skip it
+              // The characteristic will remain but won't be displayed in the UI
+              console.warn(`Cannot delete CTS characteristic ${existingChar.ctq} (ID: ${id}) due to foreign key references`);
+            }
           }
         }
         
