@@ -144,6 +144,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - June 30, 2025. Fixed foreign key constraint violation in CTS characteristics updates - replaced "delete all and recreate" approach with "update existing or insert new" logic to preserve CTQ IDs that process capability records reference, preventing database constraint errors when saving CTS characteristics modifications
 - June 30, 2025. Fixed CTS characteristics creating duplicates instead of updating existing records - changed backend matching logic from CTQ names to CTQ IDs, ensuring modifications to CTQ names properly update existing records instead of creating new ones
 - June 30, 2025. Fixed Process Capability component losing data when CTQ names change - updated frontend initialization logic to match existing capability data by CTQ ID instead of CTQ name, ensuring process capability data and analysis results persist when CTQ names are modified
+- June 30, 2025. Applied CTQ ID foreign key relationship to MSA Analysis table - added ctq_id column to msa_analysis table with foreign key to cts_characteristics.id, migrated 2 existing records successfully, enhanced backend routes to handle CTQ ID resolution for both attribute and continuous MSA analysis, and updated cascade deletion to remove MSA records by both CTQ ID and CTQ name for complete data cleanup
 
 ## User Preferences
 

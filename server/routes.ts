@@ -2645,10 +2645,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ));
 
       // Step 2: Delete all MSA Analysis records for this CTQ
+      // Delete by CTQ ID (preferred) and also by CTQ name (backward compatibility)
       await db
         .delete(msaAnalysis)
         .where(and(
-          eq(msaAnalysis.ctq, ctqToDelete.ctq),
+          or(
+            eq(msaAnalysis.ctqId, ctqId),
+            eq(msaAnalysis.ctq, ctqToDelete.ctq)
+          ),
           eq(msaAnalysis.projectId, projectId),
           eq(msaAnalysis.organizationId, userRecord.organizationId)
         ));
@@ -2914,11 +2918,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user as any;
       const organizationId = user?.organizationId || 1; // Fallback to default org
       
+      // Handle CTQ ID and CTQ name resolution
+      const { ctqId, ctq } = req.body;
+      let finalCtqId = ctqId;
+      let finalCtq = ctq;
+      
+      if (!ctqId && ctq) {
+        // Try to find CTQ ID from CTS characteristics based on CTQ name
+        const [ctsRecord] = await db
+          .select({ id: ctsCharacteristics.id, ctq: ctsCharacteristics.ctq })
+          .from(ctsCharacteristics)
+          .where(and(
+            eq(ctsCharacteristics.projectId, projectId),
+            eq(ctsCharacteristics.ctq, ctq)
+          ))
+          .limit(1);
+        
+        if (ctsRecord) {
+          finalCtqId = ctsRecord.id;
+          finalCtq = ctsRecord.ctq;
+        }
+      } else if (ctqId) {
+        // If ctqId is provided, get the current CTQ name from CTS characteristics
+        const [ctsRecord] = await db
+          .select({ ctq: ctsCharacteristics.ctq })
+          .from(ctsCharacteristics)
+          .where(eq(ctsCharacteristics.id, ctqId))
+          .limit(1);
+        
+        if (ctsRecord) {
+          finalCtq = ctsRecord.ctq;
+        }
+      }
+
       // Clean and validate the payload for continuous MSA
       const cleanPayload = {
         projectId,
         organizationId,
-        ctq: req.body.ctq,
+        ctqId: finalCtqId,
+        ctq: finalCtq,
         msaType: req.body.msaType || "Gage R&R",
         appraiser1Name: req.body.appraiser1Name || null,
         appraiser2Name: req.body.appraiser2Name || null,
