@@ -954,7 +954,8 @@ export const msaAnalysis = pgTable("msa_analysis", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
-  ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id), // Foreign key to CTS characteristics
+  ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics (kept for backward compatibility)
   msaType: text("msa_type").notNull().default("Gage R&R"), // "Gage R&R", "Attribute Agreement", "Bias Study"
   
   // Attribute Agreement Analysis fields
