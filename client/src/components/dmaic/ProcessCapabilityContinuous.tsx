@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, RefreshCw, Camera } from "lucide-react";
 import html2canvas from "html2canvas";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   ctq: string;
@@ -49,6 +50,8 @@ export default function AIAnalysisSection({
   generateAIAssessment,
   updateCapabilityField,
 }: Props) {
+  const { toast } = useToast();
+  
   if (!showStatistics[ctq]) return null;
 
   const isDisabled =
@@ -84,12 +87,53 @@ export default function AIAnalysisSection({
         throw new Error(`Only ${chartImages.length} charts captured, need 4 charts`);
       }
 
+      // Prepare statistical data and context for AI analysis
+      const currentData = dataPoints[ctq] || [];
+      const numericValues = currentData.map(dp => dp.value);
+      const capData = capabilityData[ctq] || {};
+
+      const stats = {
+        sampleSize: numericValues.length,
+        mean: numericValues.length > 0 ? numericValues.reduce((a, b) => a + b, 0) / numericValues.length : 0,
+        standardDeviation: numericValues.length > 1 ? Math.sqrt(numericValues.reduce((acc, val, _, arr) => {
+          const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+          return acc + Math.pow(val - mean, 2);
+        }, 0) / (numericValues.length - 1)) : 0,
+        cp: capData.cp,
+        cpk: capData.cpk,
+        pp: capData.pp,
+        ppk: capData.ppk,
+        zShortTerm: capData.zShortTerm,
+        zLongTerm: capData.zLongTerm,
+        zLSL: capData.zLSL,
+        zUSL: capData.zUSL,
+        isNormal: true, // Will be determined by AI from histogram
+        percentageDefectLT: capData.percentageDefectLT,
+        percentageDefectST: capData.percentageDefectST,
+        pdLSL: capData.pdLSL,
+        pdUSL: capData.pdUSL,
+        isInControl: true, // Will be determined by AI from control charts
+        isStable: true // Will be determined by AI from control charts
+      };
+
+      const context = {
+        ctq,
+        capabilityIndex: capData.capabilityIndex || "Z",
+        lsl: capData.lsl || "",
+        usl: capData.usl || "",
+        target: capData.target || "",
+        zShift: capData.zShift || 1.5,
+        dataSetTerm: capData.dataSetTerm || "Long Term"
+      };
+
       // Send to AI analysis endpoint
       const response = await fetch(`/api/projects/${projectId}/ai-capability-analysis`, {
         method: 'POST',
         body: JSON.stringify({
           ctq,
-          chartImages
+          chartImages,
+          stats,
+          context
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -97,18 +141,43 @@ export default function AIAnalysisSection({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate AI analysis');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate AI analysis');
       }
 
       const result = await response.json();
       
       // Update the capability assessment field
       updateCapabilityField(ctq, "capabilityAssessment", result.assessment);
+      
+      toast({
+        title: "AI Analysis Generated",
+        description: "Capability analysis with chart analysis has been generated successfully",
+      });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI Graph Analysis Error:', error);
+      
+      // Provide user-friendly error messages
+      let errorMessage = "Failed to generate AI analysis";
+      if (error.message?.includes("Rate limit exceeded") || error.status === 429) {
+        errorMessage = "Rate limit exceeded. Please try again in a few minutes.";
+      } else if (error.message?.includes("Authentication failed") || error.status === 401 || error.status === 403) {
+        errorMessage = "Authentication failed. Please check your API key.";
+      } else if (error.message?.includes("charts captured")) {
+        errorMessage = "Could not capture all required charts. Please ensure all charts are visible.";
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
       updateCapabilityField(ctq, "capabilityAssessment", 
-        `Error generating AI analysis: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error generating AI analysis: ${errorMessage}`
       );
     }
   };
