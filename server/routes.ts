@@ -2921,7 +2921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { 
-        ctq, lsl, usl, target, zShift, dataSetTerm, capabilityIndex, 
+        ctq, ctqId, lsl, usl, target, zShift, dataSetTerm, capabilityIndex, 
         showPercentage, showZ, showStatistics, capabilityAssessment,
         enableNonConformity, enableDpmo, enableRty, enableOee, enablePareto, enableDpu,
         nonConformityUnits, totalUnits,
@@ -2931,9 +2931,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dpuDefects, dpuUnits
       } = req.body;
 
+      // If ctqId is provided, find the CTQ from CTS characteristics
+      let finalCtqId = ctqId;
+      let finalCtq = ctq;
+      
+      if (!ctqId && ctq) {
+        // Try to find CTQ ID from CTS characteristics based on CTQ name
+        const [ctsRecord] = await db
+          .select({ id: ctsCharacteristics.id, ctq: ctsCharacteristics.ctq })
+          .from(ctsCharacteristics)
+          .where(and(
+            eq(ctsCharacteristics.projectId, projectId),
+            eq(ctsCharacteristics.ctq, ctq)
+          ))
+          .limit(1);
+        
+        if (ctsRecord) {
+          finalCtqId = ctsRecord.id;
+          finalCtq = ctsRecord.ctq;
+        }
+      } else if (ctqId) {
+        // If ctqId is provided, get the current CTQ name from CTS characteristics
+        const [ctsRecord] = await db
+          .select({ ctq: ctsCharacteristics.ctq })
+          .from(ctsCharacteristics)
+          .where(eq(ctsCharacteristics.id, ctqId))
+          .limit(1);
+        
+        if (ctsRecord) {
+          finalCtq = ctsRecord.ctq;
+        }
+      }
+
       // Prepare the data object, handling empty strings as null for optional fields
       const processedData = {
-        ctq,
+        ctq: finalCtq,
+        ctqId: finalCtqId,
         lsl: (lsl && lsl.trim() !== '') ? lsl : null,
         usl: (usl && usl.trim() !== '') ? usl : null,
         target: (target && target.trim() !== '') ? target : null,
@@ -2970,30 +3003,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const payload = insertProcessCapabilitySchema.parse(processedData);
 
-      // Check if a process capability record already exists for this CTQ and project
-      const existingCapability = await db
-        .select()
-        .from(processCapability)
-        .where(and(
-          eq(processCapability.projectId, projectId),
-          eq(processCapability.ctq, payload.ctq)
-        ))
-        .limit(1);
+      // Check if a process capability record already exists for this CTQ ID or CTQ name
+      let existingCapability;
+      if (finalCtqId) {
+        // First try to find by CTQ ID (more reliable)
+        existingCapability = await db
+          .select()
+          .from(processCapability)
+          .where(and(
+            eq(processCapability.projectId, projectId),
+            eq(processCapability.ctqId, finalCtqId)
+          ))
+          .limit(1);
+      }
+      
+      if (!existingCapability || existingCapability.length === 0) {
+        // Fall back to finding by CTQ name
+        existingCapability = await db
+          .select()
+          .from(processCapability)
+          .where(and(
+            eq(processCapability.projectId, projectId),
+            eq(processCapability.ctq, payload.ctq)
+          ))
+          .limit(1);
+      }
 
       let capability;
       
-      if (existingCapability.length > 0) {
-        // Update existing record
+      if (existingCapability && existingCapability.length > 0) {
+        // Update existing record using ID for precise targeting
         const [updatedCapability] = await db
           .update(processCapability)
           .set({
             ...payload,
             lastUpdated: new Date(),
           })
-          .where(and(
-            eq(processCapability.projectId, projectId),
-            eq(processCapability.ctq, payload.ctq)
-          ))
+          .where(eq(processCapability.id, existingCapability[0].id))
           .returning();
         
         capability = updatedCapability;
