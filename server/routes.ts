@@ -3734,25 +3734,21 @@ Please provide a comprehensive capability assessment covering:
 
 Provide actionable, specific recommendations based on what you observe in these charts.`;
 
-      // Prepare content with images for Gemini
-      const contents = [
-        analysisPrompt,
-        ...chartImages.map((imageData: string, index: number) => {
-          const chartNames = ["Histogram", "Box Plot", "Individuals Chart", "Moving Range Chart"];
-          return {
-            inlineData: {
-              data: imageData.split(',')[1], // Remove data:image/png;base64, prefix
-              mimeType: "image/png",
-            },
-            text: `Chart ${index + 1}: ${chartNames[index]}`
-          };
-        })
+      // Prepare content with images for Gemini - separate text and images
+      const parts = [
+        { text: analysisPrompt },
+        ...chartImages.map((imageData: string) => ({
+          inlineData: {
+            data: imageData.split(',')[1], // Remove data:image/png;base64, prefix
+            mimeType: "image/png",
+          }
+        }))
       ];
 
       // Call Gemini 1.5 Pro for image analysis
       const response = await genAI.models.generateContent({
         model: "gemini-1.5-pro",
-        contents: [{ parts: contents }],
+        contents: [{ parts }],
       });
 
       const assessment = response.text || "Unable to generate analysis";
