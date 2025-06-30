@@ -141,7 +141,7 @@ export default function MeasurePhase() {
 
   useEffect(() => {
     // Wait for CTQs and plans data to be loaded
-    if (!hasInitialized && plans !== undefined && ctqsData !== undefined && ctsData !== undefined && !ctqsLoading) {
+    if (plans !== undefined && ctqsData !== undefined && ctsData !== undefined && !ctqsLoading) {
       console.log('=== Data Collection Plan Initialization ===');
       console.log('Plans data:', plans);
       console.log('CTQs data:', ctqsData);
@@ -190,6 +190,7 @@ export default function MeasurePhase() {
         }));
         console.log('Setting auto-populated plans from CTS:', autoPopulatedPlans);
         setDataCollectionPlans(autoPopulatedPlans);
+        setHasLoadedFromServer(false); // Reset flag to allow future updates
       } else {
         // Auto-populate from centralized CTQs endpoint (same as MSA Analysis and Process Capability)
         const ctqs = getCTQs();
@@ -218,6 +219,7 @@ export default function MeasurePhase() {
           });
           console.log('Setting auto-populated plans:', autoPopulatedPlans);
           setDataCollectionPlans(autoPopulatedPlans);
+          setHasLoadedFromServer(false); // Reset flag to allow future updates
         } else {
           console.log('No CTQs available from centralized endpoint for auto-population');
           console.log('CTQs data structure:', ctqsData);
@@ -225,10 +227,13 @@ export default function MeasurePhase() {
           setDataCollectionPlans([]);
         }
       }
-      setHasInitialized(true);
-      console.log('=== Data Collection Plan Initialization Complete ===');
+      
+      if (!hasInitialized) {
+        setHasInitialized(true);
+        console.log('=== Data Collection Plan Initialization Complete ===');
+      }
     }
-  }, [plans, ctqsData, ctqsLoading, ctsData, hasInitialized]);
+  }, [plans, ctqsData, ctqsLoading, ctsData]);
 
 
 
