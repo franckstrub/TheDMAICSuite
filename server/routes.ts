@@ -2601,6 +2601,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CTQ Cascade Deletion endpoint
+  app.delete("/api/projects/:projectId/cts-characteristics/:ctqId/cascade", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      // Get user's organization ID for validation
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+
+      // Verify CTQ exists and belongs to this project and organization
+      const [ctqToDelete] = await db
+        .select()
+        .from(ctsCharacteristics)
+        .where(and(
+          eq(ctsCharacteristics.id, ctqId),
+          eq(ctsCharacteristics.projectId, projectId),
+          eq(ctsCharacteristics.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+
+      if (!ctqToDelete) {
+        return res.status(404).json({ message: "CTQ not found or access denied" });
+      }
+
+      // Step 1: Delete all Process Capability records for this CTQ
+      await db
+        .delete(processCapability)
+        .where(and(
+          eq(processCapability.ctqId, ctqId),
+          eq(processCapability.projectId, projectId),
+          eq(processCapability.organizationId, userRecord.organizationId)
+        ));
+
+      // Step 2: Delete all MSA Analysis records for this CTQ
+      await db
+        .delete(msaAnalysis)
+        .where(and(
+          eq(msaAnalysis.ctq, ctqToDelete.ctq),
+          eq(msaAnalysis.projectId, projectId),
+          eq(msaAnalysis.organizationId, userRecord.organizationId)
+        ));
+
+      // Step 3: Delete the CTQ from CTS characteristics
+      await db
+        .delete(ctsCharacteristics)
+        .where(and(
+          eq(ctsCharacteristics.id, ctqId),
+          eq(ctsCharacteristics.projectId, projectId),
+          eq(ctsCharacteristics.organizationId, userRecord.organizationId)
+        ));
+
+      return res.status(200).json({ 
+        message: "CTQ and all related data deleted successfully",
+        deletedCtq: ctqToDelete.ctq 
+      });
+    } catch (err) {
+      console.error("CTQ cascade deletion error:", err);
+      return handleErrors(err, res);
+    }
+  });
+
   // Get CTQs from customer requirements and business requirements for populating CTS table
   app.get("/api/projects/:projectId/ctqs", async (req: Request, res: Response) => {
     try {
