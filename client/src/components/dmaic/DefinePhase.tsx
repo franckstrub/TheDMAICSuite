@@ -1455,6 +1455,11 @@ export default function DefinePhase() {
       });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/business-requirements`] });
       
+      // Invalidate CTQ-related queries to refresh CTS characteristics and data collection plan
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/cts-characteristics`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
+      
       // Set the flag in sessionStorage to remember we have requirements for this project
       sessionStorage.setItem(`project_${projectId}_has_business_requirements`, 'true');
     },
@@ -1556,6 +1561,11 @@ export default function DefinePhase() {
         
         // Also invalidate the query to ensure consistency
         queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/requirements`] });
+        
+        // Invalidate CTQ-related queries to refresh CTS characteristics and data collection plan
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/cts-characteristics`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/data-collection-plans`] });
       } catch (error) {
         console.error("Error fetching requirements after save:", error);
       }
