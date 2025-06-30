@@ -783,10 +783,19 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       // Create Process Capability entry for each CTQ
       ctqs.forEach((ctqWithType: CtqWithType) => {
         const ctq = ctqWithType.ctq;
-        const existingCapability = (capabilityDataResponse as any)?.processCapability?.find((cap: any) => cap.ctq === ctq);
         
-        // Check if this CTQ comes from CTS characteristics to auto-populate LSL, USL, target
+        // Check if this CTQ comes from CTS characteristics to get CTQ ID and auto-populate LSL, USL, target
         const ctsChar = (ctsData as any)?.characteristics?.find((char: any) => char.ctq === ctq);
+        const ctqId = ctsChar?.id;
+        
+        // Find existing capability by CTQ ID first (more reliable), then fall back to CTQ name
+        let existingCapability;
+        if (ctqId) {
+          existingCapability = (capabilityDataResponse as any)?.processCapability?.find((cap: any) => cap.ctqId === ctqId);
+        }
+        if (!existingCapability) {
+          existingCapability = (capabilityDataResponse as any)?.processCapability?.find((cap: any) => cap.ctq === ctq);
+        }
         
         initialData[ctq] = existingCapability ? {
           ...existingCapability,
