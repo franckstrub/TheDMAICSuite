@@ -55,17 +55,16 @@ export class OrganizationService {
     let orgData: InsertOrganization;
     let companyNameToUse = userData?.companyName;
     
-    console.log(`Organization creation DEBUG: userId=${userId}, userType=${userType}, userData.companyName="${userData?.companyName}", user exists=${!!user}, user.companyName="${user?.companyName}"`);
-    
     // If no company name in userData but user exists in database, check user's existing company name
     if (!companyNameToUse && user && user.companyName) {
       companyNameToUse = user.companyName;
       console.log(`Organization creation: Using existing user company name: ${companyNameToUse}`);
     }
     
-    console.log(`Organization creation DEBUG: Final companyNameToUse="${companyNameToUse}"`);
+    // Also check if companyNameToUse is a non-empty string after trimming
+    const hasValidCompanyName = companyNameToUse && typeof companyNameToUse === 'string' && companyNameToUse.trim().length > 0;
     
-    if (companyNameToUse) {
+    if (hasValidCompanyName) {
       // User has company name - create enterprise organization
       const enterpriseType = userType === 'enterprise_medium' ? 'enterprise_medium' : 
                             userType === 'solo_entrepreneur' ? 'solo_entrepreneur' : 'enterprise_small';
@@ -74,9 +73,8 @@ export class OrganizationService {
                       enterpriseType === 'solo_entrepreneur' ? 5 : 50;
       
       orgData = {
-        name: companyNameToUse,
+        name: companyNameToUse.trim(),
         type: enterpriseType,
-        maxUsers: maxUsers,
         isActive: true,
         isSystemGenerated: false
       };
