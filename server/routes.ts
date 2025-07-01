@@ -3630,15 +3630,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user route (Super Admin only)
+  // Update user route (Admin and Super Admin)
   app.put("/api/admin/users/:userId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user || !req.user.claims || !req.user.claims.sub) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
-      if (!currentUser || currentUser.role !== 'super_admin') {
-        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      if (!currentUser || (currentUser.role !== 'super_admin' && currentUser.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
       }
 
       const { userId } = req.params;
@@ -3668,6 +3668,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userBeingUpdated = await storage.getUser(userId);
       if (!userBeingUpdated) {
         return res.status(404).json({ message: "User not found." });
+      }
+
+      // Organization isolation: admin users can only update users in their own organization
+      if (currentUser.role === 'admin') {
+        if (userBeingUpdated.organizationId !== currentUser.organizationId) {
+          return res.status(403).json({ message: "Access denied. You can only update users in your own organization." });
+        }
       }
 
       const { users: usersTable } = await import("@shared/schema");
