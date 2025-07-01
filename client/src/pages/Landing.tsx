@@ -23,9 +23,8 @@ export default function Landing() {
             <span className="text-blue-600"> Project Manager</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Transform your business processes with intelligent digital tools and
-            AI-enhanced workflow management. Streamline your DMAIC methodology
-            and drive continuous improvement.
+            Transform your business processes with intelligent tools powered by AI-generated analysis and AI-assistant. Streamline your DMAIC methodology
+            and drive continuous improvement with a single app for Project Management, Statistical Analysis and Gate Review Validation
           </p>
           <Button
             onClick={handleLogin}
@@ -46,7 +45,7 @@ export default function Landing() {
             <CardContent>
               <CardDescription>
                 Complete Define, Measure, Analyze, Improve, and Control workflow
-                management with progress tracking.
+                management, deliverables checklists per belt level, gate review validation and benefits tracking.
               </CardDescription>
             </CardContent>
           </Card>
@@ -58,8 +57,7 @@ export default function Landing() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Advanced progress calculation using phase-level task averaging
-                with dynamic visualization.
+                Advanced timeline & progress tracking with dynamic visualization.
               </CardDescription>
             </CardContent>
           </Card>
@@ -71,8 +69,7 @@ export default function Landing() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                RACI matrix management, stakeholder analysis, and gate review
-                workflows for seamless teamwork.
+                RACI matrix management, stakeholder analysis, Gantt plan for seamless teamwork.
               </CardDescription>
             </CardContent>
           </Card>
@@ -80,12 +77,11 @@ export default function Landing() {
           <Card className="border-0 shadow-lg">
             <CardHeader className="text-center">
               <CheckCircle className="w-12 h-12 text-orange-600 mx-auto mb-4" />
-              <CardTitle>Quality Assurance</CardTitle>
+              <CardTitle>Embedded Statistical tools</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Built-in quality controls, deliverable tracking, and validation
-                workflows ensure project success.
+                Built-in DMAIC statistical tools per phase ensure DMAIC clarity and project success.
               </CardDescription>
             </CardContent>
           </Card>
@@ -105,8 +101,8 @@ export default function Landing() {
                 Structured Methodology
               </h3>
               <p className="text-gray-600">
-                Follow proven Six Sigma methodologies with guided workflows and
-                templates.
+                Follow proven Lean Six Sigma methodologies with guided workflows, 
+                templates and tools.
               </p>
             </div>
             <div className="text-center">
@@ -140,7 +136,7 @@ export default function Landing() {
             Ready to Transform Your Processes?
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Join thousands of professionals who trust our platform for their Six
+            Join many of professionals who trust our platform for their Lean Six
             Sigma projects.
           </p>
           <Button
