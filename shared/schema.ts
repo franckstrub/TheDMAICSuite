@@ -41,7 +41,7 @@ export type UserRole = typeof userRoles[number];
 export const organizations = pgTable("organizations", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type", { enum: ["enterprise_small", "enterprise_medium", "solo_entrepreneur", "individual"] }).notNull(),
+  type: text("type", { enum: ["enterprise_small", "enterprise_medium", "solo_entrepreneur", "individual", "private_individual"] }).notNull(),
   isSystemGenerated: boolean("is_system_generated").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
