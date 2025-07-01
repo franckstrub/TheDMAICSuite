@@ -3572,6 +3572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (currentUser.role === 'super_admin') {
         // Superadmin can create users in any organization
         if (companyName && companyName.trim()) {
+          // Create enterprise organization with company name
           try {
             const { organizationService } = await import("./organizationService");
             const organization = await organizationService.getOrCreateUserOrganization(
@@ -3586,6 +3587,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             organizationId = organization.id;
           } catch (error) {
             console.error("Error creating organization:", error);
+            // Fall back to current user's organization
+          }
+        } else {
+          // Create private individual organization without company name
+          try {
+            const { organizationService } = await import("./organizationService");
+            const organization = await organizationService.getOrCreateUserOrganization(
+              userId, 
+              'individual', 
+              {
+                firstName,
+                lastName,
+                email
+              }
+            );
+            organizationId = organization.id;
+            console.log(`Superadmin creating user without company name - created private individual organization ID: ${organizationId}`);
+          } catch (error) {
+            console.error("Error creating private individual organization:", error);
             // Fall back to current user's organization
           }
         }
