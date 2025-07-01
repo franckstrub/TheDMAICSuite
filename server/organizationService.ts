@@ -64,6 +64,17 @@ export class OrganizationService {
     const hasValidCompanyName = companyNameToUse && typeof companyNameToUse === 'string' && companyNameToUse.trim().length > 0;
     
     if (hasValidCompanyName) {
+      // Check if an organization with this company name already exists
+      const [existingOrgByName] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.name, companyNameToUse.trim()));
+      
+      if (existingOrgByName) {
+        console.log(`Organization found: Using existing organization "${existingOrgByName.name}" (ID: ${existingOrgByName.id})`);
+        return existingOrgByName;
+      }
+      
       // User has company name - create enterprise organization
       const enterpriseType = userType === 'enterprise_medium' ? 'enterprise_medium' : 
                             userType === 'solo_entrepreneur' ? 'solo_entrepreneur' : 'enterprise_small';
