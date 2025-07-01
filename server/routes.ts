@@ -3738,15 +3738,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete user route (Super Admin only)
+  // Delete user route (Admin and Super Admin)
   app.delete("/api/admin/users/:userId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user || !req.user.claims || !req.user.claims.sub) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
-      if (!currentUser || currentUser.role !== 'super_admin') {
-        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      if (!currentUser || (currentUser.role !== 'super_admin' && currentUser.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
       }
 
       const { userId } = req.params;
@@ -3754,6 +3754,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prevent deleting own user
       if (userId === req.user.claims.sub) {
         return res.status(400).json({ message: "Cannot delete your own user account." });
+      }
+
+      // Get the user being deleted to check organization
+      const userBeingDeleted = await storage.getUser(userId);
+      if (!userBeingDeleted) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      // Organization isolation: admin users can only delete users in their own organization
+      if (currentUser.role === 'admin') {
+        if (userBeingDeleted.organizationId !== currentUser.organizationId) {
+          return res.status(403).json({ message: "Access denied. You can only delete users in your own organization." });
+        }
       }
 
       const { users: usersTable } = await import("@shared/schema");
