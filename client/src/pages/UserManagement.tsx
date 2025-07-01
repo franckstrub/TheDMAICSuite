@@ -194,16 +194,7 @@ export default function UserManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setIsAddDialogOpen(false);
-      const isAdmin = currentUserRole === "admin";
-      setFormData({
-        email: "",
-        firstName: "",
-        lastName: "",
-        companyName: isAdmin ? (currentUserData?.companyName || "") : "",
-        role: "admin",
-        phone: "",
-        phoneCountryCode: ""
-      });
+      resetForm();
       toast({
         title: "Success",
         description: "User added successfully",
@@ -495,12 +486,11 @@ export default function UserManagement() {
                       </SelectTrigger>
                       <SelectContent>
                         {currentUserRole === 'super_admin' && (
-                          <>
-                            <SelectItem value="super_admin">Super Admin</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
                         )}
-                        
+                        {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
+                        <SelectItem value="admin">Admin</SelectItem>
+                         )}                         
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="member">Member</SelectItem>
                       </SelectContent>
@@ -644,10 +634,14 @@ export default function UserManagement() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            
                             {currentUserRole === 'super_admin' && (
                               <SelectItem value="super_admin">Super Admin</SelectItem>
                             )}
-                            <SelectItem value="admin">Admin</SelectItem>
+                            {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
+                              <SelectItem value="admin">Admin</SelectItem>
+                            )}
+                            
                             <SelectItem value="manager">Manager</SelectItem>
                             <SelectItem value="member">Member</SelectItem>
                           </SelectContent>
@@ -804,10 +798,14 @@ export default function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    
                     {currentUserRole === 'super_admin' && (
                       <SelectItem value="super_admin">Super Admin</SelectItem>
                     )}
-                    <SelectItem value="admin">Admin</SelectItem>
+                    {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
+                      <SelectItem value="admin">Admin</SelectItem>
+                    )}
+                    
                     <SelectItem value="manager">Manager</SelectItem>
                     <SelectItem value="member">Member</SelectItem>
                   </SelectContent>
