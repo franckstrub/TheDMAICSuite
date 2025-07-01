@@ -382,12 +382,19 @@ export default function UserManagement() {
           <div className="flex items-center space-x-2">
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
               setIsAddDialogOpen(open);
-              if (open && !editingUser && currentUserRole === "admin") {
-                // When admin opens to add a new user, initialize with admin's company name
-                setFormData(prev => ({
-                  ...prev,
-                  companyName: currentUserData?.companyName || ""
-                }));
+              if (open) {
+                // Reset editingUser when opening add dialog to ensure we're creating a new user, not editing
+                setEditingUser(null);
+                // Only pre-fill company name for admin users, not superadmin
+                if (currentUserRole === "admin") {
+                  setFormData(prev => ({
+                    ...prev,
+                    companyName: currentUserData?.companyName || ""
+                  }));
+                } else {
+                  // For superadmin, start with empty form
+                  resetForm();
+                }
               }
               if (!open) resetForm();
             }}>
