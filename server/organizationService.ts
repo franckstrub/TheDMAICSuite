@@ -55,11 +55,15 @@ export class OrganizationService {
     let orgData: InsertOrganization;
     let companyNameToUse = userData?.companyName;
     
+    console.log(`Organization creation DEBUG: userId=${userId}, userType=${userType}, userData.companyName="${userData?.companyName}", user exists=${!!user}, user.companyName="${user?.companyName}"`);
+    
     // If no company name in userData but user exists in database, check user's existing company name
     if (!companyNameToUse && user && user.companyName) {
       companyNameToUse = user.companyName;
       console.log(`Organization creation: Using existing user company name: ${companyNameToUse}`);
     }
+    
+    console.log(`Organization creation DEBUG: Final companyNameToUse="${companyNameToUse}"`);
     
     if (companyNameToUse) {
       // User has company name - create enterprise organization
