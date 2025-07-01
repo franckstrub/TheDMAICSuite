@@ -335,7 +335,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Filtered data for update:", filteredData);
       
+      // Get current user to check role and organization
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update user profile
       const updatedUser = await storage.updateUser(userId, filteredData);
+      
+      // If user is admin or superadmin and companyName was updated, update organization
+      if ((currentUser.role === 'admin' || currentUser.role === 'super_admin') && 
+          filteredData.companyName && 
+          filteredData.companyName !== currentUser.companyName) {
+        
+        console.log(`Admin/SuperAdmin ${userId} updating organization name to: ${filteredData.companyName}`);
+        
+        try {
+          await organizationService.updateOrganization(
+            currentUser.organizationId, 
+            {
+              name: filteredData.companyName,
+              type: 'enterprise_small'
+            },
+            userId
+          );
+          console.log(`Organization ${currentUser.organizationId} updated successfully`);
+        } catch (orgError) {
+          console.error("Error updating organization:", orgError);
+          // Don't fail the entire request if organization update fails
+        }
+      }
+      
       console.log("Update result:", updatedUser);
       res.json(updatedUser);
     } catch (error) {
@@ -3614,6 +3645,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email is already taken by another user." });
       }
 
+      // Get the user being updated to check current values
+      const userBeingUpdated = await storage.getUser(userId);
+      if (!userBeingUpdated) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
       const { users: usersTable } = await import("@shared/schema");
       const [updatedUser] = await db
         .update(usersTable)
@@ -3644,6 +3681,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found." });
+      }
+
+      // If user being updated is admin or superadmin and companyName was changed, update organization
+      if ((role === 'admin' || role === 'super_admin') && 
+          companyName && 
+          companyName !== userBeingUpdated.companyName) {
+        
+        console.log(`Admin/SuperAdmin ${userId} organization being updated by SuperAdmin to: ${companyName}`);
+        
+        try {
+          await organizationService.updateOrganization(
+            userBeingUpdated.organizationId, 
+            {
+              name: companyName,
+              type: 'enterprise_small'
+            },
+            req.user.claims.sub
+          );
+          console.log(`Organization ${userBeingUpdated.organizationId} updated successfully by SuperAdmin`);
+        } catch (orgError) {
+          console.error("Error updating organization:", orgError);
+          // Don't fail the entire request if organization update fails
+        }
       }
 
       return res.status(200).json({ user: updatedUser });
