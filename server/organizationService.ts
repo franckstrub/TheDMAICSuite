@@ -51,10 +51,17 @@ export class OrganizationService {
       }
     }
 
-    // Create organization based on company_name presence first, then user type
+    // Determine organization data based on company name
     let orgData: InsertOrganization;
+    let companyNameToUse = userData?.companyName;
     
-    if (userData?.companyName) {
+    // If no company name in userData but user exists in database, check user's existing company name
+    if (!companyNameToUse && user && user.companyName) {
+      companyNameToUse = user.companyName;
+      console.log(`Organization creation: Using existing user company name: ${companyNameToUse}`);
+    }
+    
+    if (companyNameToUse) {
       // User has company name - create enterprise organization
       const enterpriseType = userType === 'enterprise_medium' ? 'enterprise_medium' : 
                             userType === 'solo_entrepreneur' ? 'solo_entrepreneur' : 'enterprise_small';
@@ -63,12 +70,14 @@ export class OrganizationService {
                       enterpriseType === 'solo_entrepreneur' ? 5 : 50;
       
       orgData = {
-        name: userData.companyName,
+        name: companyNameToUse,
         type: enterpriseType,
         maxUsers: maxUsers,
         isActive: true,
         isSystemGenerated: false
       };
+      
+      console.log(`Organization creation: Creating enterprise organization "${companyNameToUse}" with type "${enterpriseType}"`);
     } else {
       // No company name - create individual organization with "Private Individual" naming
       const orgName = await this.generateIndividualOrgName(userData?.firstName, userData?.lastName, userData?.email, userId);
@@ -80,6 +89,8 @@ export class OrganizationService {
         isActive: true,
         isSystemGenerated: true
       };
+      
+      console.log(`Organization creation: Creating individual organization "${orgName}"`);
     }
 
     // Create the organization
@@ -92,6 +103,7 @@ export class OrganizationService {
         .where(eq(users.id, userId));
     }
 
+    console.log(`Organization creation completed: ID ${newOrg.id}, Name: "${newOrg.name}", Type: "${newOrg.type}"`);
     return newOrg;
   }
 
