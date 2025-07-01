@@ -149,6 +149,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - July 1, 2025. Enhanced organization management for admin/superadmin users - when admin or superadmin users update their company name in User Profile or User Management overlay, the system now automatically updates their organization name and changes organization type to enterprise_small, ensuring consistent organization branding across the platform
 - July 1, 2025. Enhanced organization creation for existing users - when creating organizations for users who already exist in the database, the system now checks for existing company names in user records and automatically uses them to create enterprise organizations with enterprise_small type, ensuring proper organization setup even when user data exists before organization creation
 - July 1, 2025. Fixed user management add user functionality crash - corrected POST route for adding new users that was calling non-existent findOrCreateOrganization method, updated to use proper getOrCreateUserOrganization method from organization service, ensuring new user creation works correctly with proper organization assignment
+- July 1, 2025. Fixed OAuth signup organization creation issue - when users with company names sign up via OAuth, the system now correctly creates enterprise_small organizations with company names instead of defaulting to individual organizations with "Private Individual" naming, enhanced organization service validation to handle company name detection more robustly
 
 ## User Preferences
 

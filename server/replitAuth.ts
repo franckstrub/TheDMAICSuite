@@ -60,15 +60,6 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  console.log(`OAuth DEBUG: Received claims for user ${claims["sub"]}:`, {
-    sub: claims["sub"],
-    email: claims["email"],
-    first_name: claims["first_name"],
-    last_name: claims["last_name"],
-    company_name: claims["company_name"],
-    profile_image_url: claims["profile_image_url"]
-  });
-  
   // Check if user already exists and has a custom profile image
   const existingUser = await storage.getUser(claims["sub"]);
   const hasCustomProfileImage = existingUser?.profileImageUrl && 
@@ -79,8 +70,6 @@ async function upsertUser(
   
   // Determine user type based on company name
   const userType = claims["company_name"] ? 'enterprise_small' : 'individual';
-  
-  console.log(`OAuth DEBUG: Determined userType="${userType}" for company_name="${claims["company_name"]}"`);;
   
   // Get or create organization for the user
   const organization = await organizationService.getOrCreateUserOrganization(
