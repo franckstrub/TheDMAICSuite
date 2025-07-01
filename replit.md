@@ -156,6 +156,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - July 1, 2025. Enhanced organization management for superadmin user creation - when superadmin creates users with company names, system now checks for existing organizations with matching names and assigns users to existing organizations instead of creating duplicates. Added organization lookup by company name in organizationService to prevent unnecessary organization proliferation
 - July 1, 2025. Fixed admin user update permissions - updated PUT /api/admin/users/:userId route to allow both admin and superadmin access instead of superadmin-only, added organization isolation so admin users can only update users within their own organization while superadmin retains full flexibility across all organizations
 - July 1, 2025. Fixed admin user deletion permissions - updated DELETE /api/admin/users/:userId route to allow both admin and superadmin access instead of superadmin-only, added organization isolation so admin users can only delete users within their own organization while superadmin retains full flexibility across all organizations
+- July 1, 2025. Enhanced form clearing for admin user creation - streamlined success handler to use resetForm() function which properly preserves company name for admin users while clearing all other form fields after successful user creation
 
 ## User Preferences
 
