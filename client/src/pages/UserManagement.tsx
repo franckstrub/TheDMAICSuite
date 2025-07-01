@@ -382,8 +382,8 @@ export default function UserManagement() {
           <div className="flex items-center space-x-2">
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
               setIsAddDialogOpen(open);
-              if (open && !editingUser) {
-                // When opening to add a new user, initialize with admin's company name
+              if (open && !editingUser && currentUserRole === "admin") {
+                // When admin opens to add a new user, initialize with admin's company name
                 setFormData(prev => ({
                   ...prev,
                   companyName: currentUserData?.companyName || ""
@@ -441,10 +441,10 @@ export default function UserManagement() {
                       id="companyName"
                       value={formData.companyName}
                       onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                      disabled={!editingUser}
+                      disabled={!editingUser && currentUserRole === "admin"}
                       required
                     />
-                    {!editingUser && (
+                    {!editingUser && currentUserRole === "admin" && (
                       <p className="text-sm text-gray-500 flex items-center gap-1">
                         <Info className="h-3 w-3" />
                         New users will be added to your organization
