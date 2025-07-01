@@ -194,11 +194,12 @@ export default function UserManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setIsAddDialogOpen(false);
+      const isAdmin = currentUserRole === "admin";
       setFormData({
         email: "",
         firstName: "",
         lastName: "",
-        companyName: currentUserData?.companyName || "",
+        companyName: isAdmin ? (currentUserData?.companyName || "") : "",
         role: "admin",
         phone: "",
         phoneCountryCode: ""
@@ -320,11 +321,12 @@ export default function UserManagement() {
   };
 
   const resetForm = () => {
+    const isAdmin = currentUserRole === "admin";
     setFormData({
       email: "",
       firstName: "",
       lastName: "",
-      companyName: currentUserData?.companyName || "",
+      companyName: isAdmin ? (currentUserData?.companyName || "") : "",
       role: "admin",
       phone: "",
       phoneCountryCode: "+1"
