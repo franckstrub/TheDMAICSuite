@@ -123,20 +123,16 @@ export class OrganizationService {
    * Generates organization name for individual users using company_name or user data
    */
   private async generateIndividualOrgName(firstName?: string, lastName?: string, email?: string, userId?: string): Promise<string> {
-    // Build organization name from user data with "Private Individual" extension
+    // Build organization name using userid + "Individual" format
     let orgName = '';
     
-    if (firstName && lastName) {
-      orgName = `${firstName} ${lastName} Private Individual`;
-    } else if (firstName) {
-      orgName = `${firstName} Private Individual`;
+    if (userId) {
+      orgName = `${userId} Individual`;
     } else if (email) {
       const emailPrefix = email.split('@')[0];
-      orgName = `${emailPrefix} Private Individual`;
-    } else if (userId) {
-      orgName = `${userId} Private Individual`;
+      orgName = `${emailPrefix} Individual`;
     } else {
-      orgName = `User Organization Private Individual`;
+      orgName = `User Individual`;
     }
 
     // Ensure uniqueness
