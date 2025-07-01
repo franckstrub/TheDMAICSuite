@@ -440,7 +440,7 @@ export default function UserManagement() {
                       value={formData.companyName}
                       onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
                       disabled={!editingUser && currentUserRole === "admin"}
-                      required
+                      required={currentUserRole === "admin"}
                     />
                     {!editingUser && currentUserRole === "admin" && (
                       <p className="text-sm text-gray-500 flex items-center gap-1">
@@ -759,7 +759,7 @@ export default function UserManagement() {
                   id="editCompanyName"
                   value={formData.companyName}
                   onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                  required
+                  required={currentUserRole === "admin"}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
