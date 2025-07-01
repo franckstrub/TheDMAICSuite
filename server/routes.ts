@@ -3535,15 +3535,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new user route (Super Admin only)
+  // Create new user route (Admin and Super Admin)
   app.post("/api/admin/users", isAuthenticated, async (req, res) => {
     try {
       if (!req.user || !req.user.claims || !req.user.claims.sub) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       const currentUser = await storage.getUser(parseInt(req.user.claims.sub));
-      if (!currentUser || currentUser.role !== 'super_admin') {
-        return res.status(403).json({ message: "Access denied. Super admin privileges required." });
+      if (!currentUser || (currentUser.role !== 'super_admin' && currentUser.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
       }
 
       const { email, firstName, lastName, companyName, role = 'admin', phone, phoneCountryCode } = req.body;
@@ -3566,25 +3566,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate user ID
       const userId = Math.random().toString().substring(2, 10);
       
-      // Get or create organization based on companyName
+      // Get or create organization based on user role and companyName
       let organizationId = currentUser.organizationId; // Default to current user's org
-      if (companyName && companyName.trim()) {
-        try {
-          const { organizationService } = await import("./organizationService");
-          const organization = await organizationService.getOrCreateUserOrganization(
-            userId, 
-            'enterprise_small', 
-            {
-              firstName,
-              lastName,
-              companyName: companyName.trim()
-            }
-          );
-          organizationId = organization.id;
-        } catch (error) {
-          console.error("Error creating organization:", error);
-          // Fall back to current user's organization
+      
+      if (currentUser.role === 'super_admin') {
+        // Superadmin can create users in any organization
+        if (companyName && companyName.trim()) {
+          try {
+            const { organizationService } = await import("./organizationService");
+            const organization = await organizationService.getOrCreateUserOrganization(
+              userId, 
+              'enterprise_small', 
+              {
+                firstName,
+                lastName,
+                companyName: companyName.trim()
+              }
+            );
+            organizationId = organization.id;
+          } catch (error) {
+            console.error("Error creating organization:", error);
+            // Fall back to current user's organization
+          }
         }
+      } else if (currentUser.role === 'admin') {
+        // Admin users can only add users to their own organization
+        organizationId = currentUser.organizationId;
+        // For admin users, we ignore the companyName and use their organization's name
       }
       
       const { users: usersTable } = await import("@shared/schema");
@@ -3595,7 +3603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email,
           firstName,
           lastName,
-          companyName: companyName || null,
+          companyName: currentUser.role === 'admin' ? currentUser.companyName : (companyName || null),
           role,
           phone: phone || null,
           phoneCountryCode: phoneCountryCode || null,
