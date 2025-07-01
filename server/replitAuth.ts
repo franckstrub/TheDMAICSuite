@@ -68,23 +68,28 @@ async function upsertUser(
   // Create organization service instance
   const organizationService = new OrganizationService();
   
-  // Determine user type based on company name
-  const userType = claims["company_name"] ? 'enterprise_small' : 'individual';
+  // Check if user already has an organization assignment (e.g., from admin creation)
+  let organizationId = existingUser?.organizationId;
   
-  // Get or create organization for the user
-  const organization = await organizationService.getOrCreateUserOrganization(
-    claims["sub"], 
-    userType as any, 
-    {
-      firstName: claims["first_name"],
-      lastName: claims["last_name"],
-      companyName: claims["company_name"]
-    }
-  );
+  if (!organizationId) {
+    // Only create organization if user doesn't have one
+    const userType = claims["company_name"] ? 'enterprise_small' : 'individual';
+    
+    const organization = await organizationService.getOrCreateUserOrganization(
+      claims["sub"], 
+      userType as any, 
+      {
+        firstName: claims["first_name"],
+        lastName: claims["last_name"],
+        companyName: claims["company_name"]
+      }
+    );
+    organizationId = organization.id;
+  }
   
   const userData = {
     id: claims["sub"],
-    organizationId: organization.id,
+    organizationId: organizationId,
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],

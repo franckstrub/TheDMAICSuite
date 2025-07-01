@@ -154,8 +154,12 @@ export class DatabaseStorage implements IStorage {
     const existingUser = await this.getUser(userData.id);
     
     if (existingUser) {
+      // Preserve existing organization assignment if user already has one
+      if (!userData.organizationId && existingUser.organizationId) {
+        userData.organizationId = existingUser.organizationId;
+      }
       // If user exists but has no organization, create one
-      if (!existingUser.organizationId) {
+      else if (!existingUser.organizationId && !userData.organizationId) {
         const userType = userData.userType || 'individual';
         const organization = await organizationService.getOrCreateUserOrganization(userData.id, userType, userData);
         userData.organizationId = organization.id;
