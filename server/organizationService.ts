@@ -58,7 +58,6 @@ export class OrganizationService {
     // If no company name in userData but user exists in database, check user's existing company name
     if (!companyNameToUse && user && user.companyName) {
       companyNameToUse = user.companyName;
-      console.log(`Organization creation: Using existing user company name: ${companyNameToUse}`);
     }
     
     // Also check if companyNameToUse is a non-empty string after trimming

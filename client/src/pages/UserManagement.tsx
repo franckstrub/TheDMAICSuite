@@ -198,7 +198,7 @@ export default function UserManagement() {
         email: "",
         firstName: "",
         lastName: "",
-        companyName: "",
+        companyName: currentUserData?.companyName || "",
         role: "admin",
         phone: "",
         phoneCountryCode: ""
@@ -324,7 +324,7 @@ export default function UserManagement() {
       email: "",
       firstName: "",
       lastName: "",
-      companyName: "",
+      companyName: currentUserData?.companyName || "",
       role: "admin",
       phone: "",
       phoneCountryCode: "+1"
@@ -380,6 +380,13 @@ export default function UserManagement() {
           <div className="flex items-center space-x-2">
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
               setIsAddDialogOpen(open);
+              if (open && !editingUser) {
+                // When opening to add a new user, initialize with admin's company name
+                setFormData(prev => ({
+                  ...prev,
+                  companyName: currentUserData?.companyName || ""
+                }));
+              }
               if (!open) resetForm();
             }}>
               <DialogTrigger asChild>
@@ -432,8 +439,15 @@ export default function UserManagement() {
                       id="companyName"
                       value={formData.companyName}
                       onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
+                      disabled={!editingUser}
                       required
                     />
+                    {!editingUser && (
+                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <Info className="h-3 w-3" />
+                        New users will be added to your organization
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -472,9 +486,12 @@ export default function UserManagement() {
                       </SelectTrigger>
                       <SelectContent>
                         {currentUserRole === 'super_admin' && (
-                          <SelectItem value="super_admin">Super Admin</SelectItem>
+                          <>
+                            <SelectItem value="super_admin">Super Admin</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </>
                         )}
-                        <SelectItem value="admin">Admin</SelectItem>
+                        
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="member">Member</SelectItem>
                       </SelectContent>
