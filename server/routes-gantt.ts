@@ -3,9 +3,7 @@ import { storage } from "./storage";
 import { 
   insertGanttTaskSchema, 
   GanttTask, 
-  InsertGanttTask,
-  insertGanttSettingsSchema,
-  GanttSettings
+  InsertGanttTask
 } from "@shared/schema";
 import { ZodError } from "zod";
 

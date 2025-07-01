@@ -105,6 +105,16 @@ export async function generateCapabilityAssessment(
       ? (stats.isInControl ? `The process is stable and in control.` : `The process is out of control.`)
       : (stats.isInControl ? `The process is unstable.` : `The process is unstable and out of control.`)
     const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive capability analysis for the CTQ "${context.ctq}".
+     Follow a systematic 3-step approach:
+step 1. Practical Analysis. Answer the questions:
+What critical quality criteria (CTQ) am I analyzing? Does my data show long-term variation (specific cause variation) or only short-term variation (common cause variation)? Does it represent my entire scope? Do I have enough samples?
+step 2. Graphical Analysis. Answer the questions:
+What is the trend in my data? Is it a normal curve or something else? Is the data skewed? What is its spread? What is the central tendency? Are there any outliers? Compared to my specifications, are there few or many defects? Is the central tendency close to my objective? Is the process in control and stable or out of control and unstable? Are there any out-of-control data points, and what are the specific root causes that need to be investigated to achieve quick wins?
+step 3. Statistical Analysis.  Answer the questions:
+What is the result of the normality test? Normal or abnormal?
+Is the process capability calculation valid with respect to process stability?
+What statistical parameters should I use for central tendency and variation: mean and standard deviation or median and range? Which capability indices will allow me to represent true process performance? Cp/Cpk or Z, DPU, DPMO, YRT (Rolled Throughput Yield), OEE, or simply non-conformance rate?
+Do I calculate a long-term or short-term index? Should I calculate a Z-shift with a rational subgrouping of the data, or should I use the default value of 1.5 provided by the Six Sigma method?
 
 Statistical Analysis:
 - Sample size: ${stats.sampleSize}
