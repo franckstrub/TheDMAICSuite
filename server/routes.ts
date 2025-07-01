@@ -3566,7 +3566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate user ID
       const userId = Math.random().toString().substring(2, 10);
       
-      // Get or create organization based on user role and companyName
+      // Get organization based on user role and companyName
       let organizationId = currentUser.organizationId; // Default to current user's org
       
       if (currentUser.role === 'super_admin') {
@@ -3590,9 +3590,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       } else if (currentUser.role === 'admin') {
-        // Admin users can only add users to their own organization
+        // Admin users can only add users to their own organization - no organization service calls
         organizationId = currentUser.organizationId;
-        // For admin users, we ignore the companyName and use their organization's name
+        console.log(`Admin user creating new user - using admin's organization ID: ${organizationId}`);
       }
       
       const { users: usersTable } = await import("@shared/schema");
