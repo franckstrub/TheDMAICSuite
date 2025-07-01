@@ -3563,24 +3563,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid role specified." });
       }
 
+      // Generate user ID
+      const userId = Math.random().toString().substring(2, 10);
+      
       // Get or create organization based on companyName
       let organizationId = currentUser.organizationId; // Default to current user's org
       if (companyName && companyName.trim()) {
         try {
-          const orgService = await import("./organizationService");
-          const organization = await orgService.findOrCreateOrganization(companyName.trim());
+          const { organizationService } = await import("./organizationService");
+          const organization = await organizationService.getOrCreateUserOrganization(
+            userId, 
+            'enterprise_small', 
+            {
+              firstName,
+              lastName,
+              companyName: companyName.trim()
+            }
+          );
           organizationId = organization.id;
         } catch (error) {
           console.error("Error creating organization:", error);
           // Fall back to current user's organization
         }
       }
-
+      
       const { users: usersTable } = await import("@shared/schema");
       const [newUser] = await db
         .insert(usersTable)
         .values({
-          id: Math.random().toString().substring(2, 10), // Generate random ID
+          id: userId,
           email,
           firstName,
           lastName,
