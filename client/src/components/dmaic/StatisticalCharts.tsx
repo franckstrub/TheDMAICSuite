@@ -115,14 +115,18 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
 
   const histogramData = getHistogramData(numericValues, 8);
   const quartiles = calculateQuartiles(numericValues);
-  
+
   // Calculate Gaussian curve data
   const dataMean = mean(numericValues);
   const dataStdDev = standardDeviation(numericValues);
-  const gaussMinValue = Math.min(...numericValues);
-  const gaussMaxValue = Math.max(...numericValues);
+  const lsl = capabilityData[ctq]?.lsl ?? capabilityData[ctq]?.lsl;
+  const usl = capabilityData[ctq]?.usl ?? capabilityData[ctq]?.usl;
+  const gaussMinValue = lsl ? Math.min(Math.min(...numericValues), parseFloat(lsl!)) : Math.min(...numericValues);
+  const gaussMaxValue = usl ? Math.max(Math.max(...numericValues), parseFloat(usl!)) : Math.max(...numericValues);
   const gaussRange = gaussMaxValue - gaussMinValue;
   const gaussianPadding = gaussRange * 0.05;
+  const domainMin = gaussMinValue - gaussianPadding;
+  const domainMax = gaussMaxValue + gaussianPadding;
   
   // Find maximum frequency to scale the Gaussian curve
   const maxFrequency = Math.max(...histogramData.map(d => d.y));
@@ -142,10 +146,22 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
     };
   });
 
-  const lsl = capabilityData[ctq]?.lsl;
-  const usl = capabilityData[ctq]?.usl;
-  const lslpos = 100 * (parseFloat(lsl || '0') - quartiles.min) / dataRange;
-  const uslpos = 100 * (parseFloat(usl || '0') - quartiles.min) / dataRange;
+  // For box plot (no padding)
+  const XscaleMin = gaussMinValue;
+  const XscaleMax = gaussMaxValue;
+  const boxplotRangewithLSL_USL = XscaleMax - XscaleMin;
+
+  const lslpos = 100 * (parseFloat(lsl || '0') - XscaleMin)/ boxplotRangewithLSL_USL;
+  const uslpos = 100 * (parseFloat(usl || '0') - XscaleMin) / boxplotRangewithLSL_USL;
+  const minDatapos = 100 * (Math.min(...numericValues) - XscaleMin) / boxplotRangewithLSL_USL;
+  const Q1pos = 100 * (quartiles.q1 - XscaleMin) / boxplotRangewithLSL_USL;
+  const Medianpos = 100 * (quartiles.median - XscaleMin) / boxplotRangewithLSL_USL;
+  const Q3pos = 100 * (quartiles.q3 - XscaleMin) / boxplotRangewithLSL_USL;
+  const maxDatapos = 100 * (Math.max(...numericValues) - XscaleMin) / boxplotRangewithLSL_USL;
+  const dataMeanpos = 100 * (dataMean - XscaleMin) / boxplotRangewithLSL_USL;
+
+  //const lslpos = 100 * (parseFloat(lsl || '0') - quartiles.min) / dataRange;
+  //const uslpos = 100 * (parseFloat(usl || '0') - quartiles.min) / dataRange;
 
   // Box plot data
   const boxPlotData = [
@@ -170,7 +186,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Individual Control Chart (I Chart) */}
         <div className="bg-white p-4 border rounded-lg">
-          <h4 className="font-medium text-gray-800 mb-3">Individual Control Chart (I-Chart)</h4>
+          <h4 className="font-medium text-gray-800 mb-3">Individual Control Chart (I-Chart) of {ctq}</h4>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={individualData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -178,6 +194,13 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
               <YAxis 
                 label={{ value: 'Individual Value', angle: -90, position: 'insideBottomLeft' }}
                 domain={[YscaleMin, YscaleMax]}
+                tickFormatter={(value) => {
+                // Custom formatting logic:
+                // 1. Fixed decimals:
+                return value.toFixed(2); // Always show 2 decimals                
+                // 2. Dynamic decimals based on value:
+                // return value % 1 === 0 ? value.toString() : value.toFixed(2);
+                }}
               />
               <Tooltip 
                 formatter={(value: any, name: any, props: any) => {
@@ -281,7 +304,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
 
         {/* Density Histogram with Gaussian Overlay */}
         <div className="bg-white p-4 border rounded-lg">
-          <h4 className="font-medium text-gray-800 mb-3">Density Histogram with Normal Distribution</h4>
+          <h4 className="font-medium text-gray-800 mb-3">Density Histogram with Normal Distribution of {ctq}</h4>
           <ResponsiveContainer width="100%" height={250}>
             <ComposedChart data={combinedHistogramData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -290,7 +313,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                 label={{ value: 'Value', position: 'insideBottom', offset: -5 }}
                 tickFormatter={(value) => Number(value).toFixed(2)}
                 type="number"
-                domain={[gaussMinValue - gaussianPadding, gaussMaxValue + gaussianPadding]}
+                domain={[domainMin, domainMax]}
               />
               <YAxis label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }} />
               <Tooltip 
@@ -411,7 +434,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
 
         {/* Moving Range Control Chart (MR Chart) */}
         <div className="bg-white p-4 border rounded-lg">
-          <h4 className="font-medium text-gray-800 mb-3">Moving Range Control Chart (MR-Chart)</h4>
+          <h4 className="font-medium text-gray-800 mb-3">Moving Range Control Chart (MR-Chart) of {ctq}</h4>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={movingRangeData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -419,6 +442,13 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
               <YAxis 
                 label={{ value: 'Moving Range', angle: -90, position: 'insideBottomLeft' }}
                 domain={[MR_YscaleMin, MR_YscaleMax]}
+                tickFormatter={(value) => {
+                // Custom formatting logic:
+                // 1. Fixed decimals:
+                return value.toFixed(3); // Always show 2 decimals                
+                // 2. Dynamic decimals based on value:
+                // return value % 1 === 0 ? value.toString() : value.toFixed(2);
+                }}
               />
               <Tooltip 
                 formatter={(value: any, name: any, props: any) => {
@@ -522,7 +552,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
 
         {/* Box Plot */}
         <div className="bg-white p-4 border rounded-lg">
-          <h4 className="font-medium text-gray-800 mb-3">Box Plot</h4>
+          <h4 className="font-medium text-gray-800 mb-3">Box Plot of {ctq}</h4>
           <div className="h-[250px] flex items-center justify-center">
             <div className="relative w-full max-w-md">
               <div className="relative h-32 bg-gray-50 border rounded">
@@ -532,8 +562,8 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                     <div 
                       className="absolute h-0.5 bg-gray-600"
                       style={{
-                        left: '0%',
-                        width: '100%',
+                        left: `${minDatapos}%`,
+                        width: `${maxDatapos-minDatapos}%`,
                         top: '50%',
                         transform: 'translateY(-50%)'
                       }}
@@ -543,11 +573,11 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                     <div 
                       className="absolute w-0.5 h-4 bg-gray-600"
                       title={`Min: ${quartiles.min.toFixed(3)}`}
-                      style={{ left: '0%', top: '25%' }}
+                      style={{ left: `${minDatapos}%`, top: '25%' }}
                     />
 
                     {/* LSL line */}
-                    {lslpos !== null && lslpos >= 0 && lslpos <= 100 && (
+                    {lsl && lslpos !== null && lslpos >= 0 && lslpos <= 100 && (
                     <div>
                       <div 
                       className="absolute w-0.5 h-full bg-red-600"
@@ -559,7 +589,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                       style={{ 
                         left: `${Math.max(0, Math.min(85, lslpos))}%`,
                         top: '-28px',
-                        transform: lslpos > 85 ? 'translateX(-100%)' : lslpos < 15 ? 'translateX(0%)' : 'translateX(-50%)',
+                        transform: lslpos > 85 ? 'translateX(12.5%)' : lslpos < 15 ? 'translateX(-50%)' : 'translateX(-50%)',
                         whiteSpace: 'nowrap',
                         zIndex: 10
                       }}
@@ -573,8 +603,8 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                     <div 
                       className="absolute h-full bg-blue-200 border border-2 border-blue-400"
                       style={{
-                        left: '25%',
-                        width: '50%'
+                        left: `${Q1pos}%`,
+                        width: `${Q3pos-Q1pos}%`
                       }}
                     />
                     
@@ -582,7 +612,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                     <div 
                       className="absolute w-0.5 h-full bg-gray-600"
                       title={`Q1: ${quartiles.q1.toFixed(3)}`}
-                      style={{ left: '25%', top: '0%' }}
+                      style={{ left: `${Q1pos}%`, top: '0%' }}
                     />
                     
                     {/* Median line */}
@@ -590,7 +620,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                       className="absolute w-0.5 h-full bg-blue-400"
                       title={`Median: ${quartiles.median.toFixed(3)}`}
                       style={{
-                        left: '50%',
+                        left: `${Medianpos}%`,
                         top: '0%'
                       }}
                     />
@@ -599,11 +629,11 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                     <div 
                       className="absolute w-0.5 h-full bg-gray-600"
                       title={`Q3: ${quartiles.q3.toFixed(3)}`}
-                      style={{ left: '75%', top: '0%' }}
+                      style={{ left: `${Q3pos}%`, top: '0%' }}
                     />
                                                       
                     {/* USL line */}
-                    {uslpos !== null && uslpos >= 0 && uslpos <= 100 && (
+                    {usl && uslpos !== null && uslpos >= 0 && uslpos <= 100 && (
                     <div>
                       <div 
                       className="absolute w-0.5 h-full bg-red-600"
@@ -616,7 +646,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                       style={{ 
                         left: `${Math.max(0, Math.min(85, uslpos))}%`,
                         top: '-28px',
-                        transform: uslpos > 85 ? 'translateX(-100%)' : uslpos < 15 ? 'translateX(0%)' : 'translateX(-50%)',
+                        transform: uslpos > 85 ? 'translateX(12.5%)' : uslpos < 15 ? 'translateX(-50%)' : 'translateX(-50%)',
                         whiteSpace: 'nowrap',
                         zIndex: 10
                       }}
@@ -630,14 +660,14 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                     <div 
                       className="absolute w-0.5 h-4 bg-gray-600"
                       title={`Max: ${quartiles.max.toFixed(3)}`}
-                      style={{ right: '0%', top: '25%' }}
+                      style={{ right: `${100-maxDatapos}%`, top: '25%' }}
                     />
                     
                     {/* Mean marker */}
                     <div 
                       className="absolute flex items-center justify-center w-3 h-3 bg-blue-500 text-white text-xs font-bold rounded-full pt-[3px]"
                       style={{
-                        left: `${12.5+((dataMean - quartiles.min) / (quartiles.max - quartiles.min)) * 100}%`,
+                        left: `${dataMeanpos}%`,
                         top: '25%',
                         transform: 'translateX(-50%)'
                       }}

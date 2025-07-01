@@ -113,7 +113,7 @@ export default function AIAnalysisSection({
           style={{
             height: "auto",
             minHeight: "150px",
-            maxHeight: "860px",
+            maxHeight: "1200px",
           }}
         />
 
