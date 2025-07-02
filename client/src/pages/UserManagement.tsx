@@ -491,7 +491,7 @@ export default function UserManagement() {
                         {currentUserRole === 'super_admin' && (
                         <SelectItem value="super_admin">Super Admin</SelectItem>
                         )}
-                        {(currentUserRole === 'super_admin') && (
+                        {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
                         <SelectItem value="admin">Admin</SelectItem>
                          )}                         
                         {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
