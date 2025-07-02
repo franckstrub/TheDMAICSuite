@@ -108,7 +108,7 @@ export default function UserManagement() {
     firstName: "",
     lastName: "",
     companyName: "",
-    role: "admin",
+    role: "member",
     phone: "",
     phoneCountryCode: ""
   });
@@ -312,13 +312,16 @@ export default function UserManagement() {
   };
 
   const resetForm = () => {
+    const isSuperAdmin = (currentUserRole === "super_admin");
+    const isAdminorManager = (currentUserRole === "admin" || currentUserRole === "manager");
     const isAdmin = currentUserRole === "admin";
+    const isManager = currentUserRole === "manager";
     setFormData({
       email: "",
       firstName: "",
       lastName: "",
-      companyName: isAdmin ? (currentUserData?.companyName || "") : "",
-      role: "admin",
+      companyName: isAdminorManager ? (currentUserData?.companyName || "") : "",
+      role: isSuperAdmin ? "admin" : (isAdmin ? "manager" : (isManager ? "member" : "member")),
       phone: "",
       phoneCountryCode: "+1"
     });
@@ -377,7 +380,7 @@ export default function UserManagement() {
                 // Reset editingUser when opening add dialog to ensure we're creating a new user, not editing
                 setEditingUser(null);
                 // Only pre-fill company name for admin users, not superadmin
-                if (currentUserRole === "admin") {
+                if (currentUserRole === "admin" || currentUserRole ==="manager") {
                   setFormData(prev => ({
                     ...prev,
                     companyName: currentUserData?.companyName || ""
@@ -439,13 +442,13 @@ export default function UserManagement() {
                       id="companyName"
                       value={formData.companyName}
                       onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                      disabled={!editingUser && currentUserRole === "admin"}
-                      required={currentUserRole === "admin"}
+                      disabled={!editingUser && (currentUserRole === "admin" || currentUserRole === "manager")}
+                      required={(currentUserRole === "admin" || currentUserRole === "manager")}
                     />
-                    {!editingUser && currentUserRole === "admin" && (
+                    {!editingUser && (currentUserRole === "admin" || currentUserRole === "manager") && (
                       <p className="text-sm text-gray-500 flex items-center gap-1">
                         <Info className="h-3 w-3" />
-                        New users will be added to your organization
+                        Added users will always have your Organization id and Company name
                       </p>
                     )}
                   </div>
@@ -488,10 +491,12 @@ export default function UserManagement() {
                         {currentUserRole === 'super_admin' && (
                         <SelectItem value="super_admin">Super Admin</SelectItem>
                         )}
-                        {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
+                        {(currentUserRole === 'super_admin') && (
                         <SelectItem value="admin">Admin</SelectItem>
                          )}                         
+                        {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
                         <SelectItem value="manager">Manager</SelectItem>
+                        )}
                         <SelectItem value="member">Member</SelectItem>
                       </SelectContent>
                     </Select>
@@ -642,7 +647,9 @@ export default function UserManagement() {
                               <SelectItem value="admin">Admin</SelectItem>
                             )}
                             
+                            {(currentUserRole === 'super_admin' || currentUserRole === 'admin') && (
                             <SelectItem value="manager">Manager</SelectItem>
+                            )}
                             <SelectItem value="member">Member</SelectItem>
                           </SelectContent>
                         </Select>
@@ -759,7 +766,8 @@ export default function UserManagement() {
                   id="editCompanyName"
                   value={formData.companyName}
                   onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                  required={currentUserRole === "admin"}
+                  disabled={(currentUserRole === "admin" || currentUserRole === "manager")}
+                  required={(currentUserRole === "admin" || currentUserRole === "manager")}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
