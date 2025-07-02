@@ -23,6 +23,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { getParetoData } from "@/lib/statisticsUtils";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterPlot, ScatterChart, Scatter, ZAxis } from "recharts";
 import MilestoneTimeline from "./MilestoneTimeline";
+import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface CtqWithType {
+  ctq: string;
+  ctqType: "Attribute" | "Continuous";
+}
 
 export default function AnalyzePhase() {
   const { user, currentProject } = useAppContext();
@@ -117,6 +124,86 @@ export default function AnalyzePhase() {
     });
   };
 
+    // Load CTQs with types from CTS characteristics
+    const { data: ctsData, isLoading: ctsLoading } = useQuery({
+      queryKey: [`/api/projects/${projectId}/cts-characteristics`],
+      enabled: !!projectId,
+    });
+  
+    // Load project data to get project type
+    const { data: projectData, isLoading: projectLoading } = useQuery({
+      queryKey: [`/api/projects/${projectId}`],
+      enabled: !!projectId,
+    });
+    
+
+  // Get CTQs with types from CTS characteristics
+  const getCtqsWithTypes = (): CtqWithType[] => {
+    if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData) {
+      return (ctsData as any).characteristics.map((item: any) => ({
+        ctq: item.ctq,
+        ctqType: item.ctqType || "Continuous"
+      }));
+    }
+    return [];
+  };
+
+  // Get project type from project data
+  const projectType = (projectData as any)?.project?.projectType;
+  const isSimplifiedView = projectType === "Yellow Belt" || projectType === "White Belt";
+  // Load last active tab and statistics state from localStorage on component mount
+    // Load last active tab and statistics state from localStorage on component mount
+  //useEffect(() => {
+  //  const savedTab = localStorage.getItem(`analyze-active-tab-${projectId}`);
+  //  if (savedTab) {
+  //    setActiveTab(savedTab);
+  //  }
+
+    // Load saved statistics calculation state
+    
+    // Load saved attribute statistics show/hide state
+
+    // Load saved continuous statistics show/hide state 
+
+    // Load saved attribute analysis type choices
+
+    // Load saved continuous analysis type choices
+
+    // Load saved MSA show/hide state for White Belt and Yellow Belt projects
+    
+  //}, [projectId]);
+
+  const ctqList = getCtqsWithTypes();
+  if (ctqList.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            MSA (Measurement System Analysis)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            No CTQ available. Please define your CTQ(s) in CTS characteristics table to create MSA study(ies).
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  const [activeTab, setActiveTab] = useState<string>("");
+  
+  // Ensure we have an active tab when CTQs are available
+  if (!activeTab && ctqList.length > 0) {
+    const firstCtq = ctqList[0].ctq;
+    setActiveTab(firstCtq);
+  }
+  // Save active tab to localStorage whenever it changes
+  const handleTabChange = (tabValue: string) => {
+  setActiveTab(tabValue);
+  localStorage.setItem(`analyze-active-tab-${projectId}`, tabValue);
+  };
+
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
@@ -137,78 +224,39 @@ export default function AnalyzePhase() {
       {/* Cause & Effect Analysis */}
       <Card>
         <CardHeader>
-          <CardTitle>Cause & Effect Analysis</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Cause & Effect Analysis (one per CTQ)
+          </CardTitle>
+          <p className="text-sm text-gray-600 mt-2">
+            One Root Cause Analysis per CTQ defined in CTS Characteristics table
+          </p>          
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Identify potential causes of a problem using a fishbone diagram.
-          </p>
-          
-          <div className="mb-4">
-            <Label htmlFor="problem-statement">Problem Statement</Label>
-            <Input
-              id="problem-statement"
-              value={problemStatement}
-              onChange={(e) => setProblemStatement(e.target.value)}
-              placeholder="High processing time for customer orders"
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <Label htmlFor="people-factors">People</Label>
-              <Textarea
-                id="people-factors"
-                rows={3}
-                value={peopleFactors}
-                onChange={(e) => setPeopleFactors(e.target.value)}
-                placeholder="Insufficient training&#10;Lack of motivation&#10;High turnover rate"
-              />
-            </div>
-            <div>
-              <Label htmlFor="methods-factors">Methods</Label>
-              <Textarea
-                id="methods-factors"
-                rows={3}
-                value={methodsFactors}
-                onChange={(e) => setMethodsFactors(e.target.value)}
-                placeholder="Complex procedures&#10;Manual data entry&#10;Redundant approvals"
-              />
-            </div>
-            <div>
-              <Label htmlFor="materials-factors">Materials</Label>
-              <Textarea
-                id="materials-factors"
-                rows={3}
-                value={materialsFactors}
-                onChange={(e) => setMaterialsFactors(e.target.value)}
-                placeholder="Poor quality forms&#10;Missing information&#10;Incorrect documentation"
-              />
-            </div>
-            <div>
-              <Label htmlFor="machines-factors">Machines</Label>
-              <Textarea
-                id="machines-factors"
-                rows={3}
-                value={machinesFactors}
-                onChange={(e) => setMachinesFactors(e.target.value)}
-                placeholder="System outages&#10;Slow computer performance&#10;Software bugs"
-              />
+          {/* Only show scroll indicator if 5+ CTQs exist */}
+          {ctqList.length >= 6 && (
+          <div className="relative">
+            <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+            ← Scroll horizontally →
             </div>
           </div>
-          
-          <div className="border border-gray-200 rounded-md bg-gray-50 h-64 flex items-center justify-center mb-4">
-            <div className="text-center">
-              <i className="fas fa-sitemap text-4xl text-gray-300 mb-4"></i>
-              <p className="text-gray-500">Fishbone Diagram</p>
+          )}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
+            <div className="w-full overflow-x-auto">         
+              <TabsList className="flex w-max min-w-full justify-start">
+                {ctqList.map((ctqItem: CtqWithType) => (
+                  <TabsTrigger 
+                    key={ctqItem.ctq} 
+                    value={ctqItem.ctq}
+                    className="px-4 py-2 min-w-max flex flex-col items-cente border border-gray-200 data-[state=active]:border-none"
+                  >
+                    <span className="font-medium truncate min-w-[150px]">{ctqItem.ctq}</span>
+                    <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
             </div>
-          </div>
-          
-          <div>
-            <Button onClick={handleGenerateFishbone}>
-              Generate Fishbone Diagram
-            </Button>
-          </div>
+          </Tabs>
         </CardContent>
       </Card>
       
