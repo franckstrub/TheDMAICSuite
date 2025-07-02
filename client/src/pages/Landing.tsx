@@ -136,7 +136,7 @@ export default function Landing() {
             Ready to Transform Your Processes?
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Join many of professionals who trust our platform for their Lean Six
+            Join the many professionals who trust our platform for their Lean Six
             Sigma projects.
           </p>
           <Button
