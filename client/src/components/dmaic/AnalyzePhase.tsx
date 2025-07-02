@@ -173,30 +173,34 @@ export default function AnalyzePhase() {
     
   //}, [projectId]);
 
+  const [activeTab, setActiveTab] = useState<string>("");
+  
   const ctqList = getCtqsWithTypes();
+  
+  // Ensure we have an active tab when CTQs are available using useEffect
+  useEffect(() => {
+    if (!activeTab && ctqList.length > 0) {
+      const firstCtq = ctqList[0].ctq;
+      setActiveTab(firstCtq);
+    }
+  }, [activeTab, ctqList]);
+  
   if (ctqList.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            MSA (Measurement System Analysis)
+            Root Cause Analysis
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No CTQ available. Please define your CTQ(s) in CTS characteristics table to create MSA study(ies).
+            No CTQ available. Please define your CTQ(s) in CTS characteristics table to create Root Cause Analysis.
           </div>
         </CardContent>
       </Card>
     );
-  }
-  const [activeTab, setActiveTab] = useState<string>("");
-  
-  // Ensure we have an active tab when CTQs are available
-  if (!activeTab && ctqList.length > 0) {
-    const firstCtq = ctqList[0].ctq;
-    setActiveTab(firstCtq);
   }
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tabValue: string) => {
