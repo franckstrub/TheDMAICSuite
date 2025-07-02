@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import QRcodeImage from "@/assets/The DMAIC Suite QR code.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -223,6 +224,17 @@ export default function Sidebar() {
             <Settings className="w-5 h-5 mr-3" />
             <span>Settings</span>
           </Button>
+
+          {/* QR code Image inside ScrollArea */}
+          <div className="mt-2 px-4 w-full flex items-center gap-2">
+            <img
+              src={QRcodeImage}
+              alt="Lean Six Sigma DMAIC. Suite QR code"
+              className="w-[50px] h-[50px] rounded-lg"
+            />
+            <span className="text-sm font-medium">QR code</span>
+          </div>
+          
         </ScrollArea>
         
         <div className="p-4 border-t border-gray-200">

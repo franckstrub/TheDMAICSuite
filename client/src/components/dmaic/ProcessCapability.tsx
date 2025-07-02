@@ -1809,8 +1809,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <Label htmlFor={`${ctq}-showz-yes`}>Yes</Label>
                         </div>
                       </RadioGroup>
-                    </div>
 
+                      {capabilityData[ctq]?.showZ && (
+                      <>
+                      <label className="block mt-8 text-sm font-medium mb-2">Z-shift Value</label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={capabilityData[ctq]?.zShift || 1.5}
+                        onChange={(e) => updateCapabilityField(ctq, "zShift", parseFloat(e.target.value) || 1.5)}
+                        placeholder="1.5"
+                      />
+                      </>
+                      )}
+                    </div>
                     <div>
                      <label className="block text-sm font-medium mb-3">Attribute Analysis Types (Select Multiple)</label>
                       
@@ -1975,20 +1987,37 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <h4 className="font-semibold text-blue-800 mb-2">Results:</h4>
                                 <div className="space-y-1 text-sm">
                                   <div>
+                                    <div title="Non-conform rate % = (number of non-conform units / number of units) * 100">
                                     <span className="font-medium">Non-Conform Rate: </span>
                                     <span className="text-blue-700">
                                       {formatnonconformrate(capabilityData[ctq].calculatedNonConformityRate)}%
                                       <br></br>
                                     </span>
+                                    </div>
+                                    <div title="Non-conform PPM = (number of non-conform units / number of units) * 1000000">
                                     <span className="font-medium">Non-Conform PPM: </span>
                                     <span className="text-blue-700">
                                       {(capabilityData[ctq].calculatedNonConformityRate*10000).toFixed(0)}
                                     </span>
+                                    </div>
                                   </div>
                                   {capabilityData[ctq]?.showZ && (
                                   <div>
                                     <div>
-                                      <span className="font-medium">
+                                      {capabilityData[ctq]?.dataSetTerm === "Long Term" ? (
+                                        <div title="Z Long Term = Z value in Z-table for Non-Conform probability">
+                                          <span className="font-medium">
+                                           Z Long Term: 
+                                          </span>
+                                        <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedZValue_LT !== undefined && capabilityData[ctq]?.calculatedZValue_LT !== null
+                                          ? capabilityData[ctq].calculatedZValue_LT.toFixed(2)
+                                          : 'Calculating...'}
+                                        </span>
+                                        </div>
+                                      ) : (
+                                        <div title="Z Long Term = Z Short Term - Z-shift">
+                                          <span className="font-medium">
                                         Z Long Term: 
                                       </span>
                                       <span className="text-blue-700 ml-1">
@@ -1996,8 +2025,13 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           ? capabilityData[ctq].calculatedZValue_LT.toFixed(2)
                                           : 'Calculating...'}
                                       </span>
+                                        </div>
+                                      )}
                                     </div>
                                     <div>
+                                    {capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
+                                    <div title="Z Short Term = Z value in Z-table for Non-Conform probability">
+                                      {/* Add your content here */}
                                       <span className="font-medium">
                                         Z Short Term: 
                                       </span>
@@ -2006,6 +2040,20 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           ? capabilityData[ctq].calculatedZValue_ST.toFixed(2)
                                           : 'Calculating...'}
                                       </span>
+                                    </div>
+                                    ) : (
+                                    <div title="Z Short Term = Z Long Term + Z-shift">
+                                      {/* Add your content here */}
+                                      <span className="font-medium">
+                                        Z Short Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedZValue_ST !== undefined && capabilityData[ctq]?.calculatedZValue_ST !== null
+                                          ? capabilityData[ctq].calculatedZValue_ST.toFixed(2)
+                                          : 'Calculating...'}
+                                      </span>
+                                    </div>
+                                    )}                                  
                                     </div>
                                   </div>
                                   )}
@@ -2072,7 +2120,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               <div className="mt-4 p-3 bg-green-100 rounded-lg border">
                                 <h4 className="font-semibold text-green-800 mb-2">Results:</h4>
                                 <div className="space-y-1 text-sm">
-                                  <div>
+                                  <div title="DPMO = (number of defects / (number of units * opportunities of defects per unit)) * 1000000">
                                     <span className="font-medium">DPMO: </span>
                                     <span className="text-green-700">
                                       {Math.round(capabilityData[ctq].calculatedDPMO).toLocaleString()}
@@ -2081,7 +2129,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   {capabilityData[ctq]?.showZ && (
                                   <div>
                                     <div>
-                                      <span className="font-medium">
+                                      {capabilityData[ctq]?.dataSetTerm === "Long Term" ? (
+                                      <div title="Z Long Term = Z value in Z-table for DPMO. Calculated DPMO is Long Term DPMO">
+                                        {/* Add your content here */}
+                                        <span className="font-medium">
                                         Z Long Term: 
                                       </span>
                                       <span className="text-blue-700 ml-1">
@@ -2094,12 +2145,38 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       </span>
                                       <span className="text-blue-700 ml-1">
                                         {capabilityData[ctq]?.calculatedDPMO_LT !== undefined && capabilityData[ctq]?.calculatedDPMO_LT !== null
-                                          ? capabilityData[ctq].calculatedDPMO_LT.toLocaleString()
+                                          ? capabilityData[ctq].calculatedDPMO_LT.toFixed(1)
                                           : 'Calculating...'}
                                       </span>
+                                      </div>
+                                      ) : (
+                                      <div title="Z Long Term = Z Short Term - Z-shift. DPMO Long Term is given by Z-table for Z Long Term">
+                                        {/* Add your content here */}
+                                        <span className="font-medium">
+                                        Z Long Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_Z_LT !== undefined && capabilityData[ctq]?.calculatedDPMO_Z_LT !== null
+                                          ? capabilityData[ctq].calculatedDPMO_Z_LT.toFixed(2)
+                                          : 'Calculating...'}
+                                      </span>
+                                      <span className="font-medium ml-4">
+                                        <br></br>DPMO Long Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_LT !== undefined && capabilityData[ctq]?.calculatedDPMO_LT !== null
+                                          ? capabilityData[ctq].calculatedDPMO_LT.toFixed(1)
+                                          : 'Calculating...'}
+                                      </span>
+                                      </div>
+                                      )}                                      
+                                      
                                     </div>
                                     <div className="mt-2">
-                                      <span className="font-medium">
+                                      {capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
+                                      <div title="Z Short Term = Z value in Z-table for DPMO. Calculated DPMO is Short Term DPMO">
+                                        {/* Add your content here */}
+                                        <span className="font-medium">
                                         Z Short Term: 
                                       </span>
                                       <span className="text-blue-700 ml-1">
@@ -2112,9 +2189,32 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       </span>
                                       <span className="text-blue-700 ml-1">
                                         {capabilityData[ctq]?.calculatedDPMO_ST !== undefined && capabilityData[ctq]?.calculatedDPMO_ST !== null
-                                          ? capabilityData[ctq].calculatedDPMO_ST.toLocaleString()
+                                          ? capabilityData[ctq].calculatedDPMO_ST.toFixed(1)
                                           : 'Calculating...'}
                                       </span>
+                                      </div>
+                                      ) : (
+                                      <div title="Z Short Term = Z Long Term - Z-shift. DPMO Short Term is given by Z-table for Z Short Term">
+                                        {/* Add your content here */}
+                                        <span className="font-medium">
+                                        Z Short Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_Z_ST !== undefined && capabilityData[ctq]?.calculatedDPMO_Z_ST !== null
+                                          ? capabilityData[ctq].calculatedDPMO_Z_ST.toFixed(2)
+                                          : 'Calculating...'}
+                                      </span>
+                                      <span className="font-medium ml-4">
+                                        <br></br>DPMO Short Term: 
+                                      </span>
+                                      <span className="text-blue-700 ml-1">
+                                        {capabilityData[ctq]?.calculatedDPMO_ST !== undefined && capabilityData[ctq]?.calculatedDPMO_ST !== null
+                                          ? capabilityData[ctq].calculatedDPMO_ST.toFixed(1)
+                                          : 'Calculating...'}
+                                      </span>
+                                      </div>
+                                      )}
+                                      
                                     </div>
                                   </div>
                                   )}
@@ -2187,7 +2287,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     
                                     <div className="grid grid-cols-1 gap-4 text-sm">
                                       <div className="space-y-1">
-                                        <div className="flex justify-left">
+                                        <div className="flex justify-left"
+                                           title="DPU = (number of defects / number of units)">
                                           <span className="font-medium">DPU:</span>
                                           <span className="ml-1 text-purple-700 font-bold">{formatdpu(dpuResults.dpu)}</span>
                                         </div>
@@ -2195,7 +2296,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         {capabilityData[ctq]?.showZ && (
                                         <div>
                                           <div>
-                                            <span className="font-medium">
+                                            {capabilityData[ctq]?.dataSetTerm === "Long Term" ? (
+                                            <div title="Z Long Term = Z value in Z-table for DPU probability. Calculated DPU is Long Term DPU">
+                                              {/* Add your content here */}
+                                              <span className="font-medium">
                                               Z Long Term: 
                                             </span>
                                             <span className="text-blue-700 ml-1">
@@ -2211,9 +2315,35 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                                 ? formatdpu(capabilityData[ctq].calculatedDPU_LT)
                                                 : 'Calculating...'}
                                             </span>
+                                            </div>
+                                            ) : (
+                                            <div title="Z Long Term = Z Short Term - Z-shift. DPU Long Term is given by Z-table for Z Long Term">
+                                              {/* Add your content here */}
+                                              <span className="font-medium">
+                                              Z Long Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_Z_LT !== undefined && capabilityData[ctq]?.calculatedDPU_Z_LT !== null
+                                                ? capabilityData[ctq].calculatedDPU_Z_LT.toFixed(2)
+                                                : 'Calculating...'}
+                                            </span>
+                                            <span className="font-medium ml-4">
+                                              <br></br>DPU Long Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_LT !== undefined && capabilityData[ctq]?.calculatedDPU_LT !== null
+                                                ? formatdpu(capabilityData[ctq].calculatedDPU_LT)
+                                                : 'Calculating...'}
+                                            </span>
+                                            </div>
+                                            )}
+                                            
                                           </div>
                                           <div className="mt-2">
-                                            <span className="font-medium">
+                                            {capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
+                                            <div title="Z Short Term = Z value in Z-table for DPU probability. Calculated DPU is Short Term DPU">
+                                              {/* Add your content here */}
+                                              <span className="font-medium">
                                               Z Short Term: 
                                             </span>
                                             <span className="text-blue-700 ml-1">
@@ -2229,6 +2359,29 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                                 ? formatdpu(capabilityData[ctq].calculatedDPU_ST)
                                                 : 'Calculating...'}
                                             </span>
+                                            </div>
+                                            ) : (
+                                            <div title="Z Short Term = Z Long Term - Z-shift. DPU Short Term is given by Z-table for Z Short Term">
+                                              {/* Add your content here */}
+                                              <span className="font-medium">
+                                              Z Short Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_Z_ST !== undefined && capabilityData[ctq]?.calculatedDPU_Z_ST !== null
+                                                ? capabilityData[ctq].calculatedDPU_Z_ST.toFixed(2)
+                                                : 'Calculating...'}
+                                            </span>
+                                            <span className="font-medium ml-4">
+                                              <br></br>DPU Short Term: 
+                                            </span>
+                                            <span className="text-blue-700 ml-1">
+                                              {capabilityData[ctq]?.calculatedDPU_ST !== undefined && capabilityData[ctq]?.calculatedDPU_ST !== null
+                                                ? formatdpu(capabilityData[ctq].calculatedDPU_ST)
+                                                : 'Calculating...'}
+                                            </span>
+                                            </div>
+                                            )}
+                                            
                                           </div>
                                         </div>
                                         )}
@@ -2383,7 +2536,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                           <h5 className="font-medium text-green-700 mb-2">Individual Step Yields</h5>
                                           <div className="space-y-1 text-sm">
                                             {rtyResults.individualYields.map((stepYield, index) => (
-                                              <div key={index} className="flex justify-between">
+                                              <div key={index} className="flex justify-between"
+                                              title="YTPᵢ = (Passed units/Total units) * 100">
                                                 <span>{stepYield.stepName || `Step ${index + 1}`}:</span>
                                                 <span className="text-green-700 font-medium">Y<sub>TP{index}</sub>: {stepYield.yieldPercentage.toFixed(2)}%</span>
                                               </div>
@@ -2392,7 +2546,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         </div>
                                         
                                         {/* Overall RTY */}
-                                            <div className="flex justify-between border-t pt-2">
+                                            <div className="flex justify-between border-t pt-2"
+                                            title="YRT = Π YTPᵢ for i = 1 to n">
                                               <span className="font-bold">RTY Percentage:</span>
                                               <span className="text-green-700 font-bold">Y<sub>RT</sub>: {rtyResults.rtyPercentage.toFixed(2)}%</span>
                                             </div>
@@ -2429,7 +2584,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                 <span className="text-xs text-gray-500">hours</span>
                               </div>
                               <div>
-                                <label className="block text-sm font-medium mb-2">Available Time</label>
+                                <label className="block text-sm font-medium mb-2">Available Production Time</label>
                                 <Input
                                   type="number"
                                   min="0"
@@ -2533,19 +2688,23 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       </div>
                                     </div>*/}
                                     <div className="space-y-2">
-                                      <div className="flex justify-between">
+                                      <div className="flex justify-between"
+                                      title="AVAILAILITY % = (Available Production Time / Scheduled Production Time) * 100">
                                         <span className="font-medium">AVAILABILITY %</span>
                                         <span className="text-purple-700">{oeeResults.availabilityPercentage.toFixed(2)}%</span>
                                       </div>
-                                      <div className="flex justify-between">
+                                      <div className="flex justify-between"
+                                      title="PERFORMANCE % = (Number of parts manufactured / (Nominal capacity * Available Production Time)) * 100">
                                         <span className="font-medium">PERFORMANCE %</span>
                                         <span className="text-purple-700">{oeeResults.performancePercentage.toFixed(2)}%</span>
                                       </div>
-                                      <div className="flex justify-between">
+                                      <div className="flex justify-between"
+                                      title="QUALITY % = (Number of good parts manufactured / Number of parts manufactured) * 100">
                                         <span className="font-medium">QUALITY %</span>
                                         <span className="text-purple-700">{oeeResults.qualityPercentage.toFixed(2)}%</span>
                                       </div>
-                                      <div className="flex justify-between border-t pt-2">
+                                      <div className="flex justify-between border-t pt-2"
+                                      title="OEE % = AVAILAILITY % * PERFORMANCE % * QUALITY %">
                                         <span className="font-bold">OEE %</span>
                                         <span className="text-purple-700 font-bold">{oeeResults.oeePercentage.toFixed(2)}%</span>
                                       </div>

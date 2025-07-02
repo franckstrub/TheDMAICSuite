@@ -111,7 +111,7 @@ import { infiniteQueryOptions } from "@tanstack/react-query";
             // Z short term is typically 1.5 sigma higher than long term
             zDPMOValue_ST = zValue;
             zDPMOValue_LT = zDPMOValue_ST - (data.zShift || 1.5);
-            DPMOValue_ST = dpo*10000000;
+            DPMOValue_ST = dpo*1000000;
             DPMOValue_LT = (1 - normalCDF(zDPMOValue_LT))*1000000;            
           }
           else {
