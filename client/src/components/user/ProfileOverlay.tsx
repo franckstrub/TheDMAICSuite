@@ -507,6 +507,7 @@ export default function ProfileOverlay({ open, onClose }: ProfileOverlayProps) {
                       value={editedProfile.companyName}
                       onChange={(e) => setEditedProfile(prev => ({ ...prev, companyName: e.target.value }))}
                       placeholder="Enter your company name"
+                      disabled={!(user.role==="super_admin")}
                     />
                   ) : (
                     <p className="mt-1 text-sm text-gray-900">{user.companyName || "Not provided"}</p>
