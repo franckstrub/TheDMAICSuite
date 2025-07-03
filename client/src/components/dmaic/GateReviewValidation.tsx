@@ -299,11 +299,11 @@ export default function GateReviewValidation() {
     } else if (project?.project) {
       projectType = project.project.projectType;
     }
-    console.log("projectType for deliverables:", projectType);
+    //console.log("projectType for deliverables:", projectType);
   
     // function to create default deliverables with project ID
     const createDefaultDeliverables = () => {
-      console.log("Creating default deliverables");
+      //console.log("Creating default deliverables");
       return defaultDefineDeliverables.map(deliverable => ({
         ...deliverable,
         projectId: parseInt(projectId || "0")
@@ -311,17 +311,17 @@ export default function GateReviewValidation() {
     };
 
     if (!deliverablesData) {
-      console.log("No deliverables data yet");
+      //console.log("No deliverables data yet");
       return;
     }
 
     if (!deliverablesData.deliverables || !Array.isArray(deliverablesData.deliverables)) {
-      console.log("Deliverables data structure is unexpected:", deliverablesData);
+      //console.log("Deliverables data structure is unexpected:", deliverablesData);
       return;
     }
 
     if (deliverablesData.deliverables.length === 0) {
-      console.log("No deliverables found, create & using defaults based on project type");
+      //console.log("No deliverables found, create & using defaults based on project type");
       // If no deliverables exist yet, use & create the defaults
       setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
       const defaultsWithProjectId = createDefaultDeliverables();
@@ -330,8 +330,8 @@ export default function GateReviewValidation() {
       return;
     }
 
-    console.log("Deliverables available:        ", deliverablesData.deliverables.length);
-    console.log("Setting deliverables from data:", deliverablesData.deliverables);
+    //console.log("Deliverables available:        ", deliverablesData.deliverables.length);
+    //console.log("Setting deliverables from data:", deliverablesData.deliverables);
 
     // Keep track of what default deliverables exist in the database
     const existingDefaultNames = new Set<string>();
@@ -389,17 +389,17 @@ export default function GateReviewValidation() {
     // Add the custom deliverables to the ordered list
     orderedDeliverables.push(...customDeliverables);
 
-    console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
+    //console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
     setDeliverables(orderedDeliverables);
   }, [deliverablesData, projectId, defaultDefineDeliverables]);
 
   // Initialize validators from charter if none exist
   useEffect(() => {
-    console.log("Validators data received:", validatorsData);
-    console.log("Charter data:", charter);
+    //console.log("Validators data received:", validatorsData);
+    //console.log("Charter data:", charter);
 
     if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
-      console.log("Setting validators from data:", validatorsData.validators);
+      //console.log("Setting validators from data:", validatorsData.validators);
 
       // Define the default validator roles in the preferred order
       const standardRoles = ["Sponsor", "Project Leader", "Financial Controller", "Coach"];
@@ -441,10 +441,10 @@ export default function GateReviewValidation() {
       // Add the custom validators to our ordered list
       orderedValidators.push(...customValidators);
 
-      console.log("Ordered validators with preserved custom order:", orderedValidators);
+      //console.log("Ordered validators with preserved custom order:", orderedValidators);
       setValidators(orderedValidators);
     } else if (charter && 'charter' in charter) {
-      console.log("No validators found, creating defaults from charter");
+      //console.log("No validators found, creating defaults from charter");
       // If no validators exist yet but we have charter data, create default validators
       // from the project charter's key stakeholders
       const defaultValidators: Validator[] = [];
@@ -508,7 +508,7 @@ export default function GateReviewValidation() {
   // Auto-save when a new deliverable is added
   useEffect(() => {
     if (newDeliverableAdded) {
-      console.log("Auto-saving after new deliverable was added");
+      //console.log("Auto-saving after new deliverable was added");
       saveData();
       setNewDeliverableAdded(false);
     }
@@ -550,12 +550,12 @@ export default function GateReviewValidation() {
     };
 
     try {
-      console.log("Creating new validator:", newValidatorObj);
+      //console.log("Creating new validator:", newValidatorObj);
 
       // Create the new validator directly via API
       const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, newValidatorObj);
 
-      console.log("New validator created:", response);
+      //console.log("New validator created:", response);
 
       // Invalidate query to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
@@ -612,7 +612,7 @@ export default function GateReviewValidation() {
     try {
       if (validatorToRemove.id) {
         // If the validator has an ID, it exists in the database and must be deleted
-        console.log("Deleting validator from database:", validatorToRemove);
+        //console.log("Deleting validator from database:", validatorToRemove);
         await apiRequest('DELETE', `/api/gate-review-validators/${validatorToRemove.id}`, {});
 
         // After successful deletion from database, refresh the data
@@ -733,7 +733,7 @@ export default function GateReviewValidation() {
     try {
       if (deliverableToRemove.id) {
         // If the deliverable has an ID, it exists in the database and must be deleted
-        console.log("Deleting deliverable from database:", deliverableToRemove);
+        //console.log("Deleting deliverable from database:", deliverableToRemove);
         await apiRequest('DELETE', `/api/gate-review-deliverables/${deliverableToRemove.id}`, {});
 
         // After successful deletion from database, refresh the data

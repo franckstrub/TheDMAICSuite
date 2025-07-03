@@ -276,8 +276,8 @@ export default function DefinePhase() {
   // Effect to initialize SIPOC form with data from API
   useEffect(() => {
     if (sipoc?.sipoc && !sipocFormInitialized.current) {
-      console.log("Initializing SIPOC form with data:", sipoc.sipoc);
-      console.log("Process name to set:", sipoc.sipoc.processName);
+      //console.log("Initializing SIPOC form with data:", sipoc.sipoc);
+      //console.log("Process name to set:", sipoc.sipoc.processName);
       
       try {
         // Set all fields with a single reset call to ensure consistent state
@@ -331,11 +331,11 @@ export default function DefinePhase() {
         
         // Double-check processName was set correctly
         const currentProcessName = sipocForm.getValues("processName");
-        console.log("Process name after form reset:", currentProcessName);
+        //console.log("Process name after form reset:", currentProcessName);
         
         // If process name didn't get set properly, set it again directly
         if (!currentProcessName && sipoc.sipoc.processName) {
-          console.log("Process name not set correctly, setting directly:", sipoc.sipoc.processName);
+          //console.log("Process name not set correctly, setting directly:", sipoc.sipoc.processName);
           sipocForm.setValue("processName", sipoc.sipoc.processName);
         }
         
@@ -346,7 +346,7 @@ export default function DefinePhase() {
         else if (sipoc.sipoc.suppliers5) maxRow = 5;
         else if (sipoc.sipoc.suppliers4) maxRow = 4;
         
-        console.log(`Setting SIPOC rows to ${maxRow}`);
+        //console.log(`Setting SIPOC rows to ${maxRow}`);
         setVisibleSipocRows(maxRow);
       } catch (error) {
         console.error("Error initializing SIPOC form:", error);
@@ -594,13 +594,13 @@ export default function DefinePhase() {
     updateTotalFinancialSavings(formattedValue);
     
     // Log for debugging
-    console.log("FTE updated:", { 
-      param,
-      newValue: convertedValue,
-      calculatedFte: formattedFte, 
-      calculatedValue: formattedValue,
-      fteString
-    });
+    //console.log("FTE updated:", { 
+    //  param,
+    //  newValue: convertedValue,
+    //  calculatedFte: formattedFte, 
+    //  calculatedValue: formattedValue,
+    //  fteString
+    //});
   };
 
   // Fetch project charter if exists
@@ -706,7 +706,7 @@ export default function DefinePhase() {
             : JSON.parse(charter.charter.stakeholders as string);
           
           setStakeholders(stakeholdersData);
-          console.log("Loaded stakeholders:", stakeholdersData);
+          //console.log("Loaded stakeholders:", stakeholdersData);
         } catch (e) {
           console.error("Error parsing stakeholders:", e);
           setStakeholders([]);
@@ -721,7 +721,7 @@ export default function DefinePhase() {
             name: stakeholder, 
             function: stakeholderFunction 
           }]);
-          console.log("Converted legacy stakeholder to new format");
+          //console.log("Converted legacy stakeholder to new format");
         }
       }
       
@@ -733,7 +733,7 @@ export default function DefinePhase() {
             : JSON.parse(charter.charter.teamMembers as string);
           
           setTeamMembers(teamMembersData);
-          console.log("Loaded team members:", teamMembersData);
+          //console.log("Loaded team members:", teamMembersData);
         } catch (e) {
           console.error("Error parsing team members:", e);
           setTeamMembers([]);
@@ -754,7 +754,7 @@ export default function DefinePhase() {
               { text: "", category: "process" },
               { text: "", category: "growth" }
             ];
-            console.log("Initializing empty soft benefits for all categories");
+            //console.log("Initializing empty soft benefits for all categories");
           }
           // If it's a string, try to parse it as JSON
           else if (typeof charter.charter.softBenefits === 'string') {
@@ -768,12 +768,12 @@ export default function DefinePhase() {
                 // Remove the extra quotes and escape characters
                 const cleanedStr = benefitsStr.slice(1, -1).replace(/\\"/g, '"');
                 parsedBenefits = JSON.parse(cleanedStr);
-                console.log("Parsed soft benefits from double-quoted JSON string:", parsedBenefits);
+                //console.log("Parsed soft benefits from double-quoted JSON string:", parsedBenefits);
               }
               // Standard case: JSON array stored as a string
               else if (benefitsStr.startsWith('[') && benefitsStr.endsWith(']')) {
                 parsedBenefits = JSON.parse(benefitsStr);
-                console.log("Parsed soft benefits from JSON string:", parsedBenefits);
+                //console.log("Parsed soft benefits from JSON string:", parsedBenefits);
               } 
               // Legacy format case
               else {
@@ -782,7 +782,7 @@ export default function DefinePhase() {
                   text: charter.charter.softBenefits, 
                   category: "process" 
                 }];
-                console.log("Converted legacy soft benefit format");
+                //console.log("Converted legacy soft benefit format");
               }
             } catch (parseError) {
               console.error("Error parsing soft benefits string:", parseError);
@@ -797,7 +797,7 @@ export default function DefinePhase() {
           } else if (Array.isArray(charter.charter.softBenefits)) {
             // It's already an array
             parsedBenefits = charter.charter.softBenefits;
-            console.log("Using already parsed soft benefits array");
+            //console.log("Using already parsed soft benefits array");
           }
           
           // Ensure we have at least one entry for each category
@@ -810,7 +810,7 @@ export default function DefinePhase() {
           
           // Apply the parsed benefits
           setSoftBenefits(parsedBenefits);
-          console.log("Loaded soft benefits:", parsedBenefits);
+          //console.log("Loaded soft benefits:", parsedBenefits);
           
           // Make sure form value is updated too
           charterForm.setValue("softBenefits", JSON.stringify(parsedBenefits));
@@ -876,7 +876,7 @@ export default function DefinePhase() {
             calculatedValue: calculatedValue
           });
           
-          console.log("Loaded FTE parameters from database:", {
+          /*console.log("Loaded FTE parameters from database:", {
             workingDaysPerYear,
             workingDaysPerWeek, 
             workingHoursPerDay, 
@@ -886,7 +886,7 @@ export default function DefinePhase() {
             calculatedFte: parseFloat(calculatedFte.toFixed(3)),
             calculatedValue,
             fteBenefitsValue
-          });
+          });*/
         } 
         // Fallback: if we don't have the parameters but have the FTE string
         else if (charter.charter.fteBenefits) {
@@ -902,7 +902,7 @@ export default function DefinePhase() {
               calculatedFte: fteValue,
               calculatedValue: fteBenefitsValue
             }));
-            console.log("Fallback: Parsed FTE value from string:", fteValue, "calculated value:", fteBenefitsValue);
+            //console.log("Fallback: Parsed FTE value from string:", fteValue, "calculated value:", fteBenefitsValue);
           }
         }
       } catch (e) {
@@ -983,15 +983,15 @@ export default function DefinePhase() {
       
       if (currentProject?.targetEndDate && !currentControlDate) {
         const targetEndDate = new Date(currentProject.targetEndDate).toISOString().split('T')[0];
-        console.log("Initial load: Setting Control Phase date to match target end date:", targetEndDate);
+        //console.log("Initial load: Setting Control Phase date to match target end date:", targetEndDate);
         
         // Set the control phase date to match the target end date only on first load
         charterForm.setValue("control_phase_date", targetEndDate);
-        console.log("Control Phase date set to:", targetEndDate);
+        //console.log("Control Phase date set to:", targetEndDate);
       } else {
-        console.log("Not setting initial control phase date:", 
+        /*console.log("Not setting initial control phase date:", 
           currentProject?.targetEndDate ? "Has target date" : "No target date", 
-          currentControlDate ? "Control date already set" : "No control date set");
+          currentControlDate ? "Control date already set" : "No control date set");*/
       }
     }
   }, [charterError, charter, currentProject, charterForm]);
@@ -1000,7 +1000,7 @@ export default function DefinePhase() {
   useEffect(() => {
     // Only initialize if charterError is true (charter not found) or charter query returned but no charter data
     if ((charterError || (charter && !charter.charter)) && currentProject) {
-      console.log("No charter found for project, initializing form with default values");
+      //console.log("No charter found for project, initializing form with default values");
       
       // Initialize form with project data and default values
       charterForm.reset({
@@ -1075,7 +1075,7 @@ export default function DefinePhase() {
   // Initialize customer requirements when data is loaded
   useEffect(() => {
     if (requirementsData?.requirements && requirementsData.requirements.length > 0) {
-      console.log("Loading customer requirements from API:", requirementsData.requirements);
+      //console.log("Loading customer requirements from API:", requirementsData.requirements);
       
       // Sort the requirements data by ID to maintain consistency
       const sortedRequirements = [...requirementsData.requirements].sort((a, b) => a.id - b.id);
@@ -1090,27 +1090,27 @@ export default function DefinePhase() {
         id: r.id,
       }));
       
-      console.log("Setting customer requirements state with mapped data:", mappedRequirements);
+      //console.log("Setting customer requirements state with mapped data:", mappedRequirements);
       setRequirements(mappedRequirements);
       
       // Also set the sessionStorage flag to remember we have requirements for this project
       sessionStorage.setItem(`project_${projectId}_has_requirements`, 'true');
     } else if (requirementsData?.requirements && requirementsData.requirements.length === 0) {
       // If no requirements found, ensure we have at least one empty row
-      console.log("No customer requirements found, setting default empty row");
+      //console.log("No customer requirements found, setting default empty row");
       setRequirements([{ requirement: "", customerRequirement: "", importance: 3, CTS: "", ctq: "" }]);
     }
   }, [requirementsData, projectId]);
   
   // Initial data load effect for business requirements - triggered on mount and when returning to page
   useEffect(() => {
-    console.log("DefinePhase component mounted - checking for business requirements");
+    //console.log("DefinePhase component mounted - checking for business requirements");
     
     // Check if we have previously saved business requirements in sessionStorage
     const hasBusinessRequirements = sessionStorage.getItem(`project_${projectId}_has_business_requirements`);
     
     if (hasBusinessRequirements === 'true') {
-      console.log("Business requirements flag found in sessionStorage, loading from database");
+      //console.log("Business requirements flag found in sessionStorage, loading from database");
       // Load data directly from database to ensure we have the latest
       loadBusinessRequirementsFromDatabase(true);
     }
@@ -1118,11 +1118,11 @@ export default function DefinePhase() {
   
   // Add a separate useEffect to process business requirements data when it changes
   useEffect(() => {
-    console.log("Business requirements data changed:", businessRequirementsData);
+    //console.log("Business requirements data changed:", businessRequirementsData);
     if (businessRequirementsData?.businessRequirements && businessRequirementsData.businessRequirements.length > 0) {
       // Sort the business requirements data by ID to maintain consistency
       const sortedBusinessRequirements = [...businessRequirementsData.businessRequirements].sort((a, b) => a.id - b.id);
-      console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+      //console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
       
       // Map and set to state, preserving the ID for later reference
       const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
@@ -1135,7 +1135,7 @@ export default function DefinePhase() {
       
       // Only initialize once
       if (!businessRequirementsInitialized.current) {
-        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        //console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
         setBusinessRequirements(mappedBusinessRequirements);
         businessRequirementsInitialized.current = true;
       }
@@ -1145,16 +1145,16 @@ export default function DefinePhase() {
   // Function to load business requirements from the database
   const loadBusinessRequirementsFromDatabase = async (silent = false) => {
     try {
-      console.log("Explicitly loading business requirements from database");
+      //console.log("Explicitly loading business requirements from database");
       const response = await fetch(`/api/projects/${projectId}/business-requirements`);
       const data = await response.json();
-      console.log("Loaded business requirements from database:", data);
+      //console.log("Loaded business requirements from database:", data);
       
       if (data?.businessRequirements && data.businessRequirements.length > 0) {
         // Map the business requirements data and sort by ID to maintain order
         // Sort by ID in ascending order so the first entered item appears first
         const sortedBusinessRequirements = [...data.businessRequirements].sort((a, b) => a.id - b.id);
-        console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+        //console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
         
         const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
           requirement: r.requirement || "",
@@ -1164,7 +1164,7 @@ export default function DefinePhase() {
           id: r.id, // Store the ID to help with sorting
         }));
         
-        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        //console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
         // Set the business requirements state with the mapped data
         setBusinessRequirements(mappedBusinessRequirements);
         
@@ -1181,7 +1181,7 @@ export default function DefinePhase() {
         return mappedBusinessRequirements;
       } else {
         // If no business requirements found in the API response, ensure we have at least one empty row
-        console.log("No business requirements found in database, setting default empty row");
+        //console.log("No business requirements found in database, setting default empty row");
         const defaultRow = [{ requirement: "", businessNeed: "", importance: 3, ctq: "" }];
         setBusinessRequirements(defaultRow);
         return defaultRow;
@@ -1205,13 +1205,13 @@ export default function DefinePhase() {
   
   // Initial data load effect for customer requirements - triggered on mount and when returning to page
   useEffect(() => {
-    console.log("DefinePhase component mounted - checking for requirements");
+    //console.log("DefinePhase component mounted - checking for requirements");
     
     // Check if we have previously saved requirements in sessionStorage
     const hasRequirements = sessionStorage.getItem(`project_${projectId}_has_requirements`);
     
     if (hasRequirements === 'true') {
-      console.log("Requirements flag found in sessionStorage, loading from database");
+      //console.log("Requirements flag found in sessionStorage, loading from database");
       // Load data directly from database to ensure we have the latest
       loadRequirementsFromDatabase(true);
     }
@@ -1220,11 +1220,11 @@ export default function DefinePhase() {
   // Add a separate useEffect to process requirements data when it changes
   // This ensures the UI is always in sync with database state
   useEffect(() => {
-    console.log("Requirements data changed:", requirementsData);
+    //console.log("Requirements data changed:", requirementsData);
     if (requirementsData?.requirements && requirementsData.requirements.length > 0) {
       // Sort the requirements data by ID to maintain consistent order
       const sortedRequirements = [...requirementsData.requirements].sort((a, b) => a.id - b.id);
-      console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
+      //console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
       
       // Map the requirements data
       const mappedRequirements = sortedRequirements.map((r: any) => ({
@@ -1235,7 +1235,7 @@ export default function DefinePhase() {
         id: r.id, // Include ID to help with sorting
       }));
       
-      console.log("Mapped requirements from data change:", mappedRequirements);
+      //console.log("Mapped requirements from data change:", mappedRequirements);
       
       // Set the requirements state with the mapped data
       setRequirements(mappedRequirements);
@@ -1244,7 +1244,7 @@ export default function DefinePhase() {
       sessionStorage.setItem(`project_${projectId}_has_requirements`, 'true');
     } else if (requirementsData) {
       // If we got data but no requirements, ensure we have at least one empty row
-      console.log("No requirements found in data change, setting default empty row");
+      //console.log("No requirements found in data change, setting default empty row");
       setRequirements([
         { requirement: "", customerRequirement: "", importance: 3, CTS: "" }
       ]);
@@ -1255,8 +1255,8 @@ export default function DefinePhase() {
   const saveCharterMutation = useMutation({
     mutationFn: async (data: any) => {
       // VERBOSE LOGGING: Important debug for projectTitle and all request details
-      console.log("MUTATION DEBUG - Charter form - Project Title value:", data.projectTitle);
-      console.log(`MUTATION DEBUG - Project ID: ${projectId}, currentCharterId: ${charter?.charter?.id}`);
+      //console.log("MUTATION DEBUG - Charter form - Project Title value:", data.projectTitle);
+      //console.log(`MUTATION DEBUG - Project ID: ${projectId}, currentCharterId: ${charter?.charter?.id}`);
       
       const payload = {
         projectId,
@@ -1323,19 +1323,19 @@ export default function DefinePhase() {
         userId: user?.id || 1,
       };
 
-      console.log("Sending charter data to API:", payload);
+      //console.log("Sending charter data to API:", payload);
 
       // Check if charter exists
       if (charter && charter.charter && charter.charter.id) {
-        console.log(`Updating existing charter ID: ${charter.charter.id}`);
+        //console.log(`Updating existing charter ID: ${charter.charter.id}`);
         return apiRequest("PUT", `/api/charters/${charter.charter.id}`, payload);
       } else {
-        console.log(`Creating new charter for project ID: ${projectId}`);
+        //console.log(`Creating new charter for project ID: ${projectId}`);
         return apiRequest("POST", `/api/projects/${projectId}/charter`, payload);
       }
     },
     onSuccess: (data) => {
-      console.log("Charter saved successfully, response:", data);
+      //console.log("Charter saved successfully, response:", data);
       toast({
         title: "Success",
         description: "Project charter saved successfully",
@@ -1344,7 +1344,7 @@ export default function DefinePhase() {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/charter`] });
       // IMPORTANT: Also invalidate the projects list to update the title in UI
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      console.log("Project list queries invalidated to refresh updated title");
+      //console.log("Project list queries invalidated to refresh updated title");
     },
     onError: (error) => {
       console.error("Error saving charter:", error);
@@ -1369,8 +1369,8 @@ export default function DefinePhase() {
       };
       
       // Log what's being sent to the API
-      console.log("SIPOC save payload:", payload);
-      console.log("Process name being saved:", payload.processName);
+      //console.log("SIPOC save payload:", payload);
+      //console.log("Process name being saved:", payload.processName);
 
       // Check if SIPOC exists
       if (sipoc?.sipoc?.id) {
@@ -1408,25 +1408,25 @@ export default function DefinePhase() {
         validBusinessRequirements : 
         [{ requirement: "", businessNeed: "", importance: 3, ctq: "" }];
       
-      console.log("Saving business requirements:", businessRequirementsToSave);
+      //console.log("Saving business requirements:", businessRequirementsToSave);
       
       try {
         // First, get existing business requirements to delete them
         const existingBusinessReqs = await fetch(`/api/projects/${projectId}/business-requirements`).then(res => res.json());
-        console.log("Existing business requirements before deletion:", existingBusinessReqs);
+        //console.log("Existing business requirements before deletion:", existingBusinessReqs);
         
         // Delete all existing business requirements
         if (existingBusinessReqs && existingBusinessReqs.businessRequirements && existingBusinessReqs.businessRequirements.length > 0) {
-          console.log(`Deleting ${existingBusinessReqs.businessRequirements.length} existing business requirements`);
+          //console.log(`Deleting ${existingBusinessReqs.businessRequirements.length} existing business requirements`);
           const deletePromises = existingBusinessReqs.businessRequirements.map((req: any) => 
             apiRequest("DELETE", `/api/business-requirements/${req.id}`, { userId: user?.id, projectId })
           );
           await Promise.all(deletePromises);
-          console.log("All existing business requirements deleted");
+          //console.log("All existing business requirements deleted");
         }
         
         // Now create new business requirements
-        console.log(`Creating ${businessRequirementsToSave.length} new business requirements`);
+        //console.log(`Creating ${businessRequirementsToSave.length} new business requirements`);
         const createPromises = businessRequirementsToSave.map(r => {
           const payload = {
             projectId,
@@ -1441,7 +1441,7 @@ export default function DefinePhase() {
         });
         
         const results = await Promise.all(createPromises);
-        console.log("New business requirements created:", results);
+        //console.log("New business requirements created:", results);
         return results;
       } catch (error) {
         console.error("Error saving business requirements:", error);
@@ -1488,25 +1488,25 @@ export default function DefinePhase() {
         validRequirements : 
         [{ requirement: "", customerRequirement: "", importance: 3, CTS: "" }];
       
-      console.log("Saving requirements:", requirementsToSave);
+      //console.log("Saving requirements:", requirementsToSave);
       
       try {
         // First, get existing requirements to delete them
         const existingReqs = await fetch(`/api/projects/${projectId}/requirements`).then(res => res.json());
-        console.log("Existing requirements before deletion:", existingReqs);
+        //console.log("Existing requirements before deletion:", existingReqs);
         
         // Delete all existing requirements
         if (existingReqs && existingReqs.requirements && existingReqs.requirements.length > 0) {
-          console.log(`Deleting ${existingReqs.requirements.length} existing requirements`);
+          //console.log(`Deleting ${existingReqs.requirements.length} existing requirements`);
           const deletePromises = existingReqs.requirements.map((req: any) => 
             apiRequest("DELETE", `/api/requirements/${req.id}`, { userId: user?.id, projectId })
           );
           await Promise.all(deletePromises);
-          console.log("All existing requirements deleted");
+          //console.log("All existing requirements deleted");
         }
         
         // Now create new requirements
-        console.log(`Creating ${requirementsToSave.length} new requirements`);
+        //console.log(`Creating ${requirementsToSave.length} new requirements`);
         const createPromises = requirementsToSave.map(r => {
           const payload = {
             projectId,
@@ -1521,7 +1521,7 @@ export default function DefinePhase() {
         });
         
         const results = await Promise.all(createPromises);
-        console.log("New requirements created:", results);
+        //console.log("New requirements created:", results);
         return results;
       } catch (error) {
         console.error("Error saving requirements:", error);
@@ -1529,7 +1529,7 @@ export default function DefinePhase() {
       }
     },
     onSuccess: async (data) => {
-      console.log("Requirements saved successfully:", data);
+      //console.log("Requirements saved successfully:", data);
       toast({
         title: "Success",
         description: "Customer requirements saved successfully",
@@ -1537,15 +1537,15 @@ export default function DefinePhase() {
       
       try {
         // Directly fetch the latest requirements instead of just invalidating the query
-        console.log("Fetching latest requirements after successful save");
+        //console.log("Fetching latest requirements after successful save");
         const response = await fetch(`/api/projects/${projectId}/requirements`);
         const freshData = await response.json();
-        console.log("Fresh requirements data after save:", freshData);
+        //console.log("Fresh requirements data after save:", freshData);
         
         if (freshData?.requirements && freshData.requirements.length > 0) {
           // Sort the requirements data by ID to maintain order
           const sortedRequirements = [...freshData.requirements].sort((a, b) => a.id - b.id);
-          console.log("Requirements sorted by ID in ascending order:", sortedRequirements);
+          //console.log("Requirements sorted by ID in ascending order:", sortedRequirements);
           
           // Map the requirements data
           const mappedRequirements = sortedRequirements.map((r: any) => ({
@@ -1556,7 +1556,7 @@ export default function DefinePhase() {
             id: r.id, // Store ID for consistency and sorting
           }));
           
-          console.log("Setting requirements state with fresh sorted data:", mappedRequirements);
+          //console.log("Setting requirements state with fresh sorted data:", mappedRequirements);
           // Force update the state with the fresh data
           setRequirements(mappedRequirements);
         }
@@ -1586,7 +1586,7 @@ export default function DefinePhase() {
 
   const handleSaveCharter = (data: any) => {
     try {
-      console.log("handleSaveCharter triggered with form data:", data);
+      //console.log("handleSaveCharter triggered with form data:", data);
       
       // Create a working copy of the stakeholders list
       let workingStakeholders = [...stakeholders];
@@ -1598,7 +1598,7 @@ export default function DefinePhase() {
         const functionInput = document.querySelector('.stakeholder-function-input') as HTMLInputElement;
         
         if (nameInput && (nameInput.value.trim() || (functionInput && functionInput.value.trim()))) {
-          console.log("Found pending stakeholder data:", nameInput.value, functionInput?.value);
+          //console.log("Found pending stakeholder data:", nameInput.value, functionInput?.value);
           
           // Create the new stakeholder
           const pendingStakeholder = {
@@ -1616,7 +1616,7 @@ export default function DefinePhase() {
           nameInput.value = "";
           if (functionInput) functionInput.value = "";
           
-          console.log("Updated stakeholders list:", workingStakeholders);
+          //console.log("Updated stakeholders list:", workingStakeholders);
         }
       }
       
@@ -1630,7 +1630,7 @@ export default function DefinePhase() {
         const functionInput = document.querySelector('.team-member-function-input') as HTMLInputElement;
         
         if (nameInput && (nameInput.value.trim() || (functionInput && functionInput.value.trim()))) {
-          console.log("Found pending team member data:", nameInput.value, functionInput?.value);
+          //console.log("Found pending team member data:", nameInput.value, functionInput?.value);
           
           // Create the new team member
           const pendingTeamMember = {
@@ -1648,13 +1648,13 @@ export default function DefinePhase() {
           nameInput.value = "";
           if (functionInput) functionInput.value = "";
           
-          console.log("Updated team members list:", workingTeamMembers);
+          //console.log("Updated team members list:", workingTeamMembers);
         }
       }
       
       // Make sure all calculated values are properly set before submission
       updateTotalFinancialSavings();
-      console.log("Total financial savings updated");
+      //console.log("Total financial savings updated");
       
       // Update form data with the latest calculated values
       data.totalFinancialSavings = charterForm.getValues("totalFinancialSavings");
@@ -1663,20 +1663,20 @@ export default function DefinePhase() {
       data.roi = charterForm.getValues("roi");
       data.breakeven = charterForm.getValues("breakeven");
       
-      console.log("Form data updated with calculated values:", {
+      /*console.log("Form data updated with calculated values:", {
         totalFinancialSavings: data.totalFinancialSavings,
         totalProjectCosts: data.totalProjectCosts,
         projectNetValue: data.projectNetValue,
         roi: data.roi,
         breakeven: data.breakeven
-      });
+      });*/
       
       // Add calculated FTE benefits
       if (fteParams.calculatedValue > 0) {
         const formattedValue = formatCurrency(fteParams.calculatedValue, currency);
         const fteString = `${fteParams.calculatedFte.toFixed(2)} FTE (${formattedValue})`;
         data.fteBenefits = fteString;
-        console.log("Added FTE benefits:", fteString);
+        //console.log("Added FTE benefits:", fteString);
       }
       
       // Ensure all numeric fields are properly converted to strings as required by the schema
@@ -1755,12 +1755,12 @@ export default function DefinePhase() {
       };
       
       // Debug log
-      console.log("Submitting project charter with prepared data:", preparedData);
+      //console.log("Submitting project charter with prepared data:", preparedData);
       
       // Check charter status
-      console.log("Charter status:", charter && charter.charter ? 
+      /*console.log("Charter status:", charter && charter.charter ? 
         `Existing charter with ID ${charter.charter.id}` : 
-        "No existing charter, will create new one");
+        "No existing charter, will create new one");*/
       
       // Submit the form
       saveCharterMutation.mutate(preparedData);
@@ -1775,29 +1775,29 @@ export default function DefinePhase() {
   };
 
   const handleSaveSipoc = (data: any) => {
-    console.log("handleSaveSipoc called with data:", data);
-    console.log("Process name in form submit:", data.processName);
-    console.log("Current value in form:", sipocForm.getValues("processName"));
+    //console.log("handleSaveSipoc called with data:", data);
+    //console.log("Process name in form submit:", data.processName);
+    //console.log("Current value in form:", sipocForm.getValues("processName"));
     
     // Ensure processName is included in the data
     if (data.processName === undefined || data.processName === null || data.processName === "") {
       // Try to get it directly from the form
       const processNameValue = sipocForm.getValues("processName");
-      console.log("Trying to recover processName from form:", processNameValue);
+      //console.log("Trying to recover processName from form:", processNameValue);
       
       if (processNameValue) {
         data.processName = processNameValue;
       } else {
         // As a fallback, use the default process name from the sipoc data
         const defaultName = sipoc?.sipoc?.processName || "Untitled Process";
-        console.log("Using fallback processName:", defaultName);
+        //console.log("Using fallback processName:", defaultName);
         data.processName = defaultName;
       }
     }
     
     // Final log before submission
-    console.log("Final SIPOC data being submitted:", data);
-    console.log("Final process name being submitted:", data.processName);
+    //console.log("Final SIPOC data being submitted:", data);
+    //console.log("Final process name being submitted:", data.processName);
     
     saveSipocMutation.mutate(data);
   };
@@ -1827,7 +1827,7 @@ export default function DefinePhase() {
     const projectNetValue = totalFinancialSavings - totalProjectCosts;
     
     // Debug log for net value calculation
-    console.log("Net Value Calculation:", {
+    /*console.log("Net Value Calculation:", {
       totalFinancialSavings,
       totalProjectCosts,
       projectNetValue,
@@ -1840,7 +1840,7 @@ export default function DefinePhase() {
         oneOffOtherCost,
         capexCost
       }
-    });
+    });*/
     
     // Calculate ROI (Return on Investment) as a percentage
     let roi = 0;
@@ -1866,7 +1866,7 @@ export default function DefinePhase() {
     charterForm.setValue("roi", Math.round(roi).toString());
     charterForm.setValue("breakeven", breakEvenFormatted);
     
-    console.log("Financial values updated:", {
+    /*console.log("Financial values updated:", {
       qualityCostSavings,
       financialSavings,
       fteBenefits,
@@ -1876,22 +1876,22 @@ export default function DefinePhase() {
       roi,
       breakeven,
       breakEvenFormatted
-    });
+    });*/
   };
 
   // Function to load requirements from the database
   const loadRequirementsFromDatabase = async (silent = false) => {
     try {
-      console.log("Explicitly loading requirements from database");
+      //console.log("Explicitly loading requirements from database");
       const response = await fetch(`/api/projects/${projectId}/requirements`);
       const data = await response.json();
-      console.log("Loaded requirements from database:", data);
+      //console.log("Loaded requirements from database:", data);
       
       if (data?.requirements && data.requirements.length > 0) {
         // Map the requirements data and sort by ID to maintain order
         // Sort by ID in ascending order so the first entered item appears first
         const sortedRequirements = [...data.requirements].sort((a, b) => a.id - b.id);
-        console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
+        //console.log("Requirements sorted by ID (ascending order):", sortedRequirements);
         
         const mappedRequirements = sortedRequirements.map((r: any) => ({
           requirement: r.requirement || "",
@@ -1901,7 +1901,7 @@ export default function DefinePhase() {
           id: r.id, // Store the ID to help with sorting
         }));
         
-        console.log("Setting requirements state with mapped data:", mappedRequirements);
+        //console.log("Setting requirements state with mapped data:", mappedRequirements);
         // Set the requirements state with the mapped data
         setRequirements(mappedRequirements);
         
@@ -1918,7 +1918,7 @@ export default function DefinePhase() {
         return mappedRequirements;
       } else {
         // If no requirements found in the API response, ensure we have at least one empty row
-        console.log("No requirements found in database, setting default empty row");
+        //console.log("No requirements found in database, setting default empty row");
         const defaultRow = [{ requirement: "", customerRequirement: "", importance: 3, CTS: "" }];
         setRequirements(defaultRow);
         return defaultRow;
@@ -1941,7 +1941,7 @@ export default function DefinePhase() {
   };
   
   const handleSaveRequirements = async () => {
-    console.log("handleSaveRequirements called with requirements:", requirements);
+    //console.log("handleSaveRequirements called with requirements:", requirements);
     
     try {
       // Ensure we always have at least one row (even if empty) before saving
@@ -1957,20 +1957,20 @@ export default function DefinePhase() {
       // First retrieve existing requirements to ensure proper cleanup
       const existingReqsResponse = await fetch(`/api/projects/${projectId}/requirements`);
       const existingReqsData = await existingReqsResponse.json();
-      console.log("Current requirements in database before save:", existingReqsData);
+      //console.log("Current requirements in database before save:", existingReqsData);
       
       // Now proceed with saving
-      console.log("Initiating save operation...");
+      //console.log("Initiating save operation...");
       await saveRequirementsMutation.mutateAsync(requirementsToSave);
       
       // Force refetch from database to ensure we have the latest data
-      console.log("Save complete, now reloading data directly from database");
+      //console.log("Save complete, now reloading data directly from database");
       await loadRequirementsFromDatabase(true); // silent load
       
       // Also force a refresh of the query cache
       await refetchRequirements();
       
-      console.log("Requirements save and reload operation complete");
+      //console.log("Requirements save and reload operation complete");
       
       // Store a flag in sessionStorage to remember that we have requirements
       // This helps when returning to this component after navigation
@@ -2130,7 +2130,7 @@ export default function DefinePhase() {
       
       // If we have a project image, add it in a floating container at the top right
       if (projectImage) {
-        console.log("Adding project image to PDF container");
+        //console.log("Adding project image to PDF container");
         const imageContainer = document.createElement('div');
         imageContainer.style.float = 'right';
         imageContainer.style.width = '200px';
@@ -2166,11 +2166,11 @@ export default function DefinePhase() {
       const projectTypeValue = currentProject?.projectType || "Green Belt";
       const projectCategoryValue = currentProject?.projectCategory || "Process Improvement";
       
-      console.log("PDF EXPORT INFO - Project Type and Category:", { 
+      /*console.log("PDF EXPORT INFO - Project Type and Category:", { 
         projectId, 
         projectType: projectTypeValue, 
         projectCategory: projectCategoryValue 
-      });
+      });*/
       
       // We'll directly modify the form fields inside the clone element instead of adding a new section
       
@@ -2185,7 +2185,7 @@ export default function DefinePhase() {
       const stakeholderSection = clone.querySelector('.stakeholder-section');
       const teamMemberSection = clone.querySelector('.team-member-section');
       
-      console.log("Creating direct markup for stakeholders and team members");
+      //console.log("Creating direct markup for stakeholders and team members");
       
       // Create a direct markup for stakeholders
       if (stakeholderSection && stakeholderSection instanceof HTMLElement) {
@@ -2306,7 +2306,7 @@ export default function DefinePhase() {
         // Replace the original section with our direct markup
         stakeholderSection.innerHTML = '';
         stakeholderSection.appendChild(directStakeholderList);
-        console.log("Added direct stakeholder markup");
+        //console.log("Added direct stakeholder markup");
       }
       
       // Create a direct markup for team members
@@ -2428,7 +2428,7 @@ export default function DefinePhase() {
         // Replace the original section with our direct markup
         teamMemberSection.innerHTML = '';
         teamMemberSection.appendChild(directTeamMemberList);
-        console.log("Added direct team member markup");
+        //console.log("Added direct team member markup");
       }
       
       // DIRECT APPROACH: Find the project type, category, and belt level fields
@@ -2443,12 +2443,12 @@ export default function DefinePhase() {
       const projectLeaderBeltLevel = charterForm.watch("beltLevel") || "";
       const projectCoachBeltLevel = charterForm.watch("coachBeltLevel") || "";
       
-      console.log("PDF Form Values:", {
+      /*console.log("PDF Form Values:", {
         projectType: projectTypeValue,
         projectCategory: projectCategoryValue,
         beltLevel: projectLeaderBeltLevel,
         coachBeltLevel: projectCoachBeltLevel
-      });
+      });*/
       
       // Look for the labels with relevant text
       let currentSection = "project_leader";
@@ -2474,12 +2474,12 @@ export default function DefinePhase() {
         }
       });
       
-      console.log("Found containers:", { 
+      /*console.log("Found containers:", { 
         projectTypeContainer: projectTypeContainer ? true : false, 
         projectCategoryContainer: projectCategoryContainer ? true : false,
         projectLeaderBeltContainer: projectLeaderBeltContainer ? true : false,
         coachBeltContainer: coachBeltContainer ? true : false
-      });
+      });*/
       
       // Helper function to create value div
       const createValueDiv = (value: string) => {
@@ -2521,7 +2521,7 @@ export default function DefinePhase() {
         
         // Add the value to the container
         projectLeaderBeltContainer.appendChild(createValueDiv(projectLeaderBeltLevel));
-        console.log("Setting project leader belt level value:", projectLeaderBeltLevel);
+        //console.log("Setting project leader belt level value:", projectLeaderBeltLevel);
       }
       
       // Handle coach belt level field
@@ -2532,7 +2532,7 @@ export default function DefinePhase() {
         
         // Add the value to the container
         coachBeltContainer.appendChild(createValueDiv(projectCoachBeltLevel));
-        console.log("Setting coach belt level value:", projectCoachBeltLevel);
+        //console.log("Setting coach belt level value:", projectCoachBeltLevel);
       }
       
       // Still need to handle any other html2canvas-show elements
@@ -2549,10 +2549,10 @@ export default function DefinePhase() {
             el.textContent = projectCategoryValue;
           } else if (dataField === 'beltLevel') {
             el.textContent = projectLeaderBeltLevel;
-            console.log("Setting project leader belt level value in PDF:", projectLeaderBeltLevel);
+            //console.log("Setting project leader belt level value in PDF:", projectLeaderBeltLevel);
           } else if (dataField === 'coachBeltLevel') {
             el.textContent = projectCoachBeltLevel;
-            console.log("Setting coach belt level value in PDF:", projectCoachBeltLevel);
+            //console.log("Setting coach belt level value in PDF:", projectCoachBeltLevel);
           }
         }
       });
@@ -2565,7 +2565,7 @@ export default function DefinePhase() {
         const isExpanded = originalCostsSection?.getAttribute('data-state') === 'open';
         
         if (isExpanded) {
-          console.log("Project costs section is expanded - applying special handling");
+          //console.log("Project costs section is expanded - applying special handling");
           
           // Force the content to be visible
           const content = costsSection.querySelector('[data-orientation="vertical"]');
@@ -2622,7 +2622,7 @@ export default function DefinePhase() {
       // Add the container to the document
       document.body.appendChild(pdfContainer);
       
-      console.log("PDF container prepared, rendering to canvas");
+      //console.log("PDF container prepared, rendering to canvas");
       
       // Wait a bit for all elements to render
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -2637,7 +2637,7 @@ export default function DefinePhase() {
           logging: false
         });
         
-        console.log("Canvas created, size:", canvas.width, "x", canvas.height);
+        //console.log("Canvas created, size:", canvas.width, "x", canvas.height);
         
         // Create PDF with proper dimensions
         const pdf = new jsPDF({
@@ -3494,7 +3494,7 @@ export default function DefinePhase() {
                 <CharterSoftBenefitsQuadrant 
                   benefits={softBenefits}
                   onChange={(updatedBenefits) => {
-                    console.log("Soft benefits updated:", updatedBenefits);
+                    //console.log("Soft benefits updated:", updatedBenefits);
                     // First update the state
                     setSoftBenefits(updatedBenefits);
                     
@@ -3505,7 +3505,7 @@ export default function DefinePhase() {
                       
                       // Store in localStorage for persistence between page navigations
                       localStorage.setItem(`project_${projectId}_softBenefits`, benefitsString);
-                      console.log("Soft benefits saved to localStorage:", updatedBenefits);
+                      //console.log("Soft benefits saved to localStorage:", updatedBenefits);
                     }, 0);
                   }}
                 />
@@ -3740,7 +3740,9 @@ export default function DefinePhase() {
               type="submit" 
               disabled={saveCharterMutation.isPending} 
               className="mt-6"
-              onClick={() => console.log("Save Project Charter button clicked")}
+              /*onClick={() => 
+                //console.log("Save Project Charter button clicked")
+                }*/
             >
               {saveCharterMutation.isPending ? "Saving..." : "Save Project Charter"}
             </Button>

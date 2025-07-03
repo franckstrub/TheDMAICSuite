@@ -71,23 +71,23 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
 
   // Initial data loading when component mounts or when returning to page
   useEffect(() => {
-    console.log("StakeholderAnalysisMatrix mounted - checking for saved items");
+    //console.log("StakeholderAnalysisMatrix mounted - checking for saved items");
 
     // Check if we have previously saved items in sessionStorage
     const hasItems = sessionStorage.getItem(`project_${projectId}_has_stakeholder_analysis`);
 
     if (hasItems === 'true') {
-      console.log("Stakeholder analysis flag found in sessionStorage, loading from database");
+      //console.log("Stakeholder analysis flag found in sessionStorage, loading from database");
       loadAnalysisFromDatabase(true);
     }
   }, [projectId]);
 
   // React to data changes to keep UI in sync with database
   useEffect(() => {
-    console.log("Stakeholder analysis data changed:", analysisData);
+    //console.log("Stakeholder analysis data changed:", analysisData);
     if (analysisData?.items && analysisData.items.length > 0) {
       // Use items as they come from the database without sorting
-      console.log("Using stakeholder analysis items in their original order:", analysisData.items);
+      //console.log("Using stakeholder analysis items in their original order:", analysisData.items);
 
       // Set the items state with the data
       setItems(analysisData.items);
@@ -96,7 +96,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       sessionStorage.setItem(`project_${projectId}_has_stakeholder_analysis`, 'true');
     } else if (analysisData) {
       // If we got data but no items, ensure we have at least one empty row
-      console.log("No stakeholder analysis items found, setting default empty row");
+      //console.log("No stakeholder analysis items found, setting default empty row");
       setItems([createDefaultRow(Number(projectId))]);
     }
   }, [analysisData, projectId]);
@@ -124,7 +124,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
             roleTextarea.style.height = `${Math.max(60, roleTextarea.scrollHeight + 4)}px`;
           }
         });
-        console.log("Adjusted all textarea heights after items update");
+        //console.log("Adjusted all textarea heights after items update");
       }, 100);
     }
   }, [items]);
@@ -132,13 +132,13 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
   // Function to load analysis from database
   const loadAnalysisFromDatabase = async (silent = false) => {
     try {
-      console.log("Explicitly loading stakeholder analysis from database");
+      //console.log("Explicitly loading stakeholder analysis from database");
       const response = await fetch(`/api/projects/${projectId}/stakeholder-analysis`);
 
       if (!response.ok) {
         // If 404, it means there's no analysis yet
         if (response.status === 404) {
-          console.log("No stakeholder analysis found in database yet");
+          //console.log("No stakeholder analysis found in database yet");
           const defaultRow = [createDefaultRow(Number(projectId))];
           setItems(defaultRow);
           return defaultRow;
@@ -148,11 +148,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       }
 
       const data = await response.json() as AnalysisResponse;
-      console.log("Loaded stakeholder analysis from database:", data);
+      //console.log("Loaded stakeholder analysis from database:", data);
 
       if (data?.items && data.items.length > 0) {
         // Use items as they come from the database without sorting
-        console.log("Using stakeholder analysis items in their original order:", data.items);
+        //console.log("Using stakeholder analysis items in their original order:", data.items);
 
         // Set the items state with the data
         setItems(data.items);
@@ -170,7 +170,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         return data.items;
       } else {
         // If no items found, ensure we have at least one empty row
-        console.log("No items found in database, setting default empty row");
+        //console.log("No items found in database, setting default empty row");
         const defaultRow = [createDefaultRow(Number(projectId))];
         setItems(defaultRow);
         return defaultRow;
@@ -221,11 +221,11 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       
       const response = await apiRequest("POST", "/api/generate-engagement-strategy", payload);
       const data = await response.json();
-      console.log("Parsed API response data:", data);
+      //console.log("Parsed API response data:", data);
       return data;
     },
     onSuccess: (data) => {
-      console.log("AI engagement strategy generated successfully:", data);
+      //console.log("AI engagement strategy generated successfully:", data);
     },
     onError: (error) => {
       console.error("Error generating engagement strategy:", error);
@@ -248,7 +248,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         validItems : 
         [createDefaultRow(Number(projectId))];
 
-      console.log("Saving stakeholder analysis items:", itemsToSave);
+      //console.log("Saving stakeholder analysis items:", itemsToSave);
 
       try {
         // First, get existing items to delete them
@@ -256,21 +256,21 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
 
         if (existingItemsResponse.ok) {
           const existingItemsData = await existingItemsResponse.json() as AnalysisResponse;
-          console.log("Current items in database before deletion:", existingItemsData);
+          //console.log("Current items in database before deletion:", existingItemsData);
 
           // Delete all existing items
           if (existingItemsData?.items && existingItemsData.items.length > 0) {
-            console.log(`Deleting ${existingItemsData.items.length} existing items`);
+            //console.log(`Deleting ${existingItemsData.items.length} existing items`);
             const deletePromises = existingItemsData.items.map((item) => 
               apiRequest("DELETE", `/api/stakeholder-analysis/${item.id}`, { userId, projectId })
             );
             await Promise.all(deletePromises);
-            console.log("All existing items deleted");
+            //console.log("All existing items deleted");
           }
         }
 
         // Now create new items
-        console.log(`Creating ${itemsToSave.length} new items`);
+        //console.log(`Creating ${itemsToSave.length} new items`);
         const createPromises = itemsToSave.map(item => {
           const payload = {
             projectId,
@@ -288,7 +288,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         });
 
         const results = await Promise.all(createPromises);
-        console.log("New stakeholder analysis items created:", results);
+        //console.log("New stakeholder analysis items created:", results);
         return results;
       } catch (error) {
         console.error("Error saving stakeholder analysis items:", error);
@@ -296,7 +296,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       }
     },
     onSuccess: async (data) => {
-      console.log("Stakeholder analysis saved successfully:", data);
+      //console.log("Stakeholder analysis saved successfully:", data);
       toast({
         title: "Success",
         description: "Stakeholder analysis saved successfully",
@@ -304,15 +304,15 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
 
       try {
         // Directly fetch the latest items instead of just invalidating
-        console.log("Fetching latest stakeholder analysis items after successful save");
+        //console.log("Fetching latest stakeholder analysis items after successful save");
         const response = await fetch(`/api/projects/${projectId}/stakeholder-analysis`);
         const freshData = await response.json() as AnalysisResponse;
-        console.log("Fresh stakeholder analysis data after save:", freshData);
+        //console.log("Fresh stakeholder analysis data after save:", freshData);
 
         if (freshData?.items && freshData.items.length > 0) {
           // Sort by ID
           const sortedItems = [...freshData.items].sort((a, b) => a.id - b.id);
-          console.log("Items sorted by ID in ascending order:", sortedItems);
+          //console.log("Items sorted by ID in ascending order:", sortedItems);
 
           // Update state
           setItems(sortedItems);
@@ -336,7 +336,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
 
   // Event handler for saving analysis
   const handleSaveAnalysis = async () => {
-    console.log("handleSaveAnalysis called with items:", items);
+    //console.log("handleSaveAnalysis called with items:", items);
 
     try {
       // Ensure we always have at least one row before saving
@@ -350,17 +350,17 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
       await queryClient.cancelQueries({ queryKey: [`/api/projects/${projectId}/stakeholder-analysis`] });
 
       // Now proceed with saving
-      console.log("Initiating stakeholder analysis save operation...");
+      //console.log("Initiating stakeholder analysis save operation...");
       await saveAnalysisMutation.mutateAsync(itemsToSave);
 
       // Force refetch to ensure we have the latest data
-      console.log("Save complete, now reloading data directly from database");
+      //console.log("Save complete, now reloading data directly from database");
       await loadAnalysisFromDatabase(true); // silent load
 
       // Also force a refresh of the query cache
       await refetchAnalysis();
 
-      console.log("Stakeholder analysis save and reload operation complete");
+      //console.log("Stakeholder analysis save and reload operation complete");
 
       // Store a flag in sessionStorage
       sessionStorage.setItem(`project_${projectId}_has_stakeholder_analysis`, 'true');
@@ -571,7 +571,7 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
         const newHeight = Math.max(60, textarea.scrollHeight + 4);
         textarea.style.height = `${newHeight}px`;
 
-        console.log(`Adjusted textarea height for index ${index} to ${newHeight}px`);
+        //console.log(`Adjusted textarea height for index ${index} to ${newHeight}px`);
       }
     }, 0);
   };
@@ -772,14 +772,14 @@ export default function StakeholderAnalysisMatrix({ projectId, userId }: Stakeho
                                       resistanceType: item.supportLevel === 'Resistant' ? item.resistanceType || undefined : undefined
                                     });
 
-                                    console.log("AI strategy result:", result);
-                                    console.log("Result type:", typeof result);
-                                    console.log("Result keys:", result ? Object.keys(result) : 'null');
+                                    //console.log("AI strategy result:", result);
+                                    //console.log("Result type:", typeof result);
+                                    //console.log("Result keys:", result ? Object.keys(result) : 'null');
 
                                     // Update the engagement strategy with AI-generated content
                                     const strategy = result?.engagementStrategy;
                                     if (strategy) {
-                                      console.log("Using AI-generated strategy:", strategy);
+                                      //console.log("Using AI-generated strategy:", strategy);
                                       updateItem(index, 'engagementStrategy', strategy);
 
                                       toast({

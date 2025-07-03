@@ -144,10 +144,10 @@ const RaciMatrixNew = ({
   useEffect(() => {
     if (raciMatrixData && raciMatrixData.raciMatrix) {
       try {
-        console.log("Fetched RACI matrix data:", raciMatrixData);
+        //console.log("Fetched RACI matrix data:", raciMatrixData);
         // The data structure is nested and the raciData field might be an object or string
         const raciData = raciMatrixData.raciMatrix.raciData;
-        console.log("RACI data from response:", raciData);
+        //console.log("RACI data from response:", raciData);
         
         if (raciData) {
           // Handle both string and object formats
@@ -163,7 +163,7 @@ const RaciMatrixNew = ({
             throw new Error("Unexpected raciData format");
           }
           
-          console.log("Final parsed RACI data:", parsedData);
+          //console.log("Final parsed RACI data:", parsedData);
           setRaciData(parsedData);
           raciFormInitialized.current = true;
           
@@ -181,11 +181,11 @@ const RaciMatrixNew = ({
   // Initial setup when component mounts
   useEffect(() => {
     // Always check if RACI data exists for this project when the component mounts
-    console.log("RaciMatrixNew component mounted for project:", projectId);
+    //console.log("RaciMatrixNew component mounted for project:", projectId);
     
     // Always attempt to load RACI matrix data from database on component mount
     if (!raciFormInitialized.current) {
-      console.log("RACI form not initialized yet, checking for existing RACI data");
+      //console.log("RACI form not initialized yet, checking for existing RACI data");
       loadRaciDataFromDatabase(true);
     }
   }, [projectId]);
@@ -193,12 +193,12 @@ const RaciMatrixNew = ({
   // Main loading function for RACI matrix data
   const loadRaciDataFromDatabase = async (silent = false) => {
     try {
-      console.log("Explicitly loading RACI matrix from database for project:", projectId);
+      //console.log("Explicitly loading RACI matrix from database for project:", projectId);
       const response = await fetch(`/api/projects/${projectId}/raci-matrix`);
       
       // If the response is not OK, it means there's no RACI matrix yet
       if (!response.ok) {
-        console.log("No RACI matrix found for project:", projectId);
+        //console.log("No RACI matrix found for project:", projectId);
         if (!silent) {
           toast({
             title: "No Data",
@@ -210,11 +210,11 @@ const RaciMatrixNew = ({
       }
       
       const data = await response.json();
-      console.log("Loaded RACI matrix from database:", data);
+      //console.log("Loaded RACI matrix from database:", data);
       
       // Check if we got a valid RACI matrix object
       if (!data || !data.raciMatrix) {
-        console.log("Response does not contain a valid RACI matrix");
+        //console.log("Response does not contain a valid RACI matrix");
         setRaciData(defaultRaciData);
         return defaultRaciData;
       }
@@ -225,10 +225,10 @@ const RaciMatrixNew = ({
       try {
         // Get the raciData, which could be a string or an object
         const raciData = raciMatrixObj.raciData;
-        console.log("RACI data from database:", raciData);
+        //console.log("RACI data from database:", raciData);
         
         if (!raciData) {
-          console.log("No RACI data found in the matrix object");
+          //console.log("No RACI data found in the matrix object");
           setRaciData(defaultRaciData);
           return defaultRaciData;
         }
@@ -255,12 +255,12 @@ const RaciMatrixNew = ({
         
         // Check if the roles array is empty and use default if it is
         if (parsedData.roles.length === 0) {
-          console.log("RACI data has empty roles array, using default template");
+          //console.log("RACI data has empty roles array, using default template");
           setRaciData(defaultRaciData);
           return defaultRaciData;
         }
         
-        console.log("Final parsed RACI data:", parsedData);
+        //console.log("Final parsed RACI data:", parsedData);
         setRaciData(parsedData);
         raciFormInitialized.current = true;
         
@@ -301,7 +301,7 @@ const RaciMatrixNew = ({
   // Create RACI matrix mutation
   const saveRaciMatrixMutation = useMutation({
     mutationFn: async () => {
-      console.log("Saving RACI matrix with data:", raciData);
+      //console.log("Saving RACI matrix with data:", raciData);
       
       try {
         // We'll now always use the POST endpoint and let the server determine if it's an update or create
@@ -322,7 +322,7 @@ const RaciMatrixNew = ({
         }
         
         const responseData = await response.json();
-        console.log("RACI matrix save response:", responseData);
+        //console.log("RACI matrix save response:", responseData);
         return responseData; // This now contains raciMatrix and isUpdate flag
       } catch (error) {
         console.error("RACI matrix save error:", error);
@@ -330,7 +330,7 @@ const RaciMatrixNew = ({
       }
     },
     onSuccess: async (result) => {
-      console.log("RACI matrix saved successfully", result);
+      //console.log("RACI matrix saved successfully", result);
       // Store a flag in sessionStorage to remember that we have RACI data
       sessionStorage.setItem(`project_${projectId}_has_raci_data`, 'true');
       
@@ -357,17 +357,17 @@ const RaciMatrixNew = ({
 
   // Handle saving the RACI matrix
   const handleSaveRaci = async () => {
-    console.log("handleSaveRaci called with data:", raciData);
+    //console.log("handleSaveRaci called with data:", raciData);
     
     try {
       // Disable refetching temporarily to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ['/api/projects', projectId, 'raci-matrix'] });
       
       // Now proceed with saving
-      console.log("Initiating save operation...");
+      //console.log("Initiating save operation...");
       await saveRaciMatrixMutation.mutateAsync();
       
-      console.log("RACI matrix save operation complete");
+      //console.log("RACI matrix save operation complete");
     } catch (error) {
       console.error("Error in handleSaveRaci:", error);
       toast({
