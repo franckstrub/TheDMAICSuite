@@ -3,51 +3,56 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle } from "lucide-react";
 
-interface DrawIoProcessMapProps {
+interface DrawIoFishboneProps {
   projectId: number;
+  ctqId: number;
+  ctqName: string;
   onSave?: (data: string) => void;
 }
 
-export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMapProps) {
+export default function DrawIoFishbone({ projectId, ctqId, ctqName, onSave }: DrawIoFishboneProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [diagramData, setDiagramData] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load any existing diagram data for this project
+    // Load any existing diagram data for this CTQ
     loadDiagramData();
-  }, [projectId]);
+  }, [projectId, ctqId]);
 
   const loadDiagramData = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/process-map`);
+      const response = await fetch(`/api/projects/${projectId}/fishbone-diagrams/${ctqId}`);
       if (response.ok) {
         const data = await response.json();
         setDiagramData(data.diagramData || '');
-        console.log('Loaded existing diagram data');
+        console.log('Loaded existing fishbone diagram data');
       }
     } catch (error) {
-      console.log('No existing diagram data found, starting with empty diagram');
+      console.log('No existing fishbone diagram data found, starting with empty diagram');
     }
   };
 
   const saveDiagramData = async (data: string) => {
     try {
-      console.log('Saving diagram data to server:', data.substring(0, 100) + '...');
-      const response = await fetch(`/api/projects/${projectId}/process-map`, {
+      console.log('Saving fishbone diagram data to server:', data.substring(0, 100) + '...');
+      const response = await fetch(`/api/projects/${projectId}/fishbone-diagrams/${ctqId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ diagramData: data }),
+        body: JSON.stringify({ 
+          diagramData: data,
+          ctqName: ctqName 
+        }),
       });
       
       if (response.ok) {
-        console.log('Process map saved successfully');
+        console.log('Fishbone diagram saved successfully');
         toast({
           title: "Success",
-          description: "Process map saved successfully",
+          description: `Fishbone diagram saved for ${ctqName}`,
         });
         
         if (onSave) {
@@ -57,10 +62,10 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
         throw new Error(`Server responded with ${response.status}`);
       }
     } catch (error) {
-      console.error('Error saving process map:', error);
+      console.error('Error saving fishbone diagram:', error);
       toast({
         title: "Error",
-        description: "Failed to save process map",
+        description: "Failed to save fishbone diagram",
         variant: "destructive",
       });
     }
@@ -76,11 +81,11 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
       
       switch (data.event) {
         case 'init':
-          console.log('Draw.io initialized');
+          console.log('Draw.io fishbone initialized');
           setIsLoaded(true);
           // Send existing diagram data if available
           if (diagramData && iframeRef.current) {
-            console.log('Loading existing diagram data into editor');
+            console.log('Loading existing fishbone diagram data into editor');
             iframeRef.current.contentWindow?.postMessage(
               JSON.stringify({
                 action: 'load',
@@ -101,14 +106,14 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           
         case 'export':
           // Handle export events - save the exported diagram
-          console.log('Export event received:', data);
+          console.log('Fishbone export event received:', data);
           if (data.xml || data.data) {
             const xmlData = data.xml || data.data;
-            console.log('Saving exported diagram data');
+            console.log('Saving exported fishbone diagram data');
             setDiagramData(xmlData);
             saveDiagramData(xmlData);
           } else {
-            console.log('No XML data in export event:', data);
+            console.log('No XML data in fishbone export event:', data);
           }
           break;
           
@@ -117,7 +122,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           break;
       }
     } catch (error) {
-      console.error('Error parsing message from draw.io:', error);
+      console.error('Error parsing message from draw.io fishbone:', error);
     }
   };
 
@@ -129,22 +134,22 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
   }, [diagramData]);
 
   const handleSave = () => {
-    console.log('Save button clicked, isLoaded:', isLoaded);
+    console.log('Fishbone save button clicked, isLoaded:', isLoaded);
     if (iframeRef.current) {
-      console.log('Requesting diagram export from draw.io');
+      console.log('Requesting fishbone diagram export from draw.io');
       // Request current diagram data from draw.io using the correct message format
       iframeRef.current.contentWindow?.postMessage(
         JSON.stringify({ action: 'export', format: 'xmlsvg', xml: '', embedImages: false }),
         'https://embed.diagrams.net'
       );
     } else {
-      console.log('No iframe reference available');
+      console.log('No iframe reference available for fishbone');
     }
   };
 
   const handleNew = () => {
     if (iframeRef.current) {
-      // Create new diagram
+      // Create new fishbone diagram
       iframeRef.current.contentWindow?.postMessage(
         JSON.stringify({ action: 'template' }),
         'https://embed.diagrams.net'
@@ -159,7 +164,9 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
     <div className="w-full">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-600">
-          {isLoaded ? 'Process Map Editor Ready' : 'Loading Process Map Editor...'}
+          <span className="font-medium">Fishbone Diagram for: {ctqName}</span>
+          <br />
+          {isLoaded ? 'Fishbone Editor Ready' : 'Loading Fishbone Editor...'}
         </div>
         <div className="flex space-x-2">
           <Button
@@ -176,7 +183,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
             onClick={handleSave}
             disabled={!isLoaded}
           >
-            Save Process Map
+            Save Fishbone
           </Button>
         </div>
       </div>
@@ -187,10 +194,10 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           ref={iframeRef}
           src={drawIoUrl}
           className="w-full h-[600px] my-iframe"
-          title="Process Map Editor"
+          title="Fishbone Diagram Editor"
           frameBorder="0"
           onLoad={() => {
-            console.log('Draw.io iframe loaded successfully');
+            console.log('Draw.io fishbone iframe loaded successfully');
             setIsLoaded(true);
           }}
         />
@@ -198,10 +205,10 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
       
       <div className="mt-4 text-xs text-gray-500">
         <p>
-          • Use the toolbar above to create process flows and value stream maps
-          • Your diagram will be automatically saved when you use Ctrl+S or the save button
-          • This editor supports standard process mapping symbols and value stream mapping notation
-          • You may use several pages to map your process. Just click on "+" to add a page to your diagram
+          • Analyze root causes by adding potential causes to each category branch
+          • Major categories: Man, Machine, Method, Material, Measurement, Environment
+          • Your fishbone diagram will be automatically saved when you use Ctrl+S or the save button
+          • Use the "New Diagram" button to start with a fresh fishbone diagram structure
         </p>
       </div>
     </div>
