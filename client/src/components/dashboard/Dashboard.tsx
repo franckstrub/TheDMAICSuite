@@ -423,7 +423,7 @@ export default function Dashboard() {
     const qualityCostSavings = projects.reduce((sum, project) => {
       const qcs = project.benefits?.qualityCostSavings;
       const qcsValue = parseNumericValue(qcs, 0);
-      console.log(`Project ${project.id} quality cost savings:`, qcs, "parsed as:", qcsValue);
+      //console.log(`Project ${project.id} quality cost savings:`, qcs, "parsed as:", qcsValue);
       return sum + qcsValue;
     }, 0);
     
@@ -432,7 +432,7 @@ export default function Dashboard() {
       // Use parseNumericValue for consistent handling
       const wcg = project.benefits?.workingCapitalGains;
       const wcgValue = parseNumericValue(wcg, 0);
-      console.log(`Project ${project.id} workingCapitalGains:`, wcg, "parsed as:", wcgValue);
+      //console.log(`Project ${project.id} workingCapitalGains:`, wcg, "parsed as:", wcgValue);
       return sum + wcgValue;
     }, 0);
     
@@ -446,8 +446,8 @@ export default function Dashboard() {
       const wcg = project.benefits?.workingCapitalGains;
       const wcgValue = parseNumericValue(wcg, 0);
       
-      console.log(`Project ${project.id} wacc:`, waccRaw, "parsed as:", wacc);
-      console.log(`Financial savings for project ${project.id}:`, wcgValue * wacc);
+      //console.log(`Project ${project.id} wacc:`, waccRaw, "parsed as:", wacc);
+      //console.log(`Financial savings for project ${project.id}:`, wcgValue * wacc);
       
       return sum + wcgValue * wacc;
     }, 0);
@@ -457,7 +457,7 @@ export default function Dashboard() {
       // Use parseNumericValue for consistent handling
       const fteb = project.benefits?.fteBenefits;
       const ftebValue = parseNumericValue(fteb, 0);
-      console.log(`Project ${project.id} fteBenefits:`, fteb, "parsed as:", ftebValue);
+      //console.log(`Project ${project.id} fteBenefits:`, fteb, "parsed as:", ftebValue);
       return sum + ftebValue;
     }, 0);
     
@@ -480,7 +480,7 @@ export default function Dashboard() {
         fteFinancialBenefit = fteBenefits * avgFTECost;
       }
       
-      console.log(`Project ${project.id} FTE financial benefit:`, fteFinancialBenefit);
+      //console.log(`Project ${project.id} FTE financial benefit:`, fteFinancialBenefit);
       return sum + fteFinancialBenefit;
     }, 0);
     
@@ -490,7 +490,7 @@ export default function Dashboard() {
       // Use parseNumericValue for consistent handling of all numeric fields
       const opc = project.costs?.oneOffPeopleCost;
       const opcValue = parseNumericValue(opc, 0);
-      console.log(`Project ${project.id} one-off people cost:`, opc, "parsed as:", opcValue);
+      //console.log(`Project ${project.id} one-off people cost:`, opc, "parsed as:", opcValue);
       return sum + opcValue;
     }, 0);
     
@@ -499,7 +499,7 @@ export default function Dashboard() {
       // Use parseNumericValue for consistent handling
       const otc = project.costs?.oneOffTechnologyCost;
       const otcValue = parseNumericValue(otc, 0);
-      console.log(`Project ${project.id} one-off technology cost:`, otc, "parsed as:", otcValue);
+      //console.log(`Project ${project.id} one-off technology cost:`, otc, "parsed as:", otcValue);
       return sum + otcValue;
     }, 0);
     
@@ -508,7 +508,7 @@ export default function Dashboard() {
       // Use parseNumericValue for consistent handling
       const ooc = project.costs?.oneOffOtherCost;
       const oocValue = parseNumericValue(ooc, 0);
-      console.log(`Project ${project.id} one-off other cost:`, ooc, "parsed as:", oocValue);
+      //console.log(`Project ${project.id} one-off other cost:`, ooc, "parsed as:", oocValue);
       return sum + oocValue;
     }, 0);
     
@@ -520,7 +520,7 @@ export default function Dashboard() {
       // Use parseNumericValue for consistent handling
       const cc = project.costs?.capexCost;
       const ccValue = parseNumericValue(cc, 0);
-      console.log(`Project ${project.id} capex cost:`, cc, "parsed as:", ccValue);
+      //console.log(`Project ${project.id} capex cost:`, cc, "parsed as:", ccValue);
       return sum + ccValue;
     }, 0);
     
@@ -600,10 +600,10 @@ export default function Dashboard() {
     // Get the relevant projects based on current filters
     let relevantProjects = projects?.projects || [];
     
-    console.log("Extracting soft benefits from projects:", relevantProjects);
+    //console.log("Extracting soft benefits from projects:", relevantProjects);
     
     if (!relevantProjects || relevantProjects.length === 0) {
-      console.log("No relevant projects found for soft benefits");
+      //console.log("No relevant projects found for soft benefits");
       return [];
     }
     
@@ -622,7 +622,7 @@ export default function Dashboard() {
       const projectId = project.id;
       const projectTitle = project.title || `Project ${projectId}`;
       
-      console.log(`Project ${projectId} (${projectTitle}) has softBenefits:`, project.softBenefits);
+      //console.log(`Project ${projectId} (${projectTitle}) has softBenefits:`, project.softBenefits);
       
       // We'll use all soft benefits from the project data now, no need for hard-coded benefits
       
@@ -630,7 +630,7 @@ export default function Dashboard() {
       if (project.softBenefits && Array.isArray(project.softBenefits)) {
         // Use the actual softBenefits from the project data
         project.softBenefits.forEach((benefit, index) => {
-          console.log(`Processing benefit ${index}:`, benefit);
+          //console.log(`Processing benefit ${index}:`, benefit);
           if (benefit.text && benefit.category) {
             // Use all benefits from project data
             benefits.push({
@@ -646,7 +646,7 @@ export default function Dashboard() {
         // Try to parse the string as JSON
         try {
           const parsedBenefits = JSON.parse(project.softBenefits);
-          console.log("Parsed softBenefits from string:", parsedBenefits);
+          //console.log("Parsed softBenefits from string:", parsedBenefits);
           
           if (Array.isArray(parsedBenefits)) {
             parsedBenefits.forEach((benefit, index) => {
@@ -666,18 +666,18 @@ export default function Dashboard() {
           console.error("Error parsing softBenefits string:", e);
         }
       } else {
-        console.log(`Project ${projectId} has no valid softBenefits array or string`);
+        //console.log(`Project ${projectId} has no valid softBenefits array or string`);
       }
       
       // Return only actual benefits
-      console.log(`Generated ${benefits.length} benefits for project ${projectId}`);
+      //console.log(`Generated ${benefits.length} benefits for project ${projectId}`);
       return benefits;
     };
     
     // Generate all benefits for all relevant projects
     const allBenefits = relevantProjects.flatMap(generateBenefitsForProject);
     
-    console.log("Total soft benefits extracted:", allBenefits.length);
+    //console.log("Total soft benefits extracted:", allBenefits.length);
     return allBenefits;
   };
   
@@ -712,7 +712,7 @@ export default function Dashboard() {
     // Map through all projects and ensure they have the necessary data structure
     const enhancedProjects = allProjects.projects.map(project => {
       // Debug log the project cost data that's coming in
-      console.log(`Project ${project.id} original costs data:`, project.costs);
+      //console.log(`Project ${project.id} original costs data:`, project.costs);
       
       // Create phase data if missing
       const phases = project.phases || {
@@ -746,7 +746,7 @@ export default function Dashboard() {
       if (typeof project.softBenefits === 'string') {
         try {
           softBenefits = JSON.parse(project.softBenefits);
-          console.log("Parsed softBenefits from string:", softBenefits);
+          //console.log("Parsed softBenefits from string:", softBenefits);
         } catch (e) {
           console.error("Error parsing softBenefits string:", e);
           softBenefits = [];
@@ -831,7 +831,7 @@ export default function Dashboard() {
   
   // Generate financial waterfall data for chart with fallback to empty data
   const financialWaterfallData = useMemo(() => {
-    console.log("Filtered projects:", filteredProjectsArray);
+    //console.log("Filtered projects:", filteredProjectsArray);
     
     // Use the calculateMetric function to get values (will return 0 for implemented filter with no projects)
     const qualityCostSavings = calculateMetric(filteredProjectsArray, 'qualityCostSavings');
@@ -850,16 +850,16 @@ export default function Dashboard() {
     // Calculate net value
     const netValue = qualityCostSavings + financialSavings + fteBenefits - totalCosts;
     
-    console.log("Values calculated:", {
-      qualityCostSavings,
-      financialSavings,
-      fteBenefits,
-      totalCosts,
-      netValue
-    });
+    //console.log("Values calculated:", {
+    //  qualityCostSavings,
+    //  financialSavings,
+    //  fteBenefits,
+    //  totalCosts,
+    //  netValue
+    //});
 
     // Always use actual project data for visualizations, even if values are zero
-    console.log("Using actual project financial data for visualization");
+    //console.log("Using actual project financial data for visualization");
     
     // Create an array of waterfall data with 5 entries for the standard bar chart
     const result = [
@@ -895,7 +895,7 @@ export default function Dashboard() {
       }
     ];
     
-    console.log("Waterfall data:", result);
+    //console.log("Waterfall data:", result);
     return result;
   }, [filteredProjectsArray]);
 

@@ -39,6 +39,14 @@ import {
   Tooltip, 
   Legend 
 } from "recharts";
+import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ControlGateReviewValidation from '@/components/dmaic/ControlGateReviewValidation';
+
+interface CtqWithType {
+  ctq: string;
+  ctqType: "Attribute" | "Continuous";
+}
 
 export default function ControlPhase() {
   const { user, currentProject } = useAppContext();
@@ -772,6 +780,7 @@ export default function ControlPhase() {
           </div>
         </CardContent>
       </Card>
+      <ControlGateReviewValidation projectId={projectId} />
     </div>
   );
 }

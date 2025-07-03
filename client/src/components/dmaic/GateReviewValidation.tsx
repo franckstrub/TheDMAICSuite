@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from '@/lib/queryClient';
-import { CheckCircle, XCircle, Clock, Plus, Trash2, Paperclip, File, Download } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Plus, Trash2, Paperclip, File, Download, ClipboardList, Edit } from 'lucide-react';
 import { Project, DeliverableRequirementType, deliverableRequirementTypes } from '@shared/schema';
 
 // Types for our validators and deliverables
@@ -817,8 +817,11 @@ export default function GateReviewValidation() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl flex items-center justify-between">
-            <span>Gate Review and Validation</span>
-            <Badge className={`px-3 py-1 ${
+              <div className="flex items-center gap-2">
+                <ClipboardList className="h-5 w-5" />
+                <span>Gate Review and Validation</span>
+              </div>
+              <Badge className={`px-3 py-1 ${
               overallStatus === "Approved" 
                 ? "bg-green-100 text-green-800" 
                 : overallStatus === "Rejected"
@@ -1035,7 +1038,8 @@ export default function GateReviewValidation() {
             </div>
             {/* Validators Section */}
             <div>
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex gap-2 items-center mb-3">
+                <Edit className="h-5 w-5" />                
                 <h3 className="text-lg font-medium">Approvers</h3>
               </div>
 

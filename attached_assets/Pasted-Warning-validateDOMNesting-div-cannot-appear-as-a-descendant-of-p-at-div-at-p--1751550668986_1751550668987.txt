@@ -1,0 +1,32 @@
+Warning: validateDOMNesting(...): <div> cannot appear as a descendant of <p>.
+    at div
+    at p
+    at div
+    at div
+    at div
+    at _c9 (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at GanttChart (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/dmaic/GanttChart.tsx:69:38)
+    at div
+    at _c9 (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at DefinePhase (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/dmaic/DefinePhase.tsx:61:40)
+    at div
+    at DmaicTools (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/dmaic/DmaicTools.tsx:54:7)
+    at div
+    at main
+    at div
+    at div
+    at MainLayout (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/components/layout/MainLayout.tsx:24:38)
+    at HomePage (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/pages/HomePage.tsx?t=1751550172710:32:42)
+    at Route (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=76cb4439:323:16)
+    at Switch (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=76cb4439:379:17)
+    at Router (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/App.tsx?t=1751550172710&v=7M3_Nvzm5wSWf2KTzVGd_:39:32)
+    at Provider (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=76cb4439:38:15)
+    at TooltipProvider (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=76cb4439:64:5)
+    at QueryClientProvider (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=76cb4439:2805:3)
+    at App (https://1a32d3f4-c693-4ef5-b5d4-f598f2773314-00-tvc1kqs42onx.spock.replit.dev/src/App.tsx?t=1751550172710&v=7M3_Nvzm5wSWf2KTzVGd_:153:27)

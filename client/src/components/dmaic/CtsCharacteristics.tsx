@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
+import { Table2 } from "lucide-react";
+  import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -320,7 +321,9 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
   return (
     <Card>
       <CardHeader>
-        <CardTitle>CTS Characteristics</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Table2 className="h-5 w-5" />
+          CTS Characteristics</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
