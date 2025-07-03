@@ -28,7 +28,7 @@ const CharterSoftBenefitsQuadrant: React.FC<CharterSoftBenefitsQuadrantProps> = 
   useEffect(() => {
     // Only process if we have real benefits data from props
     if (benefits && Array.isArray(benefits) && benefits.length > 0) {
-      console.log("Benefits data received:", benefits);
+      //console.log("Benefits data received:", benefits);
       
       // Create a map of the current benefits by category
       const newBenefitsMap = {...benefitsMap};

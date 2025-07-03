@@ -142,7 +142,7 @@ export default function RiskAssessmentNew() {
     if (!projectId) return;
     
     try {
-      console.log("Fetching risk data for project:", projectId);
+      //console.log("Fetching risk data for project:", projectId);
       setIsLoading(true);
       
       // Adjust all textareas to default height initially
@@ -158,13 +158,13 @@ export default function RiskAssessmentNew() {
       }
       
       const data = await response.json();
-      console.log("Raw risk data from API:", data);
+      //console.log("Raw risk data from API:", data);
       
       // Handle case where risk data is in data.risk (standard API response)
       const riskItem = data.risk;
       
       if (riskItem) {
-        console.log("Risk data successfully loaded from database:", riskItem);
+        //console.log("Risk data successfully loaded from database:", riskItem);
         setRiskData(riskItem);
         
         // Determine how many rows to show based on which rows have meaningful content
@@ -191,7 +191,7 @@ export default function RiskAssessmentNew() {
           );
           
           if (hasContent) {
-            console.log(`Row ${i} has content in database`);
+            //console.log(`Row ${i} has content in database`);
             rowsWithContent.push(i);
           }
         }
@@ -199,11 +199,11 @@ export default function RiskAssessmentNew() {
         // If no rows have content, show just one empty row
         if (rowsWithContent.length === 0) {
           rowCount = 1;
-          console.log(`No rows with content, showing 1 empty row`);
+          //console.log(`No rows with content, showing 1 empty row`);
         } else {
           // Show EXACTLY what's in the database - no extra empty row
           rowCount = Math.min(6, Math.max(...rowsWithContent));
-          console.log(`Found ${rowsWithContent.length} rows with content, highest is row ${rowCount}, showing exactly the rows with content`);
+          //console.log(`Found ${rowsWithContent.length} rows with content, highest is row ${rowCount}, showing exactly the rows with content`);
         }
         
         // Don't log highestRowWithContent when it's not set (when using server's rowsWithContent)
@@ -237,16 +237,16 @@ export default function RiskAssessmentNew() {
             riskItem[`riskOwner${suffix}`] = '';
             
             if (i <= rowCount) {
-              console.log(`Row ${i} is empty but will be shown (within visible row count)`);
+              //console.log(`Row ${i} is empty but will be shown (within visible row count)`);
             } else {
-              console.log(`Row ${i} is empty and above row count - will be hidden`);
+              //console.log(`Row ${i} is empty and above row count - will be hidden`);
             }
           } else {
-            console.log(`Row ${i} has content and will be shown`);
+            //console.log(`Row ${i} has content and will be shown`);
           }
         }
         
-        console.log(`Setting visible rows to: ${rowCount} based on data content`);
+        //console.log(`Setting visible rows to: ${rowCount} based on data content`);
         setVisibleRiskRows(rowCount);
         
         // Store flag in sessionStorage
@@ -266,7 +266,7 @@ export default function RiskAssessmentNew() {
           });
         }
       } else {
-        console.log("No existing risk data found, using defaults");
+        //console.log("No existing risk data found, using defaults");
         // If no data found, use default empty state
         setRiskData(createDefaultRiskItem(Number(projectId)));
         setVisibleRiskRows(1);
@@ -354,7 +354,7 @@ export default function RiskAssessmentNew() {
           });
         }
         
-        console.log(`Restored scroll position to ${scrollPosition}px after saving`);
+        //console.log(`Restored scroll position to ${scrollPosition}px after saving`);
       }, 50);
       
     } catch (error) {
@@ -378,7 +378,7 @@ export default function RiskAssessmentNew() {
       
       const method = dataToSave.id ? 'PUT' : 'POST';
       
-      console.log(`Saving risk data via ${method} to ${url}`);
+      //console.log(`Saving risk data via ${method} to ${url}`);
       
       // ENHANCED SANITIZATION: Make a clean copy and ensure all fields 
       // beyond visible rows are explicitly set to empty/default values
@@ -415,14 +415,14 @@ export default function RiskAssessmentNew() {
       }
       
       // LOG what we're actually sending to the server
-      console.log("Final payload being saved:", {
-        method,
-        url,
-        visibleRows: visibleRiskRows,
-        hasRow2: !!payload.riskName2?.trim().length,
-        hasRow3: !!payload.riskName3?.trim().length,
-        hasRow4: !!payload.riskName4?.trim().length
-      });
+      //console.log("Final payload being saved:", {
+      //method,
+      //  url,
+      //  visibleRows: visibleRiskRows,
+      //  hasRow2: !!payload.riskName2?.trim().length,
+      //  hasRow3: !!payload.riskName3?.trim().length,
+      //  hasRow4: !!payload.riskName4?.trim().length
+     // });
       
       const response = await fetch(url, {
         method,
@@ -468,7 +468,7 @@ export default function RiskAssessmentNew() {
   
   // Add a new risk row
   const addRiskRow = () => {
-    console.log('Adding new risk row');
+    //console.log('Adding new risk row');
     
     // Allow adding rows without any limit
     setVisibleRiskRows(prev => prev + 1);
@@ -481,7 +481,7 @@ export default function RiskAssessmentNew() {
       return;
     }
     
-    console.log(`Deleting row ${rowIndex}`);
+    //console.log(`Deleting row ${rowIndex}`);
     
     try {
       // Clone the current risk data
@@ -490,7 +490,7 @@ export default function RiskAssessmentNew() {
       // Directly clear only the row being deleted - don't shift anything
       const suffix = rowIndex === 1 ? '' : rowIndex.toString();
       
-      console.log(`Directly clearing only row ${rowIndex} without shifting data`);
+      //console.log(`Directly clearing only row ${rowIndex} without shifting data`);
       
       // Clear only the specific row being deleted
       updatedRiskData[`riskName${suffix}` as keyof RiskItem] = '';
@@ -501,7 +501,7 @@ export default function RiskAssessmentNew() {
       updatedRiskData[`riskOwner${suffix}` as keyof RiskItem] = '';
       
       // Log the data we're about to save
-      console.log("Updated risk data after deletion (about to save):", updatedRiskData);
+      //console.log("Updated risk data after deletion (about to save):", updatedRiskData);
       
       // Update UI immediately
       setRiskData(updatedRiskData);
@@ -688,7 +688,7 @@ export default function RiskAssessmentNew() {
     textarea.style.transition = isAiGenerated ? 'height 0.5s ease-in-out' : 'none';
     textarea.style.height = `${newHeight}px`;
     
-    console.log(`Adjusted textarea height for ${fieldName} to ${newHeight}px`);
+    //console.log(`Adjusted textarea height for ${fieldName} to ${newHeight}px`);
   };
   
   // Handle manual input to textareas
@@ -703,7 +703,7 @@ export default function RiskAssessmentNew() {
   
   // Initial data load on component mount
   useEffect(() => {
-    console.log("RiskAssessment component mounted - always try loading from database first");
+    //console.log("RiskAssessment component mounted - always try loading from database first");
     
     // Always attempt to load from the database first, regardless of sessionStorage state
     loadRiskData(false);
@@ -712,7 +712,7 @@ export default function RiskAssessmentNew() {
   // After data changes, adjust textarea heights
   useEffect(() => {
     // After items update
-    console.log("Adjusted all textarea heights after items update");
+    //console.log("Adjusted all textarea heights after items update");
     for (const key in textareaRefs.current) {
       adjustTextareaHeight(key);
     }

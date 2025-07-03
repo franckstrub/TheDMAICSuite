@@ -173,16 +173,16 @@ export default function Projects() {
   // Mutation for updating a project's status
   const updateProjectStatusMutation = useMutation({
     mutationFn: async (data: { projectId: number; status: string }) => {
-      console.log("Sending API request to update project status:", data);
+      //console.log("Sending API request to update project status:", data);
       const response = await apiRequest("PUT", `/api/projects/${data.projectId}`, { 
         status: data.status,
         lastUpdated: new Date().toISOString()
       });
-      console.log("API response for status update:", response);
+      //console.log("API response for status update:", response);
       return response;
     },
     onSuccess: (data) => {
-      console.log("Status update successful:", data);
+      //console.log("Status update successful:", data);
       toast({
         title: "Success",
         description: "Project status updated successfully",
@@ -262,7 +262,7 @@ export default function Projects() {
     if (!projects) return [];
     
     // Log projects data to inspect
-    console.log("All projects:", projects);
+    //console.log("All projects:", projects);
     
     return projects.filter(project => {
       // Filter by status
@@ -321,7 +321,7 @@ export default function Projects() {
   ];
 
   // Logs for debugging
-  console.log("Raw API response for projects:", projectsData);
+  //console.log("Raw API response for projects:", projectsData);
   
   // Use API data - NEVER use sample data for this feature
   // Sort projects by ID to maintain a stable order regardless of status changes
@@ -644,7 +644,7 @@ export default function Projects() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  console.log("Reactivating project:", project.id, project.title);
+                                  //console.log("Reactivating project:", project.id, project.title);
                                   updateProjectStatusMutation.mutate({
                                     projectId: project.id,
                                     status: 'active'
@@ -660,7 +660,7 @@ export default function Projects() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  console.log("Putting project on hold:", project.id, project.title);
+                                  //console.log("Putting project on hold:", project.id, project.title);
                                   updateProjectStatusMutation.mutate({
                                     projectId: project.id,
                                     status: 'On Hold'
@@ -677,7 +677,7 @@ export default function Projects() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (confirm("Are you sure you want to abandon this project?")) {
-                                    console.log("Abandoning project:", project.id, project.title);
+                                    //console.log("Abandoning project:", project.id, project.title);
                                     updateProjectStatusMutation.mutate({
                                       projectId: project.id,
                                       status: 'abandoned'
@@ -694,7 +694,7 @@ export default function Projects() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  console.log("Marking project as completed:", project.id, project.title);
+                                  //console.log("Marking project as completed:", project.id, project.title);
                                   updateProjectStatusMutation.mutate({
                                     projectId: project.id,
                                     status: 'completed'

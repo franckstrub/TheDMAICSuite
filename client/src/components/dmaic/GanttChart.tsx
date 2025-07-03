@@ -139,7 +139,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
         
         if (project.ganttViewMode && ['weeks', 'months', 'years'].includes(project.ganttViewMode)) {
           savedMode = project.ganttViewMode;
-          console.log('1st useEFFECT Loaded saved Gantt view mode from Project:', savedMode);
+          //console.log('1st useEFFECT Loaded saved Gantt view mode from Project:', savedMode);
           // Set the timeline view with project.ganttViewMode from database
           setTimelineView(savedMode);
         }
@@ -153,7 +153,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       }
     }
 
-    console.log('1st useEffect timelineView =', timelineView);
+    //console.log('1st useEffect timelineView =', timelineView);
 
   }, [projectData, projectId]);
 
@@ -308,12 +308,12 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        console.log(`2nd useEffect Fetching tasks for project ${projectId}...`);
-        console.log('2nd useEffect timelineView =', timelineView);
+        //console.log(`2nd useEffect Fetching tasks for project ${projectId}...`);
+        //console.log('2nd useEffect timelineView =', timelineView);
         const response = await fetch(`/api/projects/${projectId}/gantt-tasks`);
         if (response.ok) {
           const data = await response.json();
-          console.log(`Received ${data.tasks?.length || 0} tasks:`, data.tasks);
+          //console.log(`Received ${data.tasks?.length || 0} tasks:`, data.tasks);
           setTasks(data.tasks || []);
         } else {
           console.error(`Failed to fetch tasks: ${response.status}`);
@@ -344,7 +344,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
 
   // Update date range based on project dates
   useEffect(() => {
-    console.log('in 3rd useffect Project start date:', projectStartDate);
+    //console.log('in 3rd useffect Project start date:', projectStartDate);
     if (projectStartDate && projectEndDate) {
       setDateRange({
         start: parseISO(projectStartDate),
@@ -382,7 +382,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           if (response.ok) {
             const data = await response.json();
             setTasks(data.tasks || []);
-            console.log("Tasks reloaded:", data.tasks);
+            //console.log("Tasks reloaded:", data.tasks);
           } else {
             console.error("Failed to reload tasks:", response.status);
           }
@@ -392,7 +392,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       };
 
       fetchTasks();
-      console.log("in 3rd useEffect after fetchtasks:");
+      //console.log("in 3rd useEffect after fetchtasks:");
 
       // Also invalidate the query cache for future requests
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gantt-tasks`] });
@@ -447,7 +447,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           if (response.ok) {
             const data = await response.json();
             setTasks(data.tasks || []);
-            console.log("Tasks reloaded after WBS generation:", data.tasks);
+            //console.log("Tasks reloaded after WBS generation:", data.tasks);
           } else {
             console.error("Failed to reload tasks after WBS generation:", response.status);
           }
@@ -493,7 +493,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
           if (response.ok) {
             const data = await response.json();
             setTasks(data.tasks || []);
-            console.log("Tasks reloaded after delete:", data.tasks);
+            //console.log("Tasks reloaded after delete:", data.tasks);
           } else {
             console.error("Failed to reload tasks after delete:", response.status);
           }
@@ -561,7 +561,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
       sequence: sequence,
     };
 
-    console.log("Submitting task with calculated sequence:", taskToSave);
+    //console.log("Submitting task with calculated sequence:", taskToSave);
     saveTaskMutation.mutate(taskToSave);
   };
 
@@ -782,7 +782,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
     }
     
     // Logging for debugging
-    console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, View: ${timelineView}, Left Position: ${leftPosPercentage}%, Width: ${widthPercentage}%`);
+    //console.log(`Task: ${task.name}, Dates: ${task.startDate} to ${task.endDate}, View: ${timelineView}, Left Position: ${leftPosPercentage}%, Width: ${widthPercentage}%`);
     
     return {
       left: `${leftPosPercentage}%`,
@@ -1754,7 +1754,7 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                 <p className="mt-1 text-sm text-blue-700">
                 You can <strong>drag any task within the Gantt tasks list.</strong> Use the dragging icon{' '}
                 <GripVertical size={14} className="inline text-gray-400" /> within the Gantt area.
-                <div>Added tasks will be put at the bottom of the Gantt by default.</div>
+                Added tasks will be put at the bottom of the Gantt by default
                 </p>
               </div>
             </div>
