@@ -25,6 +25,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import MilestoneTimeline from "./MilestoneTimeline";
 import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AnalyzeGateReviewValidation from '@/components/dmaic/AnalyzeGateReviewValidation';
 
 interface CtqWithType {
   ctq: string;
@@ -151,27 +152,6 @@ export default function AnalyzePhase() {
   // Get project type from project data
   const projectType = (projectData as any)?.project?.projectType;
   const isSimplifiedView = projectType === "Yellow Belt" || projectType === "White Belt";
-  // Load last active tab and statistics state from localStorage on component mount
-    // Load last active tab and statistics state from localStorage on component mount
-  //useEffect(() => {
-  //  const savedTab = localStorage.getItem(`analyze-active-tab-${projectId}`);
-  //  if (savedTab) {
-  //    setActiveTab(savedTab);
-  //  }
-
-    // Load saved statistics calculation state
-    
-    // Load saved attribute statistics show/hide state
-
-    // Load saved continuous statistics show/hide state 
-
-    // Load saved attribute analysis type choices
-
-    // Load saved continuous analysis type choices
-
-    // Load saved MSA show/hide state for White Belt and Yellow Belt projects
-    
-  //}, [projectId]);
 
   const [activeTab, setActiveTab] = useState<string>("");
   
@@ -230,10 +210,10 @@ export default function AnalyzePhase() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            Cause & Effect Analysis (one per CTQ)
+            Cause & Effect Analysis
           </CardTitle>
           <p className="text-sm text-gray-600 mt-2">
-            One Root Cause Analysis per CTQ defined in CTS Characteristics table
+            One Cause & Effect Analysis per CTQ defined in MEASURE, in CTS Characteristics table
           </p>          
         </CardHeader>
         <CardContent>
@@ -256,6 +236,16 @@ export default function AnalyzePhase() {
                   >
                     <span className="font-medium truncate min-w-[150px]">{ctqItem.ctq}</span>
                     <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
+                    {/* MSA (Measurement System Analysis) - One tab per CTQ */}
+                    {/*
+                    <MsaAnalysis projectId={projectId} />
+                    */}
+                    
+                    {/* Process Capability - One tab per CTQ */}
+                    {/*
+                    <ProcessCapability projectId={projectId} />
+                    */}
+                                             
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -501,6 +491,8 @@ export default function AnalyzePhase() {
           </div>
         </CardContent>
       </Card>
+      
+      <AnalyzeGateReviewValidation projectId={projectId} />
     </div>
   );
 }

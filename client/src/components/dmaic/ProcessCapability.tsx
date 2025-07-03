@@ -1388,7 +1388,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+            <BarChart3 className="h-5 w-5" />
             Process Capability
           </CardTitle>
         </CardHeader>
@@ -1405,7 +1405,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+            <BarChart3 className="h-5 w-5" />
             Process Capability
           </CardTitle>
         </CardHeader>
@@ -1427,7 +1427,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+            <BarChart3 className="h-5 w-5" />
             Process Capability
           </CardTitle>
         </CardHeader>
@@ -1444,7 +1444,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+          <BarChart3 className="h-5 w-5" />
           Process Capability
         </CardTitle>
         <p className="text-sm text-gray-600 mt-2">
@@ -2405,7 +2405,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                             <Card className="bg-green-50 border-green-200 min-h-full p-1">
                               <CardHeader className="pb-3">
                                 <CardTitle className="text-green-800 text-lg flex items-center gap-2">
-                                  <TrendingUp className="h-5 w-5" />
+                                  <Calculator className="h-5 w-5" />
                                   Rolled Throughput Yield (RTY)
                                 </CardTitle>
                               </CardHeader>

@@ -84,35 +84,35 @@ interface Deliverable {
 }
 
 // Function to get default deliverables based on project type
-const getDefaultmeasureDeliverables = (projectType?: string): Omit<Deliverable, "id" | "projectId">[] => {
+const getDefaultanalyzeDeliverables = (projectType?: string): Omit<Deliverable, "id" | "projectId">[] => {
   // Base deliverables that apply to all project types
-  // Default deliverables for the measure phase
+  // Default deliverables for the analyze phase
  const baseDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
   {
-    phase: "measure",
-    name: "Process Map",
-    description: "Comprehensive process map or Value Stream Map",
+    phase: "analyze",
+    name: "Cause & Effect Analysis",
+    description: "Cause & Effect Analysis. with a fishbone, 6 M's & 5 Why",
     isRequired: "Required",
     isCompleted: false
   },
   {
-    phase: "measure",
-    name: "CTS Characteristics",
-    description: "CTS specifications (CTQs, CTBs, CTC, CTD)",
+    phase: "analyze",
+    name: "Root Causes prioritization",
+    description: "Root Causes prioritization completed with a tool",
     isRequired: "Required",
     isCompleted: false
   },
   {
-    phase: "measure",
-    name: "Data Collection Plan",
-    description: "Data Collection Plan for CTS",
+    phase: "analyze",
+    name: "Critical Root Causes",
+    description: "Critical Root Causes identified",
     isRequired: "Required",
     isCompleted: false
   },
   {
-    phase: "measure",
+    phase: "analyze",
     name: "Gate Review",
-    description: "Gate review meeting to proceed to Analyze phase",
+    description: "Gate review meeting to proceed to Improve phase",
     isRequired: "Required",
     isCompleted: false
   }
@@ -122,16 +122,9 @@ const getDefaultmeasureDeliverables = (projectType?: string): Omit<Deliverable, 
   if (projectType === "Green Belt" || projectType === "Black Belt") {
     const greenBeltDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
         {
-          phase: "measure",
-          name: "MSA",
-          description: "Measurement System Analysis of each CTQ",
-          isRequired: "Required",
-          isCompleted: false
-        },
-        {
-          phase: "measure",
-          name: "Process Capability",
-          description: "Process Capability of each CTQ",
+          phase: "analyze",
+          name: "Critical root causes are proven",
+          description: "Each critical root cause is proven with a statistical study",
           isRequired: "Required",
           isCompleted: false
         },
@@ -150,8 +143,8 @@ const getDefaultmeasureDeliverables = (projectType?: string): Omit<Deliverable, 
   return baseDeliverables;
 };
 
-// Function to get default validators for measure phase based on charter data
-const getDefaultMeasureValidators = (charter?: Charter): Omit<Validator, 'id' | 'projectId'>[] => {
+// Function to get default validators for analyze phase based on charter data
+const getDefaultAnalyzeValidators = (charter?: Charter): Omit<Validator, 'id' | 'projectId'>[] => {
   const defaultValidators: Omit<Validator, 'id' | 'projectId'>[] = [];
   
   if (!charter) {
@@ -161,7 +154,7 @@ const getDefaultMeasureValidators = (charter?: Charter): Omit<Validator, 'id' | 
   // Only create validators for fields that actually have data
   if (charter.sponsor) {
     defaultValidators.push({
-      phase: "measure",
+      phase: "analyze",
       validatorName: charter.sponsor,
       validatorRole: "Sponsor",
       status: "Pending",
@@ -172,7 +165,7 @@ const getDefaultMeasureValidators = (charter?: Charter): Omit<Validator, 'id' | 
 
   if (charter.projectLeader) {
     defaultValidators.push({
-      phase: "measure",
+      phase: "analyze",
       validatorName: charter.projectLeader,
       validatorRole: "Project Leader",
       status: "Pending",
@@ -183,7 +176,7 @@ const getDefaultMeasureValidators = (charter?: Charter): Omit<Validator, 'id' | 
 
   if (charter.financialController) {
     defaultValidators.push({
-      phase: "measure",
+      phase: "analyze",
       validatorName: charter.financialController,
       validatorRole: "Financial Controller",
       status: "Pending",
@@ -194,7 +187,7 @@ const getDefaultMeasureValidators = (charter?: Charter): Omit<Validator, 'id' | 
 
   if (charter.projectCoach) {
     defaultValidators.push({
-      phase: "measure",
+      phase: "analyze",
       validatorName: charter.projectCoach,
       validatorRole: "Coach",
       status: "Pending",
@@ -206,15 +199,15 @@ const getDefaultMeasureValidators = (charter?: Charter): Omit<Validator, 'id' | 
   return defaultValidators;
 };
 
-interface MeasurGateReviewValidationProps {
+interface AnalyzeGateReviewValidationProps {
   projectId: number;
 }
-export default function MeasureGateReviewValidation({ projectId }: MeasurGateReviewValidationProps) {
+export default function AnalyzeGateReviewValidation({ projectId }: AnalyzeGateReviewValidationProps) {
   //const { projectId } = useParams();
   const { project_type_in_project } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const phase = "measure"; // This component is for the Measure phase
+  const phase = "analyze"; // This component is for the Analyze phase
 
   // States for form handling
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
@@ -226,7 +219,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
   const [newDeliverableRequired, setNewDeliverableRequired] = useState<boolean>(false); // Default to Optional
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
-  const [defaultmeasureDeliverables, setDefaultmeasureDeliverables] = useState<Omit<Deliverable, "id" | "projectId">[]>([]);
+  const [defaultanalyzeDeliverables, setDefaultanalyzeDeliverables] = useState<Omit<Deliverable, "id" | "projectId">[]>([]);
   const [uploadingFor, setUploadingFor] = useState<number | null>(null); // Track deliverable ID for which file is being uploaded
   const [isUploading, setIsUploading] = useState(false); // Track upload state
   const fileInputRef = React.useRef<HTMLInputElement>(null); // Hidden file input reference
@@ -348,21 +341,21 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     // If API failed or returned empty, initialize with defaults
     if (!deliverablesData || !deliverablesData.deliverables || deliverablesData.deliverables.length === 0) {
       console.log("No deliverables found, creating defaults based on project type");
-      const measureDefaults = getDefaultmeasureDeliverables(projectType);
-      setDefaultmeasureDeliverables(measureDefaults);
+      const analyzeDefaults = getDefaultanalyzeDeliverables(projectType);
+      setDefaultanalyzeDeliverables(analyzeDefaults);
       
-      // Create defaults with project ID using the fresh measure defaults
-      const defaultsWithProjectId = measureDefaults.map(deliverable => ({
+      // Create defaults with project ID using the fresh analyze defaults
+      const defaultsWithProjectId = analyzeDefaults.map(deliverable => ({
         ...deliverable,
         projectId: parseInt(projectId || "0")
       }));
       
       setDeliverables(defaultsWithProjectId);
-      console.log("Created measure phase deliverables:", defaultsWithProjectId.length);
+      console.log("Created analyze phase deliverables:", defaultsWithProjectId.length);
       
       // Initialize validators too
       if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
-        const defaultValidators = getDefaultMeasureValidators(charter?.charter);
+        const defaultValidators = getDefaultAnalyzeValidators(charter?.charter);
         const validatorsWithProjectId = defaultValidators.map(validator => ({
           ...validator,
           projectId: parseInt(projectId || "0")
@@ -376,9 +369,9 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     console.log("Deliverables available:        ", deliverablesData.deliverables.length);
     console.log("Setting deliverables from data:", deliverablesData.deliverables);
 
-    // Get fresh measure defaults for comparison
-    const measureDefaults = getDefaultmeasureDeliverables(projectType);
-    setDefaultmeasureDeliverables(measureDefaults);
+    // Get fresh analyze defaults for comparison
+    const analyzeDefaults = getDefaultanalyzeDeliverables(projectType);
+    setDefaultanalyzeDeliverables(analyzeDefaults);
 
     // Keep track of what default deliverables exist in the database
     const existingDefaultNames = new Set<string>();
@@ -386,8 +379,8 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
 
     // First identify existing default deliverables and custom deliverables
     deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
-      // Check if this is a default deliverable by name using fresh measure defaults
-      const isDefault = measureDefaults.some(
+      // Check if this is a default deliverable by name using fresh analyze defaults
+      const isDefault = analyzeDefaults.some(
         def => def.name === deliverable.name
       );
 
@@ -403,7 +396,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     const orderedDeliverables: Deliverable[] = [];
 
     // First add all default deliverables, either from DB or default template
-    measureDefaults.forEach(defaultDeliverable => {
+    analyzeDefaults.forEach(defaultDeliverable => {
       if (existingDefaultNames.has(defaultDeliverable.name)) {
         // Find the existing default deliverable in the database data
         const existingDeliverable = deliverablesData.deliverables.find(
@@ -445,13 +438,13 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       setValidators(validatorsData.validators);
     } else if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
       // Initialize with default validators if none exist
-      const defaultValidators = getDefaultMeasureValidators(charter?.charter);
+      const defaultValidators = getDefaultAnalyzeValidators(charter?.charter);
       const validatorsWithProjectId = defaultValidators.map(validator => ({
         ...validator,
         projectId: parseInt(projectId || "0")
       }));
       setValidators(validatorsWithProjectId);
-      console.log("Created default measure validators:", validatorsWithProjectId.length);
+      console.log("Created default analyze validators:", validatorsWithProjectId.length);
     }
   }, [deliverablesData, validatorsData, projectId, charter, project, isLoadingDeliverables, isLoadingValidators]);
 
@@ -482,7 +475,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
 
     const newDeliverableObj: Deliverable = {
       projectId: parseInt(projectId || "0"),
-      phase: "measure",
+      phase: "analyze",
       name: newDeliverable,
       description: newDeliverableDescription || null,
       isRequired: "Added by User", // All user-added deliverables have this status
@@ -505,7 +498,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
 
     const newValidatorObj: Validator = {
       projectId: parseInt(projectId || "0"),
-      phase: "measure",
+      phase: "analyze",
       validatorName: newValidatorName,
       validatorRole: newValidatorRole,
       status: "Pending"
@@ -796,7 +789,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
             </Badge>
           </CardTitle>
           <CardDescription>
-            Review and validate the Measure phase deliverables before proceeding to the Analyze phase.
+            Review and validate the Analyze phase deliverables before proceeding to the Improve phase.
           </CardDescription>
         </CardHeader>
         <CardContent>

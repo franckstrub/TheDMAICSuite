@@ -29,6 +29,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import MilestoneTimeline from "./MilestoneTimeline";
+import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ImproveGateReviewValidation from '@/components/dmaic/ImproveGateReviewValidation';
+
+interface CtqWithType {
+  ctq: string;
+  ctqType: "Attribute" | "Continuous";
+}
 
 export default function ImprovePhase() {
   const { user, currentProject } = useAppContext();
@@ -586,6 +594,7 @@ export default function ImprovePhase() {
           </Button>
         </CardContent>
       </Card>
+      <ImproveGateReviewValidation projectId={projectId} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+
 import { useParams } from "wouter";
 import { useAppContext } from "@/store/AppContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -13,14 +13,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { calculateCp, calculateCpk } from "@/lib/statisticsUtils";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import MilestoneTimeline from "./MilestoneTimeline";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Network, CalendarDays } from "lucide-react";
 import DrawIoProcessMap from '@/components/dmaic/DrawIoProcessMap';
 import CtsCharacteristics from '@/components/dmaic/CtsCharacteristics';
 import MsaAnalysis from '@/components/dmaic/MsaAnalysis';
@@ -694,8 +689,10 @@ export default function MeasurePhase() {
 
       {/* Process and Value Stream Map */}
       <Card>
-        <CardHeader>
-          <CardTitle>Process and/or Value Stream Map</CardTitle>
+        <CardHeader>          
+          <CardTitle className="flex items-center gap-2">
+            <Network className="h-5 w-5" />
+            Process and/or Value Stream Map</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
@@ -720,7 +717,9 @@ export default function MeasurePhase() {
       {/* Data Collection Plan */}
       <Card>
         <CardHeader>
-          <CardTitle>Data Collection Plan</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5" />
+            Data Collection Plan</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
