@@ -25,16 +25,16 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
       if (response.ok) {
         const data = await response.json();
         setDiagramData(data.diagramData || '');
-        console.log('Loaded existing diagram data');
+        console.log('Loaded existing process map diagram data');
       }
     } catch (error) {
-      console.log('No existing diagram data found, starting with empty diagram');
+      console.log('No existing process map diagram data found, starting with empty diagram');
     }
   };
 
   const saveDiagramData = async (data: string) => {
     try {
-      console.log('Saving diagram data to server:', data.substring(0, 100) + '...');
+      console.log('Saving process map diagram data to server:', data.substring(0, 100) + '...');
       const response = await fetch(`/api/projects/${projectId}/process-map`, {
         method: 'POST',
         headers: {
@@ -76,11 +76,11 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
       
       switch (data.event) {
         case 'init':
-          console.log('Draw.io initialized');
+          console.log('Draw.io process map editor initialized');
           setIsLoaded(true);
           // Send existing diagram data if available
           if (diagramData && iframeRef.current) {
-            console.log('Loading existing diagram data into editor');
+            console.log('Loading existing process map diagram data into editor');
             iframeRef.current.contentWindow?.postMessage(
               JSON.stringify({
                 action: 'load',
@@ -101,14 +101,14 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           
         case 'export':
           // Handle export events - save the exported diagram
-          console.log('Export event received:', data);
+          console.log('Process map export event received:', data);
           if (data.xml || data.data) {
             const xmlData = data.xml || data.data;
-            console.log('Saving exported diagram data');
+            console.log('Saving exported process map diagram data');
             setDiagramData(xmlData);
             saveDiagramData(xmlData);
           } else {
-            console.log('No XML data in export event:', data);
+            console.log('No XML data in process map export event:', data);
           }
           break;
           
@@ -117,7 +117,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
           break;
       }
     } catch (error) {
-      console.error('Error parsing message from draw.io:', error);
+      console.error('Error parsing message from draw.io process map editor:', error);
     }
   };
 
@@ -129,22 +129,22 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
   }, [diagramData]);
 
   const handleSave = () => {
-    console.log('Save button clicked, isLoaded:', isLoaded);
+    console.log('Process map save button clicked, isLoaded:', isLoaded);
     if (iframeRef.current) {
-      console.log('Requesting diagram export from draw.io');
+      console.log('Requesting process map diagram export from draw.io');
       // Request current diagram data from draw.io using the correct message format
       iframeRef.current.contentWindow?.postMessage(
         JSON.stringify({ action: 'export', format: 'xmlsvg', xml: '', embedImages: false }),
         'https://embed.diagrams.net'
       );
     } else {
-      console.log('No iframe reference available');
+      console.log('No iframe reference available for process map');
     }
   };
 
   const handleNew = () => {
     if (iframeRef.current) {
-      // Create new diagram
+      // Create new process map diagram
       iframeRef.current.contentWindow?.postMessage(
         JSON.stringify({ action: 'template' }),
         'https://embed.diagrams.net'
@@ -152,7 +152,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
     }
   };
 
-  // Draw.io embed URL with working configuration
+  // Draw.io embed URL with working configuration for process mapping
   const drawIoUrl = 'https://embed.diagrams.net/?embed=1&ui=atlas&spin=0&modified=unsavedChanges&proto=json&libraries=1&noSaveBtn=0&saveAndExit=0&noExitBtn=1';
 
   return (
@@ -172,7 +172,7 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
             <span>New Diagram</span>
           </Button>
           <Button
-            //variant="outline"
+            variant="default"
             size="sm"
             onClick={handleSave}
             disabled={!isLoaded}
@@ -182,18 +182,15 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
         </div>
       </div>
       
-      <div className="border border-gray-200 rounded-lg iframe-container">
+      <div className="border border-gray-200 rounded-lg">
         <iframe
-          /*sandbox="allow-scripts allow-forms allow-same-origin"*/
-          scrolling="no"
           ref={iframeRef}
           src={drawIoUrl}
-          className="w-full h-[600px] my-iframe"
+          className="w-full h-[600px]"
           title="Process Map Editor"
           frameBorder="0"
-          /*allow="camera; microphone; geolocation"*/
           onLoad={() => {
-            console.log('Draw.io iframe loaded successfully');
+            console.log('Draw.io process map iframe loaded successfully');
             setIsLoaded(true);
           }}
         />
