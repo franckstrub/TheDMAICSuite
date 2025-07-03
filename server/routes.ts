@@ -21,7 +21,8 @@ import {
   InsertRaciMatrix, Project, ProjectBenefits, ProjectCosts, StorageConfig, ProjectCharter, ProjectRisk,
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
-  customerRequirements, businessRequirements, msaAnalysis, processCapability
+  customerRequirements, businessRequirements, msaAnalysis, processCapability,
+  fishboneDiagrams, insertFishboneDiagramSchema
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2818,6 +2819,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .returning();
         
         return res.status(201).json(newMap);
+      }
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Fishbone Diagrams routes for DMAIC Analyze Phase
+  app.get("/api/projects/:projectId/ctq/:ctqId/fishbone", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      const [fishboneDiagram] = await db
+        .select()
+        .from(fishboneDiagrams)
+        .where(and(
+          eq(fishboneDiagrams.projectId, projectId),
+          eq(fishboneDiagrams.ctqId, ctqId)
+        ));
+      
+      if (!fishboneDiagram) {
+        return res.status(404).json({ message: "Fishbone diagram not found" });
+      }
+      
+      return res.status(200).json(fishboneDiagram);
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/ctq/:ctqId/fishbone-diagram", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      const { diagramData } = req.body;
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      // Check if fishbone diagram already exists for this CTQ
+      const [existingDiagram] = await db
+        .select()
+        .from(fishboneDiagrams)
+        .where(and(
+          eq(fishboneDiagrams.projectId, projectId),
+          eq(fishboneDiagrams.ctqId, ctqId)
+        ));
+      
+      if (existingDiagram) {
+        // Update existing fishbone diagram
+        const [updatedDiagram] = await db
+          .update(fishboneDiagrams)
+          .set({
+            diagramData,
+            lastUpdated: new Date(),
+          })
+          .where(and(
+            eq(fishboneDiagrams.projectId, projectId),
+            eq(fishboneDiagrams.ctqId, ctqId)
+          ))
+          .returning();
+        
+        return res.status(200).json(updatedDiagram);
+      } else {
+        // Create new fishbone diagram
+        const [newDiagram] = await db
+          .insert(fishboneDiagrams)
+          .values({
+            projectId,
+            ctqId,
+            organizationId: userRecord.organizationId,
+            diagramData,
+          })
+          .returning();
+        
+        return res.status(201).json(newDiagram);
       }
     } catch (err) {
       return handleErrors(err, res);

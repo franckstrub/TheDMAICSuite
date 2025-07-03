@@ -137,15 +137,15 @@ export default function MeasurePhase() {
   useEffect(() => {
     // Wait for CTQs and plans data to be loaded
     if (plans !== undefined && ctqsData !== undefined && ctsData !== undefined && !ctqsLoading) {
-      console.log('=== Data Collection Plan Initialization ===');
-      console.log('Plans data:', plans);
-      console.log('CTQs data:', ctqsData);
-      console.log('CTS data:', ctsData);
-      console.log('Plans length:', plans && typeof plans === 'object' && 'plans' in plans ? (plans as any).plans?.length : 0);
-      console.log('CTS characteristics length:', ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData ? (ctsData as any).characteristics?.length : 0);
+      //console.log('=== Data Collection Plan Initialization ===');
+      //console.log('Plans data:', plans);
+      //console.log('CTQs data:', ctqsData);
+      //console.log('CTS data:', ctsData);
+      //console.log('Plans length:', plans && typeof plans === 'object' && 'plans' in plans ? (plans as any).plans?.length : 0);
+      //console.log('CTS characteristics length:', ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData ? (ctsData as any).characteristics?.length : 0);
       
       if (plans && typeof plans === 'object' && 'plans' in plans && (plans as any).plans && (plans as any).plans.length > 0) {
-        console.log('Loading existing saved plans:', (plans as any).plans);
+        //console.log('Loading existing saved plans:', (plans as any).plans);
         // Load existing saved plans and sync CTQ types from CTS characteristics
         const ctsCharacteristics = (ctsData as any)?.characteristics || [];
         setDataCollectionPlans((plans as any).plans.map((p: any) => {
@@ -168,7 +168,7 @@ export default function MeasurePhase() {
         }));
         setHasLoadedFromServer(true);
       } else if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData && Array.isArray((ctsData as any).characteristics) && (ctsData as any).characteristics.length > 0) {
-        console.log('Auto-populating from CTS characteristics:', (ctsData as any).characteristics);
+        //console.log('Auto-populating from CTS characteristics:', (ctsData as any).characteristics);
         // Auto-populate from CTS characteristics with operational definitions
         const autoPopulatedPlans = (ctsData as any).characteristics.map((characteristic: any) => ({
           ctq: characteristic.ctq || "",
@@ -183,16 +183,16 @@ export default function MeasurePhase() {
           dataSource: "",
           responsible: ""
         }));
-        console.log('Setting auto-populated plans from CTS:', autoPopulatedPlans);
+        //console.log('Setting auto-populated plans from CTS:', autoPopulatedPlans);
         setDataCollectionPlans(autoPopulatedPlans);
         setHasLoadedFromServer(false); // Reset flag to allow future updates
       } else {
         // Auto-populate from centralized CTQs endpoint (same as MSA Analysis and Process Capability)
         const ctqs = getCTQs();
-        console.log('CTQs from getCTQs():', ctqs);
+        //console.log('CTQs from getCTQs():', ctqs);
         
         if (ctqs.length > 0) {
-          console.log('Auto-populating from centralized CTQs:', ctqs);
+          //console.log('Auto-populating from centralized CTQs:', ctqs);
           // Get CTQ types from centralized data
           const ctqsWithTypes = (ctqsData as any)?.ctqs || [];
           const autoPopulatedPlans = ctqs.map((ctq: string) => {
@@ -212,20 +212,20 @@ export default function MeasurePhase() {
               responsible: ""
             };
           });
-          console.log('Setting auto-populated plans:', autoPopulatedPlans);
+          //console.log('Setting auto-populated plans:', autoPopulatedPlans);
           setDataCollectionPlans(autoPopulatedPlans);
           setHasLoadedFromServer(false); // Reset flag to allow future updates
         } else {
-          console.log('No CTQs available from centralized endpoint for auto-population');
-          console.log('CTQs data structure:', ctqsData);
-          console.log('Setting empty data collection plans array');
+          //console.log('No CTQs available from centralized endpoint for auto-population');
+          //console.log('CTQs data structure:', ctqsData);
+          //console.log('Setting empty data collection plans array');
           setDataCollectionPlans([]);
         }
       }
       
       if (!hasInitialized) {
         setHasInitialized(true);
-        console.log('=== Data Collection Plan Initialization Complete ===');
+        //console.log('=== Data Collection Plan Initialization Complete ===');
       }
     }
   }, [plans, ctqsData, ctqsLoading, ctsData]);
@@ -412,13 +412,13 @@ export default function MeasurePhase() {
 
   // Initial data load effect - triggered on mount and when returning to page
   useEffect(() => {
-    console.log("MeasurePhase component mounted - checking for business requirements");
+    //console.log("MeasurePhase component mounted - checking for business requirements");
     
     // Check if we have previously saved business requirements in sessionStorage
     const hasBusinessRequirements = sessionStorage.getItem(`project_${projectId}_has_business_requirements`);
     
     if (hasBusinessRequirements === 'true') {
-      console.log("Business requirements flag found in sessionStorage, loading from database");
+      //console.log("Business requirements flag found in sessionStorage, loading from database");
       // Load data directly from database to ensure we have the latest
       loadBusinessRequirementsFromDatabase(true);
     }
@@ -426,11 +426,11 @@ export default function MeasurePhase() {
   
   // Add a separate useEffect to process business requirements data when it changes
   useEffect(() => {
-    console.log("Business requirements data changed:", businessRequirementsAutoData);
+    //console.log("Business requirements data changed:", businessRequirementsAutoData);
     if (businessRequirementsAutoData && typeof businessRequirementsAutoData === 'object' && 'businessRequirements' in businessRequirementsAutoData && Array.isArray((businessRequirementsAutoData as any).businessRequirements) && (businessRequirementsAutoData as any).businessRequirements.length > 0) {
       // Sort the business requirements data by ID to maintain consistency
       const sortedBusinessRequirements = [...(businessRequirementsAutoData as any).businessRequirements].sort((a: any, b: any) => a.id - b.id);
-      console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+      //console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
       
       // Map and set to state, preserving the ID for later reference
       const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
@@ -443,7 +443,7 @@ export default function MeasurePhase() {
       
       // Only initialize once
       if (!businessRequirementsInitialized.current) {
-        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        //console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
         setBusinessRequirements(mappedBusinessRequirements);
         businessRequirementsInitialized.current = true;
       }
@@ -453,16 +453,16 @@ export default function MeasurePhase() {
   // Function to load business requirements from the database
   const loadBusinessRequirementsFromDatabase = async (silent = false) => {
     try {
-      console.log("Explicitly loading business requirements from database");
+      //console.log("Explicitly loading business requirements from database");
       const response = await fetch(`/api/projects/${projectId}/business-requirements`);
       const data = await response.json();
-      console.log("Loaded business requirements from database:", data);
+      //console.log("Loaded business requirements from database:", data);
       
       if (data?.businessRequirements && data.businessRequirements.length > 0) {
         // Map the business requirements data and sort by ID to maintain order
         // Sort by ID in ascending order so the first entered item appears first
         const sortedBusinessRequirements = [...data.businessRequirements].sort((a, b) => a.id - b.id);
-        console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
+        //console.log("Business requirements sorted by ID (ascending order):", sortedBusinessRequirements);
         
         const mappedBusinessRequirements = sortedBusinessRequirements.map((r: any) => ({
           requirement: r.requirement || "",
@@ -472,7 +472,7 @@ export default function MeasurePhase() {
           id: r.id, // Store the ID to help with sorting
         }));
         
-        console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
+        //console.log("Setting business requirements state with mapped data:", mappedBusinessRequirements);
         // Set the business requirements state with the mapped data
         setBusinessRequirements(mappedBusinessRequirements);
         
@@ -489,7 +489,7 @@ export default function MeasurePhase() {
         return mappedBusinessRequirements;
       } else {
         // If no business requirements found in the API response, ensure we have at least one empty row
-        console.log("No business requirements found in database, setting default empty row");
+        //console.log("No business requirements found in database, setting default empty row");
         const defaultRow = [{ requirement: "", businessRequirement: "", importance: 3, ctq: "" }];
         setBusinessRequirements(defaultRow);
         return defaultRow;
@@ -555,25 +555,25 @@ export default function MeasurePhase() {
         validBusinessRequirements : 
         [{ requirement: "", businessRequirement: "", importance: 3, ctq: "" }];
       
-      console.log("Saving business requirements:", businessRequirementsToSave);
+      //console.log("Saving business requirements:", businessRequirementsToSave);
       
       try {
         // First, get existing business requirements to delete them
         const existingReqs = await fetch(`/api/projects/${projectId}/business-requirements`).then(res => res.json());
-        console.log("Existing business requirements before deletion:", existingReqs);
+        //console.log("Existing business requirements before deletion:", existingReqs);
         
         // Delete all existing business requirements
         if (existingReqs && existingReqs.businessRequirements && existingReqs.businessRequirements.length > 0) {
-          console.log(`Deleting ${existingReqs.businessRequirements.length} existing business requirements`);
+          //console.log(`Deleting ${existingReqs.businessRequirements.length} existing business requirements`);
           const deletePromises = existingReqs.businessRequirements.map((req: any) => 
             apiRequest("DELETE", `/api/business-requirements/${req.id}`, { userId: user?.id, projectId })
           );
           await Promise.all(deletePromises);
-          console.log("All existing business requirements deleted");
+          //console.log("All existing business requirements deleted");
         }
         
         // Now create the new business requirements
-        console.log(`Creating ${businessRequirementsToSave.length} new business requirements`);
+        //console.log(`Creating ${businessRequirementsToSave.length} new business requirements`);
         const createPromises = businessRequirementsToSave.map((req: any) => 
           apiRequest("POST", `/api/projects/${projectId}/business-requirements`, {
             projectId,
@@ -586,7 +586,7 @@ export default function MeasurePhase() {
         );
         
         const results = await Promise.all(createPromises);
-        console.log("Business requirements saved:", results);
+        //console.log("Business requirements saved:", results);
         
         return results;
       } catch (error) {
@@ -617,7 +617,7 @@ export default function MeasurePhase() {
   });
   
   const handleSaveBusinessRequirements = async () => {
-    console.log("handleSaveBusinessRequirements called with business requirements:", businessRequirements);
+    //console.log("handleSaveBusinessRequirements called with business requirements:", businessRequirements);
     
     try {
       // Ensure we always have at least one row (even if empty) before saving
@@ -633,20 +633,20 @@ export default function MeasurePhase() {
       // First retrieve existing business requirements to ensure proper cleanup
       const existingReqsResponse = await fetch(`/api/projects/${projectId}/business-requirements`);
       const existingReqsData = await existingReqsResponse.json();
-      console.log("Current business requirements in database before save:", existingReqsData);
+      //console.log("Current business requirements in database before save:", existingReqsData);
       
       // Now proceed with saving
-      console.log("Initiating save operation...");
+      //console.log("Initiating save operation...");
       await saveBusinessRequirementsMutation.mutateAsync(businessRequirementsToSave);
       
       // Force refetch from database to ensure we have the latest data
-      console.log("Save complete, now reloading data directly from database");
+      //console.log("Save complete, now reloading data directly from database");
       await loadBusinessRequirementsFromDatabase(true); // silent load
       
       // Also force a refresh of the query cache
       await refetchBusinessRequirements();
       
-      console.log("Business requirements save and reload operation complete");
+      //console.log("Business requirements save and reload operation complete");
       
       // Store a flag in sessionStorage to remember that we have business requirements
       // This helps when returning to this component after navigation
