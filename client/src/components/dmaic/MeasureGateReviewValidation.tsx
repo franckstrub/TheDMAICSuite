@@ -337,17 +337,17 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     } else if (project?.project) {
       projectType = project.project.projectType;
     }
-    console.log("projectType for deliverables:", projectType);
+    //console.log("projectType for deliverables:", projectType);
 
     // If data is still loading, wait
     if (isLoadingDeliverables || isLoadingValidators) {
-      console.log("Still loading data...");
+      //console.log("Still loading data...");
       return;
     }
 
     // If API failed or returned empty, initialize with defaults
     if (!deliverablesData || !deliverablesData.deliverables || deliverablesData.deliverables.length === 0) {
-      console.log("No deliverables found, creating defaults based on project type");
+      //console.log("No deliverables found, creating defaults based on project type");
       const measureDefaults = getDefaultmeasureDeliverables(projectType);
       setDefaultmeasureDeliverables(measureDefaults);
       
@@ -358,7 +358,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
       }));
       
       setDeliverables(defaultsWithProjectId);
-      console.log("Created measure phase deliverables:", defaultsWithProjectId.length);
+      //console.log("Created measure phase deliverables:", defaultsWithProjectId.length);
       
       // Initialize validators too
       if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
@@ -368,13 +368,13 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
           projectId: parseInt(projectId || "0")
         }));
         setValidators(validatorsWithProjectId);
-        console.log("Created default validators:", validatorsWithProjectId.length);
+        //console.log("Created default validators:", validatorsWithProjectId.length);
       }
       return;
     }
 
-    console.log("Deliverables available:        ", deliverablesData.deliverables.length);
-    console.log("Setting deliverables from data:", deliverablesData.deliverables);
+    //console.log("Deliverables available:        ", deliverablesData.deliverables.length);
+    //console.log("Setting deliverables from data:", deliverablesData.deliverables);
 
     // Get fresh measure defaults for comparison
     const measureDefaults = getDefaultmeasureDeliverables(projectType);
@@ -436,12 +436,12 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     // Add the custom deliverables to the ordered list
     orderedDeliverables.push(...customDeliverables);
 
-    console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
+    //console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
     setDeliverables(orderedDeliverables);
 
     // Also handle validators from existing data
     if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
-      console.log("Setting validators from existing data:", validatorsData.validators);
+      //console.log("Setting validators from existing data:", validatorsData.validators);
       setValidators(validatorsData.validators);
     } else if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
       // Initialize with default validators if none exist
@@ -451,7 +451,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
         projectId: parseInt(projectId || "0")
       }));
       setValidators(validatorsWithProjectId);
-      console.log("Created default measure validators:", validatorsWithProjectId.length);
+      //console.log("Created default measure validators:", validatorsWithProjectId.length);
     }
   }, [deliverablesData, validatorsData, projectId, charter, project, isLoadingDeliverables, isLoadingValidators]);
 
@@ -470,7 +470,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
   // Auto-save when a new deliverable is added
   useEffect(() => {
     if (newDeliverableAdded) {
-      console.log("Auto-saving after new deliverable was added");
+      //console.log("Auto-saving after new deliverable was added");
       saveData();
       setNewDeliverableAdded(false);
     }
@@ -512,12 +512,12 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     };
 
     try {
-      console.log("Creating new validator:", newValidatorObj);
+      //console.log("Creating new validator:", newValidatorObj);
 
       // Create the new validator directly via API
       const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, newValidatorObj);
 
-      console.log("New validator created:", response);
+      //console.log("New validator created:", response);
 
       // Invalidate query to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
@@ -574,7 +574,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     try {
       if (validatorToRemove.id) {
         // If the validator has an ID, it exists in the database and must be deleted
-        console.log("Deleting validator from database:", validatorToRemove);
+        //console.log("Deleting validator from database:", validatorToRemove);
         await apiRequest('DELETE', `/api/gate-review-validators/${validatorToRemove.id}`, {});
 
         // After successful deletion from database, refresh the data
@@ -695,7 +695,7 @@ export default function MeasureGateReviewValidation({ projectId }: MeasurGateRev
     try {
       if (deliverableToRemove.id) {
         // If the deliverable has an ID, it exists in the database and must be deleted
-        console.log("Deleting deliverable from database:", deliverableToRemove);
+        //console.log("Deleting deliverable from database:", deliverableToRemove);
         await apiRequest('DELETE', `/api/gate-review-deliverables/${deliverableToRemove.id}`, {});
 
         // After successful deletion from database, refresh the data

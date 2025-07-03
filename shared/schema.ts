@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb, json, index, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb, json, index, real, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -896,6 +896,24 @@ export const processMaps = pgTable("process_maps", {
   diagramData: text("diagram_data"), // Store draw.io XML data
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
+
+// Fishbone Diagrams for DMAIC Analyze Phase
+export const fishboneDiagrams = pgTable("fishbone_diagrams", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  projectId: integer("project_id").notNull(),
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  diagramData: text("diagram_data"), // Store draw.io XML data
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertFishboneDiagramSchema = createInsertSchema(fishboneDiagrams).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertFishboneDiagram = z.infer<typeof insertFishboneDiagramSchema>;
+export type FishboneDiagram = typeof fishboneDiagrams.$inferSelect;
 
 export const insertProcessMapSchema = createInsertSchema(processMaps).omit({
   id: true,

@@ -21,15 +21,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getParetoData } from "@/lib/statisticsUtils";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterPlot, ScatterChart, Scatter, ZAxis } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterChart, Scatter, ZAxis } from "recharts";
 import MilestoneTimeline from "./MilestoneTimeline";
 import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AnalyzeGateReviewValidation from '@/components/dmaic/AnalyzeGateReviewValidation';
+import RootCauseAnalysis from "./RootCauseAnalysis";
+import AnalyzeGateReviewValidation from "./AnalyzeGateReviewValidation";
+//import AttributeCTQAnalysis from '@/components/dmaic/AttributeCTQAnalysis';
+//import ContinuousCTQAnalysis from '@/components/dmaic/ContinuousCTQAnalysis';
 
 interface CtqWithType {
   ctq: string;
   ctqType: "Attribute" | "Continuous";
+  ctqId: number;
 }
 
 export default function AnalyzePhase() {
@@ -143,7 +147,8 @@ export default function AnalyzePhase() {
     if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData) {
       return (ctsData as any).characteristics.map((item: any) => ({
         ctq: item.ctq,
-        ctqType: item.ctqType || "Continuous"
+        ctqType: item.ctqType || "Continuous",
+        ctqId: item.id
       }));
     }
     return [];
@@ -217,7 +222,7 @@ export default function AnalyzePhase() {
           </p>          
         </CardHeader>
         <CardContent>
-          {/* Only show scroll indicator if 5+ CTQs exist */}
+          {/* Only show scroll indicator if 6+ CTQs exist */}
           {ctqList.length >= 6 && (
           <div className="relative">
             <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
@@ -225,6 +230,7 @@ export default function AnalyzePhase() {
             </div>
           </div>
           )}
+          {/* One tab per CTQ */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
             <div className="w-full overflow-x-auto">         
               <TabsList className="flex w-max min-w-full justify-start">
@@ -236,10 +242,15 @@ export default function AnalyzePhase() {
                   >
                     <span className="font-medium truncate min-w-[150px]">{ctqItem.ctq}</span>
                     <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
-                    {/* MSA (Measurement System Analysis) - One tab per CTQ */}
+                   
+                    
+                    
                     {/*
-                    <MsaAnalysis projectId={projectId} />
-                    */}
+                    {ctqItem.ctqType === 'Attribute' ? (
+                       <AttributeCTQAnalysis projectId={projectId} />
+                    ) : (                        
+                        <ContinuousCTQAnalysis projectId={projectId} />                      
+                    )}
                     
                     {/* Process Capability - One tab per CTQ */}
                     {/*
@@ -247,8 +258,26 @@ export default function AnalyzePhase() {
                     */}
                                              
                   </TabsTrigger>
+                  
                 ))}
               </TabsList>
+                {/* Render tab content separately */}
+                {ctqList.map((ctqItem: CtqWithType) => (
+                  <TabsContent key={ctqItem.ctq} value={ctqItem.ctq}>
+                    {/* CTQ CARD: Common Attribute & Continuous content */}
+                    {/* 6M's Fishbone diagram - Ishikawa diagram - Cause Effect Analysis + 5 Whys + Prioritization- */}
+                    <RootCauseAnalysis projectId={projectId} ctqId={ctqItem.ctqId}/>
+                    {/*
+                    {ctqItem.ctqType === 'Attribute' ? (
+                    <TabsContent>
+                       <AttributeCTQAnalysis projectId={projectId} />
+                    ) : (                        
+                        <ContinuousCTQAnalysis projectId={projectId} />                      
+                    )}
+                    </TabsContent>
+                    */}
+                  </TabsContent>
+                ))}
             </div>
           </Tabs>
         </CardContent>

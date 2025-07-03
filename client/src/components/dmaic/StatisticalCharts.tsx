@@ -9,7 +9,8 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   ComposedChart,
-  Bar
+  Bar,
+  Label
 } from 'recharts';
 import { BarChart3 } from 'lucide-react';
 
@@ -66,7 +67,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
 }) => {
   const currentPoints = dataPoints[ctq] || [];
   const numericValues = currentPoints.map(point => point.dataValue);
-  
+
   if (numericValues.length < 3) {
     return (
       <div className="mt-6">
@@ -255,12 +256,13 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                 }} 
               />
               <Line 
+                key={`line-individual`}
                 type="monotone" 
                 dataKey="value" 
                 stroke="#059669" 
                 strokeWidth={2}
                 dot={(props) => {
-                  const { payload, cx, cy } = props;
+                  const { payload, cx, cy, key } = props;
                   if (!payload) return null;
                   
                   const dataValue = payload.value;
@@ -269,6 +271,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                   if (isSpecialCause) {
                     return (
                       <rect
+                        key={`special-cause-${key}`} // Add key prop
                         x={cx - 4}
                         y={cy - 4}
                         width={8}
@@ -281,6 +284,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                   } else {
                     return (
                       <circle
+                        key={`normal-point-${key}`} // Add key prop
                         cx={cx}
                         cy={cy}
                         r={3}
@@ -327,6 +331,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
               
               <Bar dataKey="y" fill="#3b82f6" name="Observed Frequency" />
               <Line 
+                key={`line-gaussian`}
                 type="monotone" 
                 dataKey="gaussian" 
                 stroke="#1e40af" 
@@ -503,12 +508,13 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                 }} 
               />
               <Line 
+                key={`line-moving-range`}
                 type="monotone" 
                 dataKey="value" 
                 stroke="#7c3aed" 
                 strokeWidth={2}
                 dot={(props) => {
-                  const { payload, cx, cy } = props;
+                  const { payload, cx, cy, key } = props;
                   if (!payload) return null;
                   
                   const dataValue = payload.value;
@@ -517,6 +523,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                   if (isSpecialCause) {
                     return (
                       <rect
+                        key={`MR-special-cause-${key}`} // Add key prop
                         x={cx - 4}
                         y={cy - 4}
                         width={8}
@@ -529,6 +536,7 @@ const StatisticalCharts: React.FC<StatisticalChartsProps> = ({
                   } else {
                     return (
                       <circle
+                        key={`MR-normal-point-${key}`} // Add key prop
                         cx={cx}
                         cy={cy}
                         r={3}
