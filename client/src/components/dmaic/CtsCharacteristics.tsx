@@ -110,6 +110,8 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
+      // Invalidate root cause prioritization queries for all CTQs
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'ctq'] });
     },
     onError: (error) => {
       toast({
@@ -514,6 +516,7 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
                   <ul className="text-red-700 text-sm space-y-1">
                     <li>• All MSA (Measurement System Analysis) data for this CTQ</li>
                     <li>• All Process Capability analysis and data points for this CTQ</li>
+                    <li>• All Root Cause Prioritization data for this CTQ</li>
                     <li>• All statistical calculations and results for this CTQ</li>
                     <li>• The CTQ definition from CTS characteristics</li>
                   </ul>
