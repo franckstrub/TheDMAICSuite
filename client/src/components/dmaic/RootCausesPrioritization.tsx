@@ -32,6 +32,11 @@ interface CTQrootcause {
   rootcause: string;
   multivotescore: number;
   criticalrootcause: boolean;
+  firstwhy: string;
+  secondwhy: string;
+  thirdwhy: string;
+  fourthwhy: string;
+  fifthwhy: string;
 }
 
 interface RootCausesPrioritizationProps {
@@ -44,7 +49,6 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
   const { toast } = useToast();
   const [CTQrootcauses, setCTQrootcauses] = useState<CTQrootcause[]>([]);
   const [deletingCtqrootcauseIndex, setDeletingCtqrootcauseIndex] = useState<number | null>(null);
-  const [CriticalRootCauses, setCriticalRootCauses] = useState<CTQrootcause[]>([]);
   const updateCTQrootcause = (index: number, field: keyof CTQrootcause, value: string) => {
     const newCTQrootcauses = [...CTQrootcauses];
     
@@ -76,6 +80,11 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
         rootcause: "",
         multivotescore: 0,
         criticalrootcause: false,
+        firstwhy: "",
+        secondwhy: "",
+        thirdwhy: "",
+        fourthwhy: "",
+        fifthwhy: "",
       }
     ]);
   };
@@ -141,15 +150,46 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
     saveMutation.mutate(validCTQrootcauses);
   };
 
-  // Save CTS characteristics mutation
+  // Fetch existing root cause data
+  const { data: rootCausesData, isLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/rootcause-characteristics`],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/rootcause-characteristics`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch root causes');
+      }
+      return response.json();
+    },
+  });
+
+  // Initialize state when data is loaded
+  useEffect(() => {
+    if (rootCausesData?.rootCauses) {
+      setCTQrootcauses(rootCausesData.rootCauses);
+    } else if (!isLoading && (!rootCausesData?.rootCauses || rootCausesData.rootCauses.length === 0)) {
+      // Initialize with empty root cause if no data exists
+      setCTQrootcauses([{
+        rootcause: "",
+        multivotescore: 0,
+        criticalrootcause: false,
+        firstwhy: "",
+        secondwhy: "",
+        thirdwhy: "",
+        fourthwhy: "",
+        fifthwhy: "",
+      }]);
+    }
+  }, [rootCausesData, isLoading]);
+
+  // Save root causes mutation
     const saveMutation = useMutation({
       mutationFn: async (data: CTQrootcause[]) => {
-        const response = await fetch(`/api/projects/${projectId}/${ctqId}/rootcause-characteristics`, {
+        const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/rootcause-characteristics`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ characteristics: data }),
+          body: JSON.stringify({ rootCauses: data }),
         });
         
         if (!response.ok) {
@@ -163,7 +203,7 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
           title: "Success",
           description: "Root Cause characteristics saved successfully",
         });
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/${ctqId}/cts-characteristics`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/rootcause-characteristics`] });
       },
       onError: (error) => {
         toast({
@@ -202,6 +242,11 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
         rootcause: "",
         multivotescore: 0,
         criticalrootcause: false,
+        firstwhy: "",
+        secondwhy: "",
+        thirdwhy: "",
+        fourthwhy: "",
+        fifthwhy: "",
       });
     }
     
@@ -220,15 +265,23 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
           Prioritize the Root Causes defined in your Fishbone diagram with Multi-Vote score and complete 5 Why analysis.<br />
-        </p>
-        
+        </p>        
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
+              {/* Scroll indicator */}
+            <th className="relative top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+              ← Scroll horizontally →
+            </th>
               <tr>
                 <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Root Cause</th>
                 <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votes</th>
-                <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Critical Root Cause</th>
+                <th className="px-0 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Critical Root Cause</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">1st Why?</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">2nd Why?</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">3rd Why?</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">4th Why?</th>
+                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">5th Why?</th>
                 <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
@@ -237,7 +290,7 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
                 <tr key={index}>
                   <td className="px-1 py-3 whitespace-nowrap">
                   <Textarea
-                    placeholder="Enter Critical Root Cause"
+                    placeholder="Enter Root Cause"
                     value={CTQrootcause.rootcause}
                     onChange={(e) => updateCTQrootcause(index, 'rootcause', e.target.value)}
                     className="w-full min-w-[200px] min-h-[60px]"
@@ -248,17 +301,57 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
                       type="number"
                       step="1"
                       min="0"
-                      placeholder="Multi-Vote score"
+                      placeholder="Enter Multi-Vote score"
                       value={CTQrootcause.multivotescore}
                       onChange={(e) => updateCTQrootcause(index, 'multivotescore', e.target.value)}
-                      className="max-w-[80px] min-h-[60px]"
+                      className="min-w-[50px] min-h-[60px]"
                     />
                   </td>
-                  <td className="px-1 py-3">
+                  <td className="px-7 py-3">
                     <Checkbox
                       checked={CTQrootcause.criticalrootcause}
                       onCheckedChange={() => toggleRootCauseCriticality(index)}
                     />
+                  </td>
+                  <td className="px-1 py-3 whitespace-nowrap">
+                  <Textarea
+                    placeholder="Enter 1st Why analysis"
+                    value={CTQrootcause.firstwhy}
+                    onChange={(e) => updateCTQrootcause(index, 'firstwhy', e.target.value)}
+                    className="w-full min-w-[200px] min-h-[60px]"
+                  />
+                  </td>
+                  <td className="px-1 py-3 whitespace-nowrap">
+                  <Textarea
+                    placeholder="Enter 2nd Why analysis"
+                    value={CTQrootcause.secondwhy}
+                    onChange={(e) => updateCTQrootcause(index, 'secondwhy', e.target.value)}
+                    className="w-full min-w-[200px] min-h-[60px]"
+                  />
+                  </td>
+                  <td className="px-1 py-3 whitespace-nowrap">
+                  <Textarea
+                    placeholder="Enter 3rd Why analysis"
+                    value={CTQrootcause.thirdwhy}
+                    onChange={(e) => updateCTQrootcause(index, 'thirdwhy', e.target.value)}
+                    className="w-full min-w-[200px] min-h-[60px]"
+                  />
+                  </td>
+                  <td className="px-1 py-3 whitespace-nowrap">
+                  <Textarea
+                    placeholder="Enter 4th Why analysis"
+                    value={CTQrootcause.fourthwhy}
+                    onChange={(e) => updateCTQrootcause(index, 'fourthwhy', e.target.value)}
+                    className="w-full min-w-[200px] min-h-[60px]"
+                  />
+                  </td>
+                  <td className="px-1 py-3 whitespace-nowrap">
+                  <Textarea
+                    placeholder="Enter 5th Why analysis"
+                    value={CTQrootcause.fifthwhy}
+                    onChange={(e) => updateCTQrootcause(index, 'fifthwhy', e.target.value)}
+                    className="w-full min-w-[200px] min-h-[60px]"
+                  />
                   </td>
                   <td className="px-0 py-3 whitespace-nowrap text-center">
                     <Button
@@ -296,7 +389,7 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
         </div>
         
         <div className="mt-4 text-xs text-gray-500">
-          <p>• Root Causes must be defined by User from Fishbone diagram</p>
+          <p>• Root Causes must be defined by User. Use the Fishbone diagram to find them</p>
         </div>
 
         {/* CTQ Deletion Confirmation Dialog */}

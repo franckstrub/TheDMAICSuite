@@ -951,6 +951,31 @@ export const insertCtsCharacteristicsSchema = createInsertSchema(ctsCharacterist
 export type InsertCtsCharacteristics = z.infer<typeof insertCtsCharacteristicsSchema>;
 export type CtsCharacteristics = typeof ctsCharacteristics.$inferSelect;
 
+// Root Cause Prioritization for DMAIC Analyze Phase
+export const rootCausePrioritization = pgTable("root_cause_prioritization", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  projectId: integer("project_id").notNull(),
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  rootcause: text("rootcause").notNull(),
+  multivotescore: real("multivotescore").notNull().default(0),
+  criticalrootcause: boolean("criticalrootcause").notNull().default(false),
+  firstwhy: text("firstwhy").default(""),
+  secondwhy: text("secondwhy").default(""),
+  thirdwhy: text("thirdwhy").default(""),
+  fourthwhy: text("fourthwhy").default(""),
+  fifthwhy: text("fifthwhy").default(""),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertRootCausePrioritizationSchema = createInsertSchema(rootCausePrioritization).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertRootCausePrioritization = z.infer<typeof insertRootCausePrioritizationSchema>;
+export type RootCausePrioritization = typeof rootCausePrioritization.$inferSelect;
+
 // MSA (Measurement System Analysis) for each CTQ
 export const msaAnalysis = pgTable("msa_analysis", {
   id: serial("id").primaryKey(),
