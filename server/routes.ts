@@ -2689,7 +2689,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(msaAnalysis.organizationId, userRecord.organizationId)
         ));
 
-      // Step 3: Delete the CTQ from CTS characteristics
+      // Step 3: Delete all Root Cause Prioritization records for this CTQ
+      await db
+        .delete(rootCausePrioritization)
+        .where(and(
+          eq(rootCausePrioritization.ctqId, ctqId),
+          eq(rootCausePrioritization.projectId, projectId),
+          eq(rootCausePrioritization.organizationId, userRecord.organizationId)
+        ));
+
+      // Step 4: Delete the CTQ from CTS characteristics
       await db
         .delete(ctsCharacteristics)
         .where(and(
@@ -2914,25 +2923,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Fishbone Diagrams routes for DMAIC Analyze Phase
-  // Test endpoint for root cause deletion without authentication
-  app.delete("/api/test/delete-root-cause/:id", async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      
-      console.log("TEST DELETE - Deleting root cause with ID:", id);
-
-      const deleteResult = await db
-        .delete(rootCausePrioritization)
-        .where(eq(rootCausePrioritization.id, parseInt(id)));
-
-      console.log("TEST DELETE - Delete result:", deleteResult);
-      res.json({ success: true, message: "Root cause deleted successfully" });
-    } catch (error) {
-      console.error("TEST DELETE - Error:", error);
-      res.status(500).json({ error: "Failed to delete root cause" });
-    }
-  });
-
   // Delete individual root cause
   app.delete("/api/projects/:projectId/ctq/:ctqId/rootcause-characteristics/:rootCauseId", isAuthenticated, async (req: Request, res: Response) => {
     try {
