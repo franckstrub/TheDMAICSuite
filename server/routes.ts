@@ -11,7 +11,7 @@ import {
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
-  insertUserSchema
+  insertUserSchema, insertRootCausePrioritizationSchema
 
 } from "@shared/schema";
 import { 
@@ -22,7 +22,7 @@ import {
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
   customerRequirements, businessRequirements, msaAnalysis, processCapability,
-  fishboneDiagrams, insertFishboneDiagramSchema
+  fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2746,6 +2746,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ).filter(item => item.ctq && item.ctq.trim() !== '');
       
       return res.status(200).json({ ctqs: uniqueCtqs });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Root Cause Prioritization routes for DMAIC Analyze Phase
+  app.get("/api/projects/:projectId/ctq/:ctqId/rootcause-characteristics", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      const rootCauses = await db
+        .select()
+        .from(rootCausePrioritization)
+        .where(and(
+          eq(rootCausePrioritization.projectId, projectId),
+          eq(rootCausePrioritization.ctqId, ctqId)
+        ))
+        .orderBy(asc(rootCausePrioritization.id));
+      
+      return res.status(200).json({ rootCauses });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/ctq/:ctqId/rootcause-characteristics", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      const rootCausesData = req.body.rootCauses;
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      // Delete existing root causes for this CTQ
+      await db
+        .delete(rootCausePrioritization)
+        .where(and(
+          eq(rootCausePrioritization.projectId, projectId),
+          eq(rootCausePrioritization.ctqId, ctqId)
+        ));
+      
+      let savedRootCauses = [];
+      
+      if (rootCausesData && rootCausesData.length > 0) {
+        for (const rootCause of rootCausesData) {
+          const rootCauseWithOrgId = {
+            ...rootCause,
+            projectId,
+            ctqId,
+            organizationId: userRecord.organizationId,
+            multivotescore: rootCause.multivotescore || 0,
+            criticalrootcause: rootCause.criticalrootcause || false,
+            firstwhy: rootCause.firstwhy || "",
+            secondwhy: rootCause.secondwhy || "",
+            thirdwhy: rootCause.thirdwhy || "",
+            fourthwhy: rootCause.fourthwhy || "",
+            fifthwhy: rootCause.fifthwhy || "",
+          };
+          
+          const validatedRootCause = insertRootCausePrioritizationSchema.parse(rootCauseWithOrgId);
+          const [savedRootCause] = await db
+            .insert(rootCausePrioritization)
+            .values(validatedRootCause)
+            .returning();
+          
+          savedRootCauses.push(savedRootCause);
+        }
+      }
+      
+      return res.status(201).json({ rootCauses: savedRootCauses });
     } catch (err) {
       return handleErrors(err, res);
     }
