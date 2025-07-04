@@ -94,27 +94,24 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
     ]);
   };
 
-  // CTQ deletion mutation with cascade deletion
-  const deleteCTQrootcauseMutation = useMutation({
+  // Root cause deletion mutation
+  const deleteRootCauseMutation = useMutation({
     mutationFn: async (rootcauseId: number) => {
-      const response = await apiRequest('DELETE', `/api/projects/${projectId}/cts-characteristics/${ctqId}/${rootcauseId}/cascade`);
+      const response = await apiRequest('DELETE', `/api/projects/${projectId}/ctq/${ctqId}/rootcause-characteristics/${rootcauseId}`);
       return response;
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Root Cause and all related data deleted successfully",
+        description: "Root cause deleted successfully",
       });
-      // Invalidate all related queries
-      //queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/cts-characteristics`] });
-      //queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
-      //queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
-      //queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
+      // Invalidate the root causes query to refresh the data
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/rootcause-characteristics`] });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to delete Root Cause",
+        description: "Failed to delete root cause",
         variant: "destructive",
       });
     },
@@ -127,7 +124,7 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
     
     if (rootcause.id) {
       try {
-        await deleteCTQrootcauseMutation.mutateAsync(rootcause.id);
+        await deleteRootCauseMutation.mutateAsync(rootcause.id);
         performLocalDeletion(deletingCtqrootcauseIndex);
       } catch (error) {
         // Error is handled by the mutation
@@ -432,9 +429,9 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
               <AlertDialogAction
                 onClick={handleConfirmDelete}
                 className="bg-red-600 hover:bg-red-700 text-white"
-                disabled={deleteCTQrootcauseMutation.isPending}
+                disabled={deleteRootCauseMutation.isPending}
               >
-                {deleteCTQrootcauseMutation.isPending ? "Deleting..." : "Delete Root Cause & All Data"}
+                {deleteRootCauseMutation.isPending ? "Deleting..." : "Delete Root Cause"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
