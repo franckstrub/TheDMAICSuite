@@ -2918,13 +2918,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/projects/:projectId/ctq/:ctqId/rootcause-characteristics/:rootCauseId", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { projectId, ctqId, rootCauseId } = req.params;
-      const userRecord = req.user;
+      const user = req.user as any;
+
+      console.log("DELETE root cause - User:", user);
+      console.log("DELETE root cause - User claims:", user?.claims);
+
+      // Get user ID from claims
+      const userId = user.claims.sub;
+      const userRecord = await storage.getUser(userId);
+
+      console.log("DELETE root cause - User record from storage:", userRecord);
 
       if (!userRecord?.organizationId) {
+        console.error("DELETE root cause - No organization found for user");
         return res.status(401).json({ error: "Organization not found" });
       }
 
       // Delete the specific root cause
+      console.log("DELETE root cause - Deleting with params:", {
+        rootCauseId: parseInt(rootCauseId),
+        projectId: parseInt(projectId),
+        ctqId: parseInt(ctqId),
+        organizationId: userRecord.organizationId
+      });
+
       const deleteResult = await db
         .delete(rootCausePrioritization)
         .where(
@@ -2936,6 +2953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         );
 
+      console.log("DELETE root cause - Delete result:", deleteResult);
       res.json({ success: true, message: "Root cause deleted successfully" });
     } catch (error) {
       console.error("Error deleting root cause:", error);
