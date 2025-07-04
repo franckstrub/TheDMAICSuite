@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle } from "lucide-react";
+import RootCausesPrioritization from "./RootCausesPrioritization";
 
 interface RootCauseAnalysisProps {
   projectId: number;
@@ -226,6 +227,8 @@ export default function RootCauseAnalysis({ projectId, ctqId, onSave }: RootCaus
           • You may use several pages. Just click on "+" to add a page to your diagram
         </p>
       </div>
+      {!isNaN(projectId) && !isNaN(ctqId) && (<RootCausesPrioritization projectId={projectId} ctqId={ctqId}/>)}
     </div>
   );
+  
 }

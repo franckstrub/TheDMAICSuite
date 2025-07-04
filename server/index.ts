@@ -58,7 +58,7 @@ app.use((req, res, next) => {
   // Run database migrations
   try {
     await migrateRaciRolesToFunction();
-    console.log("RACI roles migration completed successfully");
+    //console.log("RACI roles migration completed successfully");
   } catch (error) {
     console.error("RACI roles migration failed:", error);
     // Continue with server startup even if migration fails

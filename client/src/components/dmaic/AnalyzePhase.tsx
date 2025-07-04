@@ -23,12 +23,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { getParetoData } from "@/lib/statisticsUtils";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterChart, Scatter, ZAxis } from "recharts";
 import MilestoneTimeline from "./MilestoneTimeline";
-import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
+import { GitBranch, BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RootCauseAnalysis from "./RootCauseAnalysis";
+import AttributeCTQAnalysis from "./AttributeCTQAnalysis";
+import ContinuousCTQAnalysis from "./ContinuousCTQAnalysis";
 import AnalyzeGateReviewValidation from "./AnalyzeGateReviewValidation";
-//import AttributeCTQAnalysis from '@/components/dmaic/AttributeCTQAnalysis';
-//import ContinuousCTQAnalysis from '@/components/dmaic/ContinuousCTQAnalysis';
+import FishboneIcon from '@/assets/fishboneicon.svg';
 
 interface CtqWithType {
   ctq: string;
@@ -214,7 +215,13 @@ export default function AnalyzePhase() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+                <img 
+                  src={FishboneIcon} 
+                  alt="Fishbone Diagram icon" 
+                  width={60} 
+                  height={30}
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                />
             Cause & Effect Analysis
           </CardTitle>
           <p className="text-sm text-gray-600 mt-2">
@@ -241,24 +248,8 @@ export default function AnalyzePhase() {
                     className="px-4 py-2 min-w-max flex flex-col items-cente border border-gray-200 data-[state=active]:border-none"
                   >
                     <span className="font-medium truncate min-w-[150px]">{ctqItem.ctq}</span>
-                    <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>
-                   
-                    
-                    
-                    {/*
-                    {ctqItem.ctqType === 'Attribute' ? (
-                       <AttributeCTQAnalysis projectId={projectId} />
-                    ) : (                        
-                        <ContinuousCTQAnalysis projectId={projectId} />                      
-                    )}
-                    
-                    {/* Process Capability - One tab per CTQ */}
-                    {/*
-                    <ProcessCapability projectId={projectId} />
-                    */}
-                                             
-                  </TabsTrigger>
-                  
+                    <span className="text-xs text-gray-600">{ctqItem.ctqType}</span>                  
+                  </TabsTrigger>                  
                 ))}
               </TabsList>
                 {/* Render tab content separately */}
@@ -267,15 +258,12 @@ export default function AnalyzePhase() {
                     {/* CTQ CARD: Common Attribute & Continuous content */}
                     {/* 6M's Fishbone diagram - Ishikawa diagram - Cause Effect Analysis + 5 Whys + Prioritization- */}
                     <RootCauseAnalysis projectId={projectId} ctqId={ctqItem.ctqId}/>
-                    {/*
-                    {ctqItem.ctqType === 'Attribute' ? (
-                    <TabsContent>
-                       <AttributeCTQAnalysis projectId={projectId} />
+                    
+                    {ctqItem.ctqType === 'Attribute' ? (                    
+                      <AttributeCTQAnalysis projectId={projectId} ctqId={ctqItem.ctqId} />
                     ) : (                        
-                        <ContinuousCTQAnalysis projectId={projectId} />                      
+                      <ContinuousCTQAnalysis projectId={projectId}  ctqId={ctqItem.ctqId}/>                      
                     )}
-                    </TabsContent>
-                    */}
                   </TabsContent>
                 ))}
             </div>
