@@ -2808,7 +2808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             projectId,
             ctqId,
             organizationId: userRecord.organizationId,
-            multivotescore: rootCause.multivotescore || 0,
+            multivotescore: typeof rootCause.multivotescore === 'string' ? parseFloat(rootCause.multivotescore) || 0 : (rootCause.multivotescore || 0),
             criticalrootcause: rootCause.criticalrootcause || false,
             firstwhy: rootCause.firstwhy || "",
             secondwhy: rootCause.secondwhy || "",
@@ -2817,13 +2817,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             fifthwhy: rootCause.fifthwhy || "",
           };
           
-          const validatedRootCause = insertRootCausePrioritizationSchema.parse(rootCauseWithOrgId);
-          const [savedRootCause] = await db
-            .insert(rootCausePrioritization)
-            .values(validatedRootCause)
-            .returning();
-          
-          savedRootCauses.push(savedRootCause);
+          try {
+            const validatedRootCause = insertRootCausePrioritizationSchema.parse(rootCauseWithOrgId);
+            const [savedRootCause] = await db
+              .insert(rootCausePrioritization)
+              .values(validatedRootCause)
+              .returning();
+            
+            savedRootCauses.push(savedRootCause);
+          } catch (validationError) {
+            console.error('Validation error for root cause:', rootCauseWithOrgId);
+            console.error('Validation error details:', validationError);
+            throw new Error(`Validation failed: ${validationError.message}`);
+          }
         }
       }
       
