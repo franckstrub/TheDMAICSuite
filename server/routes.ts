@@ -2914,22 +2914,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Fishbone Diagrams routes for DMAIC Analyze Phase
+  // Test endpoint for root cause deletion without authentication
+  app.delete("/api/test/delete-root-cause/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      console.log("TEST DELETE - Deleting root cause with ID:", id);
+
+      const deleteResult = await db
+        .delete(rootCausePrioritization)
+        .where(eq(rootCausePrioritization.id, parseInt(id)));
+
+      console.log("TEST DELETE - Delete result:", deleteResult);
+      res.json({ success: true, message: "Root cause deleted successfully" });
+    } catch (error) {
+      console.error("TEST DELETE - Error:", error);
+      res.status(500).json({ error: "Failed to delete root cause" });
+    }
+  });
+
   // Delete individual root cause
-  app.delete("/api/projects/:projectId/ctq/:ctqId/rootcause-characteristics/:rootCauseId", async (req: Request, res: Response) => {
+  app.delete("/api/projects/:projectId/ctq/:ctqId/rootcause-characteristics/:rootCauseId", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { projectId, ctqId, rootCauseId } = req.params;
       
-      // Temporary: Use organization ID 1 for testing
-      const organizationId = 1;
+      // Get user's organization ID for validation (matching cascade delete pattern)
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      
+      if (!userRecord?.organizationId) {
+        return res.status(401).json({ error: "Organization not found" });
+      }
 
       // Delete the specific root cause
-      console.log("DELETE root cause - Deleting with params:", {
-        rootCauseId: parseInt(rootCauseId),
-        projectId: parseInt(projectId),
-        ctqId: parseInt(ctqId),
-        organizationId: organizationId
-      });
-
       const deleteResult = await db
         .delete(rootCausePrioritization)
         .where(
@@ -2937,11 +2960,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(rootCausePrioritization.id, parseInt(rootCauseId)),
             eq(rootCausePrioritization.projectId, parseInt(projectId)),
             eq(rootCausePrioritization.ctqId, parseInt(ctqId)),
-            eq(rootCausePrioritization.organizationId, organizationId)
+            eq(rootCausePrioritization.organizationId, userRecord.organizationId)
           )
         );
 
-      console.log("DELETE root cause - Delete result:", deleteResult);
       res.json({ success: true, message: "Root cause deleted successfully" });
     } catch (error) {
       console.error("Error deleting root cause:", error);
