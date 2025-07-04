@@ -52,10 +52,10 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
   const updateCTQrootcause = (index: number, field: keyof CTQrootcause, value: string) => {
     const newCTQrootcauses = [...CTQrootcauses];
     
-    // Validate numeric fields
+    // Validate and convert numeric fields
     if (field === 'multivotescore') {
       const numValue = parseFloat(value);
-      if (value !== "" && !isNaN(numValue) && numValue <0 ) {
+      if (value !== "" && !isNaN(numValue) && numValue < 0) {
         toast({
           title: "Validation Error",
           description: "Multi-vote score is not a positive number",
@@ -63,12 +63,17 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
         });
         return;
       }
+      // Convert to number for storage
+      newCTQrootcauses[index] = { 
+        ...newCTQrootcauses[index], 
+        [field]: value === "" ? 0 : numValue
+      };
+    } else {
+      newCTQrootcauses[index] = { 
+        ...newCTQrootcauses[index], 
+        [field]: value 
+      };
     }
-    
-    newCTQrootcauses[index] = { 
-      ...newCTQrootcauses[index], 
-      [field]: value 
-    };
     
     setCTQrootcauses(newCTQrootcauses);
   };
