@@ -982,8 +982,8 @@ export function ProcessCapabilityContinuousCards({
                             ) : (
                               <span className="font-medium">
                                 {formatPercentage(
-                                  stats.obsYieldLT,
-                                  stats.obsDPMOLT,
+                                  stats.obsYieldLT!,
+                                  stats.obsDPMOLT!,
                                 )}
                               </span>
                             )}

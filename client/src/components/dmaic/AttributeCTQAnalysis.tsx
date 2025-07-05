@@ -27,10 +27,11 @@ import {
 interface AttributeCTQAnalysisProps {
   projectId: number;
   ctqId: number;
+  ctqName: string;
   onSave?: (data: string) => void;
 }
 
-export default function AttributeCTQAnalysis({ projectId, ctqId, onSave }: AttributeCTQAnalysisProps) {
+export default function AttributeCTQAnalysis({ projectId, ctqId, ctqName, onSave }: AttributeCTQAnalysisProps) {
   return (
     <div className="w-full mt-4">
     <Card>

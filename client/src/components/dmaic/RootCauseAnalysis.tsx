@@ -7,10 +7,11 @@ import RootCausesPrioritization from "./RootCausesPrioritization";
 interface RootCauseAnalysisProps {
   projectId: number;
   ctqId: number;
+  ctqName: string;
   onSave?: (data: string) => void;
 }
 
-export default function RootCauseAnalysis({ projectId, ctqId, onSave }: RootCauseAnalysisProps) {
+export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }: RootCauseAnalysisProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [diagramData, setDiagramData] = useState<string>('');

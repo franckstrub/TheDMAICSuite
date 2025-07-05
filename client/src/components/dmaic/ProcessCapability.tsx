@@ -626,7 +626,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }));
   };
 
-  const handleAddDataPoint = (ctq: string) => {
+  const AddDataPoint = (ctq: string) => {
     const value = inputValues[ctq] || "";
     if (value.trim() && !isNaN(parseFloat(value))) {
       addDataPointToLocalState(ctq, value);
@@ -3000,7 +3000,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     }))} stats={undefined} dataSetTerm={"Long Term"} capabilityIndex={"Z"}                  />
 
 
-                <div className="flex justify-end">
+                <div className="flex justify-end pr-4">
                   <Button 
                     onClick={() => saveCapability(ctq)}
                     disabled={saveCapabilityMutation.isPending}
