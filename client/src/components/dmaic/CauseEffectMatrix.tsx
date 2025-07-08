@@ -65,9 +65,10 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
         title: "Success",
         description: "Cause & Effect Matrix saved successfully",
       });
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/projects', projectId, 'cause-effect-matrix'] 
-      });
+      // Don't invalidate the query to prevent resetting local state
+      // queryClient.invalidateQueries({ 
+      //   queryKey: ['/api/projects', projectId, 'cause-effect-matrix'] 
+      // });
       if (onSave) {
         onSave(data);
       }
@@ -209,9 +210,11 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   // Add this new state for importance scores
   const [importanceScores, setImportanceScores] = useState<number[]>(Array(maxCTQs).fill(5));
 
-  // Initialize data from existing matrix
+  // Initialize data from existing matrix - only on first load
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
   useEffect(() => {
-    if (existingMatrix) {
+    if (existingMatrix && !hasInitialized) {
       setRootCauses(existingMatrix.rootCauses || Array(5).fill(""));
       setImportanceScores(existingMatrix.importanceScores || Array(maxCTQs).fill(5));
       setMatrixData(prev => ({
@@ -223,8 +226,9 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       if (existingMatrix.ctqs && Array.isArray(existingMatrix.ctqs)) {
         setEditableCtqs(existingMatrix.ctqs);
       }
+      setHasInitialized(true);
     }
-  }, [existingMatrix, maxCTQs]);
+  }, [existingMatrix, maxCTQs, hasInitialized]);
 
   // Update the importance score function
   const updateImportanceScore = (colIndex: number, value: string) => {
