@@ -527,7 +527,9 @@ const checkMinimumColumns = () => {
                           placeholder={`Enter root cause ${rowIndex + 1}`}
                         />
                       </td>
-                      {editableCtqs.map((_, colIndex) => (
+                      {editableCtqs.map((_, colIndex) => {
+                        console.log(`Rendering cell [${rowIndex}][${colIndex + 1}] with value:`, matrixData.matrix[rowIndex]?.[colIndex + 1]);
+                        return (
                         <td key={`cell-${rowIndex}-${colIndex}`} className="border border-gray-300 p-2">
                           <Select
                             value={matrixData.matrix[rowIndex]?.[colIndex + 1] || ""}
