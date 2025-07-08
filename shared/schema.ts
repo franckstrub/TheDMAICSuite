@@ -981,7 +981,6 @@ export const causeEffectMatrix = pgTable("cause_effect_matrix", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").notNull(),
-  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
   enabled: boolean("enabled").notNull().default(false),
   rootCauses: json("root_causes").$type<string[]>(),
   ctqs: json("ctqs").$type<Array<{ctq: string, ctqType: string, ctqId: number}>>(),
