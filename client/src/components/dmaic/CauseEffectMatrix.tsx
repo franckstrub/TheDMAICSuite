@@ -223,7 +223,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       ctqs: editableCtqs,
       importanceScores: importanceScores
     };
-    console.log('Sending matrix data to server:', matrixToSave);
+    //console.log('Sending matrix data to server:', matrixToSave);
     saveMatrixMutation.mutate(matrixToSave);
   };
 
@@ -239,6 +239,8 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     if (existingMatrix && !hasInitialized) {
       console.log('Initializing with existing matrix:', existingMatrix);
       console.log('Existing importance scores:', existingMatrix.importanceScores);
+      console.log('Existing CTQs:', existingMatrix.ctqs);
+      console.log('Current editableCtqs before update:', editableCtqs);
       
       setRootCauses(existingMatrix.rootCauses || Array(5).fill(""));
       
@@ -272,7 +274,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       const targetLength = editableCtqs.length;
       
       if (currentLength !== targetLength) {
-        console.log(`Syncing importance scores: ${currentLength} -> ${targetLength}`);
+        //console.log(`Syncing importance scores: ${currentLength} -> ${targetLength}`);
         if (targetLength > currentLength) {
           // Add new scores with default value 5
           const newScores = [...importanceScores, ...Array(targetLength - currentLength).fill(5)];
@@ -291,7 +293,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       const targetRows = numRootCauses; // No header row in data
       const targetCols = editableCtqs.length + 1; // +1 for root cause column
       
-      console.log(`Syncing matrix dimensions: ${matrixData.matrix.length}x${matrixData.matrix[0]?.length} -> ${targetRows}x${targetCols}`);
+      //console.log(`Syncing matrix dimensions: ${matrixData.matrix.length}x${matrixData.matrix[0]?.length} -> ${targetRows}x${targetCols}`);
       
       setMatrixData(prev => {
         const newMatrix = [];
@@ -477,7 +479,7 @@ const checkMinimumColumns = () => {
                           type="number"
                           min="0"
                           max="10"
-                          value={importanceScores[colIndex] || 5}
+                          value={importanceScores[colIndex] !== undefined ? importanceScores[colIndex] : 5}
                           onChange={(e) => updateImportanceScore(colIndex, e.target.value)}
                           className="w-16 text-center"
                           placeholder="5"

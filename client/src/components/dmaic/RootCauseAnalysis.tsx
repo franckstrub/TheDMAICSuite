@@ -46,7 +46,7 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
       if (response.ok) {
         const defaultDiagramData = await response.text();
         setDiagramData(defaultDiagramData);
-        console.log('Loaded default fishbone diagram template');
+        //console.log('Loaded default fishbone diagram template');
       }
     } catch (error) {
       console.log('Could not load default fishbone diagram template');
@@ -55,7 +55,7 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
 
   const saveDiagramData = async (data: string) => {
     try {
-      console.log('Saving diagram data to server:', data.substring(0, 100) + '...');
+      //console.log('Saving diagram data to server:', data.substring(0, 100) + '...');
       const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/fishbone-diagram`, {
         method: 'POST',
         headers: {
@@ -65,7 +65,7 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
       });
       
       if (response.ok) {
-        console.log('Fishbone diagram saved successfully');
+        //console.log('Fishbone diagram saved successfully');
         toast({
           title: "Success",
           description: "Fishbone diagram saved successfully",
@@ -97,11 +97,11 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
       
       switch (data.event) {
         case 'init':
-          console.log('Draw.io initialized');
+          //console.log('Draw.io initialized');
           setIsLoaded(true);
           // Send existing diagram data if available
           if (diagramData && iframeRef.current) {
-            console.log('Loading existing diagram data into editor');
+            //console.log('Loading existing diagram data into editor');
             iframeRef.current.contentWindow?.postMessage(
               JSON.stringify({
                 action: 'load',
@@ -122,10 +122,10 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
           
         case 'export':
           // Handle export events - save the exported diagram
-          console.log('Export event received:', data);
+          //console.log('Export event received:', data);
           if (data.xml || data.data) {
             const xmlData = data.xml || data.data;
-            console.log('Saving exported diagram data');
+            //console.log('Saving exported diagram data');
             setDiagramData(xmlData);
             saveDiagramData(xmlData);
           } else {
@@ -150,9 +150,9 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
   }, [diagramData]);
 
   const handleSave = () => {
-    console.log('Save button clicked, isLoaded:', isLoaded);
+    //console.log('Save button clicked, isLoaded:', isLoaded);
     if (iframeRef.current) {
-      console.log('Requesting diagram export from draw.io');
+      //console.log('Requesting diagram export from draw.io');
       // Request current diagram data from draw.io using the correct message format
       iframeRef.current.contentWindow?.postMessage(
         JSON.stringify({ action: 'export', format: 'xmlsvg', xml: '', embedImages: false }),
@@ -214,7 +214,7 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
           frameBorder="0"
           /*allow="camera; microphone; geolocation"*/
           onLoad={() => {
-            console.log('Draw.io iframe loaded successfully');
+            //console.log('Draw.io iframe loaded successfully');
             setIsLoaded(true);
           }}
         />
