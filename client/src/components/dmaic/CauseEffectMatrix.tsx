@@ -346,8 +346,8 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
 
   // Update the calculateRowTotal function to include importance weighting
   const calculateRowTotal = (rowIndex: number) => {
-    // rowIndex is already the correct index since we removed the header row
-    return matrixData.matrix[rowIndex]?.slice(1, editableCtqs.length + 1).reduce((sum, cell, colIndex) => {
+    // Calculate row total = sum [(cell(row,column) × importance(col)] for all columns
+    return matrixData.matrix[rowIndex]?.reduce((sum, cell, colIndex) => {
       const cellValue = parseInt(cell) || 0;
       const importance = importanceScores[colIndex] || 0;
       return sum + (cellValue * importance);
