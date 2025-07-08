@@ -4,7 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { PlusCircle, Table2, AlertTriangle } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -13,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -266,8 +264,9 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
-          Prioritize the Root Causes defined in your Fishbone diagram with Multi-Vote score and complete 5 Why analysis.<br />
-        </p>        
+          Prioritize the Root Causes defined in your Fishbone diagram with Multi-Voting and complete 5 Why analysis.<br />
+        </p>
+              
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>

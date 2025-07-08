@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RootCauseAnalysis from "./RootCauseAnalysis";
 import AttributeCTQAnalysis from "./AttributeCTQAnalysis";
 import ContinuousCTQAnalysis from "./ContinuousCTQAnalysis";
+import CauseEffectMatrix from "./CauseEffectMatrix"
 import AnalyzeGateReviewValidation from "./AnalyzeGateReviewValidation";
 import FishboneIcon from '@/assets/fishboneicon.svg';
 
@@ -211,6 +212,7 @@ export default function AnalyzePhase() {
           </Tabs>
         </CardContent>
       </Card>
+      <CauseEffectMatrix projectId={projectId} ctqlist={ctqList}/>
       <AnalyzeGateReviewValidation projectId={projectId} />
     </div>
   );
