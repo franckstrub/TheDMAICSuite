@@ -143,10 +143,18 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     // Add new column to importance scores
     setImportanceScores(prev => [...prev, 5]);
     
-    // Add new column to matrix
+    // Add new column to matrix - ensure all rows exist and have proper length
     setMatrixData(prev => ({
       ...prev,
-      matrix: prev.matrix.map(row => [...row, ""])
+      matrix: prev.matrix.map((row, index) => {
+        const currentRow = Array.isArray(row) ? [...row] : [];
+        // Ensure row has enough columns before adding new one
+        while (currentRow.length < editableCtqs.length + 1) {
+          currentRow.push("");
+        }
+        currentRow.push(""); // Add the new column
+        return currentRow;
+      })
     }));
   };
   
@@ -164,7 +172,10 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     // Remove the last column from the matrix
     setMatrixData(prev => ({
       ...prev,
-      matrix: prev.matrix.map(row => row.slice(0, -1))
+      matrix: prev.matrix.map(row => {
+        const currentRow = Array.isArray(row) ? [...row] : [];
+        return currentRow.length > 0 ? currentRow.slice(0, -1) : [];
+      })
     }));
   };
   
@@ -186,6 +197,17 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
 
   const updateCellValue = (rowIndex: number, colIndex: number, value: string) => {
     const newMatrix = [...matrixData.matrix];
+    
+    // Ensure the row exists
+    if (!newMatrix[rowIndex]) {
+      newMatrix[rowIndex] = [];
+    }
+    
+    // Ensure the row has enough columns
+    while (newMatrix[rowIndex].length <= colIndex) {
+      newMatrix[rowIndex].push("");
+    }
+    
     newMatrix[rowIndex][colIndex] = value;
     setMatrixData(prev => ({ ...prev, matrix: newMatrix }));
   };
