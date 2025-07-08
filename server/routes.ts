@@ -3079,17 +3079,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const matrixData = req.body;
       
+      console.log('Saving Cause & Effect Matrix data:', JSON.stringify(matrixData, null, 2));
+      
       // Get user's organization ID
       const userClaims = (req.user as any)?.claims;
       const userId = userClaims?.sub;
       
       if (!userId) {
+        console.error('User not authenticated - missing userId');
         return res.status(400).json({ message: "User not authenticated" });
       }
 
       const userRecord = await storage.getUser(parseInt(userId));
       
       if (!userRecord?.organizationId) {
+        console.error('Organization not found for user:', userId);
         return res.status(401).json({ error: "Organization not found" });
       }
 
@@ -3101,22 +3105,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (existingMatrix) {
         // Update existing matrix
+        console.log('Updating existing matrix for project:', projectId);
         const [updatedMatrix] = await db
           .update(causeEffectMatrix)
           .set({
-            enabled: matrixData.enabled,
-            rootCauses: matrixData.rootCauses,
-            ctqs: matrixData.ctqs,
-            importanceScores: matrixData.importanceScores,
-            matrix: matrixData.matrix,
+            enabled: matrixData.enabled ?? false,
+            rootCauses: matrixData.rootCauses ?? [],
+            ctqs: matrixData.ctqs ?? [],
+            importanceScores: matrixData.importanceScores ?? [],
+            matrix: matrixData.matrix ?? [],
             lastUpdated: new Date()
           })
           .where(eq(causeEffectMatrix.projectId, projectId))
           .returning();
         
+        console.log('Matrix updated successfully:', updatedMatrix);
         return res.status(200).json(updatedMatrix);
       } else {
         // Create new matrix - we need to provide a ctqId, so let's use the first CTQ from the project
+        console.log('Creating new matrix for project:', projectId);
         const [firstCtq] = await db
           .select()
           .from(ctsCharacteristics)
@@ -3124,6 +3131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .limit(1);
         
         if (!firstCtq) {
+          console.error('No CTQs found for project:', projectId);
           return res.status(400).json({ message: "No CTQs found for this project" });
         }
 
@@ -3133,17 +3141,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             organizationId: userRecord.organizationId,
             projectId,
             ctqId: firstCtq.id,
-            enabled: matrixData.enabled,
-            rootCauses: matrixData.rootCauses,
-            ctqs: matrixData.ctqs,
-            importanceScores: matrixData.importanceScores,
-            matrix: matrixData.matrix
+            enabled: matrixData.enabled ?? false,
+            rootCauses: matrixData.rootCauses ?? [],
+            ctqs: matrixData.ctqs ?? [],
+            importanceScores: matrixData.importanceScores ?? [],
+            matrix: matrixData.matrix ?? []
           })
           .returning();
         
+        console.log('Matrix created successfully:', newMatrix);
         return res.status(201).json(newMatrix);
       }
     } catch (err) {
+      console.error('Error in cause-effect-matrix POST route:', err);
       return handleErrors(err, res);
     }
   });

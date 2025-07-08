@@ -204,6 +204,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       ctqs: editableCtqs,
       importanceScores: importanceScores
     };
+    console.log('Sending matrix data to server:', matrixToSave);
     saveMatrixMutation.mutate(matrixToSave);
   };
 
