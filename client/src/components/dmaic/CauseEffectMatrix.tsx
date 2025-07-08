@@ -182,14 +182,14 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   
   const [matrixData, setMatrixData] = useState<CauseEffectMatrix>({
     enabled: false,
-    matrix: Array(numRootCauses + 1).fill("").map(() => Array(editableCtqs.length + 1).fill("")) // +1 for header row
+    matrix: Array(numRootCauses).fill("").map(() => Array(editableCtqs.length + 1).fill("")) // No header row in data
   });
 
   const toggleMatrix = (enabled: boolean) => {
     setMatrixData(prev => ({
       ...prev,
       enabled,
-      matrix: enabled ? prev.matrix : Array(numRootCauses + 1).fill("").map(() => Array(editableCtqs.length + 1).fill(""))
+      matrix: enabled ? prev.matrix : Array(numRootCauses).fill("").map(() => Array(editableCtqs.length + 1).fill(""))
     }));
   };
 
@@ -254,7 +254,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       setMatrixData(prev => ({
         ...prev,
         enabled: existingMatrix.enabled || false,
-        matrix: existingMatrix.matrix || Array(numRootCauses + 1).fill(null).map(() => Array(editableCtqs.length + 1).fill(""))
+        matrix: existingMatrix.matrix || Array(numRootCauses).fill(null).map(() => Array(editableCtqs.length + 1).fill(""))
       }));
       
       // Update editable CTQs if they exist in the matrix
@@ -288,7 +288,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   // Keep matrix dimensions in sync with actual CTQ and root cause counts
   useEffect(() => {
     if (hasInitialized) {
-      const targetRows = numRootCauses + 1; // +1 for header row
+      const targetRows = numRootCauses; // No header row in data
       const targetCols = editableCtqs.length + 1; // +1 for root cause column
       
       console.log(`Syncing matrix dimensions: ${matrixData.matrix.length}x${matrixData.matrix[0]?.length} -> ${targetRows}x${targetCols}`);
@@ -324,6 +324,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
 
   // Update the calculateRowTotal function to include importance weighting
   const calculateRowTotal = (rowIndex: number) => {
+    // rowIndex is already the correct index since we removed the header row
     return matrixData.matrix[rowIndex]?.slice(1, editableCtqs.length + 1).reduce((sum, cell, colIndex) => {
       const cellValue = parseInt(cell) || 0;
       const importance = importanceScores[colIndex] || 0;
@@ -527,8 +528,8 @@ const checkMinimumColumns = () => {
                       {editableCtqs.map((_, colIndex) => (
                         <td key={`cell-${rowIndex}-${colIndex}`} className="border border-gray-300 p-2">
                           <Select
-                            value={matrixData.matrix[rowIndex + 1]?.[colIndex + 1] || ""}
-                            onValueChange={(value) => updateCellValue(rowIndex + 1, colIndex + 1, value)}
+                            value={matrixData.matrix[rowIndex]?.[colIndex + 1] || ""}
+                            onValueChange={(value) => updateCellValue(rowIndex, colIndex + 1, value)}
                           >
                             <SelectTrigger className="w-20">
                               <SelectValue placeholder="0" />
@@ -543,7 +544,7 @@ const checkMinimumColumns = () => {
                         </td>
                       ))}
                       <td className="border border-gray-300 p-2 bg-gray-50 font-medium text-center">
-                        {calculateRowTotal(rowIndex + 1)}
+                        {calculateRowTotal(rowIndex)}
                       </td>
                       <td className="border border-gray-300 p-2 text-center">
                         <Button
