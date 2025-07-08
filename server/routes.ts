@@ -11,7 +11,7 @@ import {
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
-  insertUserSchema, insertRootCausePrioritizationSchema
+  insertUserSchema, insertRootCausePrioritizationSchema, insertCauseEffectMatrixSchema
 
 } from "@shared/schema";
 import { 
@@ -22,7 +22,7 @@ import {
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
   customerRequirements, businessRequirements, msaAnalysis, processCapability,
-  fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization
+  fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization, causeEffectMatrix
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -2698,7 +2698,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(rootCausePrioritization.organizationId, userRecord.organizationId)
         ));
 
-      // Step 4: Delete the CTQ from CTS characteristics
+      // Step 4: Delete all Cause & Effect Matrix records for this CTQ
+      await db
+        .delete(causeEffectMatrix)
+        .where(and(
+          eq(causeEffectMatrix.ctqId, ctqId),
+          eq(causeEffectMatrix.projectId, projectId),
+          eq(causeEffectMatrix.organizationId, userRecord.organizationId)
+        ));
+
+      // Step 5: Delete the CTQ from CTS characteristics
       await db
         .delete(ctsCharacteristics)
         .where(and(
@@ -3040,6 +3049,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .returning();
         
         return res.status(201).json(newDiagram);
+      }
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Cause & Effect Matrix routes for DMAIC Analyze Phase
+  app.get("/api/projects/:projectId/ctq/:ctqId/cause-effect-matrix", async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      const [matrix] = await db
+        .select()
+        .from(causeEffectMatrix)
+        .where(and(
+          eq(causeEffectMatrix.projectId, projectId),
+          eq(causeEffectMatrix.ctqId, ctqId)
+        ));
+      
+      if (!matrix) {
+        return res.status(404).json({ message: "Cause & Effect Matrix not found" });
+      }
+      
+      return res.status(200).json(matrix);
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/ctq/:ctqId/cause-effect-matrix", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      const matrixData = req.body;
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      
+      if (!userRecord?.organizationId) {
+        return res.status(401).json({ error: "Organization not found" });
+      }
+
+      // Check if cause-effect matrix already exists for this CTQ
+      const [existingMatrix] = await db
+        .select()
+        .from(causeEffectMatrix)
+        .where(and(
+          eq(causeEffectMatrix.projectId, projectId),
+          eq(causeEffectMatrix.ctqId, ctqId)
+        ));
+
+      if (existingMatrix) {
+        // Update existing matrix
+        const [updatedMatrix] = await db
+          .update(causeEffectMatrix)
+          .set({
+            enabled: matrixData.enabled,
+            rootCauses: matrixData.rootCauses,
+            ctqs: matrixData.ctqs,
+            importanceScores: matrixData.importanceScores,
+            matrix: matrixData.matrix,
+            lastUpdated: new Date()
+          })
+          .where(and(
+            eq(causeEffectMatrix.projectId, projectId),
+            eq(causeEffectMatrix.ctqId, ctqId)
+          ))
+          .returning();
+        
+        return res.status(200).json(updatedMatrix);
+      } else {
+        // Create new matrix
+        const [newMatrix] = await db
+          .insert(causeEffectMatrix)
+          .values({
+            organizationId: userRecord.organizationId,
+            projectId,
+            ctqId,
+            enabled: matrixData.enabled,
+            rootCauses: matrixData.rootCauses,
+            ctqs: matrixData.ctqs,
+            importanceScores: matrixData.importanceScores,
+            matrix: matrixData.matrix
+          })
+          .returning();
+        
+        return res.status(201).json(newMatrix);
       }
     } catch (err) {
       return handleErrors(err, res);

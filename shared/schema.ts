@@ -976,6 +976,28 @@ export const insertRootCausePrioritizationSchema = createInsertSchema(rootCauseP
 export type InsertRootCausePrioritization = z.infer<typeof insertRootCausePrioritizationSchema>;
 export type RootCausePrioritization = typeof rootCausePrioritization.$inferSelect;
 
+// Cause & Effect Matrix for DMAIC Analyze Phase
+export const causeEffectMatrix = pgTable("cause_effect_matrix", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  projectId: integer("project_id").notNull(),
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  enabled: boolean("enabled").notNull().default(false),
+  rootCauses: json("root_causes").$type<string[]>(),
+  ctqs: json("ctqs").$type<Array<{ctq: string, ctqType: string, ctqId: number}>>(),
+  importanceScores: json("importance_scores").$type<number[]>(),
+  matrix: json("matrix").$type<string[][]>(),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertCauseEffectMatrixSchema = createInsertSchema(causeEffectMatrix).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertCauseEffectMatrix = z.infer<typeof insertCauseEffectMatrixSchema>;
+export type CauseEffectMatrix = typeof causeEffectMatrix.$inferSelect;
+
 // MSA (Measurement System Analysis) for each CTQ
 export const msaAnalysis = pgTable("msa_analysis", {
   id: serial("id").primaryKey(),
