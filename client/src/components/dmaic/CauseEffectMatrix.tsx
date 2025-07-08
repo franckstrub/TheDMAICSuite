@@ -131,13 +131,18 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
 
   // Function to add a new CTQ column
   const addCtqColumn = () => {
+    console.log('Adding CTQ column, current CTQs:', editableCtqs);
     const newCtq = {
       ctq: `CTQ ${editableCtqs.length + 1}`,
       ctqType: 'Custom',
       ctqId: Date.now()
     };
     
-    setEditableCtqs(prev => [...prev, newCtq]);
+    setEditableCtqs(prev => {
+      const newCtqs = [...prev, newCtq];
+      console.log('New CTQs after adding:', newCtqs);
+      return newCtqs;
+    });
     
     // Add new column to importance scores
     setImportanceScores(prev => [...prev, 5]);
@@ -151,11 +156,16 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   
   // Function to remove the last CTQ column
   const removeCtqColumn = () => {
+    console.log('Removing CTQ column, current CTQs:', editableCtqs);
     // Don't remove if we're down to the minimum columns
     if (checkMinimumColumns()) return;
 
     // Remove the last CTQ
-    setEditableCtqs(prev => prev.slice(0, -1));
+    setEditableCtqs(prev => {
+      const newCtqs = prev.slice(0, -1);
+      console.log('New CTQs after removing:', newCtqs);
+      return newCtqs;
+    });
     
     // Remove the last importance score
     setImportanceScores(prev => prev.slice(0, -1));
