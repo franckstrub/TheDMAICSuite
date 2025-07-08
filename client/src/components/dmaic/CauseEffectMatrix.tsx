@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface CauseEffectMatrix {
   id?: number;
@@ -20,12 +22,69 @@ interface CauseEffectMatrix {
 
 interface CauseEffectMatrixProps {
   projectId: number;
+  ctqId: number;
   ctqlist: any;
   onSave?: (matrix: CauseEffectMatrix) => void;
 }
 
-export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseEffectMatrixProps) {
+export default function CauseEffectMatrix({ projectId, ctqId, ctqlist, onSave }: CauseEffectMatrixProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Query to load existing matrix data
+  const { data: existingMatrix, isLoading } = useQuery({
+    queryKey: ['/api/projects', projectId, 'ctq', ctqId, 'cause-effect-matrix'],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/cause-effect-matrix`);
+        if (response.status === 404) {
+          return null; // No existing matrix
+        }
+        if (!response.ok) {
+          throw new Error('Failed to load matrix');
+        }
+        return await response.json();
+      } catch (error) {
+        console.error('Error loading matrix:', error);
+        return null;
+      }
+    },
+  });
+
+  // Mutation to save matrix data
+  const saveMatrixMutation = useMutation({
+    mutationFn: async (matrixData: any) => {
+      const response = await apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/cause-effect-matrix`, {
+        method: 'POST',
+        body: JSON.stringify(matrixData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Cause & Effect Matrix saved successfully",
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/projects', projectId, 'ctq', ctqId, 'cause-effect-matrix'] 
+      });
+      if (onSave) {
+        onSave(matrixData);
+      }
+    },
+    onError: (error) => {
+      console.error('Error saving matrix:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save Cause & Effect Matrix",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Get CTQs from the ctqlist prop with debugging
   //console.log('CTQ List received:', ctqlist);
   let ctqs = [];
