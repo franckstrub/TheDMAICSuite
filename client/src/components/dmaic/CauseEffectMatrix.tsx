@@ -237,13 +237,26 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   
   useEffect(() => {
     if (existingMatrix && !hasInitialized) {
+      console.log('Initializing with existing matrix:', existingMatrix);
+      console.log('Existing importance scores:', existingMatrix.importanceScores);
+      
       setRootCauses(existingMatrix.rootCauses || Array(5).fill(""));
-      setImportanceScores(existingMatrix.importanceScores || Array(maxCTQs).fill(5));
+      
+      // Properly initialize importance scores - ensure they match the CTQ count
+      if (existingMatrix.importanceScores && Array.isArray(existingMatrix.importanceScores)) {
+        setImportanceScores(existingMatrix.importanceScores);
+      } else {
+        // If no existing scores, create default scores based on CTQ count
+        const ctqCount = existingMatrix.ctqs ? existingMatrix.ctqs.length : maxCTQs;
+        setImportanceScores(Array(ctqCount).fill(5));
+      }
+      
       setMatrixData(prev => ({
         ...prev,
         enabled: existingMatrix.enabled || false,
         matrix: existingMatrix.matrix || Array(5).fill(null).map(() => Array(maxCTQs).fill(""))
       }));
+      
       // Update editable CTQs if they exist in the matrix
       if (existingMatrix.ctqs && Array.isArray(existingMatrix.ctqs)) {
         setEditableCtqs(existingMatrix.ctqs);
