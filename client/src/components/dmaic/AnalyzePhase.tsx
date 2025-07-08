@@ -201,9 +201,6 @@ export default function AnalyzePhase() {
                     {/* 6M's Fishbone diagram - Ishikawa diagram - Cause Effect Analysis + 5 Whys + Prioritization- */}
                     <RootCauseAnalysis projectId={projectId} ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq} />
                     
-                    {/* Cause & Effect Matrix for this CTQ */}
-                    <CauseEffectMatrix projectId={projectId} ctqId={ctqItem.ctqId} ctqlist={ctqList}/>
-                    
                     {ctqItem.ctqType === 'Attribute' ? (                    
                       <AttributeCTQAnalysis projectId={projectId} ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq}  />
                     ) : (                        

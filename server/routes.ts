@@ -2698,11 +2698,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           eq(rootCausePrioritization.organizationId, userRecord.organizationId)
         ));
 
-      // Step 4: Delete all Cause & Effect Matrix records for this CTQ
+      // Step 4: Delete all Cause & Effect Matrix records for this project (since they are project-level)
       await db
         .delete(causeEffectMatrix)
         .where(and(
-          eq(causeEffectMatrix.ctqId, ctqId),
           eq(causeEffectMatrix.projectId, projectId),
           eq(causeEffectMatrix.organizationId, userRecord.organizationId)
         ));
@@ -3056,18 +3055,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cause & Effect Matrix routes for DMAIC Analyze Phase
-  app.get("/api/projects/:projectId/ctq/:ctqId/cause-effect-matrix", async (req: Request, res: Response) => {
+  app.get("/api/projects/:projectId/cause-effect-matrix", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const ctqId = parseInt(req.params.ctqId);
       
       const [matrix] = await db
         .select()
         .from(causeEffectMatrix)
-        .where(and(
-          eq(causeEffectMatrix.projectId, projectId),
-          eq(causeEffectMatrix.ctqId, ctqId)
-        ));
+        .where(eq(causeEffectMatrix.projectId, projectId));
       
       if (!matrix) {
         return res.status(404).json({ message: "Cause & Effect Matrix not found" });
@@ -3079,10 +3074,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/ctq/:ctqId/cause-effect-matrix", isAuthenticated, async (req: Request, res: Response) => {
+  app.post("/api/projects/:projectId/cause-effect-matrix", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
-      const ctqId = parseInt(req.params.ctqId);
       const matrixData = req.body;
       
       // Get user's organization ID
@@ -3099,14 +3093,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Organization not found" });
       }
 
-      // Check if cause-effect matrix already exists for this CTQ
+      // Check if cause-effect matrix already exists for this project
       const [existingMatrix] = await db
         .select()
         .from(causeEffectMatrix)
-        .where(and(
-          eq(causeEffectMatrix.projectId, projectId),
-          eq(causeEffectMatrix.ctqId, ctqId)
-        ));
+        .where(eq(causeEffectMatrix.projectId, projectId));
 
       if (existingMatrix) {
         // Update existing matrix
@@ -3120,21 +3111,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             matrix: matrixData.matrix,
             lastUpdated: new Date()
           })
-          .where(and(
-            eq(causeEffectMatrix.projectId, projectId),
-            eq(causeEffectMatrix.ctqId, ctqId)
-          ))
+          .where(eq(causeEffectMatrix.projectId, projectId))
           .returning();
         
         return res.status(200).json(updatedMatrix);
       } else {
-        // Create new matrix
+        // Create new matrix - we need to provide a ctqId, so let's use the first CTQ from the project
+        const [firstCtq] = await db
+          .select()
+          .from(ctsCharacteristics)
+          .where(eq(ctsCharacteristics.projectId, projectId))
+          .limit(1);
+        
+        if (!firstCtq) {
+          return res.status(400).json({ message: "No CTQs found for this project" });
+        }
+
         const [newMatrix] = await db
           .insert(causeEffectMatrix)
           .values({
             organizationId: userRecord.organizationId,
             projectId,
-            ctqId,
+            ctqId: firstCtq.id,
             enabled: matrixData.enabled,
             rootCauses: matrixData.rootCauses,
             ctqs: matrixData.ctqs,
