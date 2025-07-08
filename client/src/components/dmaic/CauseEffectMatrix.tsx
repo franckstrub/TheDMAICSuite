@@ -22,21 +22,20 @@ interface CauseEffectMatrix {
 
 interface CauseEffectMatrixProps {
   projectId: number;
-  ctqId: number;
   ctqlist: any;
   onSave?: (matrix: CauseEffectMatrix) => void;
 }
 
-export default function CauseEffectMatrix({ projectId, ctqId, ctqlist, onSave }: CauseEffectMatrixProps) {
+export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseEffectMatrixProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Query to load existing matrix data
   const { data: existingMatrix, isLoading } = useQuery({
-    queryKey: ['/api/projects', projectId, 'ctq', ctqId, 'cause-effect-matrix'],
+    queryKey: ['/api/projects', projectId, 'cause-effect-matrix'],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/cause-effect-matrix`);
+        const response = await fetch(`/api/projects/${projectId}/cause-effect-matrix`);
         if (response.status === 404) {
           return null; // No existing matrix
         }
@@ -54,7 +53,7 @@ export default function CauseEffectMatrix({ projectId, ctqId, ctqlist, onSave }:
   // Mutation to save matrix data
   const saveMatrixMutation = useMutation({
     mutationFn: async (matrixData: any) => {
-      const response = await apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/cause-effect-matrix`, {
+      const response = await apiRequest(`/api/projects/${projectId}/cause-effect-matrix`, {
         method: 'POST',
         body: JSON.stringify(matrixData),
         headers: {
@@ -63,16 +62,16 @@ export default function CauseEffectMatrix({ projectId, ctqId, ctqlist, onSave }:
       });
       return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Cause & Effect Matrix saved successfully",
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/projects', projectId, 'ctq', ctqId, 'cause-effect-matrix'] 
+        queryKey: ['/api/projects', projectId, 'cause-effect-matrix'] 
       });
       if (onSave) {
-        onSave(matrixData);
+        onSave(data);
       }
     },
     onError: (error) => {
@@ -205,11 +204,28 @@ export default function CauseEffectMatrix({ projectId, ctqId, ctqlist, onSave }:
       ctqs: editableCtqs,
       importanceScores: importanceScores
     };
-    //logic to implement here
+    saveMatrixMutation.mutate(matrixToSave);
   };
 
   // Add this new state for importance scores
   const [importanceScores, setImportanceScores] = useState<number[]>(Array(maxCTQs).fill(5));
+
+  // Initialize data from existing matrix
+  useEffect(() => {
+    if (existingMatrix) {
+      setRootCauses(existingMatrix.rootCauses || Array(5).fill(""));
+      setImportanceScores(existingMatrix.importanceScores || Array(maxCTQs).fill(5));
+      setMatrixData(prev => ({
+        ...prev,
+        enabled: existingMatrix.enabled || false,
+        matrix: existingMatrix.matrix || Array(5).fill(null).map(() => Array(maxCTQs).fill(""))
+      }));
+      // Update editable CTQs if they exist in the matrix
+      if (existingMatrix.ctqs && Array.isArray(existingMatrix.ctqs)) {
+        setEditableCtqs(existingMatrix.ctqs);
+      }
+    }
+  }, [existingMatrix, maxCTQs]);
 
   // Update the importance score function
   const updateImportanceScore = (colIndex: number, value: string) => {
@@ -468,8 +484,12 @@ const checkMinimumColumns = () => {
                   <i className="fas fa-plus"></i>
                   <span>Add a Root Cause</span>
                 </Button>
-                <Button onClick={handleSaveMatrix} className="mt-4">
-                  Save Matrix
+                <Button 
+                  onClick={handleSaveMatrix} 
+                  className="mt-4"
+                  disabled={saveMatrixMutation.isPending}
+                >
+                  {saveMatrixMutation.isPending ? "Saving..." : "Save Matrix"}
                 </Button>
               </div>
               <div className="mt-4 space-y-2">
