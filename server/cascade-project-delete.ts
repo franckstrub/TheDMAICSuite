@@ -14,7 +14,14 @@ import {
   stakeholderAnalysisItems,
   gateReviewDeliverables,
   gateReviewValidators,
-  ganttTasks
+  ganttTasks,
+  causeEffectMatrix,
+  rootCausePrioritization,
+  msaAnalysis,
+  processCapability,
+  ctsCharacteristics,
+  fishboneDiagrams,
+  processMaps
 } from '@shared/schema';
 
 /**
@@ -127,6 +134,62 @@ export async function permanentlyDeleteProject(projectId: number): Promise<numbe
     deletionCount += ganttTasksResult.length > 0 ? 1 : 0;
     console.log(`Deleted ${ganttTasksResult.length} Gantt tasks`);
 
+    // Delete cause-effect matrix
+    const causeEffectMatrixResult = await db.delete(causeEffectMatrix)
+      .where(eq(causeEffectMatrix.projectId, projectId))
+      .returning();
+    results['causeEffectMatrix'] = causeEffectMatrixResult.length;
+    deletionCount += causeEffectMatrixResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${causeEffectMatrixResult.length} cause-effect matrix records`);
+
+    // Delete root cause prioritization
+    const rootCauseResult = await db.delete(rootCausePrioritization)
+      .where(eq(rootCausePrioritization.projectId, projectId))
+      .returning();
+    results['rootCausePrioritization'] = rootCauseResult.length;
+    deletionCount += rootCauseResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${rootCauseResult.length} root cause prioritization records`);
+
+    // Delete MSA analysis
+    const msaResult = await db.delete(msaAnalysis)
+      .where(eq(msaAnalysis.projectId, projectId))
+      .returning();
+    results['msaAnalysis'] = msaResult.length;
+    deletionCount += msaResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${msaResult.length} MSA analysis records`);
+
+    // Delete process capability
+    const processCapabilityResult = await db.delete(processCapability)
+      .where(eq(processCapability.projectId, projectId))
+      .returning();
+    results['processCapability'] = processCapabilityResult.length;
+    deletionCount += processCapabilityResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${processCapabilityResult.length} process capability records`);
+
+    // Delete fishbone diagrams
+    const fishboneResult = await db.delete(fishboneDiagrams)
+      .where(eq(fishboneDiagrams.projectId, projectId))
+      .returning();
+    results['fishboneDiagrams'] = fishboneResult.length;
+    deletionCount += fishboneResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${fishboneResult.length} fishbone diagrams`);
+
+    // Delete process maps
+    const processMapsResult = await db.delete(processMaps)
+      .where(eq(processMaps.projectId, projectId))
+      .returning();
+    results['processMaps'] = processMapsResult.length;
+    deletionCount += processMapsResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${processMapsResult.length} process maps`);
+
+    // Delete CTS characteristics
+    const ctsResult = await db.delete(ctsCharacteristics)
+      .where(eq(ctsCharacteristics.projectId, projectId))
+      .returning();
+    results['ctsCharacteristics'] = ctsResult.length;
+    deletionCount += ctsResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${ctsResult.length} CTS characteristics`);
+
     // Delete project charter
     const charterResult = await db.delete(projectCharters)
       .where(eq(projectCharters.projectId, projectId))
@@ -177,6 +240,13 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
       { name: 'customerRequirements', table: customerRequirements },
       { name: 'sipocDiagrams', table: sipocDiagrams },
       { name: 'ganttTasks', table: ganttTasks },
+      { name: 'causeEffectMatrix', table: causeEffectMatrix },
+      { name: 'rootCausePrioritization', table: rootCausePrioritization },
+      { name: 'msaAnalysis', table: msaAnalysis },
+      { name: 'processCapability', table: processCapability },
+      { name: 'fishboneDiagrams', table: fishboneDiagrams },
+      { name: 'processMaps', table: processMaps },
+      { name: 'ctsCharacteristics', table: ctsCharacteristics },
       { name: 'projectCharters', table: projectCharters }
     ];
     
