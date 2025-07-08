@@ -148,7 +148,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       matrix: prev.matrix.map((row, index) => {
         const currentRow = Array.isArray(row) ? [...row] : [];
         // Ensure row has enough columns before adding new one
-        while (currentRow.length < editableCtqs.length + 1) {
+        while (currentRow.length < editableCtqs.length) {
           currentRow.push("");
         }
         currentRow.push(""); // Add the new column
@@ -237,10 +237,10 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   
   useEffect(() => {
     if (existingMatrix && !hasInitialized) {
-      console.log('Initializing with existing matrix:', existingMatrix);
-      console.log('Existing importance scores:', existingMatrix.importanceScores);
-      console.log('Existing CTQs:', existingMatrix.ctqs);
-      console.log('Current editableCtqs before update:', editableCtqs);
+      //console.log('Initializing with existing matrix:', existingMatrix);
+      //console.log('Existing importance scores:', existingMatrix.importanceScores);
+      //console.log('Existing CTQs:', existingMatrix.ctqs);
+      //console.log('Current editableCtqs before update:', editableCtqs);
       
       setRootCauses(existingMatrix.rootCauses || Array(5).fill(""));
       
@@ -256,7 +256,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       setMatrixData(prev => ({
         ...prev,
         enabled: existingMatrix.enabled || false,
-        matrix: existingMatrix.matrix || Array(numRootCauses).fill(null).map(() => Array(editableCtqs.length + 1).fill(""))
+        matrix: existingMatrix.matrix || Array(numRootCauses).fill(null).map(() => Array(editableCtqs.length).fill(""))
       }));
       
       // Update editable CTQs if they exist in the matrix
@@ -291,7 +291,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   useEffect(() => {
     if (hasInitialized) {
       const targetRows = numRootCauses; // No header row in data
-      const targetCols = editableCtqs.length + 1; // +1 for root cause column
+      const targetCols = editableCtqs.length; // No +1 needed - root causes stored separately
       
       //console.log(`Syncing matrix dimensions: ${matrixData.matrix.length}x${matrixData.matrix[0]?.length} -> ${targetRows}x${targetCols}`);
       
@@ -527,13 +527,11 @@ const checkMinimumColumns = () => {
                           placeholder={`Enter root cause ${rowIndex + 1}`}
                         />
                       </td>
-                      {editableCtqs.map((_, colIndex) => {
-                        console.log(`Rendering cell [${rowIndex}][${colIndex + 1}] with value:`, matrixData.matrix[rowIndex]?.[colIndex + 1]);
-                        return (
+                      {editableCtqs.map((_, colIndex) => (
                         <td key={`cell-${rowIndex}-${colIndex}`} className="border border-gray-300 p-2">
                           <Select
-                            value={matrixData.matrix[rowIndex]?.[colIndex + 1] || ""}
-                            onValueChange={(value) => updateCellValue(rowIndex, colIndex + 1, value)}
+                            value={matrixData.matrix[rowIndex]?.[colIndex] || ""}
+                            onValueChange={(value) => updateCellValue(rowIndex, colIndex, value)}
                           >
                             <SelectTrigger className="w-20">
                               <SelectValue placeholder="0" />
