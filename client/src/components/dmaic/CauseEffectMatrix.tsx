@@ -182,14 +182,14 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   
   const [matrixData, setMatrixData] = useState<CauseEffectMatrix>({
     enabled: false,
-    matrix: Array(numRootCauses + 1).fill("").map(() => Array(maxCTQs + 1).fill("")) // +1 for header row
+    matrix: Array(numRootCauses + 1).fill("").map(() => Array(editableCtqs.length + 1).fill("")) // +1 for header row
   });
 
   const toggleMatrix = (enabled: boolean) => {
     setMatrixData(prev => ({
       ...prev,
       enabled,
-      matrix: enabled ? prev.matrix : Array(numRootCauses + 1).fill("").map(() => Array(maxCTQs + 1).fill(""))
+      matrix: enabled ? prev.matrix : Array(numRootCauses + 1).fill("").map(() => Array(editableCtqs.length + 1).fill(""))
     }));
   };
 
@@ -254,7 +254,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       setMatrixData(prev => ({
         ...prev,
         enabled: existingMatrix.enabled || false,
-        matrix: existingMatrix.matrix || Array(5).fill(null).map(() => Array(maxCTQs).fill(""))
+        matrix: existingMatrix.matrix || Array(numRootCauses + 1).fill(null).map(() => Array(editableCtqs.length + 1).fill(""))
       }));
       
       // Update editable CTQs if they exist in the matrix
@@ -284,6 +284,35 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       }
     }
   }, [editableCtqs.length, hasInitialized]);
+
+  // Keep matrix dimensions in sync with actual CTQ and root cause counts
+  useEffect(() => {
+    if (hasInitialized) {
+      const targetRows = numRootCauses + 1; // +1 for header row
+      const targetCols = editableCtqs.length + 1; // +1 for root cause column
+      
+      console.log(`Syncing matrix dimensions: ${matrixData.matrix.length}x${matrixData.matrix[0]?.length} -> ${targetRows}x${targetCols}`);
+      
+      setMatrixData(prev => {
+        const newMatrix = [];
+        
+        // Create rows with correct dimensions
+        for (let i = 0; i < targetRows; i++) {
+          const newRow = [];
+          for (let j = 0; j < targetCols; j++) {
+            // Preserve existing values if they exist
+            newRow[j] = prev.matrix[i]?.[j] || "";
+          }
+          newMatrix.push(newRow);
+        }
+        
+        return {
+          ...prev,
+          matrix: newMatrix
+        };
+      });
+    }
+  }, [editableCtqs.length, numRootCauses, hasInitialized]);
 
   // Update the importance score function
   const updateImportanceScore = (colIndex: number, value: string) => {
