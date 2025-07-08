@@ -140,8 +140,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     
     setEditableCtqs(prev => [...prev, newCtq]);
     
-    // Add new column to importance scores
-    setImportanceScores(prev => [...prev, 5]);
+    // Note: importance scores will be synced automatically by useEffect
     
     // Add new column to matrix - ensure all rows exist and have proper length
     setMatrixData(prev => ({
@@ -166,8 +165,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     // Remove the last CTQ
     setEditableCtqs(prev => prev.slice(0, -1));
     
-    // Remove the last importance score
-    setImportanceScores(prev => prev.slice(0, -1));
+    // Note: importance scores will be synced automatically by useEffect
     
     // Remove the last column from the matrix
     setMatrixData(prev => ({
@@ -229,8 +227,10 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     saveMatrixMutation.mutate(matrixToSave);
   };
 
-  // Add this new state for importance scores
-  const [importanceScores, setImportanceScores] = useState<number[]>(Array(maxCTQs).fill(5));
+  // Add this new state for importance scores - initialize to match editableCtqs length
+  const [importanceScores, setImportanceScores] = useState<number[]>(() => 
+    Array(editableCtqs.length).fill(5)
+  );
 
   // Initialize data from existing matrix - only on first load
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -264,6 +264,26 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       setHasInitialized(true);
     }
   }, [existingMatrix, maxCTQs, hasInitialized]);
+
+  // Keep importance scores in sync with editableCtqs length
+  useEffect(() => {
+    if (hasInitialized) {
+      const currentLength = importanceScores.length;
+      const targetLength = editableCtqs.length;
+      
+      if (currentLength !== targetLength) {
+        console.log(`Syncing importance scores: ${currentLength} -> ${targetLength}`);
+        if (targetLength > currentLength) {
+          // Add new scores with default value 5
+          const newScores = [...importanceScores, ...Array(targetLength - currentLength).fill(5)];
+          setImportanceScores(newScores);
+        } else {
+          // Remove excess scores
+          setImportanceScores(importanceScores.slice(0, targetLength));
+        }
+      }
+    }
+  }, [editableCtqs.length, hasInitialized]);
 
   // Update the importance score function
   const updateImportanceScore = (colIndex: number, value: string) => {
