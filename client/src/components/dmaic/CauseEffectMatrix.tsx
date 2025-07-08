@@ -229,9 +229,9 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       ctqs: editableCtqs,
       importanceScores: importanceScores
     };
-    console.log('Matrix dimensions before save:', matrixData.matrix.length, 'x', matrixData.matrix[0]?.length);
-    console.log('Corrected matrix dimensions:', correctedMatrix.length, 'x', correctedMatrix[0]?.length);
-    console.log('Expected dimensions: 5 x', editableCtqs.length);
+    //console.log('Matrix dimensions before save:', matrixData.matrix.length, 'x', matrixData.matrix[0]?.length);
+    //console.log('Corrected matrix dimensions:', correctedMatrix.length, 'x', correctedMatrix[0]?.length);
+    //console.log('Expected dimensions: 5 x', editableCtqs.length);
     saveMatrixMutation.mutate(matrixToSave);
   };
 
