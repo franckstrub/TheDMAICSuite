@@ -53,14 +53,12 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   // Mutation to save matrix data
   const saveMatrixMutation = useMutation({
     mutationFn: async (matrixData: any) => {
-      const response = await apiRequest(`/api/projects/${projectId}/cause-effect-matrix`, {
-        method: 'POST',
-        body: JSON.stringify(matrixData),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      return response;
+      const response = await apiRequest(
+        'POST',
+        `/api/projects/${projectId}/cause-effect-matrix`,
+        matrixData
+      );
+      return response.json();
     },
     onSuccess: (data) => {
       toast({
