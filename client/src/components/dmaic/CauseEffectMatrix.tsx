@@ -481,10 +481,10 @@ const checkMinimumColumns = () => {
                         </div>
                       </th>
                     ))}
-                    <th className="border border-gray-300 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="border border-gray-300 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Total
                     </th>
-                    <th className="border border-gray-300 px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="border border-gray-300 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Action
                     </th>
                   </tr>
@@ -506,10 +506,10 @@ const checkMinimumColumns = () => {
                         />
                       </td>
                     ))}
-                    <td className="border border-gray-300 px-4 py-2 text-xs font-medium text-blue-700">
+                    <td className="border border-gray-300 px-4 py-2 text-center text-xs font-medium text-blue-700">
                       Weight
                     </td>
-                    <td className="border border-gray-300 p-2">
+                    <td className="border border-gray-300 p-2 flex justify-center">
                       {/* Add CTQ Column Button */}
                       <div className="inline-flex rounded-md shadow-sm border border-gray-200">
                         <Button
@@ -521,7 +521,7 @@ const checkMinimumColumns = () => {
                       >
                         <i className="fas fa-plus text-blue-600"></i>
                       </Button>
-                      <div className="border-l border-gray-200"></div> {/* Divider */}
+                      <div className="border-l border-r border-gray-200"></div> {/* Divider */}
                       <Button
                         variant="ghost"
                         size="sm"
