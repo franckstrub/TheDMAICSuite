@@ -3122,25 +3122,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Matrix updated successfully:', updatedMatrix);
         return res.status(200).json(updatedMatrix);
       } else {
-        // Create new matrix - we need to provide a ctqId, so let's use the first CTQ from the project
+        // Create new matrix
         console.log('Creating new matrix for project:', projectId);
-        const [firstCtq] = await db
-          .select()
-          .from(ctsCharacteristics)
-          .where(eq(ctsCharacteristics.projectId, projectId))
-          .limit(1);
-        
-        if (!firstCtq) {
-          console.error('No CTQs found for project:', projectId);
-          return res.status(400).json({ message: "No CTQs found for this project" });
-        }
 
         const [newMatrix] = await db
           .insert(causeEffectMatrix)
           .values({
             organizationId: userRecord.organizationId,
             projectId,
-            ctqId: firstCtq.id,
             enabled: matrixData.enabled ?? false,
             rootCauses: matrixData.rootCauses ?? [],
             ctqs: matrixData.ctqs ?? [],
