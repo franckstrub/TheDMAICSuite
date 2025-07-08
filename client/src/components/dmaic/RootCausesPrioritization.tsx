@@ -267,13 +267,16 @@ export default function RootCausesPrioritization({ projectId, ctqId, onSave }: R
           Prioritize the Root Causes defined in your Fishbone diagram with Multi-Voting and complete 5 Why analysis.<br />
         </p>
               
+        {/* Scroll indicator */}
+        <div className="relative">
+          <p className="absolute max-w-[180px] text-center top-0 right-0 bg-blue-100 text-blue-600 mb-1 px-2 py-1 text-xs rounded-bl z-10">
+            ← Scroll horizontally →
+          </p>
+        </div>
         <div className="overflow-x-auto">
+          
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
-              {/* Scroll indicator */}
-            <th className="relative top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
-              ← Scroll horizontally →
-            </th>
               <tr>
                 <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Root Cause</th>
                 <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votes</th>
