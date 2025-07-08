@@ -217,13 +217,21 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   };
 
   const handleSaveMatrix = () => {
+    // Ensure matrix is 5x4 (5 rows, 4 columns) before saving
+    const correctedMatrix = matrixData.matrix.map(row => 
+      Array.isArray(row) ? row.slice(0, editableCtqs.length) : Array(editableCtqs.length).fill("")
+    );
+    
     const matrixToSave = {
       ...matrixData,
+      matrix: correctedMatrix,
       rootCauses: rootCauses,
       ctqs: editableCtqs,
       importanceScores: importanceScores
     };
-    //console.log('Sending matrix data to server:', matrixToSave);
+    console.log('Matrix dimensions before save:', matrixData.matrix.length, 'x', matrixData.matrix[0]?.length);
+    console.log('Corrected matrix dimensions:', correctedMatrix.length, 'x', correctedMatrix[0]?.length);
+    console.log('Expected dimensions: 5 x', editableCtqs.length);
     saveMatrixMutation.mutate(matrixToSave);
   };
 
