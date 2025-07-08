@@ -245,12 +245,20 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   
   useEffect(() => {
     if (existingMatrix && !hasInitialized) {
-      //console.log('Initializing with existing matrix:', existingMatrix);
-      //console.log('Existing importance scores:', existingMatrix.importanceScores);
-      //console.log('Existing CTQs:', existingMatrix.ctqs);
-      //console.log('Current editableCtqs before update:', editableCtqs);
+      console.log('Initializing with existing matrix:', existingMatrix);
+      console.log('Existing root causes:', existingMatrix.rootCauses);
+      console.log('Existing importance scores:', existingMatrix.importanceScores);
+      console.log('Existing CTQs:', existingMatrix.ctqs);
+      console.log('Current editableCtqs before update:', editableCtqs);
       
-      setRootCauses(existingMatrix.rootCauses || Array(5).fill(""));
+      // Ensure root causes are properly set from the existing matrix
+      if (existingMatrix.rootCauses && Array.isArray(existingMatrix.rootCauses)) {
+        console.log('Setting root causes from existing matrix:', existingMatrix.rootCauses);
+        setRootCauses(existingMatrix.rootCauses);
+      } else {
+        console.log('No existing root causes, using empty array');
+        setRootCauses(Array(5).fill(""));
+      }
       
       // Properly initialize importance scores - ensure they match the CTQ count
       if (existingMatrix.importanceScores && Array.isArray(existingMatrix.importanceScores)) {
