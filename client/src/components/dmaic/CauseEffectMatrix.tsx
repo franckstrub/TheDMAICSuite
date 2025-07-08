@@ -180,6 +180,33 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   const [rootCauses, setRootCauses] = useState<string[]>(Array(5).fill(""));
   const [numRootCauses, setNumRootCauses] = useState<number>(5); // Track number of root causes
   
+  // Functions to add and remove root causes
+  const addRootCause = () => {
+    const newRootCauses = [...rootCauses, ""];
+    setRootCauses(newRootCauses);
+    setNumRootCauses(newRootCauses.length);
+    
+    // Add new row to matrix
+    setMatrixData(prev => ({
+      ...prev,
+      matrix: [...prev.matrix, Array(editableCtqs.length).fill("")]
+    }));
+  };
+  
+  const removeRootCause = () => {
+    if (rootCauses.length > 1) { // Keep at least 1 root cause
+      const newRootCauses = rootCauses.slice(0, -1);
+      setRootCauses(newRootCauses);
+      setNumRootCauses(newRootCauses.length);
+      
+      // Remove last row from matrix
+      setMatrixData(prev => ({
+        ...prev,
+        matrix: prev.matrix.slice(0, -1)
+      }));
+    }
+  };
+  
   const [matrixData, setMatrixData] = useState<CauseEffectMatrix>({
     enabled: false,
     matrix: Array(numRootCauses).fill("").map(() => Array(editableCtqs.length + 1).fill("")) // No header row in data
