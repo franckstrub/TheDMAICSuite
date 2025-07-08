@@ -180,43 +180,18 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   const [rootCauses, setRootCauses] = useState<string[]>(Array(5).fill(""));
   const [numRootCauses, setNumRootCauses] = useState<number>(5); // Track number of root causes
   
-  // Functions to add and remove root causes
-  const addRootCause = () => {
-    const newRootCauses = [...rootCauses, ""];
-    setRootCauses(newRootCauses);
-    setNumRootCauses(newRootCauses.length);
-    
-    // Add new row to matrix
-    setMatrixData(prev => ({
-      ...prev,
-      matrix: [...prev.matrix, Array(editableCtqs.length).fill("")]
-    }));
-  };
-  
-  const removeRootCause = () => {
-    if (rootCauses.length > 1) { // Keep at least 1 root cause
-      const newRootCauses = rootCauses.slice(0, -1);
-      setRootCauses(newRootCauses);
-      setNumRootCauses(newRootCauses.length);
-      
-      // Remove last row from matrix
-      setMatrixData(prev => ({
-        ...prev,
-        matrix: prev.matrix.slice(0, -1)
-      }));
-    }
-  };
+
   
   const [matrixData, setMatrixData] = useState<CauseEffectMatrix>({
     enabled: false,
-    matrix: Array(numRootCauses).fill("").map(() => Array(editableCtqs.length + 1).fill("")) // No header row in data
+    matrix: Array(numRootCauses).fill("").map(() => Array(editableCtqs.length).fill("")) // No header row in data
   });
 
   const toggleMatrix = (enabled: boolean) => {
     setMatrixData(prev => ({
       ...prev,
       enabled,
-      matrix: enabled ? prev.matrix : Array(numRootCauses).fill("").map(() => Array(editableCtqs.length + 1).fill(""))
+      matrix: enabled ? prev.matrix : Array(numRootCauses).fill("").map(() => Array(editableCtqs.length).fill(""))
     }));
   };
 
@@ -272,19 +247,21 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   
   useEffect(() => {
     if (existingMatrix && !hasInitialized) {
-      console.log('Initializing with existing matrix:', existingMatrix);
-      console.log('Existing root causes:', existingMatrix.rootCauses);
-      console.log('Existing importance scores:', existingMatrix.importanceScores);
-      console.log('Existing CTQs:', existingMatrix.ctqs);
-      console.log('Current editableCtqs before update:', editableCtqs);
+      //console.log('Initializing with existing matrix:', existingMatrix);
+      //console.log('Existing root causes:', existingMatrix.rootCauses);
+      //console.log('Existing importance scores:', existingMatrix.importanceScores);
+      //console.log('Existing CTQs:', existingMatrix.ctqs);
+      //console.log('Current editableCtqs before update:', editableCtqs);
       
       // Ensure root causes are properly set from the existing matrix
       if (existingMatrix.rootCauses && Array.isArray(existingMatrix.rootCauses)) {
-        console.log('Setting root causes from existing matrix:', existingMatrix.rootCauses);
+        //console.log('Setting root causes from existing matrix:', existingMatrix.rootCauses);
         setRootCauses(existingMatrix.rootCauses);
+        setNumRootCauses(existingMatrix.rootCauses.length);
       } else {
-        console.log('No existing root causes, using empty array');
+        //console.log('No existing root causes, using empty array');
         setRootCauses(Array(5).fill(""));
+        setNumRootCauses(5);
       }
       
       // Properly initialize importance scores - ensure they match the CTQ count
@@ -385,10 +362,10 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     // Add new empty root cause
     setRootCauses(prev => [...prev, ""]);
     
-    // Add new row to matrix
+    // Add new row to matrix with correct number of columns (CTQs only)
     setMatrixData(prev => ({
       ...prev,
-      matrix: [...prev.matrix, Array(maxCTQs + 1).fill("")]
+      matrix: [...prev.matrix, Array(editableCtqs.length).fill("")]
     }));
   };
 
@@ -401,7 +378,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     
     // Clear all matrix values for this row
     const newMatrix = [...matrixData.matrix];
-    newMatrix[rowIndex + 1] = Array(maxCTQs + 1).fill("");
+    newMatrix[rowIndex] = Array(editableCtqs.length).fill("");
     setMatrixData(prev => ({ ...prev, matrix: newMatrix }));
   };
 
@@ -416,7 +393,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
     // Remove the row from the matrix
     setMatrixData(prev => ({
       ...prev,
-      matrix: prev.matrix.filter((_, i) => i !== rowIndex + 1) // +1 to account for header row
+      matrix: prev.matrix.filter((_, i) => i !== rowIndex)
     }));
 
     // Update the row count
