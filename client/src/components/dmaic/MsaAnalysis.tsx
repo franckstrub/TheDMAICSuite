@@ -675,19 +675,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       // Save current state for undo (always save, even if empty) - same pattern as ProcessCapability
       setUndoStates(prev => ({
         ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {
-          ctq: ctq,
-          appraiser1Name: "",
-          appraiser2Name: "",
-          appraiser3Name: "",
-          gageRRData: generateDefaultContinuousData(),
-          sigmaMultiplier: 6,
-          tolerance: undefined,
-          repetitions: 2,
-          numberOfAppraisers: 2,
-          studyDateTime: new Date().toISOString(),
-          justification: "",
-        }))
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]?.gageRRData || []))
       }));
       
       // Parse tab-separated or comma-separated values
@@ -853,19 +841,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       // Save current state for undo (always save, even if empty) - same pattern as ProcessCapability
       setUndoStates(prev => ({
         ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {
-          ctq: ctq,
-          appraiser1Name: "",
-          appraiser2Name: "",
-          appraiser3Name: "",
-          gageRRData: generateDefaultContinuousData(),
-          sigmaMultiplier: 6,
-          tolerance: undefined,
-          repetitions: 2,
-          numberOfAppraisers: 2,
-          studyDateTime: new Date().toISOString(),
-          justification: "",
-        }))
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]?.gageRRData || []))
       }));
       
       // Parse tab-separated or comma-separated values
@@ -976,15 +952,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle undo functionality
   const handleUndo = (ctq: string) => {
     if (undoStates[ctq]) {
-      // Save current state for redo before undoing
+      // Save current gageRRData for redo before undoing
       setRedoStates(prev => ({
         ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]?.gageRRData || []))
       }));
       
+      // Restore only the gageRRData array - same pattern as ProcessCapability
       setContinuousMsaData(prev => ({
         ...prev,
-        [ctq]: undoStates[ctq]
+        [ctq]: {
+          ...prev[ctq],
+          gageRRData: undoStates[ctq]
+        }
       }));
       
       // Hide undo button and show redo button
@@ -1014,15 +994,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle redo functionality
   const handleRedo = (ctq: string) => {
     if (redoStates[ctq]) {
-      // Save current state for undo before redoing
+      // Save current gageRRData for undo before redoing
       setUndoStates(prev => ({
         ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]?.gageRRData || []))
       }));
       
+      // Restore only the gageRRData array - same pattern as ProcessCapability
       setContinuousMsaData(prev => ({
         ...prev,
-        [ctq]: redoStates[ctq]
+        [ctq]: {
+          ...prev[ctq],
+          gageRRData: redoStates[ctq]
+        }
       }));
       
       // Show undo button and hide redo button
