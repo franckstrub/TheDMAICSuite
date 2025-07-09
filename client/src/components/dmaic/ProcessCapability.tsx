@@ -223,6 +223,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/ctqs`],
     enabled: !!projectId,
+    staleTime: 0, // Force fresh queries for CTQs
   });
 
   // Load CTS characteristics for additional data

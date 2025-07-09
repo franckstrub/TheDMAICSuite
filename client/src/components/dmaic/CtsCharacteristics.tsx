@@ -88,6 +88,12 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
+      
+      // Force refetch of CTQs to bypass cache
+      queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
+      
+      // Also force invalidate and refetch with fresh data
+      queryClient.removeQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
     },
     onError: (error) => {
       toast({
