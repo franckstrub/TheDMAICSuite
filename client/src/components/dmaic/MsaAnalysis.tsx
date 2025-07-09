@@ -672,7 +672,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle focused cell paste for continuous MSA
   const handleFocusedCellPaste = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, pasteData: string) => {
     try {
-      // Save current state for undo - use existing data or default empty structure
+      // Save current state for undo BEFORE making any changes
       const currentGageRRData = continuousMsaData[ctq]?.gageRRData || generateDefaultContinuousData();
       console.log('MSA Focused Cell Paste: Saving gageRRData for undo:', currentGageRRData);
       setUndoStates(prev => ({
@@ -719,6 +719,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         return;
       }
       
+      // Show undo button after paste operation
+      setShowUndoButton(prev => ({
+        ...prev,
+        [ctq]: true
+      }));
+
       // Apply the pasted data starting from the focused cell
       setContinuousMsaData(prev => {
         const currentData = [...(prev[ctq]?.gageRRData || [])];
@@ -886,6 +892,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         return;
       }
       
+      // Show undo button after paste operation
+      setShowUndoButton(prev => ({
+        ...prev,
+        [ctq]: true
+      }));
+
       // Apply the pasted data to the table
       setContinuousMsaData(prev => {
         const currentData = [...(prev[ctq]?.gageRRData || [])];
