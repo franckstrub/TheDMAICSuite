@@ -97,12 +97,14 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   // Helper function to save state to undo stack
   const saveToUndoStack = (currentState: DataPoint[], action: string) => {
+    console.log("Saving to undo stack:", action, "State length:", currentState.length);
     setUndoStack(prev => {
       const newStack = [...prev, { state: [...currentState], action }];
       // Keep only last 20 states to prevent memory issues
       if (newStack.length > 20) {
         newStack.shift();
       }
+      console.log("Undo stack now has", newStack.length, "entries");
       return newStack;
     });
     setCanUndo(true);
@@ -113,13 +115,17 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     if (undoStack.length === 0) return;
     
     const lastEntry = undoStack[undoStack.length - 1];
+    console.log("Undoing action:", lastEntry.action);
+    console.log("Current dataPoints length:", dataPoints.length);
+    console.log("Restoring to state with length:", lastEntry.state.length);
+    
     setDataPoints(lastEntry.state);
     setUndoStack(prev => prev.slice(0, -1));
     setCanUndo(undoStack.length > 1);
     
     toast({
       title: "Undo Complete",
-      description: `Undid: ${lastEntry.action}`,
+      description: `Undid: ${lastEntry.action}. Restored to ${lastEntry.state.length} data points.`,
     });
   };
 
