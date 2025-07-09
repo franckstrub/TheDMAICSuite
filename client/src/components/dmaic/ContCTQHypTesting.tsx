@@ -99,15 +99,18 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
 
 
-  // Undo function - restore to previous state
+  // Undo function - restore to previous state and clear undo state (like ProcessCapability)
   const handleUndo = () => {
-    setDataPoints(JSON.parse(JSON.stringify(undoState)));
-    setShowUndoButton(false);
-    
-    toast({
-      title: "Undo Complete",
-      description: "Restored to previous state",
-    });
+    if (undoState) {
+      setDataPoints(JSON.parse(JSON.stringify(undoState)));
+      setUndoState([]); // Clear the undo state after using it
+      setShowUndoButton(false);
+      
+      toast({
+        title: "Undo Complete",
+        description: "Previous operation has been undone",
+      });
+    }
   };
 
   // Functions for data input
