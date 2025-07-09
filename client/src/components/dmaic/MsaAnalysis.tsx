@@ -672,17 +672,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle focused cell paste for continuous MSA
   const handleFocusedCellPaste = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, pasteData: string) => {
     try {
-      // Save current state for undo (only if data exists)
-      if (continuousMsaData[ctq]) {
-        console.log('MSA Focused Cell Paste: Saving undo state for', ctq);
-        console.log('MSA Current data before paste:', continuousMsaData[ctq]);
-        setUndoStates(prev => ({
-          ...prev,
-          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
-        }));
-      } else {
-        console.log('MSA Focused Cell Paste: No existing data for', ctq, 'continuousMsaData:', continuousMsaData);
-      }
+      // Save current state for undo - always save before any changes
+      console.log('MSA Focused Cell Paste: Saving undo state for', ctq);
+      console.log('MSA Current data before paste:', continuousMsaData[ctq]);
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {}))
+      }));
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
@@ -844,17 +840,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
     
     try {
-      // Save current state for undo (only if data exists)
-      if (continuousMsaData[ctq]) {
-        console.log('MSA General Paste: Saving undo state for', ctq);
-        console.log('MSA Current data before paste:', continuousMsaData[ctq]);
-        setUndoStates(prev => ({
-          ...prev,
-          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
-        }));
-      } else {
-        console.log('MSA General Paste: No existing data for', ctq, 'continuousMsaData:', continuousMsaData);
-      }
+      // Save current state for undo - always save before any changes
+      console.log('MSA General Paste: Saving undo state for', ctq);
+      console.log('MSA Current data before paste:', continuousMsaData[ctq]);
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {}))
+      }));
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
