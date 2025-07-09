@@ -633,13 +633,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   // Function to handle focused cell paste for data input
   const handleFocusedCellPaste = (ctq: string, startIndex: number, pasteData: string) => {
     try {
-      // Save current state for undo (only if data exists)
-      if (dataPoints[ctq] && dataPoints[ctq].length > 0) {
-        setUndoStates(prev => ({
-          ...prev,
-          [ctq]: JSON.parse(JSON.stringify(dataPoints[ctq]))
-        }));
-      }
+      // Save current state for undo (always save, even if empty)
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(dataPoints[ctq] || []))
+      }));
       
       // Parse tab-separated or comma-separated values (Excel format)
       const rows = pasteData.trim().split('\n');
