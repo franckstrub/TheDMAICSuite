@@ -207,18 +207,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       // Simplified MSA focus detection - just check if we're within the MSA component
       const isMsaFocused = activeElement && activeElement.closest('[data-component="msa-analysis"]');
 
-      // Debug logging to understand focus detection
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
-        console.log('MSA Keyboard shortcut triggered:', {
-          activeElement: activeElement?.tagName,
-          activeElementClass: activeElement?.className,
-          isMsaFocused,
-          isInInputField,
-          hasDataComponent: !!activeElement?.closest('[data-component="msa-analysis"]'),
-          hasMsaTable: !!activeElement?.closest('.msa-table'),
-          activeTab
-        });
-      }
+
 
       // Handle Ctrl+V for paste - when focused on MSA component (allow in input fields within MSA)
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab && isMsaFocused) {
@@ -229,15 +218,27 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            // Create a synthetic paste event
-            const syntheticEvent = {
-              preventDefault: () => {},
-              clipboardData: {
-                getData: () => clipboardData
-              }
-            } as unknown as React.ClipboardEvent;
+            // Check if we're focused on a specific input field (cell)
+            const inputElement = activeElement as HTMLInputElement;
+            const rowIndexAttr = inputElement.getAttribute('data-row-index');
+            const fieldAttr = inputElement.getAttribute('data-field');
             
-            handlePasteData(activeTab, syntheticEvent);
+            if (rowIndexAttr && fieldAttr && inputElement.tagName === 'INPUT') {
+              // Focused cell paste
+              const rowIndex = parseInt(rowIndexAttr);
+              const field = fieldAttr;
+              handleFocusedCellPaste(activeTab, rowIndex, field as keyof ContinuousAnalysisRow, clipboardData);
+            } else {
+              // General table paste
+              const syntheticEvent = {
+                preventDefault: () => {},
+                clipboardData: {
+                  getData: () => clipboardData
+                }
+              } as unknown as React.ClipboardEvent;
+              
+              handlePasteData(activeTab, syntheticEvent);
+            }
           } else {
             toast({
               title: "No Data Found",
@@ -730,17 +731,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         
         // Find starting column index
         const startColIndex = fields.indexOf(field as string);
-        console.log('MSA Paste Debug:', {
-          field,
-          fields,
-          startColIndex,
-          rowIndex,
-          parsedData,
-          totalValidNumbers
-        });
         
         if (startColIndex === -1) {
-          console.log('Field not found in fields array:', field);
           return prev;
         }
         
@@ -1982,6 +1974,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                       className="w-20"
                                       disabled={(repetitions === 2 && field.includes('_rep3')) || (numberOfAppraisers === 2 && field.includes('app3_'))}
                                       title="Click to focus, then Ctrl+V to paste data starting from this cell"
+                                      data-row-index={index}
+                                      data-field={field}
                                     />
                                   </TableCell>
                                 ))}
