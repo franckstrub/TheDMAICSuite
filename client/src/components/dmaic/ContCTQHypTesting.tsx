@@ -37,6 +37,9 @@ interface ContCTQHypTestingProps {
 
 export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQHypTestingProps) {
   const { toast } = useToast();
+  
+  // Debug: Log component props when it mounts
+  console.log('ContCTQHypTesting mounted with props:', { projectId, ctqId, ctqName, activeTab });
   const [variable1, setVariable1] = useState("Processing Time (Before)");
   const [variable2, setVariable2] = useState("Processing Time (After)");
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
@@ -255,8 +258,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
       // Debug: Log all keyboard events to see what's happening
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
-        console.log('Ctrl+V event detected:', {
+      if ((event.ctrlKey || event.metaKey)) {
+        console.log('Keyboard event detected:', {
           ctrlKey: event.ctrlKey,
           metaKey: event.metaKey,
           key: event.key,
