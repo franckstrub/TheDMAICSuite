@@ -558,7 +558,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                 <p className="text-sm text-gray-600 mb-3">
                   Enter data values and click Add, then Save Data to persist to database
                 </p>
-                
+
                 {/* Data Table */}
                 <div className="border rounded-md">
                   <table className="min-w-full">
@@ -577,17 +577,18 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {dataPoints.length === 0 ? (
-                        
-                            <div 
-                              className="cursor-pointer hover:bg-blue-50 rounded"
+                        <tr>
+                          <td colSpan={3} className="text-center text-gray-500">
+                            <div
+                              className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
                               onClick={() => document.getElementById('add-data-input')?.focus()}
                               onPaste={(e) => handlePasteData(e)}
                               tabIndex={0}
                               title="Click to focus input or paste data here"
                             >
-                            
                             </div>
-                          
+                          </td>
+                        </tr>
                       ) : (
                         dataPoints.map((point, index) => (
                           <tr key={index} className="hover:bg-gray-50">
@@ -613,7 +614,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                                   autoFocus
                                 />
                               ) : (
-                                <div 
+                                <div
                                   className="cursor-pointer hover:bg-blue-50 p-1 rounded"
                                   onClick={() => startEditing(index, point.dataValue)}
                                   onPaste={(e) => handleCellPaste(e, index)}
@@ -638,7 +639,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                           </tr>
                         ))
                       )}
-                      
+
                       {/* Add Data Row - Integrated within the main table */}
                       <tr className="bg-blue-50 border-t-2 border-blue-200">
                         <td className="px-4 py-2 text-sm text-gray-500">
@@ -659,7 +660,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                               e.preventDefault();
                               const pastedData = e.clipboardData.getData('text/plain');
                               const lines = pastedData.trim().split('\n');
-                              
+
                               if (lines.length > 1) {
                                 // Multiple values - use the general paste handler
                                 handlePasteData(e);
@@ -677,7 +678,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                           />
                         </td>
                         <td className="px-4 py-2">
-                          <Button 
+                          <Button
                             onClick={() => addDataPoint(inputValue)}
                             disabled={!inputValue.trim()}
                             size="sm"
