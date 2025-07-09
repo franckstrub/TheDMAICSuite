@@ -1841,16 +1841,28 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                               return;
                             }
                             
-                            // Create a synthetic paste event
-                            const syntheticEvent = {
-                              preventDefault: () => {},
-                              clipboardData: {
-                                getData: () => clipboardData
-                              }
-                            } as unknown as React.ClipboardEvent;
+                            // Check if we're focused on a specific input field (cell)
+                            const activeElement = document.activeElement;
+                            const inputElement = activeElement as HTMLInputElement;
+                            const rowIndexAttr = inputElement?.getAttribute('data-row-index');
+                            const fieldAttr = inputElement?.getAttribute('data-field');
                             
-                            // Call the paste handler directly
-                            handlePasteData(ctqItem.ctq, syntheticEvent);
+                            if (rowIndexAttr && fieldAttr && inputElement.tagName === 'INPUT') {
+                              // Focused cell paste
+                              const rowIndex = parseInt(rowIndexAttr);
+                              const field = fieldAttr;
+                              handleFocusedCellPaste(ctqItem.ctq, rowIndex, field as keyof ContinuousAnalysisRow, clipboardData);
+                            } else {
+                              // General table paste (from row 1, column 1)
+                              const syntheticEvent = {
+                                preventDefault: () => {},
+                                clipboardData: {
+                                  getData: () => clipboardData
+                                }
+                              } as unknown as React.ClipboardEvent;
+                              
+                              handlePasteData(ctqItem.ctq, syntheticEvent);
+                            }
                             
                           } catch (error) {
                             toast({
@@ -2012,7 +2024,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     <h4 className="text-sm font-medium text-green-800 mb-2">📋 Excel Copy-Paste Instructions</h4>
                     <div className="text-xs text-green-700 space-y-1">
                       <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
-                      <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
+                      <p>• <strong>Paste data</strong> using Ctrl+V or "Paste from Excel" button - data will start from the focused cell</p>
                       <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
                       {/*<p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p> */}
                       <p>• Data will automatically create new rows if needed</p>
