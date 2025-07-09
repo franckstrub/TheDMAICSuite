@@ -89,8 +89,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const { toast } = useToast();
   const [attributeMsaData, setAttributeMsaData] = useState<{ [ctq: string]: AttributeMsaData }>({});
   const [continuousMsaData, setContinuousMsaData] = useState<{ [ctq: string]: ContinuousMsaData }>({});
-  const [undoStates, setUndoStates] = useState<{ [ctq: string]: ContinuousMsaData }>({});
-  const [redoStates, setRedoStates] = useState<{ [ctq: string]: ContinuousMsaData }>({});
+  const [undoStates, setUndoStates] = useState<{ [ctq: string]: ContinuousAnalysisRow[] }>({});
+  const [redoStates, setRedoStates] = useState<{ [ctq: string]: ContinuousAnalysisRow[] }>({});
+  const [originalStates, setOriginalStates] = useState<{ [ctq: string]: ContinuousAnalysisRow[] }>({});
   const [showUndoButton, setShowUndoButton] = useState<{ [ctq: string]: boolean }>({});
   const [showRedoButton, setShowRedoButton] = useState<{ [ctq: string]: boolean }>({});
   const [activeTab, setActiveTab] = useState<string>("");
@@ -273,7 +274,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     // Use event capturing (true) to handle events before Process Capability component
     document.addEventListener('keydown', handleKeyboardShortcut, true);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut, true);
-  }, [activeTab, undoStates, showUndoButton]);
+  }, [activeTab, undoStates, showUndoButton, originalStates]);
 
 
 
@@ -546,6 +547,17 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       setAttributeMsaData(initialAttributeData);
       setContinuousMsaData(initialContinuousData);
       
+      // Capture original states for undo functionality - store the original gageRRData for each CTQ
+      const originalStatesData: { [ctq: string]: ContinuousAnalysisRow[] } = {};
+      ctqsWithTypes.forEach((ctqItem: CtqWithType) => {
+        if (ctqItem.ctqType === "Continuous") {
+          const ctq = ctqItem.ctq;
+          const gageRRData = initialContinuousData[ctq]?.gageRRData || generateDefaultContinuousData();
+          originalStatesData[ctq] = JSON.parse(JSON.stringify(gageRRData));
+        }
+      });
+      setOriginalStates(originalStatesData);
+      
       // Ensure we have an active tab when CTQs are available
       if (ctqsWithTypes.length > 0 && !activeTab) {
         setActiveTab(ctqsWithTypes[0].ctq);
@@ -672,12 +684,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle focused cell paste for continuous MSA
   const handleFocusedCellPaste = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, pasteData: string) => {
     try {
-      // Save current state for undo BEFORE making any changes
-      const currentGageRRData = continuousMsaData[ctq]?.gageRRData || generateDefaultContinuousData();
-      setUndoStates(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(currentGageRRData))
-      }));
+      // Save original state for undo - always restore to the original table state
+      if (originalStates[ctq]) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(originalStates[ctq]))
+        }));
+      }
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
@@ -845,12 +858,13 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
     
     try {
-      // Save current state for undo - use existing data or default empty structure
-      const currentGageRRData = continuousMsaData[ctq]?.gageRRData || generateDefaultContinuousData();
-      setUndoStates(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(currentGageRRData))
-      }));
+      // Save original state for undo - always restore to the original table state
+      if (originalStates[ctq]) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(originalStates[ctq]))
+        }));
+      }
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
