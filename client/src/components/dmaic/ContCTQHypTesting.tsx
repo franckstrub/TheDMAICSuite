@@ -54,6 +54,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   const [focusedCell, setFocusedCell] = useState<number>(-1);
   const [editingCell, setEditingCell] = useState<number>(-1);
   const [editValue, setEditValue] = useState<string>("");
+  const [undoStack, setUndoStack] = useState<DataPoint[][]>([]);
+  const [canUndo, setCanUndo] = useState(false);
 
   const updateContCTQHypTestDataField = (
     ctqId: number, 
@@ -76,12 +78,43 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
     });
   };
 
+  // Helper function to save state to undo stack
+  const saveToUndoStack = (currentState: DataPoint[]) => {
+    setUndoStack(prev => {
+      const newStack = [...prev, currentState];
+      // Keep only last 20 states to prevent memory issues
+      if (newStack.length > 20) {
+        newStack.shift();
+      }
+      return newStack;
+    });
+    setCanUndo(true);
+  };
+
+  // Undo function
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+    
+    const lastState = undoStack[undoStack.length - 1];
+    setDataPoints(lastState);
+    setUndoStack(prev => prev.slice(0, -1));
+    setCanUndo(undoStack.length > 1);
+    
+    toast({
+      title: "Undo Complete",
+      description: "Data has been restored to previous state.",
+    });
+  };
+
   // Functions for data input
   const addDataPoint = (value: string) => {
     if (!value.trim()) return;
     
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return;
+    
+    // Save current state to undo stack before making changes
+    saveToUndoStack(dataPoints);
     
     setDataPoints(prev => [
       ...prev,
@@ -92,6 +125,9 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   };
 
   const handleDeleteDataPoint = (index: number) => {
+    // Save current state to undo stack before making changes
+    saveToUndoStack(dataPoints);
+    
     setDataPoints(prev => {
       const updatedPoints = prev.filter((_, i) => i !== index);
       // Re-index the remaining points
@@ -129,6 +165,9 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
       });
       
       if (newDataPoints.length > 0) {
+        // Save current state to undo stack before making changes
+        saveToUndoStack(dataPoints);
+        
         setDataPoints(prev => [...prev, ...newDataPoints]);
         setPasteInput("");
         toast({
@@ -148,12 +187,23 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
       const value = pastedData.trim().split('\n')[0]; // Take only the first line
       const numericValue = parseFloat(value);
       if (!isNaN(numericValue)) {
+        // Save current state to undo stack before making changes
+        saveToUndoStack(dataPoints);
+        
         setDataPoints(prev => 
           prev.map((point, i) => 
             i === index ? { ...point, dataValue: numericValue } : point
           )
         );
       }
+    }
+  };
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.ctrlKey && event.key === 'z') {
+      event.preventDefault();
+      handleUndo();
     }
   };
 
@@ -166,6 +216,9 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   const saveEdit = (index: number) => {
     const numericValue = parseFloat(editValue);
     if (!isNaN(numericValue)) {
+      // Save current state to undo stack before making changes
+      saveToUndoStack(dataPoints);
+      
       setDataPoints(prev => 
         prev.map((point, i) => 
           i === index ? { ...point, dataValue: numericValue } : point
@@ -197,7 +250,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   const currentTestType = ContCTQHypTestData[ctqId]?.testType || "Two Sample Hyp-Test";
 
   return (
-    <Card>
+    <Card onKeyDown={handleKeyDown} tabIndex={0}>
       <CardHeader>
         <CardTitle>Hypothesis Testing</CardTitle>
       </CardHeader>
