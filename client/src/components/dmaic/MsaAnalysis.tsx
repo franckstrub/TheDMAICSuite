@@ -672,15 +672,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle focused cell paste for continuous MSA
   const handleFocusedCellPaste = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, pasteData: string) => {
     try {
-      // Save current state for undo BEFORE making any changes - but only if we don't already have undo state
-      if (!undoStates[ctq]) {
-        const currentGageRRData = continuousMsaData[ctq]?.gageRRData || generateDefaultContinuousData();
-        console.log('MSA Focused Cell Paste: Saving gageRRData for undo:', currentGageRRData);
-        setUndoStates(prev => ({
-          ...prev,
-          [ctq]: JSON.parse(JSON.stringify(currentGageRRData))
-        }));
-      }
+      // Save current state for undo BEFORE making any changes
+      const currentGageRRData = continuousMsaData[ctq]?.gageRRData || generateDefaultContinuousData();
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(currentGageRRData))
+      }));
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
@@ -946,11 +943,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         };
       });
       
-      // Show undo button
-      setShowUndoButton(prev => ({
-        ...prev,
-        [ctq]: true
-      }));
+
       
       toast({
         title: "Data Pasted Successfully",
