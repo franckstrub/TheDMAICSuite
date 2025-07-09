@@ -188,10 +188,15 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newDataPoints.length > 0) {
-        // Save current state to undo stack before making changes
-        saveToUndoStack(dataPoints, `Paste ${newDataPoints.length} data points`);
+        // For granular undo, save each individual data point addition
+        let currentState = dataPoints;
+        newDataPoints.forEach((newPoint, index) => {
+          // Save state before adding each point
+          saveToUndoStack(currentState, `Add data point ${newPoint.dataValue}`);
+          currentState = [...currentState, newPoint];
+        });
         
-        setDataPoints(prev => [...prev, ...newDataPoints]);
+        setDataPoints(currentState);
         setPasteInput("");
         toast({
           title: "Data Imported",
@@ -226,32 +231,29 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newValues.length > 0) {
-        // Save current state to undo stack before making changes
-        saveToUndoStack(dataPoints, `Paste ${newValues.length} values at row ${index + 1}`);
-        
-        setDataPoints(prev => {
-          const updatedPoints = [...prev];
+        // For granular undo, save each individual cell change
+        let currentState = [...dataPoints];
+        newValues.forEach((value, i) => {
+          const targetIndex = index + i;
+          // Save state before each individual change
+          saveToUndoStack(currentState, `Edit data point at row ${targetIndex + 1} to ${value}`);
           
-          // Update existing cells starting from the clicked index
-          newValues.forEach((value, i) => {
-            const targetIndex = index + i;
-            if (targetIndex < updatedPoints.length) {
-              // Update existing cell
-              updatedPoints[targetIndex] = {
-                ...updatedPoints[targetIndex],
-                dataValue: value
-              };
-            } else {
-              // Create new data point
-              updatedPoints.push({
-                indexNumber: updatedPoints.length + 1,
-                dataValue: value
-              });
-            }
-          });
-          
-          return updatedPoints;
+          if (targetIndex < currentState.length) {
+            // Update existing cell
+            currentState[targetIndex] = {
+              ...currentState[targetIndex],
+              dataValue: value
+            };
+          } else {
+            // Create new data point
+            currentState.push({
+              indexNumber: currentState.length + 1,
+              dataValue: value
+            });
+          }
         });
+        
+        setDataPoints(currentState);
         
         toast({
           title: "Data Pasted",
