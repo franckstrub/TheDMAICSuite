@@ -139,6 +139,24 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
     }
   };
 
+  // Handle paste specifically for editing cells (single value only)
+  const handleCellPaste = (event: React.ClipboardEvent, index: number) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const value = pastedData.trim().split('\n')[0]; // Take only the first line
+      const numericValue = parseFloat(value);
+      if (!isNaN(numericValue)) {
+        setDataPoints(prev => 
+          prev.map((point, i) => 
+            i === index ? { ...point, dataValue: numericValue } : point
+          )
+        );
+      }
+    }
+  };
+
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
     setEditingCell(index);
@@ -470,7 +488,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                                 <div 
                                   className="cursor-pointer hover:bg-blue-50 p-1 rounded"
                                   onClick={() => startEditing(index, point.dataValue)}
-                                  onPaste={handlePasteData}
+                                  onPaste={(e) => handleCellPaste(e, index)}
                                   tabIndex={0}
                                   title="Click to edit this value"
                                 >
