@@ -510,7 +510,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                       {dataPoints.length === 0 ? (
                         <tr>
                           <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No data points added yet. Enter values above to begin.
+                            No data points added yet. Enter values below to begin.
                           </td>
                         </tr>
                       ) : (
@@ -563,16 +563,10 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                           </tr>
                         ))
                       )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Manual Input - Moved to bottom with Index display */}
-                <div className="border rounded-md mt-4">
-                  <table className="min-w-full">
-                    <tbody className="bg-white">
-                      <tr className="border-t border-gray-200">
-                        <td className="px-4 py-2 text-sm text-gray-500 w-20">
+                      
+                      {/* Add Data Row - Integrated within the main table */}
+                      <tr className="bg-blue-50 border-t-2 border-blue-200">
+                        <td className="px-4 py-2 text-sm text-gray-500">
                           {dataPoints.length + 1}
                         </td>
                         <td className="px-4 py-2">
@@ -590,7 +584,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                             step="any"
                           />
                         </td>
-                        <td className="px-4 py-2 w-20">
+                        <td className="px-4 py-2">
                           <Button 
                             onClick={() => addDataPoint(inputValue)}
                             disabled={!inputValue.trim()}
