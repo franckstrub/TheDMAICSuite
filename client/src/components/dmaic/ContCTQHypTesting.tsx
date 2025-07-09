@@ -55,7 +55,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const [focusedCell, setFocusedCell] = useState<number>(-1);
   const [editingCell, setEditingCell] = useState<number>(-1);
   const [editValue, setEditValue] = useState<string>("");
-  const [originalState, setOriginalState] = useState<DataPoint[]>([]);
+  const [undoState, setUndoState] = useState<DataPoint[]>([]);
   const [showUndoButton, setShowUndoButton] = useState(false);
 
   // Initialize ContCTQHypTestData with default values
@@ -74,12 +74,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
 
-  // Capture original state when data is first added (not when component initializes empty)
-  useEffect(() => {
-    if (dataPoints.length > 0 && originalState.length === 0) {
-      setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
-    }
-  }, [dataPoints, originalState.length]);
+
 
   const updateContCTQHypTestDataField = (
     ctqId: number, 
@@ -104,14 +99,14 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
 
 
-  // Undo function - restore to original state
+  // Undo function - restore to previous state
   const handleUndo = () => {
-    setDataPoints(JSON.parse(JSON.stringify(originalState)));
+    setDataPoints(JSON.parse(JSON.stringify(undoState)));
     setShowUndoButton(false);
     
     toast({
       title: "Undo Complete",
-      description: "Restored to original table state",
+      description: "Restored to previous state",
     });
   };
 
@@ -122,10 +117,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return;
     
-    // Save original state before first modification
-    if (originalState.length === 0) {
-      setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
-    }
+    // Save current state before making changes
+    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
     
     // Show undo button
     setShowUndoButton(true);
