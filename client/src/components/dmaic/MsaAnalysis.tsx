@@ -675,10 +675,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       // Save current state for undo - always save before any changes
       console.log('MSA Focused Cell Paste: Saving undo state for', ctq);
       console.log('MSA Current data before paste:', continuousMsaData[ctq]);
-      setUndoStates(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {}))
-      }));
+      if (continuousMsaData[ctq]) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+        }));
+      }
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
@@ -843,10 +845,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       // Save current state for undo - always save before any changes
       console.log('MSA General Paste: Saving undo state for', ctq);
       console.log('MSA Current data before paste:', continuousMsaData[ctq]);
-      setUndoStates(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {}))
-      }));
+      if (continuousMsaData[ctq]) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
+        }));
+      }
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
