@@ -83,7 +83,11 @@ export default function CtsCharacteristics({ projectId }: CtsCharacteristicsProp
         title: "Success",
         description: "CTS characteristics saved successfully",
       });
+      // Invalidate both CTS characteristics and CTQs queries to refresh all dependent components
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/cts-characteristics`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctqs`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-capability`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/msa-analysis`] });
     },
     onError: (error) => {
       toast({
