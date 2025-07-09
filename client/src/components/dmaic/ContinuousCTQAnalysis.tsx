@@ -58,8 +58,24 @@ interface ContinuousCTQAnalysisProps {
 export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, onSave }: ContinuousCTQAnalysisProps) {
   const { toast } = useToast();
 
-  const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>({});
-  
+  const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>(() => {
+    // This initializer function runs only once when the component mounts.
+    // It sets the initial state for the ctqId relevant to this component instance.
+    return {
+      [ctqId]: {
+        ctq: ctqName, // Include ctqName as it's part of CTQAnalysisData
+        ctqId: ctqId,
+        enableContYHypothesisTest: true, // <--- This line sets it to true by default
+        // Other boolean enablers will be undefined by default, or you can set them here if needed
+        enableContYSimpleRegression: false, // Example: explicitly set others to false
+        enableContYMultiVariChart: false,
+        enableContYANOVA2way: false,
+        enableContYMultipleRegression: false,
+        enableContYDOE: false,
+        enablePareto: false,
+      },
+    };
+  });
   const updateCTQAnalysisField = (ctqId: number, field: keyof CTQAnalysisData, value: any) => {
     setCTQAnalysisData(prev => {
       const updated = {

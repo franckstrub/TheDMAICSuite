@@ -540,19 +540,17 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {dataPoints.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                        
                             <div 
-                              className="cursor-pointer hover:bg-blue-50 p-2 rounded"
+                              className="cursor-pointer hover:bg-blue-50 rounded"
                               onClick={() => document.getElementById('add-data-input')?.focus()}
                               onPaste={(e) => handlePasteData(e)}
                               tabIndex={0}
                               title="Click to focus input or paste data here"
                             >
-                              No data points added yet. Enter values below to begin or paste data here.
+                            
                             </div>
-                          </td>
-                        </tr>
+                          
                       ) : (
                         dataPoints.map((point, index) => (
                           <tr key={index} className="hover:bg-gray-50">
