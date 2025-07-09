@@ -204,15 +204,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       const activeElement = document.activeElement;
       const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
-      // Check if user is interacting with MSA component by looking for MSA-specific elements or classes
-      const isMsaFocused = activeElement && (
-        activeElement.closest('[data-component="msa-analysis"]') ||
-        activeElement.closest('.msa-table') ||
-        activeElement.closest('[role="tabpanel"]')?.querySelector('.msa-table') ||
-        (activeElement.getAttribute('data-testid') && activeElement.getAttribute('data-testid')?.includes('msa')) ||
-        // Also check if we're in an MSA input field within the MSA component
-        (isInInputField && activeElement.closest('[data-component="msa-analysis"]'))
-      );
+      // Simplified MSA focus detection - just check if we're within the MSA component
+      const isMsaFocused = activeElement && activeElement.closest('[data-component="msa-analysis"]');
 
       // Debug logging to understand focus detection
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
@@ -227,10 +220,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         });
       }
 
-      // Handle Ctrl+V for paste - only when not in input field AND focused on MSA component
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab && !isInInputField && isMsaFocused) {
-        // Trigger paste for the active CTQ
+      // Handle Ctrl+V for paste - when focused on MSA component (allow in input fields within MSA)
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab && isMsaFocused) {
+        // Prevent other components from handling this event
         event.preventDefault();
+        event.stopImmediatePropagation();
         
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
@@ -269,8 +263,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }
     };
 
-    document.addEventListener('keydown', handleKeyboardShortcut);
-    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
+    // Use event capturing (true) to handle events before Process Capability component
+    document.addEventListener('keydown', handleKeyboardShortcut, true);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcut, true);
   }, [activeTab, undoStates, showUndoButton]);
 
 
