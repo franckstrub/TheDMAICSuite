@@ -52,10 +52,11 @@ interface ContinuousCTQAnalysisProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, onSave }: ContinuousCTQAnalysisProps) {
+export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activeTab, onSave }: ContinuousCTQAnalysisProps) {
   const { toast } = useToast();
 
   const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>(() => {
@@ -245,7 +246,7 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, onSav
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
         {/* Hypothesis Testing */}
          {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
-         <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+         <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
          
         )}
       
