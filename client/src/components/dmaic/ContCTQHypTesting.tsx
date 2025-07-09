@@ -269,7 +269,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
             handlePasteData(syntheticEvent);
           }
         }).catch(error => {
-          console.error('Clipboard access failed:', error);
           toast({
             title: "Clipboard Access",
             description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
