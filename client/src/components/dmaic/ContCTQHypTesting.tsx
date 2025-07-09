@@ -255,30 +255,41 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
       // Handle Ctrl+V/Cmd+V for paste - only when not in input field and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && !isInInputField && activeTab === ctqName) {
-        event.preventDefault();
-        
-        // Get clipboard data
-        navigator.clipboard.readText().then(clipboardData => {
-          if (clipboardData.trim()) {
-            // Create a synthetic paste event
-            const syntheticEvent = {
-              preventDefault: () => {},
-              clipboardData: {
-                getData: (format: string) => clipboardData
-              }
-            } as unknown as React.ClipboardEvent;
-            
-            handlePasteData(syntheticEvent);
-          }
-        }).catch(error => {
-          console.error('Clipboard access failed:', error);
-          toast({
-            title: "Clipboard Access",
-            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-            variant: "default",
-          });
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+        console.log('Ctrl+V debug:', { 
+          isInInputField, 
+          activeTab, 
+          ctqName, 
+          match: activeTab === ctqName,
+          shouldWork: !isInInputField && activeTab === ctqName
         });
+        
+        if (!isInInputField && activeTab === ctqName) {
+          event.preventDefault();
+          
+          // Get clipboard data
+          navigator.clipboard.readText().then(clipboardData => {
+            console.log('Pasting data:', clipboardData);
+            if (clipboardData.trim()) {
+              // Create a synthetic paste event
+              const syntheticEvent = {
+                preventDefault: () => {},
+                clipboardData: {
+                  getData: (format: string) => clipboardData
+                }
+              } as unknown as React.ClipboardEvent;
+              
+              handlePasteData(syntheticEvent);
+            }
+          }).catch(error => {
+            console.error('Clipboard access failed:', error);
+            toast({
+              title: "Clipboard Access",
+              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+              variant: "default",
+            });
+          });
+        }
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
