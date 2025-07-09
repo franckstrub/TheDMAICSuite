@@ -274,7 +274,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [canUndo, currentTestType]);
+  }, [canUndo, ContCTQHypTestData[ctqId]?.testType]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
