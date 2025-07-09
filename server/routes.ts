@@ -2725,7 +2725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get CTQs from customer requirements and business requirements for populating CTS table
+  // Get CTQs from customer requirements, business requirements, and CTS characteristics
   app.get("/api/projects/:projectId/ctqs", async (req: Request, res: Response) => {
     try {
       const projectId = parseInt(req.params.projectId);
@@ -2756,8 +2756,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         AND ctq != ''
       `);
       
+      // Get CTQs from CTS characteristics table
+      const ctsCtqs = await db.execute(sql`
+        SELECT ctq, 'cts_characteristics' as source 
+        FROM cts_characteristics 
+        WHERE project_id = ${projectId} 
+        AND ctq IS NOT NULL 
+        AND ctq != ''
+      `);
+      
       // Combine and deduplicate CTQs
-      const allCtqs = [...customerCtqs.rows, ...businessCtqs.rows];
+      const allCtqs = [...customerCtqs.rows, ...businessCtqs.rows, ...ctsCtqs.rows];
       const uniqueCtqs = Array.from(
         new Map(allCtqs.map(item => [item.ctq, item])).values()
       ).filter(item => item.ctq && item.ctq.trim() !== '');
