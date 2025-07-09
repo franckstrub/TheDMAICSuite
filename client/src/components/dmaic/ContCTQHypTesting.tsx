@@ -192,6 +192,13 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
           description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
         });
       }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
     }
   };
 
@@ -244,6 +251,13 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
           title: "Data Pasted",
           description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
         });
+      }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
       }
     }
   };
