@@ -730,7 +730,19 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         
         // Find starting column index
         const startColIndex = fields.indexOf(field as string);
-        if (startColIndex === -1) return prev;
+        console.log('MSA Paste Debug:', {
+          field,
+          fields,
+          startColIndex,
+          rowIndex,
+          parsedData,
+          totalValidNumbers
+        });
+        
+        if (startColIndex === -1) {
+          console.log('Field not found in fields array:', field);
+          return prev;
+        }
         
         // Apply pasted data starting from the focused cell position
         parsedData.forEach((rowData, pasteRowIndex) => {
@@ -803,7 +815,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       
       toast({
         title: "Data Pasted Successfully",
-        description: `Imported ${parsedData.length} rows starting from focused cell`,
+        description: `Imported ${totalValidNumbers} data points starting from focused cell (${field})`,
       });
       
     } catch (error) {
