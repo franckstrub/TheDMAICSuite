@@ -100,6 +100,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const [attributeAnalysisType, setAttributeAnalysisType] = useState<{ [ctq: string]: 'simple' | 'agreement' }>({});
   const [continuousAnalysisType, setContinuousAnalysisType] = useState<{ [ctq: string]: 'simple' | 'gage_rr' }>({});
   const [showMsaContent, setShowMsaContent] = useState<{ [ctq: string]: boolean }>({});
+  const [lastFocusedCell, setLastFocusedCell] = useState<{ rowIndex: number; field: string; ctq: string } | null>(null);
 
   // Load last active tab and statistics state from localStorage on component mount
   useEffect(() => {
@@ -1841,17 +1842,32 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                               return;
                             }
                             
-                            // Check if we're focused on a specific input field (cell)
+                            // Check if we have a last focused cell or if we're currently focused on a specific input field
                             const activeElement = document.activeElement;
                             const inputElement = activeElement as HTMLInputElement;
                             const rowIndexAttr = inputElement?.getAttribute('data-row-index');
                             const fieldAttr = inputElement?.getAttribute('data-field');
                             
+                            // Use current focus first, then fall back to last focused cell
+                            let targetRowIndex: number | null = null;
+                            let targetField: string | null = null;
+                            let targetCtq: string | null = null;
+                            
                             if (rowIndexAttr && fieldAttr && inputElement.tagName === 'INPUT') {
+                              // Currently focused on a cell
+                              targetRowIndex = parseInt(rowIndexAttr);
+                              targetField = fieldAttr;
+                              targetCtq = ctqItem.ctq;
+                            } else if (lastFocusedCell && lastFocusedCell.ctq === ctqItem.ctq) {
+                              // Use last focused cell for this CTQ
+                              targetRowIndex = lastFocusedCell.rowIndex;
+                              targetField = lastFocusedCell.field;
+                              targetCtq = lastFocusedCell.ctq;
+                            }
+                            
+                            if (targetRowIndex !== null && targetField && targetCtq) {
                               // Focused cell paste
-                              const rowIndex = parseInt(rowIndexAttr);
-                              const field = fieldAttr;
-                              handleFocusedCellPaste(ctqItem.ctq, rowIndex, field as keyof ContinuousAnalysisRow, clipboardData);
+                              handleFocusedCellPaste(targetCtq, targetRowIndex, targetField as keyof ContinuousAnalysisRow, clipboardData);
                             } else {
                               // General table paste (from row 1, column 1)
                               const syntheticEvent = {
@@ -1969,6 +1985,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                                       step="0.01"
                                       value={row[field as keyof ContinuousAnalysisRow] as number | null ?? ''}
                                       onChange={(e) => updateContinuousAnalysisRow(ctqItem.ctq, index, field as keyof ContinuousAnalysisRow, e.target.value)}
+                                      onFocus={() => {
+                                        setLastFocusedCell({ rowIndex: index, field, ctq: ctqItem.ctq });
+                                      }}
                                       onPaste={(e) => {
                                         e.preventDefault();
                                         const pasteData = e.clipboardData.getData('text');
