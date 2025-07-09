@@ -153,10 +153,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
           i === index ? { ...point, dataValue: numericValue } : point
         )
       );
-      toast({
-        title: "Data Updated",
-        description: "Data point has been updated successfully.",
-      });
     }
     setEditingCell(-1);
     setEditValue("");
