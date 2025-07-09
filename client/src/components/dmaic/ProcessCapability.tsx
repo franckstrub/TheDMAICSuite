@@ -343,8 +343,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       //console.log("API response:", response);
       return response;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       {/*console.log("Mutation succeeded:", data);*/}
+      // Invalidate and refetch the data points for this process capability
+      queryClient.invalidateQueries({
+        queryKey: [`/api/process-capability/${variables.processCapabilityId}/data`]
+      });
       // Don't show toast here as it's handled in saveAllDataPoints
     },
     onError: (error) => {
@@ -416,7 +420,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const currentPoints = dataPoints[ctq] || [];
     const numericValues = currentPoints.map(point => point.dataValue);
     
-    if (numericValues.length === 0) return;
+    // Allow auto-saving empty datasets to properly clear the database
     
     try {
       await saveDataPointMutation.mutateAsync({
@@ -581,14 +585,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const currentPoints = dataPoints[ctq] || [];
     const numericValues = currentPoints.map(point => point.dataValue);
     
-    if (numericValues.length === 0) {
-      toast({
-        title: "Warning",
-        description: "No data points to save",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Allow saving empty datasets to properly clear the database
     
     //console.log("Saving data points:", { processCapabilityId, numericValues });
     
@@ -1699,7 +1696,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
                             <Button
                               onClick={() => saveAllDataPoints(ctq)}
-                              disabled={saveDataPointMutation.isPending || (dataPoints[ctq] || []).length === 0}
+                              disabled={saveDataPointMutation.isPending}
                               size="sm"
                               variant="outline"
                               className="flex items-center gap-1"
