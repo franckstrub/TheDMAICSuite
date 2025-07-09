@@ -178,23 +178,55 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
     }
   };
 
-  // Handle paste specifically for editing cells (single value only)
+  // Handle paste specifically for editing cells - handles multiple values starting from clicked cell
   const handleCellPaste = (event: React.ClipboardEvent, index: number) => {
     event.preventDefault();
     const pastedData = event.clipboardData.getData('text/plain');
     
     if (pastedData.trim()) {
-      const value = pastedData.trim().split('\n')[0]; // Take only the first line
-      const numericValue = parseFloat(value);
-      if (!isNaN(numericValue)) {
+      const lines = pastedData.trim().split('\n');
+      const newValues: number[] = [];
+      
+      lines.forEach((line) => {
+        const value = line.trim();
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      });
+      
+      if (newValues.length > 0) {
         // Save current state to undo stack before making changes
         saveToUndoStack(dataPoints);
         
-        setDataPoints(prev => 
-          prev.map((point, i) => 
-            i === index ? { ...point, dataValue: numericValue } : point
-          )
-        );
+        setDataPoints(prev => {
+          const updatedPoints = [...prev];
+          
+          // Update existing cells starting from the clicked index
+          newValues.forEach((value, i) => {
+            const targetIndex = index + i;
+            if (targetIndex < updatedPoints.length) {
+              // Update existing cell
+              updatedPoints[targetIndex] = {
+                ...updatedPoints[targetIndex],
+                dataValue: value
+              };
+            } else {
+              // Create new data point
+              updatedPoints.push({
+                indexNumber: updatedPoints.length + 1,
+                dataValue: value
+              });
+            }
+          });
+          
+          return updatedPoints;
+        });
+        
+        toast({
+          title: "Data Pasted",
+          description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
+        });
       }
     }
   };
@@ -237,7 +269,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   const [ContCTQHypTestData, setContCTQHypTestData] = useState<{ [ctqId: number]: ContCTQHypTestData }>({
     [ctqId]: {
       ctq: ctqName,
-      testType: "Two Sample Hyp-Test",
+      testType: "One Sample Hyp-Test",
       enableMeanTest: false,
       enableVarianceTest: false,
       enableMedianTest: false,
@@ -247,7 +279,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
     }
   });
 
-  const currentTestType = ContCTQHypTestData[ctqId]?.testType || "Two Sample Hyp-Test";
+  const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
 
   return (
     <Card onKeyDown={handleKeyDown} tabIndex={0}>
@@ -509,9 +541,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                     <tbody className="bg-white divide-y divide-gray-200">
                       {dataPoints.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No data points added yet. Enter values below to begin.
-                          </td>
+                          
                         </tr>
                       ) : (
                         dataPoints.map((point, index) => (
