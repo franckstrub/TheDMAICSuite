@@ -673,9 +673,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const handleFocusedCellPaste = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, pasteData: string) => {
     try {
       // Save current state for undo (always save, even if empty) - same pattern as ProcessCapability
+      const currentGageRRData = continuousMsaData[ctq]?.gageRRData || [];
+      console.log('MSA Focused Cell Paste: Saving gageRRData for undo:', currentGageRRData);
       setUndoStates(prev => ({
         ...prev,
-        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]?.gageRRData || []))
+        [ctq]: JSON.parse(JSON.stringify(currentGageRRData))
       }));
       
       // Parse tab-separated or comma-separated values
@@ -951,12 +953,18 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
   // Handle undo functionality
   const handleUndo = (ctq: string) => {
+    console.log('MSA handleUndo called for:', ctq);
+    console.log('MSA undoStates[ctq]:', undoStates[ctq]);
+    console.log('MSA current gageRRData:', continuousMsaData[ctq]?.gageRRData);
+    
     if (undoStates[ctq]) {
       // Save current gageRRData for redo before undoing
       setRedoStates(prev => ({
         ...prev,
         [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]?.gageRRData || []))
       }));
+      
+      console.log('MSA restoring gageRRData:', undoStates[ctq]);
       
       // Restore only the gageRRData array - same pattern as ProcessCapability
       setContinuousMsaData(prev => ({
