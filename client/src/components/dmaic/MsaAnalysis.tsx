@@ -259,14 +259,11 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
       // Handle Ctrl+Z for undo - works both in and outside input fields but only when focused on MSA
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab && isMsaFocused) {
-        console.log('MSA Ctrl+Z pressed - activeTab:', activeTab);
-        console.log('MSA undoStates:', undoStates);
-        console.log('MSA undoStates[activeTab]:', undoStates[activeTab]);
+        
         if (undoStates[activeTab]) {
           event.preventDefault();
           handleUndo(activeTab);
         } else {
-          console.log('MSA: No undo state available for', activeTab);
         }
       }
     };
@@ -975,11 +972,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
   // Handle undo functionality
   const handleUndo = (ctq: string) => {
-    console.log('MSA handleUndo called for:', ctq);
-    console.log('MSA undoStates[ctq]:', undoStates[ctq]);
-    console.log('MSA undoStates[ctq] length:', undoStates[ctq]?.length);
-    console.log('MSA current gageRRData:', continuousMsaData[ctq]?.gageRRData);
-    console.log('MSA current gageRRData length:', continuousMsaData[ctq]?.gageRRData?.length);
     
     if (undoStates[ctq]) {
       // Save current gageRRData for redo before undoing
@@ -987,9 +979,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         ...prev,
         [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]?.gageRRData || []))
       }));
-      
-      console.log('MSA restoring gageRRData:', undoStates[ctq]);
-      console.log('MSA restoring gageRRData length:', undoStates[ctq]?.length);
       
       // Restore only the gageRRData array - same pattern as ProcessCapability
       setContinuousMsaData(prev => ({
