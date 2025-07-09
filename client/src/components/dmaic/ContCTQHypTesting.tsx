@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Trash2 } from "lucide-react";
+import { Trash2, Undo } from "lucide-react";
 
 interface DataPoint {
   indexNumber: number;
@@ -55,8 +55,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const [focusedCell, setFocusedCell] = useState<number>(-1);
   const [editingCell, setEditingCell] = useState<number>(-1);
   const [editValue, setEditValue] = useState<string>("");
-  const [undoStack, setUndoStack] = useState<{ state: DataPoint[], action: string }[]>([]);
-  const [canUndo, setCanUndo] = useState(false);
+  const [originalState, setOriginalState] = useState<DataPoint[]>([]);
+  const [showUndoButton, setShowUndoButton] = useState(false);
 
   // Initialize ContCTQHypTestData with default values
   const [ContCTQHypTestData, setContCTQHypTestData] = useState<{ [ctqId: number]: ContCTQHypTestData }>(() => ({
@@ -73,6 +73,11 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   }));
 
   const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
+
+  // Capture original state when component initializes
+  useEffect(() => {
+    setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
+  }, []);
 
   const updateContCTQHypTestDataField = (
     ctqId: number, 
@@ -95,31 +100,16 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     });
   };
 
-  // Helper function to save state to undo stack
-  const saveToUndoStack = (currentState: DataPoint[], action: string) => {
-    setUndoStack(prev => {
-      const newStack = [...prev, { state: [...currentState], action }];
-      // Keep only last 20 states to prevent memory issues
-      if (newStack.length > 20) {
-        newStack.shift();
-      }
-      return newStack;
-    });
-    setCanUndo(true);
-  };
 
-  // Undo function
+
+  // Undo function - restore to original state
   const handleUndo = () => {
-    if (undoStack.length === 0) return;
-    
-    const lastEntry = undoStack[undoStack.length - 1];
-    setDataPoints(lastEntry.state);
-    setUndoStack(prev => prev.slice(0, -1));
-    setCanUndo(undoStack.length > 1);
+    setDataPoints(JSON.parse(JSON.stringify(originalState)));
+    setShowUndoButton(false);
     
     toast({
       title: "Undo Complete",
-      description: `Undid: ${lastEntry.action}`,
+      description: "Restored to original table state",
     });
   };
 
@@ -130,8 +120,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return;
     
-    // Save current state to undo stack before making changes
-    saveToUndoStack(dataPoints, "Add data point");
+    // Show undo button
+    setShowUndoButton(true);
     
     setDataPoints(prev => [
       ...prev,
@@ -142,8 +132,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   };
 
   const handleDeleteDataPoint = (index: number) => {
-    // Save current state to undo stack before making changes
-    saveToUndoStack(dataPoints, "Delete data point");
+    // Show undo button
+    setShowUndoButton(true);
     
     setDataPoints(prev => {
       const updatedPoints = prev.filter((_, i) => i !== index);
@@ -182,8 +172,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newDataPoints.length > 0) {
-        // Save current state to undo stack before making changes
-        saveToUndoStack(dataPoints, `Paste ${newDataPoints.length} data points`);
+        // Show undo button
+        setShowUndoButton(true);
         
         setDataPoints(prev => [...prev, ...newDataPoints]);
         setPasteInput("");
@@ -220,8 +210,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newValues.length > 0) {
-        // Save current state to undo stack before making changes
-        saveToUndoStack(dataPoints, `Paste ${newValues.length} values at row ${index + 1}`);
+        // Show undo button
+        setShowUndoButton(true);
         
         setDataPoints(prev => {
           const updatedPoints = [...prev];
@@ -293,7 +283,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && canUndo && activeTab === ctqName) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && showUndoButton && activeTab === ctqName) {
         event.preventDefault();
         handleUndo();
       }
@@ -301,7 +291,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [canUndo, activeTab, ctqName]);
+  }, [showUndoButton, activeTab, ctqName]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
@@ -312,8 +302,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const saveEdit = (index: number) => {
     const numericValue = parseFloat(editValue);
     if (!isNaN(numericValue)) {
-      // Save current state to undo stack before making changes
-      saveToUndoStack(dataPoints, `Edit data point at row ${index + 1}`);
+      // Show undo button
+      setShowUndoButton(true);
       
       setDataPoints(prev => 
         prev.map((point, i) => 
@@ -713,6 +703,21 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                   <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
                   <div>• <strong>Data will automatically create new rows</strong> if needed</div>
                 </div>
+                
+                {/* Undo Button */}
+                {showUndoButton && (
+                  <div className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleUndo}
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                    >
+                      <Undo className="h-4 w-4 mr-1" />
+                      Undo (Ctrl+Z)
+                    </Button>
+                  </div>
+                )}
                 
                 {dataPoints.length > 0 && (
                   <div className="text-sm text-gray-600 mt-2">
