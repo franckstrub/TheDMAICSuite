@@ -676,32 +676,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       console.log('MSA Focused Cell Paste: Saving undo state for', ctq);
       console.log('MSA Current data before paste:', continuousMsaData[ctq]);
       
-      // Ensure we have MSA data initialized for this CTQ
-      let currentData = continuousMsaData[ctq];
+      // Get current data (should always exist due to initialization in useEffect)
+      const currentData = continuousMsaData[ctq];
       if (!currentData) {
-        // Initialize default MSA data structure if it doesn't exist
-        currentData = {
-          ctq: ctq,
-          appraiser1Name: "",
-          appraiser2Name: "",
-          appraiser3Name: "",
-          gageRRData: [],
-          sigmaMultiplier: 6,
-          tolerance: undefined,
-          repetitions: 2,
-          numberOfAppraisers: 2,
-          studyDateTime: new Date().toISOString(),
-          justification: "",
-        };
-        
-        // Update the state with the initialized data
-        setContinuousMsaData(prev => ({
-          ...prev,
-          [ctq]: currentData!
-        }));
+        console.error('MSA data not initialized for CTQ:', ctq);
+        return;
       }
       
-      // Save undo state with the current (or newly initialized) data
+      // Save undo state with the current data
       setUndoStates(prev => ({
         ...prev,
         [ctq]: JSON.parse(JSON.stringify(currentData))
@@ -872,32 +854,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       console.log('MSA General Paste: Saving undo state for', ctq);
       console.log('MSA Current data before paste:', continuousMsaData[ctq]);
       
-      // Ensure we have MSA data initialized for this CTQ
-      let currentData = continuousMsaData[ctq];
+      // Get current data (should always exist due to initialization in useEffect)
+      const currentData = continuousMsaData[ctq];
       if (!currentData) {
-        // Initialize default MSA data structure if it doesn't exist
-        currentData = {
-          ctq: ctq,
-          appraiser1Name: "",
-          appraiser2Name: "",
-          appraiser3Name: "",
-          gageRRData: [],
-          sigmaMultiplier: 6,
-          tolerance: undefined,
-          repetitions: 2,
-          numberOfAppraisers: 2,
-          studyDateTime: new Date().toISOString(),
-          justification: "",
-        };
-        
-        // Update the state with the initialized data
-        setContinuousMsaData(prev => ({
-          ...prev,
-          [ctq]: currentData!
-        }));
+        console.error('MSA data not initialized for CTQ:', ctq);
+        return;
       }
       
-      // Save undo state with the current (or newly initialized) data
+      // Save undo state with the current data
       setUndoStates(prev => ({
         ...prev,
         [ctq]: JSON.parse(JSON.stringify(currentData))
