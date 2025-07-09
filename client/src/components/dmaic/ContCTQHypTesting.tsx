@@ -74,10 +74,12 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
 
-  // Capture original state when component initializes
+  // Capture original state when data is first added (not when component initializes empty)
   useEffect(() => {
-    setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
-  }, []);
+    if (dataPoints.length > 0 && originalState.length === 0) {
+      setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
+    }
+  }, [dataPoints, originalState.length]);
 
   const updateContCTQHypTestDataField = (
     ctqId: number, 
@@ -120,6 +122,11 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return;
     
+    // Save original state before first modification
+    if (originalState.length === 0) {
+      setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
+    }
+    
     // Show undo button
     setShowUndoButton(true);
     
@@ -132,6 +139,11 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   };
 
   const handleDeleteDataPoint = (index: number) => {
+    // Save original state before first modification
+    if (originalState.length === 0) {
+      setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
+    }
+    
     // Show undo button
     setShowUndoButton(true);
     
@@ -172,6 +184,11 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newDataPoints.length > 0) {
+        // Save original state before first modification
+        if (originalState.length === 0) {
+          setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
+        }
+        
         // Show undo button
         setShowUndoButton(true);
         
