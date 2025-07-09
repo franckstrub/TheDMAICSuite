@@ -642,27 +642,6 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   };
 
   const updateContinuousAnalysisRow = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, value: string | number) => {
-    // Save undo state only if we don't already have one for this CTQ and there's actual data
-    if (!undoStates[ctq] && continuousMsaData[ctq]?.gageRRData) {
-      const hasAnyData = continuousMsaData[ctq].gageRRData.some(row =>
-        row.app1_rep1 !== null || row.app1_rep2 !== null || row.app1_rep3 !== null ||
-        row.app2_rep1 !== null || row.app2_rep2 !== null || row.app2_rep3 !== null ||
-        row.app3_rep1 !== null || row.app3_rep2 !== null || row.app3_rep3 !== null
-      );
-      
-      if (hasAnyData) {
-        setUndoStates(prev => ({
-          ...prev,
-          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq].gageRRData))
-        }));
-        
-        setShowUndoButton(prev => ({
-          ...prev,
-          [ctq]: true
-        }));
-      }
-    }
-
     setContinuousMsaData(prev => {
       const updatedData = [...(prev[ctq]?.gageRRData || [])];
       if (updatedData[rowIndex]) {
