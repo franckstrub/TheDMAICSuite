@@ -209,8 +209,23 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         activeElement.closest('[data-component="msa-analysis"]') ||
         activeElement.closest('.msa-table') ||
         activeElement.closest('[role="tabpanel"]')?.querySelector('.msa-table') ||
-        (activeElement.getAttribute('data-testid') && activeElement.getAttribute('data-testid')?.includes('msa'))
+        (activeElement.getAttribute('data-testid') && activeElement.getAttribute('data-testid')?.includes('msa')) ||
+        // Also check if we're in an MSA input field within the MSA component
+        (isInInputField && activeElement.closest('[data-component="msa-analysis"]'))
       );
+
+      // Debug logging to understand focus detection
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
+        console.log('MSA Keyboard shortcut triggered:', {
+          activeElement: activeElement?.tagName,
+          activeElementClass: activeElement?.className,
+          isMsaFocused,
+          isInInputField,
+          hasDataComponent: !!activeElement?.closest('[data-component="msa-analysis"]'),
+          hasMsaTable: !!activeElement?.closest('.msa-table'),
+          activeTab
+        });
+      }
 
       // Handle Ctrl+V for paste - only when not in input field AND focused on MSA component
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab && !isInInputField && isMsaFocused) {
