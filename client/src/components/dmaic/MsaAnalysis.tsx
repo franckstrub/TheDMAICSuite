@@ -658,6 +658,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
       const parsedData: (number | null)[][] = [];
+      let totalValidNumbers = 0;
       
       rows.forEach(row => {
         // Split by tabs first (Excel default), then by commas if no tabs
@@ -670,7 +671,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             rowData.push(null);
           } else {
             const parsed = parseFloat(trimmedCell);
-            rowData.push(!isNaN(parsed) && isFinite(parsed) ? parsed : null);
+            if (!isNaN(parsed) && isFinite(parsed)) {
+              rowData.push(parsed);
+              totalValidNumbers++;
+            } else {
+              rowData.push(null);
+            }
           }
         });
         
@@ -679,10 +685,10 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         }
       });
       
-      if (parsedData.length === 0) {
+      if (parsedData.length === 0 || totalValidNumbers === 0) {
         toast({
           title: "No Data Found",
-          description: "No valid data found in clipboard. Please copy measurement data from Excel first.",
+          description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
           variant: "destructive",
         });
         return;
@@ -817,6 +823,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
       const parsedData: (number | null)[][] = [];
+      let totalValidNumbers = 0;
       
       rows.forEach(row => {
         // Split by tabs first (Excel default), then by commas if no tabs
@@ -829,7 +836,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             rowData.push(null);
           } else {
             const parsed = parseFloat(trimmedCell);
-            rowData.push(!isNaN(parsed) && isFinite(parsed) ? parsed : null);
+            if (!isNaN(parsed) && isFinite(parsed)) {
+              rowData.push(parsed);
+              totalValidNumbers++;
+            } else {
+              rowData.push(null);
+            }
           }
         });
         
@@ -838,10 +850,10 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         }
       });
       
-      if (parsedData.length === 0) {
+      if (parsedData.length === 0 || totalValidNumbers === 0) {
         toast({
           title: "No Data Found",
-          description: "No valid data found in clipboard. Please copy measurement data from Excel first.",
+          description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
           variant: "destructive",
         });
         return;
