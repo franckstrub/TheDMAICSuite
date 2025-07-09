@@ -254,7 +254,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
       const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
       // Handle Ctrl+V/Cmd+V for paste - only when not in input field and in One Sample Hyp-Test mode
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && currentTestType === "One Sample Hyp-Test" && !isInInputField) {
+      const testType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && testType === "One Sample Hyp-Test" && !isInInputField) {
         event.preventDefault();
         
         // Get clipboard data
@@ -280,7 +281,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && currentTestType === "One Sample Hyp-Test") {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && testType === "One Sample Hyp-Test") {
         if (canUndo) {
           event.preventDefault();
           handleUndo();
