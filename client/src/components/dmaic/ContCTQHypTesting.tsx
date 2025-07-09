@@ -52,6 +52,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   const [inputValue, setInputValue] = useState("");
   const [pasteInput, setPasteInput] = useState("");
   const [focusedCell, setFocusedCell] = useState<number>(-1);
+  const [editingCell, setEditingCell] = useState<number>(-1);
+  const [editValue, setEditValue] = useState<string>("");
 
   const updateContCTQHypTestDataField = (
     ctqId: number, 
@@ -135,6 +137,34 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
         });
       }
     }
+  };
+
+  // Handle cell editing
+  const startEditing = (index: number, currentValue: number) => {
+    setEditingCell(index);
+    setEditValue(currentValue.toString());
+  };
+
+  const saveEdit = (index: number) => {
+    const numericValue = parseFloat(editValue);
+    if (!isNaN(numericValue)) {
+      setDataPoints(prev => 
+        prev.map((point, i) => 
+          i === index ? { ...point, dataValue: numericValue } : point
+        )
+      );
+      toast({
+        title: "Data Updated",
+        description: "Data point has been updated successfully.",
+      });
+    }
+    setEditingCell(-1);
+    setEditValue("");
+  };
+
+  const cancelEdit = () => {
+    setEditingCell(-1);
+    setEditValue("");
   };
 
   const [ContCTQHypTestData, setContCTQHypTestData] = useState<{ [ctqId: number]: ContCTQHypTestData }>({
@@ -422,13 +452,53 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                             <td className="px-4 py-2 text-sm text-gray-900">
                               {point.indexNumber}
                             </td>
-                            <td 
-                              className="px-4 py-2 text-sm text-gray-900 cursor-pointer hover:bg-blue-50"
-                              onClick={() => setFocusedCell(index)}
-                              onPaste={handlePasteData}
-                              tabIndex={0}
-                            >
-                              {point.dataValue}
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {editingCell === index ? (
+                                <div className="flex gap-1 items-center">
+                                  <Input
+                                    type="number"
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyPress={(e) => {
+                                      if (e.key === 'Enter') {
+                                        saveEdit(index);
+                                      } else if (e.key === 'Escape') {
+                                        cancelEdit();
+                                      }
+                                    }}
+                                    onBlur={() => saveEdit(index)}
+                                    className="w-20 h-7 text-xs"
+                                    step="any"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => saveEdit(index)}
+                                    className="h-6 w-6 p-0 text-green-600"
+                                  >
+                                    ✓
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={cancelEdit}
+                                    className="h-6 w-6 p-0 text-red-600"
+                                  >
+                                    ✕
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div 
+                                  className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                  onClick={() => startEditing(index, point.dataValue)}
+                                  onPaste={handlePasteData}
+                                  tabIndex={0}
+                                  title="Click to edit this value"
+                                >
+                                  {point.dataValue}
+                                </div>
+                              )}
                             </td>
                             <td className="px-4 py-2">
                               <Button
