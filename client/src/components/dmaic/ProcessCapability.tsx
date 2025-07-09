@@ -204,6 +204,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V for paste - when this CTQ is active
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
+        // Debug logging to understand when Process Capability intercepts shortcuts
+        console.log('Process Capability keyboard shortcut triggered:', {
+          activeElement: document.activeElement?.tagName,
+          activeElementClass: document.activeElement?.className,
+          activeTab,
+          processCapabilityActiveTab: activeTab
+        });
+        
         event.preventDefault();
         
         // Get clipboard data
