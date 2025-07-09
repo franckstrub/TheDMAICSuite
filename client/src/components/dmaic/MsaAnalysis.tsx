@@ -672,42 +672,23 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   // Handle focused cell paste for continuous MSA
   const handleFocusedCellPaste = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, pasteData: string) => {
     try {
-      // Save current state for undo - always save before any changes
-      console.log('MSA Focused Cell Paste: Saving undo state for', ctq);
-      console.log('MSA Current data before paste:', continuousMsaData[ctq]);
-      
-      // Get current data - if it doesn't exist, initialize it now
-      let currentData = continuousMsaData[ctq];
-      if (!currentData) {
-        console.warn('MSA data not initialized for CTQ, initializing now:', ctq);
-        // Force initialization for this CTQ
-        currentData = {
+      // Save current state for undo (always save, even if empty) - same pattern as ProcessCapability
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {
           ctq: ctq,
           appraiser1Name: "",
           appraiser2Name: "",
           appraiser3Name: "",
-          gageRRData: generateDefaultContinuousData(),
+          gageRRData: [],
           sigmaMultiplier: 6,
           tolerance: undefined,
           repetitions: 2,
           numberOfAppraisers: 2,
           studyDateTime: new Date().toISOString(),
           justification: "",
-        };
-        
-        // Update the state
-        setContinuousMsaData(prev => ({
-          ...prev,
-          [ctq]: currentData!
-        }));
-      }
-      
-      // Save undo state with the current data
-      setUndoStates(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(currentData))
+        }))
       }));
-      console.log('MSA Focused Cell Paste: Undo state saved for', ctq);
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
@@ -869,42 +850,23 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     }
     
     try {
-      // Save current state for undo - always save before any changes
-      console.log('MSA General Paste: Saving undo state for', ctq);
-      console.log('MSA Current data before paste:', continuousMsaData[ctq]);
-      
-      // Get current data - if it doesn't exist, initialize it now
-      let currentData = continuousMsaData[ctq];
-      if (!currentData) {
-        console.warn('MSA data not initialized for CTQ, initializing now:', ctq);
-        // Force initialization for this CTQ
-        currentData = {
+      // Save current state for undo (always save, even if empty) - same pattern as ProcessCapability
+      setUndoStates(prev => ({
+        ...prev,
+        [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq] || {
           ctq: ctq,
           appraiser1Name: "",
           appraiser2Name: "",
           appraiser3Name: "",
-          gageRRData: generateDefaultContinuousData(),
+          gageRRData: [],
           sigmaMultiplier: 6,
           tolerance: undefined,
           repetitions: 2,
           numberOfAppraisers: 2,
           studyDateTime: new Date().toISOString(),
           justification: "",
-        };
-        
-        // Update the state
-        setContinuousMsaData(prev => ({
-          ...prev,
-          [ctq]: currentData!
-        }));
-      }
-      
-      // Save undo state with the current data
-      setUndoStates(prev => ({
-        ...prev,
-        [ctq]: JSON.parse(JSON.stringify(currentData))
+        }))
       }));
-      console.log('MSA General Paste: Undo state saved for', ctq);
       
       // Parse tab-separated or comma-separated values
       const rows = pasteData.trim().split('\n');
