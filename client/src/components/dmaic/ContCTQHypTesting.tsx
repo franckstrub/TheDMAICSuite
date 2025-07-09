@@ -255,45 +255,34 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
 
       // Handle Ctrl+V/Cmd+V for paste - only when not in input field
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && !isInInputField) {
-        const testType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
-        console.log('Ctrl+V detected:', { ctrlKey: event.ctrlKey, metaKey: event.metaKey, key: event.key, testType, isInInputField });
+        event.preventDefault();
         
-        // Only work for One Sample Hyp-Test mode
-        if (testType === "One Sample Hyp-Test") {
-          console.log('Processing paste...');
-          event.preventDefault();
-          
-          // Get clipboard data
-          navigator.clipboard.readText().then(clipboardData => {
-            if (clipboardData.trim()) {
-              // Create a synthetic paste event
-              const syntheticEvent = {
-                preventDefault: () => {},
-                clipboardData: {
-                  getData: () => clipboardData
-                }
-              } as unknown as React.ClipboardEvent;
-              
-              handlePasteData(syntheticEvent);
-            }
-          }).catch(() => {
-            toast({
-              title: "Clipboard Access",
-              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-              variant: "default",
-            });
+        // Get clipboard data
+        navigator.clipboard.readText().then(clipboardData => {
+          if (clipboardData.trim()) {
+            // Create a synthetic paste event
+            const syntheticEvent = {
+              preventDefault: () => {},
+              clipboardData: {
+                getData: () => clipboardData
+              }
+            } as unknown as React.ClipboardEvent;
+            
+            handlePasteData(syntheticEvent);
+          }
+        }).catch(() => {
+          toast({
+            title: "Clipboard Access",
+            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+            variant: "default",
           });
-        }
+        });
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
-        const testType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
-        
-        if (testType === "One Sample Hyp-Test" && canUndo) {
-          event.preventDefault();
-          handleUndo();
-        }
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && canUndo) {
+        event.preventDefault();
+        handleUndo();
       }
     };
 
