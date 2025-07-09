@@ -221,6 +221,12 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
             } as unknown as React.ClipboardEvent;
             
             handlePasteData(activeTab, syntheticEvent);
+          } else {
+            toast({
+              title: "No Data Found",
+              description: "No data found in clipboard. Please copy data from Excel first.",
+              variant: "destructive",
+            });
           }
         }).catch(() => {
           toast({
