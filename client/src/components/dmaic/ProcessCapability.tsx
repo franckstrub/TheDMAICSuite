@@ -421,13 +421,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const numericValues = currentPoints.map(point => point.dataValue);
     
     // Allow auto-saving empty datasets to properly clear the database
+    console.log(`Auto-saving for ${ctq}:`, { currentPoints, numericValues, length: numericValues.length });
     
     try {
       await saveDataPointMutation.mutateAsync({
         processCapabilityId, // Now TypeScript knows this is definitely a number
         dataPoints: numericValues
       });
-      //console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
+      console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
       
       // Clear the timer from state to hide the auto-saving indicator
       setAutoSaveTimers(prev => {
@@ -485,8 +486,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       [ctq]: ""
     }));
 
-    // Trigger auto-save
-    triggerAutoSave(ctq);
+    // Auto-save will be triggered by useEffect watching dataPoints changes
   };
 
   // Handle adding data point from the Add button
@@ -497,9 +497,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Function to delete a data point
   const handleDeleteDataPoint = (ctq: string, index: number) => {
+    console.log(`Deleting data point at index ${index} for ${ctq}`);
     setDataPoints(prev => {
       const currentPoints = prev[ctq] || [];
+      console.log(`Before delete:`, currentPoints);
       const updatedPoints = currentPoints.filter((_, i) => i !== index);
+      console.log(`After delete:`, updatedPoints);
       
       // Re-index the remaining points
       const reindexedPoints = updatedPoints.map((point, i) => ({
@@ -507,14 +510,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         indexNumber: i + 1
       }));
       
+      console.log(`After re-index:`, reindexedPoints);
+      
       return {
         ...prev,
         [ctq]: reindexedPoints
       };
     });
 
-    // Trigger auto-save after deletion
-    triggerAutoSave(ctq);
+    // Auto-save will be triggered by useEffect watching dataPoints changes
     
     toast({
       title: "Data Point Deleted",
@@ -700,8 +704,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         description: `Pasted ${parsedValues.length} data points from position ${startIndex + 1} to ${startIndex + parsedValues.length}`,
       });
 
-      // Trigger auto-save after paste
-      triggerAutoSave(ctq);
+      // Auto-save will be triggered by useEffect watching dataPoints changes
       
     } catch (error) {
 
@@ -762,6 +765,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       }
     });
   }, [capabilityData, ctsData, ctsLoading, projectLoading]);
+
+  // Auto-save when data points change (with debouncing)
+  useEffect(() => {
+    const ctqs = getCtqsWithTypes();
+    ctqs.forEach(({ ctq }) => {
+      if (capabilityData[ctq]?.id && dataPoints[ctq] !== undefined) {
+        // Trigger auto-save when data points change
+        triggerAutoSave(ctq);
+      }
+    });
+  }, [dataPoints]);
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
