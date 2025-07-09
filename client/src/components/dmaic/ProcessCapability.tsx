@@ -494,6 +494,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     triggerAutoSave(ctq);
   };
 
+  // Handle adding data point from the Add button
+  const handleAddDataPoint = (ctq: string) => {
+    const value = inputValues[ctq] || "";
+    addDataPointToLocalState(ctq, value);
+  };
+
   // Function to delete a data point
   const handleDeleteDataPoint = (ctq: string, index: number) => {
     setDataPoints(prev => {
