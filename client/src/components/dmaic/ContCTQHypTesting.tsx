@@ -97,12 +97,14 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   // Helper function to save state to undo stack
   const saveToUndoStack = (currentState: DataPoint[], action: string) => {
+    console.log("Saving to undo stack:", action, "State length:", currentState.length);
     setUndoStack(prev => {
       const newStack = [...prev, { state: [...currentState], action }];
       // Keep only last 20 states to prevent memory issues
       if (newStack.length > 20) {
         newStack.shift();
       }
+      console.log("Undo stack now has", newStack.length, "entries");
       return newStack;
     });
     setCanUndo(true);
@@ -113,13 +115,17 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     if (undoStack.length === 0) return;
     
     const lastEntry = undoStack[undoStack.length - 1];
+    console.log("Undoing action:", lastEntry.action);
+    console.log("Current dataPoints length:", dataPoints.length);
+    console.log("Restoring to state with length:", lastEntry.state.length);
+    
     setDataPoints(lastEntry.state);
     setUndoStack(prev => prev.slice(0, -1));
     setCanUndo(undoStack.length > 1);
     
     toast({
       title: "Undo Complete",
-      description: `Undid: ${lastEntry.action}`,
+      description: `Undid: ${lastEntry.action}. Restored to ${lastEntry.state.length} data points.`,
     });
   };
 
@@ -182,15 +188,10 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newDataPoints.length > 0) {
-        // For granular undo, save each individual data point addition
-        let currentState = dataPoints;
-        newDataPoints.forEach((newPoint, index) => {
-          // Save state before adding each point
-          saveToUndoStack(currentState, `Add data point ${newPoint.dataValue}`);
-          currentState = [...currentState, newPoint];
-        });
+        // Save current state to undo stack before making changes
+        saveToUndoStack(dataPoints, `Paste ${newDataPoints.length} data points`);
         
-        setDataPoints(currentState);
+        setDataPoints(prev => [...prev, ...newDataPoints]);
         setPasteInput("");
         toast({
           title: "Data Imported",
@@ -225,29 +226,32 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newValues.length > 0) {
-        // For granular undo, save each individual cell change
-        let currentState = [...dataPoints];
-        newValues.forEach((value, i) => {
-          const targetIndex = index + i;
-          // Save state before each individual change
-          saveToUndoStack(currentState, `Edit data point at row ${targetIndex + 1} to ${value}`);
-          
-          if (targetIndex < currentState.length) {
-            // Update existing cell
-            currentState[targetIndex] = {
-              ...currentState[targetIndex],
-              dataValue: value
-            };
-          } else {
-            // Create new data point
-            currentState.push({
-              indexNumber: currentState.length + 1,
-              dataValue: value
-            });
-          }
-        });
+        // Save current state to undo stack before making changes
+        saveToUndoStack(dataPoints, `Paste ${newValues.length} values at row ${index + 1}`);
         
-        setDataPoints(currentState);
+        setDataPoints(prev => {
+          const updatedPoints = [...prev];
+          
+          // Update existing cells starting from the clicked index
+          newValues.forEach((value, i) => {
+            const targetIndex = index + i;
+            if (targetIndex < updatedPoints.length) {
+              // Update existing cell
+              updatedPoints[targetIndex] = {
+                ...updatedPoints[targetIndex],
+                dataValue: value
+              };
+            } else {
+              // Create new data point
+              updatedPoints.push({
+                indexNumber: updatedPoints.length + 1,
+                dataValue: value
+              });
+            }
+          });
+          
+          return updatedPoints;
+        });
         
         toast({
           title: "Data Pasted",
