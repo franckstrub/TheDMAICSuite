@@ -55,7 +55,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const [focusedCell, setFocusedCell] = useState<number>(-1);
   const [editingCell, setEditingCell] = useState<number>(-1);
   const [editValue, setEditValue] = useState<string>("");
-  const [undoStack, setUndoStack] = useState<DataPoint[][]>([]);
+  const [undoStack, setUndoStack] = useState<{ state: DataPoint[], action: string }[]>([]);
   const [canUndo, setCanUndo] = useState(false);
 
   // Initialize ContCTQHypTestData with default values
@@ -96,9 +96,9 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   };
 
   // Helper function to save state to undo stack
-  const saveToUndoStack = (currentState: DataPoint[]) => {
+  const saveToUndoStack = (currentState: DataPoint[], action: string) => {
     setUndoStack(prev => {
-      const newStack = [...prev, currentState];
+      const newStack = [...prev, { state: [...currentState], action }];
       // Keep only last 20 states to prevent memory issues
       if (newStack.length > 20) {
         newStack.shift();
@@ -112,14 +112,14 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const handleUndo = () => {
     if (undoStack.length === 0) return;
     
-    const lastState = undoStack[undoStack.length - 1];
-    setDataPoints(lastState);
+    const lastEntry = undoStack[undoStack.length - 1];
+    setDataPoints(lastEntry.state);
     setUndoStack(prev => prev.slice(0, -1));
     setCanUndo(undoStack.length > 1);
     
     toast({
       title: "Undo Complete",
-      description: "Data has been restored to previous state.",
+      description: `Undid: ${lastEntry.action}`,
     });
   };
 
@@ -131,7 +131,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     if (isNaN(numericValue)) return;
     
     // Save current state to undo stack before making changes
-    saveToUndoStack(dataPoints);
+    saveToUndoStack(dataPoints, "Add data point");
     
     setDataPoints(prev => [
       ...prev,
@@ -143,7 +143,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   const handleDeleteDataPoint = (index: number) => {
     // Save current state to undo stack before making changes
-    saveToUndoStack(dataPoints);
+    saveToUndoStack(dataPoints, "Delete data point");
     
     setDataPoints(prev => {
       const updatedPoints = prev.filter((_, i) => i !== index);
@@ -183,7 +183,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       
       if (newDataPoints.length > 0) {
         // Save current state to undo stack before making changes
-        saveToUndoStack(dataPoints);
+        saveToUndoStack(dataPoints, `Paste ${newDataPoints.length} data points`);
         
         setDataPoints(prev => [...prev, ...newDataPoints]);
         setPasteInput("");
@@ -221,7 +221,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       
       if (newValues.length > 0) {
         // Save current state to undo stack before making changes
-        saveToUndoStack(dataPoints);
+        saveToUndoStack(dataPoints, `Paste ${newValues.length} values at row ${index + 1}`);
         
         setDataPoints(prev => {
           const updatedPoints = [...prev];
@@ -313,7 +313,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     const numericValue = parseFloat(editValue);
     if (!isNaN(numericValue)) {
       // Save current state to undo stack before making changes
-      saveToUndoStack(dataPoints);
+      saveToUndoStack(dataPoints, `Edit data point at row ${index + 1}`);
       
       setDataPoints(prev => 
         prev.map((point, i) => 
