@@ -123,9 +123,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     // Save current state before making changes
     setUndoState(JSON.parse(JSON.stringify(dataPoints)));
     
-    // Show undo button
-    setShowUndoButton(true);
-    
     setDataPoints(prev => [
       ...prev,
       { indexNumber: prev.length + 1, dataValue: numericValue }
@@ -137,9 +134,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const handleDeleteDataPoint = (index: number) => {
     // Save current state before making changes
     setUndoState(JSON.parse(JSON.stringify(dataPoints)));
-    
-    // Show undo button
-    setShowUndoButton(true);
     
     setDataPoints(prev => {
       const updatedPoints = prev.filter((_, i) => i !== index);
@@ -181,9 +175,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
         // Save current state before making changes
         setUndoState(JSON.parse(JSON.stringify(dataPoints)));
         
-        // Show undo button
-        setShowUndoButton(true);
-        
         setDataPoints(prev => [...prev, ...newDataPoints]);
         setPasteInput("");
         toast({
@@ -221,9 +212,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       if (newValues.length > 0) {
         // Save current state before making changes
         setUndoState(JSON.parse(JSON.stringify(dataPoints)));
-        
-        // Show undo button
-        setShowUndoButton(true);
         
         setDataPoints(prev => {
           const updatedPoints = [...prev];
@@ -303,7 +291,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [showUndoButton, activeTab, ctqName]);
+  }, [undoState, activeTab, ctqName]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
@@ -316,9 +304,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     if (!isNaN(numericValue)) {
       // Save current state before making changes
       setUndoState(JSON.parse(JSON.stringify(dataPoints)));
-      
-      // Show undo button
-      setShowUndoButton(true);
       
       setDataPoints(prev => 
         prev.map((point, i) => 
@@ -536,7 +521,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                   <label className="block text-sm font-medium mb-2">Data Input</label>
                   {/* Undo and Paste from Excel Section */}
                   <div className="flex gap-2 mt-2">
-                    {showUndoButton && (
+                    {undoState && (
                       <Button 
                         variant="outline" 
                         size="sm" 
