@@ -204,8 +204,16 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       const activeElement = document.activeElement;
       const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
-      // Handle Ctrl+V for paste - only when not in input field
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab && !isInInputField) {
+      // Check if user is interacting with MSA component by looking for MSA-specific elements or classes
+      const isMsaFocused = activeElement && (
+        activeElement.closest('[data-component="msa-analysis"]') ||
+        activeElement.closest('.msa-table') ||
+        activeElement.closest('[role="tabpanel"]')?.querySelector('.msa-table') ||
+        (activeElement.getAttribute('data-testid') && activeElement.getAttribute('data-testid')?.includes('msa'))
+      );
+
+      // Handle Ctrl+V for paste - only when not in input field AND focused on MSA component
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab && !isInInputField && isMsaFocused) {
         // Trigger paste for the active CTQ
         event.preventDefault();
         
@@ -237,8 +245,8 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         });
       }
 
-      // Handle Ctrl+Z for undo - works both in and outside input fields
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab) {
+      // Handle Ctrl+Z for undo - works both in and outside input fields but only when focused on MSA
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab && isMsaFocused) {
         if (undoStates[activeTab] && showUndoButton[activeTab]) {
           event.preventDefault();
           handleUndo(activeTab);
@@ -1142,7 +1150,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   }
 
   return (
-    <Card>
+    <Card data-component="msa-analysis">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
@@ -1394,7 +1402,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                     </div>
 
                     <div className="overflow-x-auto border rounded-lg pt-6">
-                      <Table>
+                      <Table className="msa-table">
                         <TableHeader>
                           <TableRow>
                             <TableHead className="w-20">
@@ -1885,7 +1893,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                       </div>
                       )}
                       <div className="pt-5 pb-6">
-                      <Table>
+                      <Table className="msa-table">
                         <TableHeader>
                           <TableRow>
                             <TableHead className="w-20">Unit #</TableHead>
