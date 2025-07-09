@@ -57,6 +57,22 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   const [undoStack, setUndoStack] = useState<DataPoint[][]>([]);
   const [canUndo, setCanUndo] = useState(false);
 
+  // Initialize ContCTQHypTestData with default values
+  const [ContCTQHypTestData, setContCTQHypTestData] = useState<{ [ctqId: number]: ContCTQHypTestData }>(() => ({
+    [ctqId]: {
+      ctq: ctqName,
+      testType: "One Sample Hyp-Test",
+      enableMeanTest: false,
+      enableVarianceTest: false,
+      enableMedianTest: false,
+      targetMean: 0,
+      targetVariance: 0,
+      targetMedian: 0
+    }
+  }));
+
+  const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
+
   const updateContCTQHypTestDataField = (
     ctqId: number, 
     field: keyof ContCTQHypTestData, 
@@ -303,20 +319,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
     setEditValue("");
   };
 
-  const [ContCTQHypTestData, setContCTQHypTestData] = useState<{ [ctqId: number]: ContCTQHypTestData }>({
-    [ctqId]: {
-      ctq: ctqName,
-      testType: "One Sample Hyp-Test",
-      enableMeanTest: false,
-      enableVarianceTest: false,
-      enableMedianTest: false,
-      targetMean: 0,
-      targetVariance: 0,
-      targetMedian: 0
-    }
-  });
 
-  const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
 
   return (
     <Card>
