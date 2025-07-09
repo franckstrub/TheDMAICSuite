@@ -31,10 +31,11 @@ interface ContCTQHypTestingProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQHypTestingProps) {
+export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQHypTestingProps) {
   const { toast } = useToast();
   const [variable1, setVariable1] = useState("Processing Time (Before)");
   const [variable2, setVariable2] = useState("Processing Time (After)");
@@ -253,8 +254,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
       const activeElement = document.activeElement;
       const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
-      // Handle Ctrl+V/Cmd+V for paste - only when not in input field
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && !isInInputField) {
+      // Handle Ctrl+V/Cmd+V for paste - only when not in input field and this CTQ is active
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && !isInInputField && activeTab === ctqName) {
         event.preventDefault();
         
         // Get clipboard data
@@ -279,8 +280,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
         });
       }
 
-      // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && canUndo) {
+      // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && canUndo && activeTab === ctqName) {
         event.preventDefault();
         handleUndo();
       }
@@ -288,7 +289,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [canUndo, ContCTQHypTestData[ctqId]?.testType]);
+  }, [canUndo, activeTab, ctqName]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {

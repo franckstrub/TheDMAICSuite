@@ -204,7 +204,7 @@ export default function AnalyzePhase() {
                     {ctqItem.ctqType === 'Attribute' ? (                    
                       <AttributeCTQAnalysis projectId={projectId} ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq}  />
                     ) : (                        
-                      <ContinuousCTQAnalysis projectId={projectId}  ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq} />                      
+                      <ContinuousCTQAnalysis projectId={projectId}  ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq} activeTab={activeTab} />                      
                     )}
                   </TabsContent>
                 ))}
