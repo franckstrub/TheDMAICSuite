@@ -132,10 +132,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   };
 
   const handleDeleteDataPoint = (index: number) => {
-    // Save original state before first modification
-    if (originalState.length === 0) {
-      setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
-    }
+    // Save current state before making changes
+    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
     
     // Show undo button
     setShowUndoButton(true);
@@ -177,10 +175,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newDataPoints.length > 0) {
-        // Save original state before first modification
-        if (originalState.length === 0) {
-          setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
-        }
+        // Save current state before making changes
+        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
         
         // Show undo button
         setShowUndoButton(true);
@@ -220,10 +216,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newValues.length > 0) {
-        // Save original state before first modification
-        if (originalState.length === 0) {
-          setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
-        }
+        // Save current state before making changes
+        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
         
         // Show undo button
         setShowUndoButton(true);
@@ -317,10 +311,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const saveEdit = (index: number) => {
     const numericValue = parseFloat(editValue);
     if (!isNaN(numericValue)) {
-      // Save original state before first modification
-      if (originalState.length === 0) {
-        setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
-      }
+      // Save current state before making changes
+      setUndoState(JSON.parse(JSON.stringify(dataPoints)));
       
       // Show undo button
       setShowUndoButton(true);
