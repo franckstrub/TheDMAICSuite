@@ -258,7 +258,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
       // Handle Ctrl+Z for undo - works both in and outside input fields but only when focused on MSA
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab && isMsaFocused) {
-        if (undoStates[activeTab] && showUndoButton[activeTab]) {
+        if (undoStates[activeTab]) {
           event.preventDefault();
           handleUndo(activeTab);
         }
