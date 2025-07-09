@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -231,13 +231,50 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
     }
   };
 
-  // Handle keyboard shortcuts
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.ctrlKey && event.key === 'z') {
-      event.preventDefault();
-      handleUndo();
-    }
-  };
+  // Add keyboard shortcut support for paste and undo functionality
+  useEffect(() => {
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+
+      // Handle Ctrl+V/Cmd+V for paste - only when not in input field and in One Sample Hyp-Test mode
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && currentTestType === "One Sample Hyp-Test" && !isInInputField) {
+        event.preventDefault();
+        
+        // Get clipboard data
+        navigator.clipboard.readText().then(clipboardData => {
+          if (clipboardData.trim()) {
+            // Create a synthetic paste event
+            const syntheticEvent = {
+              preventDefault: () => {},
+              clipboardData: {
+                getData: () => clipboardData
+              }
+            } as unknown as React.ClipboardEvent;
+            
+            handlePasteData(syntheticEvent);
+          }
+        }).catch(() => {
+          toast({
+            title: "Clipboard Access",
+            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+            variant: "default",
+          });
+        });
+      }
+
+      // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && currentTestType === "One Sample Hyp-Test") {
+        if (canUndo) {
+          event.preventDefault();
+          handleUndo();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyboardShortcut);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [canUndo, currentTestType]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
@@ -282,7 +319,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
   const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
 
   return (
-    <Card onKeyDown={handleKeyDown} tabIndex={0}>
+    <Card>
       <CardHeader>
         <CardTitle>Hypothesis Testing</CardTitle>
       </CardHeader>
@@ -514,7 +551,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                   <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                   <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                   <div className="text-blue-600 text-xs mt-1">
-                    Ctrl+V to paste | Ctrl+Z to undo | Click table cell to paste
+                    Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click table cell to paste
                   </div>
                 </div>
 
@@ -657,8 +694,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                 <div className="text-xs text-blue-600 mt-2 space-y-1">
                   <div><strong>Excel Import Instructions:</strong></div>
                   <div>• <strong>Focus a cell</strong> by clicking on any measurement input field</div>
-                  <div>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</div>
-                  <div>• <strong>Undo changes</strong> using Ctrl+Z after pasting</div>
+                  <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
+                  <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
                   <div>• <strong>Data will automatically create new rows</strong> if needed</div>
                 </div>
                 
