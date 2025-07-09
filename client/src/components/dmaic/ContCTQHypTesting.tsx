@@ -55,7 +55,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const [focusedCell, setFocusedCell] = useState<number>(-1);
   const [editingCell, setEditingCell] = useState<number>(-1);
   const [editValue, setEditValue] = useState<string>("");
-  const [undoState, setUndoState] = useState<DataPoint[]>([]);
+  const [undoState, setUndoState] = useState<DataPoint[] | null>(null);
   const [showUndoButton, setShowUndoButton] = useState(false);
 
   // Initialize ContCTQHypTestData with default values
@@ -103,7 +103,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const handleUndo = () => {
     if (undoState) {
       setDataPoints(JSON.parse(JSON.stringify(undoState)));
-      setUndoState([]); // Clear the undo state after using it
+      setUndoState(null); // Clear the undo state after using it
       setShowUndoButton(false);
       
       toast({
@@ -295,7 +295,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && showUndoButton && activeTab === ctqName) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && undoState && activeTab === ctqName) {
         event.preventDefault();
         handleUndo();
       }
