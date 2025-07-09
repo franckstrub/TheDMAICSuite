@@ -219,15 +219,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     };
   }, [activeTab, undoStates]);
 
-  // Load CTQs from centralized endpoint
-  const { data: ctqsData, isLoading: ctqsLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctqs`],
-    enabled: !!projectId,
-    staleTime: 0, // Force fresh queries for CTQs
-  });
-
-  // Load CTS characteristics for additional data
-  const { data: ctsData } = useQuery({
+  // Load CTS characteristics for CTQs data (same pattern as MSA)
+  const { data: ctsData, isLoading: ctsLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/cts-characteristics`],
     enabled: !!projectId,
   });
@@ -250,17 +243,29 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     enabled: !!projectId,
   });
 
+  // Get CTQs with types from CTS characteristics (same pattern as MSA)
+  const getCtqsWithTypes = (): CtqWithType[] => {
+    if (ctsData && typeof ctsData === 'object' && 'characteristics' in ctsData) {
+      return (ctsData as any).characteristics.map((item: any) => ({
+        ctq: item.ctq,
+        ctqType: item.ctqType || "Continuous"
+      }));
+    }
+    return [];
+  };
+
   // Initialize showProcessCapability state from localStorage after queries are loaded
   useEffect(() => {
     // Early return if any data is still loading or undefined
-    if (ctqsLoading || projectLoading || !ctqsData || !ctsData || !projectData) {
+    if (ctsLoading || projectLoading || !ctsData || !projectData) {
       return;
     }
 
     try {
-      // Use centralized CTQs endpoint which aggregates from all sources
-      if ((ctqsData as any)?.ctqs?.length > 0) {
-        const ctqs = (ctqsData as any).ctqs.map((item: any) => item.ctq);
+      // Use getCtqsWithTypes to get CTQs from CTS characteristics (same pattern as MSA)
+      const ctqsWithTypes = getCtqsWithTypes();
+      if (ctqsWithTypes.length > 0) {
+        const ctqs = ctqsWithTypes.map((item: any) => item.ctq);
         if (ctqs.length > 0) {
           const initialShowState: { [ctq: string]: boolean } = {};
           ctqs.forEach((ctq: string) => {
@@ -273,7 +278,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     } catch (error) {
       console.warn('Error initializing Process Capability show state:', error);
     }
-  }, [projectId, ctqsData, ctsData, projectData, ctqsLoading, projectLoading]);
+  }, [projectId, ctsData, projectData, ctsLoading, projectLoading]);
 
   // Save Process Capability mutation
   const saveCapabilityMutation = useMutation({
@@ -348,25 +353,10 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     },
   });
 
-  // Get CTQs from centralized endpoint
+  // Get CTQs from CTS characteristics (same pattern as MSA)
   const getCTQs = () => {
-    // Use centralized CTQs endpoint which aggregates from all sources
-    if (ctqsData && (ctqsData as any)?.ctqs?.length > 0) {
-      return (ctqsData as any).ctqs.map((item: any) => item.ctq);
-    }
-    
-    return [];
-  };
-  // Get CTQs with types from CTS characteristics
-  const getCtqsWithTypes = (): CtqWithType[] => {
-    if (!ctsData) return [];
-    if (typeof ctsData === 'object' && 'characteristics' in ctsData) {
-      return (ctsData as any).characteristics.map((item: any) => ({
-        ctq: item.ctq,
-        ctqType: item.ctqType || "Continuous"
-      }));
-    }
-    return [];
+    const ctqsWithTypes = getCtqsWithTypes();
+    return ctqsWithTypes.map(item => item.ctq);
   };
 
   // Auto-save function with debouncing
@@ -767,7 +757,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Load data points when process capability data is loaded (only once)
   useEffect(() => {
-    if (!ctsData || ctqsLoading || projectLoading) return;
+    if (!ctsData || ctsLoading || projectLoading) return;
     
     const ctqs = getCtqsWithTypes();
     ctqs.forEach(({ ctq }) => {
@@ -776,11 +766,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         loadDataPointsForCtq(ctq);
       }
     });
-  }, [capabilityData, ctsData, ctqsLoading, projectLoading]);
+  }, [capabilityData, ctsData, ctsLoading, projectLoading]);
 
   // Initialize Process Capability data when CTQs and capability data are loaded
   useEffect(() => {
-    if (!ctsData || ctqsLoading || projectLoading) return;
+    if (!ctsData || ctsLoading || projectLoading) return;
     
     const ctqs = getCtqsWithTypes();
     if (ctqs.length > 0) {
@@ -855,7 +845,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         }
       }
     }
-  }, [ctqsData, capabilityDataResponse, ctsData, activeTab, ctqsLoading, projectLoading]);
+  }, [capabilityDataResponse, ctsData, activeTab, ctsLoading, projectLoading]);
 
   // Auto-calculate analysis when capability data is loaded and state is updated
   useEffect(() => {
@@ -1390,7 +1380,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  if (ctqsLoading || capabilityLoading || projectLoading) {
+  if (ctsLoading || capabilityLoading || projectLoading) {
     return (
       <Card>
         <CardHeader>
@@ -1407,7 +1397,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   }
 
   // Ensure data is available before calling getCTQs
-  if (!ctqsData) {
+  if (!ctsData) {
     return (
       <Card>
         <CardHeader>
