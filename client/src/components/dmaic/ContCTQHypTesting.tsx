@@ -567,27 +567,41 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                   </table>
                 </div>
 
-                {/* Manual Input - Moved to bottom */}
-                <div className="flex gap-2 mt-4">
-                  <Input
-                    type="number"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        addDataPoint(inputValue);
-                      }
-                    }}
-                    placeholder="Enter a data value"
-                    className="flex-1"
-                    step="any"
-                  />
-                  <Button 
-                    onClick={() => addDataPoint(inputValue)}
-                    disabled={!inputValue.trim()}
-                  >
-                    Add
-                  </Button>
+                {/* Manual Input - Moved to bottom with Index display */}
+                <div className="border rounded-md mt-4">
+                  <table className="min-w-full">
+                    <tbody className="bg-white">
+                      <tr className="border-t border-gray-200">
+                        <td className="px-4 py-2 text-sm text-gray-500 w-20">
+                          {dataPoints.length + 1}
+                        </td>
+                        <td className="px-4 py-2">
+                          <Input
+                            type="number"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                addDataPoint(inputValue);
+                              }
+                            }}
+                            placeholder="Enter numeric value"
+                            className="w-full"
+                            step="any"
+                          />
+                        </td>
+                        <td className="px-4 py-2 w-20">
+                          <Button 
+                            onClick={() => addDataPoint(inputValue)}
+                            disabled={!inputValue.trim()}
+                            size="sm"
+                          >
+                            Add
+                          </Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
                 {/* Excel Import Instructions */}
