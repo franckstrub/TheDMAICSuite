@@ -418,17 +418,18 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
     
     const currentPoints = dataPoints[ctq] || [];
-    const numericValues = currentPoints.map(point => point.dataValue);
+    // Filter out any NaN values and ensure we only have valid numeric values
+    const numericValues = currentPoints
+      .map(point => point.dataValue)
+      .filter(value => !isNaN(value) && isFinite(value));
     
     // Allow auto-saving empty datasets to properly clear the database
-    console.log(`Auto-saving for ${ctq}:`, { currentPoints, numericValues, length: numericValues.length });
     
     try {
       await saveDataPointMutation.mutateAsync({
         processCapabilityId, // Now TypeScript knows this is definitely a number
         dataPoints: numericValues
       });
-      console.log(`Auto-saved ${numericValues.length} data points for ${ctq}`);
       
       // Clear the timer from state to hide the auto-saving indicator
       setAutoSaveTimers(prev => {
@@ -497,20 +498,15 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   // Function to delete a data point
   const handleDeleteDataPoint = (ctq: string, index: number) => {
-    console.log(`Deleting data point at index ${index} for ${ctq}`);
     setDataPoints(prev => {
       const currentPoints = prev[ctq] || [];
-      console.log(`Before delete:`, currentPoints);
       const updatedPoints = currentPoints.filter((_, i) => i !== index);
-      console.log(`After delete:`, updatedPoints);
       
       // Re-index the remaining points
       const reindexedPoints = updatedPoints.map((point, i) => ({
         ...point,
         indexNumber: i + 1
       }));
-      
-      console.log(`After re-index:`, reindexedPoints);
       
       return {
         ...prev,
@@ -1609,14 +1605,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       step="any"
                                       value={point.dataValue}
                                       onChange={(e) => {
-                                        const newValue = parseFloat(e.target.value);
+                                        const inputValue = e.target.value;
+                                        
+                                        if (inputValue === "" || inputValue === null || inputValue === undefined) {
+                                          // Handle empty cell - remove this data point from the array
                                           setDataPoints(prev => {
                                             const updated = [...(prev[ctq] || [])];
-                                            updated[index] = { ...updated[index], dataValue: newValue };
-                                            return { ...prev, [ctq]: updated };
+                                            const filteredPoints = updated.filter((_, i) => i !== index);
+                                            // Re-index the remaining points
+                                            const reindexedPoints = filteredPoints.map((point, i) => ({
+                                              ...point,
+                                              indexNumber: i + 1
+                                            }));
+                                            return { ...prev, [ctq]: reindexedPoints };
                                           });
-                                          // Trigger auto-save when cell value changes
-                                  
+                                        } else {
+                                          const newValue = parseFloat(inputValue);
+                                          if (!isNaN(newValue)) {
+                                            setDataPoints(prev => {
+                                              const updated = [...(prev[ctq] || [])];
+                                              updated[index] = { ...updated[index], dataValue: newValue };
+                                              return { ...prev, [ctq]: updated };
+                                            });
+                                          }
+                                        }
                                       }}
                                       onFocus={() => {
                                         setFocusedCell(prev => ({ ...prev, [ctq]: index }));
