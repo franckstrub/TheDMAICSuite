@@ -642,6 +642,27 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   };
 
   const updateContinuousAnalysisRow = (ctq: string, rowIndex: number, field: keyof ContinuousAnalysisRow, value: string | number) => {
+    // Save undo state only if we don't already have one for this CTQ and there's actual data
+    if (!undoStates[ctq] && continuousMsaData[ctq]?.gageRRData) {
+      const hasAnyData = continuousMsaData[ctq].gageRRData.some(row =>
+        row.app1_rep1 !== null || row.app1_rep2 !== null || row.app1_rep3 !== null ||
+        row.app2_rep1 !== null || row.app2_rep2 !== null || row.app2_rep3 !== null ||
+        row.app3_rep1 !== null || row.app3_rep2 !== null || row.app3_rep3 !== null
+      );
+      
+      if (hasAnyData) {
+        setUndoStates(prev => ({
+          ...prev,
+          [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq].gageRRData))
+        }));
+        
+        setShowUndoButton(prev => ({
+          ...prev,
+          [ctq]: true
+        }));
+      }
+    }
+
     setContinuousMsaData(prev => {
       const updatedData = [...(prev[ctq]?.gageRRData || [])];
       if (updatedData[rowIndex]) {
@@ -968,7 +989,9 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
   const handleUndo = (ctq: string) => {
     console.log('MSA handleUndo called for:', ctq);
     console.log('MSA undoStates[ctq]:', undoStates[ctq]);
+    console.log('MSA undoStates[ctq] length:', undoStates[ctq]?.length);
     console.log('MSA current gageRRData:', continuousMsaData[ctq]?.gageRRData);
+    console.log('MSA current gageRRData length:', continuousMsaData[ctq]?.gageRRData?.length);
     
     if (undoStates[ctq]) {
       // Save current gageRRData for redo before undoing
@@ -978,6 +1001,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
       }));
       
       console.log('MSA restoring gageRRData:', undoStates[ctq]);
+      console.log('MSA restoring gageRRData length:', undoStates[ctq]?.length);
       
       // Restore only the gageRRData array - same pattern as ProcessCapability
       setContinuousMsaData(prev => ({
