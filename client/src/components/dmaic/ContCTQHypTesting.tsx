@@ -393,29 +393,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                   Enter data values and click Add, then Save Data to persist to database
                 </p>
                 
-                {/* Manual Input */}
-                <div className="flex gap-2 mb-4">
-                  <Input
-                    type="number"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        addDataPoint(inputValue);
-                      }
-                    }}
-                    placeholder="Enter a data value"
-                    className="flex-1"
-                    step="any"
-                  />
-                  <Button 
-                    onClick={() => addDataPoint(inputValue)}
-                    disabled={!inputValue.trim()}
-                  >
-                    Add
-                  </Button>
-                </div>
-
                 {/* Data Table */}
                 <div className="border rounded-md">
                   <table className="min-w-full">
@@ -469,6 +446,29 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Manual Input - Moved to bottom */}
+                <div className="flex gap-2 mt-4">
+                  <Input
+                    type="number"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        addDataPoint(inputValue);
+                      }
+                    }}
+                    placeholder="Enter a data value"
+                    className="flex-1"
+                    step="any"
+                  />
+                  <Button 
+                    onClick={() => addDataPoint(inputValue)}
+                    disabled={!inputValue.trim()}
+                  >
+                    Add
+                  </Button>
                 </div>
 
                 {/* Excel Import Instructions */}
