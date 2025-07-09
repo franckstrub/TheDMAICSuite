@@ -199,30 +199,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
 
-  // Add keyboard shortcut handler for Ctrl+V and Ctrl+Z
+  // Add keyboard shortcut handler for Ctrl+Z and cleanup auto-save timers
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Handle Ctrl+V for paste - when this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab) {
-        event.preventDefault();
-        
-        // Get clipboard data
-        navigator.clipboard.readText().then(clipboardData => {
-          if (clipboardData.trim()) {
-            // Start from the first empty row or focused cell
-            const currentDataLength = (dataPoints[activeTab] || []).length;
-            const startIndex = focusedCell[activeTab] !== undefined ? focusedCell[activeTab] : currentDataLength;
-            handleFocusedCellPaste(activeTab, startIndex, clipboardData);
-          }
-        }).catch(error => {
-          toast({
-            title: "Clipboard Access",
-            description: "Please use the 'Paste from Excel' button or paste directly into the table.",
-            variant: "default",
-          });
-        });
-      }
-      
       // Handle Ctrl+Z for undo - works both in and outside input fields
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab) {
         if (undoStates[activeTab]) {
@@ -238,7 +217,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcut);
     };
-  }, [activeTab, undoStates, focusedCell, dataPoints]);
+  }, [activeTab, undoStates]);
 
   // Load CTS characteristics for CTQs data (same pattern as MSA)
   const { data: ctsData, isLoading: ctsLoading } = useQuery({
@@ -608,7 +587,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     // Allow saving empty datasets to properly clear the database
     
-
+    console.log("Saving data points:", { processCapabilityId, numericValues, currentPoints });
     
     try {
       // Save all data points as JSON array to database
