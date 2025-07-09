@@ -258,9 +258,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
 
       // Handle Ctrl+Z for undo - works both in and outside input fields but only when focused on MSA
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && activeTab && isMsaFocused) {
+        console.log('MSA Ctrl+Z pressed - activeTab:', activeTab);
+        console.log('MSA undoStates:', undoStates);
+        console.log('MSA undoStates[activeTab]:', undoStates[activeTab]);
         if (undoStates[activeTab]) {
           event.preventDefault();
           handleUndo(activeTab);
+        } else {
+          console.log('MSA: No undo state available for', activeTab);
         }
       }
     };
@@ -669,10 +674,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     try {
       // Save current state for undo (only if data exists)
       if (continuousMsaData[ctq]) {
+        console.log('MSA Focused Cell Paste: Saving undo state for', ctq);
+        console.log('MSA Current data before paste:', continuousMsaData[ctq]);
         setUndoStates(prev => ({
           ...prev,
           [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
         }));
+      } else {
+        console.log('MSA Focused Cell Paste: No existing data for', ctq, 'continuousMsaData:', continuousMsaData);
       }
       
       // Parse tab-separated or comma-separated values
@@ -837,10 +846,14 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
     try {
       // Save current state for undo (only if data exists)
       if (continuousMsaData[ctq]) {
+        console.log('MSA General Paste: Saving undo state for', ctq);
+        console.log('MSA Current data before paste:', continuousMsaData[ctq]);
         setUndoStates(prev => ({
           ...prev,
           [ctq]: JSON.parse(JSON.stringify(continuousMsaData[ctq]))
         }));
+      } else {
+        console.log('MSA General Paste: No existing data for', ctq, 'continuousMsaData:', continuousMsaData);
       }
       
       // Parse tab-separated or comma-separated values
