@@ -454,40 +454,22 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900">
                               {editingCell === index ? (
-                                <div className="flex gap-1 items-center">
-                                  <Input
-                                    type="number"
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    onKeyPress={(e) => {
-                                      if (e.key === 'Enter') {
-                                        saveEdit(index);
-                                      } else if (e.key === 'Escape') {
-                                        cancelEdit();
-                                      }
-                                    }}
-                                    onBlur={() => saveEdit(index)}
-                                    className="w-20 h-7 text-xs"
-                                    step="any"
-                                    autoFocus
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => saveEdit(index)}
-                                    className="h-6 w-6 p-0 text-green-600"
-                                  >
-                                    ✓
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={cancelEdit}
-                                    className="h-6 w-6 p-0 text-red-600"
-                                  >
-                                    ✕
-                                  </Button>
-                                </div>
+                                <Input
+                                  type="number"
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      saveEdit(index);
+                                    } else if (e.key === 'Escape') {
+                                      cancelEdit();
+                                    }
+                                  }}
+                                  onBlur={() => saveEdit(index)}
+                                  className="w-20 h-7 text-xs"
+                                  step="any"
+                                  autoFocus
+                                />
                               ) : (
                                 <div 
                                   className="cursor-pointer hover:bg-blue-50 p-1 rounded"
