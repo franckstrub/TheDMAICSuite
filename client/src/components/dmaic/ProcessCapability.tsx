@@ -587,7 +587,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     
     // Allow saving empty datasets to properly clear the database
     
-    //console.log("Saving data points:", { processCapabilityId, numericValues });
+    console.log("Saving data points:", { processCapabilityId, numericValues, currentPoints });
     
     try {
       // Save all data points as JSON array to database
