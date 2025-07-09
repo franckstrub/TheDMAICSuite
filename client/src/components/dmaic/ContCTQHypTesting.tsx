@@ -254,12 +254,27 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       const activeElement = document.activeElement;
       const isInInputField = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
 
+      // Debug: Log all keyboard events to see what's happening
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+        console.log('Ctrl+V event detected:', {
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          key: event.key,
+          isInInputField,
+          activeTab,
+          ctqName,
+          activeTabMatchesCtq: activeTab === ctqName
+        });
+      }
+
       // Handle Ctrl+V/Cmd+V for paste - only when not in input field and this CTQ is active
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && !isInInputField && activeTab === ctqName) {
+        console.log('Ctrl+V triggered for CTQ:', ctqName, 'activeTab:', activeTab);
         event.preventDefault();
         
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
+          console.log('Clipboard data:', clipboardData);
           if (clipboardData.trim()) {
             // Create a synthetic paste event
             const syntheticEvent = {
@@ -271,7 +286,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
             
             handlePasteData(syntheticEvent);
           }
-        }).catch(() => {
+        }).catch(error => {
+          console.error('Clipboard access failed:', error);
           toast({
             title: "Clipboard Access",
             description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
