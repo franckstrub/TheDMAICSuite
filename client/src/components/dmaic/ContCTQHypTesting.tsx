@@ -541,7 +541,17 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                     <tbody className="bg-white divide-y divide-gray-200">
                       {dataPoints.length === 0 ? (
                         <tr>
-                          
+                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                            <div 
+                              className="cursor-pointer hover:bg-blue-50 p-2 rounded"
+                              onClick={() => document.getElementById('add-data-input')?.focus()}
+                              onPaste={(e) => handlePasteData(e)}
+                              tabIndex={0}
+                              title="Click to focus input or paste data here"
+                            >
+                              No data points added yet. Enter values below to begin or paste data here.
+                            </div>
+                          </td>
                         </tr>
                       ) : (
                         dataPoints.map((point, index) => (
@@ -601,12 +611,29 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, onSave }: ContCTQ
                         </td>
                         <td className="px-4 py-2">
                           <Input
+                            id="add-data-input"
                             type="number"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
                                 addDataPoint(inputValue);
+                              }
+                            }}
+                            onPaste={(e) => {
+                              e.preventDefault();
+                              const pastedData = e.clipboardData.getData('text/plain');
+                              const lines = pastedData.trim().split('\n');
+                              
+                              if (lines.length > 1) {
+                                // Multiple values - use the general paste handler
+                                handlePasteData(e);
+                              } else {
+                                // Single value - set it in the input field
+                                const value = lines[0]?.trim();
+                                if (value) {
+                                  setInputValue(value);
+                                }
                               }
                             }}
                             placeholder="Enter numeric value"
