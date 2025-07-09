@@ -227,6 +227,11 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       });
       
       if (newValues.length > 0) {
+        // Save original state before first modification
+        if (originalState.length === 0) {
+          setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
+        }
+        
         // Show undo button
         setShowUndoButton(true);
         
@@ -319,6 +324,11 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
   const saveEdit = (index: number) => {
     const numericValue = parseFloat(editValue);
     if (!isNaN(numericValue)) {
+      // Save original state before first modification
+      if (originalState.length === 0) {
+        setOriginalState(JSON.parse(JSON.stringify(dataPoints)));
+      }
+      
       // Show undo button
       setShowUndoButton(true);
       
@@ -536,8 +546,19 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
               <div>
                 <div className="flex justify-between items-center">
                   <label className="block text-sm font-medium mb-2">Data Input</label>
-                  {/* Paste from Excel Section */}
+                  {/* Undo and Paste from Excel Section */}
                   <div className="flex gap-2 mt-2">
+                    {showUndoButton && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleUndo}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                      >
+                        <Undo className="h-4 w-4 mr-1" />
+                        Undo
+                      </Button>
+                    )}
                     <Button
                       onClick={async () => {
                         try {
@@ -720,21 +741,6 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                   <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
                   <div>• <strong>Data will automatically create new rows</strong> if needed</div>
                 </div>
-                
-                {/* Undo Button */}
-                {showUndoButton && (
-                  <div className="mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleUndo}
-                      className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                    >
-                      <Undo className="h-4 w-4 mr-1" />
-                      Undo (Ctrl+Z)
-                    </Button>
-                  </div>
-                )}
                 
                 {dataPoints.length > 0 && (
                   <div className="text-sm text-gray-600 mt-2">
