@@ -158,49 +158,39 @@ const saveConfigMutation = useMutation({
   },
 });
 
-// Corrected useEffect to properly initialize state from savedConfig
+// Initialize state from saved configuration with proper timing
 useEffect(() => {
-  console.log('ContinuousCTQAnalysis useEffect triggered:', {
-    isLoading,
-    savedConfig,
-    ctqId,
-    ctqName,
-    currentState: ctqAnalysisData[ctqId]
-  });
-  
-  if (isLoading) {
-    console.log('Still loading, skipping initialization');
-    return; // Wait until loading is complete
-  }
+  if (isLoading) return; // Wait until loading is complete
   
   if (savedConfig && savedConfig.config) {
     // We have saved config - use it (server returns { config: configData })
     const config = savedConfig.config;
-    console.log('Found saved config, applying:', config);
     
-    const newState = {
-      [ctqId]: {
-        id: config.id,
-        ctq: config.ctq ?? ctqName,
-        ctqId: config.ctqId ?? ctqId,
-        enableContYHypothesisTest: config.enableContYHypothesisTest ?? false,
-        enableContYSimpleRegression: config.enableContYSimpleRegression ?? false,
-        enableContYMultiVariChart: config.enableContYMultiVariChart ?? false,
-        enableContYANOVA2way: config.enableContYANOVA2way ?? false,
-        enableContYMultipleRegression: config.enableContYMultipleRegression ?? false,
-        enableContYDOE: config.enableContYDOE ?? false,
-        enablePareto: config.enablePareto ?? false,
-      },
-    };
-    
-    console.log('Setting state to:', newState);
-    setCTQAnalysisData(newState);
+    // Use setTimeout to ensure state update happens in next tick
+    // This prevents race conditions with React's batching
+    setTimeout(() => {
+      setCTQAnalysisData({
+        [ctqId]: {
+          id: config.id,
+          ctq: config.ctq ?? ctqName,
+          ctqId: config.ctqId ?? ctqId,
+          enableContYHypothesisTest: config.enableContYHypothesisTest ?? false,
+          enableContYSimpleRegression: config.enableContYSimpleRegression ?? false,
+          enableContYMultiVariChart: config.enableContYMultiVariChart ?? false,
+          enableContYANOVA2way: config.enableContYANOVA2way ?? false,
+          enableContYMultipleRegression: config.enableContYMultipleRegression ?? false,
+          enableContYDOE: config.enableContYDOE ?? false,
+          enablePareto: config.enablePareto ?? false,
+        },
+      });
+    }, 0);
   } else {
     // No saved config - use defaults
-    console.log('No saved config found, using defaults');
-    setCTQAnalysisData({
-      [ctqId]: getDefaultConfig(),
-    });
+    setTimeout(() => {
+      setCTQAnalysisData({
+        [ctqId]: getDefaultConfig(),
+      });
+    }, 0);
   }
 }, [savedConfig, isLoading, ctqId, ctqName]);
 
@@ -306,13 +296,10 @@ useEffect(() => {
                   <Checkbox
                     id={`${ctqId}-ContYSimpleRegression`}
                     checked={Boolean(ctqAnalysisData[ctqId]?.enableContYSimpleRegression)}
-                    onCheckedChange={(checked) => {
-                      console.log('ContYSimpleRegression checkbox changed:', { checked, currentValue: ctqAnalysisData[ctqId]?.enableContYSimpleRegression });
-                      updateCTQAnalysisField(ctqId, "enableContYSimpleRegression", checked);
-                    }}
+                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYSimpleRegression", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYSimpleRegression`} className="text-sm font-medium text-gray-700">
-                    Continuous Y Simple Regression {ctqAnalysisData[ctqId]?.enableContYSimpleRegression ? '✓' : '✗'}
+                    Continuous Y Simple Regression
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
