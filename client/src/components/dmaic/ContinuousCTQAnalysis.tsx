@@ -119,13 +119,21 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
   // Save mutation
   const saveConfigMutation = useMutation({
     mutationFn: async (configData: any) => {
-      return apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`, {
+      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`, {
         method: 'POST',
-        body: JSON.stringify(configData),
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
+        body: JSON.stringify(configData),
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
