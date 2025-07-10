@@ -103,8 +103,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   // Initialize data from database when loaded
   useEffect(() => {
-    console.log('ContCTQHypTesting configData:', configData);
-    if (configData?.config) {
+    if (configData?.config && !isLoading) {
       // Use setTimeout to avoid React timing issues
       setTimeout(() => {
         setContCTQHypTestData(prev => ({
@@ -122,7 +121,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
         }));
       }, 0);
     }
-  }, [configData, ctqId]);
+  }, [configData, ctqId, isLoading]);
 
   const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
 
