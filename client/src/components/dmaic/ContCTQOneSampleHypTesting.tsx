@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Undo } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { BetaRawContentBlockDeltaEvent } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs';
 
 interface DataPoint {
   indexNumber: number;
@@ -42,7 +43,9 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
-  const [alternative, setAlternative] = useState("Less than");
+  const [alternativemean, setAlternativemean] = useState("Less than");
+  const [alternativevariance, setAlternativevariance] = useState("Less than");
+  const [alternativemedian, setAlternativemedian] = useState("Less than");
   const [testResult, setTestResult] = useState({
     tStatistic: -3.45,
     pValue: 0.002,
@@ -125,14 +128,19 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       setTimeout(() => {
         const config = configData.config;
         
-        // Update significanceLevel and alternative from database
+        // Update significanceLevel and alternativemean from database
         if (config.significanceLevel) {
           setSignificanceLevel(config.significanceLevel);
         }
-        if (config.alternative) {
-          setAlternative(config.alternative);
+        if (config.alternativemean) {
+          setAlternativemean(config.alternativemean);
         }
-        
+        if (config.alternativemean) {
+          setAlternativevariance(config.alternativevariance);
+        }
+        if (config.alternativemedian) {
+          setAlternativemedian(config.alternativemedian);
+        }
         // Update data points from database
         if (config.dataPoints && Array.isArray(config.dataPoints)) {
           setDataPoints(config.dataPoints);
@@ -170,7 +178,9 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       targetVariance: currentConfig.targetVariance,
       targetMedian: currentConfig.targetMedian,
       significanceLevel,
-      alternative,
+      alternativemean,
+      alternativevariance,
+      alternativemedian,
       dataPoints,
       datasetDescription: currentConfig.datasetdescription || "",
     };
@@ -192,14 +202,30 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     }));
   };
 
-  const handleRunTest = () => {
+  const handleRunTest = (
+    enableMeanTest: boolean,
+    enablevarianceTest: boolean,
+    enableMedianTest: boolean,
+    dataset: DataPoint, 
+    significance: number, 
+    HaMean: "Less than" | "Greater than" | "Different",
+    HaVariance: "Less than" | "Greater than" | "Different",
+    HaMedian: "Less than" | "Greater than" | "Different",
+    targetmean: number,
+    targetvariance: number,
+    targetmedian: number,
+  ) => {
+    // test normalitu of sample first
+
     toast({
       title: "Test Run Successfully",
       description: "The hypothesis test has been executed.",
     });
+    const param1: any = "";
+    return(
+      param1
+    )
   };
-
-
 
   // Undo function - restore to previous state and clear undo state (like ProcessCapability)
   const handleUndo = () => {
@@ -422,8 +448,6 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     setEditValue("");
   };
 
-
-
   return (
     <Card>
       <CardHeader>
@@ -524,7 +548,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                 </div>
             )}
             {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
-                <div className="w-1/3 min-w-[200px]"> {/* Added flex-1 and min-width */}
+                <div className="w-1/3 min-w-[200px] pr-4"> {/* Added flex-1 and min-width */}
                     <Label>Target value for median:</Label>
                     <Input
                         type="number"
@@ -541,7 +565,51 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             )}
           </div>            
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 pr-4 gap-4">
+            
+            <div>
+            <Label htmlFor="alternativemean">Ha hypothesis for Mean</Label>
+            <Select value={alternativemean} onValueChange={setAlternativemean}>
+            <SelectTrigger id="alternativemean">
+                <SelectValue placeholder="Select Ha hypothesis for mean" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Different">Different</SelectItem>
+                <SelectItem value="Less than">Less than</SelectItem>
+                <SelectItem value="Greater than">Greater than</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+            <div>
+            <Label htmlFor="alternativevariance">Ha hypothesis for Variance</Label>
+            <Select value={alternativevariance} onValueChange={setAlternativevariance}>
+            <SelectTrigger id="alternativevariance">
+                <SelectValue placeholder="Select Ha hypothesis for variance" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Different">Different</SelectItem>
+                <SelectItem value="Less than">Less than</SelectItem>
+                <SelectItem value="Greater than">Greater than</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+            <div>
+            <Label htmlFor="alternativemedian">Ha hypothesis for Median</Label>
+            <Select value={alternativemedian} onValueChange={setAlternativemedian}>
+            <SelectTrigger id="alternativemedian">
+                <SelectValue placeholder="Select Ha hypothesis for median" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Different">Different</SelectItem>
+                <SelectItem value="Less than">Less than</SelectItem>
+                <SelectItem value="Greater than">Greater than</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+          </div>
+
+          <div>
+           <div className="grid grid-cols-2 gap-4 pr-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
             <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
@@ -556,21 +624,6 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             </Select>
             </div>
             <div>
-            <Label htmlFor="alternative">Alternative Hypothesis</Label>
-            <Select value={alternative} onValueChange={setAlternative}>
-            <SelectTrigger id="alternative">
-                <SelectValue placeholder="Select alternative" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="Different">Different</SelectItem>
-                <SelectItem value="Less than">Less than</SelectItem>
-                <SelectItem value="Greater than">Greater than</SelectItem>
-            </SelectContent>
-            </Select>
-            </div>
-          </div>
-
-          <div>
             <Label>Characterize your tested dataset:</Label>
             <Input
                 type="text"
@@ -581,8 +634,10 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                     e.target.value
                 )}
                 placeholder="Enter a description of your tested dataset"
-                className="mt-1"
+                className="mt-0"
             />
+            </div>
+           </div>
 
           {/* Data Input Section for One Sample Hypothesis Test */}
           <div className="space-y-4">

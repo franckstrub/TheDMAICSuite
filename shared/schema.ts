@@ -1156,7 +1156,9 @@ export const oneSampleHypothesisConfig = pgTable("one_sample_hypothesis_config",
   
   // Test parameters
   significanceLevel: text("significance_level").default("0.05"),
-  alternative: text("alternative").default("Less than"),
+  alternativemean: text("alternativemean").default("Less than"),
+  alternativevariance: text("alternativevariance").default("Less than"),
+  alternativemedian: text("alternativemedian").default("Less than"),
   
   // Data points
   dataPoints: jsonb("data_points").$type<Array<{indexNumber: number; dataValue: number}>>().default([]),
