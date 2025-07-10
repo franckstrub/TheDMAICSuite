@@ -9,7 +9,6 @@ import { ContCTQTwoSampleHypTesting } from "./ContCTQTwoSampleHypTesting";
 import { ContCTQPairedSampleHypTesting } from "./ContCTQPairedSampleHypTesting";
 import { ContCTQMultipleSampleHypTesting } from "./ContCTQMultipleSampleHypTesting";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 
 interface DataPoint {
   indexNumber: number;
@@ -53,32 +52,50 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading, error } = useQuery({
-    queryKey: ['hypothesis-testing-config', projectId, ctqId],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/hypothesis-testing-config`),
+    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/hypothesis-testing-config`],
     enabled: !!projectId && !!ctqId,
+    retry: false, // Don't retry on 404 - it's expected when no config exists yet
   });
 
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
-    mutationFn: (configData: any) => 
-      apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/hypothesis-testing-config`, {
+    mutationFn: async (configData: any) => {
+      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/hypothesis-testing-config`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify(configData),
-      }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText}`);
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Configuration Saved",
         description: "Hypothesis testing configuration has been saved successfully.",
       });
       // Invalidate the query to refresh data
-      queryClient.invalidateQueries({ queryKey: ['hypothesis-testing-config', projectId, ctqId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/hypothesis-testing-config`] });
     },
     onError: (error: any) => {
-      console.error('Save configuration error:', error);
+      console.error('Save configuration error details:', error);
+      console.error('Error message:', error.message);
+      
+      let errorMessage = "Failed to save configuration. Please try again.";
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Save Failed",
-        description: "Failed to save configuration. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -141,6 +158,8 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       enableMultipleSampleTest: currentConfig.enableMultipleSampleTest ?? false,
     };
 
+
+    
     saveConfigMutation.mutate(configToSave);
   };
 
