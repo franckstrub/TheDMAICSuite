@@ -23,7 +23,8 @@ import {
   fishboneDiagrams,
   processMaps,
   continuousCtqAnalysisConfig,
-  oneSampleHypothesisConfig
+  oneSampleHypothesisConfig,
+  hypothesisTestingConfig
 } from '@shared/schema';
 
 /**
@@ -176,6 +177,14 @@ export async function permanentlyDeleteProject(projectId: number): Promise<numbe
     deletionCount += continuousCtqConfigResult.length > 0 ? 1 : 0;
     console.log(`Deleted ${continuousCtqConfigResult.length} continuous CTQ analysis configuration records`);
 
+    // Delete main hypothesis testing configuration
+    const hypConfigResult = await db.delete(hypothesisTestingConfig)
+      .where(eq(hypothesisTestingConfig.projectId, projectId))
+      .returning();
+    results['hypothesisTestingConfig'] = hypConfigResult.length;
+    deletionCount += hypConfigResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${hypConfigResult.length} hypothesis testing configuration records`);
+
     // Delete one-sample hypothesis testing configuration
     const oneSampleHypConfigResult = await db.delete(oneSampleHypothesisConfig)
       .where(eq(oneSampleHypothesisConfig.projectId, projectId))
@@ -263,6 +272,7 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
       { name: 'msaAnalysis', table: msaAnalysis },
       { name: 'processCapability', table: processCapability },
       { name: 'continuousCtqAnalysisConfig', table: continuousCtqAnalysisConfig },
+      { name: 'hypothesisTestingConfig', table: hypothesisTestingConfig },
       { name: 'oneSampleHypothesisConfig', table: oneSampleHypothesisConfig },
       { name: 'fishboneDiagrams', table: fishboneDiagrams },
       { name: 'processMaps', table: processMaps },
