@@ -83,6 +83,13 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
   const { data: savedConfig, isLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`],
     enabled: !!projectId && !!ctqId,
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors - this means no configuration exists yet
+      if (error?.status === 404) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   // Update state when saved configuration is loaded
@@ -132,9 +139,17 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
     },
     onError: (error: any) => {
       console.error('Save configuration error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+        projectId,
+        ctqId,
+        configData: ctqAnalysisData[ctqId]
+      });
       toast({
         title: "Save Failed",
-        description: "Failed to save analysis configuration. Please try again.",
+        description: `Failed to save analysis configuration: ${error?.message || 'Please try again.'}`,
         variant: "destructive",
       });
     },
@@ -166,6 +181,13 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
         enableContYDOE: currentConfig.enableContYDOE,
         enablePareto: currentConfig.enablePareto,
       };
+      
+      console.log('Saving configuration:', {
+        projectId,
+        ctqId,
+        configToSave,
+        url: `/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`
+      });
       
       saveConfigMutation.mutate(configToSave);
     }
