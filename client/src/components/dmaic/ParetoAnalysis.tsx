@@ -16,10 +16,11 @@ interface ParetoAnalysisProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export function ParetoAnalysis({ projectId, ctqId, ctqName, onSave }: ParetoAnalysisProps) {
+export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab, onSave }: ParetoAnalysisProps) {
 // Hypothesis Testing state
     const { toast } = useToast();
     // Correlation Analysis state
@@ -45,6 +46,9 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, onSave }: ParetoAnal
                   <CardTitle>Pareto Analysis</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-gray-500 mb-4">
+                    CTQ: {ctqName}
+                  </p>
                   <p className="text-sm text-gray-500 mb-4">
                     Identify the vital few causes that account for the majority of problems.
                   </p>

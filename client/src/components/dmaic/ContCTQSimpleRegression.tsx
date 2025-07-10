@@ -15,10 +15,11 @@ interface ContCTQSimpleRegressionProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export function ContCTQSimpleRegression({ projectId, ctqId, ctqName, onSave }: ContCTQSimpleRegressionProps) {
+export function ContCTQSimpleRegression({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQSimpleRegressionProps) {
 // Hypothesis Testing state
     const { toast } = useToast();
     // Correlation Analysis state
@@ -38,6 +39,9 @@ export function ContCTQSimpleRegression({ projectId, ctqId, ctqName, onSave }: C
                   <CardTitle>Simple Regression Analysis</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-gray-500 mb-4">
+                  CTQ: {ctqName}
+                </p>
                   <p className="text-sm text-gray-500 mb-4">
                     Identify relationships between variables.
                   </p>

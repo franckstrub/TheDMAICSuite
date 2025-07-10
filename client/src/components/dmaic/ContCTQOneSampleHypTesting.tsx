@@ -1,0 +1,715 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Trash2, Undo } from "lucide-react";
+
+interface DataPoint {
+  indexNumber: number;
+  dataValue: number;
+}
+
+interface ContCTQOneSampleHypTestData {
+  id?: number;
+  ctq: string;
+  ctqId?: number;
+  testType: string;
+  enableMeanTest?: boolean;
+  enableVarianceTest?: boolean;
+  enableMedianTest?: boolean;
+  targetMean?: number;
+  targetVariance?: number;
+  targetMedian?: number;
+  dataPoints?: DataPoint[];
+  datasetdescription?: string;
+}
+
+interface ContCTQOneSampleHypTestingProps {
+  projectId: number;
+  ctqId: number;
+  ctqName: string;
+  activeTab?: string;
+  onSave?: (data: string) => void;
+}
+
+export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQOneSampleHypTestingProps) {
+  const { toast } = useToast();
+  const [significanceLevel, setSignificanceLevel] = useState("0.05");
+  const [alternative, setAlternative] = useState("Less than");
+  const [testResult, setTestResult] = useState({
+    tStatistic: -3.45,
+    pValue: 0.002,
+    conclusion: "Reject null hypothesis",
+    explanation: "There is a statistically significant difference between the before and after measurements."
+  });
+
+  // Data input state for One Sample test
+  const [dataPoints, setDataPoints] = useState<DataPoint[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [pasteInput, setPasteInput] = useState("");
+  const [focusedCell, setFocusedCell] = useState<number>(-1);
+  const [editingCell, setEditingCell] = useState<number>(-1);
+  const [editValue, setEditValue] = useState<string>("");
+  const [undoState, setUndoState] = useState<DataPoint[] | null>(null);
+  const [showUndoButton, setShowUndoButton] = useState(false);
+
+  // Initialize ContCTQOneSampleHypTestData with default values
+  const [ContCTQOneSampleHypTestData, setContCTQOneSampleHypTestData] = useState<{ [ctqId: number]: ContCTQOneSampleHypTestData }>(() => ({
+    [ctqId]: {
+      ctq: ctqName,
+      testType: "One Sample Hyp-Test",
+      enableMeanTest: true,
+      enableVarianceTest: false,
+      enableMedianTest: false,
+      targetMean: 0,
+      targetVariance: 0,
+      targetMedian: 0,
+      datasetdescrition: "",
+    }
+  }));
+
+  const updateContCTQOneSampleHypTestDataField = (
+    ctqId: number, 
+    field: keyof ContCTQOneSampleHypTestData, 
+    value: any
+  ) => {
+    setContCTQOneSampleHypTestData(prev => ({
+      ...prev,
+      [ctqId]: {
+        ...prev[ctqId],
+        [field]: value,
+      }
+    }));
+  };
+
+  const handleRunTest = () => {
+    toast({
+      title: "Test Run Successfully",
+      description: "The hypothesis test has been executed.",
+    });
+  };
+
+
+
+  // Undo function - restore to previous state and clear undo state (like ProcessCapability)
+  const handleUndo = () => {
+    if (undoState) {
+      setDataPoints(JSON.parse(JSON.stringify(undoState)));
+      setUndoState(null); // Clear the undo state after using it
+      setShowUndoButton(false);
+      
+      toast({
+        title: "Undo Complete",
+        description: "Previous operation has been undone",
+      });
+    }
+  };
+
+  // Functions for data input
+  const addDataPoint = (value: string) => {
+    if (!value.trim()) return;
+    
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return;
+    
+    // Save current state before making changes
+    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+    
+    setDataPoints(prev => [
+      ...prev,
+      { indexNumber: prev.length + 1, dataValue: numericValue }
+    ]);
+    
+    setInputValue("");
+  };
+
+  const handleDeleteDataPoint = (index: number) => {
+    // Save current state before making changes
+    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+    
+    setDataPoints(prev => {
+      const updatedPoints = prev.filter((_, i) => i !== index);
+      // Re-index the remaining points
+      const reindexedPoints = updatedPoints.map((point, i) => ({
+        ...point,
+        indexNumber: i + 1
+      }));
+      return reindexedPoints;
+    });
+    
+    toast({
+      title: "Data Point Deleted",
+      description: "The data point has been removed and the list has been re-indexed.",
+    });
+  };
+
+  // Handle paste from Excel functionality
+  const handlePasteData = (event: React.ClipboardEvent) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const lines = pastedData.trim().split('\n');
+      const newDataPoints: DataPoint[] = [];
+      
+      lines.forEach((line, index) => {
+        const value = line.trim();
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          newDataPoints.push({
+            indexNumber: dataPoints.length + index + 1,
+            dataValue: numericValue
+          });
+        }
+      });
+      
+      if (newDataPoints.length > 0) {
+        // Save current state before making changes
+        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+        
+        setDataPoints(prev => [...prev, ...newDataPoints]);
+        setPasteInput("");
+        toast({
+          title: "Data Imported",
+          description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
+        });
+      }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    }
+  };
+
+  // Handle paste specifically for editing cells - handles multiple values starting from clicked cell
+  const handleCellPaste = (event: React.ClipboardEvent, index: number) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const lines = pastedData.trim().split('\n');
+      const newValues: number[] = [];
+      
+      lines.forEach((line) => {
+        const value = line.trim();
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      });
+      
+      if (newValues.length > 0) {
+        // Save current state before making changes
+        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+        
+        setDataPoints(prev => {
+          const updatedPoints = [...prev];
+          
+          // Update existing cells starting from the clicked index
+          newValues.forEach((value, i) => {
+            const targetIndex = index + i;
+            if (targetIndex < updatedPoints.length) {
+              // Update existing cell
+              updatedPoints[targetIndex] = {
+                ...updatedPoints[targetIndex],
+                dataValue: value
+              };
+            } else {
+              // Create new data point
+              updatedPoints.push({
+                indexNumber: updatedPoints.length + 1,
+                dataValue: value
+              });
+            }
+          });
+          
+          return updatedPoints;
+        });
+        
+        toast({
+          title: "Data Pasted",
+          description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
+        });
+      }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    }
+  };
+
+  // Add keyboard shortcut support for paste and undo functionality
+  useEffect(() => {
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
+        event.preventDefault();
+        
+        // Get clipboard data
+        navigator.clipboard.readText().then(clipboardData => {
+          if (clipboardData.trim()) {
+            // Create a synthetic paste event
+            const syntheticEvent = {
+              preventDefault: () => {},
+              clipboardData: {
+                getData: (format: string) => clipboardData
+              }
+            } as unknown as React.ClipboardEvent;
+            
+            handlePasteData(syntheticEvent);
+          }
+        }).catch(error => {
+          console.error('Clipboard access failed:', error);
+          toast({
+            title: "Clipboard Access",
+            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+            variant: "default",
+          });
+        });
+      }
+
+      // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && undoState && activeTab === ctqName) {
+        event.preventDefault();
+        handleUndo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyboardShortcut);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [undoState, activeTab, ctqName]);
+
+  // Handle cell editing
+  const startEditing = (index: number, currentValue: number) => {
+    setEditingCell(index);
+    setEditValue(currentValue.toString());
+  };
+
+  const saveEdit = (index: number) => {
+    const numericValue = parseFloat(editValue);
+    if (!isNaN(numericValue)) {
+      // Save current state before making changes
+      setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+      
+      setDataPoints(prev => 
+        prev.map((point, i) => 
+          i === index ? { ...point, dataValue: numericValue } : point
+        )
+      );
+    }
+    setEditingCell(-1);
+    setEditValue("");
+  };
+
+  const cancelEdit = () => {
+    setEditingCell(-1);
+    setEditValue("");
+  };
+
+
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>One-Sample Hypothesis Testing</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-500 mb-4">
+            CTQ: {ctqName}
+        </p>
+        <p className="text-sm text-gray-500 mb-4">
+          Validate or invalidate assumptions and determine if differences are statistically significant or insignificant between a sample and a target.
+        </p>
+        
+        <div className="space-y-4">
+          <label className="block text-sm font-medium mb-3">
+            Statistical parameter to test (Select Multiple)
+          </label>
+          <div className="max-w-4xl">
+            <div className="grid grid-cols-3 gap-12">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${ctqId}-MeanTest`}
+                  checked={ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest || false}
+                  onCheckedChange={(checked) => updateContCTQOneSampleHypTestDataField(ctqId, "enableMeanTest", checked)}
+                />
+                <Label htmlFor={`${ctqId}-enableMeanTest`} className="text-sm font-medium text-gray-700">
+                  Mean
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${ctqId}-VarianceTest`}
+                  checked={ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest || false}
+                  onCheckedChange={(checked) => updateContCTQOneSampleHypTestDataField(ctqId, "enableVarianceTest", checked)}
+                />
+                <Label htmlFor={`${ctqId}-VarianceTest`} className="text-sm font-medium text-gray-700">
+                  Variance
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${ctqId}-MedianTest`}
+                  checked={ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest || false}
+                  onCheckedChange={(checked) => updateContCTQOneSampleHypTestDataField(ctqId, "enableMedianTest", checked)}
+                />
+                <Label htmlFor={`${ctqId}-MedianTest`} className="text-sm font-medium text-gray-700">
+                  Median
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
+            {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
+                <div className="w-1/3 min-w-[200px] pr-4"> {/* Added flex-1 and min-width for responsiveness */}
+                    <Label>Target value for mean:</Label>
+                    <Input
+                        type="number"
+                        value={ContCTQOneSampleHypTestData[ctqId]?.targetMean || 0}
+                        onChange={(e) => updateContCTQOneSampleHypTestDataField(
+                            ctqId, 
+                            "targetMean", 
+                            parseFloat(e.target.value) || 0
+                        )}
+                        placeholder="Enter target mean"
+                        className="mt-1"
+                    />
+                </div>
+            )}
+            {ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
+                <div className="w-1/3 min-w-[200px] pr-4"> {/* Added flex-1 and min-width */}
+                    <Label>Target value for variance:</Label>
+                    <Input
+                        type="number"
+                        min="-1"
+                        value={ContCTQOneSampleHypTestData[ctqId]?.targetVariance || 0}
+                        onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (isNaN(value)) {
+                                // If input is empty or invalid number, update to 0 or undefined based on your state logic
+                                updateContCTQOneSampleHypTestDataField(ctqId, "targetVariance", 0); 
+                            } else if (value < 0) {
+                                // Display toast message for negative input
+                                toast({
+                                title: "Target Variance",
+                                description: `Variance cannot be negative. Please enter a non-negative value.`
+                                });
+                                // Optionally, keep the previous valid value or set to 0
+                                updateContCTQOneSampleHypTestDataField(ctqId, "targetVariance", 0); // Reset to 0
+                            } else {
+                                // Valid non-negative number
+                                updateContCTQOneSampleHypTestDataField(ctqId, "targetVariance", value);
+                            }
+                        }}
+                        placeholder="Enter target variance"
+                        className="mt-1"
+                    />
+                </div>
+            )}
+            {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
+                <div className="w-1/3 min-w-[200px]"> {/* Added flex-1 and min-width */}
+                    <Label>Target value for median:</Label>
+                    <Input
+                        type="number"
+                        value={ContCTQOneSampleHypTestData[ctqId]?.targetMedian || 0}
+                        onChange={(e) => updateContCTQOneSampleHypTestDataField(
+                            ctqId, 
+                            "targetMedian", 
+                            parseFloat(e.target.value) || 0
+                        )}
+                        placeholder="Enter target median"
+                        className="mt-1"
+                    />
+                </div>
+            )}
+          </div>            
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+            <Label htmlFor="significance">Significance Level (α)</Label>
+            <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
+            <SelectTrigger id="significance">
+                <SelectValue placeholder="Select significance level" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="0.01">1%</SelectItem>
+                <SelectItem value="0.05">5%</SelectItem>
+                <SelectItem value="0.10">10%</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+            <div>
+            <Label htmlFor="alternative">Alternative Hypothesis</Label>
+            <Select value={alternative} onValueChange={setAlternative}>
+            <SelectTrigger id="alternative">
+                <SelectValue placeholder="Select alternative" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Different">Different</SelectItem>
+                <SelectItem value="Less than">Less than</SelectItem>
+                <SelectItem value="Greater than">Greater than</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label>Characterize your tested dataset:</Label>
+            <Input
+                type="text"
+                value={ContCTQOneSampleHypTestData[ctqId]?.datasetdescription || ""}
+                onChange={(e) => updateContCTQOneSampleHypTestDataField(
+                    ctqId, 
+                    "datasetdescription", 
+                    e.target.value
+                )}
+                placeholder="Enter a description of your tested dataset"
+                className="mt-1"
+            />
+
+          {/* Data Input Section for One Sample Hypothesis Test */}
+          <div className="space-y-4">
+            <div>
+            <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium mb-2">Data Input</label>
+                {/* Undo and Paste from Excel Section */}
+                <div className="flex gap-2 mt-2 mb-2">
+                {undoState && (
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleUndo}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                    >
+                    <Undo className="h-4 w-4 mr-1" />
+                    Undo
+                    </Button>
+                )}
+                <Button
+                    onClick={async () => {
+                    try {
+                        const clipboardData = await navigator.clipboard.readText();
+                        if (clipboardData.trim()) {
+                        // Create a synthetic paste event
+                        const syntheticEvent = {
+                            preventDefault: () => {},
+                            clipboardData: {
+                            getData: (format: string) => clipboardData
+                            }
+                        };
+                        handlePasteData(syntheticEvent as any);
+                        }
+                    } catch (error) {
+                        toast({
+                        title: "Clipboard Access",
+                        description: "Please use Ctrl+V to paste data or manually enter values.",
+                        });
+                    }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                >
+                    📋 Paste data from Excel
+                </Button>
+                </div>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
+                <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
+                <div className="text-blue-700">Copy single column of numeric values from Excel</div>
+                <div className="text-blue-600 text-xs mt-1">
+                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click table cell to paste
+                </div>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-3">
+                Enter data values and click Add, then Save Data to persist to database
+            </p>
+
+            {/* Data Table */}
+            <div className="border rounded-md">
+                <table className="min-w-full">
+                <thead className="bg-gray-50">
+                    <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Index
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Data Value
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                    {dataPoints.length === 0 ? (
+                    <tr>
+                        <td colSpan={3} className="text-center text-gray-500">
+                        <div
+                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
+                            onClick={() => document.getElementById('add-data-input')?.focus()}
+                            onPaste={(e) => handlePasteData(e)}
+                            tabIndex={0}
+                            title="Click to focus input or paste data here"
+                        >
+                        </div>
+                        </td>
+                    </tr>
+                    ) : (
+                    dataPoints.map((point, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                            {point.indexNumber}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                            {editingCell === index ? (
+                            <Input
+                                type="number"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    saveEdit(index);
+                                } else if (e.key === 'Escape') {
+                                    cancelEdit();
+                                }
+                                }}
+                                onBlur={() => saveEdit(index)}
+                                className="w-20 h-7 text-xs"
+                                step="any"
+                                autoFocus
+                            />
+                            ) : (
+                            <div
+                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                onClick={() => startEditing(index, point.dataValue)}
+                                onPaste={(e) => handleCellPaste(e, index)}
+                                tabIndex={0}
+                                title="Click to edit this value"
+                            >
+                                {point.dataValue}
+                            </div>
+                            )}
+                        </td>
+                        <td className="px-4 py-2">
+                            <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteDataPoint(index)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Delete this data point"
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </td>
+                        </tr>
+                    ))
+                    )}
+
+                    {/* Add Data Row - Integrated within the main table */}
+                    <tr className="bg-blue-50 border-t-2 border-blue-200">
+                    <td className="px-4 py-2 text-sm text-gray-500">
+                        {dataPoints.length + 1}
+                    </td>
+                    <td className="px-4 py-2">
+                        <Input
+                        id="add-data-input"
+                        type="number"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                            addDataPoint(inputValue);
+                            }
+                        }}
+                        onPaste={(e) => {
+                            e.preventDefault();
+                            const pastedData = e.clipboardData.getData('text/plain');
+                            const lines = pastedData.trim().split('\n');
+
+                            if (lines.length > 1) {
+                            // Multiple values - use the general paste handler
+                            handlePasteData(e);
+                            } else {
+                            // Single value - set it in the input field
+                            const value = lines[0]?.trim();
+                            if (value) {
+                                setInputValue(value);
+                            }
+                            }
+                        }}
+                        placeholder="Enter numeric value"
+                        className="w-full"
+                        step="any"
+                        />
+                    </td>
+                    <td className="px-4 py-2">
+                        <Button
+                        onClick={() => addDataPoint(inputValue)}
+                        disabled={!inputValue.trim()}
+                        size="sm"
+                        >
+                        Add
+                        </Button>
+                    </td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+
+            {/* Excel Import Instructions */}
+            <div className="text-xs text-blue-600 mt-2 space-y-1">
+                <div><strong>Excel Import Instructions:</strong></div>
+                <div>• <strong>Focus a cell</strong> by clicking on any measurement input field</div>
+                <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
+                <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
+                <div>• <strong>Data will automatically create new rows</strong> if needed</div>
+            </div>
+            
+            {dataPoints.length > 0 && (
+                <div className="text-sm text-gray-600 mt-2">
+                <strong>Sample size:</strong> {dataPoints.length} data points
+                </div>
+            )}
+            </div>
+          </div>
+          
+          <div>
+          <Button className="w-full" onClick={handleRunTest}>
+            Run Test
+          </Button>
+          </div>
+
+          <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
+            <h4 className="font-medium text-sm mb-2">Results</h4>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="text-gray-600">t-statistic:</div>
+              <div className="font-medium">{testResult.tStatistic}</div>
+              <div className="text-gray-600">p-value:</div>
+              <div className="font-medium text-green-600">{testResult.pValue}</div>
+              <div className="text-gray-600">Conclusion:</div>
+              <div className="font-medium text-green-600">{testResult.conclusion}</div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              {testResult.explanation}
+            </div>
+          </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

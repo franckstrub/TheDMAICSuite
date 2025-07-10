@@ -15,10 +15,11 @@ interface ContCTQMultiVariChartProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, onSave }: ContCTQMultiVariChartProps) {
+export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQMultiVariChartProps) {
 // Hypothesis Testing state
     const { toast } = useToast();
     // Correlation Analysis state
@@ -38,6 +39,9 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, onSave }: Con
                 <CardTitle>Multi-Vari Chart Analysis</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-gray-500 mb-4">
+                    CTQ: {ctqName}
+                  </p>
                   <p className="text-sm text-gray-500 mb-4">
                     Identify relationships between variables.
                   </p>
