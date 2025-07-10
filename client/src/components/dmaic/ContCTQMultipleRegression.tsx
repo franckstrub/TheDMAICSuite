@@ -26,7 +26,7 @@ export function ContCTQMultipleRegression({ projectId, ctqId, ctqName, onSave }:
   return (
         <Card>
                 <CardHeader>
-                <CardTitle>Multipl Regression</CardTitle>
+                <CardTitle>Multiple Regression</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-500 mb-4">

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterChart, Scatter, ZAxis } from "recharts";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import {
   Card,
   CardContent,
@@ -58,25 +60,86 @@ interface ContinuousCTQAnalysisProps {
 
 export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activeTab, onSave }: ContinuousCTQAnalysisProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>(() => {
-    // This initializer function runs only once when the component mounts.
-    // It sets the initial state for the ctqId relevant to this component instance.
-    return {
-      [ctqId]: {
-        ctq: ctqName, // Include ctqName as it's part of CTQAnalysisData
-        ctqId: ctqId,
-        enableContYHypothesisTest: true, // <--- This line sets it to true by default
-        // Other boolean enablers will be undefined by default, or you can set them here if needed
-        enableContYSimpleRegression: false, // Example: explicitly set others to false
-        enableContYMultiVariChart: false,
-        enableContYANOVA2way: false,
-        enableContYMultipleRegression: false,
-        enableContYDOE: false,
-        enablePareto: false,
-      },
-    };
+  // Default configuration fallback
+  const getDefaultConfig = () => ({
+    ctq: ctqName,
+    ctqId: ctqId,
+    enableContYHypothesisTest: true,
+    enableContYSimpleRegression: false,
+    enableContYMultiVariChart: false,
+    enableContYANOVA2way: false,
+    enableContYMultipleRegression: false,
+    enableContYDOE: false,
+    enablePareto: false,
   });
+
+  const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>({
+    [ctqId]: getDefaultConfig(),
+  });
+
+  // Query to fetch saved configuration
+  const { data: savedConfig, isLoading } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`],
+    enabled: !!projectId && !!ctqId,
+  });
+
+  // Update state when saved configuration is loaded
+  useEffect(() => {
+    if (savedConfig?.config) {
+      setCTQAnalysisData({
+        [ctqId]: {
+          id: savedConfig.config.id,
+          ctq: savedConfig.config.ctq,
+          ctqId: savedConfig.config.ctqId,
+          enableContYHypothesisTest: savedConfig.config.enableContYHypothesisTest ?? true,
+          enableContYSimpleRegression: savedConfig.config.enableContYSimpleRegression ?? false,
+          enableContYMultiVariChart: savedConfig.config.enableContYMultiVariChart ?? false,
+          enableContYANOVA2way: savedConfig.config.enableContYANOVA2way ?? false,
+          enableContYMultipleRegression: savedConfig.config.enableContYMultipleRegression ?? false,
+          enableContYDOE: savedConfig.config.enableContYDOE ?? false,
+          enablePareto: savedConfig.config.enablePareto ?? false,
+        },
+      });
+    } else if (!isLoading) {
+      // If no saved config exists and not loading, ensure default config is set
+      setCTQAnalysisData({
+        [ctqId]: getDefaultConfig(),
+      });
+    }
+  }, [savedConfig, isLoading, ctqId, ctqName]);
+  // Save mutation
+  const saveConfigMutation = useMutation({
+    mutationFn: async (configData: any) => {
+      return apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`, {
+        method: 'POST',
+        body: JSON.stringify(configData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configuration Saved",
+        description: "Continuous CTQ analysis configuration has been saved successfully.",
+      });
+      // Invalidate and refetch the configuration
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`],
+      });
+    },
+    onError: (error: any) => {
+      console.error('Save configuration error:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save analysis configuration. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateCTQAnalysisField = (ctqId: number, field: keyof CTQAnalysisData, value: any) => {
     setCTQAnalysisData(prev => {
       const updated = {
@@ -91,6 +154,23 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
   };
 
   const handleSaveAnalysis = () => {
+    const currentConfig = ctqAnalysisData[ctqId];
+    if (currentConfig) {
+      // Prepare the data for saving (exclude UI-only fields)
+      const configToSave = {
+        enableContYHypothesisTest: currentConfig.enableContYHypothesisTest,
+        enableContYSimpleRegression: currentConfig.enableContYSimpleRegression,
+        enableContYMultiVariChart: currentConfig.enableContYMultiVariChart,
+        enableContYANOVA2way: currentConfig.enableContYANOVA2way,
+        enableContYMultipleRegression: currentConfig.enableContYMultipleRegression,
+        enableContYDOE: currentConfig.enableContYDOE,
+        enablePareto: currentConfig.enablePareto,
+      };
+      
+      saveConfigMutation.mutate(configToSave);
+    }
+
+    // Also call the legacy onSave if provided
     if (onSave) {
       onSave(JSON.stringify(ctqAnalysisData));
     }
@@ -235,15 +315,15 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
             </Button>
             <Button 
               onClick={handleSaveAnalysis}
-              disabled={!ctqAnalysisData[ctqId] || Object.keys(ctqAnalysisData[ctqId]).length === 0}
+              disabled={saveConfigMutation.isPending || !ctqAnalysisData[ctqId] || Object.keys(ctqAnalysisData[ctqId]).length === 0}
             >
-              Save Analysis Configuration
+              {saveConfigMutation.isPending ? 'Saving...' : 'Save Analysis Configuration'}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-2 mt-4">
         {/* Hypothesis Testing */}
          {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
          <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
