@@ -128,14 +128,14 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       setTimeout(() => {
         const config = configData.config;
         
-        // Update significanceLevel and alternativemean from database
+        // Update significanceLevel and alternative options from database
         if (config.significanceLevel) {
           setSignificanceLevel(config.significanceLevel);
         }
         if (config.alternativemean) {
           setAlternativemean(config.alternativemean);
         }
-        if (config.alternativemean) {
+        if (config.alternativevariance) {
           setAlternativevariance(config.alternativevariance);
         }
         if (config.alternativemedian) {
