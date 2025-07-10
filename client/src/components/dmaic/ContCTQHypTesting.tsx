@@ -8,6 +8,8 @@ import { ContCTQOneSampleHypTesting } from "./ContCTQOneSampleHypTesting";
 import { ContCTQTwoSampleHypTesting } from "./ContCTQTwoSampleHypTesting";
 import { ContCTQPairedSampleHypTesting } from "./ContCTQPairedSampleHypTesting";
 import { ContCTQMultipleSampleHypTesting } from "./ContCTQMultipleSampleHypTesting";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface DataPoint {
   indexNumber: number;
@@ -34,6 +36,8 @@ interface ContCTQHypTestingProps {
 }
 
 export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQHypTestingProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Initialize ContCTQHypTestData with default values
   const [ContCTQHypTestData, setContCTQHypTestData] = useState<{ [ctqId: number]: ContCTQHypTestData }>(() => ({
@@ -47,6 +51,61 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     }
   }));
 
+  // TanStack Query for loading data from database
+  const { data: configData, isLoading, error } = useQuery({
+    queryKey: ['hypothesis-testing-config', projectId, ctqId],
+    queryFn: () => apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/hypothesis-testing-config`),
+    enabled: !!projectId && !!ctqId,
+  });
+
+  // Mutation for saving data to database
+  const saveConfigMutation = useMutation({
+    mutationFn: (configData: any) => 
+      apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/hypothesis-testing-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configData),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Configuration Saved",
+        description: "Hypothesis testing configuration has been saved successfully.",
+      });
+      // Invalidate the query to refresh data
+      queryClient.invalidateQueries({ queryKey: ['hypothesis-testing-config', projectId, ctqId] });
+    },
+    onError: (error: any) => {
+      console.error('Save configuration error:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save configuration. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Initialize data from database when loaded
+  useEffect(() => {
+    if (configData?.config) {
+      // Use setTimeout to avoid React timing issues
+      setTimeout(() => {
+        setContCTQHypTestData(prev => ({
+          ...prev,
+          [ctqId]: {
+            id: configData.config.id,
+            ctq: configData.config.ctq,
+            ctqId: configData.config.ctqId,
+            testType: configData.config.testType || "One Sample Hyp-Test",
+            enableOneSampleTest: configData.config.enableOneSampleTest ?? true,
+            enableTwoSampleTest: configData.config.enableTwoSampleTest ?? false,
+            enableMultipleSampleTest: configData.config.enableMultipleSampleTest ?? false,
+            enablePairedSampleTest: configData.config.enablePairedSampleTest ?? false,
+          }
+        }));
+      }, 0);
+    }
+  }, [configData, ctqId]);
+
   const currentTestType = ContCTQHypTestData[ctqId]?.testType || "One Sample Hyp-Test";
 
   const updateContCTQHypTestDataField = (
@@ -59,6 +118,43 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       [ctqId]: {
         ...prev[ctqId],
         [field]: value,
+      }
+    }));
+  };
+
+  // Save configuration handler
+  const handleSaveConfiguration = () => {
+    const currentConfig = ContCTQHypTestData[ctqId];
+    if (!currentConfig) {
+      toast({
+        title: "Save Failed",
+        description: "No configuration data to save.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const configToSave = {
+      enableOneSampleTest: currentConfig.enableOneSampleTest ?? true,
+      enableTwoSampleTest: currentConfig.enableTwoSampleTest ?? false,
+      enablePairedSampleTest: currentConfig.enablePairedSampleTest ?? false,
+      enableMultipleSampleTest: currentConfig.enableMultipleSampleTest ?? false,
+    };
+
+    saveConfigMutation.mutate(configToSave);
+  };
+
+  // Clear all handler
+  const handleClearAll = () => {
+    setContCTQHypTestData(prev => ({
+      ...prev,
+      [ctqId]: {
+        ctq: ctqName,
+        testType: "One Sample Hyp-Test",
+        enableOneSampleTest: true,
+        enableTwoSampleTest: false,
+        enableMultipleSampleTest: false,
+        enablePairedSampleTest: false,
       }
     }));
   };
@@ -152,16 +248,15 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
         <div className="mt-4 mb-2 flex justify-end gap-2">
           <Button 
             variant="outline" 
-            onClick={() => setContCTQHypTestData({})}
+            onClick={handleClearAll}
           >
             Clear All
           </Button>
           <Button 
-            //onClick={handleSaveAnalysis}
-            //disabled={saveConfigMutation.isPending || !ContCTQHypTestData[ctqId] || Object.keys(ContCTQHypTestData[ctqId]).length < 0}
+            onClick={handleSaveConfiguration}
+            disabled={saveConfigMutation.isPending || !ContCTQHypTestData[ctqId]}
           >
-            {/*{saveConfigMutation.isPending ? 'Saving...' : 'Save Analysis Configuration'} */}
-            Save Hypothesis Testing Configuration
+            {saveConfigMutation.isPending ? 'Saving...' : 'Save Hypothesis Testing Configuration'}
           </Button>
         </div>
         <div className="space-y-4">

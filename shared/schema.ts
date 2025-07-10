@@ -1177,3 +1177,31 @@ export const insertOneSampleHypothesisConfigSchema = createInsertSchema(oneSampl
 
 export type InsertOneSampleHypothesisConfig = z.infer<typeof insertOneSampleHypothesisConfigSchema>;
 export type OneSampleHypothesisConfig = typeof oneSampleHypothesisConfig.$inferSelect;
+
+// Main Hypothesis Testing Configuration - stores which types of hypothesis tests are enabled
+export const hypothesisTestingConfig = pgTable("hypothesis_testing_config", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  projectId: integer("project_id").notNull(),
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  ctq: text("ctq").notNull(), // CTQ name for reference
+  
+  // Test type enablers
+  enableOneSampleTest: boolean("enable_one_sample_test").default(true),
+  enableTwoSampleTest: boolean("enable_two_sample_test").default(false),
+  enablePairedSampleTest: boolean("enable_paired_sample_test").default(false),
+  enableMultipleSampleTest: boolean("enable_multiple_sample_test").default(false),
+  
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+}, (table) => ({
+  // Unique constraint to ensure one config per CTQ
+  uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+}));
+
+export const insertHypothesisTestingConfigSchema = createInsertSchema(hypothesisTestingConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertHypothesisTestingConfig = z.infer<typeof insertHypothesisTestingConfigSchema>;
+export type HypothesisTestingConfig = typeof hypothesisTestingConfig.$inferSelect;
