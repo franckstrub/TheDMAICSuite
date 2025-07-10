@@ -77,26 +77,37 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading, error } = useQuery({
-    queryKey: ['one-sample-hypothesis-config', projectId, ctqId],
-    queryFn: () => apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/one-sample-hypothesis-config`),
+    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/one-sample-hypothesis-config`],
     enabled: !!projectId && !!ctqId,
+    retry: false,
   });
 
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
-    mutationFn: (configData: any) => 
-      apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/one-sample-hypothesis-config`, {
+    mutationFn: async (configData: any) => {
+      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/one-sample-hypothesis-config`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
         body: JSON.stringify(configData),
-      }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText}`);
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Configuration Saved",
         description: "One-sample hypothesis testing configuration has been saved successfully.",
       });
       // Invalidate the query to refresh data
-      queryClient.invalidateQueries({ queryKey: ['one-sample-hypothesis-config', projectId, ctqId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/one-sample-hypothesis-config`] });
     },
     onError: (error: any) => {
       console.error('Save configuration error:', error);
