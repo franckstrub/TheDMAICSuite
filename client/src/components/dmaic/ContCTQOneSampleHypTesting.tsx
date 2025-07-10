@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Trash2, Undo } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface DataPoint {
   indexNumber: number;
@@ -38,6 +40,7 @@ interface ContCTQOneSampleHypTestingProps {
 
 export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQOneSampleHypTestingProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
   const [alternative, setAlternative] = useState("Less than");
   const [testResult, setTestResult] = useState({
@@ -68,9 +71,101 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       targetMean: 0,
       targetVariance: 0,
       targetMedian: 0,
-      datasetdescrition: "",
+      datasetdescription: "",
     }
   }));
+
+  // TanStack Query for loading data from database
+  const { data: configData, isLoading, error } = useQuery({
+    queryKey: ['one-sample-hypothesis-config', projectId, ctqId],
+    queryFn: () => apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/one-sample-hypothesis-config`),
+    enabled: !!projectId && !!ctqId,
+  });
+
+  // Mutation for saving data to database
+  const saveConfigMutation = useMutation({
+    mutationFn: (configData: any) => 
+      apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/one-sample-hypothesis-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configData),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Configuration Saved",
+        description: "One-sample hypothesis testing configuration has been saved successfully.",
+      });
+      // Invalidate the query to refresh data
+      queryClient.invalidateQueries({ queryKey: ['one-sample-hypothesis-config', projectId, ctqId] });
+    },
+    onError: (error: any) => {
+      console.error('Save configuration error:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save configuration. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Load configuration data from database when available
+  useEffect(() => {
+    if (configData?.config && !isLoading) {
+      setTimeout(() => {
+        const config = configData.config;
+        
+        // Update significanceLevel and alternative from database
+        if (config.significanceLevel) {
+          setSignificanceLevel(config.significanceLevel);
+        }
+        if (config.alternative) {
+          setAlternative(config.alternative);
+        }
+        
+        // Update data points from database
+        if (config.dataPoints && Array.isArray(config.dataPoints)) {
+          setDataPoints(config.dataPoints);
+        }
+        
+        // Update ContCTQOneSampleHypTestData from database
+        setContCTQOneSampleHypTestData(prev => ({
+          ...prev,
+          [ctqId]: {
+            ...prev[ctqId],
+            enableMeanTest: config.enableMeanTest ?? true,
+            enableVarianceTest: config.enableVarianceTest ?? false,
+            enableMedianTest: config.enableMedianTest ?? false,
+            targetMean: config.targetMean || 0,
+            targetVariance: config.targetVariance || 0,
+            targetMedian: config.targetMedian || 0,
+            datasetdescription: config.datasetDescription || "",
+          }
+        }));
+      }, 0);
+    }
+  }, [configData, ctqId, isLoading]);
+
+  // Function to save current configuration to database
+  const saveConfiguration = () => {
+    const currentConfig = ContCTQOneSampleHypTestData[ctqId];
+    if (!currentConfig) return;
+    
+    const configToSave = {
+      testType: currentConfig.testType,
+      enableMeanTest: currentConfig.enableMeanTest,
+      enableVarianceTest: currentConfig.enableVarianceTest,
+      enableMedianTest: currentConfig.enableMedianTest,
+      targetMean: currentConfig.targetMean,
+      targetVariance: currentConfig.targetVariance,
+      targetMedian: currentConfig.targetMedian,
+      significanceLevel,
+      alternative,
+      dataPoints,
+      datasetDescription: currentConfig.datasetdescription || "",
+    };
+    
+    saveConfigMutation.mutate(configToSave);
+  };
 
   const updateContCTQOneSampleHypTestDataField = (
     ctqId: number, 
@@ -687,10 +782,18 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             </div>
           </div>
           
-          <div>
-          <Button className="w-full" onClick={handleRunTest}>
-            Run Test
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              className="w-full" 
+              onClick={saveConfiguration} 
+              disabled={saveConfigMutation.isPending}
+              variant="outline"
+            >
+              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration"}
+            </Button>
+            <Button className="w-full" onClick={handleRunTest}>
+              Run Test
+            </Button>
           </div>
 
           <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
