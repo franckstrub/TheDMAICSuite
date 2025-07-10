@@ -77,9 +77,11 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
   });
 
   // Query to fetch saved configuration
-  const { data: savedConfig, isLoading } = useQuery<SavedConfigData>({
+  const { data: savedConfig, isLoading, refetch } = useQuery<SavedConfigData>({
     queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`],
     enabled: !!projectId && !!ctqId,
+    staleTime: 0, // Always refetch when component mounts
+    cacheTime: 0, // Don't cache the result
     retry: (failureCount, error) => {
       // Don't retry on 404 errors - this means no configuration exists yet
       // Check for 404 in various possible error structures
@@ -156,12 +158,25 @@ const saveConfigMutation = useMutation({
 
 // Corrected useEffect to properly initialize state from savedConfig
 useEffect(() => {
-  if (isLoading) return; // Wait until loading is complete
+  console.log('ContinuousCTQAnalysis useEffect triggered:', {
+    isLoading,
+    savedConfig,
+    ctqId,
+    ctqName,
+    currentState: ctqAnalysisData[ctqId]
+  });
+  
+  if (isLoading) {
+    console.log('Still loading, skipping initialization');
+    return; // Wait until loading is complete
+  }
   
   if (savedConfig && savedConfig.config) {
     // We have saved config - use it (server returns { config: configData })
     const config = savedConfig.config;
-    setCTQAnalysisData({
+    console.log('Found saved config, applying:', config);
+    
+    const newState = {
       [ctqId]: {
         id: config.id,
         ctq: config.ctq ?? ctqName,
@@ -174,9 +189,13 @@ useEffect(() => {
         enableContYDOE: config.enableContYDOE ?? false,
         enablePareto: config.enablePareto ?? false,
       },
-    });
+    };
+    
+    console.log('Setting state to:', newState);
+    setCTQAnalysisData(newState);
   } else {
     // No saved config - use defaults
+    console.log('No saved config found, using defaults');
     setCTQAnalysisData({
       [ctqId]: getDefaultConfig(),
     });
