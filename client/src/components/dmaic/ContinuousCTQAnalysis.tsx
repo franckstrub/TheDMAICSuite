@@ -72,8 +72,10 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
   });
 
   const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>(() => {
-    // Start with empty object, we'll populate it in useEffect
-    return {};
+    // Initialize with default config to prevent undefined state
+    return {
+      [ctqId]: getDefaultConfig(),
+    };
   });
 
   // Query to fetch saved configuration
@@ -303,11 +305,14 @@ useEffect(() => {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id={`${ctqId}-ContYSimpleRegression`}
-                    checked={ctqAnalysisData[ctqId]?.enableContYSimpleRegression || false}
-                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYSimpleRegression", checked)}
+                    checked={Boolean(ctqAnalysisData[ctqId]?.enableContYSimpleRegression)}
+                    onCheckedChange={(checked) => {
+                      console.log('ContYSimpleRegression checkbox changed:', { checked, currentValue: ctqAnalysisData[ctqId]?.enableContYSimpleRegression });
+                      updateCTQAnalysisField(ctqId, "enableContYSimpleRegression", checked);
+                    }}
                   />
                   <Label htmlFor={`${ctqId}-ContYSimpleRegression`} className="text-sm font-medium text-gray-700">
-                    Continuous Y Simple Regression
+                    Continuous Y Simple Regression {ctqAnalysisData[ctqId]?.enableContYSimpleRegression ? '✓' : '✗'}
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
