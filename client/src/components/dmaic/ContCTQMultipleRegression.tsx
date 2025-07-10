@@ -15,10 +15,11 @@ interface ContCTQMultipleRegressionProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export function ContCTQMultipleRegression({ projectId, ctqId, ctqName, onSave }: ContCTQMultipleRegressionProps) {
+export function ContCTQMultipleRegression({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQMultipleRegressionProps) {
 // Hypothesis Testing state
     const { toast } = useToast();
     // Correlation Analysis state
@@ -29,6 +30,9 @@ export function ContCTQMultipleRegression({ projectId, ctqId, ctqName, onSave }:
                 <CardTitle>Multiple Regression</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-gray-500 mb-4">
+                    CTQ: {ctqName}
+                  </p>
                   <p className="text-sm text-gray-500 mb-4">
                     Identify relationships between your CTQ and n variables.
                   </p>

@@ -15,10 +15,11 @@ interface ContCTQDOEProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export function ContCTQDOE({ projectId, ctqId, ctqName, onSave }: ContCTQDOEProps) {
+export function ContCTQDOE({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQDOEProps) {
 // Hypothesis Testing state
     const { toast } = useToast();
     // Correlation Analysis state
@@ -29,6 +30,9 @@ export function ContCTQDOE({ projectId, ctqId, ctqName, onSave }: ContCTQDOEProp
                 <CardTitle>DOE (Design of Experiment</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-gray-500 mb-4">
+                    CTQ: {ctqName}
+                  </p>
                   <p className="text-sm text-gray-500 mb-4">
                     Identify relationships between your CTQ and n variables.
                   </p>

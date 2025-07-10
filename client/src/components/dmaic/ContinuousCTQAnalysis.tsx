@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, LineChart, ScatterChart, Scatter, ZAxis } from "recharts";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import {
   Card,
   CardContent,
@@ -13,21 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Value } from '@radix-ui/react-select';
 import { ContCTQHypTesting } from "./ContCTQHypTesting";
 import { ContCTQSimpleRegression } from "./ContCTQSimpleRegression";
 import { ContCTQMultiVariChart } from "./ContCTQMultiVariChart";
@@ -41,6 +24,19 @@ interface CTQAnalysisData {
   ctq: string;
   ctqId?: number; // Foreign key to CTS characteristics
   // Boolean enablers for each analysis type
+  enableContYHypothesisTest?: boolean;
+  enableContYSimpleRegression?: boolean;
+  enableContYMultiVariChart?: boolean;
+  enableContYANOVA2way?: boolean;
+  enableContYMultipleRegression?: boolean;
+  enableContYDOE?: boolean;
+  enablePareto?: boolean;
+}
+
+interface SavedConfigData {
+  id?: number;
+  ctq?: string;
+  ctqId?: number;
   enableContYHypothesisTest?: boolean;
   enableContYSimpleRegression?: boolean;
   enableContYMultiVariChart?: boolean;
@@ -66,7 +62,7 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
   const getDefaultConfig = () => ({
     ctq: ctqName,
     ctqId: ctqId,
-    enableContYHypothesisTest: true,
+    enableContYHypothesisTest: false,
     enableContYSimpleRegression: false,
     enableContYMultiVariChart: false,
     enableContYANOVA2way: false,
@@ -75,93 +71,117 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
     enablePareto: false,
   });
 
-  const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>({
-    [ctqId]: getDefaultConfig(),
+  const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>(() => {
+    // Start with empty object, we'll populate it in useEffect
+    return {};
   });
 
   // Query to fetch saved configuration
-  const { data: savedConfig, isLoading } = useQuery({
+  const { data: savedConfig, isLoading } = useQuery<SavedConfigData>({
     queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`],
     enabled: !!projectId && !!ctqId,
     retry: (failureCount, error) => {
       // Don't retry on 404 errors - this means no configuration exists yet
-      if (error?.status === 404) {
+      // Check for 404 in various possible error structures
+      const is404 = error?.message?.includes('404') || 
+                   error?.toString()?.includes('404') ||
+                   (error as any)?.response?.status === 404 ||
+                   (error as any)?.status === 404;
+      
+      if (is404) {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2;
     },
   });
 
-  // Update state when saved configuration is loaded
-  useEffect(() => {
-    if (savedConfig?.config) {
-      setCTQAnalysisData({
-        [ctqId]: {
-          id: savedConfig.config.id,
-          ctq: savedConfig.config.ctq,
-          ctqId: savedConfig.config.ctqId,
-          enableContYHypothesisTest: savedConfig.config.enableContYHypothesisTest ?? true,
-          enableContYSimpleRegression: savedConfig.config.enableContYSimpleRegression ?? false,
-          enableContYMultiVariChart: savedConfig.config.enableContYMultiVariChart ?? false,
-          enableContYANOVA2way: savedConfig.config.enableContYANOVA2way ?? false,
-          enableContYMultipleRegression: savedConfig.config.enableContYMultipleRegression ?? false,
-          enableContYDOE: savedConfig.config.enableContYDOE ?? false,
-          enablePareto: savedConfig.config.enablePareto ?? false,
-        },
-      });
-    } else if (!isLoading) {
-      // If no saved config exists and not loading, ensure default config is set
-      setCTQAnalysisData({
-        [ctqId]: getDefaultConfig(),
-      });
+// SIMPLE SOLUTION - Remove cache invalidation to prevent UI clearing
+
+// Save mutation - SIMPLE VERSION
+const saveConfigMutation = useMutation({
+  mutationFn: async (configData: any) => {
+    const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(configData),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
-  }, [savedConfig, isLoading, ctqId, ctqName]);
-  // Save mutation
-  const saveConfigMutation = useMutation({
-    mutationFn: async (configData: any) => {
-      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(configData),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Configuration Saved",
-        description: "Continuous CTQ analysis configuration has been saved successfully.",
-      });
-      // Invalidate and refetch the configuration
-      queryClient.invalidateQueries({
-        queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`],
-      });
-    },
-    onError: (error: any) => {
-      console.error('Save configuration error:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        status: error?.status,
-        response: error?.response,
-        projectId,
-        ctqId,
-        configData: ctqAnalysisData[ctqId]
-      });
-      toast({
-        title: "Save Failed",
-        description: `Failed to save analysis configuration: ${error?.message || 'Please try again.'}`,
-        variant: "destructive",
-      });
-    },
-  });
+    
+    return response.json();
+  },
+  onSuccess: (savedData) => {
+    toast({
+      title: "Configuration Saved",
+      description: "Continuous CTQ analysis configuration has been saved successfully.",
+    });
+    
+    // Update the local state with the saved data (server returns { config: configData })
+    if (savedData && savedData.config) {
+      setCTQAnalysisData(prev => ({
+        ...prev,
+        [ctqId]: {
+          ...prev[ctqId],
+          id: savedData.config.id, // Update with the ID from server
+          // Keep the current values since they're already in state
+        }
+      }));
+    }
+    
+    // DON'T invalidate the cache - this was causing the clearing
+    // The data is already correct in our local state
+  },
+  onError: (error: any) => {
+    console.error('Save configuration error:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      response: error?.response,
+      projectId,
+      ctqId,
+      configData: ctqAnalysisData[ctqId]
+    });
+    toast({
+      title: "Save Failed",
+      description: `Failed to save analysis configuration: ${error?.message || 'Please try again.'}`,
+      variant: "destructive",
+    });
+  },
+});
+
+// Corrected useEffect to properly initialize state from savedConfig
+useEffect(() => {
+  if (isLoading) return; // Wait until loading is complete
+  
+  if (savedConfig && savedConfig.config) {
+    // We have saved config - use it (server returns { config: configData })
+    const config = savedConfig.config;
+    setCTQAnalysisData({
+      [ctqId]: {
+        id: config.id,
+        ctq: config.ctq ?? ctqName,
+        ctqId: config.ctqId ?? ctqId,
+        enableContYHypothesisTest: config.enableContYHypothesisTest ?? false,
+        enableContYSimpleRegression: config.enableContYSimpleRegression ?? false,
+        enableContYMultiVariChart: config.enableContYMultiVariChart ?? false,
+        enableContYANOVA2way: config.enableContYANOVA2way ?? false,
+        enableContYMultipleRegression: config.enableContYMultipleRegression ?? false,
+        enableContYDOE: config.enableContYDOE ?? false,
+        enablePareto: config.enablePareto ?? false,
+      },
+    });
+  } else {
+    // No saved config - use defaults
+    setCTQAnalysisData({
+      [ctqId]: getDefaultConfig(),
+    });
+  }
+}, [savedConfig, isLoading, ctqId, ctqName]);
 
   const updateCTQAnalysisField = (ctqId: number, field: keyof CTQAnalysisData, value: any) => {
     setCTQAnalysisData(prev => {
@@ -190,12 +210,13 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
         enablePareto: currentConfig.enablePareto,
       };
       
-      console.log('Saving configuration:', {
+      {/*console.log('Saving configuration:', {
         projectId,
         ctqId,
         configToSave,
         url: `/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`
       });
+      */}
       
       saveConfigMutation.mutate(configToSave);
     }
@@ -205,6 +226,31 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
       onSave(JSON.stringify(ctqAnalysisData));
     }
   };
+
+  const handleClearAll = () => {
+    setCTQAnalysisData({
+      [ctqId]: getDefaultConfig(),
+    });
+  };
+
+  // Add this right before the return statement:
+  if (isLoading) {
+    return (
+      <div className="w-full mt-4 p-4 flex justify-center items-center h-40">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <span className="ml-3">Loading configuration...</span>
+      </div>
+    );
+  }
+
+  // Ensure we have data before rendering
+  if (!ctqAnalysisData[ctqId]) {
+    return (
+      <div className="w-full mt-4 p-4 text-center text-gray-500">
+        Initializing analysis configuration...
+      </div>
+    );
+  }
 
   return (
     <div className="w-full mt-4">
@@ -300,7 +346,6 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
           </div>
           
           {/* Show selected analysis types */}
-          
           {(ctqAnalysisData[ctqId]?.enableContYHypothesisTest || 
             ctqAnalysisData[ctqId]?.enableContYSimpleRegression || 
             ctqAnalysisData[ctqId]?.enableContYMultiVariChart || 
@@ -339,13 +384,13 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
           <div className="mt-6 flex justify-end gap-2">
             <Button 
               variant="outline" 
-              onClick={() => setCTQAnalysisData({})}
+              onClick={handleClearAll}
             >
               Clear All
             </Button>
             <Button 
               onClick={handleSaveAnalysis}
-              disabled={saveConfigMutation.isPending || !ctqAnalysisData[ctqId] || Object.keys(ctqAnalysisData[ctqId]).length === 0}
+              disabled={saveConfigMutation.isPending || !ctqAnalysisData[ctqId]}
             >
               {saveConfigMutation.isPending ? 'Saving...' : 'Save Analysis Configuration'}
             </Button>
@@ -355,40 +400,39 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
 
       <div className="grid grid-cols-1 md:grid-cols-1 gap-2 mt-4">
         {/* Hypothesis Testing */}
-         {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
-         <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-         
+        {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
+          <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
         )}
       
-        {/* Simple Rewgression Analysis */}
+        {/* Simple Regression Analysis */}
         {ctqAnalysisData[ctqId]?.enableContYSimpleRegression && (
-        <ContCTQSimpleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+          <ContCTQSimpleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
         )}
 
         {/* Multi-Vari Chart Analysis */}
         {ctqAnalysisData[ctqId]?.enableContYMultiVariChart && (
-        <ContCTQMultiVariChart projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+          <ContCTQMultiVariChart projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
         )}
         
         {/* ANOVA 2-Way Analysis */}
         {ctqAnalysisData[ctqId]?.enableContYANOVA2way && (
-        <ContCTQANOVA2Way projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+          <ContCTQANOVA2Way projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
         )}
 
-         {/* ANOVA 2-Way Analysis */}
+        {/* Multiple Regression Analysis */}
         {ctqAnalysisData[ctqId]?.enableContYMultipleRegression && (
-        <ContCTQMultipleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+          <ContCTQMultipleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
         )}
 
         {/* DOE Analysis */}
         {ctqAnalysisData[ctqId]?.enableContYDOE && (
-        <ContCTQDOE projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+          <ContCTQDOE projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
         )}
        
-      {/* Pareto Analysis */}
-      {ctqAnalysisData[ctqId]?.enablePareto && (
-       <ParetoAnalysis projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
-      )}
+        {/* Pareto Analysis */}
+        {ctqAnalysisData[ctqId]?.enablePareto && (
+          <ParetoAnalysis projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+        )}
       </div>        
     </div>
   );
