@@ -121,7 +121,6 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // Load configuration data from database when available
   useEffect(() => {
-    console.log('ContCTQOneSampleHypTesting configData:', configData);
     if (configData?.config && !isLoading) {
       setTimeout(() => {
         const config = configData.config;
