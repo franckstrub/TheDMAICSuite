@@ -103,6 +103,7 @@ export function ContCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
 
   // Initialize data from database when loaded
   useEffect(() => {
+    console.log('ContCTQHypTesting configData:', configData);
     if (configData?.config) {
       // Use setTimeout to avoid React timing issues
       setTimeout(() => {
