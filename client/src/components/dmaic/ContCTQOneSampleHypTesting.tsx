@@ -502,7 +502,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
           <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
             {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
-                <div className="w-1/3 min-w-[200px] pr-4"> {/* Added flex-1 and min-width for responsiveness */}
+                <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width for responsiveness */}
                     <Label>Target value for mean:</Label>
                     <Input
                         type="number"
@@ -518,7 +518,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                 </div>
             )}
             {ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
-                <div className="w-1/3 min-w-[200px] pr-4"> {/* Added flex-1 and min-width */}
+                <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width */}
                     <Label>Target value for variance:</Label>
                     <Input
                         type="number"
@@ -548,7 +548,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                 </div>
             )}
             {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
-                <div className="w-1/3 min-w-[200px] pr-4"> {/* Added flex-1 and min-width */}
+                <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width */}
                     <Label>Target value for median:</Label>
                     <Input
                         type="number"
