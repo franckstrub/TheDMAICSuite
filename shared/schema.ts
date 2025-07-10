@@ -1132,3 +1132,48 @@ export const insertContinuousCtqAnalysisConfigSchema = createInsertSchema(contin
 
 export type InsertContinuousCtqAnalysisConfig = z.infer<typeof insertContinuousCtqAnalysisConfigSchema>;
 export type ContinuousCtqAnalysisConfig = typeof continuousCtqAnalysisConfig.$inferSelect;
+
+// One Sample Hypothesis Testing Configuration - stores user data and settings for one-sample tests
+export const oneSampleHypothesisConfig = pgTable("one_sample_hypothesis_config", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  projectId: integer("project_id").notNull(),
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  ctq: text("ctq").notNull(), // CTQ name for reference
+  
+  // Test configuration
+  testType: text("test_type").default("One Sample Hyp-Test"),
+  
+  // Statistical parameter enablers
+  enableMeanTest: boolean("enable_mean_test").default(true),
+  enableVarianceTest: boolean("enable_variance_test").default(false),
+  enableMedianTest: boolean("enable_median_test").default(false),
+  
+  // Target values
+  targetMean: real("target_mean"),
+  targetVariance: real("target_variance"),
+  targetMedian: real("target_median"),
+  
+  // Test parameters
+  significanceLevel: text("significance_level").default("0.05"),
+  alternative: text("alternative").default("Less than"),
+  
+  // Data points
+  dataPoints: jsonb("data_points").$type<Array<{indexNumber: number; dataValue: number}>>().default([]),
+  
+  // Dataset description
+  datasetDescription: text("dataset_description"),
+  
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+}, (table) => ({
+  // Unique constraint to ensure one config per CTQ
+  uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+}));
+
+export const insertOneSampleHypothesisConfigSchema = createInsertSchema(oneSampleHypothesisConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertOneSampleHypothesisConfig = z.infer<typeof insertOneSampleHypothesisConfigSchema>;
+export type OneSampleHypothesisConfig = typeof oneSampleHypothesisConfig.$inferSelect;
