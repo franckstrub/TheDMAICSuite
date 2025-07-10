@@ -21,7 +21,8 @@ import {
   processCapability,
   ctsCharacteristics,
   fishboneDiagrams,
-  processMaps
+  processMaps,
+  continuousCtqAnalysisConfig
 } from '@shared/schema';
 
 /**
@@ -166,6 +167,14 @@ export async function permanentlyDeleteProject(projectId: number): Promise<numbe
     deletionCount += processCapabilityResult.length > 0 ? 1 : 0;
     console.log(`Deleted ${processCapabilityResult.length} process capability records`);
 
+    // Delete continuous CTQ analysis configuration
+    const continuousCtqConfigResult = await db.delete(continuousCtqAnalysisConfig)
+      .where(eq(continuousCtqAnalysisConfig.projectId, projectId))
+      .returning();
+    results['continuousCtqAnalysisConfig'] = continuousCtqConfigResult.length;
+    deletionCount += continuousCtqConfigResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${continuousCtqConfigResult.length} continuous CTQ analysis configuration records`);
+
     // Delete fishbone diagrams
     const fishboneResult = await db.delete(fishboneDiagrams)
       .where(eq(fishboneDiagrams.projectId, projectId))
@@ -244,6 +253,7 @@ export async function cleanupOrphanedProjectData(): Promise<Record<string, numbe
       { name: 'rootCausePrioritization', table: rootCausePrioritization },
       { name: 'msaAnalysis', table: msaAnalysis },
       { name: 'processCapability', table: processCapability },
+      { name: 'continuousCtqAnalysisConfig', table: continuousCtqAnalysisConfig },
       { name: 'fishboneDiagrams', table: fishboneDiagrams },
       { name: 'processMaps', table: processMaps },
       { name: 'ctsCharacteristics', table: ctsCharacteristics },

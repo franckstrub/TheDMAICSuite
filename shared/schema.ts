@@ -1101,3 +1101,34 @@ export type InsertProcessCapability = z.infer<typeof insertProcessCapabilitySche
 export type ProcessCapability = typeof processCapability.$inferSelect;
 
 // Process Capability Data is now stored as JSON array in the processCapability table
+
+// Continuous CTQ Analysis Configuration - stores user choices for analysis types
+export const continuousCtqAnalysisConfig = pgTable("continuous_ctq_analysis_config", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  projectId: integer("project_id").notNull(),
+  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  ctq: text("ctq").notNull(), // CTQ name for reference
+  
+  // Analysis type enablers
+  enableContYHypothesisTest: boolean("enable_cont_y_hypothesis_test").default(true),
+  enableContYSimpleRegression: boolean("enable_cont_y_simple_regression").default(false),
+  enableContYMultiVariChart: boolean("enable_cont_y_multi_vari_chart").default(false),
+  enableContYANOVA2way: boolean("enable_cont_y_anova_2way").default(false),
+  enableContYMultipleRegression: boolean("enable_cont_y_multiple_regression").default(false),
+  enableContYDOE: boolean("enable_cont_y_doe").default(false),
+  enablePareto: boolean("enable_pareto").default(false),
+  
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+}, (table) => ({
+  // Unique constraint to ensure one config per CTQ
+  uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+}));
+
+export const insertContinuousCtqAnalysisConfigSchema = createInsertSchema(continuousCtqAnalysisConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertContinuousCtqAnalysisConfig = z.infer<typeof insertContinuousCtqAnalysisConfigSchema>;
+export type ContinuousCtqAnalysisConfig = typeof continuousCtqAnalysisConfig.$inferSelect;

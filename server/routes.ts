@@ -11,7 +11,8 @@ import {
   insertPlanSchema, insertConfigSchema, insertLogSchema, insertProcessDataSchema,
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
-  insertUserSchema, insertRootCausePrioritizationSchema, insertCauseEffectMatrixSchema
+  insertUserSchema, insertRootCausePrioritizationSchema, insertCauseEffectMatrixSchema,
+  insertContinuousCtqAnalysisConfigSchema
 
 } from "@shared/schema";
 import { 
@@ -22,7 +23,8 @@ import {
   projects, projectCharters, projectRisks, InsertGanttTask, GanttTask, stakeholderAnalysisItems,
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
   customerRequirements, businessRequirements, msaAnalysis, processCapability,
-  fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization, causeEffectMatrix
+  fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization, causeEffectMatrix,
+  continuousCtqAnalysisConfig
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -4132,6 +4134,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       return res.status(200).json({ message: "User deleted successfully." });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Continuous CTQ Analysis Configuration routes
+  app.get("/api/projects/:projectId/ctq/:ctqId/continuous-analysis-config", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      const [config] = await db
+        .select()
+        .from(continuousCtqAnalysisConfig)
+        .where(and(
+          eq(continuousCtqAnalysisConfig.projectId, projectId),
+          eq(continuousCtqAnalysisConfig.ctqId, ctqId),
+          eq(continuousCtqAnalysisConfig.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      if (!config) {
+        return res.status(404).json({ message: "Configuration not found" });
+      }
+      
+      return res.status(200).json({ config });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/ctq/:ctqId/continuous-analysis-config", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      // Get CTQ name from CTS characteristics
+      const [ctsRecord] = await db
+        .select({ ctq: ctsCharacteristics.ctq })
+        .from(ctsCharacteristics)
+        .where(eq(ctsCharacteristics.id, ctqId))
+        .limit(1);
+      
+      if (!ctsRecord) {
+        return res.status(404).json({ message: "CTQ not found" });
+      }
+      
+      const configData = {
+        projectId,
+        ctqId,
+        organizationId: userRecord.organizationId,
+        ctq: ctsRecord.ctq,
+        ...req.body
+      };
+      
+      // Validate the configuration data
+      const validatedData = insertContinuousCtqAnalysisConfigSchema.parse(configData);
+      
+      // Check if configuration already exists
+      const [existingConfig] = await db
+        .select()
+        .from(continuousCtqAnalysisConfig)
+        .where(and(
+          eq(continuousCtqAnalysisConfig.projectId, projectId),
+          eq(continuousCtqAnalysisConfig.ctqId, ctqId),
+          eq(continuousCtqAnalysisConfig.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      let savedConfig;
+      if (existingConfig) {
+        // Update existing configuration
+        [savedConfig] = await db
+          .update(continuousCtqAnalysisConfig)
+          .set({
+            ...validatedData,
+            lastUpdated: new Date()
+          })
+          .where(eq(continuousCtqAnalysisConfig.id, existingConfig.id))
+          .returning();
+      } else {
+        // Create new configuration
+        [savedConfig] = await db
+          .insert(continuousCtqAnalysisConfig)
+          .values(validatedData)
+          .returning();
+      }
+      
+      return res.status(201).json({ config: savedConfig });
     } catch (err) {
       return handleErrors(err, res);
     }
