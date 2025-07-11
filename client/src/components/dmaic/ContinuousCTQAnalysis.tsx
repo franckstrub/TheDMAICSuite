@@ -281,7 +281,7 @@ useEffect(() => {
               Continuous CTQ Analysis Types (Select Multiple)
             </label>
             <div className="max-w-4xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id={`${ctqId}-ContYHypothesisTest`}
@@ -289,7 +289,7 @@ useEffect(() => {
                     onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYHypothesisTest", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYHypothesisTest`} className="text-sm font-medium text-gray-700">
-                    Continuous Y Hypothesis Testing
+                     Hypothesis Testing
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -299,7 +299,7 @@ useEffect(() => {
                     onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYSimpleRegression", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYSimpleRegression`} className="text-sm font-medium text-gray-700">
-                    Continuous Y Simple Regression
+                    Simple Regression
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -309,7 +309,7 @@ useEffect(() => {
                     onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYMultiVariChart", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYMultiVariChart`} className="text-sm font-medium text-gray-700">
-                    Continuous Y Multi-Vari Chart
+                    Multi-Vari Chart
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -319,7 +319,7 @@ useEffect(() => {
                     onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYANOVA2way", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYANOVA2way`} className="text-sm font-medium text-gray-700">
-                    Continuous Y ANOVA Two-way
+                    ANOVA Two-way
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -329,7 +329,7 @@ useEffect(() => {
                     onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYMultipleRegression", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYMultipleRegression`} className="text-sm font-medium text-gray-700">
-                    Continuous Y Multiple Regression
+                    Multiple Regression
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -339,7 +339,7 @@ useEffect(() => {
                     onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYDOE", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYDOE`} className="text-sm font-medium text-gray-700">
-                    Continuous Y DOE (Design of Experiment)
+                    DOE (Design of Experiment)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -368,22 +368,22 @@ useEffect(() => {
               <h4 className="text-sm font-medium mb-2">Selected Analysis Types:</h4>
               <ul className="text-sm text-gray-600 space-y-1">
                 {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
-                  <li>• Continuous Y Hypothesis Testing Analysis</li>
+                  <li>• Hypothesis Testing Analysis</li>
                 )}
                 {ctqAnalysisData[ctqId]?.enableContYSimpleRegression && (
-                  <li>• Continuous Y Simple Regression Analysis</li>
+                  <li>• Simple Regression Analysis</li>
                 )}
                 {ctqAnalysisData[ctqId]?.enableContYMultiVariChart && (
-                  <li>• Continuous Y Multi-Vari Chart</li>
+                  <li>• Multi-Vari Chart</li>
                 )}
                 {ctqAnalysisData[ctqId]?.enableContYANOVA2way && (
-                  <li>• Continuous Y ANOVA Two-way Analysis</li>
+                  <li>• ANOVA Two-way Analysis</li>
                 )}
                 {ctqAnalysisData[ctqId]?.enableContYMultipleRegression && (
-                  <li>• Continuous Y Multiple Regression Analysis</li>
+                  <li>• Multiple Regression Analysis</li>
                 )}
                 {ctqAnalysisData[ctqId]?.enableContYDOE && (
-                  <li>• Continuous Y DOE (Design of Experiment) Analysis</li>
+                  <li>• DOE (Design of Experiment) Analysis</li>
                 )}
                 {ctqAnalysisData[ctqId]?.enablePareto && (
                   <li>• Pareto Analysis</li>
@@ -405,46 +405,46 @@ useEffect(() => {
             >
               {saveConfigMutation.isPending ? 'Saving...' : 'Save Analysis Configuration'}
             </Button>
-          </div>
+          </div>   
+
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-2 mt-4">
+            {/* Hypothesis Testing */}
+            {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
+              <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+          
+            {/* Simple Regression Analysis */}
+            {ctqAnalysisData[ctqId]?.enableContYSimpleRegression && (
+              <ContCTQSimpleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+
+            {/* Multi-Vari Chart Analysis */}
+            {ctqAnalysisData[ctqId]?.enableContYMultiVariChart && (
+              <ContCTQMultiVariChart projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+            
+            {/* ANOVA 2-Way Analysis */}
+            {ctqAnalysisData[ctqId]?.enableContYANOVA2way && (
+              <ContCTQANOVA2Way projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+
+            {/* Multiple Regression Analysis */}
+            {ctqAnalysisData[ctqId]?.enableContYMultipleRegression && (
+              <ContCTQMultipleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+
+            {/* DOE Analysis */}
+            {ctqAnalysisData[ctqId]?.enableContYDOE && (
+              <ContCTQDOE projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+          
+            {/* Pareto Analysis */}
+            {ctqAnalysisData[ctqId]?.enablePareto && (
+              <ParetoAnalysis projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+            )}
+          </div> 
         </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-1 gap-2 mt-4">
-        {/* Hypothesis Testing */}
-        {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
-          <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-        )}
-      
-        {/* Simple Regression Analysis */}
-        {ctqAnalysisData[ctqId]?.enableContYSimpleRegression && (
-          <ContCTQSimpleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-        )}
-
-        {/* Multi-Vari Chart Analysis */}
-        {ctqAnalysisData[ctqId]?.enableContYMultiVariChart && (
-          <ContCTQMultiVariChart projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-        )}
-        
-        {/* ANOVA 2-Way Analysis */}
-        {ctqAnalysisData[ctqId]?.enableContYANOVA2way && (
-          <ContCTQANOVA2Way projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-        )}
-
-        {/* Multiple Regression Analysis */}
-        {ctqAnalysisData[ctqId]?.enableContYMultipleRegression && (
-          <ContCTQMultipleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-        )}
-
-        {/* DOE Analysis */}
-        {ctqAnalysisData[ctqId]?.enableContYDOE && (
-          <ContCTQDOE projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-        )}
-       
-        {/* Pareto Analysis */}
-        {ctqAnalysisData[ctqId]?.enablePareto && (
-          <ParetoAnalysis projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
-        )}
-      </div>        
+      </Card>       
     </div>
   );
 }

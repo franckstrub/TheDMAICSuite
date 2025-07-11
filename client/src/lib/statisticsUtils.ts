@@ -1,3 +1,4 @@
+import jstat from 'jstat';
 // Simple statistics utilities for Lean Six Sigma calculations
 
 /**
@@ -1083,3 +1084,75 @@ export function inverseNormCDF(p: number): number {
   
     return dpu.toFixed(decimalPlaces);
   };
+
+// Helper functions you'll need to implement:
+
+export function calculate1STCriticalValue(
+  significance: number,
+  df: number,
+  alternative: "Less than" | "Greater than" | "Different"
+): number {
+  // Implement logic to get critical t-value from t-distribution
+  // This might use a stats library or lookup table
+  // For two-tailed tests, divide significance by 2
+  return 0; // Replace with actual calculation
+}
+
+export function calculate1SMeanConfidenceInterval(
+  mean: number,
+  SE: number,
+  tCritical: number,
+  alternative: "Less than" | "Greater than" | "Different"
+): { lower: number; upper: number } {
+  // Handle one-sided vs two-sided CIs based on alternative
+  if (alternative === "Different") {
+    const margin = tCritical * SE;
+    return {
+      lower: mean - margin,
+      upper: mean + margin
+    };
+  } else {
+    // For one-sided tests, return -Infinity or +Infinity for the unbounded side
+    const margin = tCritical * SE;
+    return alternative === "Less than" 
+      ? { lower: -Infinity, upper: mean + margin }
+      : { lower: mean - margin, upper: Infinity };
+  }
+}
+
+export function calculate1SMeanPValue(
+  tStatistic: number,
+  degreesOfFreedom: number,
+  alternative: "Less than" | "Greater than" | "Different"
+): number {
+  // Get the cumulative probability up to the t-statistic
+  const cumulativeProbability = jstat.studentt.cdf(
+    Math.abs(tStatistic), // jstat uses absolute value
+    degreesOfFreedom
+  );
+
+  let pValue: number;
+
+  switch (alternative) {
+    case "Less than":
+      // Left-tailed test: P(T ≤ t)
+      pValue = jstat.studentt.cdf(tStatistic, degreesOfFreedom);
+      break;
+
+    case "Greater than":
+      // Right-tailed test: P(T ≥ t) = 1 - P(T ≤ t)
+      pValue = 1 - jstat.studentt.cdf(tStatistic, degreesOfFreedom);
+      break;
+
+    case "Different":
+      // Two-tailed test: 2 * P(T ≥ |t|)
+      pValue = 2 * (1 - cumulativeProbability);
+      break;
+
+    default:
+      throw new Error(`Unknown alternative hypothesis: ${alternative}`);
+  }
+
+  // Ensure p-value is between 0 and 1
+  return Math.min(1, Math.max(0, pValue));
+}
