@@ -1,4 +1,4 @@
-import jstat from 'jstat';
+import * as jstat from 'jstat'
 // Simple statistics utilities for Lean Six Sigma calculations
 
 /**
