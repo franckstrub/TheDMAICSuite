@@ -31,6 +31,7 @@ import {
   assessProcessVariation,
   inverseNormCDF
 } from "@/lib/statisticsUtils";
+import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
 
 interface DataPoint {
   indexNumber: number;
@@ -147,6 +148,7 @@ const [testResults, setTestResults] = useState<RunTestResults>({
   const [editValue, setEditValue] = useState<string>("");
   const [undoState, setUndoState] = useState<DataPoint[] | null>(null);
   const [showUndoButton, setShowUndoButton] = useState(false);
+  const [showBoxPlot, setShowBoxPlot] = useState(false);
 
   // Initialize ContCTQOneSampleHypTestData with default values
   const [ContCTQOneSampleHypTestData, setContCTQOneSampleHypTestData] = useState<{ [ctqId: number]: ContCTQOneSampleHypTestData }>(() => ({
@@ -1061,6 +1063,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? 0
                     );
                     setTestResults(results); // Store the returned results in your state
+                    setShowBoxPlot(true); // Show the BoxPlot component after running the test
                 }}
             >
                 Run Test
@@ -1115,6 +1118,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             
             </div>
           </div>
+
+          {/* BoxPlot visualization when showBoxPlot is true */}
+          {showBoxPlot && dataPoints.length > 0 && (
+            <div className="mt-6">
+              <BoxPlotWith1SMeanTest
+                data={dataPoints.map(point => point.dataValue)}
+                h0Value={ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? 0}
+                confidenceInterval={[testResults.meanCI_minus, testResults.meanCI_plus]}
+                title={`1-Sample T-Test Results (α = ${(parseFloat(significanceLevel) * 100).toFixed(1)}%)`}
+              />
+            </div>
+          )}
+
           </div>
         </div>
       </CardContent>

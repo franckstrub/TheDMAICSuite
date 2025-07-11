@@ -1088,14 +1088,38 @@ export function inverseNormCDF(p: number): number {
 // Helper functions you'll need to implement:
 
 export function calculate1STCriticalValue(
-  significance: number,
-  df: number,
+  significanceLevel: number,
+  degreesOfFreedom: number,
   alternative: "Less than" | "Greater than" | "Different"
 ): number {
-  // Implement logic to get critical t-value from t-distribution
-  // This might use a stats library or lookup table
-  // For two-tailed tests, divide significance by 2
-  return 0; // Replace with actual calculation
+  // Validate inputs
+  if (significanceLevel <= 0 || significanceLevel >= 1) {
+    throw new Error('Significance level must be between 0 and 1');
+  }
+  if (degreesOfFreedom <= 0) {
+    throw new Error('Degrees of freedom must be positive');
+  }
+
+  let alpha: number;
+
+  switch (alternative) {
+    case "Different":
+      // Two-tailed test: split alpha
+      alpha = significanceLevel / 2;
+      // Get the critical value for upper tail
+      return Math.abs(jstat.studentt.inv(1 - alpha, degreesOfFreedom));
+
+    case "Less than":
+      // Left-tailed test: critical value is negative
+      return jstat.studentt.inv(significanceLevel, degreesOfFreedom);
+
+    case "Greater than":
+      // Right-tailed test: critical value is positive
+      return jstat.studentt.inv(1 - significanceLevel, degreesOfFreedom);
+
+    default:
+      throw new Error(`Unknown alternative hypothesis: ${alternative}`);
+  }
 }
 
 export function calculate1SMeanConfidenceInterval(

@@ -20,6 +20,7 @@ import {
   calculate1SMeanPValue,
   calculate1SMeanConfidenceInterval,
 } from "@/lib/statisticsUtils";
+import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
 
 interface MeanTestResults {
   meanValue: number;
@@ -48,8 +49,6 @@ export function onesampleMeanHypothesisTest({
   ADvalue,
   ADp_Value,
 }: onesampleMeanHypothesisTestProps): MeanTestResults {
-
-  // Do your actual calculations here instead of hardcoded zeros
   
   // Example calculations (replace with your actual statistical calculations)
   //const dataValues = dataPoints.map(point => point.dataValue) || [];
@@ -84,14 +83,18 @@ export function onesampleMeanHypothesisTest({
     tCriteria,
     alternativemean
   );
-  // Placeholder calculations (replace with actual statistical formulas)
-  {/*const tCriteria = 2.086; // This should be calculated based on significance level and df
-  const tp_Value = 0.05; // This should be calculated based on t-statistic and df
   
-  const margin = tCriteria * SEmean;
-  const meanCI_minus = meanValue - margin;
-  const meanCI_plus = meanValue + margin;
-  */}
+  const AnalysisComponent = () => {
+
+  return (
+    <BoxPlotWith1SMeanTest
+      data={dataValues}
+      h0Value={targetMean}
+      confidenceInterval={[meanCI_minus, meanCI_plus] as [number, number]}
+      title="1-Sample T-Test Results (α = ${significance*100}%)"
+    />
+  );
+};
 
   return {
     meanValue,
