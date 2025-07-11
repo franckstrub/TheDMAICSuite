@@ -8,8 +8,29 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Trash2, Undo } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Badge } from "@/components/ui/badge";
 import { apiRequest } from '@/lib/queryClient';
 import { BetaRawContentBlockDeltaEvent } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs';
+import {onesampleMeanHypothesisTest} from "./onesampleMeanHypothesisTest";
+import { 
+  mean, 
+  standardDeviation, 
+  variance,
+  parseNumericValue,
+  calculateMode,
+  performNormalityTest,
+  getHistogramData,
+  calculateQuartiles,
+  calculateMovingRange,
+  calculateIndividualControlLimits,
+  calculateMovingRangeControlLimits,
+  calculateZScoreLongShortTerm,
+  calculatePerformanceMetrics,
+  calculateCapabilityIndexes,
+  calculateObservedPerformanceMetrics,
+  assessProcessVariation,
+  inverseNormCDF
+} from "@/lib/statisticsUtils";
 
 interface DataPoint {
   indexNumber: number;
@@ -39,6 +60,42 @@ interface ContCTQOneSampleHypTestingProps {
   onSave?: (data: string) => void;
 }
 
+interface RunTestResults {
+  sampleSize: number;
+  meanValue: number;
+  stdev: number;
+  median: number;
+  SEmean: number;
+  SEvariance: number;
+  SEmedian: number;
+  ADvalue: number;
+  ADp_Value: number;
+  tStatistic: number;
+  tCriteria: number;
+  tp_Value: number;
+  meanCI_minus: number;
+  meanCI_plus: number;
+  varStatistic: number;
+  varCriteria: number;
+  varp_Value: number;
+  varianceCI_minus: number;
+  varianceCI_plus: number;
+  medianStatistic: number;
+  medianCriteria: number;
+  medianp_Value: number;
+  medianCI_minus: number;
+  medianCI_plus: number;
+}
+interface MeanTestResults {
+  meanValue: number;
+  SEmean: number;
+  tStatistic: number;
+  tCriteria: number;
+  tp_Value: number;
+  meanCI_minus: number;
+  meanCI_plus: number;
+}
+
 export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQOneSampleHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -52,6 +109,34 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     conclusion: "Reject null hypothesis",
     explanation: "There is a statistically significant difference between the before and after measurements."
   });
+
+const [testResults, setTestResults] = useState<RunTestResults>({
+  sampleSize: 0,
+  meanValue: 0,
+  stdev: 0,
+  median: 0,
+  SEmean: 0,
+  SEvariance: 0,
+  SEmedian: 0,
+  ADvalue: 0,
+  ADp_Value: 0,
+  tStatistic: 0,
+  tCriteria: 0,
+  tp_Value: 0,
+  meanCI_minus: 0,
+  meanCI_plus: 0,
+  varStatistic: 0,
+  varCriteria: 0,
+  varp_Value: 0,
+  varianceCI_minus: 0,
+  varianceCI_plus: 0,
+  medianStatistic: 0,
+  medianCriteria: 0,
+  medianp_Value: 0,
+  medianCI_minus: 0,
+  medianCI_plus: 0
+});
+  const [onesampleMeanTestresult, setOnesampleMeanTestresult] = useState<MeanTestResults | null>(null); // Initialize with null
 
   // Data input state for One Sample test
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([]);
@@ -203,29 +288,118 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   };
 
   const handleRunTest = (
-    enableMeanTest: boolean,
-    enablevarianceTest: boolean,
-    enableMedianTest: boolean,
-    dataset: DataPoint, 
-    significance: number, 
-    HaMean: "Less than" | "Greater than" | "Different",
-    HaVariance: "Less than" | "Greater than" | "Different",
-    HaMedian: "Less than" | "Greater than" | "Different",
-    targetmean: number,
-    targetvariance: number,
-    targetmedian: number,
-  ) => {
-    // test normalitu of sample first
+  enableMeanTest: boolean,
+  enableVarianceTest: boolean,
+  enableMedianTest: boolean,
+  dataset: DataPoint[],
+  significance: number,
+  HaMean: "Less than" | "Greater than" | "Different",
+  HaVariance: "Less than" | "Greater than" | "Different",
+  HaMedian: "Less than" | "Greater than" | "Different",
+  targetmean: number,
+  targetvariance: number,
+  targetmedian: number,
+): RunTestResults => {
 
+  // Initialize with default values
+  let sampleSize: number = 0;
+  let meanValue: number = 0;
+  let stdev: number = 0;
+  let median: number = 0;
+  let SEmean: number = 0;
+  let SEvariance: number = 0;
+  let SEmedian: number = 0;
+  let ADvalue: number = 0;
+  let ADp_Value: number = 0;
+  let tStatistic: number = 0;
+  let tCriteria: number = 0;
+  let tp_Value: number = 0;
+  let meanCI_minus: number = 0;
+  let meanCI_plus: number = 0;
+  let varStatistic: number = 0;
+  let varCriteria: number = 0;
+  let varp_Value: number = 0;
+  let varianceCI_minus: number = 0;
+  let varianceCI_plus: number = 0;
+  let medianStatistic: number = 0;
+  let medianCriteria: number = 0;
+  let medianp_Value: number = 0;
+  let medianCI_minus: number = 0;
+  let medianCI_plus: number = 0;
+
+  if (!dataset || dataset.length === 0) {
     toast({
-      title: "Test Run Successfully",
-      description: "The hypothesis test has been executed.",
+      title: "Test Run Unsuccessfully",
+      description: "No data set. The hypothesis test has not been executed.",
     });
-    const param1: any = "";
-    return(
-      param1
-    )
+    return {
+      sampleSize, meanValue, stdev, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
+      tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus,
+      varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+    };
+  }
+  const dataValues = dataset.map(point => point.dataValue) || [];
+  const n = dataValues.length;
+  const meanVal = mean(dataValues);
+  const stdDev = standardDeviation(dataValues);
+  // Perform normality test - will return isNormal, AD value and p_values
+  const normalityTest = performNormalityTest(dataValues, meanVal, stdDev);
+  ADvalue = normalityTest.adStatistic;
+  ADp_Value = normalityTest.pValue;
+
+  if (enableMeanTest) {
+    // Validate and type cast the string to the expected union type
+    const validAlternatives = ["Less than", "Greater than", "Different"] as const;
+    if (!validAlternatives.includes(HaMean as any)) {
+      toast({
+        title: "Invalid Alternative Hypothesis",
+        description: "Invalid alternative hypothesis for meanValue test.",
+        variant: "destructive",
+      });
+      return {
+        sampleSize,meanValue, stdev, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
+        tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus,
+        varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+        medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+      };
+    }
+    
+    const meanTestResult = onesampleMeanHypothesisTest({
+      dataValues,
+      significance,
+      alternativemean: HaMean as "Less than" | "Greater than" | "Different",
+      targetMean: targetmean,
+      ADvalue,
+      ADp_Value,
+    });
+    
+    // Update the variables with actual calculated values
+    sampleSize = n;
+    meanValue = meanVal;
+    SEmean = meanTestResult.SEmean;
+    tStatistic = meanTestResult.tStatistic;
+    tCriteria = meanTestResult.tCriteria;
+    tp_Value = meanTestResult.tp_Value;
+    meanCI_minus = meanTestResult.meanCI_minus;
+    meanCI_plus = meanTestResult.meanCI_plus;
+    
+    // Update state as well
+    setOnesampleMeanTestresult(meanTestResult);
+  }
+
+  toast({
+    title: "Test Run Successfully",
+    description: "The hypothesis test has been executed.",
+  });
+
+  return {
+    sampleSize, meanValue, stdev, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
+    tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus,
+    varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+    medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
   };
+};
 
   // Undo function - restore to previous state and clear undo state (like ProcessCapability)
   const handleUndo = () => {
@@ -447,6 +621,18 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     setEditingCell(-1);
     setEditValue("");
   };
+  type AlternativeMeanOption = "Less than" | "Greater than" | "Different";
+
+const Ha = (alternative: string): AlternativeMeanOption => {
+  switch (alternative) {
+    case "Less than":
+      return "Less than";
+    case "Greater than":
+      return "Greater than";
+    default:
+      return "Different";
+  }
+};
 
   return (
     <Card>
@@ -857,23 +1043,76 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             >
               {saveConfigMutation.isPending ? "Saving..." : "Save Configuration"}
             </Button>
-            <Button className="w-full" onClick={handleRunTest}>
-              Run Test
+
+            <Button
+                className="w-full"
+                onClick={() => { // Use a block to perform multiple actions
+                    const results = handleRunTest(
+                        ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ?? false,
+                        ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ?? false, // Matches corrected function signature
+                        ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest ?? false,
+                        dataPoints,
+                        parseFloat(significanceLevel),
+                        Ha(alternativemean),
+                        Ha(alternativevariance),
+                        Ha(alternativemedian),
+                        ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? 0,
+                        ContCTQOneSampleHypTestData[ctqId]?.targetVariance ?? 0,
+                        ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? 0
+                    );
+                    setTestResults(results); // Store the returned results in your state
+                }}
+            >
+                Run Test
             </Button>
+
           </div>
 
           <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
             <h4 className="font-medium text-sm mb-2">Results</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-600">t-statistic:</div>
-              <div className="font-medium">{testResult.tStatistic}</div>
-              <div className="text-gray-600">p-value:</div>
-              <div className="font-medium text-green-600">{testResult.pValue}</div>
-              <div className="text-gray-600">Conclusion:</div>
-              <div className="font-medium text-green-600">{testResult.conclusion}</div>
-            </div>
-            <div className="mt-2 text-xs text-gray-500">
-              {testResult.explanation}
+              <div className="text-gray-600">Sample size:</div>
+              <div className="font-medium">{testResults.sampleSize}</div>
+              <Badge
+                variant="default"
+                className={`font-medium text-xs text-center justify-center ${testResults.ADp_Value >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+                title={
+                  testResults.ADp_Value >= parseFloat(significanceLevel)
+                    ? "Data follows normal distribution (P-Value ≥ ${significanceLevel})"
+                    : "Data does not follow normal distribution (P-Value < ${significanceLevel})"
+                }
+              >
+                {testResults.ADp_Value >= parseFloat(significanceLevel)
+                  ? "Data follows normal distribution"
+                  : "Data does not follow normal distribution"}
+              </Badge>
+              {/*
+              { (testResults.ADp_Value !== undefined && testResults.ADp_Value < parseFloat(significanceLevel)) ? (
+              <div className="text-green-600">Data does not follow a Normal distribution</div>
+              ) : (
+              <div className="text-gray-600">Data follows a Normal distribution</div>
+              )}
+              */}
+              <div> </div>
+              <div className="text-gray-600">Normality test (Anderson Darling) AD value:</div>
+              <div className="font-medium">{testResults.ADvalue}</div>
+              <div className="text-gray-600">Normality test (Anderson Darling) p_Value:</div>
+              <div className="font-medium">{testResults.ADp_Value}</div>
+              <div className="text-gray-600">Mean of sample:</div>
+              <div className="font-medium">{testResults.meanValue}</div>
+              <div className="text-gray-600">SE Mean of sample:</div>
+              <div className="font-medium">{testResults.SEmean}</div>
+              <div className="text-gray-600">one-sample t-statistic:</div>
+              <div className="font-medium">{testResults.tStatistic}</div>
+              <div className="text-gray-600">one-sample t-criteria at significance:</div>
+              <div className="font-medium">{testResults.tCriteria}</div>
+              <div className="text-gray-600">t test p-value:</div>
+              <div className="font-medium text-green-600">{testResults.tp_Value}</div>
+              <div className="text-gray-600">Lower CI:</div>
+              <div className="font-medium text-green-600">{testResults.meanCI_minus}</div>
+              <div className="text-gray-600">Upper CI:</div>
+              <div className="font-medium text-green-600">{testResults.meanCI_plus}</div>
+            
             </div>
           </div>
           </div>
