@@ -20,7 +20,6 @@ import {
   calculate1SMeanPValue,
   calculate1SMeanConfidenceInterval,
 } from "@/lib/statisticsUtils";
-import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
 
 interface MeanTestResults {
   meanValue: number;
@@ -83,18 +82,6 @@ export function onesampleMeanHypothesisTest({
     tCriteria,
     alternativemean
   );
-  
-  const AnalysisComponent = () => {
-
-  return (
-    <BoxPlotWith1SMeanTest
-      data={dataValues}
-      h0Value={targetMean}
-      confidenceInterval={[meanCI_minus, meanCI_plus] as [number, number]}
-      title="1-Sample T-Test Results (α = ${significance*100}%)"
-    />
-  );
-};
 
   return {
     meanValue,

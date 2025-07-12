@@ -888,8 +888,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </p>
 
             {/* Data Table */}
-            <div className="border rounded-md">
-                <table className="min-w-full">
+            <div className="border rounded-md max-h-[500px] overflow-y-auto">
+                <table className="min-w-full table-auto">
                 <thead className="bg-gray-50">
                     <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1043,7 +1043,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               disabled={saveConfigMutation.isPending}
               variant="outline"
             >
-              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration"}
+              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
             </Button>
 
             <Button
@@ -1074,8 +1074,6 @@ const Ha = (alternative: string): AlternativeMeanOption => {
           <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
             <h4 className="font-medium text-sm mb-2">Results</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-600">Sample size:</div>
-              <div className="font-medium">{testResults.sampleSize}</div>
               <Badge
                 variant="default"
                 className={`font-medium text-xs text-center justify-center ${testResults.ADp_Value >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
@@ -1089,32 +1087,47 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   ? "Data follows normal distribution"
                   : "Data does not follow normal distribution"}
               </Badge>
-              {/*
-              { (testResults.ADp_Value !== undefined && testResults.ADp_Value < parseFloat(significanceLevel)) ? (
-              <div className="text-green-600">Data does not follow a Normal distribution</div>
-              ) : (
-              <div className="text-gray-600">Data follows a Normal distribution</div>
-              )}
-              */}
               <div> </div>
+              <div className="text-gray-600">Sample size:</div>
+              <div className="font-medium">{testResults.sampleSize}</div>
               <div className="text-gray-600">Normality test (Anderson Darling) AD value:</div>
-              <div className="font-medium">{testResults.ADvalue}</div>
+              <div className="font-medium">{testResults.ADvalue.toFixed(3)}</div>
               <div className="text-gray-600">Normality test (Anderson Darling) p_Value:</div>
-              <div className="font-medium">{testResults.ADp_Value}</div>
+              <div className="font-medium">{testResults.ADp_Value.toFixed(3)}</div>
               <div className="text-gray-600">Mean of sample:</div>
-              <div className="font-medium">{testResults.meanValue}</div>
+              <div className="font-medium">{testResults.meanValue.toFixed(3)}</div>
+              <div className="text-gray-600">Target:</div>
+              <div className="font-medium">{ContCTQOneSampleHypTestData[ctqId]?.targetMean}</div>
+              <Badge
+                variant="default"
+                className={`font-medium text-xs text-center justify-center ${testResults.tp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-600 " : "text-white bg-blue-300"}`}
+                title={
+                  testResults.tp_Value < parseFloat(significanceLevel)
+                    ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                    : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                }
+              >
+                <div>{alternativemean==='less than' ? "Ha: Mean < "
+                : ( alternativemean==='greater than' ? "Ha: Mean >"
+                  :"Ha: Mean ≠ " )} Target<br></br>
+                {testResults.tp_Value < parseFloat(significanceLevel)
+                  ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                  : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`}
+                </div>
+              </Badge>
+              <div> </div>
               <div className="text-gray-600">SE Mean of sample:</div>
-              <div className="font-medium">{testResults.SEmean}</div>
+              <div className="font-medium">{testResults.SEmean.toFixed(3)}</div>
               <div className="text-gray-600">one-sample t-statistic:</div>
-              <div className="font-medium">{testResults.tStatistic}</div>
+              <div className="font-medium">{testResults.tStatistic.toFixed(3)}</div>
               <div className="text-gray-600">one-sample t-criteria at significance:</div>
-              <div className="font-medium">{testResults.tCriteria}</div>
+              <div className="font-medium">{testResults.tCriteria.toFixed(3)}</div>
               <div className="text-gray-600">t test p-value:</div>
-              <div className="font-medium text-green-600">{testResults.tp_Value}</div>
+              <div className="font-medium text-green-600">{testResults.tp_Value.toFixed(3)}</div>
               <div className="text-gray-600">Lower CI:</div>
-              <div className="font-medium text-green-600">{testResults.meanCI_minus}</div>
+              <div className="font-medium text-green-600">{testResults.meanCI_minus.toFixed(3)}</div>
               <div className="text-gray-600">Upper CI:</div>
-              <div className="font-medium text-green-600">{testResults.meanCI_plus}</div>
+              <div className="font-medium text-green-600">{testResults.meanCI_plus.toFixed(3)}</div>
             
             </div>
           </div>
@@ -1124,9 +1137,14 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             <div className="mt-6">
               <BoxPlotWith1SMeanTest
                 data={dataPoints.map(point => point.dataValue)}
+                ctqName={ctqName}
+                mean={testResults.meanValue}
+                Ha={Ha(alternativemean)}
                 h0Value={ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? 0}
                 confidenceInterval={[testResults.meanCI_minus, testResults.meanCI_plus]}
-                title={`1-Sample T-Test Results (α = ${(parseFloat(significanceLevel) * 100).toFixed(1)}%)`}
+                title={`1-Sample T-Test Mean vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.tp_Value}
+                alphalevel={significanceLevel}
               />
             </div>
           )}

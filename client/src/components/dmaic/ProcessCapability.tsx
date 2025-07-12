@@ -1606,7 +1606,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         }}
                         tabIndex={0}
                       >
-                        <div className="max-h-64 overflow-y-auto">
+                        <div className="max-h-[500px] overflow-y-auto">
                           <table className="w-full">
                             <thead className="bg-gray-50 sticky top-0">
                               <tr>
