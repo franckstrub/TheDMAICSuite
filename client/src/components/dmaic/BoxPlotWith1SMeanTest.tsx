@@ -156,6 +156,7 @@ export default function BoxPlotWith1SMeanTest({
                 dash: 'solid'
               }
             },
+            
             // Confidence Interval lower bound
             {
               type: 'line',
@@ -168,7 +169,14 @@ export default function BoxPlotWith1SMeanTest({
                 color: 'black',
                 width: 1,
                 dash: 'solid'
-              }
+              },
+              arrowhead: 2,
+  arrowsize: 1.5,
+  arrowwidth: 1,
+  arrowcolor: 'black',
+  arrowside: 'end',
+  visible: true,
+  layer: 'above',
             },
             // Confidence Interval upper bound
             {
