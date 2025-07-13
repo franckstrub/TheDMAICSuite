@@ -689,7 +689,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
           </div>
 
           <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
-            {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
+            {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ? (
                 <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width for responsiveness */}
                     <Label>Target value for mean:</Label>
                     <Input
@@ -704,8 +704,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         className="mt-1"
                     />
                 </div>
+                ) : (
+                <div className="w-1/3 min-w-[100px] pr-4">
+                </div>
             )}
-            {ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
+            {ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ? (
                 <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width */}
                     <Label>Target value for variance:</Label>
                     <Input
@@ -734,8 +737,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         className="mt-1"
                     />
                 </div>
+            ) : (
+              <div className="w-1/3 min-w-[100px] pr-4">
+              </div>
             )}
-            {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
+            {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest ? (
                 <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width */}
                     <Label>Target value for median:</Label>
                     <Input
@@ -750,12 +756,15 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         className="mt-1"
                     />
                 </div>
+              ) : (
+              <div className="w-1/3 min-w-[100px] pr-4">
+              </div>
             )}
           </div>            
 
           <div className="grid grid-cols-3 pr-4 gap-4">
-            
-            <div>
+            {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ? (
+            <div className="w-1/3 min-w-[100px] pr-4">
             <Label htmlFor="alternativemean">Ha hypothesis for Mean</Label>
             <Select value={alternativemean} onValueChange={setAlternativemean}>
             <SelectTrigger id="alternativemean">
@@ -768,7 +777,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </SelectContent>
             </Select>
             </div>
-            <div>
+            ) : (
+            <div className="w-1/3 min-w-[100px] pr-4">
+            </div>
+            )}
+            {ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ? (
+            <div className="w-1/3 min-w-[100px] pr-4">
             <Label htmlFor="alternativevariance">Ha hypothesis for Variance</Label>
             <Select value={alternativevariance} onValueChange={setAlternativevariance}>
             <SelectTrigger id="alternativevariance">
@@ -781,7 +795,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </SelectContent>
             </Select>
             </div>
-            <div>
+            ) : (
+            <div className="w-1/3 min-w-[100px] pr-4">
+            </div>
+            )}
+            {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest ? (
+            <div className="w-1/3 min-w-[100px] pr-4">
             <Label htmlFor="alternativemedian">Ha hypothesis for Median</Label>
             <Select value={alternativemedian} onValueChange={setAlternativemedian}>
             <SelectTrigger id="alternativemedian">
@@ -794,6 +813,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </SelectContent>
             </Select>
             </div>
+            ) : (
+            <div className="w-1/3 min-w-[100px] pr-4">
+            </div>
+            )}
           </div>
 
           <div>
@@ -1047,93 +1070,107 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </Button>
 
             <Button
-                className="w-full"
-                onClick={() => { // Use a block to perform multiple actions
-                    const results = handleRunTest(
-                        ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ?? false,
-                        ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ?? false, // Matches corrected function signature
-                        ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest ?? false,
-                        dataPoints,
-                        parseFloat(significanceLevel),
-                        Ha(alternativemean),
-                        Ha(alternativevariance),
-                        Ha(alternativemedian),
-                        ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? 0,
-                        ContCTQOneSampleHypTestData[ctqId]?.targetVariance ?? 0,
-                        ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? 0
-                    );
-                    setTestResults(results); // Store the returned results in your state
-                    setShowBoxPlot(true); // Show the BoxPlot component after running the test
-                }}
+              className={`w-full ${!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest} &
+                ${!ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest} &
+                ${!ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest} ? 'opacity-50 cursor-not-allowed' : ''
+              `}
+              disabled={!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest &&
+                !ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest &&
+                !ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest}
+              onClick={() => { // Use a block to perform multiple actions
+                  const results = handleRunTest(
+                      ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ?? false,
+                      ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ?? false, // Matches corrected function signature
+                      ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest ?? false,
+                      dataPoints,
+                      parseFloat(significanceLevel),
+                      Ha(alternativemean),
+                      Ha(alternativevariance),
+                      Ha(alternativemedian),
+                      ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? 0,
+                      ContCTQOneSampleHypTestData[ctqId]?.targetVariance ?? 0,
+                      ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? 0
+                  );
+                  setTestResults(results); // Store the returned results in your state
+                  setShowBoxPlot(true); // Show the BoxPlot component after running the test
+              }}
             >
                 Run Test
             </Button>
-
           </div>
-
-          <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
-            <h4 className="font-medium text-sm mb-2">Results</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <Badge
-                variant="default"
-                className={`font-medium text-xs text-center justify-center ${testResults.ADp_Value >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
-                title={
-                  testResults.ADp_Value >= parseFloat(significanceLevel)
-                    ? "Data follows normal distribution (P-Value ≥ ${significanceLevel})"
-                    : "Data does not follow normal distribution (P-Value < ${significanceLevel})"
-                }
-              >
-                {testResults.ADp_Value >= parseFloat(significanceLevel)
-                  ? "Data follows normal distribution"
-                  : "Data does not follow normal distribution"}
-              </Badge>
-              <div> </div>
-              <div className="text-gray-600">Sample size:</div>
-              <div className="font-medium">{testResults.sampleSize}</div>
-              <div className="text-gray-600">Normality test (Anderson Darling) AD value:</div>
-              <div className="font-medium">{testResults.ADvalue.toFixed(3)}</div>
-              <div className="text-gray-600">Normality test (Anderson Darling) p_Value:</div>
-              <div className="font-medium">{testResults.ADp_Value.toFixed(3)}</div>
-              <div className="text-gray-600">Mean of sample:</div>
-              <div className="font-medium">{testResults.meanValue.toFixed(3)}</div>
-              <div className="text-gray-600">Target:</div>
-              <div className="font-medium">{ContCTQOneSampleHypTestData[ctqId]?.targetMean}</div>
-              <Badge
-                variant="default"
-                className={`font-medium text-xs text-center justify-center ${testResults.tp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-600 " : "text-white bg-blue-300"}`}
-                title={
-                  testResults.tp_Value < parseFloat(significanceLevel)
-                    ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
-                    : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
-                }
-              >
-                <div>{alternativemean==='less than' ? "Ha: Mean < "
-                : ( alternativemean==='greater than' ? "Ha: Mean >"
-                  :"Ha: Mean ≠ " )} Target<br></br>
-                {testResults.tp_Value < parseFloat(significanceLevel)
-                  ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
-                  : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`}
+          {(ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ||
+            ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ||
+            ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) && ( 
+          <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
+            <Card>
+            <CardTitle>Results:</CardTitle>    
+            <Badge
+              variant="default"
+              className={`font-medium text-xs text-center justify-center ${testResults.ADp_Value >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+              title={
+                testResults.ADp_Value >= parseFloat(significanceLevel)
+                  ? "Data follows normal distribution (P-Value ≥ ${significanceLevel})"
+                  : "Data does not follow normal distribution (P-Value < ${significanceLevel})"
+              }
+            >
+              {testResults.ADp_Value >= parseFloat(significanceLevel)
+                ? "Data follows normal distribution"
+                : "Data does not follow normal distribution"}
+            </Badge>
+            <div className="text-gray-600 font-medium">Sample size:&nbsp;
+            {testResults.sampleSize}</div>
+            <div className="text-gray-600 font-medium">Normality test (Anderson Darling) AD value:&nbsp;
+            {testResults.ADvalue.toFixed(3)}</div>
+            <div className="text-gray-600 font-medium">Normality test (Anderson Darling) p_Value:&nbsp;
+            {testResults.ADp_Value.toFixed(3)}</div>
+            </Card>
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
+              <Card>                
+                <CardTitle>One-Sample T-test:</CardTitle>
+                <div className="text-gray-600 font-medium">Mean:&nbsp;
+                  {testResults.meanValue.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Target:&nbsp;
+                  {ContCTQOneSampleHypTestData[ctqId]?.targetMean}</div>
+                <div>
+                 <Badge
+                  variant="default"
+                  className={`font-medium text-xs text-center justify-center ${testResults.tp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-600 " : "text-white bg-blue-300"}`}
+                  title={
+                    testResults.tp_Value < parseFloat(significanceLevel)
+                      ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                  }
+                 >
+                  {alternativemean==='less than' ? "Ha: Mean < "
+                  : ( alternativemean==='greater than' ? "Ha: Mean >"
+                    :"Ha: Mean ≠ " )} Target<br></br>
+                  {testResults.tp_Value < parseFloat(significanceLevel)
+                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`}
+                  
+                 </Badge>
                 </div>
-              </Badge>
-              <div> </div>
-              <div className="text-gray-600">SE Mean of sample:</div>
-              <div className="font-medium">{testResults.SEmean.toFixed(3)}</div>
-              <div className="text-gray-600">one-sample t-statistic:</div>
-              <div className="font-medium">{testResults.tStatistic.toFixed(3)}</div>
-              <div className="text-gray-600">one-sample t-criteria at significance:</div>
-              <div className="font-medium">{testResults.tCriteria.toFixed(3)}</div>
-              <div className="text-gray-600">t test p-value:</div>
-              <div className="font-medium text-green-600">{testResults.tp_Value.toFixed(3)}</div>
-              <div className="text-gray-600">Lower CI:</div>
-              <div className="font-medium text-green-600">{testResults.meanCI_minus.toFixed(3)}</div>
-              <div className="text-gray-600">Upper CI:</div>
-              <div className="font-medium text-green-600">{testResults.meanCI_plus.toFixed(3)}</div>
-            
+                <div className="text-gray-600 font-medium">SE Mean:&nbsp;
+                  {testResults.SEmean.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">T-statistic:&nbsp;
+                  {testResults.tStatistic.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">T-criteria at significance:&nbsp;
+                  {testResults.tCriteria.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">T-test p-value:&nbsp;
+                  {testResults.tp_Value.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Lower CI:&nbsp;
+                {testResults.meanCI_minus.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Upper CI:&nbsp;
+                  {testResults.meanCI_plus.toFixed(3)}</div>
+              </Card>
+              )}              
             </div>
           </div>
+          )}
 
           {/* BoxPlot visualization when showBoxPlot is true */}
-          {showBoxPlot && dataPoints.length > 0 && (
+          {showBoxPlot && dataPoints.length && ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
             <div className="mt-6">
               <BoxPlotWith1SMeanTest
                 data={dataPoints.map(point => point.dataValue)}
@@ -1148,8 +1185,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               />
             </div>
           )}
-
-          </div>
+          </div>         
         </div>
       </CardContent>
     </Card>

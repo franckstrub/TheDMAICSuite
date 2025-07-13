@@ -1,6 +1,5 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
-import { number } from 'zod';
 
 interface BoxPlotWith1SMeanTestProps {
   data: number[];
@@ -154,7 +153,7 @@ export default function BoxPlotWith1SMeanTest({
                 color: 'black',
                 width: 1,
                 dash: 'solid'
-              }
+              },
             },
             
             // Confidence Interval lower bound
@@ -170,13 +169,6 @@ export default function BoxPlotWith1SMeanTest({
                 width: 1,
                 dash: 'solid'
               },
-              arrowhead: 2,
-  arrowsize: 1.5,
-  arrowwidth: 1,
-  arrowcolor: 'black',
-  arrowside: 'end',
-  visible: true,
-  layer: 'above',
             },
             // Confidence Interval upper bound
             {
