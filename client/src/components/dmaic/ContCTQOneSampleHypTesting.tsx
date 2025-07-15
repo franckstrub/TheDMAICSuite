@@ -34,6 +34,7 @@ import {
   inverseNormCDF
 } from "@/lib/statisticsUtils";
 import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
+import * as jStat from 'jstat';
 
 interface DataPoint {
   indexNumber: number;
