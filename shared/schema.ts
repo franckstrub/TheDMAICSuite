@@ -1,47 +1,87 @@
-import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb, json, index, real, unique } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  date,
+  timestamp,
+  jsonb,
+  json,
+  index,
+  real,
+  unique,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // RACI role types
 export const raciRoleTypes = ["R", "A", "C", "I"] as const;
-export type RaciRole = typeof raciRoleTypes[number];
+export type RaciRole = (typeof raciRoleTypes)[number];
 
 // Stakeholder Analysis Interest Level
 export const interestLevels = ["High", "Medium", "Low"] as const;
-export type InterestLevel = typeof interestLevels[number];
+export type InterestLevel = (typeof interestLevels)[number];
 
 // Stakeholder Analysis Resistance Type
-export const resistanceTypes = ["Technical", "Political", "Cultural", "Personal"] as const; 
-export type ResistanceType = typeof resistanceTypes[number];
+export const resistanceTypes = [
+  "Technical",
+  "Political",
+  "Cultural",
+  "Personal",
+] as const;
+export type ResistanceType = (typeof resistanceTypes)[number];
 
 // Stakeholder Analysis Influence Level
 export const influenceLevels = ["High", "Medium", "Low"] as const;
-export type InfluenceLevel = typeof influenceLevels[number];
+export type InfluenceLevel = (typeof influenceLevels)[number];
 
 // Stakeholder Analysis Support Level
 export const supportLevels = ["Supporter", "Neutral", "Resistant"] as const;
-export type SupportLevel = typeof supportLevels[number];
+export type SupportLevel = (typeof supportLevels)[number];
 
 // Unit appraised type options for MSA
-export const unitAppraisedTypes = ["Part", "Unit", "File", "Document", "Other"] as const;
-export type UnitAppraisedType = typeof unitAppraisedTypes[number];
+export const unitAppraisedTypes = [
+  "Part",
+  "Unit",
+  "File",
+  "Document",
+  "Other",
+] as const;
+export type UnitAppraisedType = (typeof unitAppraisedTypes)[number];
 
 // Gate Review Validation Status
-export const validationStatusTypes = ["Pending", "Approved", "Rejected"] as const;
-export type ValidationStatus = typeof validationStatusTypes[number];
+export const validationStatusTypes = [
+  "Pending",
+  "Approved",
+  "Rejected",
+] as const;
+export type ValidationStatus = (typeof validationStatusTypes)[number];
 
-export const deliverableRequirementTypes = ["Required", "Optional", "Added by User"] as const;
-export type DeliverableRequirementType = typeof deliverableRequirementTypes[number];
+export const deliverableRequirementTypes = [
+  "Required",
+  "Optional",
+  "Added by User",
+] as const;
+export type DeliverableRequirementType =
+  (typeof deliverableRequirementTypes)[number];
 
 // User Roles
 export const userRoles = ["super_admin", "admin", "manager", "member"] as const;
-export type UserRole = typeof userRoles[number];
+export type UserRole = (typeof userRoles)[number];
 
 // Organizations table for multi-tenant support
 export const organizations = pgTable("organizations", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type", { enum: ["enterprise_small", "enterprise_medium", "solo_entrepreneur", "individual"] }).notNull(),
+  type: text("type", {
+    enum: [
+      "enterprise_small",
+      "enterprise_medium",
+      "solo_entrepreneur",
+      "individual",
+    ],
+  }).notNull(),
   isSystemGenerated: boolean("is_system_generated").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -65,7 +105,9 @@ export const sessions = pgTable(
 // Users (for Replit authentication)
 export const users = pgTable("users", {
   id: text("id").primaryKey().notNull(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   email: text("email").unique(),
   firstName: text("first_name"),
   lastName: text("last_name"),
@@ -73,7 +115,9 @@ export const users = pgTable("users", {
   phone: text("phone"),
   phoneCountryCode: text("phone_country_code"),
   companyName: text("company_name"),
-  role: text("role", { enum: ["super_admin", "admin", "manager", "member"] }).default("admin"),
+  role: text("role", {
+    enum: ["super_admin", "admin", "manager", "member"],
+  }).default("admin"),
   billingAddress: jsonb("billing_address").$type<{
     street?: string;
     city?: string;
@@ -103,7 +147,9 @@ export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 // Projects
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   title: text("title").notNull(),
   description: text("description"),
   projectType: text("project_type").default("Green Belt"),
@@ -150,7 +196,9 @@ export type Stakeholder = z.infer<typeof stakeholderSchema>;
 // Project Charter
 export const projectCharters = pgTable("project_charters", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   projectTitle: text("project_title"), // Add projectTitle field to store the title
   projectReferenceNumber: text("project_reference_number"),
@@ -198,7 +246,7 @@ export const projectCharters = pgTable("project_charters", {
   analyze_phase_date: text("analyze_phase_date"),
   improve_phase_date: text("improve_phase_date"),
   control_phase_date: text("control_phase_date"),
-  
+
   // Project cost fields
   oneOffPeopleCost: text("one_off_people_cost"),
   oneOffTechnologyCost: text("one_off_technology_cost"),
@@ -228,76 +276,78 @@ export const insertCharterSchema = createInsertSchema(projectCharters)
     teamMembers: z.array(stakeholderSchema).default([]),
   })
   .pick({
-  organizationId: true,
-  projectId: true,
-  projectTitle: true, // Add projectTitle to the schema
-  projectReferenceNumber: true,
-  projectLeader: true,
-  sponsor: true,
-  sponsorFunction: true,
-  stakeholders: true,
-  teamMembers: true,
-  // Keep old fields for backwards compatibility
-  stakeholder: true,
-  stakeholderFunction: true,
-  financialController: true,
-  projectCoach: true,
-  beltLevel: true,
-  coachBeltLevel: true,
-  projectType: true,
-  projectCategory: true,
-  businessCase: true,
-  problemStatement: true,
-  goals: true,
-  scope: true,
-  projectImage: true,
-  // Project dates
-  startDate: true, 
-  targetEndDate: true,
-  savingsPerYear: true,
-  workingCapitalGains: true,
-  waccPercentage: true,
-  financialSavings: true,
-  fteBenefits: true,
-  // FTE calculation parameters
-  fteWorkingDaysPerYear: true,
-  fteWorkingHoursPerDay: true,
-  fteTimeUnit: true,
-  fteSavedHours: true,
-  fteCostPerYear: true,
-  fteCalculatedValue: true,
-  softBenefits: true,
-  // Milestone dates
-  kick_off_date: true,
-  define_phase_date: true,
-  measure_phase_date: true,
-  analyze_phase_date: true,
-  improve_phase_date: true,
-  control_phase_date: true,
-  // Project cost fields
-  oneOffPeopleCost: true,
-  oneOffTechnologyCost: true,
-  oneOffOtherCost: true,
-  oneOffOtherExplanation: true,
-  opexPeopleCost: true,
-  opexTechnologyCost: true,
-  opexOtherCost: true,
-  opexOtherExplanation: true,
-  opexPeriod: true,
-  capexCost: true,
-  capexExplanation: true,
-  // Financial summary fields
-  totalFinancialSavings: true,
-  totalProjectCosts: true,
-  projectNetValue: true,
-  roi: true,
-  breakeven: true,
-});
+    organizationId: true,
+    projectId: true,
+    projectTitle: true, // Add projectTitle to the schema
+    projectReferenceNumber: true,
+    projectLeader: true,
+    sponsor: true,
+    sponsorFunction: true,
+    stakeholders: true,
+    teamMembers: true,
+    // Keep old fields for backwards compatibility
+    stakeholder: true,
+    stakeholderFunction: true,
+    financialController: true,
+    projectCoach: true,
+    beltLevel: true,
+    coachBeltLevel: true,
+    projectType: true,
+    projectCategory: true,
+    businessCase: true,
+    problemStatement: true,
+    goals: true,
+    scope: true,
+    projectImage: true,
+    // Project dates
+    startDate: true,
+    targetEndDate: true,
+    savingsPerYear: true,
+    workingCapitalGains: true,
+    waccPercentage: true,
+    financialSavings: true,
+    fteBenefits: true,
+    // FTE calculation parameters
+    fteWorkingDaysPerYear: true,
+    fteWorkingHoursPerDay: true,
+    fteTimeUnit: true,
+    fteSavedHours: true,
+    fteCostPerYear: true,
+    fteCalculatedValue: true,
+    softBenefits: true,
+    // Milestone dates
+    kick_off_date: true,
+    define_phase_date: true,
+    measure_phase_date: true,
+    analyze_phase_date: true,
+    improve_phase_date: true,
+    control_phase_date: true,
+    // Project cost fields
+    oneOffPeopleCost: true,
+    oneOffTechnologyCost: true,
+    oneOffOtherCost: true,
+    oneOffOtherExplanation: true,
+    opexPeopleCost: true,
+    opexTechnologyCost: true,
+    opexOtherCost: true,
+    opexOtherExplanation: true,
+    opexPeriod: true,
+    capexCost: true,
+    capexExplanation: true,
+    // Financial summary fields
+    totalFinancialSavings: true,
+    totalProjectCosts: true,
+    projectNetValue: true,
+    roi: true,
+    breakeven: true,
+  });
 
 // SIPOC Diagrams
 export const sipocDiagrams = pgTable("sipoc_diagrams", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   processName: text("process_name"),
   suppliers: text("suppliers"),
@@ -384,17 +434,21 @@ export const insertSipocSchema = createInsertSchema(sipocDiagrams).pick({
 // Customer Requirements
 export const customerRequirements = pgTable("customer_requirements", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   requirement: text("requirement").notNull(),
   customerRequirement: text("customer_requirement"),
   importance: integer("importance").notNull(),
   CTS: text("CTS").notNull().default(""), // Changed from integer to text for CTS
-  ctq: text("ctq").default(""),  // Critical to Quality field
+  ctq: text("ctq").default(""), // Critical to Quality field
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertRequirementSchema = createInsertSchema(customerRequirements).pick({
+export const insertRequirementSchema = createInsertSchema(
+  customerRequirements,
+).pick({
   organizationId: true,
   projectId: true,
   requirement: true,
@@ -407,7 +461,9 @@ export const insertRequirementSchema = createInsertSchema(customerRequirements).
 // Business Requirements
 export const businessRequirements = pgTable("business_requirements", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   requirement: text("requirement").notNull(),
   businessNeed: text("business_need"),
@@ -416,7 +472,9 @@ export const businessRequirements = pgTable("business_requirements", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertBusinessRequirementSchema = createInsertSchema(businessRequirements).pick({
+export const insertBusinessRequirementSchema = createInsertSchema(
+  businessRequirements,
+).pick({
   organizationId: true,
   projectId: true,
   requirement: true,
@@ -428,7 +486,9 @@ export const insertBusinessRequirementSchema = createInsertSchema(businessRequir
 // Datasets
 export const datasets = pgTable("datasets", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   name: text("name").notNull(),
   description: text("description"),
   projectId: integer("project_id"),
@@ -453,16 +513,26 @@ export const insertDatasetSchema = createInsertSchema(datasets).pick({
 
 // Point of Measure types
 export const pointOfMeasureTypes = ["Input", "Process", "Output"] as const;
-export type PointOfMeasureType = typeof pointOfMeasureTypes[number];
+export type PointOfMeasureType = (typeof pointOfMeasureTypes)[number];
 
 // Collection Method types
-export const collectionMethodTypes = ["Random", "Stratified", "Systematic", "Time-based", "Rationale Subgrouping", "100% inspection", "Other"] as const;
-export type CollectionMethodType = typeof collectionMethodTypes[number];
+export const collectionMethodTypes = [
+  "Random",
+  "Stratified",
+  "Systematic",
+  "Time-based",
+  "Rationale Subgrouping",
+  "100% inspection",
+  "Other",
+] as const;
+export type CollectionMethodType = (typeof collectionMethodTypes)[number];
 
 // Data Collection Plans
 export const dataCollectionPlans = pgTable("data_collection_plans", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(),
   operationalDefinition: text("operational_definition"),
@@ -499,7 +569,9 @@ export const insertPlanSchema = createInsertSchema(dataCollectionPlans).pick({
 // Storage Configuration
 export const storageConfigs = pgTable("storage_configs", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   userId: integer("user_id").notNull(),
   cloudEnabled: boolean("cloud_enabled").notNull().default(true),
   cloudRegion: text("cloud_region"),
@@ -537,7 +609,9 @@ export const insertConfigSchema = createInsertSchema(storageConfigs).pick({
 // Project RACI Matrix
 export const projectRaciMatrix = pgTable("project_raci_matrix", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   // Store the matrix as structured JSON with role assignments
   // Each row represents a team member/stakeholder
@@ -555,7 +629,9 @@ export const insertRaciSchema = createInsertSchema(projectRaciMatrix).pick({
 // Activity Log
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   userId: integer("user_id").notNull(),
   projectId: integer("project_id"),
   action: text("action").notNull(),
@@ -574,7 +650,9 @@ export const insertLogSchema = createInsertSchema(activityLogs).pick({
 // Process Data (for statistical analysis)
 export const processData = pgTable("process_data", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   datasetId: integer("dataset_id").notNull(),
   projectId: integer("project_id").notNull(),
   data: jsonb("data").notNull(),
@@ -590,9 +668,11 @@ export const insertProcessDataSchema = createInsertSchema(processData).pick({
 // Project Risk Assessment
 export const projectRisks = pgTable("project_risks", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
-  
+
   // First risk row (mandatory)
   riskName: text("risk_name").notNull(),
   probability: text("probability").notNull(),
@@ -600,7 +680,7 @@ export const projectRisks = pgTable("project_risks", {
   riskCriticality: integer("risk_criticality").notNull(),
   mitigationPlan: text("mitigation_plan"),
   riskOwner: text("risk_owner"),
-  
+
   // Optional additional risks (rows 2-6)
   riskName2: text("risk_name2"),
   probability2: text("probability2"),
@@ -608,77 +688,77 @@ export const projectRisks = pgTable("project_risks", {
   riskCriticality2: integer("risk_criticality2"),
   mitigationPlan2: text("mitigation_plan2"),
   riskOwner2: text("risk_owner2"),
-  
+
   riskName3: text("risk_name3"),
   probability3: text("probability3"),
   impact3: text("impact3"),
   riskCriticality3: integer("risk_criticality3"),
   mitigationPlan3: text("mitigation_plan3"),
   riskOwner3: text("risk_owner3"),
-  
+
   riskName4: text("risk_name4"),
   probability4: text("probability4"),
   impact4: text("impact4"),
   riskCriticality4: integer("risk_criticality4"),
   mitigationPlan4: text("mitigation_plan4"),
   riskOwner4: text("risk_owner4"),
-  
+
   riskName5: text("risk_name5"),
   probability5: text("probability5"),
   impact5: text("impact5"),
   riskCriticality5: integer("risk_criticality5"),
   mitigationPlan5: text("mitigation_plan5"),
   riskOwner5: text("risk_owner5"),
-  
+
   riskName6: text("risk_name6"),
   probability6: text("probability6"),
   impact6: text("impact6"),
   riskCriticality6: integer("risk_criticality6"),
   mitigationPlan6: text("mitigation_plan6"),
   riskOwner6: text("risk_owner6"),
-  
+
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
 export const insertRiskSchema = createInsertSchema(projectRisks).pick({
   organizationId: true,
   projectId: true,
-  
+
   riskName: true,
   probability: true,
   impact: true,
   riskCriticality: true,
   mitigationPlan: true,
   riskOwner: true,
-  
+
   riskName2: true,
   probability2: true,
   impact2: true,
   riskCriticality2: true,
   mitigationPlan2: true,
   riskOwner2: true,
-  
+
   riskName3: true,
   probability3: true,
   impact3: true,
   riskCriticality3: true,
   mitigationPlan3: true,
   riskOwner3: true,
-  
+
   riskName4: true,
   probability4: true,
   impact4: true,
   riskCriticality4: true,
   mitigationPlan4: true,
   riskOwner4: true,
-  
+
   riskName5: true,
   probability5: true,
   impact5: true,
   riskCriticality5: true,
   mitigationPlan5: true,
   riskOwner5: true,
-  
+
   riskName6: true,
   probability6: true,
   impact6: true,
@@ -720,7 +800,9 @@ export type CustomerRequirement = typeof customerRequirements.$inferSelect;
 export type InsertRequirement = z.infer<typeof insertRequirementSchema>;
 
 export type BusinessRequirement = typeof businessRequirements.$inferSelect;
-export type InsertBusinessRequirement = z.infer<typeof insertBusinessRequirementSchema>;
+export type InsertBusinessRequirement = z.infer<
+  typeof insertBusinessRequirementSchema
+>;
 
 export type Dataset = typeof datasets.$inferSelect;
 export type InsertDataset = z.infer<typeof insertDatasetSchema>;
@@ -747,7 +829,7 @@ export type InsertRaciMatrix = z.infer<typeof insertRaciSchema>;
 export type RaciMatrixData = {
   roles: {
     name: string;
-    role: string;        // The role field is now required
+    role: string; // The role field is now required
     phases: {
       define: RaciRole | null;
       measure: RaciRole | null;
@@ -761,7 +843,7 @@ export type RaciMatrixData = {
 // Define a SoftBenefit type for TypeScript usage
 export type SoftBenefit = {
   text: string;
-  category: 'employee' | 'customer' | 'process' | 'growth';
+  category: "employee" | "customer" | "process" | "growth";
 };
 
 // Benefits type definition
@@ -785,39 +867,60 @@ export type ProjectCosts = {
 // Stakeholder Analysis Matrix
 export const stakeholderAnalysisItems = pgTable("stakeholder_analysis_items", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   stakeholderName: text("stakeholder_name").notNull(),
   stakeholderRole: text("stakeholder_role"),
-  interestLevel: text("interest_level").$type<InterestLevel>().notNull().default("Medium"),
+  interestLevel: text("interest_level")
+    .$type<InterestLevel>()
+    .notNull()
+    .default("Medium"),
   resistanceType: text("resistance_type").$type<ResistanceType | null>(),
-  influenceLevel: text("influence_level").$type<InfluenceLevel>().notNull().default("Medium"),
-  supportLevel: text("support_level").$type<SupportLevel>().notNull().default("Neutral"),
+  influenceLevel: text("influence_level")
+    .$type<InfluenceLevel>()
+    .notNull()
+    .default("Medium"),
+  supportLevel: text("support_level")
+    .$type<SupportLevel>()
+    .notNull()
+    .default("Neutral"),
   engagementStrategy: text("engagement_strategy"),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
 // Schema for inserting a stakeholder analysis item
-export const insertStakeholderAnalysisItemSchema = createInsertSchema(stakeholderAnalysisItems).omit({
+export const insertStakeholderAnalysisItemSchema = createInsertSchema(
+  stakeholderAnalysisItems,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
 // Type for insert operations
-export type InsertStakeholderAnalysisItem = z.infer<typeof insertStakeholderAnalysisItemSchema>;
+export type InsertStakeholderAnalysisItem = z.infer<
+  typeof insertStakeholderAnalysisItemSchema
+>;
 
 // Type for select operations
-export type StakeholderAnalysisItem = typeof stakeholderAnalysisItems.$inferSelect;
+export type StakeholderAnalysisItem =
+  typeof stakeholderAnalysisItems.$inferSelect;
 
 // Gate Review Deliverables
 export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   phase: text("phase").notNull(), // define, measure, analyze, improve, control
   name: text("name").notNull(),
   description: text("description"),
-  isRequired: text("is_required").$type<DeliverableRequirementType>().notNull().default("Required"),
+  isRequired: text("is_required")
+    .$type<DeliverableRequirementType>()
+    .notNull()
+    .default("Required"),
   isCompleted: boolean("is_completed").notNull().default(false),
   fileAttachment: text("file_attachment"), // Path/filename for the attached document
   fileOriginalName: text("file_original_name"), // Original filename before upload
@@ -826,18 +929,24 @@ export const gateReviewDeliverables = pgTable("gate_review_deliverables", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertGateReviewDeliverableSchema = createInsertSchema(gateReviewDeliverables).omit({
+export const insertGateReviewDeliverableSchema = createInsertSchema(
+  gateReviewDeliverables,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertGateReviewDeliverable = z.infer<typeof insertGateReviewDeliverableSchema>;
+export type InsertGateReviewDeliverable = z.infer<
+  typeof insertGateReviewDeliverableSchema
+>;
 export type GateReviewDeliverable = typeof gateReviewDeliverables.$inferSelect;
 
 // Gate Review Validators
 export const gateReviewValidators = pgTable("gate_review_validators", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   phase: text("phase").notNull(), // define, measure, analyze, improve, control
   validatorName: text("validator_name").notNull(),
@@ -848,19 +957,25 @@ export const gateReviewValidators = pgTable("gate_review_validators", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertGateReviewValidatorSchema = createInsertSchema(gateReviewValidators).omit({
+export const insertGateReviewValidatorSchema = createInsertSchema(
+  gateReviewValidators,
+).omit({
   id: true,
   validatedDate: true,
   lastUpdated: true,
 });
 
-export type InsertGateReviewValidator = z.infer<typeof insertGateReviewValidatorSchema>;
+export type InsertGateReviewValidator = z.infer<
+  typeof insertGateReviewValidatorSchema
+>;
 export type GateReviewValidator = typeof gateReviewValidators.$inferSelect;
 
 // Gantt Tasks for Work Breakdown Structure
 export const ganttTasks = pgTable("gantt_tasks", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   name: text("name").notNull(),
   description: text("description"),
@@ -886,12 +1001,12 @@ export const insertGanttTaskSchema = createInsertSchema(ganttTasks).omit({
 export type InsertGanttTask = z.infer<typeof insertGanttTaskSchema>;
 export type GanttTask = typeof ganttTasks.$inferSelect;
 
-
-
 // Process Maps for DMAIC Measure Phase
 export const processMaps = pgTable("process_maps", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   diagramData: text("diagram_data"), // Store draw.io XML data
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
@@ -900,14 +1015,20 @@ export const processMaps = pgTable("process_maps", {
 // Fishbone Diagrams for DMAIC Analyze Phase
 export const fishboneDiagrams = pgTable("fishbone_diagrams", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
-  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  ctqId: integer("ctq_id")
+    .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+    .notNull(),
   diagramData: text("diagram_data"), // Store draw.io XML data
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertFishboneDiagramSchema = createInsertSchema(fishboneDiagrams).omit({
+export const insertFishboneDiagramSchema = createInsertSchema(
+  fishboneDiagrams,
+).omit({
   id: true,
   lastUpdated: true,
 });
@@ -925,12 +1046,14 @@ export type ProcessMap = typeof processMaps.$inferSelect;
 
 // CTQ Type for CTS Characteristics
 export const ctqTypes = ["Attribute", "Continuous"] as const;
-export type CtqType = typeof ctqTypes[number];
+export type CtqType = (typeof ctqTypes)[number];
 
 // CTS Characteristics for DMAIC Measure Phase
 export const ctsCharacteristics = pgTable("cts_characteristics", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   ctq: text("ctq").notNull(),
   operationalDefinition: text("operational_definition"),
@@ -943,20 +1066,28 @@ export const ctsCharacteristics = pgTable("cts_characteristics", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertCtsCharacteristicsSchema = createInsertSchema(ctsCharacteristics).omit({
+export const insertCtsCharacteristicsSchema = createInsertSchema(
+  ctsCharacteristics,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertCtsCharacteristics = z.infer<typeof insertCtsCharacteristicsSchema>;
+export type InsertCtsCharacteristics = z.infer<
+  typeof insertCtsCharacteristicsSchema
+>;
 export type CtsCharacteristics = typeof ctsCharacteristics.$inferSelect;
 
 // Root Cause Prioritization for DMAIC Analyze Phase
 export const rootCausePrioritization = pgTable("root_cause_prioritization", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
-  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
+  ctqId: integer("ctq_id")
+    .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+    .notNull(),
   rootcause: text("rootcause").notNull(),
   multivotescore: real("multivotescore").notNull().default(0),
   criticalrootcause: boolean("criticalrootcause").notNull().default(false),
@@ -968,46 +1099,63 @@ export const rootCausePrioritization = pgTable("root_cause_prioritization", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertRootCausePrioritizationSchema = createInsertSchema(rootCausePrioritization).omit({
+export const insertRootCausePrioritizationSchema = createInsertSchema(
+  rootCausePrioritization,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertRootCausePrioritization = z.infer<typeof insertRootCausePrioritizationSchema>;
-export type RootCausePrioritization = typeof rootCausePrioritization.$inferSelect;
+export type InsertRootCausePrioritization = z.infer<
+  typeof insertRootCausePrioritizationSchema
+>;
+export type RootCausePrioritization =
+  typeof rootCausePrioritization.$inferSelect;
 
 // Cause & Effect Matrix for DMAIC Analyze Phase
 export const causeEffectMatrix = pgTable("cause_effect_matrix", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   enabled: boolean("enabled").notNull().default(false),
   rootCauses: json("root_causes").$type<string[]>(),
-  ctqs: json("ctqs").$type<Array<{ctq: string, ctqType: string, ctqId: number}>>(),
+  ctqs: json("ctqs").$type<
+    Array<{ ctq: string; ctqType: string; ctqId: number }>
+  >(),
   importanceScores: json("importance_scores").$type<number[]>(),
   matrix: json("matrix").$type<string[][]>(),
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertCauseEffectMatrixSchema = createInsertSchema(causeEffectMatrix).omit({
+export const insertCauseEffectMatrixSchema = createInsertSchema(
+  causeEffectMatrix,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertCauseEffectMatrix = z.infer<typeof insertCauseEffectMatrixSchema>;
+export type InsertCauseEffectMatrix = z.infer<
+  typeof insertCauseEffectMatrixSchema
+>;
 export type CauseEffectMatrix = typeof causeEffectMatrix.$inferSelect;
 
 // MSA (Measurement System Analysis) for each CTQ
 export const msaAnalysis = pgTable("msa_analysis", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   ctqId: integer("ctq_id").references(() => ctsCharacteristics.id), // Foreign key to CTS characteristics
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics (kept for backward compatibility)
   msaType: text("msa_type").notNull().default("Gage R&R"), // "Gage R&R", "Attribute Agreement", "Bias Study"
-  
+
   // Attribute Agreement Analysis fields
-  unitAppraisedType: text("unit_appraised_type").$type<UnitAppraisedType>().default("Part"),
+  unitAppraisedType: text("unit_appraised_type")
+    .$type<UnitAppraisedType>()
+    .default("Part"),
   unitAppraisedTypeOther: text("unit_appraised_type_other"), // Comment for "Other" selection
   appraiser1Name: text("appraiser1_name"),
   appraiser2Name: text("appraiser2_name"),
@@ -1021,7 +1169,7 @@ export const msaAnalysis = pgTable("msa_analysis", {
   showStatistics: boolean("show_statistics").default(false), // Show/hide statistics section
   studyDateTime: timestamp("study_date_time"),
   justification: text("justification"), // Measurement System Precision & Accuracy justification
-  
+
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -1035,7 +1183,7 @@ export type MsaAnalysis = typeof msaAnalysis.$inferSelect;
 
 // Data set term types for process capability
 export const dataSetTermTypes = ["Long Term", "Short Term"] as const;
-export type DataSetTermType = typeof dataSetTermTypes[number];
+export type DataSetTermType = (typeof dataSetTermTypes)[number];
 
 // Capability Index Type
 export const capabilityIndexType = z.enum(["Z", "Cp/Cpk"]);
@@ -1044,7 +1192,9 @@ export type CapabilityIndexType = z.infer<typeof capabilityIndexType>;
 // Process Capability for each CTQ
 export const processCapability = pgTable("process_capability", {
   id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
   projectId: integer("project_id").notNull(),
   ctqId: integer("ctq_id").references(() => ctsCharacteristics.id), // Foreign key to CTS characteristics
   ctq: text("ctq").notNull(), // Links to CTQ from CTS characteristics (kept for backward compatibility)
@@ -1052,8 +1202,12 @@ export const processCapability = pgTable("process_capability", {
   usl: text("usl"), // Upper Specification Limit (optional for attribute CTQs)
   target: text("target"), // Target value (optional for attribute CTQs)
   zShift: real("z_shift").default(1.5), // Z-shift value (default 1.5)
-  dataSetTerm: text("data_set_term").$type<DataSetTermType>().default("Long Term"), // Data set term (Long Term or Short Term)
-  capabilityIndex: text("capability_index").$type<CapabilityIndexType>().default("Cp/Cpk"), // Z or Cp/Cpk
+  dataSetTerm: text("data_set_term")
+    .$type<DataSetTermType>()
+    .default("Long Term"), // Data set term (Long Term or Short Term)
+  capabilityIndex: text("capability_index")
+    .$type<CapabilityIndexType>()
+    .default("Cp/Cpk"), // Z or Cp/Cpk
   showPercentage: boolean("show_percentage").default(false), // Show percentage display
   showZ: boolean("show_z").default(false), // Show Z for attribute CTQs
   showStatistics: boolean("show_statistics").default(false), // Show/hide statistics section
@@ -1075,7 +1229,10 @@ export const processCapability = pgTable("process_capability", {
   dpmoUnits: integer("dpmo_units"),
   dpmoOpportunitiesPerUnit: integer("dpmo_opportunities_per_unit"),
   // RTY Analysis fields
-  rtyProcessSteps: json("rty_process_steps").$type<Array<{stepName: string; passed: number | null; total: number}>>(),
+  rtyProcessSteps:
+    json("rty_process_steps").$type<
+      Array<{ stepName: string; passed: number | null; total: number }>
+    >(),
   // OEE Analysis fields - Input fields
   oeeScheduledTime: real("oee_scheduled_time"), // Scheduled production time in hours
   oeeAvailableTime: real("oee_available_time"), // Available time in hours
@@ -1083,7 +1240,9 @@ export const processCapability = pgTable("process_capability", {
   oeePartsManufactured: integer("oee_parts_manufactured"), // Number of parts manufactured
   oeeBadParts: integer("oee_bad_parts"), // Number of bad/defective parts
   // Pareto Analysis fields
-  paretoDefectCategories: json("pareto_defect_categories").$type<Array<{category: string; count: number | null}>>(),
+  paretoDefectCategories: json("pareto_defect_categories").$type<
+    Array<{ category: string; count: number | null }>
+  >(),
   // DPU Analysis fields
   dpuDefects: integer("dpu_defects"),
   dpuUnits: integer("dpu_units"),
@@ -1092,118 +1251,173 @@ export const processCapability = pgTable("process_capability", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-export const insertProcessCapabilitySchema = createInsertSchema(processCapability).omit({
+export const insertProcessCapabilitySchema = createInsertSchema(
+  processCapability,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertProcessCapability = z.infer<typeof insertProcessCapabilitySchema>;
+export type InsertProcessCapability = z.infer<
+  typeof insertProcessCapabilitySchema
+>;
 export type ProcessCapability = typeof processCapability.$inferSelect;
 
 // Process Capability Data is now stored as JSON array in the processCapability table
 
 // Continuous CTQ Analysis Configuration - stores user choices for analysis types
-export const continuousCtqAnalysisConfig = pgTable("continuous_ctq_analysis_config", {
-  id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
-  projectId: integer("project_id").notNull(),
-  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
-  ctq: text("ctq").notNull(), // CTQ name for reference
-  
-  // Analysis type enablers
-  enableContYHypothesisTest: boolean("enable_cont_y_hypothesis_test").default(true),
-  enableContYSimpleRegression: boolean("enable_cont_y_simple_regression").default(false),
-  enableContYMultiVariChart: boolean("enable_cont_y_multi_vari_chart").default(false),
-  enableContYANOVA2way: boolean("enable_cont_y_anova_2way").default(false),
-  enableContYMultipleRegression: boolean("enable_cont_y_multiple_regression").default(false),
-  enableContYDOE: boolean("enable_cont_y_doe").default(false),
-  enablePareto: boolean("enable_pareto").default(false),
-  
-  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
-}, (table) => ({
-  // Unique constraint to ensure one config per CTQ
-  uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
-}));
+export const continuousCtqAnalysisConfig = pgTable(
+  "continuous_ctq_analysis_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
 
-export const insertContinuousCtqAnalysisConfigSchema = createInsertSchema(continuousCtqAnalysisConfig).omit({
+    // Analysis type enablers
+    enableContYHypothesisTest: boolean("enable_cont_y_hypothesis_test").default(
+      true,
+    ),
+    enableContYSimpleRegression: boolean(
+      "enable_cont_y_simple_regression",
+    ).default(false),
+    enableContYMultiVariChart: boolean(
+      "enable_cont_y_multi_vari_chart",
+    ).default(false),
+    enableContYANOVA2way: boolean("enable_cont_y_anova_2way").default(false),
+    enableContYMultipleRegression: boolean(
+      "enable_cont_y_multiple_regression",
+    ).default(false),
+    enableContYDOE: boolean("enable_cont_y_doe").default(false),
+    enablePareto: boolean("enable_pareto").default(false),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertContinuousCtqAnalysisConfigSchema = createInsertSchema(
+  continuousCtqAnalysisConfig,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertContinuousCtqAnalysisConfig = z.infer<typeof insertContinuousCtqAnalysisConfigSchema>;
-export type ContinuousCtqAnalysisConfig = typeof continuousCtqAnalysisConfig.$inferSelect;
+export type InsertContinuousCtqAnalysisConfig = z.infer<
+  typeof insertContinuousCtqAnalysisConfigSchema
+>;
+export type ContinuousCtqAnalysisConfig =
+  typeof continuousCtqAnalysisConfig.$inferSelect;
 
 // One Sample Hypothesis Testing Configuration - stores user data and settings for one-sample tests
-export const oneSampleHypothesisConfig = pgTable("one_sample_hypothesis_config", {
-  id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
-  projectId: integer("project_id").notNull(),
-  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
-  ctq: text("ctq").notNull(), // CTQ name for reference
-  
-  // Test configuration
-  testType: text("test_type").default("One Sample Hyp-Test"),
-  
-  // Statistical parameter enablers
-  enableMeanTest: boolean("enable_mean_test").default(true),
-  enableVarianceTest: boolean("enable_variance_test").default(false),
-  enableMedianTest: boolean("enable_median_test").default(false),
-  
-  // Target values
-  targetMean: real("target_mean"),
-  targetVariance: real("target_variance"),
-  targetMedian: real("target_median"),
-  
-  // Test parameters
-  significanceLevel: text("significance_level").default("0.05"),
-  alternativemean: text("alternativemean").default("Less than"),
-  alternativevariance: text("alternativevariance").default("Less than"),
-  alternativemedian: text("alternativemedian").default("Less than"),
-  
-  // Data points
-  dataPoints: jsonb("data_points").$type<Array<{indexNumber: number; dataValue: number}>>().default([]),
-  
-  // Dataset description
-  datasetDescription: text("dataset_description"),
-  
-  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
-}, (table) => ({
-  // Unique constraint to ensure one config per CTQ
-  uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
-}));
+export const oneSampleHypothesisConfig = pgTable(
+  "one_sample_hypothesis_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
 
-export const insertOneSampleHypothesisConfigSchema = createInsertSchema(oneSampleHypothesisConfig).omit({
+    // Test configuration
+    testType: text("test_type").default("One Sample Hyp-Test"),
+
+    // Statistical parameter enablers
+    enableMeanTest: boolean("enable_mean_test").default(true),
+    enableVarianceTest: boolean("enable_variance_test").default(false),
+    enableMedianTest: boolean("enable_median_test").default(false),
+
+    // Target values
+    targetMean: real("target_mean"),
+    targetstdev: real("target_stdev"),
+    targetMedian: real("target_median"),
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternativemean: text("alternativemean").default("Less than"),
+    alternativevariance: text("alternativevariance").default("Less than"),
+    alternativemedian: text("alternativemedian").default("Less than"),
+
+    // Data points
+    dataPoints: jsonb("data_points")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+
+    // Dataset description
+    datasetDescription: text("dataset_description"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertOneSampleHypothesisConfigSchema = createInsertSchema(
+  oneSampleHypothesisConfig,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertOneSampleHypothesisConfig = z.infer<typeof insertOneSampleHypothesisConfigSchema>;
-export type OneSampleHypothesisConfig = typeof oneSampleHypothesisConfig.$inferSelect;
+export type InsertOneSampleHypothesisConfig = z.infer<
+  typeof insertOneSampleHypothesisConfigSchema
+>;
+export type OneSampleHypothesisConfig =
+  typeof oneSampleHypothesisConfig.$inferSelect;
 
 // Main Hypothesis Testing Configuration - stores which types of hypothesis tests are enabled
-export const hypothesisTestingConfig = pgTable("hypothesis_testing_config", {
-  id: serial("id").primaryKey(),
-  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
-  projectId: integer("project_id").notNull(),
-  ctqId: integer("ctq_id").references(() => ctsCharacteristics.id, { onDelete: 'cascade' }).notNull(),
-  ctq: text("ctq").notNull(), // CTQ name for reference
-  
-  // Test type enablers
-  enableOneSampleTest: boolean("enable_one_sample_test").default(true),
-  enableTwoSampleTest: boolean("enable_two_sample_test").default(false),
-  enablePairedSampleTest: boolean("enable_paired_sample_test").default(false),
-  enableMultipleSampleTest: boolean("enable_multiple_sample_test").default(false),
-  
-  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
-}, (table) => ({
-  // Unique constraint to ensure one config per CTQ
-  uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
-}));
+export const hypothesisTestingConfig = pgTable(
+  "hypothesis_testing_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
 
-export const insertHypothesisTestingConfigSchema = createInsertSchema(hypothesisTestingConfig).omit({
+    // Test type enablers
+    enableOneSampleTest: boolean("enable_one_sample_test").default(true),
+    enableTwoSampleTest: boolean("enable_two_sample_test").default(false),
+    enablePairedSampleTest: boolean("enable_paired_sample_test").default(false),
+    enableMultipleSampleTest: boolean("enable_multiple_sample_test").default(
+      false,
+    ),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertHypothesisTestingConfigSchema = createInsertSchema(
+  hypothesisTestingConfig,
+).omit({
   id: true,
   lastUpdated: true,
 });
 
-export type InsertHypothesisTestingConfig = z.infer<typeof insertHypothesisTestingConfigSchema>;
-export type HypothesisTestingConfig = typeof hypothesisTestingConfig.$inferSelect;
+export type InsertHypothesisTestingConfig = z.infer<
+  typeof insertHypothesisTestingConfigSchema
+>;
+export type HypothesisTestingConfig =
+  typeof hypothesisTestingConfig.$inferSelect;
