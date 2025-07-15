@@ -1180,3 +1180,173 @@ export function calculate1SMeanPValue(
   // Ensure p-value is between 0 and 1
   return Math.min(1, Math.max(0, pValue));
 }
+
+export function calculate1SvarChiSquareValue(
+  df: number,
+  sampleVariance: number,
+  targetstdev: number,  
+): number {
+  return (df * sampleVariance) / (targetstdev*targetstdev);
+}
+
+export function calculate1SvarChiSquareCriticalValue(
+  significance: number,
+  df: number,
+  alternative: "Less than" | "Greater than" | "Different"
+): number | { lower: number; upper: number } {
+  switch (alternative) {
+    case "Less than":
+      // Left-tailed test: χ²(α, df)
+      return chiSquareInverse(significance, df);
+    
+    case "Greater than":
+      // Right-tailed test: χ²(1-α, df)
+      return chiSquareInverse(1 - significance, df);
+    
+    case "Different":
+      // Two-tailed test: χ²(α/2, df) and χ²(1-α/2, df)
+      return {
+        lower: chiSquareInverse(significance / 2, df),
+        upper: chiSquareInverse(1 - significance / 2, df)
+      };
+    
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+}
+
+/**
+ * Calculate the p-value for chi-square test
+ * @param chiSquareStatistic - Chi-square test statistic
+ * @param df - Degrees of freedom
+ * @param alternative - Alternative hypothesis type
+ * @returns p-value
+ */
+export function calculate1SvarChiSquarePValue(
+  chiSquareStatistic: number,
+  df: number,
+  alternative: "Less than" | "Greater than" | "Different"
+): number {
+  switch (alternative) {
+    case "Less than":
+      // P(χ² ≤ test statistic)
+      return chiSquareCDF(chiSquareStatistic, df);
+    
+    case "Greater than":
+      // P(χ² ≥ test statistic)
+      return 1 - chiSquareCDF(chiSquareStatistic, df);
+    
+    case "Different":
+      // Two-tailed: 2 × min(P(χ² ≤ test statistic), P(χ² ≥ test statistic))
+      const leftTail = chiSquareCDF(chiSquareStatistic, df);
+      const rightTail = 1 - leftTail;
+      return 2 * Math.min(leftTail, rightTail);
+    
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+}
+
+/**
+ * Calculate confidence interval for variance
+ * @param sampleVariance - Sample variance
+ * @param significance - Significance level
+ * @param df - Degrees of freedom
+ * @returns Confidence interval for variance
+ */
+export function calculate1SvarChiSquareConfidenceInterval(
+  sampleVariance: number,
+  significance: number,
+  df: number
+): { lower: number; upper: number } {
+  const alpha = significance;
+  const chiSquareUpper = chiSquareInverse(alpha / 2, df);
+  const chiSquareLower = chiSquareInverse(1 - alpha / 2, df);
+  
+  return {
+    lower: (df * sampleVariance) / chiSquareLower,
+    upper: (df * sampleVariance) / chiSquareUpper
+  };
+}
+
+// Helper functions for chi-square distribution
+/**
+ * Chi-square cumulative distribution function
+ * Using approximation for chi-square CDF
+ */
+function chiSquareCDF(x: number, df: number): number {
+  if (x <= 0) return 0;
+  if (df <= 0) throw new Error("Degrees of freedom must be positive");
+  
+  // Use gamma function relationship: χ²(df) = 2 × Gamma(df/2, 2)
+  // For simplicity, using Wilson-Hilferty approximation
+  const h = 2 / (9 * df);
+  const z = (Math.pow(x / df, 1/3) - 1 + h) / Math.sqrt(h);
+  
+  return 1-normalCDF(z);
+}
+
+/**
+ * Chi-square inverse cumulative distribution function
+ * Approximation using Newton-Raphson method
+ */
+function chiSquareInverse(p: number, df: number): number {
+  if (p <= 0 || p >= 1) throw new Error("Probability must be between 0 and 1");
+  if (df <= 0) throw new Error("Degrees of freedom must be positive");
+  
+  // Initial guess using Wilson-Hilferty transformation
+  const h = 2 / (9 * df);
+  const z = inverseNormCDF(1-p);
+  let x = df * Math.pow(1 - h + z * Math.sqrt(h), 3);
+  
+  // Newton-Raphson iterations
+  for (let i = 0; i < 10; i++) {
+    const fx = chiSquareCDF(x, df) - p;
+    const fpx = chiSquarePDF(x, df);
+    
+    if (Math.abs(fx) < 1e-10) break;
+    
+    x = x - fx / fpx;
+    if (x <= 0) x = 0.001; // Keep positive
+  }
+  
+  return x;
+}
+
+/**
+ * Chi-square probability density function
+ */
+function chiSquarePDF(x: number, df: number): number {
+  if (x <= 0) return 0;
+  
+  const k = df / 2;
+  const coefficient = Math.pow(x, k - 1) * Math.exp(-x / 2);
+  const denominator = Math.pow(2, k) * gamma(k);
+  
+  return coefficient / denominator;
+}
+
+/**
+ * Gamma function approximation using Lanczos approximation
+ */
+function gamma(z: number): number {
+  const g = 7;
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+             771.32342877765313, -176.61502916214059, 12.507343278686905,
+             -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  
+  if (z < 0.5) {
+    return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+  }
+  
+  z -= 1;
+  let x = c[0];
+  for (let i = 1; i < g + 2; i++) {
+    x += c[i] / (z + i);
+  }
+  
+  const t = z + g + 0.5;
+  const sqrt2pi = Math.sqrt(2 * Math.PI);
+  
+  return sqrt2pi * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+}

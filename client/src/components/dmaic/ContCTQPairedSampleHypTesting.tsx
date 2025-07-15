@@ -22,7 +22,7 @@ interface ContCTQPairedSampleHypTestData {
   enableVarianceTest?: boolean;
   enableMedianTest?: boolean;
   targetMean?: number;
-  targetVariance?: number;
+  targetStdev?: number;
   targetMedian?: number;
   dataPoints?: DataPoint[];
   datasetdescription?: string;
@@ -66,7 +66,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
       enableVarianceTest: false,
       enableMedianTest: false,
       targetMean: 0,
-      targetVariance: 0,
+      targetStdev: 0,
       targetMedian: 0,
       datasetdescrition: "",
     }
@@ -393,12 +393,12 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                     <Input
                         type="number"
                         min="-1"
-                        value={ContCTQPairedSampleHypTestData[ctqId]?.targetVariance || 0}
+                        value={ContCTQPairedSampleHypTestData[ctqId]?.targetStdev || 0}
                         onChange={(e) => {
                             const value = parseFloat(e.target.value);
                             if (isNaN(value)) {
                                 // If input is empty or invalid number, update to 0 or undefined based on your state logic
-                                updateContCTQPairedSampleHypTestDataField(ctqId, "targetVariance", 0); 
+                                updateContCTQPairedSampleHypTestDataField(ctqId, "targetStdev", 0); 
                             } else if (value < 0) {
                                 // Display toast message for negative input
                                 toast({
@@ -406,10 +406,10 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                                 description: `Variance cannot be negative. Please enter a non-negative value.`
                                 });
                                 // Optionally, keep the previous valid value or set to 0
-                                updateContCTQPairedSampleHypTestDataField(ctqId, "targetVariance", 0); // Reset to 0
+                                updateContCTQPairedSampleHypTestDataField(ctqId, "targetStdev", 0); // Reset to 0
                             } else {
                                 // Valid non-negative number
-                                updateContCTQPairedSampleHypTestDataField(ctqId, "targetVariance", value);
+                                updateContCTQPairedSampleHypTestDataField(ctqId, "targetStdev", value);
                             }
                         }}
                         placeholder="Enter target variance"

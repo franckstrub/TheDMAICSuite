@@ -48,20 +48,20 @@ export default function BoxPlotWith1SMeanTest({
   let CIplustext: string = 'CI+';
 
   if (confidenceInterval[0]=== -Infinity) {
-    shownconfidenceInterval[0]= Math.min(...data);
+    shownconfidenceInterval[0]= Math.min(...data, h0Value);
     CIminustext = '-∞';
   }
   else if (confidenceInterval[1]=== Infinity) {
-    shownconfidenceInterval[1]=Math.max(...data);
+    shownconfidenceInterval[1]=Math.max(...data, h0Value);
     CIplustext = '+∞';
   }
   const yBadge=0.95*(Math.max(...data)-Math.min(...data))+ Math.min(...data);
 
   let Badgetext='Ha: Mean ';
-  if (Ha==='less than'){
+  if (Ha==='Less than'){
     Badgetext = Badgetext + " < Target H0";
   }
-  else if (Ha==='greater than') {
+  else if (Ha==='Greater than') {
     Badgetext = Badgetext + " > Target H0";
   }
   else {

@@ -21,33 +21,27 @@ import {
   calculate1SMeanConfidenceInterval,
 } from "@/lib/statisticsUtils";
 
-interface MeanTestResults {
-  meanValue: number;
-  SEmean: number;
-  tStatistic: number;
-  tCriteria: number;
-  tp_Value: number;
-  meanCI_minus: number;
-  meanCI_plus: number;
+interface MedianTestResults {
+  medianStatistic: number;
+  medianCriteria: number;
+  medianp_Value: number;
+  medianCI_minus: number;
+  medianCI_plus: number;
 }  
     
-interface onesampleMeanHypothesisTestProps {
+interface onesampleMedianHypothesisTestProps {
   dataValues: number[];
   significance: number;
-  alternativemean: "Less than" | "Greater than" | "Different";
-  targetMean: number;
-  ADvalue: number;
-  ADp_Value: number;
+  alternativemedian: "Less than" | "Greater than" | "Different";
+  targetMedian: number;
 }
 
-export function onesampleMeanHypothesisTest({
+export function onesampleMedianHypothesisTest({
   dataValues,
   significance,
-  alternativemean,                        
-  targetMean,
-  ADvalue,
-  ADp_Value,
-}: onesampleMeanHypothesisTestProps): MeanTestResults {
+  alternativemedian,                        
+  targetMedian,
+}: onesampleMedianHypothesisTestProps): MedianTestResults {
   
   // Example calculations (replace with your actual statistical calculations)
   //const dataValues = dataPoints.map(point => point.dataValue) || [];
@@ -55,10 +49,11 @@ export function onesampleMeanHypothesisTest({
   const meanValue = mean(dataValues);
   const stdDev = standardDeviation(dataValues);
   const SEmean = stdDev / Math.sqrt(n);
+  const quartiles = calculateQuartiles(dataValues);
   // Perform normality test - will return isNormal, AD value and p_values
   
   // Calculate t-statistic
-  const tStatistic = (meanValue - targetMean) / SEmean;
+  const medianStatistic = (quartiles.median - targetMedian) / SEmean;
   
   // Calculate degrees of freedom
   const df = n - 1;
@@ -67,26 +62,23 @@ export function onesampleMeanHypothesisTest({
   // - p-value calculation
   // - confidence interval calculation
   // You'll need to implement this based on your significance level, the df and Ha
-  const tCriteria = calculate1STCriticalValue(significance, df, alternativemean);
+  const medianCriteria = calculate1SMedianCriticalValue(significance, df, alternativemedian);
 
   // Calculate p-value based on alternative hypothesis
-  const tp_Value = calculate1SMeanPValue(tStatistic, df, alternativemean);
+  const medianp_Value = calculate1SMedianPValue(medianStatistic, df, alternativemedian);
 
   // Calculate confidence intervals
-  const { lower: meanCI_minus, upper: meanCI_plus } = calculate1SMeanConfidenceInterval(
-    meanValue,
-    SEmean,
-    tCriteria,
-    alternativemean
+  const { lower: medianCI_minus, upper: medianCI_plus } = calculate1SMedianConfidenceInterval(
+    quartiles.median,
+    medianCriteria,
+    alternativemedian
   );
 
   return {
-    meanValue,
-    SEmean,
-    tStatistic,
-    tCriteria,
-    tp_Value,
-    meanCI_minus,
-    meanCI_plus,
+    medianStatistic,
+    medianCriteria,
+    medianp_Value,
+    medianCI_minus,
+    medianCI_plus,
   };
 }
