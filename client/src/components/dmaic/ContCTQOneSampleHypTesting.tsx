@@ -380,6 +380,14 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const n = dataValues.length;
   const meanVal = mean(dataValues);
   const stdDev = standardDeviation(dataValues);
+  
+  // Check what's available in jStat
+  console.log('jStat object:', jStat);
+  console.log('jStat keys:', Object.keys(jStat));
+  console.log('Does jStat have binomial?', 'binomial' in jStat);
+  if ('binomial' in jStat) {
+    console.log('jStat.binomial:', jStat.binomial);
+  }
   // Perform normality test - will return isNormal, AD value and p_values
   const normalityTest = performNormalityTest(dataValues, meanVal, stdDev);
   ADvalue = normalityTest.adStatistic;
