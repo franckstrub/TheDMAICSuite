@@ -118,7 +118,6 @@ interface MedianTestResults {
   medianp_Value: number;
   medianCI_minus: number;
   medianCI_plus: number;
-  useWilcoxon?: boolean;
 }
 
 export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQOneSampleHypTestingProps) {
@@ -1382,9 +1381,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       : `Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
-                  {alternativemean==='Less than' ? "Ha: Mean < "
-                  : ( alternativemean==='Greater than' ? "Ha: Mean >"
-                    :"Ha: Mean ≠ " )} Target<br></br>
+                  {alternativemean==='Less than' ? "Ha: Median < "
+                  : ( alternativemean==='Greater than' ? "Ha: Median >"
+                    :"Ha: Median ≠ " )} Target<br></br>
                   {testResults.medianp_Value < parseFloat(significanceLevel)
                     ? `Result => Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
                     : `Result => Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`}

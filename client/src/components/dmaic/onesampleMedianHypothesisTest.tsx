@@ -30,9 +30,6 @@ interface MedianTestResults {
   medianp_Value: number;
   medianCI_minus: number;
   medianCI_plus: number;
-  testType: "Sign Test" | "Wilcoxon Signed-Rank Test";
-  actualMedian: number;
-  targetMedian: number;
 }  
     
 interface onesampleMedianHypothesisTestProps {
@@ -143,9 +140,6 @@ export function onesampleMedianHypothesisTest({
         medianp_Value: 1,
         medianCI_minus: targetMedian,
         medianCI_plus: targetMedian,
-        testType: "Wilcoxon Signed-Rank Test",
-        actualMedian,
-        targetMedian
       };
     }
     
@@ -197,9 +191,6 @@ export function onesampleMedianHypothesisTest({
       medianp_Value,
       medianCI_minus,
       medianCI_plus,
-      testType: "Wilcoxon Signed-Rank Test",
-      actualMedian,
-      targetMedian
     };
     
   } else {
@@ -226,9 +217,6 @@ export function onesampleMedianHypothesisTest({
         medianp_Value: 1,
         medianCI_minus: targetMedian,
         medianCI_plus: targetMedian,
-        testType: "Sign Test",
-        actualMedian,
-        targetMedian
       };
     }
     
@@ -287,9 +275,6 @@ export function onesampleMedianHypothesisTest({
       medianp_Value,
       medianCI_minus,
       medianCI_plus,
-      testType: "Sign Test",
-      actualMedian,
-      targetMedian
     };
   }
 }
