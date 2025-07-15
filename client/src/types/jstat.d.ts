@@ -20,6 +20,11 @@ declare module 'jstat' {
       cdf(x: number, df1: number, df2: number): number;
       inv(p: number, df1: number, df2: number): number;
     };
+    binomial: {
+      pdf(k: number, n: number, p: number): number;
+      cdf(k: number, n: number, p: number): number;
+      inv(prob: number, n: number, p: number): number;
+    };
     mean(data: number[]): number;
     median(data: number[]): number;
     mode(data: number[]): number;
