@@ -23,7 +23,6 @@ declare module 'jstat' {
     binomial: {
       pdf(k: number, n: number, p: number): number;
       cdf(k: number, n: number, p: number): number;
-      inv(prob: number, n: number, p: number): number;
     };
     mean(data: number[]): number;
     median(data: number[]): number;
