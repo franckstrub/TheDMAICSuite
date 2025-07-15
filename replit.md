@@ -188,6 +188,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - July 10, 2025. Fixed one-sample hypothesis testing database schema compatibility issue - updated database to rename 'alternative' column to 'alternativemean' and added new 'alternativevariance' and 'alternativemedian' columns. Corrected component logic to properly load the new field names from database, resolving column "alternative" does not exist error and enabling successful configuration saves
 - July 15, 2025. Implemented BoxPlot visualization for one-sample hypothesis testing - fixed syntax errors in function calls, added showBoxPlot state management, created proper component integration with confidence intervals and target value display, added default export to BoxPlotWith1SMeanTest component resolving import issues
 - July 15, 2025. Installed jstat statistical library with custom TypeScript declarations - added comprehensive type definitions for normal, t-distribution, chi-square, and F-distribution functions, enabling advanced statistical calculations for hypothesis testing components
+- July 15, 2025. Fixed jStat binomial distribution compatibility issues - implemented custom binomialQuantile function to replace non-existent jStat.binomial.inv method, updated median hypothesis testing to use proper binomial PDF-based quantile calculation, corrected TypeScript declarations to match actual jStat API
 
 ## User Preferences
 

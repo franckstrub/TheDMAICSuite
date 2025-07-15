@@ -34,7 +34,7 @@ import {
   inverseNormCDF
 } from "@/lib/statisticsUtils";
 import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
-import * as jStat from 'jstat';
+//import * as jStat from 'jstat';
 
 interface DataPoint {
   indexNumber: number;
@@ -118,6 +118,7 @@ interface MedianTestResults {
   medianp_Value: number;
   medianCI_minus: number;
   medianCI_plus: number;
+  useWilcoxon?: boolean;
 }
 
 export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQOneSampleHypTestingProps) {
@@ -381,13 +382,8 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const meanVal = mean(dataValues);
   const stdDev = standardDeviation(dataValues);
   
-  // Check what's available in jStat
-  console.log('jStat object:', jStat);
-  console.log('jStat keys:', Object.keys(jStat));
-  console.log('Does jStat have binomial?', 'binomial' in jStat);
-  if ('binomial' in jStat) {
-    console.log('jStat.binomial:', jStat.binomial);
-  }
+
+
   // Perform normality test - will return isNormal, AD value and p_values
   const normalityTest = performNormalityTest(dataValues, meanVal, stdDev);
   ADvalue = normalityTest.adStatistic;
@@ -495,6 +491,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       significance,
       alternativemedian: HaMedian as "Less than" | "Greater than" | "Different",
       targetMedian: targetmedian,
+      useWilcoxon: true,
     });
     
     // Update the variables with actual calculated values
@@ -1258,7 +1255,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
           </div>
           {((ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ||
             ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ||
-            ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) && (onesampleMeanTestresult || onesampleVarianceTestresult) && ( testResults.sampleSize > 1)) && ( 
+            ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) && (onesampleMeanTestresult || onesampleVarianceTestresult || onesampleMedianTestresult) && ( testResults.sampleSize > 1)) && ( 
           <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
             <Card className="p-2">
             <CardTitle className="text-lg">Results:</CardTitle>    
@@ -1299,7 +1296,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   title={
                     testResults.tp_Value < parseFloat(significanceLevel)
                       ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
-                      : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
                   {alternativemean==='Less than' ? "Ha: Mean < "
@@ -1307,7 +1304,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     :"Ha: Mean ≠ " )} Target<br></br>
                   {testResults.tp_Value < parseFloat(significanceLevel)
                     ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
-                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`}
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`}
                   
                  </Badge>
                 </div>
@@ -1341,7 +1338,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   title={
                     testResults.varp_Value < parseFloat(significanceLevel)
                       ? `Reject H0. Accept Ha (P-Value ${testResults.varp_Value.toFixed(4)} < ${significanceLevel})`
-                      : `Accept H0. Reject Ha (P-Value ${testResults.varp_Value.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.varp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
                   {alternativevariance==='Less than' ? "Ha: Standard Deviation < "
@@ -1349,7 +1346,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     :"Ha: Variance ≠ " )} Target<br></br>
                   {testResults.varp_Value < parseFloat(significanceLevel)
                     ? `Result => Reject H0. Accept Ha (P-Value ${testResults.varp_Value.toFixed(4)} < ${significanceLevel})`
-                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.varp_Value.toFixed(4)} < ${significanceLevel})`}
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.varp_Value.toFixed(4)} ≥ ${significanceLevel})`}
                   
                  </Badge>
                 </div>
@@ -1366,6 +1363,44 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 {testResults.varianceCI_minus.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Variance Upper CI:&nbsp;
                   {testResults.varianceCI_plus.toFixed(3)}</div>
+              </Card>
+              )}
+              {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
+              <Card className="p-2">                
+                <CardTitle className="text-lg">One-Sample Median-test:</CardTitle>
+                <div className="text-gray-600 font-medium">Median:&nbsp;
+                  {testResults.median.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Target:&nbsp;
+                  {ContCTQOneSampleHypTestData[ctqId]?.targetMedian}</div>
+                <div>
+                 <Badge
+                  variant="default"
+                  className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.medianp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-600 " : "text-white bg-blue-500"}`}
+                  title={
+                    testResults.medianp_Value < parseFloat(significanceLevel)
+                      ? `Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`
+                  }
+                 >
+                  {alternativemean==='Less than' ? "Ha: Mean < "
+                  : ( alternativemean==='Greater than' ? "Ha: Mean >"
+                    :"Ha: Mean ≠ " )} Target<br></br>
+                  {testResults.medianp_Value < parseFloat(significanceLevel)
+                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`}
+                  
+                 </Badge>
+                </div>
+                <div className="text-gray-600 font-medium">Median-statistic:&nbsp;
+                  {testResults.medianStatistic.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Median-criteria at significance:&nbsp;
+                  {testResults.medianCriteria.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Median-test P-value:&nbsp;
+                  {testResults.medianp_Value.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Lower CI:&nbsp;
+                {testResults.medianCI_minus.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Upper CI:&nbsp;
+                  {testResults.medianCI_plus.toFixed(3)}</div>
               </Card>
               )}            
             </div>

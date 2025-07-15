@@ -1,4 +1,4 @@
-import * as jstat from 'jstat'
+import * as jStat from 'jstat'
 // Simple statistics utilities for Lean Six Sigma calculations
 
 /**
@@ -1107,15 +1107,15 @@ export function calculate1STCriticalValue(
       // Two-tailed test: split alpha
       alpha = significanceLevel / 2;
       // Get the critical value for upper tail
-      return Math.abs(jstat.studentt.inv(1 - alpha, degreesOfFreedom));
+      return Math.abs(jStat.studentt.inv(1 - alpha, degreesOfFreedom));
 
     case "Less than":
       // Left-tailed test: critical value is negative
-      return jstat.studentt.inv(significanceLevel, degreesOfFreedom);
+      return jStat.studentt.inv(significanceLevel, degreesOfFreedom);
 
     case "Greater than":
       // Right-tailed test: critical value is positive
-      return jstat.studentt.inv(1 - significanceLevel, degreesOfFreedom);
+      return jStat.studentt.inv(1 - significanceLevel, degreesOfFreedom);
 
     default:
       throw new Error(`Unknown alternative hypothesis: ${alternative}`);
@@ -1150,8 +1150,8 @@ export function calculate1SMeanPValue(
   alternative: "Less than" | "Greater than" | "Different"
 ): number {
   // Get the cumulative probability up to the t-statistic
-  const cumulativeProbability = jstat.studentt.cdf(
-    Math.abs(tStatistic), // jstat uses absolute value
+  const cumulativeProbability = jStat.studentt.cdf(
+    Math.abs(tStatistic), // jStat uses absolute value
     degreesOfFreedom
   );
 
@@ -1160,12 +1160,12 @@ export function calculate1SMeanPValue(
   switch (alternative) {
     case "Less than":
       // Left-tailed test: P(T ≤ t)
-      pValue = jstat.studentt.cdf(tStatistic, degreesOfFreedom);
+      pValue = jStat.studentt.cdf(tStatistic, degreesOfFreedom);
       break;
 
     case "Greater than":
       // Right-tailed test: P(T ≥ t) = 1 - P(T ≤ t)
-      pValue = 1 - jstat.studentt.cdf(tStatistic, degreesOfFreedom);
+      pValue = 1 - jStat.studentt.cdf(tStatistic, degreesOfFreedom);
       break;
 
     case "Different":
