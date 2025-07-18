@@ -290,7 +290,7 @@ export default function Landing() {
                 </li>
               </ul>
               
-              <Button className="w-full">Get Started</Button>
+              <Button className="w-full">Sign In to Get Started</Button>
             </div>
             
             <div className="bg-white rounded-lg p-8 shadow-xl border-2 border-primary relative">
@@ -338,7 +338,7 @@ export default function Landing() {
                 </li>
               </ul>
               
-              <Button className="w-full">Get Started</Button>
+              <Button className="w-full">Sign In to Get Started</Button>
             </div>
             
             <div className="bg-white rounded-lg p-8 shadow-md border border-gray-200">
