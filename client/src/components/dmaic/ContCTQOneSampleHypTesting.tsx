@@ -34,6 +34,7 @@ import {
   inverseNormCDF
 } from "@/lib/statisticsUtils";
 import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
+import { number } from 'zod';
 //import * as jStat from 'jstat';
 
 interface DataPoint {
@@ -75,14 +76,17 @@ interface RunTestResults {
   SEmedian: number;
   ADvalue: number;
   ADp_Value: number;
-  tStatistic: number;
-  tCriteria: number;
+  tStatistic: number | {lower: number; upper: number};
+  tCriteria: number | {lower: number; upper: number};
   tp_Value: number;
   meanCI_minus: number;
   meanCI_plus: number;
   df: number;
   varStatistic: number;
-  varCriteria: number;
+  varCriteria: number | {
+    lower: number;
+    upper: number;
+    };
   varp_Value: number;
   varianceCI_minus: number;
   varianceCI_plus: number;
@@ -95,8 +99,8 @@ interface RunTestResults {
 interface MeanTestResults {
   meanValue: number;
   SEmean: number;
-  tStatistic: number;
-  tCriteria: number;
+  tStatistic: number | {lower: number; upper: number};
+  tCriteria: number | {lower: number; upper: number};
   tp_Value: number;
   meanCI_minus: number;
   meanCI_plus: number;
@@ -105,7 +109,10 @@ interface MeanTestResults {
 interface VarianceTestResults {
   
   varStatistic: number;
-  varCriteria: number;
+  varCriteria: number | {
+    lower: number;
+    upper: number;
+    };
   varp_Value: number;
   varianceCI_minus: number;
   varianceCI_plus: number;
@@ -334,14 +341,14 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   let SEmedian: number = 0;
   let ADvalue: number = 0;
   let ADp_Value: number = 0;
-  let tStatistic: number = 0;
-  let tCriteria: number = 0;
+  let tStatistic: number | {lower: number; upper: number} = 0;
+  let tCriteria: number | {lower: number; upper: number} = 0;
   let tp_Value: number = 0;
   let meanCI_minus: number = 0;
   let meanCI_plus: number = 0;
   let df: number = 0;
   let varStatistic: number = 0;
-  let varCriteria: number = 0;
+  let varCriteria: number | {lower: number; upper: number} = 0;
   let varp_Value: number = 0;
   let varianceCI_minus: number = 0;
   let varianceCI_plus: number = 0;
@@ -420,7 +427,25 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     stdev = stdDev;
     SEmean = meanTestResult.SEmean;
     tStatistic = meanTestResult.tStatistic;
-    tCriteria = meanTestResult.tCriteria;
+    if(typeof meanTestResult.tStatistic === 'number') {
+      tStatistic = meanTestResult.tStatistic;
+    }
+    else if(meanTestResult.tStatistic && typeof meanTestResult.tStatistic === 'object') {
+      tStatistic = {
+        lower: meanTestResult.tStatistic.lower,
+        upper: meanTestResult.tStatistic.upper
+      };
+    }
+    
+    if(typeof meanTestResult.tCriteria === 'number') {
+      tCriteria = meanTestResult.tCriteria;
+    }
+    else if(meanTestResult.tCriteria && typeof meanTestResult.tCriteria === 'object') {
+      tCriteria = {
+        lower: meanTestResult.tCriteria.lower,
+        upper: meanTestResult.tCriteria.upper
+      };
+    }
     tp_Value = meanTestResult.tp_Value;
     meanCI_minus = meanTestResult.meanCI_minus;
     meanCI_plus = meanTestResult.meanCI_plus;
@@ -459,7 +484,15 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     stdev = stdDev;
     variance=stdDev*stdDev;
     varStatistic = varianceTestResult.varStatistic;
-    varCriteria = varianceTestResult.varCriteria;
+    if(typeof varianceTestResult.varCriteria === 'number') {
+      varCriteria = varianceTestResult.varCriteria;
+    }
+    else if(varianceTestResult.varCriteria && typeof varianceTestResult.varCriteria === 'object') {
+      varCriteria = {
+        lower: varianceTestResult.varCriteria.lower,
+        upper: varianceTestResult.varCriteria.upper
+      };
+    }
     varp_Value = varianceTestResult.varp_Value;
     varianceCI_minus = varianceTestResult.varianceCI_minus;
     varianceCI_plus = varianceTestResult.varianceCI_plus;
@@ -845,72 +878,84 @@ const Ha = (alternative: string): AlternativeMeanOption => {
 
           <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
             {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ? (
-                <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width for responsiveness */}
-                    <Label>Target value for mean:</Label>
-                    <Input
-                        type="number"
-                        value={ContCTQOneSampleHypTestData[ctqId]?.targetMean || 0}
-                        onChange={(e) => updateContCTQOneSampleHypTestDataField(
-                            ctqId, 
-                            "targetMean", 
-                            parseFloat(e.target.value) || 0
-                        )}
-                        placeholder="Enter target mean"
-                        className="mt-1"
-                    />
-                </div>
+                <div className="w-1/3 min-w-[100px] pr-4">
+                  <Label>Target value for mean:</Label>
+                  <Input
+                      type="number"
+                      step="any"
+                      value={ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? ''}
+                      onChange={(e) => updateContCTQOneSampleHypTestDataField(
+                          ctqId, 
+                          "targetMean", 
+                          e.target.value === '' ? '' : parseFloat(e.target.value)
+                      )}
+                      placeholder="Enter target mean"
+                      className="mt-1"
+                  />
+              </div>
                 ) : (
                 <div className="w-1/3 min-w-[100px] pr-4">
                 </div>
             )}
             {ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ? (
-                <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width */}
-                    <Label>Target value for standard deviation:</Label>
-                    <Input
-                        type="number"
-                        min="-1"
-                        value={ContCTQOneSampleHypTestData[ctqId]?.targetstdev || 0}
-                        onChange={(e) => {
-                            const value = parseFloat(e.target.value);
-                            if (isNaN(value)) {
-                                // If input is empty or invalid number, update to 0 or undefined based on your state logic
-                                updateContCTQOneSampleHypTestDataField(ctqId, "targetstdev", 0); 
-                            } else if (value < 0) {
-                                // Display toast message for negative input
-                                toast({
-                                title: "Target Variance",
-                                description: `Variance cannot be negative. Please enter a non-negative value.`
-                                });
-                                // Optionally, keep the previous valid value or set to 0
-                                updateContCTQOneSampleHypTestDataField(ctqId, "targetstdev", 0); // Reset to 0
-                            } else {
-                                // Valid non-negative number
-                                updateContCTQOneSampleHypTestDataField(ctqId, "targetstdev", value);
-                            }
-                        }}
-                        placeholder="Enter target variance"
-                        className="mt-1"
-                    />
-                </div>
+                <div className="w-1/3 min-w-[100px] pr-4">
+                  <Label>Target value for standard deviation:</Label>
+                  <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={ContCTQOneSampleHypTestData[ctqId]?.targetstdev ?? ''}
+                      onChange={(e) => {
+                          const inputValue = e.target.value;
+                          
+                          // Allow empty input for clearing
+                          if (inputValue === '') {
+                              updateContCTQOneSampleHypTestDataField(ctqId, "targetstdev", '');
+                              return;
+                          }
+                          
+                          const value = parseFloat(inputValue);
+                          
+                          if (isNaN(value)) {
+                              // Invalid input - don't update
+                              return;
+                          } else if (value < 0) {
+                              // Display toast message for negative input
+                              toast({
+                                  title: "Target Standard Deviation",
+                                  description: `Standard deviation cannot be negative. Please enter a positive value.`
+                              });
+                              // Don't update the field, keeping the previous value
+                              return;
+                          } else {
+                              // Valid non-negative number
+                              updateContCTQOneSampleHypTestDataField(ctqId, "targetstdev", value);
+                          }
+                      }}
+                      placeholder="Enter target standard deviation"
+                      className="mt-1"
+                  />
+              </div>
             ) : (
               <div className="w-1/3 min-w-[100px] pr-4">
               </div>
             )}
             {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest ? (
-                <div className="w-1/3 min-w-[100px] pr-4"> {/* Added flex-1 and min-width */}
-                    <Label>Target value for median:</Label>
-                    <Input
-                        type="number"
-                        value={ContCTQOneSampleHypTestData[ctqId]?.targetMedian || 0}
-                        onChange={(e) => updateContCTQOneSampleHypTestDataField(
-                            ctqId, 
-                            "targetMedian", 
-                            parseFloat(e.target.value) || 0
-                        )}
-                        placeholder="Enter target median"
-                        className="mt-1"
-                    />
-                </div>
+              <div className="w-1/3 min-w-[100px] pr-4">
+                  <Label>Target value for median:</Label>
+                  <Input
+                      type="number"
+                      step="any"
+                      value={ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? ''}
+                      onChange={(e) => updateContCTQOneSampleHypTestDataField(
+                          ctqId, 
+                          "targetMedian", 
+                          e.target.value === '' ? '' : parseFloat(e.target.value)
+                      )}
+                      placeholder="Enter target median"
+                      className="mt-1"
+                  />
+              </div>
               ) : (
               <div className="w-1/3 min-w-[100px] pr-4">
               </div>
@@ -1283,7 +1328,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             <div className="grid grid-cols-3 gap-2 text-sm">
               {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
               <Card className="p-2">                
-                <CardTitle className="text-lg">One-Sample T-test:</CardTitle>
+                <CardTitle className="text-lg">One-Sample Mean test:</CardTitle>
+                <div className="text-lg justify-left">Student T-test:</div>
                 <div className="text-gray-600 font-medium">Mean:&nbsp;
                   {testResults.meanValue.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Target:&nbsp;
@@ -1291,7 +1337,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div>
                  <Badge
                   variant="default"
-                  className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.tp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-600 " : "text-white bg-blue-500"}`}
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.tp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
                   title={
                     testResults.tp_Value < parseFloat(significanceLevel)
                       ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
@@ -1310,11 +1356,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-gray-600 font-medium">SE Mean:&nbsp;
                   {testResults.SEmean.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">T-statistic:&nbsp;
-                  {testResults.tStatistic.toFixed(3)}</div>
+                  {typeof testResults.tStatistic === 'number' 
+                    ? testResults.tStatistic.toFixed(3) 
+                    : `[${testResults.tStatistic.lower.toFixed(3)} ; ${testResults.tStatistic.upper.toFixed(3)}]`
+                  }
+                </div>
                 <div className="text-gray-600 font-medium">T-criteria at significance:&nbsp;
-                  {testResults.tCriteria.toFixed(3)}</div>
+                  {typeof testResults.tCriteria === 'number' 
+                    ? testResults.tCriteria.toFixed(3) 
+                    : `[${testResults.tCriteria.lower.toFixed(3)} ; ${testResults.tCriteria.upper.toFixed(3)}]`
+                  }
+                </div>
                 <div className="text-gray-600 font-medium">T-test P-value:&nbsp;
-                  {testResults.tp_Value.toFixed(3)}</div>
+                  {testResults.tp_Value.toFixed(4)}</div>
                 <div className="text-gray-600 font-medium">Lower CI:&nbsp;
                 {testResults.meanCI_minus.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Upper CI:&nbsp;
@@ -1324,16 +1378,15 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               {ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
               <Card className="p-2">                
                 <CardTitle className="text-lg">One-Sample Variance test:</CardTitle>
+                <div className="text-lg justify-left">χ² (Chi Square) test:</div>
                 <div className="text-gray-600 font-medium">Standard Deviation:&nbsp;
                   {testResults.stdev.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Variance:&nbsp;
-                  {testResults.variance.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Standard Deviation Target:&nbsp;
                   {ContCTQOneSampleHypTestData[ctqId]?.targetstdev}</div>
                 <div>
                  <Badge
                   variant="default"
-                  className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.varp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-600 " : "text-white bg-blue-500"}`}
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.varp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
                   title={
                     testResults.varp_Value < parseFloat(significanceLevel)
                       ? `Reject H0. Accept Ha (P-Value ${testResults.varp_Value.toFixed(4)} < ${significanceLevel})`
@@ -1355,18 +1408,23 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-gray-600 font-medium">χ² statistic:&nbsp;
                   {testResults.varStatistic.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">χ² criteria at significance:&nbsp;
-                  {testResults.varCriteria.toFixed(3)}</div>
+                  {typeof testResults.varCriteria === 'number' 
+                    ? testResults.varCriteria.toFixed(3) 
+                    : `[${testResults.varCriteria.lower.toFixed(3)} ; ${testResults.varCriteria.upper.toFixed(3)}]`
+                  }
+                </div>
                 <div className="text-gray-600 font-medium">χ² P-value:&nbsp;
-                  {testResults.varp_Value.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Variance Lower CI:&nbsp;
+                  {testResults.varp_Value.toFixed(4)}</div>
+                <div className="text-gray-600 font-medium">Standard deviation Lower CI:&nbsp;
                 {testResults.varianceCI_minus.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Variance Upper CI:&nbsp;
+                <div className="text-gray-600 font-medium">Standard deviation Upper CI:&nbsp;
                   {testResults.varianceCI_plus.toFixed(3)}</div>
               </Card>
               )}
               {ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
               <Card className="p-2">                
                 <CardTitle className="text-lg">One-Sample Median-test:</CardTitle>
+                <div className="text-lg justify-left">Wilcoxon test:</div>
                 <div className="text-gray-600 font-medium">Median:&nbsp;
                   {testResults.median.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Target:&nbsp;
@@ -1374,15 +1432,15 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div>
                  <Badge
                   variant="default"
-                  className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.medianp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-600 " : "text-white bg-blue-500"}`}
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.medianp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
                   title={
                     testResults.medianp_Value < parseFloat(significanceLevel)
                       ? `Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
                       : `Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
-                  {alternativemean==='Less than' ? "Ha: Median < "
-                  : ( alternativemean==='Greater than' ? "Ha: Median >"
+                  {alternativemedian==='Less than' ? "Ha: Median < "
+                  : ( alternativemedian==='Greater than' ? "Ha: Median >"
                     :"Ha: Median ≠ " )} Target<br></br>
                   {testResults.medianp_Value < parseFloat(significanceLevel)
                     ? `Result => Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
@@ -1390,14 +1448,14 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   
                  </Badge>
                 </div>
-                <div className="text-gray-600 font-medium">Median-statistic:&nbsp;
+                <div className="text-gray-600 font-medium">Wilcoxon-statistic:&nbsp;
                   {testResults.medianStatistic.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Median-criteria at significance:&nbsp;
+                  <div className="text-gray-600 font-medium">Wilcoxon-criteria at significance:&nbsp;
                   {testResults.medianCriteria.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Median-test P-value:&nbsp;
-                  {testResults.medianp_Value.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Wilcoxon-test P-value:&nbsp;
+                  {testResults.medianp_Value.toFixed(4)}</div>
                 <div className="text-gray-600 font-medium">Lower CI:&nbsp;
-                {testResults.medianCI_minus.toFixed(3)}</div>
+                  {testResults.medianCI_minus.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Upper CI:&nbsp;
                   {testResults.medianCI_plus.toFixed(3)}</div>
               </Card>

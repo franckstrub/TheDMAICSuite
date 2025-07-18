@@ -20,12 +20,13 @@ import {
   calculate1SMeanPValue,
   calculate1SMeanConfidenceInterval,
 } from "@/lib/statisticsUtils";
+import { NumericKeys } from "node_modules/react-hook-form/dist/types/path/common";
 
 interface MeanTestResults {
   meanValue: number;
   SEmean: number;
-  tStatistic: number;
-  tCriteria: number;
+  tStatistic: number | {lower: number; upper: number};
+  tCriteria: number | {lower: number; upper: number};
   tp_Value: number;
   meanCI_minus: number;
   meanCI_plus: number;
@@ -84,7 +85,7 @@ export function onesampleMeanHypothesisTest({
     meanValue,
     SEmean,
     tStatistic,
-    tCriteria,
+    tCriteria: typeof tCriteria === 'number' ? tCriteria : { lower: tCriteria.lower, upper: tCriteria.upper },
     tp_Value,
     meanCI_minus,
     meanCI_plus,

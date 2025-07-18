@@ -24,7 +24,7 @@ import {
 
 interface VarianceTestResults {
   varStatistic: number;
-  varCriteria: number;
+  varCriteria: number | {lower: number; upper: number};
   varp_Value: number;
   varianceCI_minus: number;
   varianceCI_plus: number;
@@ -64,13 +64,14 @@ export function onesampleVarianceHypothesisTest({
   const { lower: varianceCI_minus, upper: varianceCI_plus } = calculate1SvarChiSquareConfidenceInterval(
     Samplevariance,
     significance,
-    df
+    df,
+    alternativevariance
   );
 
 
   return {
     varStatistic,
-    varCriteria: typeof varCriteria === 'number' ? varCriteria : varCriteria.upper,
+    varCriteria: typeof varCriteria === 'number' ? varCriteria : { lower: varCriteria.lower, upper: varCriteria.upper },
     varp_Value,
     varianceCI_minus,
     varianceCI_plus,

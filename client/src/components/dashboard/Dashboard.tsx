@@ -270,7 +270,7 @@ export default function Dashboard() {
         case "completed": statusFilterText += "Completed Projects"; break;
         case "on-hold": statusFilterText += "On-Hold Projects"; break;
         case "abandoned": statusFilterText += "Abandoned Projects"; break;
-        case "active-completed": statusFilterText += "Active + Completed Projects"; break;
+        case "active-completed": statusFilterText += "Both Active & Completed Projects"; break;
         case "implemented": statusFilterText += "Implemented Projects"; break;
         case "not-implemented": statusFilterText += "Not Implemented Projects"; break;
         default: statusFilterText += "All Projects";
@@ -993,7 +993,7 @@ export default function Dashboard() {
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="on-hold">On Hold</SelectItem>
               <SelectItem value="abandoned">Abandoned</SelectItem>
-              <SelectItem value="active-completed">Active + Completed</SelectItem>
+              <SelectItem value="active-completed">Both Active & Completed</SelectItem>
               <SelectItem value="implemented">Implemented</SelectItem>
               <SelectItem value="not-implemented">Not Implemented</SelectItem>
             </SelectContent>
@@ -1105,7 +1105,7 @@ export default function Dashboard() {
               case "completed": return "Completed Projects";
               case "on-hold": return "On-Hold Projects";
               case "abandoned": return "Abandoned Projects";
-              case "active-completed": return "Active + Completed Projects";
+              case "active-completed": return "Both Active & Completed Projects";
               case "implemented": return "Implemented Projects";
               case "not-implemented": return "Not Implemented Projects";
               default: return "Projects";
@@ -1198,7 +1198,7 @@ export default function Dashboard() {
               case "completed": return "Completed Projects";
               case "on-hold": return "On-Hold Projects";
               case "abandoned": return "Abandoned Projects";
-              case "active-completed": return "Active + Completed Projects";
+              case "active-completed": return "Both Active & Completed Projects";
               case "implemented": return "Implemented Projects";
               case "not-implemented": return "Not Implemented Projects";
               default: return "Projects";
@@ -1241,7 +1241,7 @@ export default function Dashboard() {
               case "completed": return "Completed Projects";
               case "on-hold": return "On-Hold Projects";
               case "abandoned": return "Abandoned Projects";
-              case "active-completed": return "Active + Completed Projects";
+              case "active-completed": return "Both Active & Completed Projects";
               case "implemented": return "Implemented Projects";
               case "not-implemented": return "Not Implemented Projects";
               default: return "Projects";
@@ -1279,7 +1279,7 @@ export default function Dashboard() {
                         case "completed": return "(Completed only)"; 
                         case "on-hold": return "(On-Hold only)";
                         case "abandoned": return "(Abandoned only)";
-                        case "active-completed": return "(Active + Completed)";
+                        case "active-completed": return "(Both Active & Completed)";
                         case "implemented": return "(Implemented only)";
                         case "not-implemented": return "(Not Implemented only)";
                         default: return "";
@@ -1360,7 +1360,7 @@ export default function Dashboard() {
                         case "completed": return "(Completed only)"; 
                         case "on-hold": return "(On-Hold only)";
                         case "abandoned": return "(Abandoned only)";
-                        case "active-completed": return "(Active + Completed)";
+                        case "active-completed": return "(Both Active & Completed)";
                         case "implemented": return "(Implemented only)";
                         case "not-implemented": return "(Not Implemented only)";
                         default: return "";

@@ -142,7 +142,7 @@ export default function Sidebar() {
             <FolderKanban className="w-5 h-5 mr-3" />
             <span>Projects</span>
           </Button>
-          
+          {/*}
           <Button
             variant={currentTab === "data" ? "default" : "ghost"}
             className="w-full justify-start font-medium"
@@ -151,7 +151,7 @@ export default function Sidebar() {
             <Database className="w-5 h-5 mr-3" />
             <span>Data Management</span>
           </Button>
-          
+*/}          
           <div className="px-3 mt-6 mb-3">
             <h3 className="text-xs uppercase font-semibold text-gray-500 tracking-wider">DMAIC Tools</h3>
           </div>

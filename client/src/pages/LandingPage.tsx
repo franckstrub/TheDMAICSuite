@@ -131,7 +131,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Powerful Features</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Our comprehensive toolset helps you streamline your Lean Six Sigma initiatives and achieve process excellence
+              Our comprehensive toolset helps you streamline your Quality Improvement initiatives and achieve Process Excellence
             </p>
           </div>
           
@@ -140,9 +140,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <i className="fas fa-chart-line text-primary text-xl"></i>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Statistical Analysis</h3>
+              <h3 className="text-xl font-semibold mb-3">AI-driven Statistical Analysis</h3>
               <p className="text-gray-600">
-                Comprehensive statistical tools for hypothesis testing, process capability analysis, and more.
+                Comprehensive statistical tools for process capability analysis, hypothesis testing, and more with MBB AI-Assistant & AI-generated deliverables
               </p>
             </div>
             
@@ -150,9 +150,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <i className="fas fa-project-diagram text-green-600 text-xl"></i>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Project Management</h3>
+              <h3 className="text-xl font-semibold mb-3">Project and Benefits Management</h3>
               <p className="text-gray-600">
-                Track and manage all your Lean Six Sigma initiatives in one place with integrated project management.
+                Track and manage all your Lean Six Sigma initiatives and Benefits in one place with integrated project management.
               </p>
             </div>
             
@@ -162,7 +162,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Flexible Data Storage</h3>
               <p className="text-gray-600">
-                Store your data in the cloud, on your company's servers, or locally, with full control over your configuration.
+                Store your data in the cloud, on your company's servers, or locally, with full control over your configuration (Enterprise customers only).
               </p>
             </div>
             
@@ -226,7 +226,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Measure</h3>
               <p className="text-gray-600 text-sm">
-                Create data collection plans, process capability analysis, and value stream mapping.
+                Create data collection plans, measurement system analysis, process capability analysis, and value stream mapping.
               </p>
             </div>
             
@@ -236,7 +236,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Analyze</h3>
               <p className="text-gray-600 text-sm">
-                Identify root causes with Pareto analysis, cause & effect diagrams, and correlation studies.
+                Identify root causes with Pareto analysis, cause & effect diagrams, Hypothesis Testing and Regression studies.
               </p>
             </div>
             
@@ -363,7 +363,7 @@ export default function LandingPage() {
             <div className="bg-white rounded-lg p-8 shadow-md border border-gray-200">
               <h3 className="text-xl font-semibold mb-3">Starter</h3>
               <p className="text-gray-600 mb-6">For small teams just getting started with Six Sigma</p>
-              <div className="text-4xl font-bold mb-6">$49<span className="text-lg font-normal text-gray-500">/month</span></div>
+              <div className="text-4xl font-bold mb-6">$79<span className="text-lg font-normal text-gray-500">/month</span></div>
               
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center">
@@ -377,6 +377,10 @@ export default function LandingPage() {
                 <li className="flex items-center">
                   <i className="fas fa-check text-green-500 mr-2"></i>
                   <span>Cloud storage only</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Multiple tenant database with security</span>
                 </li>
                 <li className="flex items-center">
                   <i className="fas fa-check text-green-500 mr-2"></i>
@@ -404,7 +408,11 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-center">
                   <i className="fas fa-check text-green-500 mr-2"></i>
-                  <span>Cloud or company server storage</span>
+                  <span>Cloud storage</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Multiple tenant database with security</span>
                 </li>
                 <li className="flex items-center">
                   <i className="fas fa-check text-green-500 mr-2"></i>
@@ -436,6 +444,10 @@ export default function LandingPage() {
                 <li className="flex items-center">
                   <i className="fas fa-check text-green-500 mr-2"></i>
                   <span>All storage options (cloud/server/local)</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Single tenant database</span>
                 </li>
                 <li className="flex items-center">
                   <i className="fas fa-check text-green-500 mr-2"></i>
@@ -484,7 +496,7 @@ export default function LandingPage() {
                 <span>Lean Six Sigma DMAIC Suite™</span>
               </div>
               <p className="text-gray-400 mb-4">
-                Empowering organizations to achieve process excellence through data-driven improvement.
+                Empowering organizations to achieve process excellence through data-driven improvement with the assistance of AI.
               </p>
               <div className="flex space-x-4">
                 <a href="#" className="text-gray-400 hover:text-white">
