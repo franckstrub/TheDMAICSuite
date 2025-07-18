@@ -15,11 +15,13 @@ import {
   calculateCapabilityIndexes,
   calculateObservedPerformanceMetrics,
   assessProcessVariation,
+  normalCDF,
   inverseNormCDF,
   calculate1STCriticalValue,
   calculate1SMeanPValue,
   calculate1SMeanConfidenceInterval,
 } from "@/lib/statisticsUtils";
+import { numeric } from "drizzle-orm/sqlite-core";
 
 // Import jStat for statistical functions
 import * as jStat from 'jstat';
@@ -57,7 +59,8 @@ function binomialQuantile(p: number, n: number, prob: number): number {
 }
 
 // Calculate critical value for sign test using binomial distribution
-function calculateSignTestCriticalValue(n: number, alpha: number, alternative: string): number {
+function calculateSignTestCriticalValue(n: number, alpha: number,
+  alternative: "Less than" | "Greater than" | "Different"): number {
   if (alternative === "Different") {
     alpha = alpha / 2; // Two-tailed test
   }
@@ -68,7 +71,7 @@ function calculateSignTestCriticalValue(n: number, alpha: number, alternative: s
   } else if (alternative === "Greater than") {
     return n - binomialQuantile(alpha, n, 0.5);
   } else { // "Different"
-    return binomialQuantile(alpha, n, 0.5);
+    return binomialQuantile(alpha, n, 0.5);    
   }
 }
 
@@ -76,7 +79,7 @@ function calculateSignTestCriticalValue(n: number, alpha: number, alternative: s
 function calculateMedianConfidenceInterval(
   sortedData: number[],
   alpha: number,
-  alternative: string
+  alternative: "Less than" | "Greater than" | "Different",
 ): { lower: number; upper: number } {
   const n = sortedData.length;
   
@@ -149,36 +152,88 @@ export function onesampleMedianHypothesisTest({
       .sort((a, b) => a.value - b.value)
       .map((item, rank) => ({ ...item, rank: rank + 1 }));
     
-    // Calculate W+ (sum of positive ranks)
+    // Calculate W+ (sum of positive ranks) and W- (sum of negative ranks)
     const WPlus = absRanks
       .filter(item => item.sign > 0)
       .reduce((sum, item) => sum + item.rank, 0);
-    
-    // Test statistic
-    const medianStatistic = WPlus;
-    
-    // For large samples, use normal approximation with jStat
-    let medianp_Value: number;
-    if (m >= 20) {
-      const mu = m * (m + 1) / 4;
-      const sigma = Math.sqrt(m * (m + 1) * (2 * m + 1) / 24);
-      const z = (WPlus - mu) / sigma;
-      
-      if (alternativemedian === "Less than") {
-        medianp_Value = jStat.normal.cdf(z, 0, 1);
-      } else if (alternativemedian === "Greater than") {
-        medianp_Value = 1 - jStat.normal.cdf(z, 0, 1);
-      } else { // "Different"
-        medianp_Value = 2 * Math.min(jStat.normal.cdf(z, 0, 1), 1 - jStat.normal.cdf(z, 0, 1));
-      }
-    } else {
-      // For small samples, use approximation (exact Wilcoxon tables would be ideal)
-      const expectedValue = m * (m + 1) / 4;
-      medianp_Value = WPlus < expectedValue ? 0.05 : 0.95; // Simplified
+
+    const WMinus = absRanks
+      .filter(item => item.sign < 0)
+      .reduce((sum, item) => sum + item.rank, 0);
+
+    // Test statistic depends on alternative hypothesis
+    let medianStatistic: number;
+    if (alternativemedian === "Less than") {
+      // H1: median < target, expect more negative differences (larger W-)
+      medianStatistic = WMinus;
+    } else if (alternativemedian === "Greater than") {
+      // H1: median > target, expect more positive differences (larger W+)
+      medianStatistic = WPlus;
+    } else { // "Different"
+      // Two-tailed: use the smaller of W+ and W-
+      medianStatistic = Math.min(WPlus, WMinus);
     }
     
-    // Critical value
-    const medianCriteria = m * (m + 1) / 4; // Expected value under null
+    // Calculate critical value based on alternative hypothesis
+    let medianCriteria: number;
+    const mu = m * (m + 1) / 4; // Expected value under null
+    const sigma = Math.sqrt(m * (m + 1) * (2 * m + 1) / 24);
+
+    if (alternativemedian === "Less than") {
+      // Critical value for one-tailed test (lower tail)
+      const z_alpha = jStat.normal.inv(significance, 0, 1);
+      medianCriteria = mu + z_alpha * sigma;
+    } else if (alternativemedian === "Greater than") {
+      // Critical value for one-tailed test (upper tail)
+      const z_alpha = jStat.normal.inv(1 - significance, 0, 1);
+      medianCriteria = mu + z_alpha * sigma;
+    } else { // "Different"
+      // Critical value for two-tailed test
+      //const z_alpha_1 = jStat.normal.inv(1 - (significance / 2), 0, 1);
+      const z_alpha_2 = jStat.normal.inv(significance / 2, 0, 1);
+      medianCriteria = mu + z_alpha_2 * sigma;  // Lower critical value
+    }
+    // Update p-value calculation to use the correct test statistic
+    let medianp_Value: number;
+    if (m >= 20) {      
+      if (alternativemedian === "Less than") {
+        // Use W- for "Less than" test
+        const z = (WMinus - mu) / sigma;
+        medianp_Value = 1 - jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = 1 - normalCDF(z);
+      } else if (alternativemedian === "Greater than") {
+        // Use W+ for "Greater than" test
+        const z = (WPlus - mu) / sigma;
+        medianp_Value = 1 - jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = normalCDF(z);
+      } else { // "Different"
+        // For two-tailed test, use the smaller of W+ and W-
+        const minW = Math.min(WPlus, WMinus);
+        const z = (minW - mu) / sigma;
+        medianp_Value = 2 * jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = 2 * (1 - normalCDF(z));
+      }
+    } else {
+      // For small samples, use normal approximation with continuity correction      
+      if (alternativemedian === "Less than") {
+        // Use W- with continuity correction
+        //const z = (WMinus + 0.5 - mu) / sigma;
+        const z = (mu - (WMinus + 0.5)) / sigma;
+        medianp_Value = jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = 1 - normalCDF(z)
+      } else if (alternativemedian === "Greater than") {
+        // Use W+ with continuity correction
+        const z = (WPlus - 0.5 - mu) / sigma;
+        medianp_Value = 1 - jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = normalCDF(z)
+      } else { // "Different"
+        // For two-tailed test, use the smaller of W+ and W-
+        const minW = Math.min(WPlus, WMinus);
+        const z = (minW + 0.5 - mu) / sigma; // Continuity correction
+        medianp_Value = 2 * jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = 2 * (1 - normalCDF(z));
+      }
+    }
     
     // Confidence interval
     const sortedData = [...dataValues].sort((a, b) => a - b);
@@ -242,16 +297,19 @@ export function onesampleMedianHypothesisTest({
       if (alternativemedian === "Less than") {
         const z = (S + 0.5 - mu) / sigma; // Continuity correction
         medianp_Value = jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = 1 - normalCDF(z);
       } else if (alternativemedian === "Greater than") {
         const z = (S - 0.5 - mu) / sigma; // Continuity correction
         medianp_Value = 1 - jStat.normal.cdf(z, 0, 1);
+        //medianp_Value = normalCDF(z);
       } else { // "Different"
         const z1 = (S + 0.5 - mu) / sigma;
         const z2 = (S - 0.5 - mu) / sigma;
         medianp_Value = 2 * Math.min(jStat.normal.cdf(z1, 0, 1), 1 - jStat.normal.cdf(z2, 0, 1));
+        //medianp_Value = 2 * Math.min(1 - normalCDF(z1), normalCDF(z2));
       }
     } else {
-      // Use exact binomial calculation with jStat
+      // Use exact binomial calculation with jStat for small sample (n<20)
       if (alternativemedian === "Less than") {
         medianp_Value = jStat.binomial.cdf(S, effectiveN, 0.5);
       } else if (alternativemedian === "Greater than") {

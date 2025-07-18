@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, Target, TrendingUp, Users } from "lucide-react";
+import { CheckCircle, Target, TrendingUp, Users, Sparkles } from "lucide-react";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -19,12 +19,12 @@ export default function Landing() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            The Lean Six Sigma DMAIC Suite™
-            <span className="text-blue-600"> Project Manager</span>
+            The Lean Six Sigma DMAIC Suite™<br></br>
+            <span className="text-blue-600 text-4xl"> AI-assisted Quality Improvement & Project Management</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Transform your business processes with intelligent tools powered by AI-generated analysis and AI-assistant. Streamline your DMAIC methodology
-            and drive continuous improvement with a single app for Project Management, Statistical Analysis and Gate Review Validation
+            Transform your business processes with intelligent tools powered by our premium AI-generated analysis and our unique AI-MBB-assistant.<br></br>
+            Streamline your DMAIC methodology and drive continuous improvement with a single application for Quality Enhancementment, Project Management, Statistical Analysis, Documentation, Presentations, Approvals, and Gate Review Validation...
           </p>
           <Button
             onClick={handleLogin}
@@ -45,7 +45,19 @@ export default function Landing() {
             <CardContent>
               <CardDescription>
                 Complete Define, Measure, Analyze, Improve, and Control workflow
-                management, deliverables checklists per belt level, gate review validation and benefits tracking.
+                management, Deliverables Checklists, Gate Review Validation, Approvals, and Benefits tracking.
+              </CardDescription>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="text-center">
+              <Users className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+              <CardTitle>AI-MBB-Assistant</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                AI-MBB-Assistant powered by LLM, available all the time for any Lean Six Sigma questions and clarifications.
               </CardDescription>
             </CardContent>
           </Card>
@@ -57,19 +69,7 @@ export default function Landing() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Advanced timeline & progress tracking with dynamic visualization.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="text-center">
-              <Users className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-              <CardTitle>Team Collaboration</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                RACI matrix management, stakeholder analysis, Gantt plan for seamless teamwork.
+                Advanced timeline & progress tracking with dynamic global and phase-by-phase visualization.
               </CardDescription>
             </CardContent>
           </Card>
@@ -81,12 +81,315 @@ export default function Landing() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Built-in DMAIC statistical tools per phase ensure DMAIC clarity and project success.
+                Built-in DMAIC statistical tools per phase ensure DMAIC clarity and project success with unique AI-MBB-assistant and premium AI-generated analysis.
               </CardDescription>
             </CardContent>
           </Card>
         </div>
+      {/* DMAIC Process Section */}
+      <section id="process" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">DMAIC Methodology</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Our platform guides you through each phase of the DMAIC process with specialized tools and templates. You will get the full support of an AI-MBB-assistant and also a lot of AI-generated deliverables all along your project.
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-4">
+            <div className="bg-white rounded-lg p-6 shadow-md text-center w-64">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+                D
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Define</h3>
+              <p className="text-gray-600 text-sm">
+                Define the problem, establish project charter, define expected benefits, identify customer requirements, create SIPOC diagrams, Risk analysis, RACI, Stakeholder Management,  Gantt plan and Elevator speech.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md text-center w-64">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+                M
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Measure</h3>
+              <p className="text-gray-600 text-sm">
+                Create data collection plans, measurement system analysis, process capability analysis, and process mapping or value stream mapping.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md text-center w-64">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+                A
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Analyze</h3>
+              <p className="text-gray-600 text-sm">
+                Identify root causes with Cause & effect diagrams, prioritize them with Cause & Effect matrix, verify your critical root causes with Hypothesis Testing, Regression studies, Multi-vari chart and Pareto analysis.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md text-center w-64">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+                I
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Improve</h3>
+              <p className="text-gray-600 text-sm">
+                Develop solutions, assess them with a Benefit-Effort matrix, define an implementation plan, conduct pilot tests, and implement process improvements. Statistically demonstrate your improvements.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md text-center w-64">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+                C
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Control</h3>
+              <p className="text-gray-600 text-sm">
+                Establish control plans, implement statistical process control, and monitor ongoing performance. Transfer your project to the process owner and close it.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    {/* Testimonials Section */}
+      <section id="testimonials" className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">What Our Customers Say</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Hear from professionals who have transformed their process improvement initiatives with Lean Six Sigma DMAIC Suite™
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-lg p-6 shadow-md">
+              <div className="flex items-center mb-4">
+                <img 
+                  src="https://randomuser.me/api/portraits/women/45.jpg" 
+                  alt="Customer" 
+                  className="w-12 h-12 rounded-full object-cover mr-4"
+                />
+                <div>
+                  <h4 className="font-semibold">Sarah Johnson</h4>
+                  <p className="text-sm text-gray-500">Process Improvement Manager</p>
+                </div>
+              </div>
+              <p className="text-gray-600 italic mb-4">
+                "The statistical analysis tools have made a huge difference in how quickly we can identify issues and implement solutions. Our team's productivity has increased by 30%."
+              </p>
+              <div className="text-yellow-500">
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md">
+              <div className="flex items-center mb-4">
+                <img 
+                  src="https://randomuser.me/api/portraits/men/32.jpg" 
+                  alt="Customer" 
+                  className="w-12 h-12 rounded-full object-cover mr-4"
+                />
+                <div>
+                  <h4 className="font-semibold">Michael Chen</h4>
+                  <p className="text-sm text-gray-500">Quality Director</p>
+                </div>
+              </div>
+              <p className="text-gray-600 italic mb-4">
+                "Being able to store data on our own servers while still leveraging the platform's capabilities has been a game-changer for our compliance requirements."
+              </p>
+              <div className="text-yellow-500">
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star-half-alt"></i>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-md">
+              <div className="flex items-center mb-4">
+                <img 
+                  src="https://randomuser.me/api/portraits/women/68.jpg" 
+                  alt="Customer" 
+                  className="w-12 h-12 rounded-full object-cover mr-4"
+                />
+                <div>
+                  <h4 className="font-semibold">Amanda Rodriguez</h4>
+                  <p className="text-sm text-gray-500">Lean Six Sigma Black Belt</p>
+                </div>
+              </div>
+              <p className="text-gray-600 italic mb-4">
+                "The DMAIC workflow guides our teams through each phase effortlessly. We've seen a 25% reduction in project completion time since implementing Lean Six Sigma DMAIC Suite™."
+              </p>
+              <div className="text-yellow-500">
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-4 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Choose the plan that's right for your organization's process improvement needs
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="bg-white rounded-lg p-8 shadow-md border border-gray-200">
+              <h3 className="text-xl font-semibold mb-3">Starter</h3>
+              <p className="text-gray-600 mb-6">For individuals just getting started with Lean Six Sigma</p>
+              <div className="text-4xl font-bold mb-6">$69<span className="text-lg font-normal text-gray-500">/month</span></div>
+              
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span className = "font-bold">1 user</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Access to all our statistical tools</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>AI-MBB-Assistant</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>AI-generated deliverables</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>LLM API access plan: $10 included in the subscription, then billed per use as needed</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span className = "mt-5">Cloud database storage</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Multi-tenant database with high security</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Unlimited projects</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Free upgrades</span>
+                </li>
+              </ul>
+              
+              <Button className="w-full">Get Started</Button>
+            </div>
+            
+            <div className="bg-white rounded-lg p-8 shadow-xl border-2 border-primary relative">
+              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">POPULAR</div>
+              <h3 className="text-xl font-semibold mb-3">Professional</h3>
+              <p className="text-gray-600 mb-6">For professional improvement teams with advanced needs</p>
+              <div className="text-4xl font-bold mb-6">$99<span className="text-lg font-normal text-gray-500">/month</span></div>
+              
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span className = "font-bold">Up to 5 users</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Access to all our statistical tools</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>AI-MBB-Assistant</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>AI-generated deliverables</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>LLM API access plan: $25 included in the subscription, then billed per use as needed</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span className = "mt-5">Cloud database storage</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Multi-tenant database with high security</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Unlimited projects</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Free upgrades</span>
+                </li>
+              </ul>
+              
+              <Button className="w-full">Get Started</Button>
+            </div>
+            
+            <div className="bg-white rounded-lg p-8 shadow-md border border-gray-200">
+              <h3 className="text-xl font-semibold mb-3">Enterprise</h3>
+              <p className="text-gray-600 mb-6">For organizations with comprehensive requirements</p>
+              <div className="text-lg font-normal text-gray-500 mb-6">from <span className="text-4xl text-black font-bold">$249</span> <span className="text-lg font-normal text-gray-500">/month</span></div>
+              
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span className = "font-bold">From 20 users</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Access to all our statistical tools</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>AI-MBB-Assistant</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>AI-generated deliverables</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>LLM API access plan: from $50 included in the subscription, then billed per use as needed</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>All database storage options (cloud/server/local)</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Single tenant Enterprise database</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Unlimited projects</span>
+                </li>
+                <li className="flex items-center">
+                  <i className="fas fa-check text-green-500 mr-2"></i>
+                  <span>Free upgrades</span>
+                </li>
+              </ul>
+              
+              <Button className="w-full">Contact Sales</Button>
+            </div>
+          </div>
+        </div>
+      </section>      
         {/* Benefits Section */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
@@ -102,7 +405,7 @@ export default function Landing() {
               </h3>
               <p className="text-gray-600">
                 Follow proven Lean Six Sigma methodologies with guided workflows, 
-                templates and tools.
+                templates and tools all in one application.
               </p>
             </div>
             <div className="text-center">
@@ -111,20 +414,19 @@ export default function Landing() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Real-time Insights</h3>
               <p className="text-gray-600">
-                Track progress, identify bottlenecks, and measure improvements
+                Track progress, timeline and benefits, identify performamce issues, analyze their root causes and measure improvements
                 in real-time.
               </p>
             </div>
             <div className="text-center">
               <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-purple-600" />
+                <Sparkles className="w-8 h-8 text-purple-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
-                Collaborative Platform
+                AI-powered application
               </h3>
               <p className="text-gray-600">
-                Bring your team together with shared workspaces and
-                communication tools.
+                Unique AI-MBB-Assistant which act like a Master Black Belt coach. Ask it any questions you have about Lean Six Sigma and get relevant and comprehensive answers.
               </p>
             </div>
           </div>
@@ -136,7 +438,7 @@ export default function Landing() {
             Ready to Transform Your Processes?
           </h2>
           <p className="text-lg text-gray-600 mb-8">
-            Join the many professionals who trust our platform for their Lean Six
+            Join the many professionals who trust our platform for their Operational Excellence and Lean Six
             Sigma projects.
           </p>
           <Button

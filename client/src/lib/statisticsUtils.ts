@@ -1091,7 +1091,7 @@ export function calculate1STCriticalValue(
   significanceLevel: number,
   degreesOfFreedom: number,
   alternative: "Less than" | "Greater than" | "Different"
-): number {
+): number | { lower: number; upper: number } {
   // Validate inputs
   if (significanceLevel <= 0 || significanceLevel >= 1) {
     throw new Error('Significance level must be between 0 and 1');
@@ -1107,7 +1107,21 @@ export function calculate1STCriticalValue(
       // Two-tailed test: split alpha
       alpha = significanceLevel / 2;
       // Get the critical value for upper tail
-      return Math.abs(jStat.studentt.inv(1 - alpha, degreesOfFreedom));
+      const up = jStat.studentt.inv(1 - alpha, degreesOfFreedom);
+      const low = jStat.studentt.inv(alpha, degreesOfFreedom);
+      if (up<low) {
+        return {
+          lower: jStat.studentt.inv(1 - alpha, degreesOfFreedom),
+          upper: jStat.studentt.inv(alpha, degreesOfFreedom)
+        };
+      }
+      else {
+        
+      return {
+        lower: jStat.studentt.inv(alpha, degreesOfFreedom),
+        upper: jStat.studentt.inv(1 - alpha, degreesOfFreedom)
+        };
+      };
 
     case "Less than":
       // Left-tailed test: critical value is negative
@@ -1125,19 +1139,22 @@ export function calculate1STCriticalValue(
 export function calculate1SMeanConfidenceInterval(
   mean: number,
   SE: number,
-  tCritical: number,
+  tCritical: number | {lower: number; upper: number},
   alternative: "Less than" | "Greater than" | "Different"
 ): { lower: number; upper: number } {
   // Handle one-sided vs two-sided CIs based on alternative
   if (alternative === "Different") {
-    const margin = tCritical * SE;
+    // For two-sided test, use the upper critical value (positive t-value)
+    const criticalValue = typeof tCritical === 'number' ? Math.abs(tCritical) : Math.abs(tCritical.upper);
+    const margin = criticalValue * SE;
     return {
       lower: mean - margin,
       upper: mean + margin
     };
   } else {
     // For one-sided tests, return -Infinity or +Infinity for the unbounded side
-    const margin = tCritical * SE;
+    const criticalValue = typeof tCritical === 'number' ? Math.abs(tCritical) : Math.abs(tCritical.upper);
+    const margin = criticalValue * SE;
     return alternative === "Less than" 
       ? { lower: -Infinity, upper: mean + margin }
       : { lower: mean - margin, upper: Infinity };
@@ -1206,8 +1223,8 @@ export function calculate1SvarChiSquareCriticalValue(
     case "Different":
       // Two-tailed test: χ²(α/2, df) and χ²(1-α/2, df)
       return {
-        lower: chiSquareInverse(significance / 2, df),
-        upper: chiSquareInverse(1 - significance / 2, df)
+        lower: chiSquareInverse(1 - significance / 2, df),
+        upper: chiSquareInverse(significance / 2, df)
       };
     
     default:
@@ -1230,11 +1247,11 @@ export function calculate1SvarChiSquarePValue(
   switch (alternative) {
     case "Less than":
       // P(χ² ≤ test statistic)
-      return chiSquareCDF(chiSquareStatistic, df);
+      return 1 - chiSquareCDF(chiSquareStatistic, df);
     
     case "Greater than":
       // P(χ² ≥ test statistic)
-      return 1 - chiSquareCDF(chiSquareStatistic, df);
+      return chiSquareCDF(chiSquareStatistic, df);
     
     case "Different":
       // Two-tailed: 2 × min(P(χ² ≤ test statistic), P(χ² ≥ test statistic))
@@ -1257,16 +1274,34 @@ export function calculate1SvarChiSquarePValue(
 export function calculate1SvarChiSquareConfidenceInterval(
   sampleVariance: number,
   significance: number,
-  df: number
+  df: number,
+  alternative: "Less than" | "Greater than" | "Different"
 ): { lower: number; upper: number } {
   const alpha = significance;
-  const chiSquareUpper = chiSquareInverse(alpha / 2, df);
-  const chiSquareLower = chiSquareInverse(1 - alpha / 2, df);
+  if (alternative === "Greater than") {
+    
+    const chiSquareLower = chiSquareInverse(alpha / 2, df);
+    return {
+      lower: Math.sqrt((df * sampleVariance) / chiSquareLower),
+      upper: Infinity
+      };
+  }
+  else if (alternative === "Less than") {
+    const chiSquareUpper = chiSquareInverse(1 - alpha / 2, df);
+    return {
+      lower: - Infinity,
+      upper:  Math.sqrt((df * sampleVariance) / chiSquareUpper)
+      };
+  }
+  else{
+    const chiSquareUpper = chiSquareInverse(1 - alpha / 2, df);
+    const chiSquareLower = chiSquareInverse(alpha / 2, df);
+    return {
+      lower:  Math.sqrt((df * sampleVariance) / chiSquareLower),
+      upper:  Math.sqrt((df * sampleVariance) / chiSquareUpper)
+      };
+  }
   
-  return {
-    lower: (df * sampleVariance) / chiSquareLower,
-    upper: (df * sampleVariance) / chiSquareUpper
-  };
 }
 
 // Helper functions for chi-square distribution
