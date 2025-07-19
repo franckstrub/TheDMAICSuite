@@ -1707,6 +1707,7 @@ export default function DefinePhase() {
         coachBeltLevel: data.coachBeltLevel || "Master Black Belt",
         projectType: data.projectType || "Green Belt",
         projectCategory: data.projectCategory || "Process Improvement",
+        projectTypology: data.projectTypology || "Project",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -2169,6 +2170,7 @@ export default function DefinePhase() {
           // Get the current project type and category values
       const projectTypeValue = currentProject?.projectType || "Green Belt";
       const projectCategoryValue = currentProject?.projectCategory || "Process Improvement";
+      const projectTypologyValue = currentProject?.projectCategorTypology || "Project";
       
       /*console.log("PDF EXPORT INFO - Project Type and Category:", { 
         projectId, 
@@ -2440,6 +2442,7 @@ export default function DefinePhase() {
       const allLabels = clone.querySelectorAll('label');
       let projectTypeContainer = null;
       let projectCategoryContainer = null;
+      let projectTypologyContainer = null;
       let projectLeaderBeltContainer = null;
       let coachBeltContainer = null;
       
@@ -2462,6 +2465,8 @@ export default function DefinePhase() {
           projectTypeContainer = label.parentElement;
         } else if (label.textContent === 'Project Category') {
           projectCategoryContainer = label.parentElement;
+        } else if (label.textContent === 'Project Typology') {
+          projectTypologyContainer = label.parentElement;
         } else if (label.textContent === 'Project Leader') {
           // Now we're in the project leader section
           currentSection = "project_leader";
@@ -2517,6 +2522,15 @@ export default function DefinePhase() {
         projectCategoryContainer.appendChild(createValueDiv(projectCategoryValue));
       }
       
+      if (projectTypologyContainer) {
+        // Remove any existing html2canvas-show elements that might be hiding
+        const existingShowElements = projectTypologyContainer.querySelectorAll('.html2canvas-show');
+        existingShowElements.forEach(el => el.remove());
+        
+        // Add it to the container
+        projectTypologyContainer.appendChild(createValueDiv(projectTypologyValue));
+      }
+      
       // Handle project leader belt level field
       if (projectLeaderBeltContainer) {
         // Remove any existing html2canvas-show elements
@@ -2551,6 +2565,8 @@ export default function DefinePhase() {
             el.textContent = projectTypeValue;
           } else if (dataField === 'projectCategory') {
             el.textContent = projectCategoryValue;
+          } else if (dataField === 'projectTypology') {
+            el.textContent = projectTypologyValue;
           } else if (dataField === 'beltLevel') {
             el.textContent = projectLeaderBeltLevel;
             //console.log("Setting project leader belt level value in PDF:", projectLeaderBeltLevel);
@@ -2818,7 +2834,7 @@ export default function DefinePhase() {
                     {...charterForm.register("projectReferenceNumber")}
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
                       <Label htmlFor="projectType">Project Type</Label>
                       {/* Regular select for screen display */}
@@ -2844,6 +2860,7 @@ export default function DefinePhase() {
                         {charterForm.watch("projectType") || "Green Belt"}
                       </div>
                     </div>
+
                     <div>
                       <Label htmlFor="projectCategory">Project Category</Label>
                       {/* Regular select for screen display */}
@@ -2852,7 +2869,7 @@ export default function DefinePhase() {
                           onValueChange={(value) => charterForm.setValue("projectCategory", value)}
                           value={charterForm.watch("projectCategory") || "Process Improvement"}
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-full text-[12px]">
                             <SelectValue placeholder="Select project category" />
                           </SelectTrigger>
                           <SelectContent>
@@ -2884,10 +2901,12 @@ export default function DefinePhase() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Project">Project</SelectItem>
-                            <SelectItem value="Program">Program</SelectItem>
+                            <SelectItem value="Kaizen">Kaizen</SelectItem>
+                            <SelectItem value="Quick Action">Quick Action</SelectItem>
+                            <SelectItem value="Program">Program</SelectItem>                            
                             <SelectItem value="Portfolio">Portfolio</SelectItem>
                             <SelectItem value="Initiative">Initiative</SelectItem>
-                            <SelectItem value="Campaign">Campaign</SelectItem>
+                            
                           </SelectContent>
                         </Select>
                       </div>

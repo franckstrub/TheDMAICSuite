@@ -346,7 +346,7 @@ export default function Projects() {
               New Project
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[620px]">
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
               <DialogDescription>
@@ -402,8 +402,8 @@ export default function Projects() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="grid gap-1">
                     <Label htmlFor="projectType">Project Type</Label>
                     <Select
                       value={newProject.projectType}
@@ -440,8 +440,8 @@ export default function Projects() {
                   <div className="grid gap-2">
                     <Label htmlFor="projectTypologyy">Project Typology</Label>
                     <Select
-                      value={newProject.projectTypologyy}
-                      onValueChange={(value) => setNewProject({ ...newProject, projectTypologyy: value })}
+                      value={newProject.projectTypology}
+                      onValueChange={(value) => setNewProject({ ...newProject, projectTypology: value })}
                     >
                       <SelectTrigger id="projectTypologyy">
                         <SelectValue placeholder="Select typology" />
@@ -450,6 +450,9 @@ export default function Projects() {
                         <SelectItem value="Project">Project</SelectItem>
                         <SelectItem value="Kaizen">Kaizen</SelectItem>
                         <SelectItem value="Quick Action">Quick Action</SelectItem>
+                        <SelectItem value="Program">Program</SelectItem>                            
+                        <SelectItem value="Portfolio">Portfolio</SelectItem>
+                        <SelectItem value="Initiative">Initiative</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -565,14 +568,15 @@ export default function Projects() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[25%]">Project</TableHead>
+                    <TableHead className="w-[20%]">Project</TableHead>
                     <TableHead className="w-[12%]">Type</TableHead>
-                    <TableHead className="w-[12%]">Phase</TableHead>
+                    <TableHead className="w-[14%]">Typology</TableHead>
+                    <TableHead className="w-[9%]">Phase</TableHead>
                     <TableHead className="w-[12%]">Status</TableHead>
-                    <TableHead className="w-[10%]">Progress</TableHead>
-                    <TableHead className="w-[10%]">Timeline</TableHead>
+                    <TableHead className="w-[12%]">Progress</TableHead>
+                    <TableHead className="w-[13%]">Timeline</TableHead>
                     <TableHead className="w-[10%]">Last Updated</TableHead>
-                    <TableHead className="w-[9%] text-right">Actions</TableHead>
+                    <TableHead className="w-[8%] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -585,23 +589,28 @@ export default function Projects() {
                       <TableCell className="font-medium">
                         <div>
                           <div className="font-medium">{project.title}</div>
-                          <div className="text-sm text-gray-500 truncate max-w-xs">
+                          <div className="text-xs text-gray-500 truncate max-w-[240px]">
                             {project.description || "No description provided"}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getProjectTypeColor(project.projectType)}`}>
+                        <div className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getProjectTypeColor(project.projectType)}`}>
                           {project.projectType || "Not Specified"}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <div className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100`}>
+                          {project.projectTypology || "Not Specified"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {getPhaseLabel(project.currentPhase)}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                        <div className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
                           {project.status}
                         </div>
                       </TableCell>
