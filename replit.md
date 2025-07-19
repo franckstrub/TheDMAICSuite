@@ -191,6 +191,7 @@ This is a comprehensive Lean Six Sigma AI-powered SaaS platform built for managi
 - July 15, 2025. Fixed jStat binomial distribution compatibility issues - implemented custom binomialQuantile function to replace non-existent jStat.binomial.inv method, updated median hypothesis testing to use proper binomial PDF-based quantile calculation, corrected TypeScript declarations to match actual jStat API
 - July 15, 2025. Diagnosed deployment authentication issues vs database schema - confirmed one_sample_hypothesis_config table already has correct target_stdev field (not target_variance), verified all code uses proper field names, identified "failed to load projects" error as authentication issue rather than database problem, requiring users to re-authenticate in deployed environment
 - July 19, 2025. Added project_typology field to projects table database schema - positioned next to project_category field with default value "Project", updated TypeScript schema definitions, verified database column creation and existing project data migration successful
+- July 19, 2025. Added project_typology field to project_charters table database schema - positioned next to project_category field with default value "Project", fixed schema typo (projectTypologyy to projectTypology), verified all 7 existing project charters now have default value, confirmed TypeScript insert schema properly includes the field
 
 ## User Preferences
 

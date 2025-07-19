@@ -220,7 +220,7 @@ export const projectCharters = pgTable("project_charters", {
   coachBeltLevel: text("coach_belt_level"),
   projectType: text("project_type"),
   projectCategory: text("project_category"),
-  projectTypologyy: text("project_typology"),
+  projectTypology: text("project_typology"),
   businessCase: text("business_case"),
   problemStatement: text("problem_statement"),
   goals: text("goals"),
