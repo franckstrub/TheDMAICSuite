@@ -2877,8 +2877,6 @@ export default function DefinePhase() {
                             <SelectItem value="Process Redesign">Process Redesign</SelectItem>
                             <SelectItem value="Process Design">Process Design</SelectItem>
                             <SelectItem value="Project Scoping">Project Scoping</SelectItem>
-                            <SelectItem value="Kaizen">Kaizen</SelectItem>
-                            <SelectItem value="Quick Action">Quick Action</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
