@@ -85,6 +85,7 @@ export default function Projects() {
     description: "",
     projectType: "Green Belt",
     projectCategory: "Process Improvement",
+    projectTypology: "Project",
     currentPhase: "define",
     status: "active",
     startDate: new Date().toISOString().split('T')[0],
@@ -217,6 +218,7 @@ export default function Projects() {
       description: "",
       projectType: "Green Belt",
       projectCategory: "Process Improvement",
+      projectTypology: "Project",
       currentPhase: "define",
       status: "active",
       startDate: new Date().toISOString().split('T')[0],
@@ -432,6 +434,20 @@ export default function Projects() {
                         <SelectItem value="Process Redesign">Process Redesign</SelectItem>
                         <SelectItem value="Process Design">Process Design</SelectItem>
                         <SelectItem value="Project Scoping">Project Scoping</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="projectTypologyy">Project Typology</Label>
+                    <Select
+                      value={newProject.projectTypologyy}
+                      onValueChange={(value) => setNewProject({ ...newProject, projectTypologyy: value })}
+                    >
+                      <SelectTrigger id="projectTypologyy">
+                        <SelectValue placeholder="Select typology" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Project">Project</SelectItem>
                         <SelectItem value="Kaizen">Kaizen</SelectItem>
                         <SelectItem value="Quick Action">Quick Action</SelectItem>
                       </SelectContent>
