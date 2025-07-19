@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -176,6 +176,9 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [undoState, setUndoState] = useState<DataPoint[] | null>(null);
   const [showUndoButton, setShowUndoButton] = useState(false);
   const [showBoxPlot, setShowBoxPlot] = useState(false);
+  
+  // Ref for the scrollable table container
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize ContCTQOneSampleHypTestData with default values
   const [ContCTQOneSampleHypTestData, setContCTQOneSampleHypTestData] = useState<{ [ctqId: number]: ContCTQOneSampleHypTestData }>(() => ({
@@ -621,6 +624,13 @@ useEffect(() => {
     ]);
     
     setInputValue("");
+    
+    // Auto-scroll to show the newly added row after a short delay
+    setTimeout(() => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+      }
+    }, 100);
   };
 
   const handleDeleteDataPoint = (index: number) => {
@@ -673,6 +683,13 @@ useEffect(() => {
           title: "Data Imported",
           description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
         });
+        
+        // Auto-scroll to show the newly added rows after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+          }
+        }, 100);
       }
       else {
        toast({
@@ -733,6 +750,17 @@ useEffect(() => {
           title: "Data Pasted",
           description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
         });
+        
+        // Auto-scroll to show the newly pasted data after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            const lastPastedIndex = index + newValues.length - 1;
+            // Calculate the position of the last pasted row
+            const rowHeight = 50; // Approximate row height
+            const scrollPosition = lastPastedIndex * rowHeight;
+            tableContainerRef.current.scrollTop = scrollPosition;
+          }
+        }, 100);
       }
       else {
        toast({
@@ -1110,7 +1138,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </p>
 
             {/* Data Table */}
-            <div className="border rounded-md max-h-[500px] overflow-y-auto">
+            <div ref={tableContainerRef} className="border rounded-md max-h-[500px] overflow-y-auto">
                 <table className="min-w-full table-auto">
                 <thead className="bg-gray-50">
                     <tr>
