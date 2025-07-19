@@ -167,6 +167,7 @@ export default function DefinePhase() {
       coachBeltLevel: "Master Black Belt",
       projectType: "",
       projectCategory: "Process Improvement",
+      projectTypology: "Project",
       businessCase: "",
       problemStatement: "",
       goals: "",
@@ -924,6 +925,7 @@ export default function DefinePhase() {
         coachBeltLevel: charter.charter.coachBeltLevel || "Master Black Belt",
         projectType: currentProject?.projectType || "",
         projectCategory: charter.charter.projectCategory || "Process Improvement",
+        projectTypology: currentProject?.projectTypology || charter.charter.projectTypology || "Project",
         businessCase: charter.charter.businessCase || "",
         problemStatement: charter.charter.problemStatement || "",
         goals: charter.charter.goals || "",
@@ -1015,6 +1017,7 @@ export default function DefinePhase() {
         coachBeltLevel: "Master Black Belt",
         projectType: currentProject?.projectType || "",
         projectCategory: "Process Improvement",
+        projectTypology: currentProject?.projectTypology || "Project",
         businessCase: "",
         problemStatement: "",
         goals: "",
@@ -1278,6 +1281,7 @@ export default function DefinePhase() {
         coachBeltLevel: data.coachBeltLevel || "Master Black Belt",
         projectType: data.projectType || "Green Belt",
         projectCategory: data.projectCategory || "Process Improvement",
+        projectTypology: data.projectTypology || "Project",
         businessCase: data.businessCase || "",
         problemStatement: data.problemStatement || "",
         goals: data.goals || "",
@@ -2814,7 +2818,7 @@ export default function DefinePhase() {
                     {...charterForm.register("projectReferenceNumber")}
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="projectType">Project Type</Label>
                       {/* Regular select for screen display */}
@@ -2865,6 +2869,32 @@ export default function DefinePhase() {
                       {/* Plain text representation for PDF export */}
                       <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="projectCategory">
                         {charterForm.watch("projectCategory") || "Process Improvement"}
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="projectTypology">Project Typology</Label>
+                      {/* Regular select for screen display */}
+                      <div className="html2canvas-hide">
+                        <Select 
+                          onValueChange={(value) => charterForm.setValue("projectTypology", value)}
+                          value={charterForm.watch("projectTypology") || "Project"}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select project typology" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Project">Project</SelectItem>
+                            <SelectItem value="Program">Program</SelectItem>
+                            <SelectItem value="Portfolio">Portfolio</SelectItem>
+                            <SelectItem value="Initiative">Initiative</SelectItem>
+                            <SelectItem value="Campaign">Campaign</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Plain text representation for PDF export */}
+                      <div className="html2canvas-show font-normal border rounded-md p-2 mt-1" data-field="projectTypology">
+                        {charterForm.watch("projectTypology") || "Project"}
                       </div>
                     </div>
                   </div>

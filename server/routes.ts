@@ -237,6 +237,18 @@ async function syncProjectBenefitsFromCharter(charter: ProjectCharter, project: 
       console.log("Synchronizing project type from charter to project:", charter.projectType);
     }
     
+    // Sync project category if provided in charter
+    if (charter.projectCategory) {
+      projectUpdate.projectCategory = charter.projectCategory;
+      console.log("Synchronizing project category from charter to project:", charter.projectCategory);
+    }
+    
+    // Sync project typology if provided in charter
+    if (charter.projectTypology) {
+      projectUpdate.projectTypology = charter.projectTypology;
+      console.log("Synchronizing project typology from charter to project:", charter.projectTypology);
+    }
+    
     // Sync dates
     if (charter.startDate) {
       projectUpdate.startDate = charter.startDate;
