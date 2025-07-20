@@ -34,8 +34,8 @@ import {
   inverseNormCDF
 } from "@/lib/statisticsUtils";
 import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
-import { number } from 'zod';
-//import * as jStat from 'jstat';
+import BoxPlotWith1SMedianTest from './BoxPlotWith1SMedianTest';
+import OneSVarianceTestCI from './oneSVarianceTestCI';
 
 interface DataPoint {
   indexNumber: number;
@@ -1492,7 +1492,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
           </div>
           )}
 
-          {/* BoxPlot visualization when showBoxPlot is true */}
+          {/* 1 sample Student mean test BoxPlot visualization when showBoxPlot is true */}
           {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
             <div className="mt-6">
               <BoxPlotWith1SMeanTest
@@ -1502,8 +1502,42 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 Ha={Ha(alternativemean)}
                 h0Value={ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? 0}
                 confidenceInterval={[testResults.meanCI_minus, testResults.meanCI_plus]}
-                title={`1-Sample T-Test Mean vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                title={`1-Sample Mean T-Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
                 pValue={testResults.tp_Value}
+                alphalevel={significanceLevel}
+              />
+            </div>
+          )}
+
+          {/* 1 sample χ² variance test BoxPlot visualization when showBoxPlot is true */}
+          {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
+            <div className="mt-6">
+              <OneSVarianceTestCI
+                data={dataPoints.map(point => point.dataValue)}
+                ctqName={ctqName}
+                stdev={testResults.stdev}
+                Ha={Ha(alternativevariance)}
+                h0Value={ContCTQOneSampleHypTestData[ctqId]?.targetstdev ?? 0}
+                confidenceInterval={[testResults.varianceCI_minus, testResults.varianceCI_plus]}
+                title={`1-Sample χ² Variance Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.varp_Value}
+                alphalevel={significanceLevel}
+              />
+            </div>
+          )}
+          
+          {/* 1 sample Wilcoxon median test BoxPlot visualization when showBoxPlot is true */}
+          {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
+            <div className="mt-6">
+              <BoxPlotWith1SMedianTest
+                data={dataPoints.map(point => point.dataValue)}
+                ctqName={ctqName}
+                median={testResults.median}
+                Ha={Ha(alternativemedian)}
+                h0Value={ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? 0}
+                confidenceInterval={[testResults.medianCI_minus, testResults.medianCI_plus]}
+                title={`1-Sample Wilcoxon Median Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.medianp_Value}
                 alphalevel={significanceLevel}
               />
             </div>
