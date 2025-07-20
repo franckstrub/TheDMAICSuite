@@ -1,10 +1,10 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 
-interface BoxPlotWith1SMeanTestProps {
+interface OneSVarianceTestCIProps {
   data: number[];
   ctqName: string;
-  mean: number
+  stdev: number
   Ha: string;
   h0Value: number;
   confidenceInterval: [number, number];
@@ -13,17 +13,17 @@ interface BoxPlotWith1SMeanTestProps {
   alphalevel: string;
 }
 
-export default function BoxPlotWith1SMeanTest({
+export default function OneSVarianceTestCI({
   data,
   ctqName,
-  mean,
+  stdev,
   Ha,
   h0Value,
   confidenceInterval,
   title,
   pValue,
   alphalevel
-}: BoxPlotWith1SMeanTestProps): JSX.Element {
+}: OneSVarianceTestCIProps): JSX.Element {
   if (!data || data.length === 0) {
     return <div>No data available for visualization</div>;
   }
@@ -32,32 +32,33 @@ export default function BoxPlotWith1SMeanTest({
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = "Ha: Mean < H0";
+      Hatext = "Ha: Standard deviation < H0";
       break;
     case "Greater than":
-      Hatext = "Ha: Mean > H0";
+      Hatext = "Ha: Standard deviation > H0";
       break;
     case "Different":
-      Hatext = "Ha: Mean ≠ H0";
+      Hatext = "Ha: Standard deviation ≠ H0";
       break;
     default:
-      Hatext = "Ha: Mean ≠ H0";
+      Hatext = "Ha: Standard deviation ≠ H0";
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
   let CIplustext: string = 'CI+';
 
   if (confidenceInterval[0]=== -Infinity) {
-    shownconfidenceInterval[0]= Math.min(...data, h0Value);
+    shownconfidenceInterval[0]= Math.min(stdev, h0Value) - 2*Math.abs(stdev - h0Value);
     CIminustext = '-∞';
   }
   else if (confidenceInterval[1]=== Infinity) {
-    shownconfidenceInterval[1]=Math.max(...data, h0Value);
+    shownconfidenceInterval[1]= Math.max(stdev, h0Value) + 2*Math.abs(stdev - h0Value);
     CIplustext = '+∞';
   }
-  const yBadge=0.95*(Math.max(...data)-Math.min(...data))+ Math.min(...data);
+  const yExtraScale=(shownconfidenceInterval[1]-shownconfidenceInterval[0])/5;
+  const yBadge=0.99*(shownconfidenceInterval[1] + yExtraScale);
 
-  let Badgetext='Ha: Mean ';
+  let Badgetext='Ha: Standard deviation ';
   if (Ha==='Less than'){
     Badgetext = Badgetext + " < Target H0";
   }
@@ -79,6 +80,7 @@ export default function BoxPlotWith1SMeanTest({
       {/*<h3 className="text-center font-medium mb-2">{title}</h3>*/}
       <Plot
         data={[
+          /*
           {
             x: [0],
             y: [mean],
@@ -96,17 +98,18 @@ export default function BoxPlotWith1SMeanTest({
             line: { color: '#1e3a8a' },
             fillcolor: '#bfdbfe',
             boxmean: false, // optionally set to 'sd' or true
-          },          
+          },
+          */          
           {
-            x:[1],
-            y: [mean],
+            x:[0],
+            y: [stdev],
             type: 'scatter',
             mode: 'markers',
-            name: 'Mean',
-            marker: { color: 'red', size: 8, symbol: 'circle' },
+            name: 'Standard Deviation',
+            marker: { color: 'green', size: 8, symbol: 'square' },
           },
           {
-            x:[1],
+            x:[0],
             y: [h0Value],
             type: 'scatter',
             mode: 'markers',
@@ -114,7 +117,7 @@ export default function BoxPlotWith1SMeanTest({
             marker: { color: 'black', size: 8, symbol: 'square' },
           },
           {
-            x:[1],
+            x:[0],
             y: [shownconfidenceInterval[0]],
             type: 'scatter',
             mode: 'markers',
@@ -122,7 +125,7 @@ export default function BoxPlotWith1SMeanTest({
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
           },
           {
-            x:[1],
+            x:[0],
             y: [shownconfidenceInterval[1]],
             type: 'scatter',
             mode: 'markers',
@@ -136,25 +139,26 @@ export default function BoxPlotWith1SMeanTest({
           width: 860,
           margin: { l: 70, r: 160, t: 30, b: 20 },
           xaxis: {
-            tickvals: [0, 1],
-            ticktext: [ctqName, Hatext],
-            range: [-0.5, 1.5],
+            tickvals: [0],
+            ticktext: [Hatext],
+            range: [-0.5, 0.5],
             showline: true,
             zeroline: false,
           },
           yaxis: { 
             title: {
-              text: 'Y values'
+              text: 'Y'
             },
-          showline: true,
+            range: [(shownconfidenceInterval[0]-yExtraScale), (shownconfidenceInterval[1]+yExtraScale)],
+            showline: true,
           },
           shapes: [            
             // Confidence Interval vertical line
             {
               type: 'line',
               xref: 'x',
-              x0: 1,
-              x1: 1,
+              x0: 0,
+              x1: 0,
               yref: 'y',
               y0: shownconfidenceInterval[0],
               y1: shownconfidenceInterval[1],
@@ -169,8 +173,8 @@ export default function BoxPlotWith1SMeanTest({
             {
               type: 'line',
               xref: 'x',
-              x0: 0.975,
-              x1: 1.025,
+              x0: -0.025,
+              x1: 0.025,
               yref: 'y',
               y0: shownconfidenceInterval[0],
               y1: shownconfidenceInterval[0],
@@ -185,8 +189,8 @@ export default function BoxPlotWith1SMeanTest({
             {
               type: 'line',
               xref: 'x',
-              x0: 0.975,
-              x1: 1.025,
+              x0: -0.025,
+              x1: 0.025,
               yref: 'y',
               y0: shownconfidenceInterval[1],
               y1: shownconfidenceInterval[1],
@@ -198,27 +202,29 @@ export default function BoxPlotWith1SMeanTest({
             }
           ],
           annotations: [
+              /*
               {
-                x: 0.0,
-                y: mean,
-                text: 'Mean',
+                x: 0,
+                y: stdev,
+                text: 'Standard Deviation',
                 showarrow: false,
                 font: { size: 12, color: 'red' },
                 xanchor: 'center',
                 yanchor: 'bottom',
                 yshift: 5,
               },
+              */
               {
-                x: 1.15,
-                y: mean,
-                text: 'Mean',
+                x: 0.15,
+                y: stdev,
+                text: 'Standard Deviation',
                 showarrow: false,
-                font: { size: 12, color: 'red' },
+                font: { size: 12, color: 'green' },
                 xanchor: 'left',
                 yanchor: 'middle'
               },
               {
-                x: 1.15,
+                x: 0.15,
                 y: h0Value,
                 text: 'H0',
                 showarrow: false,
@@ -227,7 +233,7 @@ export default function BoxPlotWith1SMeanTest({
                 yanchor: 'middle'
               },
               {
-                x: 1.15,
+                x: 0.15,
                 y: shownconfidenceInterval[0],
                 text: CIminustext,
                 showarrow: false,
@@ -236,7 +242,7 @@ export default function BoxPlotWith1SMeanTest({
                 yanchor: 'middle'
               },
               {
-                x: 1.15,
+                x: 0.15,
                 y: shownconfidenceInterval[1],
                 text: CIplustext,
                 showarrow: false,
@@ -245,7 +251,7 @@ export default function BoxPlotWith1SMeanTest({
                 yanchor: 'middle'
               },
               {
-                x: 0.6,
+                x: 0,
                 y: yBadge,
                 text: Badgetext,
                 showarrow: false,
@@ -256,7 +262,7 @@ export default function BoxPlotWith1SMeanTest({
             ],
           showlegend: false,
         }}
-         config={{ responsive: true,
+          config={{ responsive: true,
                     displayModeBar: true,
                     displaylogo: false, // Remove Plotly logo
                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'], // Remove specific tools
@@ -267,7 +273,7 @@ export default function BoxPlotWith1SMeanTest({
                         width: 700,
                         scale: 1
                     },
-         }}
+          }}
     
         style={{
             width: "100%", height: "100%",
@@ -279,4 +285,3 @@ export default function BoxPlotWith1SMeanTest({
     </div>
   );
 }
-

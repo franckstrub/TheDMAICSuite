@@ -1,10 +1,10 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 
-interface BoxPlotWith1SMeanTestProps {
+interface BoxPlotWith1SMedianTestProps {
   data: number[];
   ctqName: string;
-  mean: number
+  median: number
   Ha: string;
   h0Value: number;
   confidenceInterval: [number, number];
@@ -13,17 +13,17 @@ interface BoxPlotWith1SMeanTestProps {
   alphalevel: string;
 }
 
-export default function BoxPlotWith1SMeanTest({
+export default function BoxPlotWith1SMedianTest({
   data,
   ctqName,
-  mean,
+  median,
   Ha,
   h0Value,
   confidenceInterval,
   title,
   pValue,
   alphalevel
-}: BoxPlotWith1SMeanTestProps): JSX.Element {
+}: BoxPlotWith1SMedianTestProps): JSX.Element {
   if (!data || data.length === 0) {
     return <div>No data available for visualization</div>;
   }
@@ -32,16 +32,16 @@ export default function BoxPlotWith1SMeanTest({
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = "Ha: Mean < H0";
+      Hatext = "Ha: Median < H0";
       break;
     case "Greater than":
-      Hatext = "Ha: Mean > H0";
+      Hatext = "Ha: Median > H0";
       break;
     case "Different":
-      Hatext = "Ha: Mean ≠ H0";
+      Hatext = "Ha: Median ≠ H0";
       break;
     default:
-      Hatext = "Ha: Mean ≠ H0";
+      Hatext = "Ha: Median ≠ H0";
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
@@ -57,7 +57,7 @@ export default function BoxPlotWith1SMeanTest({
   }
   const yBadge=0.95*(Math.max(...data)-Math.min(...data))+ Math.min(...data);
 
-  let Badgetext='Ha: Mean ';
+  let Badgetext='Ha: Median ';
   if (Ha==='Less than'){
     Badgetext = Badgetext + " < Target H0";
   }
@@ -81,11 +81,11 @@ export default function BoxPlotWith1SMeanTest({
         data={[
           {
             x: [0],
-            y: [mean],
+            y: [median],
             type: 'scatter',
             mode: 'markers',
-            name: 'Mean',
-            marker: { color: 'red', size: 8, symbol: 'circle' },
+            name: 'Median',
+            marker: { color: 'blue', size: 8, symbol: 'square' },
           },
           {
             y: data,
@@ -99,11 +99,11 @@ export default function BoxPlotWith1SMeanTest({
           },          
           {
             x:[1],
-            y: [mean],
+            y: [median],
             type: 'scatter',
             mode: 'markers',
-            name: 'Mean',
-            marker: { color: 'red', size: 8, symbol: 'circle' },
+            name: 'Median',
+            marker: { color: 'blue', size: 8, symbol: 'square' },
           },
           {
             x:[1],
@@ -148,7 +148,7 @@ export default function BoxPlotWith1SMeanTest({
             },
           showline: true,
           },
-          shapes: [            
+          shapes: [
             // Confidence Interval vertical line
             {
               type: 'line',
@@ -198,71 +198,75 @@ export default function BoxPlotWith1SMeanTest({
             }
           ],
           annotations: [
-              {
-                x: 0.0,
-                y: mean,
-                text: 'Mean',
-                showarrow: false,
-                font: { size: 12, color: 'red' },
-                xanchor: 'center',
-                yanchor: 'bottom',
-                yshift: 5,
-              },
-              {
-                x: 1.15,
-                y: mean,
-                text: 'Mean',
-                showarrow: false,
-                font: { size: 12, color: 'red' },
-                xanchor: 'left',
-                yanchor: 'middle'
-              },
-              {
-                x: 1.15,
-                y: h0Value,
-                text: 'H0',
-                showarrow: false,
-                font: { size: 12, color: 'black' },
-                xanchor: 'left',
-                yanchor: 'middle'
-              },
-              {
-                x: 1.15,
-                y: shownconfidenceInterval[0],
-                text: CIminustext,
-                showarrow: false,
-                font: { size: 12, color: 'black' },
-                xanchor: 'left',
-                yanchor: 'middle'
-              },
-              {
-                x: 1.15,
-                y: shownconfidenceInterval[1],
-                text: CIplustext,
-                showarrow: false,
-                font: { size: 12, color: 'black' },
-                xanchor: 'left',
-                yanchor: 'middle'
-              },
-              {
-                x: 0.6,
-                y: yBadge,
-                text: Badgetext,
-                showarrow: false,
-                font: { size: 12, color: 'black' },
-                xanchor: 'center',
-                yanchor: 'middle'
-              },
-            ],
+            // Median annotation for boxplot
+            {
+              x: 0,
+              y: median,
+              text: 'Median',
+              showarrow: false,
+              font: { size: 12, color: 'blue' },
+              xanchor: 'center',
+              yanchor: 'bottom',
+              yshift: 5,
+            },
+            
+            // Annotations for CI plot
+            {
+              x: 1.15,
+              y: median,
+              text: 'Median',
+              showarrow: false,
+              font: { size: 12, color: 'blue' },
+              xanchor: 'left',
+              yanchor: 'middle'
+            },
+            {
+              x: 1.15,
+              y: h0Value,
+              text: 'H0',
+              showarrow: false,
+              font: { size: 12, color: 'black' },
+              xanchor: 'left',
+              yanchor: 'middle'
+            },
+            {
+              x: 1.15,
+              y: shownconfidenceInterval[0],
+              text: CIminustext,
+              showarrow: false,
+              font: { size: 12, color: 'black' },
+              xanchor: 'left',
+              yanchor: 'middle'
+            },
+            {
+              x: 1.15,
+              y: shownconfidenceInterval[1],
+              text: CIplustext,
+              showarrow: false,
+              font: { size: 12, color: 'black' },
+              xanchor: 'left',
+              yanchor: 'middle'
+            },
+            {
+              x: 0.6,
+              y: yBadge,
+              text: Badgetext,
+              showarrow: false,
+              font: { size: 12, color: 'black' },
+              xanchor: 'center',
+              yanchor: 'middle'
+            },
+          ],
           showlegend: false,
         }}
-         config={{ responsive: true,
+        
+        config={{ responsive: true,
                     displayModeBar: true,
                     displaylogo: false, // Remove Plotly logo
                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'], // Remove specific tools
                     toImageButtonOptions: {
                         format: 'png',
-                        filename: '1-sample Student Mean test',
+                        filename: '1-sample Wilcoxon Median test',
                         height: 500,
                         width: 700,
                         scale: 1
@@ -279,4 +283,3 @@ export default function BoxPlotWith1SMeanTest({
     </div>
   );
 }
-
