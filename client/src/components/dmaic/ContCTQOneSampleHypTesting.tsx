@@ -160,8 +160,8 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [alternativemean, setAlternativemean] = useState("Less than");
   const [alternativevariance, setAlternativevariance] = useState("Less than");
   const [alternativemedian, setAlternativemedian] = useState("Less than");
-  const [power1SMeanPower, setPower1SMeanPower] = useState('0.95');
-  const [power1SMeanAlpha, setPower1SMeanAlpha] = useState('0.05');
+  const [power1SMeanPower, setPower1SMeanPower] = useState("0.95");
+  const [power1SMeanAlpha, setPower1SMeanAlpha] = useState("0.05");
   const [power1SMeanHa, setPower1SMeanHa] = useState('≠');
 
   const [PowerSampleSizeResults, setPowerSampleSizeResults] = useState<PowerSampleSizeResults>({
@@ -330,24 +330,24 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             targetMedian: config.targetMedian || 0,
             datasetdescription: config.datasetDescription || "",
             enableMean1SPower: config.enableMean1SPower ?? true,
-            power1SMeanPower:config.power1SMeanPower || 0,
+            power1SMeanPower:config.power1SMeanPower || "0",
             power1SMeanHa: config.power1SMeanHa || "≠",
             power1SMeanMean: config.power1SMeanMean || 0,
             power1SMeanH0: config.power1SMeanH0 || 0,
             power1SMeanStdev: config.power1SMeanStdev || 0,
-            power1SMeanAlpha: config.power1SMeanAlpha || 0, 
+            power1SMeanAlpha: config.power1SMeanAlpha || "0", 
             enableVariance1SPower: config.enableVariance1SPower ?? true,
-            power1SVariancePower: config.power1SVariancePower || 0,
+            power1SVariancePower: config.power1SVariancePower || "0",
             power1SVarianceHa: config.power1SVarianceHa || "≠",
             power1SVarianceStdev: config.power1SVarianceStdev || 0,
             power1SVarianceH0: config.power1SVarianceH0 || 0,
-            power1SVarianceAlpha: config.power1SVarianceAlpha || 0,
+            power1SVarianceAlpha: config.power1SVarianceAlpha || "0",
             enableMedian1SPower: config.enableMedian1SPower ?? true,
-            power1SMedianPower: config.power1SMedianPower || 0,
+            power1SMedianPower: config.power1SMedianPower || "0",
             power1SMedianHa: config.power1SMedianHa || "≠",
             power1SMedianMedian: config.power1SMedianMedian || 0,
             power1SMedianH0: config.power1SMedianH0 || 0,
-            power1SMedianAlpha: config.power1SMedianAlpha || 0, 
+            power1SMedianAlpha: config.power1SMedianAlpha || "0", 
           }
         }));
       }, 0);
@@ -374,24 +374,24 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       dataPoints,
       datasetDescription: currentConfig.datasetdescription || "",
       enableMean1SPower: currentConfig.enableMean1SPower ?? true,
-      power1SMeanPower:currentConfig.power1SMeanPower,
+      power1SMeanPower:currentConfig.power1SMeanPower || "0",
       power1SMeanHa: currentConfig.power1SMeanHa || "≠",
       power1SMeanMean: currentConfig.power1SMeanMean,
       power1SMeanH0: currentConfig.power1SMeanH0,
       power1SMeanStdev: currentConfig.power1SMeanStdev,
-      power1SMeanAlpha: currentConfig.power1SMeanAlpha,
+      power1SMeanAlpha: currentConfig.power1SMeanAlpha || "0",
       enableVariance1SPower: currentConfig.enableVariance1SPower ?? true,
-      power1SVariancePower:currentConfig.power1SVariancePower,
+      power1SVariancePower:currentConfig.power1SVariancePower || "0",
       power1SVarianceHa: currentConfig.power1SVarianceHa || "≠",
       power1SVarianceStdev: currentConfig.power1SVarianceStdev,
       power1SVarianceH0: currentConfig.power1SVarianceH0,
-      power1VarianceAlpha: currentConfig.power1SVarianceAlpha,
+      power1VarianceAlpha: currentConfig.power1SVarianceAlpha || "0",
       enableMedian1SPower: currentConfig.enableMedian1SPower ?? true,
-      power1SMedianPower: currentConfig.power1SMedianPower,
+      power1SMedianPower: currentConfig.power1SMedianPower || "0",
       power1SMedianHa: currentConfig.power1SMedianHa || "≠",
       power1SMedianMedian: currentConfig.power1SMedianMedian,
       power1SMedianH0: currentConfig.power1SMedianH0,
-      power1SMedianAlpha: currentConfig.power1SMedianAlpha,
+      power1SMedianAlpha: currentConfig.power1SMedianAlpha || "0",
     };
     
     saveConfigMutation.mutate(configToSave);
@@ -413,24 +413,24 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   const handlePowerSampleSize = (
   enableMean1SPower: boolean,
-  power1SMeanPower:number,
+  power1SMeanPower:string,
   power1SMeanHa: string,
   power1SMeanMean: number,
   power1SMeanH0: number,
   power1SMeanStdev: number,
-  power1SMeanAlpha: number,
+  power1SMeanAlpha: string,
   enableVariance1SPower: boolean,
-  power1SVariancePower:number,
+  power1SVariancePower:string,
   power1SVarianceHa: string,
   power1SVarianceStdev: number,
   power1SVarianceH0: number,
-  power1SVarianceAlpha: number,
+  power1SVarianceAlpha: string,
   enableMedian1SPower: boolean,
-  power1SMedianPower:number,
+  power1SMedianPower:string,
   power1SMedianHa: string,
   power1SMedianMedian: number,
   power1SMedianH0: number,
-  power1SMedianAlpha: number,
+  power1SMedianAlpha: string,
 ): PowerSampleSizeResults => {
 
   // Initialize with default values
@@ -476,24 +476,24 @@ useEffect(() => {
 
   const results = handlePowerSampleSize(
     currentConfig.enableMean1SPower ?? false,
-    currentConfig.power1SMeanPower ?? 0,
+    currentConfig.power1SMeanPower ?? "0",
     currentConfig.power1SMeanHa ?? "≠",
     currentConfig.power1SMeanMean ?? 0,
     currentConfig.power1SMeanH0 ?? 0,
     currentConfig.power1SMeanStdev ?? 0,
-    currentConfig.power1SMeanAlpha ?? 0,
+    currentConfig.power1SMeanAlpha ?? "0",
     currentConfig.enableVariance1SPower ?? false,
-    currentConfig.power1SVariancePower ?? 0,
+    currentConfig.power1SVariancePower ?? "0",
     currentConfig.power1SVarianceHa ?? "≠",
     currentConfig.power1SVarianceStdev ?? 0,
     currentConfig.power1SVarianceH0 ?? 0,
-    currentConfig.power1SVarianceAlpha ?? 0,
+    currentConfig.power1SVarianceAlpha ?? "0",
     currentConfig.enableMedian1SPower?? false,
-    currentConfig.power1SMedianPower ?? 0,
+    currentConfig.power1SMedianPower ?? "0",
     currentConfig.power1SMedianHa ?? "≠",
     currentConfig.power1SMedianMedian ?? 0,
     currentConfig.power1SMedianH0 ?? 0,
-    currentConfig.power1SMedianAlpha ?? 0,
+    currentConfig.power1SMedianAlpha ?? "0",
   );
 
   setPowerSampleSizeResults(results);
@@ -1106,7 +1106,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
           <div className="grid grid-cols-3 gap-12">
               <div className="flex items-top ml-4 space-x-2">
               <Checkbox
-                id={`${ctqId}-Mean1SPower`}
+                id={`${ctqId}-enableMean1SPower`}
                 checked={ContCTQOneSampleHypTestData[ctqId]?.enableMean1SPower || false}
                 onCheckedChange={(checked) => updateContCTQOneSampleHypTestDataField(ctqId, "enableMean1SPower", checked)}
               />
@@ -1124,7 +1124,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <CardTitle className="text-sm">Power & Sample Size 1-S Mean Hypothesis Testing</CardTitle>
                     </CardHeader>
                     <CardContent className="text-xs">
-                      <tr>Power of test(1-β): 
+                      <tr>
+                        <Label htmlFor="power1SMeanPower">Power of test(1-β):</Label>
                         <Select value={power1SMeanPower} onValueChange={setPower1SMeanPower}>
                         <SelectTrigger id="power1SMeanPower">
                             <SelectValue placeholder="Select Power of test" />
@@ -1137,7 +1138,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         </SelectContent>
                         </Select>  
                       </tr>
-                      <tr>Ha: 
+                      <tr>
+                        <Label htmlFor="power1SMeanHa">Ha:</Label>
                         <Select value={power1SMeanHa} onValueChange={setPower1SMeanHa}>
                         <SelectTrigger id="power1SMeanHa">
                             <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
@@ -1149,7 +1151,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         </SelectContent>
                         </Select>  
                       </tr>
-                      <tr>Alpha (α): 
+                      <tr>
+                        <Label htmlFor="power1SMeanAlpha">Alpha (α):</Label> 
                         <Select value={power1SMeanAlpha} onValueChange={setPower1SMeanAlpha}>
                         <SelectTrigger id="power1SMeanAlpha">
                             <SelectValue placeholder="Select Alpha significance level" />
