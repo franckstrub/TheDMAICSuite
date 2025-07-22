@@ -1385,3 +1385,141 @@ function gamma(z: number): number {
   
   return sqrt2pi * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
 }
+
+export function calculate1SMeanSampleSize(
+  power1SMeanPower: string,
+  power1SMeanHa: string,
+  power1SMeanMean: number,
+  power1SMeanH0: number,
+  power1SMeanStdev: number,
+  power1SMeanAlpha: string
+): 
+  number
+ {
+  const oneSMeanPower = parseFloat(power1SMeanPower);
+  const oneSMeanAlpha = parseFloat(power1SMeanAlpha);
+  // Input validation
+  if (oneSMeanPower <= 0 || oneSMeanPower >= 1) {
+    //throw new Error("Power must be between 0 and 1");
+  }
+  if (oneSMeanAlpha <= 0 || oneSMeanAlpha >= 1) {
+    //throw new Error("Alpha must be between 0 and 1");
+  }
+  if (power1SMeanStdev <= 0) {
+    //throw new Error("Standard deviation must be positive");
+  }
+  if (power1SMeanMean === power1SMeanH0) {
+    //throw new Error("Alternative mean cannot equal null hypothesis mean");
+  }
+  if (power1SMeanStdev === 0) {
+    return 0;
+  }
+  else {
+    // Calculate effect size (standardized difference)
+    const effectSize = Math.abs(power1SMeanMean - power1SMeanH0) / power1SMeanStdev;
+    
+    // Determine critical values based on test type
+    let zAlpha: number;
+    let zBeta: number;
+    
+    switch (power1SMeanHa) {
+      case "<":
+        // One-tailed test (left tail)
+        zAlpha = jStat.normal.inv(oneSMeanAlpha, 0, 1);
+        zBeta = jStat.normal.inv(1 - oneSMeanPower, 0, 1);
+        break;
+        
+      case ">":
+        // One-tailed test (right tail)
+        zAlpha = jStat.normal.inv(1 - oneSMeanAlpha, 0, 1);
+        zBeta = jStat.normal.inv(1 - oneSMeanPower, 0, 1);
+        break;
+        
+      case "≠":
+      default:
+        // Two-tailed test
+        zAlpha = jStat.normal.inv(1 - oneSMeanAlpha / 2, 0, 1);
+        zBeta = jStat.normal.inv(1 - oneSMeanPower, 0, 1);
+        break;
+    }
+    
+    // Calculate initial sample size using normal approximation
+    let n: number;
+    
+    if (power1SMeanHa === "≠") {
+      // Two-tailed test
+      n = Math.pow((zAlpha + zBeta) / effectSize, 2);
+    } else {
+      // One-tailed test
+      n = Math.pow((Math.abs(zAlpha) + zBeta) / effectSize, 2);
+    }
+    
+    // Round up to next integer for initial estimate
+    n = Math.ceil(n);
+    
+    // Iterative refinement using t-distribution
+    // Start with normal approximation and refine using actual t-distribution
+    let converged = false;
+    let iterations = 0;
+    const maxIterations = 100;
+    
+    while (!converged && iterations < maxIterations) {
+      const df = n - 1;
+      let tAlpha: number;
+      
+      // Get t-critical values
+      switch (power1SMeanHa) {
+        case "<":
+          tAlpha = jStat.studentt.inv(oneSMeanAlpha, df);
+          break;
+          
+        case ">":
+          tAlpha = jStat.studentt.inv(1 - oneSMeanAlpha, df);
+          break;
+          
+        case "≠":
+        default:
+          tAlpha = jStat.studentt.inv(1 - oneSMeanAlpha / 2, df);
+          break;
+      }
+      
+      // Calculate non-centrality parameter
+      const delta = effectSize * Math.sqrt(n);
+      
+      // Calculate actual power with current n
+      let actualPower: number;
+      
+      if (power1SMeanHa === "≠") {
+        // Two-tailed test - power is more complex for non-central t
+        // Approximate using normal distribution for simplicity
+        const criticalValue = Math.abs(tAlpha);
+        actualPower = 1 - jStat.normal.cdf(criticalValue - delta, 0, 1) + 
+                    jStat.normal.cdf(-criticalValue - delta, 0, 1);
+      } else {
+        // One-tailed test
+        if (power1SMeanMean > power1SMeanH0) {
+          actualPower = 1 - jStat.studentt.cdf(tAlpha - delta, df);
+        } else {
+          actualPower = jStat.studentt.cdf(tAlpha + delta, df);
+        }
+      }
+      
+      // Check convergence
+      if (Math.abs(actualPower - oneSMeanPower) < 0.001) {
+        converged = true;
+      } else if (actualPower < oneSMeanPower) {
+        n += 1;
+      } else {
+        converged = true; // Close enough
+      }
+      
+      iterations++;
+    }
+    
+    // Ensure minimum sample size
+    n = Math.max(n, 2);
+    
+    //return { sampleSize: Math.ceil(n) };
+    return n;
+    }
+}

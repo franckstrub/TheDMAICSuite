@@ -31,7 +31,8 @@ import {
   calculateCapabilityIndexes,
   calculateObservedPerformanceMetrics,
   assessProcessVariation,
-  inverseNormCDF
+  inverseNormCDF,
+  calculate1SMeanSampleSize
 } from "@/lib/statisticsUtils";
 import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
 import BoxPlotWith1SMedianTest from './BoxPlotWith1SMedianTest';
@@ -56,24 +57,24 @@ interface ContCTQOneSampleHypTestData {
   dataPoints?: DataPoint[];
   datasetdescription?: string;
   enableMean1SPower: boolean;
-  power1SMeanPower:number;
+  power1SMeanPower:string;
   power1SMeanHa: string;
   power1SMeanMean: number;
   power1SMeanH0: number;
   power1SMeanStdev: number;
-  power1SMeanAlpha: number;
+  power1SMeanAlpha: string;
   enableVariance1SPower: boolean;
-  power1SVariancePower:number;
+  power1SVariancePower:string;
   power1SVarianceHa: string;
   power1SVarianceStdev: number;
   power1SVarianceH0: number;
-  power1SVarianceAlpha: number;
+  power1SVarianceAlpha: string;
   enableMedian1SPower: boolean;
-  power1SMedianPower:number;
+  power1SMedianPower:string;
   power1SMedianHa: string;
   power1SMedianMedian: number;
   power1SMedianH0: number;
-  power1SMedianAlpha: number;
+  power1SMedianAlpha: string;
 }
 
 interface ContCTQOneSampleHypTestingProps {
@@ -159,9 +160,9 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [alternativemean, setAlternativemean] = useState("Less than");
   const [alternativevariance, setAlternativevariance] = useState("Less than");
   const [alternativemedian, setAlternativemedian] = useState("Less than");
-  const [power1SMeanPower, setpower1SMeanPower] = useState("0.95");
-  const [power1SMeanAlpha, setpower1SMeanAlpha] = useState("0.05");
-  const [power1SMeanHa, setpower1SMeanHa] = useState("≠");
+  const [power1SMeanPower, setPower1SMeanPower] = useState('0.95');
+  const [power1SMeanAlpha, setPower1SMeanAlpha] = useState('0.05');
+  const [power1SMeanHa, setPower1SMeanHa] = useState('≠');
 
   const [PowerSampleSizeResults, setPowerSampleSizeResults] = useState<PowerSampleSizeResults>({
     oneSMeansampleSize: 0,
@@ -227,24 +228,24 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       targetMedian: 0,
       datasetdescription: "",
       enableMean1SPower: false,
-      power1SMeanPower:0,
-      power1SMeanHa: "Different",
+      power1SMeanPower:"0",
+      power1SMeanHa: "≠",
       power1SMeanMean: 0,
       power1SMeanH0: 0,
       power1SMeanStdev: 0,
-      power1SMeanAlpha: 0,
+      power1SMeanAlpha: "0",
       enableVariance1SPower: false,
-      power1SVariancePower:0,
-      power1SVarianceHa: "Different",
+      power1SVariancePower: "0",
+      power1SVarianceHa: "≠",
       power1SVarianceStdev: 0,
       power1SVarianceH0: 0,
-      power1SVarianceAlpha: 0,
+      power1SVarianceAlpha: "0",
       enableMedian1SPower: false,
-      power1SMedianPower:0,
-      power1SMedianHa: "Different",
+      power1SMedianPower:"0",
+      power1SMedianHa: "≠",
       power1SMedianMedian: 0,
       power1SMedianH0: 0,
-      power1SMedianAlpha: 0,
+      power1SMedianAlpha: "0",
     }
   }));
 
@@ -322,8 +323,8 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
           [ctqId]: {
             ...prev[ctqId],
             enableMeanTest: config.enableMeanTest ?? true,
-            enableVarianceTest: config.enableVarianceTest ?? false,
-            enableMedianTest: config.enableMedianTest ?? false,
+            enableVarianceTest: config.enableVarianceTest ?? true,
+            enableMedianTest: config.enableMedianTest ?? true,
             targetMean: config.targetMean || 0,
             targetstdev: config.targetstdev || 0,
             targetMedian: config.targetMedian || 0,
@@ -337,13 +338,13 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             power1SMeanAlpha: config.power1SMeanAlpha || 0, 
             enableVariance1SPower: config.enableVariance1SPower ?? true,
             power1SVariancePower: config.power1SVariancePower || 0,
-            power1SVarianceHa: "≠",
+            power1SVarianceHa: config.power1SVarianceHa || "≠",
             power1SVarianceStdev: config.power1SVarianceStdev || 0,
             power1SVarianceH0: config.power1SVarianceH0 || 0,
             power1SVarianceAlpha: config.power1SVarianceAlpha || 0,
             enableMedian1SPower: config.enableMedian1SPower ?? true,
             power1SMedianPower: config.power1SMedianPower || 0,
-            power1SMedianHa: "≠",
+            power1SMedianHa: config.power1SMedianHa || "≠",
             power1SMedianMedian: config.power1SMedianMedian || 0,
             power1SMedianH0: config.power1SMedianH0 || 0,
             power1SMedianAlpha: config.power1SMedianAlpha || 0, 
@@ -372,7 +373,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       alternativemedian,
       dataPoints,
       datasetDescription: currentConfig.datasetdescription || "",
-      enableMean1SPower: currentConfig.enableMean1SPower,
+      enableMean1SPower: currentConfig.enableMean1SPower ?? true,
       power1SMeanPower:currentConfig.power1SMeanPower,
       power1SMeanHa: currentConfig.power1SMeanHa || "≠",
       power1SMeanMean: currentConfig.power1SMeanMean,
@@ -433,35 +434,40 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 ): PowerSampleSizeResults => {
 
   // Initialize with default values
-  let sampleSize: number = 100;
-  let Power: number = 1;
+  let nMean = 0;
+  let nVariance = 0;
+  let nMedian = 0;
 
-  if (sampleSize === 0 || Power ===0) {
-    toast({
-      title: "Test Run Unsuccessfully",
-      description: "No data set. The hypothesis test has not been executed.",
-    });
-    return {
-      oneSMeansampleSize: 0,
-      oneSVariancesampleSize: 0,
-      oneSMediansampleSize: 0,
-    };
-  }
-
-  const n = sampleSize;
-  const calcPower = Power;
-  toast({
-    title: "Power & Sample Size test Run Successfully",
-    description: "The Power & Sample Size test has been executed.",
-  });
-
+  if(enableMean1SPower) {
+    if(isNaN(power1SMeanPower)) {
+      toast({
+        title: "Mean Power & Sample Size test run Unsuccessfully",
+        description: "No valid Mean Power value. The Mean Power & Sample Size test has not been executed.",
+      });
+    }
+    else {
+      nMean = calculate1SMeanSampleSize(
+        power1SMeanPower,
+        power1SMeanHa,
+        power1SMeanMean,
+        power1SMeanH0,
+        power1SMeanStdev,
+        power1SMeanAlpha
+      );
+      // Update state as well
+      //
+      toast({
+        title: "Mean Power & Sample Size test Run Successfully",
+        description: "The Mean Power & Sample Size test has been executed.",
+      });
+    }
+  };
   return {
-      oneSMeansampleSize: n,
-      oneSVariancesampleSize: 2*n,
-      oneSMediansampleSize: n-10,
-    };  
-    // Update state as well
-};
+      oneSMeansampleSize: nMean,
+      oneSVariancesampleSize: nVariance,
+      oneSMediansampleSize: nMedian,
+    };
+}
 
 {/* on input change, update ContCTQOneSampleHypTestData state */}
 useEffect(() => {
@@ -1119,7 +1125,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </CardHeader>
                     <CardContent className="text-xs">
                       <tr>Power of test(1-β): 
-                        <Select value={power1SMeanPower} onValueChange={setpower1SMeanPower}>
+                        <Select value={power1SMeanPower} onValueChange={setPower1SMeanPower}>
                         <SelectTrigger id="power1SMeanPower">
                             <SelectValue placeholder="Select Power of test" />
                         </SelectTrigger>
@@ -1132,7 +1138,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         </Select>  
                       </tr>
                       <tr>Ha: 
-                        <Select value={power1SMeanHa} onValueChange={setpower1SMeanHa}>
+                        <Select value={power1SMeanHa} onValueChange={setPower1SMeanHa}>
                         <SelectTrigger id="power1SMeanHa">
                             <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
                         </SelectTrigger>
@@ -1144,7 +1150,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         </Select>  
                       </tr>
                       <tr>Alpha (α): 
-                        <Select value={power1SMeanAlpha} onValueChange={setpower1SMeanAlpha}>
+                        <Select value={power1SMeanAlpha} onValueChange={setPower1SMeanAlpha}>
                         <SelectTrigger id="power1SMeanAlpha">
                             <SelectValue placeholder="Select Alpha significance level" />
                         </SelectTrigger>
@@ -1174,6 +1180,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <tr>Standard Deviation (σ): 
                         <Input
                           type="number"
+                          min="0"
                           step="any"
                           value={ContCTQOneSampleHypTestData[ctqId]?.power1SMeanStdev ?? ''}
                           onChange={(e) => updateContCTQOneSampleHypTestDataField(
@@ -1201,7 +1208,14 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       </tr>
                       <tr className="font-medium text-sm">Delta (δ = μ-μ0): {(ContCTQOneSampleHypTestData[ctqId]?.power1SMeanMean -  ContCTQOneSampleHypTestData[ctqId]?.power1SMeanH0).toFixed(3)}
                       </tr>
-                      <tr className="font-medium text-sm">Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)}
+                      <tr className="font-medium text-sm">
+                      <Badge
+                        variant="default"
+                        className={`mt-2 mb-2 p-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
+                        title={ "Estimated Sample Size" }
+                      >
+                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)}
+                      </Badge>
                       </tr>
                     </CardContent>
                   </Card>
