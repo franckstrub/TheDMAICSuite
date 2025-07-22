@@ -295,9 +295,9 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // Load configuration data from database when available
   useEffect(() => {
-    if (configData?.config && !isLoading) {
+    if (configData && (configData as any).config && !isLoading) {
       setTimeout(() => {
-        const config = configData.config;
+        const config = (configData as any).config;
         
         // Update significanceLevel and alternative options from database
         if (config.significanceLevel) {
@@ -315,6 +315,17 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         // Update data points from database
         if (config.dataPoints && Array.isArray(config.dataPoints)) {
           setDataPoints(config.dataPoints);
+        }
+
+        // Update local power analysis state variables from database
+        if (config.power1SMeanPower) {
+          setPower1SMeanPower(config.power1SMeanPower);
+        }
+        if (config.power1SMeanHa) {
+          setPower1SMeanHa(config.power1SMeanHa);
+        }
+        if (config.power1SMeanAlpha) {
+          setPower1SMeanAlpha(config.power1SMeanAlpha);
         }
         
         // Update ContCTQOneSampleHypTestData from database
@@ -385,7 +396,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       power1SVarianceHa: currentConfig.power1SVarianceHa || "≠",
       power1SVarianceStdev: currentConfig.power1SVarianceStdev,
       power1SVarianceH0: currentConfig.power1SVarianceH0,
-      power1VarianceAlpha: currentConfig.power1SVarianceAlpha || "0",
+      power1SVarianceAlpha: currentConfig.power1SVarianceAlpha || "0",
       enableMedian1SPower: currentConfig.enableMedian1SPower ?? true,
       power1SMedianPower: currentConfig.power1SMedianPower || "0",
       power1SMedianHa: currentConfig.power1SMedianHa || "≠",
@@ -439,7 +450,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   let nMedian = 0;
 
   if(enableMean1SPower) {
-    if(isNaN(power1SMeanPower)) {
+    if(isNaN(parseFloat(power1SMeanPower))) {
       toast({
         title: "Mean Power & Sample Size test run Unsuccessfully",
         description: "No valid Mean Power value. The Mean Power & Sample Size test has not been executed.",
@@ -1126,7 +1137,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     <CardContent className="text-xs">
                       <tr>
                         <Label htmlFor="power1SMeanPower">Power of test(1-β):</Label>
-                        <Select value={power1SMeanPower} onValueChange={setPower1SMeanPower}>
+                        <Select value={power1SMeanPower} onValueChange={(value) => {
+                          setPower1SMeanPower(value);
+                          updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanPower', value);
+                        }}>
                         <SelectTrigger id="power1SMeanPower">
                             <SelectValue placeholder="Select Power of test" />
                         </SelectTrigger>
@@ -1140,7 +1154,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       </tr>
                       <tr>
                         <Label htmlFor="power1SMeanHa">Ha:</Label>
-                        <Select value={power1SMeanHa} onValueChange={setPower1SMeanHa}>
+                        <Select value={power1SMeanHa} onValueChange={(value) => {
+                          setPower1SMeanHa(value);
+                          updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanHa', value);
+                        }}>
                         <SelectTrigger id="power1SMeanHa">
                             <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
                         </SelectTrigger>
@@ -1153,7 +1170,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       </tr>
                       <tr>
                         <Label htmlFor="power1SMeanAlpha">Alpha (α):</Label> 
-                        <Select value={power1SMeanAlpha} onValueChange={setPower1SMeanAlpha}>
+                        <Select value={power1SMeanAlpha} onValueChange={(value) => {
+                          setPower1SMeanAlpha(value);
+                          updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanAlpha', value);
+                        }}>
                         <SelectTrigger id="power1SMeanAlpha">
                             <SelectValue placeholder="Select Alpha significance level" />
                         </SelectTrigger>
