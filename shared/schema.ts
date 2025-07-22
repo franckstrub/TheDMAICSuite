@@ -1362,6 +1362,31 @@ export const oneSampleHypothesisConfig = pgTable(
     // Dataset description
     datasetDescription: text("dataset_description"),
 
+    // Power analysis fields for Mean Test
+    enableMean1SPower: boolean("enable_mean_1s_power").default(false),
+    power1SMeanPower: text("power_1s_mean_power"),
+    power1SMeanHa: text("power_1s_mean_ha"),
+    power1SMeanMean: real("power_1s_mean_mean"),
+    power1SMeanH0: real("power_1s_mean_h0"),
+    power1SMeanStdev: real("power_1s_mean_stdev"),
+    power1SMeanAlpha: text("power_1s_mean_alpha"),
+
+    // Power analysis fields for Variance Test
+    enableVariance1SPower: boolean("enable_variance_1s_power").default(false),
+    power1SVariancePower: text("power_1s_variance_power"),
+    power1SVarianceHa: text("power_1s_variance_ha"),
+    power1SVarianceStdev: real("power_1s_variance_stdev"),
+    power1SVarianceH0: real("power_1s_variance_h0"),
+    power1SVarianceAlpha: text("power_1s_variance_alpha"),
+
+    // Power analysis fields for Median Test
+    enableMedian1SPower: boolean("enable_median_1s_power").default(false),
+    power1SMedianPower: text("power_1s_median_power"),
+    power1SMedianHa: text("power_1s_median_ha"),
+    power1SMedianMedian: real("power_1s_median_median"),
+    power1SMedianH0: real("power_1s_median_h0"),
+    power1SMedianAlpha: text("power_1s_median_alpha"),
+
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({
