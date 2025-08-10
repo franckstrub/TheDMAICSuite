@@ -1379,14 +1379,6 @@ export const oneSampleHypothesisConfig = pgTable(
     power1SVarianceH0: real("power_1s_variance_h0"),
     power1SVarianceAlpha: text("power_1s_variance_alpha"),
 
-    // Power analysis fields for Median Test
-    enableMedian1SPower: boolean("enable_median_1s_power").default(false),
-    power1SMedianPower: text("power_1s_median_power"),
-    power1SMedianHa: text("power_1s_median_ha"),
-    power1SMedianMedian: real("power_1s_median_median"),
-    power1SMedianH0: real("power_1s_median_h0"),
-    power1SMedianAlpha: text("power_1s_median_alpha"),
-
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({

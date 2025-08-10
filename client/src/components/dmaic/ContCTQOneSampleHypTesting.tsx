@@ -32,7 +32,8 @@ import {
   calculateObservedPerformanceMetrics,
   assessProcessVariation,
   inverseNormCDF,
-  calculate1SMeanSampleSize
+  calculate1SMeanSampleSize,
+  calculate1SVarianceSampleSize
 } from "@/lib/statisticsUtils";
 import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
 import BoxPlotWith1SMedianTest from './BoxPlotWith1SMedianTest';
@@ -57,24 +58,12 @@ interface ContCTQOneSampleHypTestData {
   dataPoints?: DataPoint[];
   datasetdescription?: string;
   enableMean1SPower: boolean;
-  power1SMeanPower:string;
-  power1SMeanHa: string;
   power1SMeanMean: number;
   power1SMeanH0: number;
   power1SMeanStdev: number;
-  power1SMeanAlpha: string;
   enableVariance1SPower: boolean;
-  power1SVariancePower:string;
-  power1SVarianceHa: string;
   power1SVarianceStdev: number;
   power1SVarianceH0: number;
-  power1SVarianceAlpha: string;
-  enableMedian1SPower: boolean;
-  power1SMedianPower:string;
-  power1SMedianHa: string;
-  power1SMedianMedian: number;
-  power1SMedianH0: number;
-  power1SMedianAlpha: string;
 }
 
 interface ContCTQOneSampleHypTestingProps {
@@ -87,8 +76,9 @@ interface ContCTQOneSampleHypTestingProps {
 
 interface PowerSampleSizeResults {
   oneSMeansampleSize: number;
+  oneSMeanactualPower: number;
   oneSVariancesampleSize: number;
-  oneSMediansampleSize: number;
+  oneSVarianceactualPower: number;
 }
 
 interface RunTestResults {
@@ -160,14 +150,18 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [alternativemean, setAlternativemean] = useState("Less than");
   const [alternativevariance, setAlternativevariance] = useState("Less than");
   const [alternativemedian, setAlternativemedian] = useState("Less than");
-  const [power1SMeanPower, setPower1SMeanPower] = useState("0.95");
+  const [power1SMeanPower, setPower1SMeanPower] = useState("0.90");
   const [power1SMeanAlpha, setPower1SMeanAlpha] = useState("0.05");
   const [power1SMeanHa, setPower1SMeanHa] = useState('≠');
+  const [power1SVariancePower, setPower1SVariancePower] = useState("0.90");
+  const [power1SVarianceAlpha, setPower1SVarianceAlpha] = useState("0.05");
+  const [power1SVarianceHa, setPower1SVarianceHa] = useState('≠');
 
   const [PowerSampleSizeResults, setPowerSampleSizeResults] = useState<PowerSampleSizeResults>({
     oneSMeansampleSize: 0,
+    oneSMeanactualPower: 0,
     oneSVariancesampleSize: 0,
-    oneSMediansampleSize: 0,
+    oneSVarianceactualPower: 0,
   });
   
   const [testResults, setTestResults] = useState<RunTestResults>({
@@ -220,7 +214,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     [ctqId]: {
       ctq: ctqName,
       testType: "One Sample Hyp-Test",
-      enableMeanTest: true,
+      enableMeanTest: false,
       enableVarianceTest: false,
       enableMedianTest: false,
       targetMean: 0,
@@ -228,24 +222,12 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       targetMedian: 0,
       datasetdescription: "",
       enableMean1SPower: false,
-      power1SMeanPower:"0",
-      power1SMeanHa: "≠",
       power1SMeanMean: 0,
       power1SMeanH0: 0,
       power1SMeanStdev: 0,
-      power1SMeanAlpha: "0",
       enableVariance1SPower: false,
-      power1SVariancePower: "0",
-      power1SVarianceHa: "≠",
       power1SVarianceStdev: 0,
       power1SVarianceH0: 0,
-      power1SVarianceAlpha: "0",
-      enableMedian1SPower: false,
-      power1SMedianPower:"0",
-      power1SMedianHa: "≠",
-      power1SMedianMedian: 0,
-      power1SMedianH0: 0,
-      power1SMedianAlpha: "0",
     }
   }));
 
@@ -327,6 +309,17 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         if (config.power1SMeanAlpha) {
           setPower1SMeanAlpha(config.power1SMeanAlpha);
         }
+
+        // Update local power analysis state variables from database
+        if (config.power1SVariancePower) {
+          setPower1SVariancePower(config.power1SVariancePower);
+        }
+        if (config.power1SVarianceHa) {
+          setPower1SVarianceHa(config.power1SVarianceHa);
+        }
+        if (config.power1SVarianceAlpha) {
+          setPower1SVarianceAlpha(config.power1SVarianceAlpha);
+        }
         
         // Update ContCTQOneSampleHypTestData from database
         setContCTQOneSampleHypTestData(prev => ({
@@ -341,24 +334,12 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             targetMedian: config.targetMedian || 0,
             datasetdescription: config.datasetDescription || "",
             enableMean1SPower: config.enableMean1SPower ?? true,
-            power1SMeanPower:config.power1SMeanPower || "0",
-            power1SMeanHa: config.power1SMeanHa || "≠",
             power1SMeanMean: config.power1SMeanMean || 0,
             power1SMeanH0: config.power1SMeanH0 || 0,
-            power1SMeanStdev: config.power1SMeanStdev || 0,
-            power1SMeanAlpha: config.power1SMeanAlpha || "0", 
+            power1SMeanStdev: config.power1SMeanStdev || 0, 
             enableVariance1SPower: config.enableVariance1SPower ?? true,
-            power1SVariancePower: config.power1SVariancePower || "0",
-            power1SVarianceHa: config.power1SVarianceHa || "≠",
             power1SVarianceStdev: config.power1SVarianceStdev || 0,
             power1SVarianceH0: config.power1SVarianceH0 || 0,
-            power1SVarianceAlpha: config.power1SVarianceAlpha || "0",
-            enableMedian1SPower: config.enableMedian1SPower ?? true,
-            power1SMedianPower: config.power1SMedianPower || "0",
-            power1SMedianHa: config.power1SMedianHa || "≠",
-            power1SMedianMedian: config.power1SMedianMedian || 0,
-            power1SMedianH0: config.power1SMedianH0 || 0,
-            power1SMedianAlpha: config.power1SMedianAlpha || "0", 
           }
         }));
       }, 0);
@@ -385,24 +366,18 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       dataPoints,
       datasetDescription: currentConfig.datasetdescription || "",
       enableMean1SPower: currentConfig.enableMean1SPower ?? true,
-      power1SMeanPower:currentConfig.power1SMeanPower || "0",
-      power1SMeanHa: currentConfig.power1SMeanHa || "≠",
+      power1SMeanPower,
+      power1SMeanHa,
       power1SMeanMean: currentConfig.power1SMeanMean,
       power1SMeanH0: currentConfig.power1SMeanH0,
       power1SMeanStdev: currentConfig.power1SMeanStdev,
-      power1SMeanAlpha: currentConfig.power1SMeanAlpha || "0",
+      power1SMeanAlpha,
       enableVariance1SPower: currentConfig.enableVariance1SPower ?? true,
-      power1SVariancePower:currentConfig.power1SVariancePower || "0",
-      power1SVarianceHa: currentConfig.power1SVarianceHa || "≠",
+      power1SVariancePower,
+      power1SVarianceHa,
       power1SVarianceStdev: currentConfig.power1SVarianceStdev,
       power1SVarianceH0: currentConfig.power1SVarianceH0,
-      power1SVarianceAlpha: currentConfig.power1SVarianceAlpha || "0",
-      enableMedian1SPower: currentConfig.enableMedian1SPower ?? true,
-      power1SMedianPower: currentConfig.power1SMedianPower || "0",
-      power1SMedianHa: currentConfig.power1SMedianHa || "≠",
-      power1SMedianMedian: currentConfig.power1SMedianMedian,
-      power1SMedianH0: currentConfig.power1SMedianH0,
-      power1SMedianAlpha: currentConfig.power1SMedianAlpha || "0",
+      power1SVarianceAlpha,
     };
     
     saveConfigMutation.mutate(configToSave);
@@ -436,18 +411,14 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   power1SVarianceStdev: number,
   power1SVarianceH0: number,
   power1SVarianceAlpha: string,
-  enableMedian1SPower: boolean,
-  power1SMedianPower:string,
-  power1SMedianHa: string,
-  power1SMedianMedian: number,
-  power1SMedianH0: number,
-  power1SMedianAlpha: string,
 ): PowerSampleSizeResults => {
 
   // Initialize with default values
+  
   let nMean = 0;
+  let actualMeanPower=0;
   let nVariance = 0;
-  let nMedian = 0;
+  let actualVariancePower=0;
 
   if(enableMean1SPower) {
     if(isNaN(parseFloat(power1SMeanPower))) {
@@ -457,7 +428,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       });
     }
     else {
-      nMean = calculate1SMeanSampleSize(
+      const result = calculate1SMeanSampleSize(
         power1SMeanPower,
         power1SMeanHa,
         power1SMeanMean,
@@ -465,19 +436,43 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         power1SMeanStdev,
         power1SMeanAlpha
       );
-      // Update state as well
-      //
-      toast({
-        title: "Mean Power & Sample Size test Run Successfully",
-        description: "The Mean Power & Sample Size test has been executed.",
-      });
+      nMean=result.sampleSize;
+      actualMeanPower= result.actualPower;      
     }
   };
+
+  if(enableVariance1SPower) {
+    if(isNaN(parseFloat(power1SVariancePower))) {
+      toast({
+        title: "Variance Power & Sample Size test run Unsuccessfully",
+        description: "No valid Variance Power value. The Variance Power & Sample Size test has not been executed.",
+      });
+    }
+    else {
+      const result = calculate1SVarianceSampleSize(
+        power1SVariancePower,
+        power1SVarianceHa,
+        power1SVarianceStdev,
+        power1SVarianceH0,
+        power1SVarianceAlpha
+      );
+      nVariance=result.sampleSize;
+      actualVariancePower= result.actualPower;      
+    }
+  };
+
+  setPowerSampleSizeResults(PowerSampleSizeResults);
+  toast({
+        title: "Power & Sample Size test Run Successfully",
+        description: "The Power & Sample Size tests have been executed.",
+      });
   return {
-      oneSMeansampleSize: nMean,
-      oneSVariancesampleSize: nVariance,
-      oneSMediansampleSize: nMedian,
-    };
+    oneSMeansampleSize: nMean,
+    oneSMeanactualPower: actualMeanPower,
+    oneSVariancesampleSize: nVariance,
+    oneSVarianceactualPower: actualVariancePower,
+  };
+
 }
 
 {/* on input change, update ContCTQOneSampleHypTestData state */}
@@ -487,47 +482,35 @@ useEffect(() => {
 
   const results = handlePowerSampleSize(
     currentConfig.enableMean1SPower ?? false,
-    currentConfig.power1SMeanPower ?? "0",
-    currentConfig.power1SMeanHa ?? "≠",
+    power1SMeanPower,
+    power1SMeanHa,
     currentConfig.power1SMeanMean ?? 0,
     currentConfig.power1SMeanH0 ?? 0,
     currentConfig.power1SMeanStdev ?? 0,
-    currentConfig.power1SMeanAlpha ?? "0",
+    power1SMeanAlpha,
     currentConfig.enableVariance1SPower ?? false,
-    currentConfig.power1SVariancePower ?? "0",
-    currentConfig.power1SVarianceHa ?? "≠",
+    power1SVariancePower,
+    power1SVarianceHa,
     currentConfig.power1SVarianceStdev ?? 0,
     currentConfig.power1SVarianceH0 ?? 0,
-    currentConfig.power1SVarianceAlpha ?? "0",
-    currentConfig.enableMedian1SPower?? false,
-    currentConfig.power1SMedianPower ?? "0",
-    currentConfig.power1SMedianHa ?? "≠",
-    currentConfig.power1SMedianMedian ?? 0,
-    currentConfig.power1SMedianH0 ?? 0,
-    currentConfig.power1SMedianAlpha ?? "0",
+    power1SVarianceAlpha,
   );
 
   setPowerSampleSizeResults(results);
 }, [
   ContCTQOneSampleHypTestData[ctqId]?.enableMean1SPower,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMeanPower,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMeanHa,
+  power1SMeanPower,
+  power1SMeanHa,
   ContCTQOneSampleHypTestData[ctqId]?.power1SMeanMean,
   ContCTQOneSampleHypTestData[ctqId]?.power1SMeanH0,
   ContCTQOneSampleHypTestData[ctqId]?.power1SMeanStdev,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMeanAlpha,
+  power1SMeanAlpha,
   ContCTQOneSampleHypTestData[ctqId]?.enableVariance1SPower,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SVariancePower,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceHa,
+  power1SVariancePower,
+  power1SVarianceHa,
   ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceStdev,
   ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceH0,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceAlpha,
-  ContCTQOneSampleHypTestData[ctqId]?.enableMedian1SPower,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMedianPower,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMedianHa,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMedianMedian,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMedianH0,
-  ContCTQOneSampleHypTestData[ctqId]?.power1SMedianAlpha,
+  power1SVarianceAlpha,
 ]);
 
   const handleRunTest = (
@@ -1114,8 +1097,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-12">
-              <div className="flex items-top ml-4 space-x-2">
+          <div className="grid grid-cols-3 gap-12 items-stretch">
+              <div className="flex items-top ml-1 h-full space-x-1">
               <Checkbox
                 id={`${ctqId}-enableMean1SPower`}
                 checked={ContCTQOneSampleHypTestData[ctqId]?.enableMean1SPower || false}
@@ -1130,33 +1113,34 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   <Label htmlFor={`${ctqId}-enableMean1SPower`} className="text-sm font-medium text-gray-700">
                   Power & Sample Size
                   </Label>
-                  <Card className="bg-gray-50">
+                  <Card className="bg-gray-50 min-h-[540px] flex flex-col">
                     <CardHeader>
-                      <CardTitle className="text-sm">Power & Sample Size 1-S Mean Hypothesis Testing</CardTitle>
+                      <CardTitle className="text-sm">Power & Sample Size 1-Sample Mean Hypothesis Testing</CardTitle>
                     </CardHeader>
                     <CardContent className="text-xs">
                       <tr>
-                        <Label htmlFor="power1SMeanPower">Power of test(1-β):</Label>
-                        <Select value={power1SMeanPower} onValueChange={(value) => {
+                        <Label htmlFor='power1SMeanPower'>Power of test(1-β):</Label>
+                        <Select value={power1SMeanPower} onValueChange={(value: string) => {
                           setPower1SMeanPower(value);
-                          updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanPower', value);
+                          //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanPower', value);
                         }}>
-                        <SelectTrigger id="power1SMeanPower">
+                        <SelectTrigger id='power1SMeanPower'>
                             <SelectValue placeholder="Select Power of test" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="0.99">99%</SelectItem>
                           <SelectItem value="0.95">95%</SelectItem>
                           <SelectItem value="0.90">90%</SelectItem>
+                          <SelectItem value="0.85">85%</SelectItem>
                           <SelectItem value="0.80">80%</SelectItem>
                         </SelectContent>
                         </Select>  
                       </tr>
                       <tr>
                         <Label htmlFor="power1SMeanHa">Ha:</Label>
-                        <Select value={power1SMeanHa} onValueChange={(value) => {
+                        <Select value={power1SMeanHa} onValueChange={(value: string) => {
                           setPower1SMeanHa(value);
-                          updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanHa', value);
+                          //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanHa', value);
                         }}>
                         <SelectTrigger id="power1SMeanHa">
                             <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
@@ -1170,9 +1154,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       </tr>
                       <tr>
                         <Label htmlFor="power1SMeanAlpha">Alpha (α):</Label> 
-                        <Select value={power1SMeanAlpha} onValueChange={(value) => {
+                        <Select value={power1SMeanAlpha} onValueChange={(value: string) => {
                           setPower1SMeanAlpha(value);
-                          updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanAlpha', value);
+                          //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanAlpha', value);
                         }}>
                         <SelectTrigger id="power1SMeanAlpha">
                             <SelectValue placeholder="Select Alpha significance level" />
@@ -1181,6 +1165,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.01">1%</SelectItem>
                           <SelectItem value="0.05">5%</SelectItem>
                           <SelectItem value="0.10">10%</SelectItem>
+                          <SelectItem value="0.15">15%</SelectItem>
                           <SelectItem value="0.20">20%</SelectItem>
                         </SelectContent>
                         </Select>  
@@ -1211,7 +1196,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                               "power1SMeanStdev", 
                               e.target.value === '' ? '' : parseFloat(e.target.value)
                           )}
-                          placeholder="Enter mean value (μ)"
+                          placeholder="Enter standard deviation value (σ)"
                           className="mt-1"
                         />
                       </tr>
@@ -1234,17 +1219,138 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <tr className="font-medium text-sm">
                       <Badge
                         variant="default"
-                        className={`mt-2 mb-2 p-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
+                        className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
                         title={ "Estimated Sample Size" }
                       >
-                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)}
+                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)} <br />
+                        Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower*100).toFixed(2)}%
                       </Badge>
                       </tr>
                     </CardContent>
                   </Card>
                 </div>
               )}
-            </div>
+              </div>
+
+              <div className="flex items-top ml-1 space-x-1">
+              <Checkbox
+                id={`${ctqId}-enableVariance1SPower`}
+                checked={ContCTQOneSampleHypTestData[ctqId]?.enableVariance1SPower || false}
+                onCheckedChange={(checked) => updateContCTQOneSampleHypTestDataField(ctqId, "enableVariance1SPower", checked)}
+              />
+              {!ContCTQOneSampleHypTestData[ctqId]?.enableVariance1SPower ? (
+                <Label htmlFor={`${ctqId}-enableVariance1SPower`} className="items-top text-sm font-sm text-gray-400">
+                  Power & Sample Size
+                </Label>
+                ) : (
+                <div>
+                  <Label htmlFor={`${ctqId}-enableVariance1SPower`} className="text-sm font-medium text-gray-700">
+                  Power & Sample Size
+                  </Label>
+                  <Card className="bg-gray-50 min-h-[540px] flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="text-sm">Power & Sample Size 1-Sample Variance Hypothesis Testing</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-xs">
+                      <tr>
+                        <Label htmlFor='power1SVariancePower'>Power of test(1-β):</Label>
+                        <Select value={power1SVariancePower} onValueChange={(value: string) => {
+                          setPower1SVariancePower(value);
+                          //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanPower', value);
+                        }}>
+                        <SelectTrigger id='power1SVariancePower'>
+                            <SelectValue placeholder="Select Power of test" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.99">99%</SelectItem>
+                          <SelectItem value="0.95">95%</SelectItem>
+                          <SelectItem value="0.90">90%</SelectItem>
+                          <SelectItem value="0.85">85%</SelectItem>
+                          <SelectItem value="0.80">80%</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      <tr>
+                        <Label htmlFor="power1SVarianceHa">Ha:</Label>
+                        <Select value={power1SVarianceHa} onValueChange={(value: string) => {
+                          setPower1SVarianceHa(value);
+                          //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanHa', value);
+                        }}>
+                        <SelectTrigger id="power1SVarianceHa">
+                            <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=">">&gt;</SelectItem>
+                          <SelectItem value="≠">≠</SelectItem>
+                          <SelectItem value="<">&lt;</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      <tr>
+                        <Label htmlFor="power1SVarianceAlpha">Alpha (α):</Label> 
+                        <Select value={power1SVarianceAlpha} onValueChange={(value: string) => {
+                          setPower1SVarianceAlpha(value);
+                          //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanAlpha', value);
+                        }}>
+                        <SelectTrigger id="power1SVarianceAlpha">
+                            <SelectValue placeholder="Select Alpha significance level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.01">1%</SelectItem>
+                          <SelectItem value="0.05">5%</SelectItem>
+                          <SelectItem value="0.10">10%</SelectItem>
+                          <SelectItem value="0.15">15%</SelectItem>
+                          <SelectItem value="0.20">20%</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      
+                      <tr>Standard Deviation (σ): 
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceStdev ?? ''}
+                          onChange={(e) => updateContCTQOneSampleHypTestDataField(
+                              ctqId, 
+                              "power1SVarianceStdev", 
+                              e.target.value === '' ? '' : parseFloat(e.target.value)
+                          )}
+                          placeholder="Enter standard deviation value (σ)"
+                          className="mt-1"
+                        />
+                      </tr>
+                      <tr>Hypothetized std dev H0 (σ0): 
+                        <Input
+                          type="number"
+                          step="any"
+                          value={ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceH0 ?? ''}
+                          onChange={(e) => updateContCTQOneSampleHypTestDataField(
+                              ctqId, 
+                              "power1SVarianceH0", 
+                              e.target.value === '' ? '' : parseFloat(e.target.value)
+                          )}
+                          placeholder="Enter hypothetized standard deviation (σ0)"
+                          className="mt-1"
+                        />
+                      </tr>
+                      <tr className="font-medium text-sm">Std dev Ratio (σ/σ0): {(ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceStdev /  ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceH0).toFixed(3)}
+                      </tr>
+                      <tr className="font-medium text-sm">
+                      <Badge
+                        variant="default"
+                        className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
+                        title={ "Estimated Sample Size" }
+                      >
+                        Sample Size (n): {PowerSampleSizeResults.oneSVariancesampleSize.toFixed(1)} <br />
+                        Actual Power: {(PowerSampleSizeResults.oneSVarianceactualPower*100).toFixed(2)}%
+                      </Badge>
+                      </tr>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              </div>
           </div>
           <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
             {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ? (

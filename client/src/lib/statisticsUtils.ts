@@ -1384,6 +1384,11 @@ function gamma(z: number): number {
   const sqrt2pi = Math.sqrt(2 * Math.PI);
   
   return sqrt2pi * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+};
+
+interface PowerAnalysisResult {
+  sampleSize: number;
+  actualPower: number;
 }
 
 export function calculate1SMeanSampleSize(
@@ -1393,55 +1398,43 @@ export function calculate1SMeanSampleSize(
   power1SMeanH0: number,
   power1SMeanStdev: number,
   power1SMeanAlpha: string
-): 
-  number
- {
+): PowerAnalysisResult {
   const oneSMeanPower = parseFloat(power1SMeanPower);
   const oneSMeanAlpha = parseFloat(power1SMeanAlpha);
+
   // Input validation
   if (oneSMeanPower <= 0 || oneSMeanPower >= 1) {
-    //throw new Error("Power must be between 0 and 1");
+    throw new Error("Power must be between 0 and 1");
   }
   if (oneSMeanAlpha <= 0 || oneSMeanAlpha >= 1) {
-    //throw new Error("Alpha must be between 0 and 1");
+    throw new Error("Alpha must be between 0 and 1");
   }
-  if (power1SMeanStdev <= 0) {
-    //throw new Error("Standard deviation must be positive");
+  if (power1SMeanStdev <= 0 || power1SMeanMean === power1SMeanH0) {
+    return { sampleSize: 0, actualPower: 0 };
   }
-  if (power1SMeanMean === power1SMeanH0) {
-    //throw new Error("Alternative mean cannot equal null hypothesis mean");
+
+  // Calculate effect size
+  const effectSize = Math.abs(power1SMeanMean - power1SMeanH0) / power1SMeanStdev;
+
+  // Critical values
+  let zAlpha: number;
+  let zBeta: number;
+
+  switch (power1SMeanHa) {
+    case "<":
+      zAlpha = jStat.normal.inv(oneSMeanAlpha, 0, 1);
+      zBeta = jStat.normal.inv(oneSMeanPower, 0, 1);
+      break;
+    case ">":
+      zAlpha = jStat.normal.inv(1 - oneSMeanAlpha, 0, 1);
+      zBeta = jStat.normal.inv(oneSMeanPower, 0, 1);
+      break;
+    case "≠":
+    default:
+      zAlpha = jStat.normal.inv(1 - oneSMeanAlpha / 2, 0, 1);
+      zBeta = jStat.normal.inv(oneSMeanPower, 0, 1);
+      break;
   }
-  if (power1SMeanStdev === 0) {
-    return 0;
-  }
-  else {
-    // Calculate effect size (standardized difference)
-    const effectSize = Math.abs(power1SMeanMean - power1SMeanH0) / power1SMeanStdev;
-    
-    // Determine critical values based on test type
-    let zAlpha: number;
-    let zBeta: number;
-    
-    switch (power1SMeanHa) {
-      case "<":
-        // One-tailed test (left tail)
-        zAlpha = jStat.normal.inv(oneSMeanAlpha, 0, 1);
-        zBeta = jStat.normal.inv(1 - oneSMeanPower, 0, 1);
-        break;
-        
-      case ">":
-        // One-tailed test (right tail)
-        zAlpha = jStat.normal.inv(1 - oneSMeanAlpha, 0, 1);
-        zBeta = jStat.normal.inv(1 - oneSMeanPower, 0, 1);
-        break;
-        
-      case "≠":
-      default:
-        // Two-tailed test
-        zAlpha = jStat.normal.inv(1 - oneSMeanAlpha / 2, 0, 1);
-        zBeta = jStat.normal.inv(1 - oneSMeanPower, 0, 1);
-        break;
-    }
     
     // Calculate initial sample size using normal approximation
     let n: number;
@@ -1462,6 +1455,7 @@ export function calculate1SMeanSampleSize(
     let converged = false;
     let iterations = 0;
     const maxIterations = 100;
+    let actualPower = 0;
     
     while (!converged && iterations < maxIterations) {
       const df = n - 1;
@@ -1487,14 +1481,18 @@ export function calculate1SMeanSampleSize(
       const delta = effectSize * Math.sqrt(n);
       
       // Calculate actual power with current n
-      let actualPower: number;
+      //let actualPower: number;
       
       if (power1SMeanHa === "≠") {
         // Two-tailed test - power is more complex for non-central t
-        // Approximate using normal distribution for simplicity
+        // Approximate using Student
         const criticalValue = Math.abs(tAlpha);
-        actualPower = 1 - jStat.normal.cdf(criticalValue - delta, 0, 1) + 
-                    jStat.normal.cdf(-criticalValue - delta, 0, 1);
+        {/*
+          actualPower = 1 - jStat.normal.cdf(criticalValue - delta, 0, 1) + 
+                    jStat.normal.cdf(-criticalValue - delta, 0, 1); */}
+          actualPower = 1 - jStat.studentt.cdf(criticalValue - delta, df) + 
+                    jStat.studentt.cdf(-criticalValue - delta, df);
+          
       } else {
         // One-tailed test
         if (power1SMeanMean > power1SMeanH0) {
@@ -1520,6 +1518,167 @@ export function calculate1SMeanSampleSize(
     n = Math.max(n, 2);
     
     //return { sampleSize: Math.ceil(n) };
-    return n;
+    return {
+    sampleSize: n,
+    actualPower: actualPower
+    };
+};
+
+interface PowerAnalysisResult {
+  sampleSize: number;
+  actualPower: number;
+}
+export function calculate1SVarianceSampleSize(
+  power1SVariancePower: string,
+  power1SVarianceHa: string,
+  power1SVarianceStdev: number,
+  power1SVarianceH0: number,
+  power1SVarianceAlpha: string
+): PowerAnalysisResult {
+  const oneSVariancePower = parseFloat(power1SVariancePower);
+  const oneSVarianceAlpha = parseFloat(power1SVarianceAlpha);
+
+  // Input validation
+  if (oneSVariancePower <= 0 || oneSVariancePower >= 1) {
+    //throw new Error("Power must be between 0 and 1");
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  if (oneSVarianceAlpha <= 0 || oneSVarianceAlpha >= 1) {
+    //throw new Error("Alpha must be between 0 and 1");
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  if (power1SVarianceStdev === power1SVarianceH0) {
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  // Calculate variance ratio
+  const sigma0Squared = power1SVarianceH0 * power1SVarianceH0;  // H0 variance
+  const sigma1Squared = power1SVarianceStdev * power1SVarianceStdev;  // H1 variance
+  const varianceRatio = sigma1Squared / sigma0Squared;
+
+  /**
+   * Calculate power for a given sample size using Chi-square distribution
+   * Test statistic: χ² = (n-1)s²/σ₀² ~ χ²(n-1) under H0
+   * Under H1: χ² ~ χ²(n-1, λ) where λ is non-centrality parameter
+   */
+  function calculatePowerForN(n: number): number {
+    if (n < 2) return 0; // Need at least 2 observations for variance test
+    
+    const df = n - 1; // degrees of freedom
+    
+    try {
+      // Find critical values under H0
+      let criticalLower: number, criticalUpper: number;
+      
+      switch (power1SVarianceHa) {
+        case "<":
+          // H1: σ² < σ₀² (left-tailed test)
+          criticalLower = jStat.chisquare.inv(oneSVarianceAlpha, df);
+          criticalUpper = Infinity;
+          break;
+        case ">":
+          // H1: σ² > σ₀² (right-tailed test)
+          criticalUpper = jStat.chisquare.inv(1 - oneSVarianceAlpha, df);
+          criticalLower = 0;
+          break;
+        case "≠":
+        default:
+          // Two-sided test: split alpha
+          const alphaPerSide = oneSVarianceAlpha / 2;
+          criticalLower = jStat.chisquare.inv(alphaPerSide, df);
+          criticalUpper = jStat.chisquare.inv(1 - alphaPerSide, df);
+          break;
+      }
+      
+      // Calculate power under alternative hypothesis
+      // Under H1, the test statistic follows a scaled chi-square distribution
+      // χ² = (n-1)s²/σ₀² has distribution (1/varianceRatio) * χ²(n-1) under H1
+      
+      let power = 0;
+      
+      switch (power1SVarianceHa) {
+        case "<":
+          // Power = P(χ² < criticalLower/varianceRatio) under H1
+          const scaledLowerLess = criticalLower / varianceRatio;
+          power = jStat.chisquare.cdf(scaledLowerLess, df);
+          break;
+        case ">":
+          // Power = P(χ² > criticalUpper/varianceRatio) under H1
+          const scaledUpperGreater = criticalUpper / varianceRatio;
+          power = 1 - jStat.chisquare.cdf(scaledUpperGreater, df);
+          break;
+        case "≠":
+        default:
+          // Power = P(χ² < criticalLower/varianceRatio) + P(χ² > criticalUpper/varianceRatio)
+          const scaledLower = criticalLower / varianceRatio;
+          const scaledUpper = criticalUpper / varianceRatio;
+          
+          const powerLower = jStat.chisquare.cdf(scaledLower, df);
+          const powerUpper = 1 - jStat.chisquare.cdf(scaledUpper, df);
+          power = powerLower + powerUpper;
+          break;
+      }
+      
+      return Math.max(0, Math.min(1, power));
+      
+    } catch (error) {
+      console.error("Error calculating power:", error);
+      return 0;
     }
+  }
+
+  // Binary search for minimum sample size that achieves desired power
+  let lowerBound = 2;
+  let upperBound = 50;
+  
+  // First, find a reasonable upper bound
+  while (calculatePowerForN(upperBound) < oneSVariancePower && upperBound < 10000) {
+    upperBound = Math.min(upperBound * 2, upperBound + 100);
+  }
+  
+  // If we couldn't reach desired power even with large sample
+  if (calculatePowerForN(upperBound) < oneSVariancePower) {
+    // Try with maximum reasonable sample size
+    upperBound = 10000;
+    const maxPower = calculatePowerForN(upperBound);
+    if (maxPower < oneSVariancePower) {
+      // Return the maximum achievable power
+      return {
+        sampleSize: upperBound,
+        actualPower: Math.round(maxPower * 10000) / 10000
+      };
+    }
+  }
+  
+  // Binary search for optimal sample size
+  let bestN = upperBound;
+  
+  while (upperBound - lowerBound > 1) {
+    const midN = Math.floor((lowerBound + upperBound) / 2);
+    const power = calculatePowerForN(midN);
+    
+    if (power >= oneSVariancePower) {
+      bestN = midN;
+      upperBound = midN;
+    } else {
+      lowerBound = midN;
+    }
+  }
+  
+  // Check both bounds to ensure we have the minimum n
+  const powerLower = calculatePowerForN(lowerBound);
+  const powerUpper = calculatePowerForN(upperBound);
+  
+  if (powerLower >= oneSVariancePower) {
+    bestN = lowerBound;
+  } else if (powerUpper >= oneSVariancePower) {
+    bestN = upperBound;
+  }
+  
+  // Calculate final actual power
+  const actualPower = calculatePowerForN(bestN);
+  
+  return {
+    sampleSize: bestN,
+    actualPower: Math.round(actualPower * 10000) / 10000
+  };
 }
