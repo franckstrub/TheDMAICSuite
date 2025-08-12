@@ -200,12 +200,16 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   // Data input state for Two Sample test
   const [dataSet1, setDataSet1] = useState<DataPoint[]>([]);
   const [dataSet2, setDataSet2] = useState<DataPoint[]>([]);
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue1, setInputValue1] = useState("");
+  const [inputValue2, setInputValue2] = useState("");
   const [pasteInput, setPasteInput] = useState("");
   const [focusedCell, setFocusedCell] = useState<number>(-1);
-  const [editingCell, setEditingCell] = useState<number>(-1);
-  const [editValue, setEditValue] = useState<string>("");
-  const [undoState, setUndoState] = useState<DataPoint[] | null>(null);
+  const [editingCell1, setEditingCell1] = useState<number>(-1);
+  const [editingCell2, setEditingCell2] = useState<number>(-1);
+  const [editValue1, setEditValue1] = useState<string>("");
+  const [editValue2, setEditValue2] = useState<string>("");
+  const [undoState1, setUndoState1] = useState<DataPoint[] | null>(null);
+  const [undoState2, setUndoState2] = useState<DataPoint[] | null>(null);
   const [showUndoButton, setShowUndoButton] = useState(false);
   const [showBoxPlot, setShowBoxPlot] = useState(false);
   
@@ -797,36 +801,49 @@ useEffect(() => {
   ContCTQTwoSampleHypTestData[ctqId]?.deltaMedian0
 ]);
 
-// Undo function - restore to previous state and clear undo state (like ProcessCapability)
-  const handleUndo = () => {
-    if (undoState) {
-      setDataSet1(JSON.parse(JSON.stringify(undoState)));
-      setUndoState(null); // Clear the undo state after using it
+// Undo functions - restore to previous state and clear undo state
+  const handleUndo1 = () => {
+    if (undoState1) {
+      setDataSet1(JSON.parse(JSON.stringify(undoState1)));
+      setUndoState1(null); // Clear the undo state after using it
       setShowUndoButton(false);
       
       toast({
         title: "Undo Complete",
-        description: "Previous operation has been undtwo",
+        description: "Previous operation on Dataset 1 has been undone",
+      });
+    }
+  };
+
+  const handleUndo2 = () => {
+    if (undoState2) {
+      setDataSet2(JSON.parse(JSON.stringify(undoState2)));
+      setUndoState2(null); // Clear the undo state after using it
+      setShowUndoButton(false);
+      
+      toast({
+        title: "Undo Complete",
+        description: "Previous operation on Dataset 2 has been undone",
       });
     }
   };
 
   // Functions for data input
-  const addDataPoint = (value: string) => {
+  const addDataPoint1 = (value: string) => {
     if (!value.trim()) return;
     
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return;
     
     // Save current state before making changes
-    setUndoState(JSON.parse(JSON.stringify(dataSet1)));
+    setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
     
     setDataSet1(prev => [
       ...prev,
       { indexNumber: prev.length + 1, dataValue: numericValue }
     ]);
     
-    setInputValue("");
+    setInputValue1("");
     
     // Auto-scroll to show the newly added row after a short delay
     setTimeout(() => {
@@ -836,9 +853,33 @@ useEffect(() => {
     }, 100);
   };
 
-  const handleDeleteDataPoint = (index: number) => {
+  const addDataPoint2 = (value: string) => {
+    if (!value.trim()) return;
+    
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return;
+    
     // Save current state before making changes
-    setUndoState(JSON.parse(JSON.stringify(dataSet1)));
+    setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+    
+    setDataSet2(prev => [
+      ...prev,
+      { indexNumber: prev.length + 1, dataValue: numericValue }
+    ]);
+    
+    setInputValue2("");
+    
+    // Auto-scroll to show the newly added row after a short delay
+    setTimeout(() => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+      }
+    }, 100);
+  };
+
+  const handleDeleteDataPoint1 = (index: number) => {
+    // Save current state before making changes
+    setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
     
     setDataSet1(prev => {
       const updatedPoints = prev.filter((_, i) => i !== index);
@@ -856,8 +897,28 @@ useEffect(() => {
     });
   };
 
-  // Handle paste from Excel functionality
-  const handlePasteData = (event: React.ClipboardEvent) => {
+  const handleDeleteDataPoint2 = (index: number) => {
+    // Save current state before making changes
+    setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+    
+    setDataSet2(prev => {
+      const updatedPoints = prev.filter((_, i) => i !== index);
+      // Re-index the remaining points
+      const reindexedPoints = updatedPoints.map((point, i) => ({
+        ...point,
+        indexNumber: i + 1
+      }));
+      return reindexedPoints;
+    });
+    
+    toast({
+      title: "Data Point Deleted",
+      description: "The data point has been removed and the list has been re-indexed.",
+    });
+  };
+
+  // Handle paste from Excel functionality for Dataset 1
+  const handlePasteData1 = (event: React.ClipboardEvent) => {
     event.preventDefault();
     const pastedData = event.clipboardData.getData('text/plain');
     
@@ -878,12 +939,12 @@ useEffect(() => {
       
       if (newDataPoints.length > 0) {
         // Save current state before making changes
-        setUndoState(JSON.parse(JSON.stringify(dataSet1)));
+        setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
         
         setDataSet1(prev => [...prev, ...newDataPoints]);
         setPasteInput("");
         toast({
-          title: "Data Imported",
+          title: "Data Imported to Dataset 1",
           description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
         });
         
@@ -904,8 +965,56 @@ useEffect(() => {
     }
   };
 
-  // Handle paste specifically for editing cells - handles multiple values starting from clicked cell
-  const handleCellPaste = (event: React.ClipboardEvent, index: number) => {
+  // Handle paste from Excel functionality for Dataset 2
+  const handlePasteData2 = (event: React.ClipboardEvent) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const lines = pastedData.trim().split('\n');
+      const newDataPoints: DataPoint[] = [];
+      
+      lines.forEach((line, index) => {
+        const value = line.trim();
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          newDataPoints.push({
+            indexNumber: dataSet2.length + index + 1,
+            dataValue: numericValue
+          });
+        }
+      });
+      
+      if (newDataPoints.length > 0) {
+        // Save current state before making changes
+        setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+        
+        setDataSet2(prev => [...prev, ...newDataPoints]);
+        setPasteInput("");
+        toast({
+          title: "Data Imported to Dataset 2",
+          description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
+        });
+        
+        // Auto-scroll to show the newly added rows after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+          }
+        }, 100);
+      }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    }
+  };
+
+  // Handle paste specifically for editing cells - Dataset 1
+  const handleCellPaste1 = (event: React.ClipboardEvent, index: number) => {
     event.preventDefault();
     const pastedData = event.clipboardData.getData('text/plain');
     
@@ -923,7 +1032,7 @@ useEffect(() => {
       
       if (newValues.length > 0) {
         // Save current state before making changes
-        setUndoState(JSON.parse(JSON.stringify(dataSet1)));
+        setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
         
         setDataSet1(prev => {
           const updatedPoints = [...prev];
@@ -950,7 +1059,78 @@ useEffect(() => {
         });
         
         toast({
-          title: "Data Pasted",
+          title: "Data Pasted to Dataset 1",
+          description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
+        });
+        
+        // Auto-scroll to show the newly pasted data after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            const lastPastedIndex = index + newValues.length - 1;
+            // Calculate the position of the last pasted row
+            const rowHeight = 50; // Approximate row height
+            const scrollPosition = lastPastedIndex * rowHeight;
+            tableContainerRef.current.scrollTop = scrollPosition;
+          }
+        }, 100);
+      }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    }
+  };
+
+  // Handle paste specifically for editing cells - Dataset 2
+  const handleCellPaste2 = (event: React.ClipboardEvent, index: number) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const lines = pastedData.trim().split('\n');
+      const newValues: number[] = [];
+      
+      lines.forEach((line) => {
+        const value = line.trim();
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      });
+      
+      if (newValues.length > 0) {
+        // Save current state before making changes
+        setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+        
+        setDataSet2(prev => {
+          const updatedPoints = [...prev];
+          
+          // Update existing cells starting from the clicked index
+          newValues.forEach((value, i) => {
+            const targetIndex = index + i;
+            if (targetIndex < updatedPoints.length) {
+              // Update existing cell
+              updatedPoints[targetIndex] = {
+                ...updatedPoints[targetIndex],
+                dataValue: value
+              };
+            } else {
+              // Create new data point
+              updatedPoints.push({
+                indexNumber: updatedPoints.length + 1,
+                dataValue: value
+              });
+            }
+          });
+          
+          return updatedPoints;
+        });
+        
+        toast({
+          title: "Data Pasted to Dataset 2",
           description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
         });
         
@@ -1016,17 +1196,17 @@ useEffect(() => {
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
   }, [undoState, activeTab, ctqName]);
 
-  // Handle cell editing
-  const startEditing = (index: number, currentValue: number) => {
-    setEditingCell(index);
-    setEditValue(currentValue.toString());
+  // Handle cell editing for Dataset 1
+  const startEditing1 = (index: number, currentValue: number) => {
+    setEditingCell1(index);
+    setEditValue1(currentValue.toString());
   };
 
-  const saveEdit = (index: number) => {
-    const numericValue = parseFloat(editValue);
+  const saveEdit1 = (index: number) => {
+    const numericValue = parseFloat(editValue1);
     if (!isNaN(numericValue)) {
       // Save current state before making changes
-      setUndoState(JSON.parse(JSON.stringify(dataSet1)));
+      setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
       
       setDataSet1(prev => 
         prev.map((point, i) => 
@@ -1034,13 +1214,40 @@ useEffect(() => {
         )
       );
     }
-    setEditingCell(-1);
-    setEditValue("");
+    setEditingCell1(-1);
+    setEditValue1("");
   };
 
-  const cancelEdit = () => {
-    setEditingCell(-1);
-    setEditValue("");
+  const cancelEdit1 = () => {
+    setEditingCell1(-1);
+    setEditValue1("");
+  };
+
+  // Handle cell editing for Dataset 2
+  const startEditing2 = (index: number, currentValue: number) => {
+    setEditingCell2(index);
+    setEditValue2(currentValue.toString());
+  };
+
+  const saveEdit2 = (index: number) => {
+    const numericValue = parseFloat(editValue2);
+    if (!isNaN(numericValue)) {
+      // Save current state before making changes
+      setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+      
+      setDataSet2(prev => 
+        prev.map((point, i) => 
+          i === index ? { ...point, dataValue: numericValue } : point
+        )
+      );
+    }
+    setEditingCell2(-1);
+    setEditValue2("");
+  };
+
+  const cancelEdit2 = () => {
+    setEditingCell2(-1);
+    setEditValue2("");
   };
   type AlternativeMeanOption = "Less than" | "Greater than" | "Different";
 
@@ -1712,13 +1919,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </td>
                     <td className="px-4 py-2">
                         <Input
-                        id="add-data-input"
+                        id="add-data-input-1"
                         type="number"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        value={inputValue1}
+                        onChange={(e) => setInputValue1(e.target.value)}
                         onKeyPress={(e) => {
                             if (e.key === 'Enter') {
-                            addDataPoint(inputValue);
+                            addDataPoint1(inputValue1);
                             }
                         }}
                         onPaste={(e) => {
@@ -1728,12 +1935,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
 
                             if (lines.length > 1) {
                             // Multiple values - use the general paste handler
-                            handlePasteData(e);
+                            handlePasteData1(e);
                             } else {
                             // Single value - set it in the input field
                             const value = lines[0]?.trim();
                             if (value) {
-                                setInputValue(value);
+                                setInputValue1(value);
                             }
                             }
                         }}
@@ -1744,8 +1951,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </td>
                     <td className="px-4 py-2">
                         <Button
-                        onClick={() => addDataPoint(inputValue)}
-                        disabled={!inputValue.trim()}
+                        onClick={() => addDataPoint1(inputValue1)}
+                        disabled={!inputValue1.trim()}
                         size="sm"
                         >
                         Add
@@ -1920,13 +2127,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </td>
                     <td className="px-4 py-2">
                         <Input
-                        id="add-data-input"
+                        id="add-data-input-2"
                         type="number"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        value={inputValue2}
+                        onChange={(e) => setInputValue2(e.target.value)}
                         onKeyPress={(e) => {
                             if (e.key === 'Enter') {
-                            addDataPoint(inputValue);
+                            addDataPoint2(inputValue2);
                             }
                         }}
                         onPaste={(e) => {
@@ -1936,12 +2143,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
 
                             if (lines.length > 1) {
                             // Multiple values - use the general paste handler
-                            handlePasteData(e);
+                            handlePasteData2(e);
                             } else {
                             // Single value - set it in the input field
                             const value = lines[0]?.trim();
                             if (value) {
-                                setInputValue(value);
+                                setInputValue2(value);
                             }
                             }
                         }}
@@ -1952,8 +2159,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </td>
                     <td className="px-4 py-2">
                         <Button
-                        onClick={() => addDataPoint(inputValue)}
-                        disabled={!inputValue.trim()}
+                        onClick={() => addDataPoint2(inputValue2)}
+                        disabled={!inputValue2.trim()}
                         size="sm"
                         >
                         Add
