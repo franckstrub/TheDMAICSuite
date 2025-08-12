@@ -203,20 +203,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [inputValue1, setInputValue1] = useState("");
   const [inputValue2, setInputValue2] = useState("");
   const [pasteInput, setPasteInput] = useState("");
-  const [focusedCell1, setFocusedCell1] = useState<number>(-1);
-  const [focusedCell2, setFocusedCell2] = useState<number>(-1);
-  
-  // Unified focus tracking: { dataset: 1 | 2 | null, row: number }
-  const [activeDatasetFocus, setActiveDatasetFocus] = useState<{ dataset: 1 | 2 | null; row: number }>({ dataset: null, row: -1 });
-  
-  // Use a ref to store the current focus state for immediate access in keyboard events
-  const activeDatasetFocusRef = useRef<{ dataset: 1 | 2 | null; row: number }>({ dataset: null, row: -1 });
-  
-  // Update ref whenever state changes
-  useEffect(() => {
-    activeDatasetFocusRef.current = activeDatasetFocus;
-    console.log('activeDatasetFocus changed to:', activeDatasetFocus);
-  }, [activeDatasetFocus]);
+  const [focusedCell, setFocusedCell] = useState<number>(-1);
   const [editingCell1, setEditingCell1] = useState<number>(-1);
   const [editingCell2, setEditingCell2] = useState<number>(-1);
   const [editValue1, setEditValue1] = useState<string>("");
@@ -852,7 +839,7 @@ useEffect(() => {
       setDataSet1([]);
       setInputValue1("");
       setPasteInput("");
-      setFocusedCell1(-1);
+      setFocusedCell(-1);
       setEditingCell1(-1);
       setEditValue1("");
       
@@ -873,7 +860,7 @@ useEffect(() => {
       setDataSet2([]);
       setInputValue2("");
       setPasteInput("");
-      setFocusedCell2(-1);
+      setFocusedCell(-1);
       setEditingCell2(-1);
       setEditValue2("");
       
@@ -1297,300 +1284,6 @@ useEffect(() => {
     }
   };
 
-  // Handle focused cell paste for Dataset 1 - exact copy from One Sample functionality
-  const handleFocusedCellPaste1 = (pasteData: string) => {
-    if (focusedCell1 === -1) {
-      toast({
-        title: "No Cell Focused",
-        description: "Please click on a data cell first to set the starting position for paste.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Save current state before making changes
-      setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
-      setShowUndoButton(true);
-
-      // Parse the pasted data
-      const rows = pasteData.trim().split('\n');
-      const newValues: number[] = [];
-      
-      rows.forEach(row => {
-        let cells: string[] = [];
-        
-        if (row.includes('\t')) {
-          // Excel data with tabs - standard Excel copy format
-          cells = row.split('\t');
-        } else {
-          // No tabs - could be single column or comma-separated
-          // First, try to detect if this is a single French decimal number
-          const trimmedRow = row.trim();
-          
-          // Check if this looks like a single French decimal number (digits, optional comma, digits)
-          const frenchDecimalPattern = /^-?\d+,\d+$/;
-          if (frenchDecimalPattern.test(trimmedRow)) {
-            // This is a single French decimal number, don't split by comma
-            cells = [trimmedRow];
-          } else if (trimmedRow.includes(',')) {
-            // Contains commas but doesn't match French decimal pattern
-            // Split by comma but be careful about decimal commas
-            const parts = trimmedRow.split(',');
-            cells = [];
-            
-            for (let i = 0; i < parts.length; i++) {
-              const part = parts[i].trim();
-              
-              // Check if this part combined with next part could be a French decimal
-              if (i < parts.length - 1) {
-                const nextPart = parts[i + 1].trim();
-                const combined = part + ',' + nextPart;
-                
-                // If combined looks like a French decimal, combine them
-                if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
-                  cells.push(combined);
-                  i++; // Skip next part as we combined it
-                  continue;
-                }
-              }
-              
-              // Otherwise, treat as separate cell
-              if (part !== '') {
-                cells.push(part);
-              }
-            }
-          } else {
-            // No commas, treat as single cell
-            cells = [trimmedRow];
-          }
-        }
-
-        // Parse each cell as a number
-        cells.forEach(cellValue => {
-          if (cellValue.trim() !== '') {
-            // Handle different decimal separators (French regional settings)
-            let processedValue = cellValue.trim();
-            
-            // Handle European format with comma as decimal separator
-            if (processedValue.includes(',') && !processedValue.includes('.')) {
-              processedValue = processedValue.replace(',', '.');
-            }
-            
-            // Remove any thousands separators (spaces, apostrophes)
-            processedValue = processedValue.replace(/[\s']/g, '');
-            
-            const numericValue = parseFloat(processedValue);
-            if (!isNaN(numericValue)) {
-              newValues.push(numericValue);
-            }
-          }
-        });
-      });
-
-      if (newValues.length > 0) {
-        setDataSet1(prev => {
-          const updatedPoints = [...prev];
-          
-          // Update existing cells or add new ones starting from focused cell
-          newValues.forEach((value, i) => {
-            const targetIndex = focusedCell1 + i;
-            if (targetIndex < updatedPoints.length) {
-              // Update existing cell
-              updatedPoints[targetIndex] = {
-                ...updatedPoints[targetIndex],
-                dataValue: value
-              };
-            } else {
-              // Add new data point
-              updatedPoints.push({
-                indexNumber: targetIndex + 1,
-                dataValue: value
-              });
-            }
-          });
-          
-          return updatedPoints;
-        });
-
-        toast({
-          title: "Data Pasted to Dataset 1",
-          description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell1 + 1}.`,
-        });
-      } else {
-        toast({
-          title: "No Valid Data",
-          description: "No valid numeric data found in clipboard.",
-          variant: "destructive",
-        });
-      }
-
-      // Auto-scroll to show the newly pasted data
-      setTimeout(() => {
-        if (tableContainerRef.current) {
-          const lastPastedIndex = focusedCell1 + newValues.length - 1;
-          const rowHeight = 50;
-          const scrollPosition = lastPastedIndex * rowHeight;
-          tableContainerRef.current.scrollTop = scrollPosition;
-        }
-      }, 100);
-      
-    } catch (error) {
-      toast({
-        title: "Paste Error",
-        description: "Failed to paste data. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Handle focused cell paste for Dataset 2 - exact copy from One Sample functionality
-  const handleFocusedCellPaste2 = (pasteData: string) => {
-    if (focusedCell2 === -1) {
-      toast({
-        title: "No Cell Focused",
-        description: "Please click on a data cell first to set the starting position for paste.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Save current state before making changes
-      setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
-      setShowUndoButton(true);
-
-      // Parse the pasted data
-      const rows = pasteData.trim().split('\n');
-      const newValues: number[] = [];
-      
-      rows.forEach(row => {
-        let cells: string[] = [];
-        
-        if (row.includes('\t')) {
-          // Excel data with tabs - standard Excel copy format
-          cells = row.split('\t');
-        } else {
-          // No tabs - could be single column or comma-separated
-          // First, try to detect if this is a single French decimal number
-          const trimmedRow = row.trim();
-          
-          // Check if this looks like a single French decimal number (digits, optional comma, digits)
-          const frenchDecimalPattern = /^-?\d+,\d+$/;
-          if (frenchDecimalPattern.test(trimmedRow)) {
-            // This is a single French decimal number, don't split by comma
-            cells = [trimmedRow];
-          } else if (trimmedRow.includes(',')) {
-            // Contains commas but doesn't match French decimal pattern
-            // Split by comma but be careful about decimal commas
-            const parts = trimmedRow.split(',');
-            cells = [];
-            
-            for (let i = 0; i < parts.length; i++) {
-              const part = parts[i].trim();
-              
-              // Check if this part combined with next part could be a French decimal
-              if (i < parts.length - 1) {
-                const nextPart = parts[i + 1].trim();
-                const combined = part + ',' + nextPart;
-                
-                // If combined looks like a French decimal, combine them
-                if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
-                  cells.push(combined);
-                  i++; // Skip next part as we combined it
-                  continue;
-                }
-              }
-              
-              // Otherwise, treat as separate cell
-              if (part !== '') {
-                cells.push(part);
-              }
-            }
-          } else {
-            // No commas, treat as single cell
-            cells = [trimmedRow];
-          }
-        }
-
-        // Parse each cell as a number
-        cells.forEach(cellValue => {
-          if (cellValue.trim() !== '') {
-            // Handle different decimal separators (French regional settings)
-            let processedValue = cellValue.trim();
-            
-            // Handle European format with comma as decimal separator
-            if (processedValue.includes(',') && !processedValue.includes('.')) {
-              processedValue = processedValue.replace(',', '.');
-            }
-            
-            // Remove any thousands separators (spaces, apostrophes)
-            processedValue = processedValue.replace(/[\s']/g, '');
-            
-            const numericValue = parseFloat(processedValue);
-            if (!isNaN(numericValue)) {
-              newValues.push(numericValue);
-            }
-          }
-        });
-      });
-
-      if (newValues.length > 0) {
-        setDataSet2(prev => {
-          const updatedPoints = [...prev];
-          
-          // Update existing cells or add new ones starting from focused cell
-          newValues.forEach((value, i) => {
-            const targetIndex = focusedCell2 + i;
-            if (targetIndex < updatedPoints.length) {
-              // Update existing cell
-              updatedPoints[targetIndex] = {
-                ...updatedPoints[targetIndex],
-                dataValue: value
-              };
-            } else {
-              // Add new data point
-              updatedPoints.push({
-                indexNumber: targetIndex + 1,
-                dataValue: value
-              });
-            }
-          });
-          
-          return updatedPoints;
-        });
-
-        toast({
-          title: "Data Pasted to Dataset 2",
-          description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell2 + 1}.`,
-        });
-      } else {
-        toast({
-          title: "No Valid Data",
-          description: "No valid numeric data found in clipboard.",
-          variant: "destructive",
-        });
-      }
-
-      // Auto-scroll to show the newly pasted data
-      setTimeout(() => {
-        if (tableContainerRef.current) {
-          const lastPastedIndex = focusedCell2 + newValues.length - 1;
-          const rowHeight = 50;
-          const scrollPosition = lastPastedIndex * rowHeight;
-          tableContainerRef.current.scrollTop = scrollPosition;
-        }
-      }, 100);
-      
-    } catch (error) {
-      toast({
-        title: "Paste Error",
-        description: "Failed to paste data. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
@@ -1601,28 +1294,33 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            const currentFocus = activeDatasetFocusRef.current;
-            console.log('Paste triggered - activeDatasetFocus (from ref):', currentFocus);
+            // Create a synthetic paste event
+            const syntheticEvent = {
+              preventDefault: () => {},
+              clipboardData: {
+                getData: (format: string) => clipboardData
+              }
+            } as unknown as React.ClipboardEvent;
             
-            if (currentFocus.dataset === 1 && currentFocus.row >= 0) {
-              // Use focused cell paste for Dataset 1
-              console.log('Pasting to Dataset 1 at row:', currentFocus.row);
-              handleFocusedCellPaste1(clipboardData);
-            } else if (currentFocus.dataset === 2 && currentFocus.row >= 0) {
-              // Use focused cell paste for Dataset 2
-              console.log('Pasting to Dataset 2 at row:', currentFocus.row);
-              handleFocusedCellPaste2(clipboardData);
-            } else {
-              // Create a synthetic paste event for general paste to Dataset 1 (default)
-              console.log('No active focus, defaulting to Dataset 1 general paste');
-              const syntheticEvent = {
-                preventDefault: () => {},
-                clipboardData: {
-                  getData: (format: string) => clipboardData
-                }
-              } as unknown as React.ClipboardEvent;
-              
+            // Determine which dataset to paste into based on which input field is focused
+            const activeElement = document.activeElement as HTMLElement;
+            const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
+                                  activeElement?.closest('[data-dataset="1"]');
+            const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
+                                  activeElement?.closest('[data-dataset="2"]');
+            
+            if (isDataset1Input) {
               handlePasteData1(syntheticEvent);
+            } else if (isDataset2Input) {
+              handlePasteData2(syntheticEvent);
+            } else {
+              // Default to dataset 1 if no specific input is focused
+              handlePasteData1(syntheticEvent);
+              toast({
+                title: "Data Pasted to Dataset 1",
+                description: "Data was pasted to Dataset 1. Click on Dataset 2 input to paste there instead.",
+                variant: "default",
+              });
             }
           }
         }).catch(error => {
@@ -1695,7 +1393,7 @@ useEffect(() => {
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState1, undoState2, activeTab, ctqName, focusedCell1, focusedCell2, activeDatasetFocus]);
+  }, [undoState1, undoState2, activeTab, ctqName]);
 
   // Handle cell editing for Dataset 1
   const startEditing1 = (index: number, currentValue: number) => {
@@ -2402,41 +2100,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${
-                                  focusedCell1 === index ? 'ring-2 ring-blue-500 bg-blue-100' : ''
-                                }`}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  console.log('Dataset 1 cell clicked:', index);
-                                  console.log('Setting activeDatasetFocus to:', { dataset: 1, row: index });
-                                  setFocusedCell1(index);
-                                  setFocusedCell2(-1); // Clear Dataset 2 focus
-                                  const newFocus = { dataset: 1 as const, row: index };
-                                  setActiveDatasetFocus(newFocus);
-                                  activeDatasetFocusRef.current = newFocus; // Update ref immediately
-                                  console.log('State updates called for Dataset 1');
-                                  // Make this div focusable and focus it to maintain focus state
-                                  e.currentTarget.focus();
-                                }}
-                                onPaste={(e) => {
-                                  e.preventDefault();
-                                  const pasteData = e.clipboardData.getData('text');
-                                  setFocusedCell1(index);
-                                  handleFocusedCellPaste1(pasteData);
-                                }}
+                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                onClick={() => startEditing1(index, point.dataValue)}
+                                onPaste={(e) => handleCellPaste1(e, index)}
                                 tabIndex={0}
-                                title="Single click to focus (blue ring), then Ctrl+V to paste data starting from this row. Double-click to edit value."
-                                onDoubleClick={() => startEditing1(index, point.dataValue)}
-                                onBlur={() => {
-                                  // Don't immediately clear focus, let user keep it for paste operations
-                                  // Only clear if they click elsewhere that sets a new focus
-                                }}
-                                onFocus={() => {
-                                  // Ensure focused cell is set when this div gets focus
-                                  setFocusedCell1(index);
-                                  setFocusedCell2(-1); // Clear Dataset 2 focus
-                                  setActiveDatasetFocus({ dataset: 1, row: index });
-                                }}
+                                title="Click to edit this value"
                             >
                                 {point.dataValue}
                             </div>
@@ -2615,43 +2283,14 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <tbody className="bg-white divide-y divide-gray-200">
                     {dataSet2.length === 0 ? (
                     <tr>
-                        <td colSpan={3} className="text-center text-gray-500 py-8">
-                        <div className="space-y-4">
-                            <div>No data in Dataset 2</div>
-                            {/* Virtual focusable cells for direct paste */}
-                            <div className="grid grid-cols-5 gap-2 max-w-md mx-auto">
-                            {Array.from({ length: 5 }, (_, index) => (
-                                <div
-                                key={`virtual-${index}`}
-                                className={`cursor-pointer hover:bg-blue-50 p-2 border rounded text-center ${
-                                    focusedCell2 === index ? 'ring-2 ring-blue-500 bg-blue-100' : 'bg-gray-50'
-                                }`}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setFocusedCell2(index);
-                                    setFocusedCell1(-1);
-                                    const newFocus = { dataset: 2 as const, row: index };
-                                    setActiveDatasetFocus(newFocus);
-                                    activeDatasetFocusRef.current = newFocus;
-                                    e.currentTarget.focus();
-                                }}
-                                onPaste={(e) => {
-                                    e.preventDefault();
-                                    const pasteData = e.clipboardData.getData('text');
-                                    setFocusedCell2(index);
-                                    handleFocusedCellPaste2(pasteData);
-                                }}
-                                tabIndex={0}
-                                title="Click to focus, then Ctrl+V to paste"
-                                >
-                                {index + 1}
-                                </div>
-                            ))}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                            Click a number above to focus, then Ctrl+V to paste data starting from that position
-                            </div>
+                        <td colSpan={3} className="text-center text-gray-500">
+                        <div
+                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
+                            onClick={() => document.getElementById('add-data-input-2')?.focus()}
+                            onPaste={(e) => handlePasteData2(e)}
+                            tabIndex={0}
+                            title="Click to focus input or paste data here"
+                        >
                         </div>
                         </td>
                     </tr>
@@ -2681,44 +2320,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${
-                                  focusedCell2 === index ? 'ring-2 ring-blue-500 bg-blue-100' : ''
-                                }`}
-                                onClick={(e) => {
-                                  console.log('CLICK EVENT FIRED - Dataset 2 cell:', index);
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setFocusedCell2(index);
-                                  setFocusedCell1(-1);
-                                  const newFocus = { dataset: 2 as const, row: index };
-                                  setActiveDatasetFocus(newFocus);
-                                  activeDatasetFocusRef.current = newFocus;
-                                  console.log('Ref updated to:', activeDatasetFocusRef.current);
-                                  e.currentTarget.focus();
-                                }}
-                                onPaste={(e) => {
-                                  e.preventDefault();
-                                  const pasteData = e.clipboardData.getData('text');
-                                  setFocusedCell2(index);
-                                  handleFocusedCellPaste2(pasteData);
-                                }}
+                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                onClick={() => startEditing2(index, point.dataValue)}
+                                onPaste={(e) => handleCellPaste2(e, index)}
                                 tabIndex={0}
-                                title="Single click to focus (blue ring), then Ctrl+V to paste data starting from this row. Double-click to edit value."
-                                onDoubleClick={() => startEditing2(index, point.dataValue)}
-                                onBlur={() => {
-                                  // Don't immediately clear focus, let user keep it for paste operations
-                                  // Only clear if they click elsewhere that sets a new focus
-                                }}
-                                onFocus={() => {
-                                  // Ensure focused cell is set when this div gets focus
-                                  console.log('Dataset 2 cell focused:', index);
-                                  setFocusedCell2(index);
-                                  setFocusedCell1(-1); // Clear Dataset 1 focus
-                                  const newFocus = { dataset: 2 as const, row: index };
-                                  setActiveDatasetFocus(newFocus);
-                                  activeDatasetFocusRef.current = newFocus; // Update ref immediately
-                                  console.log('onFocus - Ref after update:', activeDatasetFocusRef.current);
-                                }}
+                                title="Click to edit this value"
                             >
                                 {point.dataValue}
                             </div>
