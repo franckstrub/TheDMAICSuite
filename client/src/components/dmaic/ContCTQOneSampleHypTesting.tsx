@@ -858,7 +858,28 @@ useEffect(() => {
       
       lines.forEach((line, index) => {
         const value = line.trim();
-        const numericValue = parseFloat(value);
+        
+        // Handle different decimal separators and number formats (French regional settings support)
+        let processedValue = value;
+        
+        // Handle European format with comma as decimal separator (but not thousands separator)
+        if (value.includes(',') && !value.includes('.')) {
+          processedValue = value.replace(',', '.');
+        }
+        
+        // Remove any thousands separators (spaces, apostrophes)
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        // Handle thousands separators with commas (US format: 1,234.56)
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
+          }
+        }
+        
+        const numericValue = parseFloat(processedValue);
         if (!isNaN(numericValue)) {
           newDataPoints.push({
             indexNumber: dataPoints.length + index + 1,
@@ -906,7 +927,28 @@ useEffect(() => {
       
       lines.forEach((line) => {
         const value = line.trim();
-        const numericValue = parseFloat(value);
+        
+        // Handle different decimal separators and number formats (French regional settings support)
+        let processedValue = value;
+        
+        // Handle European format with comma as decimal separator (but not thousands separator)
+        if (value.includes(',') && !value.includes('.')) {
+          processedValue = value.replace(',', '.');
+        }
+        
+        // Remove any thousands separators (spaces, apostrophes)
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        // Handle thousands separators with commas (US format: 1,234.56)
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
+          }
+        }
+        
+        const numericValue = parseFloat(processedValue);
         if (!isNaN(numericValue)) {
           newValues.push(numericValue);
         }
@@ -1702,9 +1744,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             // Multiple values - use the general paste handler
                             handlePasteData(e);
                             } else {
-                            // Single value - set it in the input field
-                            const value = lines[0]?.trim();
+                            // Single value - set it in the input field with decimal format handling
+                            let value = lines[0]?.trim();
                             if (value) {
+                                // Handle French decimal format (comma to dot conversion)
+                                if (value.includes(',') && !value.includes('.')) {
+                                value = value.replace(',', '.');
+                                }
                                 setInputValue(value);
                             }
                             }
