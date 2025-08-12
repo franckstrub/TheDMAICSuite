@@ -1173,12 +1173,26 @@ useEffect(() => {
               }
             } as unknown as React.ClipboardEvent;
             
-            // For now, show message to use table paste functionality
-            toast({
-              title: "Paste Data",
-              description: "Please paste data directly into the table cells or use the input fields.",
-              variant: "default",
-            });
+            // Determine which dataset to paste into based on which input field is focused
+            const activeElement = document.activeElement as HTMLElement;
+            const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
+                                  activeElement?.closest('[data-dataset="1"]');
+            const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
+                                  activeElement?.closest('[data-dataset="2"]');
+            
+            if (isDataset1Input) {
+              handlePasteData1(syntheticEvent);
+            } else if (isDataset2Input) {
+              handlePasteData2(syntheticEvent);
+            } else {
+              // Default to dataset 1 if no specific input is focused
+              handlePasteData1(syntheticEvent);
+              toast({
+                title: "Data Pasted to Dataset 1",
+                description: "Data was pasted to Dataset 1. Click on Dataset 2 input to paste there instead.",
+                variant: "default",
+              });
+            }
           }
         }).catch(error => {
           console.error('Clipboard access failed:', error);
@@ -1782,7 +1796,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
            
 
            {/* Data Input Section for Two Sample Hypothesis Test */}
-           <div className="space-y-4">
+           <div className="space-y-4" data-dataset="1">
             <div>
             <div className="flex justify-between items-center">
                 <label className="block text-sm font-medium mb-2">Dataset 1 Input</label>
@@ -1990,7 +2004,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </div>
            </div>
 
-           <div className="space-y-4">
+           <div className="space-y-4" data-dataset="2">
             <div>
             <div className="flex justify-between items-center">
                 <label className="block text-sm font-medium mb-2">Dataset 2 Input</label>
