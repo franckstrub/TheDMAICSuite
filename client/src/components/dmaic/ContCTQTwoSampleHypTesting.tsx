@@ -12,8 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest } from '@/lib/queryClient';
 import { BetaRawContentBlockDeltaEvent } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs';
 import {twosampleMeanHypothesisTest} from "./twosampleMeanHypothesisTest";
-//import {twosampleVarianceHypothesisTest} from "./twosampleVarianceHypothesisTest";
-//import {twosampleMedianHypothesisTest} from "./twosampleMedianHypothesisTest";
+import {twosampleVarianceHypothesisTest} from "./twosampleVarianceHypothesisTest";
+import {twosampleMedianHypothesisTest} from "./twosampleMedianHypothesisTest";
 import { 
   mean, 
   standardDeviation, 
@@ -273,7 +273,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       // Invalidate the query to refresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`] });
     },
-    tworror: (error: any) => {
+    onError: (error: any) => {
       console.error('Save configuration error:', error);
       toast({
         title: "Save Failed",
@@ -625,39 +625,39 @@ useEffect(() => {
       dataValues,
       significance,
       alternativemean: HaMean as "Less than" | "Greater than" | "Different",
-      targetMean: targetmean,
-      ADvalue,
-      ADp_Value,
+      targetMean: 1,
+      ADvalue: ADvalue1,
+      ADp_Value: ADp_Value1,
     });
     
     // Update the variables with actual calculated values
     sampleSize = n;
-    meanValue = meanVal;
-    stdev = stdDev;
-    SEmean = meanTestResult.SEmean;
-    tStatistic = meanTestResult.tStatistic;
+    meanValue1 = meanVal;
+    stdev1 = stdDev;
+    SEmean1 = meanTestResult.SEmean;
+    tStatistic1 = meanTestResult.tStatistic;
     if(typeof meanTestResult.tStatistic === 'number') {
-      tStatistic = meanTestResult.tStatistic;
+      tStatistic1 = meanTestResult.tStatistic;
     }
     else if(meanTestResult.tStatistic && typeof meanTestResult.tStatistic === 'object') {
-      tStatistic = {
+      tStatistic1 = {
         lower: meanTestResult.tStatistic.lower,
         upper: meanTestResult.tStatistic.upper
       };
     }
     
     if(typeof meanTestResult.tCriteria === 'number') {
-      tCriteria = meanTestResult.tCriteria;
+      tCriteria1 = meanTestResult.tCriteria;
     }
     else if(meanTestResult.tCriteria && typeof meanTestResult.tCriteria === 'object') {
-      tCriteria = {
+      tCriteria1 = {
         lower: meanTestResult.tCriteria.lower,
         upper: meanTestResult.tCriteria.upper
       };
     }
-    tp_Value = meanTestResult.tp_Value;
-    meanCI_minus = meanTestResult.meanCI_minus;
-    meanCI_plus = meanTestResult.meanCI_plus;
+    tp_Value1 = meanTestResult.tp_Value;
+    mean1CI_minus = meanTestResult.meanCI_minus;
+    mean1CI_plus = meanTestResult.meanCI_plus;
     
     // Update state as well
     setTwosampleMeanTestresult(meanTestResult);
@@ -683,15 +683,15 @@ useEffect(() => {
       dataValues,
       significance,
       alternativevariance: HaVariance as "Less than" | "Greater than" | "Different",
-      targetstdev: targetstdev,
+      targetstdev: 1,
     });
     
     // Update the variables with actual calculated values
     
     sampleSize = n;
-    df = n-1;
-    stdev = stdDev;
-    variance=stdDev*stdDev;
+    df1 = n-1;
+    stdev1 = stdDev;
+    variance1=stdDev*stdDev;
     varStatistic = varianceTestResult.varStatistic;
     if(typeof varianceTestResult.varCriteria === 'number') {
       varCriteria = varianceTestResult.varCriteria;
@@ -731,18 +731,18 @@ useEffect(() => {
       dataValues,
       significance,
       alternativemedian: HaMedian as "Less than" | "Greater than" | "Different",
-      targetMedian: targetmedian,
+      targetMedian: 1,
       useWilcoxon: true,
     });
     
     // Update the variables with actual calculated values
     
     sampleSize = n;
-    df = n-1;
-    stdev = stdDev;
-    variance=stdDev*stdDev;
+    df1 = n-1;
+    stdev1 = stdDev;
+    variance1=stdDev*stdDev;
     quartiles = calculateQuartiles(dataValues);
-    median = quartiles.median;
+    median1 = quartiles.median;
     medianStatistic = medianTestResult.medianStatistic;
     medianCriteria = medianTestResult.medianCriteria;
     medianp_Value = medianTestResult.medianp_Value;
@@ -1207,11 +1207,35 @@ useEffect(() => {
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && activeTab === ctqName) {
         event.preventDefault();
-        // For simplicity, undo the most recent operation (could be enhanced to track which dataset)
-        if (undoState1) {
+        
+        // Determine which dataset to undo based on which input field is focused
+        const activeElement = document.activeElement as HTMLElement;
+        const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
+                              activeElement?.closest('[data-dataset="1"]');
+        const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
+                              activeElement?.closest('[data-dataset="2"]');
+        
+        if (isDataset1Input && undoState1) {
           handleUndo1();
-        } else if (undoState2) {
+        } else if (isDataset2Input && undoState2) {
           handleUndo2();
+        } else {
+          // Fallback: undo the dataset that has undo state available, but prioritize Dataset 1
+          if (undoState1) {
+            handleUndo1();
+            toast({
+              title: "Undoing Dataset 1",
+              description: "Undid the last operation on Dataset 1. Focus on Dataset 2 input to undo there.",
+              variant: "default",
+            });
+          } else if (undoState2) {
+            handleUndo2();
+            toast({
+              title: "Undoing Dataset 2", 
+              description: "Undid the last operation on Dataset 2.",
+              variant: "default",
+            });
+          }
         }
       }
     };
@@ -2290,7 +2314,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-gray-600 font-medium">Mean1:&nbsp;
                   {testResults.meanValue1.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Mean2:&nbsp;
-                  {ContCTQTwoSampleHypTestData[ctqId]?.targetMean}</div>
+                  {testResults.meanValue1.toFixed(3)}</div>
+                 <div className="text-gray-600 font-medium">Delta:&nbsp;
+                  {ContCTQTwoSampleHypTestData[ctqId]?.deltaMean0}</div>
                 <div>
                  <Badge
                   variant="default"
@@ -2310,9 +2336,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   
                  </Badge>
                 </div>
-                <div className="text-gray-600 font-medium">SE Mean:&nbsp;
+                <div className="text-gray-600 font-medium">SE Mean 1:&nbsp;
                   {testResults.SEmean1.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">T-statistic:&nbsp;
+                <div className="text-gray-600 font-medium">T-statistic 1:&nbsp;
                   {typeof testResults.tStatistic1 === 'number' 
                     ? testResults.tStatistic1.toFixed(3) 
                     : `[${testResults.tStatistic1.lower.toFixed(3)} ; ${testResults.tStatistic1.upper.toFixed(3)}]`
@@ -2326,9 +2352,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 </div>
                 <div className="text-gray-600 font-medium">T-test P-value:&nbsp;
                   {testResults.tp_Value1.toFixed(4)}</div>
-                <div className="text-gray-600 font-medium">Lower CI:&nbsp;
+                <div className="text-gray-600 font-medium">μ1 Lower CI:&nbsp;
                 {testResults.mean1CI_minus.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Upper CI:&nbsp;
+                <div className="text-gray-600 font-medium">μ1 Upper CI:&nbsp;
                   {testResults.mean1CI_plus.toFixed(3)}</div>
               </Card>
               )}
@@ -2336,10 +2362,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               <Card className="p-2">                
                 <CardTitle className="text-lg">Two-Sample Variance test:</CardTitle>
                 <div className="text-lg justify-left">χ² (Chi Square) test:</div>
-                <div className="text-gray-600 font-medium">Standard Deviation:&nbsp;
+                <div className="text-gray-600 font-medium">Standard Deviation 1:&nbsp;
                   {testResults.stdev1.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Standard Deviation Target:&nbsp;
-                  {ContCTQTwoSampleHypTestData[ctqId]?.targetstdev}</div>
+                <div className="text-gray-600 font-medium">Standard Deviation 2:&nbsp;
+                  {testResults.stdev1.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Standard Deviations ratio:&nbsp;
+                  {ContCTQTwoSampleHypTestData[ctqId]?.ratioVariance0}</div>
                 <div>
                  <Badge
                   variant="default"
@@ -2361,7 +2389,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 </div>
                 
                 <div className="text-gray-600 font-medium">χ² Degrees of Freedom:&nbsp;
-                  {testResults.df.toFixed(0)}</div>
+                  {/* df1 error to be fixed */}
+                  {testResults.df1.toFixed(0)}</div>
                 <div className="text-gray-600 font-medium">χ² statistic:&nbsp;
                   {testResults.varStatistic.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">χ² criteria at significance:&nbsp;
@@ -2384,8 +2413,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-lg justify-left">Wilcoxon test:</div>
                 <div className="text-gray-600 font-medium">Median:&nbsp;
                   {testResults.median1.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Target:&nbsp;
-                  {ContCTQTwoSampleHypTestData[ctqId]?.targetMedian}</div>
+                <div className="text-gray-600 font-medium">Delta:&nbsp;
+                  {ContCTQTwoSampleHypTestData[ctqId]?.deltaMedian0}</div>
                 <div>
                  <Badge
                   variant="default"
