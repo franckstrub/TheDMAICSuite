@@ -2613,17 +2613,23 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {console.log('Dataset 2 length:', dataSet2.length, 'Data:', dataSet2)}
                     {dataSet2.length === 0 ? (
                     <tr>
-                        <td colSpan={3} className="text-center text-gray-500">
-                        <div
-                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
-                            onClick={() => document.getElementById('add-data-input-2')?.focus()}
-                            onPaste={(e) => handlePasteData2(e)}
-                            tabIndex={0}
-                            title="Click to focus input or paste data here"
-                        >
+                        <td colSpan={3} className="text-center text-gray-500 py-8">
+                        <div className="space-y-2">
+                            <div className="text-sm font-medium">No data in Dataset 2</div>
+                            <div className="text-xs">
+                                Add data first using the input below, then use focused cell paste by clicking on cells
+                            </div>
+                            <div
+                                className="cursor-pointer hover:bg-blue-50 rounded p-2 border border-dashed border-blue-300"
+                                onClick={() => document.getElementById('add-data-input-2')?.focus()}
+                                onPaste={(e) => handlePasteData2(e)}
+                                tabIndex={0}
+                                title="Click to focus input below or paste Excel data here"
+                            >
+                                📋 Click here to paste Excel data or use input below
+                            </div>
                         </div>
                         </td>
                     </tr>
