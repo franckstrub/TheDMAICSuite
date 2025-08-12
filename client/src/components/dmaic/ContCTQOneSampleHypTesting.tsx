@@ -940,6 +940,8 @@ useEffect(() => {
 
   // Handle focused cell paste - similar to Process Capability functionality
   const handleFocusedCellPaste = (pasteData: string) => {
+    console.log(`handleFocusedCellPaste called with focusedCell: ${focusedCell}`);
+    
     if (focusedCell === -1) {
       toast({
         title: "No Cell Focused",
@@ -1054,21 +1056,24 @@ useEffect(() => {
       setDataPoints(prev => {
         const updatedPoints = [...prev];
         
+        // Calculate the end index for the paste operation
+        const endIndex = focusedCell + newValues.length - 1;
+        
+        // Extend array if needed to accommodate the paste range
+        while (updatedPoints.length <= endIndex) {
+          updatedPoints.push({
+            indexNumber: updatedPoints.length + 1,
+            dataValue: 0
+          });
+        }
+        
+        // Replace values ONLY from focusedCell to endIndex (inclusive)
         newValues.forEach((value, i) => {
           const targetIndex = focusedCell + i;
-          if (targetIndex < updatedPoints.length) {
-            // Update existing cell
-            updatedPoints[targetIndex] = {
-              ...updatedPoints[targetIndex],
-              dataValue: value
-            };
-          } else {
-            // Create new data point with correct indexNumber
-            updatedPoints.push({
-              indexNumber: targetIndex + 1,
-              dataValue: value
-            });
-          }
+          updatedPoints[targetIndex] = {
+            indexNumber: targetIndex + 1,
+            dataValue: value
+          };
         });
         
         return updatedPoints;
@@ -1076,7 +1081,7 @@ useEffect(() => {
       
       toast({
         title: "Data Pasted",
-        description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1}.`,
+        description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1} (index ${focusedCell + 1} to ${focusedCell + newValues.length}).`,
       });
       
       // Auto-scroll to show the newly pasted data
@@ -1742,7 +1747,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click table cell to paste
+                Single-click table cell to focus (blue ring) | Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo
                 </div>
             </div>
 
@@ -1811,7 +1816,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 }`}
                                 onClick={() => {
                                   setFocusedCell(index);
-                                  startEditing(index, point.dataValue);
+                                  // Don't automatically start editing, just focus the cell for paste
+                                  console.log(`Focused cell set to index ${index} (row ${point.indexNumber})`);
                                 }}
                                 onPaste={(e) => {
                                   e.preventDefault();
@@ -1820,7 +1826,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   handleFocusedCellPaste(pasteData);
                                 }}
                                 tabIndex={0}
-                                title="Click to focus cell, then Ctrl+V to paste data starting from this cell"
+                                title="Single click to focus (blue ring), then Ctrl+V to paste data starting from this row. Double-click to edit value."
+                                onDoubleClick={() => startEditing(index, point.dataValue)}
                             >
                                 {point.dataValue}
                             </div>
