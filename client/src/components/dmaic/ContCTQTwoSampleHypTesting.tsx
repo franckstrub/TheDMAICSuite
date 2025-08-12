@@ -208,6 +208,15 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   
   // Unified focus tracking: { dataset: 1 | 2 | null, row: number }
   const [activeDatasetFocus, setActiveDatasetFocus] = useState<{ dataset: 1 | 2 | null; row: number }>({ dataset: null, row: -1 });
+  
+  // Use a ref to store the current focus state for immediate access in keyboard events
+  const activeDatasetFocusRef = useRef<{ dataset: 1 | 2 | null; row: number }>({ dataset: null, row: -1 });
+  
+  // Update ref whenever state changes
+  useEffect(() => {
+    activeDatasetFocusRef.current = activeDatasetFocus;
+    console.log('activeDatasetFocus changed to:', activeDatasetFocus);
+  }, [activeDatasetFocus]);
   const [editingCell1, setEditingCell1] = useState<number>(-1);
   const [editingCell2, setEditingCell2] = useState<number>(-1);
   const [editValue1, setEditValue1] = useState<string>("");
@@ -1592,15 +1601,16 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            console.log('Paste triggered - activeDatasetFocus:', activeDatasetFocus);
+            const currentFocus = activeDatasetFocusRef.current;
+            console.log('Paste triggered - activeDatasetFocus (from ref):', currentFocus);
             
-            if (activeDatasetFocus.dataset === 1 && activeDatasetFocus.row >= 0) {
+            if (currentFocus.dataset === 1 && currentFocus.row >= 0) {
               // Use focused cell paste for Dataset 1
-              console.log('Pasting to Dataset 1 at row:', activeDatasetFocus.row);
+              console.log('Pasting to Dataset 1 at row:', currentFocus.row);
               handleFocusedCellPaste1(clipboardData);
-            } else if (activeDatasetFocus.dataset === 2 && activeDatasetFocus.row >= 0) {
+            } else if (currentFocus.dataset === 2 && currentFocus.row >= 0) {
               // Use focused cell paste for Dataset 2
-              console.log('Pasting to Dataset 2 at row:', activeDatasetFocus.row);
+              console.log('Pasting to Dataset 2 at row:', currentFocus.row);
               handleFocusedCellPaste2(clipboardData);
             } else {
               // Create a synthetic paste event for general paste to Dataset 1 (default)
@@ -2398,9 +2408,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   console.log('Dataset 1 cell clicked:', index);
+                                  console.log('Setting activeDatasetFocus to:', { dataset: 1, row: index });
                                   setFocusedCell1(index);
                                   setFocusedCell2(-1); // Clear Dataset 2 focus
-                                  setActiveDatasetFocus({ dataset: 1, row: index });
+                                  const newFocus = { dataset: 1 as const, row: index };
+                                  setActiveDatasetFocus(newFocus);
+                                  activeDatasetFocusRef.current = newFocus; // Update ref immediately
+                                  console.log('State updates called for Dataset 1');
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2644,9 +2658,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   console.log('Dataset 2 cell clicked:', index);
+                                  console.log('Setting activeDatasetFocus to:', { dataset: 2, row: index });
                                   setFocusedCell2(index);
                                   setFocusedCell1(-1); // Clear Dataset 1 focus
-                                  setActiveDatasetFocus({ dataset: 2, row: index });
+                                  const newFocus = { dataset: 2 as const, row: index };
+                                  setActiveDatasetFocus(newFocus);
+                                  activeDatasetFocusRef.current = newFocus; // Update ref immediately
+                                  console.log('State updates called for Dataset 2');
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
