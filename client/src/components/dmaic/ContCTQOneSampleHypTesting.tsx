@@ -971,9 +971,9 @@ useEffect(() => {
                 dataValue: value
               };
             } else {
-              // Create new data point
+              // Create new data point with correct indexNumber
               updatedPoints.push({
-                indexNumber: updatedPoints.length + 1,
+                indexNumber: targetIndex + 1,
                 dataValue: value
               });
             }
