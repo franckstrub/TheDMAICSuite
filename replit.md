@@ -43,7 +43,7 @@ Preferred communication style: Simple, everyday language.
 - Dynamic UI adjustments based on project type (e.g., White Belt/Yellow Belt).
 - **Regional Format Support**: Comprehensive French decimal format handling (comma-to-dot conversion) across all statistical input fields and paste operations.
 - **Enhanced Focused Cell Paste**: Consistent focused cell paste functionality across One Sample and Two Sample Hypothesis Testing components with proper indexing and dual-dataset support.
-- **Two Sample Focused Cell Paste**: Complete implementation with unified focus tracking system (`activeDatasetFocus`) that precisely identifies which dataset (1 or 2) and which row is focused. Features mutual exclusion between datasets, enhanced keyboard shortcut detection, and comprehensive debugging logs. Ensures Ctrl+V paste operations target the exact focused cell position in the correct dataset.
+- **Two Sample Focused Cell Paste**: Comprehensive solution implementing React ref-based focus tracking to solve asynchronous state issues. Features unified `activeDatasetFocus` state with immediate ref updates (`activeDatasetFocusRef`), enhanced event propagation control with `stopPropagation()`, mutual exclusion between datasets, and comprehensive debugging infrastructure. Addresses React state timing issues that prevented keyboard shortcuts from accessing current focus values.
 
 ## External Dependencies
 
