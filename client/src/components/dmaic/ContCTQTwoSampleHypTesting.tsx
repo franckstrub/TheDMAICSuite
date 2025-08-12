@@ -1362,6 +1362,14 @@ useEffect(() => {
           description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell1 + 1}.`,
         });
         
+        // Maintain focus after paste operation
+        setTimeout(() => {
+          const lastPastedIndex = focusedCell1 + newValues.length - 1;
+          if (lastPastedIndex < dataSet1.length + newValues.length) {
+            setFocusedCell1(lastPastedIndex);
+          }
+        }, 50);
+        
         // Auto-scroll to show the newly pasted data after a short delay
         setTimeout(() => {
           if (tableContainerRef.current) {
@@ -1465,6 +1473,14 @@ useEffect(() => {
           description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell2 + 1}.`,
         });
         
+        // Maintain focus after paste operation
+        setTimeout(() => {
+          const lastPastedIndex = focusedCell2 + newValues.length - 1;
+          if (lastPastedIndex < dataSet2.length + newValues.length) {
+            setFocusedCell2(lastPastedIndex);
+          }
+        }, 50);
+        
         // Auto-scroll to show the newly pasted data after a short delay
         setTimeout(() => {
           if (tableContainerRef.current) {
@@ -1497,6 +1513,7 @@ useEffect(() => {
       // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
         event.preventDefault();
+        console.log('Keyboard paste triggered for activeTab:', activeTab, 'ctqName:', ctqName);
         
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
@@ -2326,13 +2343,18 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   setFocusedCell1(index);
                                 }}
                                 onBlur={(e) => {
-                                  // Don't clear focus immediately - delay to allow paste operations
+                                  // Don't clear focus immediately - allow multiple paste operations
                                   setTimeout(() => {
-                                    // Only clear if not related to paste operations
-                                    if (document.activeElement !== e.currentTarget) {
+                                    // Only clear if user clicked elsewhere and not in related elements
+                                    const activeElement = document.activeElement;
+                                    const isInputFocused = activeElement?.id === 'add-data-input-1' || activeElement?.id === 'add-data-input-2';
+                                    const isInDatasetContainer = activeElement?.closest('[data-dataset]');
+                                    
+                                    if (!isInputFocused && !isInDatasetContainer && activeElement !== e.currentTarget) {
+                                      console.log('Dataset 1 cell blur - clearing focus');
                                       setFocusedCell1(-1);
                                     }
-                                  }, 100);
+                                  }, 200);
                                 }}
                                 onPaste={(e) => {
                                   e.preventDefault();
@@ -2564,13 +2586,18 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   setFocusedCell2(index);
                                 }}
                                 onBlur={(e) => {
-                                  // Don't clear focus immediately - delay to allow paste operations
+                                  // Don't clear focus immediately - allow multiple paste operations
                                   setTimeout(() => {
-                                    // Only clear if not related to paste operations
-                                    if (document.activeElement !== e.currentTarget) {
+                                    // Only clear if user clicked elsewhere and not in related elements
+                                    const activeElement = document.activeElement;
+                                    const isInputFocused = activeElement?.id === 'add-data-input-1' || activeElement?.id === 'add-data-input-2';
+                                    const isInDatasetContainer = activeElement?.closest('[data-dataset]');
+                                    
+                                    if (!isInputFocused && !isInDatasetContainer && activeElement !== e.currentTarget) {
+                                      console.log('Dataset 2 cell blur - clearing focus');
                                       setFocusedCell2(-1);
                                     }
-                                  }, 100);
+                                  }, 200);
                                 }}
                                 onPaste={(e) => {
                                   e.preventDefault();
