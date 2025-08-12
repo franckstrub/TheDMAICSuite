@@ -2616,19 +2616,41 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     {dataSet2.length === 0 ? (
                     <tr>
                         <td colSpan={3} className="text-center text-gray-500 py-8">
-                        <div className="space-y-2">
-                            <div className="text-sm font-medium">No data in Dataset 2</div>
-                            <div className="text-xs">
-                                Add data first using the input below, then use focused cell paste by clicking on cells
-                            </div>
-                            <div
-                                className="cursor-pointer hover:bg-blue-50 rounded p-2 border border-dashed border-blue-300"
-                                onClick={() => document.getElementById('add-data-input-2')?.focus()}
-                                onPaste={(e) => handlePasteData2(e)}
+                        <div className="space-y-4">
+                            <div>No data in Dataset 2</div>
+                            {/* Virtual focusable cells for direct paste */}
+                            <div className="grid grid-cols-5 gap-2 max-w-md mx-auto">
+                            {Array.from({ length: 5 }, (_, index) => (
+                                <div
+                                key={`virtual-${index}`}
+                                className={`cursor-pointer hover:bg-blue-50 p-2 border rounded text-center ${
+                                    focusedCell2 === index ? 'ring-2 ring-blue-500 bg-blue-100' : 'bg-gray-50'
+                                }`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setFocusedCell2(index);
+                                    setFocusedCell1(-1);
+                                    const newFocus = { dataset: 2 as const, row: index };
+                                    setActiveDatasetFocus(newFocus);
+                                    activeDatasetFocusRef.current = newFocus;
+                                    e.currentTarget.focus();
+                                }}
+                                onPaste={(e) => {
+                                    e.preventDefault();
+                                    const pasteData = e.clipboardData.getData('text');
+                                    setFocusedCell2(index);
+                                    handleFocusedCellPaste2(pasteData);
+                                }}
                                 tabIndex={0}
-                                title="Click to focus input below or paste Excel data here"
-                            >
-                                📋 Click here to paste Excel data or use input below
+                                title="Click to focus, then Ctrl+V to paste"
+                                >
+                                {index + 1}
+                                </div>
+                            ))}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                            Click a number above to focus, then Ctrl+V to paste data starting from that position
                             </div>
                         </div>
                         </td>
