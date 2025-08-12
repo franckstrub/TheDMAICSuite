@@ -802,6 +802,28 @@ useEffect(() => {
     }
   };
 
+  // Clear all data function
+  const handleClearAllData = () => {
+    if (dataPoints.length > 0) {
+      // Save current state before clearing
+      setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+      setShowUndoButton(true);
+      
+      // Clear all data
+      setDataPoints([]);
+      setInputValue("");
+      setPasteInput("");
+      setFocusedCell(-1);
+      setEditingCell(-1);
+      setEditValue("");
+      
+      toast({
+        title: "Data Cleared",
+        description: "All data has been cleared. Use Undo to restore if needed.",
+      });
+    }
+  };
+
   // Functions for data input
   const addDataPoint = (value: string) => {
     if (!value.trim()) return;
@@ -1583,8 +1605,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             <div>
             <div className="flex justify-between items-center">
                 <label className="block text-sm font-medium mb-2">Data Input</label>
-                {/* Undo and Paste from Excel Section */}
+                {/* Clear All Data, Undo and Paste from Excel Section */}
                 <div className="flex gap-2 mt-2 mb-2">
+                {dataPoints.length > 0 && (
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleClearAllData}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                    title="Clear all data (can be undone)"
+                    >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear All Data
+                    </Button>
+                )}
                 {undoState && (
                     <Button 
                     variant="outline" 
