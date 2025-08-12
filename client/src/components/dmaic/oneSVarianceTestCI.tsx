@@ -55,6 +55,11 @@ export default function OneSVarianceTestCI({
     shownconfidenceInterval[1]= Math.max(stdev, h0Value) + 2*Math.abs(stdev - h0Value);
     CIplustext = '+∞';
   }
+  let xshiftforCIminus = 0.15;
+  if (confidenceInterval[0]=== h0Value) {
+    xshiftforCIminus = 0.20;
+    };
+  
   const yExtraScale=(shownconfidenceInterval[1]-shownconfidenceInterval[0])/5;
   const yBadge=0.99*(shownconfidenceInterval[1] + yExtraScale);
 
@@ -233,7 +238,7 @@ export default function OneSVarianceTestCI({
                 yanchor: 'middle'
               },
               {
-                x: 0.15,
+                x: xshiftforCIminus,
                 y: shownconfidenceInterval[0],
                 text: CIminustext,
                 showarrow: false,
