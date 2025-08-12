@@ -1967,16 +1967,18 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 placeholder="Enter a description of your dataset 2"
                 className="mt-0"
             />
-            </div>
-           
+            </div>            
+            
+            <label className="block text-sm font-medium">Dataset 1 Input:</label>            
+            <label className="block text-sm font-medium">Dataset 2 Input:</label>
 
            {/* Data Input Section for Two Sample Hypothesis Test */}
            <div className="space-y-4" data-dataset="1">
             <div>
             <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium mb-2">Dataset 1 Input</label>
+                
                 {/* Clear All Data, Undo and Paste from Excel Section */}
-                <div className="flex gap-2 mt-2 mb-2">
+                <div className="flex gap-2 mb-2">
                 {dataSet1.length > 0 && (
                     <Button 
                     variant="outline" 
@@ -2194,9 +2196,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
            <div className="space-y-4" data-dataset="2">
             <div>
             <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium mb-2">Dataset 2 Input</label>
+                
                 {/* Clear All Data, Undo and Paste from Excel Section */}
-                <div className="flex gap-2 mt-2 mb-2">
+                <div className="flex gap-2 mb-2">
                 {dataSet2.length > 0 && (
                     <Button 
                     variant="outline" 
