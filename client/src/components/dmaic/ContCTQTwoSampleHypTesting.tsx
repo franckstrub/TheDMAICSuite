@@ -1863,8 +1863,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         <td colSpan={3} className="text-center text-gray-500">
                         <div
                             className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
-                            onClick={() => document.getElementById('add-data-input')?.focus()}
-                            onPaste={(e) => handlePasteData(e)}
+                            onClick={() => document.getElementById('add-data-input-1')?.focus()}
+                            onPaste={(e) => handlePasteData1(e)}
                             tabIndex={0}
                             title="Click to focus input or paste data here"
                         >
@@ -1878,19 +1878,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             {point.indexNumber}
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-900">
-                            {editingCell === index ? (
+                            {editingCell1 === index ? (
                             <Input
                                 type="number"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
+                                value={editValue1}
+                                onChange={(e) => setEditValue1(e.target.value)}
                                 onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
-                                    saveEdit(index);
+                                    saveEdit1(index);
                                 } else if (e.key === 'Escape') {
-                                    cancelEdit();
+                                    cancelEdit1();
                                 }
                                 }}
-                                onBlur={() => saveEdit(index)}
+                                onBlur={() => saveEdit1(index)}
                                 className="w-20 h-7 text-xs"
                                 step="any"
                                 autoFocus
@@ -1898,8 +1898,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             ) : (
                             <div
                                 className="cursor-pointer hover:bg-blue-50 p-1 rounded"
-                                onClick={() => startEditing(index, point.dataValue)}
-                                onPaste={(e) => handleCellPaste(e, index)}
+                                onClick={() => startEditing1(index, point.dataValue)}
+                                onPaste={(e) => handleCellPaste1(e, index)}
                                 tabIndex={0}
                                 title="Click to edit this value"
                             >
@@ -1911,7 +1911,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteDataPoint(index)}
+                            onClick={() => handleDeleteDataPoint1(index)}
                             className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             title="Delete this data point"
                             >
@@ -2071,8 +2071,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         <td colSpan={3} className="text-center text-gray-500">
                         <div
                             className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
-                            onClick={() => document.getElementById('add-data-input')?.focus()}
-                            onPaste={(e) => handlePasteData(e)}
+                            onClick={() => document.getElementById('add-data-input-2')?.focus()}
+                            onPaste={(e) => handlePasteData2(e)}
                             tabIndex={0}
                             title="Click to focus input or paste data here"
                         >
@@ -2086,19 +2086,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             {point.indexNumber}
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-900">
-                            {editingCell === index ? (
+                            {editingCell2 === index ? (
                             <Input
                                 type="number"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
+                                value={editValue2}
+                                onChange={(e) => setEditValue2(e.target.value)}
                                 onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
-                                    saveEdit(index);
+                                    saveEdit2(index);
                                 } else if (e.key === 'Escape') {
-                                    cancelEdit();
+                                    cancelEdit2();
                                 }
                                 }}
-                                onBlur={() => saveEdit(index)}
+                                onBlur={() => saveEdit2(index)}
                                 className="w-20 h-7 text-xs"
                                 step="any"
                                 autoFocus
@@ -2106,8 +2106,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             ) : (
                             <div
                                 className="cursor-pointer hover:bg-blue-50 p-1 rounded"
-                                onClick={() => startEditing(index, point.dataValue)}
-                                onPaste={(e) => handleCellPaste(e, index)}
+                                onClick={() => startEditing2(index, point.dataValue)}
+                                onPaste={(e) => handleCellPaste2(e, index)}
                                 tabIndex={0}
                                 title="Click to edit this value"
                             >
@@ -2119,7 +2119,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteDataPoint(index)}
+                            onClick={() => handleDeleteDataPoint2(index)}
                             className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             title="Delete this data point"
                             >
