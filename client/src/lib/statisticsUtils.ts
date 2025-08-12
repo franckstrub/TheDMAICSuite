@@ -1289,7 +1289,7 @@ export function calculate1SvarChiSquareConfidenceInterval(
   else if (alternative === "Less than") {
     const chiSquareUpper = chiSquareInverse(1 - alpha / 2, df);
     return {
-      lower: - Infinity,
+      lower: 0,
       upper:  Math.sqrt((df * sampleVariance) / chiSquareUpper)
       };
   }
@@ -1524,10 +1524,6 @@ export function calculate1SMeanSampleSize(
     };
 };
 
-interface PowerAnalysisResult {
-  sampleSize: number;
-  actualPower: number;
-}
 export function calculate1SVarianceSampleSize(
   power1SVariancePower: string,
   power1SVarianceHa: string,
@@ -1679,6 +1675,417 @@ export function calculate1SVarianceSampleSize(
   
   return {
     sampleSize: bestN,
+    actualPower: Math.round(actualPower * 10000) / 10000
+  };
+}
+
+export function calculate2SMeanSampleSize(
+  power2SMeanPower: string,
+  power2SMeanHa: string,
+  power2SMeanMean1: number,
+  power2SMeanMean2: number,
+  power2SMeanStdev: number,
+  power2SMeanAlpha: string
+): PowerAnalysisResult {
+  const targetPower = parseFloat(power2SMeanPower);
+  const alpha = parseFloat(power2SMeanAlpha);
+
+  // Input validation
+  if (targetPower <= 0 || targetPower >= 1) {
+    throw new Error("Power must be between 0 and 1");
+  }
+  if (alpha <= 0 || alpha >= 1) {
+    throw new Error("Alpha must be between 0 and 1");
+  }
+  if (power2SMeanStdev <= 0 || power2SMeanMean1 === power2SMeanMean2) {
+    return { sampleSize: 0, actualPower: 0 };
+  }
+
+    // Calculate effect size (Cohen's d)
+  const meanDifference = Math.abs(power2SMeanMean1 - power2SMeanMean2);
+  const effectSize = meanDifference / power2SMeanStdev;
+
+  // Determine direction for one-sided tests
+  const isGroup1Greater = power2SMeanMean1 > power2SMeanMean2;
+
+  /**
+   * Calculate critical t-values for given degrees of freedom and alpha
+   */
+  function getCriticalValues(df: number): { tLower: number, tUpper: number } {
+    let tLower = -Infinity;
+    let tUpper = Infinity;
+
+    switch (power2SMeanHa) {
+      case "<":
+        // H1: μ₁ < μ₂
+        tLower = jStat.studentt.inv(alpha, df);
+        break;
+      case ">":
+        // H1: μ₁ > μ₂
+        tUpper = jStat.studentt.inv(1 - alpha, df);
+        break;
+      case "≠":
+      default:
+        // H1: μ₁ ≠ μ₂
+        tLower = jStat.studentt.inv(alpha / 2, df);
+        tUpper = jStat.studentt.inv(1 - alpha / 2, df);
+        break;
+    }
+
+    return { tLower, tUpper };
+  }
+
+  /**
+   * Calculate power for a given sample size per group
+   * Uses non-central t-distribution approach
+   */
+  function calculatePowerForN(nPerGroup: number): number {
+    if (nPerGroup < 2) return 0; // Need at least 2 per group
+    
+    const df = 2 * nPerGroup - 2; // degrees of freedom for two-sample t-test
+    const standardError = power2SMeanStdev * Math.sqrt(2 / nPerGroup); // SE of difference
+    
+    try {
+      // Calculate non-centrality parameter
+      const delta = meanDifference / standardError;
+      
+      // Apply direction for one-sided tests
+      const signedDelta = (power2SMeanHa === "<") 
+        ? (isGroup1Greater ? -delta : delta)
+        : (isGroup1Greater ? delta : -delta);
+
+      const { tLower, tUpper } = getCriticalValues(df);
+      
+      let power = 0;
+
+      switch (power2SMeanHa) {
+        case "<":
+          // Power = P(T < tLower | H1 true)
+          // Under H1, T ~ t(df, δ) where δ is non-centrality parameter
+          // Approximate using normal distribution for large df
+          if (df >= 30) {
+            const adjustedT = (tLower - signedDelta);
+            power = jStat.normal.cdf(adjustedT, 0, 1);
+          } else {
+            // For small df, use approximation
+            const adjustedT = (tLower - signedDelta) / Math.sqrt(1 + signedDelta * signedDelta / (2 * df));
+            power = jStat.studentt.cdf(adjustedT, df);
+          }
+          break;
+
+        case ">":
+          // Power = P(T > tUpper | H1 true)
+          if (df >= 30) {
+            const adjustedT = (tUpper - signedDelta);
+            power = 1 - jStat.normal.cdf(adjustedT, 0, 1);
+          } else {
+            const adjustedT = (tUpper - signedDelta) / Math.sqrt(1 + signedDelta * signedDelta / (2 * df));
+            power = 1 - jStat.studentt.cdf(adjustedT, df);
+          }
+          break;
+
+        case "≠":
+        default:
+          // Power = P(T < tLower | H1) + P(T > tUpper | H1)
+          if (df >= 30) {
+            const adjustedTLower = (tLower - signedDelta);
+            const adjustedTUpper = (tUpper - signedDelta);
+            const powerLower = jStat.normal.cdf(adjustedTLower, 0, 1);
+            const powerUpper = 1 - jStat.normal.cdf(adjustedTUpper, 0, 1);
+            power = powerLower + powerUpper;
+          } else {
+            const adjustmentFactor = Math.sqrt(1 + signedDelta * signedDelta / (2 * df));
+            const adjustedTLower = (tLower - signedDelta) / adjustmentFactor;
+            const adjustedTUpper = (tUpper - signedDelta) / adjustmentFactor;
+            const powerLower = jStat.studentt.cdf(adjustedTLower, df);
+            const powerUpper = 1 - jStat.studentt.cdf(adjustedTUpper, df);
+            power = powerLower + powerUpper;
+          }
+          break;
+      }
+      
+      return Math.max(0, Math.min(1, power));
+      
+    } catch (error) {
+      console.error("Error calculating power:", error);
+      return 0;
+    }
+  }
+
+  /**
+   * Alternative approach using standard power formula
+   * More reliable for most practical scenarios
+   */
+  function calculatePowerForNSimple(nPerGroup: number): number {
+    if (nPerGroup < 2) return 0;
+    
+    const df = 2 * nPerGroup - 2;
+    
+    try {
+      // Standard error of the difference between means
+      const se = power2SMeanStdev * Math.sqrt(2 / nPerGroup);
+      
+      // Standardized effect size
+      const delta = meanDifference / se;
+      
+      let tCritical: number;
+      let power = 0;
+
+      switch (power2SMeanHa) {
+        case "<":      
+          tCritical = jStat.studentt.inv(alpha, df);
+          // Power calculation for one-sided test
+          power = jStat.normal.cdf((tCritical + delta), 0, 1);
+          break;
+
+        case ">":        
+          tCritical = jStat.studentt.inv(1 - alpha, df);
+          // Power calculation for one-sided test
+          power = 1 - jStat.normal.cdf((tCritical - delta), 0, 1);
+          break;
+
+        case "≠":
+        default:
+          tCritical = jStat.studentt.inv(1 - alpha / 2, df);
+          // Power calculation for two-sided test
+          const powerUpper = 1 - jStat.normal.cdf((tCritical - delta), 0, 1);
+          const powerLower = jStat.normal.cdf((-tCritical - delta), 0, 1);
+          power = powerUpper + powerLower;
+          break;
+      }
+      
+      return Math.max(0, Math.min(1, power));
+      
+    } catch (error) {
+      console.error("Error in simple power calculation:", error);
+      return 0;
+    }
+  }
+
+  // Binary search for minimum sample size that achieves desired power
+  let lowerBound = 2;
+  let upperBound = 50;
+  
+  // Find reasonable upper bound
+  while (calculatePowerForNSimple(upperBound) < targetPower && upperBound < 10000) {
+    upperBound = Math.min(upperBound * 2, upperBound + 100);
+  }
+  
+  // If we couldn't reach desired power even with large sample
+  if (calculatePowerForNSimple(upperBound) < targetPower) {
+    upperBound = 10000;
+    const maxPower = calculatePowerForNSimple(upperBound);
+    if (maxPower < targetPower) {
+      return {
+        sampleSize: upperBound,
+        actualPower: Math.round(maxPower * 10000) / 10000
+      };
+    }
+  }
+  
+  // Binary search for optimal sample size
+  let bestN = upperBound;
+  
+  while (upperBound - lowerBound > 1) {
+    const midN = Math.floor((lowerBound + upperBound) / 2);
+    const power = calculatePowerForNSimple(midN);
+    
+    if (power >= targetPower) {
+      bestN = midN;
+      upperBound = midN;
+    } else {
+      lowerBound = midN;
+    }
+  }
+  
+  // Check both bounds to ensure we have the minimum n
+  const powerLower = calculatePowerForNSimple(lowerBound);
+  const powerUpper = calculatePowerForNSimple(upperBound);
+  
+  if (powerLower >= targetPower) {
+    bestN = lowerBound;
+  } else if (powerUpper >= targetPower) {
+    bestN = upperBound;
+  }
+  
+  // Calculate final actual power
+  const actualPower = calculatePowerForNSimple(bestN);
+  
+  return {
+    sampleSize: bestN, // Sample size per group
+    actualPower: Math.round(actualPower * 10000) / 10000
+  };
+};
+
+export function calculate2SVarianceSampleSize(
+  power2SVariancePower: string,
+  power2SVarianceHa: string,
+  power2SVarianceStdev1: number,
+  power2SVarianceStdev2: number,
+  power2SVarianceAlpha: string
+): PowerAnalysisResult {
+  const targetPower = parseFloat(power2SVariancePower);
+  const alpha = parseFloat(power2SVarianceAlpha);
+
+  // Input validation
+  if (targetPower <= 0 || targetPower >= 1) {
+    //throw new Error("Power must be between 0 and 1");
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  if (alpha <= 0 || alpha >= 1) {
+    //throw new Error("Alpha must be between 0 and 1");
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  if (typeof power2SVarianceStdev1 !== 'number' || isNaN(power2SVarianceStdev1) || power2SVarianceStdev1 <= 0) {
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  
+  if (typeof power2SVarianceStdev2 !== 'number' || isNaN(power2SVarianceStdev2) || power2SVarianceStdev2 <= 0) {
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  
+  if (power2SVarianceStdev1 === power2SVarianceStdev2) {
+    return { sampleSize: 0, actualPower: 0 };
+  }
+  // Calculate variance ratio
+  const sigma1Squared = power2SVarianceStdev1 * power2SVarianceStdev1;
+  const sigma2Squared = power2SVarianceStdev2 * power2SVarianceStdev2;
+  const varianceRatio = sigma1Squared / sigma2Squared; // σ₁²/σ₂²
+
+  /**
+   * Calculate critical F-values for given degrees of freedom and alpha
+   */
+  function getCriticalValues(df1: number, df2: number): { fLower: number, fUpper: number } {
+    let fLower = 0;
+    let fUpper = Infinity;
+
+    try {
+      switch (power2SVarianceHa) {
+        case "<":
+          // H1: σ₁² < σ₂² (left-tailed test)
+          fUpper = jStat.centralF.inv(alpha, df1, df2);
+          break;
+        case ">":
+          // H1: σ₁² > σ₂² (right-tailed test)
+          fLower = jStat.centralF.inv(1 - alpha, df1, df2);
+          break;
+        case "≠":
+        default:
+          // H1: σ₁² ≠ σ₂² (two-tailed test)
+          fLower = jStat.centralF.inv(alpha / 2, df1, df2);
+          fUpper = jStat.centralF.inv(1 - alpha / 2, df1, df2);
+          break;
+      }
+    } catch (error) {
+      console.error("Error calculating critical F-values:", error);
+    }
+
+    return { fLower, fUpper };
+  }
+
+  /**
+   * Calculate power for a given sample size per group
+   * Uses F-distribution with variance ratio scaling
+   */
+  function calculatePowerForN(nPerGroup: number): number {
+    if (nPerGroup < 2) return 0; // Need at least 2 per group
+    
+    const df1 = nPerGroup - 1; // degrees of freedom for group 1
+    const df2 = nPerGroup - 1; // degrees of freedom for group 2
+    
+    try {
+      const { fLower, fUpper } = getCriticalValues(df1, df2);
+      
+      // Under H1, the test statistic F = (s₁²/σ₁²) / (s₂²/σ₂²) * (σ₁²/σ₂²)
+      // follows a scaled F-distribution
+      
+      let power = 0;
+
+      switch (power2SVarianceHa) {
+        case "<":
+          // Power = P(F < fUpper/varianceRatio | H1)
+          // Under H1, F is scaled by varianceRatio
+          const scaledFUpperLess = fUpper / varianceRatio;
+          power = jStat.centralF.cdf(scaledFUpperLess, df1, df2);
+          break;
+
+        case ">":
+          // Power = P(F > fLower/varianceRatio | H1)
+          const scaledFLowerGreater = fLower / varianceRatio;
+          power = 1 - jStat.centralF.cdf(scaledFLowerGreater, df1, df2);
+          break;
+
+        case "≠":
+        default:
+          // Power = P(F < fLower/varianceRatio) + P(F > fUpper/varianceRatio | H1)
+          const scaledFLower = fLower / varianceRatio;
+          const scaledFUpper = fUpper / varianceRatio;
+          
+          const powerLower = jStat.centralF.cdf(scaledFLower, df1, df2);
+          const powerUpper = 1 - jStat.centralF.cdf(scaledFUpper, df1, df2);
+          power = powerLower + powerUpper;
+          break;
+      }
+      
+      return Math.max(0, Math.min(1, power));
+      
+    } catch (error) {
+      console.error("Error calculating power:", error);
+      return 0;
+    }
+  }
+
+  // Binary search for minimum sample size that achieves desired power
+  let lowerBound = 2;
+  let upperBound = 50;
+  
+  // Find reasonable upper bound
+  while (calculatePowerForN(upperBound) < targetPower && upperBound < 5000) {
+    upperBound = Math.min(upperBound * 2, upperBound + 100);
+  }
+  
+  // If we couldn't reach desired power even with large sample
+  if (calculatePowerForN(upperBound) < targetPower) {
+    upperBound = 5000;
+    const maxPower = calculatePowerForN(upperBound);
+    if (maxPower < targetPower) {
+      return {
+        sampleSize: upperBound,
+        actualPower: Math.round(maxPower * 10000) / 10000
+      };
+    }
+  }
+  
+  // Binary search for optimal sample size
+  let bestN = upperBound;
+  
+  while (upperBound - lowerBound > 1) {
+    const midN = Math.floor((lowerBound + upperBound) / 2);
+    const power = calculatePowerForN(midN);
+    
+    if (power >= targetPower) {
+      bestN = midN;
+      upperBound = midN;
+    } else {
+      lowerBound = midN;
+    }
+  }
+  
+  // Check both bounds to ensure we have the minimum n
+  const powerLower = calculatePowerForN(lowerBound);
+  const powerUpper = calculatePowerForN(upperBound);
+  
+  if (powerLower >= targetPower) {
+    bestN = lowerBound;
+  } else if (powerUpper >= targetPower) {
+    bestN = upperBound;
+  }
+  
+  // Calculate final actual power
+  const actualPower = calculatePowerForN(bestN);
+  
+  return {
+    sampleSize: bestN, // Sample size per group
     actualPower: Math.round(actualPower * 10000) / 10000
   };
 }

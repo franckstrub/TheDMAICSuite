@@ -1352,6 +1352,17 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               )}
               </div>
           </div>
+          {(ContCTQOneSampleHypTestData[ctqId]?.enableMean1SPower || 
+          ContCTQOneSampleHypTestData[ctqId]?.enableVariance1SPower) && (    
+          <Button 
+              className="w-full" 
+              onClick={saveConfiguration} 
+              disabled={saveConfigMutation.isPending}
+              //variant="outline"
+            >
+              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+          </Button>
+          )}
           <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
             {ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ? (
                 <div className="w-1/3 min-w-[100px] pr-4">
@@ -1734,16 +1745,16 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </div>
           </div>
           
-          <div className="space-y-2">
+          <div className="mt-2 mb-3">
             <Button 
               className="w-full" 
               onClick={saveConfiguration} 
               disabled={saveConfigMutation.isPending}
-              variant="outline"
+              //variant="outline"
             >
               {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
             </Button>
-
+{/* Run Test Button 
             <Button
               className={`w-full ${!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest} &
                 ${!ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest} &
@@ -1772,6 +1783,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             >
                 Run Test
             </Button>
+            */}
           </div>
           {((ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ||
             ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ||

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +7,37 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Trash2, Undo } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Badge } from "@/components/ui/badge";
+import { apiRequest } from '@/lib/queryClient';
+import { BetaRawContentBlockDeltaEvent } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs';
+import {twosampleMeanHypothesisTest} from "./twosampleMeanHypothesisTest";
+//import {twosampleVarianceHypothesisTest} from "./twosampleVarianceHypothesisTest";
+//import {twosampleMedianHypothesisTest} from "./twosampleMedianHypothesisTest";
+import { 
+  mean, 
+  standardDeviation, 
+  variance,
+  parseNumericValue,
+  calculateMode,
+  performNormalityTest,
+  getHistogramData,
+  calculateQuartiles,
+  calculateMovingRange,
+  calculateIndividualControlLimits,
+  calculateMovingRangeControlLimits,
+  calculateZScoreLongShortTerm,
+  calculatePerformanceMetrics,
+  calculateCapabilityIndexes,
+  calculateObservedPerformanceMetrics,
+  assessProcessVariation,
+  inverseNormCDF,
+  calculate2SMeanSampleSize,
+  calculate2SVarianceSampleSize
+} from "@/lib/statisticsUtils";
+//import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
+//import BoxPlotWith2SMedianTest from './BoxPlotWith2SMedianTest';
+//import TwoSVarianceTestCI from './twoSVarianceTestCI';
 
 interface DataPoint {
   indexNumber: number;
@@ -21,11 +52,20 @@ interface ContCTQTwoSampleHypTestData {
   enableMeanTest?: boolean;
   enableVarianceTest?: boolean;
   enableMedianTest?: boolean;
-  targetMean?: number;
-  targetStdev?: number;
-  targetMedian?: number;
-  dataPoints?: DataPoint[];
-  datasetdescription?: string;
+  deltaMean0?: number;
+  ratioVariance0?: number;
+  deltaMedian0?: number;
+  dataSet1?: DataPoint[];
+  dataset1description?: string;
+  dataSet2?: DataPoint[];
+  dataset2description?: string;
+  enableMean2SPower: boolean;
+  power2SMeanMean1: number;
+  power2SMeanMean2: number;
+  power2SMeanStdev: number;
+  enableVariance2SPower: boolean;
+  power2SVarianceStdev1: number;
+  power2SVarianceStdev2: number;
 }
 
 interface ContCTQTwoSampleHypTestingProps {
@@ -36,19 +76,130 @@ interface ContCTQTwoSampleHypTestingProps {
   onSave?: (data: string) => void;
 }
 
+interface PowerSampleSizeResults {
+  twoSMeansampleSize: number;
+  twoSMeanactualPower: number;
+  twoSVariancesampleSize: number;
+  twoSVarianceactualPower: number;
+}
+
+interface RunTestResults {
+  sampleSize: number;
+  meanValue1: number;
+  stdev1: number;
+  variance1: number;
+  median1: number;
+  SEmean1: number;
+  SEvariance1: number;
+  SEmedian1: number;
+  ADvalue1: number;
+  ADp_Value1: number;
+  tStatistic1: number | {lower: number; upper: number};
+  tCriteria1: number | {lower: number; upper: number};
+  tp_Value1: number;
+  mean1CI_minus: number;
+  mean1CI_plus: number;
+  df1: number;
+  varStatistic: number;
+  varCriteria: number | {
+    lower: number;
+    upper: number;
+    };
+  varp_Value: number;
+  varianceCI_minus: number;
+  varianceCI_plus: number;
+  medianStatistic: number;
+  medianCriteria: number;
+  medianp_Value: number;
+  medianCI_minus: number;
+  medianCI_plus: number;
+}
+interface MeanTestResults {
+  meanValue: number;
+  SEmean: number;
+  tStatistic: number | {lower: number; upper: number};
+  tCriteria: number | {lower: number; upper: number};
+  tp_Value: number;
+  meanCI_minus: number;
+  meanCI_plus: number;
+}
+
+interface VarianceTestResults {
+  
+  varStatistic: number;
+  varCriteria: number | {
+    lower: number;
+    upper: number;
+    };
+  varp_Value: number;
+  varianceCI_minus: number;
+  varianceCI_plus: number;
+}
+
+interface MedianTestResults {
+  
+  medianStatistic: number;
+  medianCriteria: number;
+  medianp_Value: number;
+  medianCI_minus: number;
+  medianCI_plus: number;
+}
+
 export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQTwoSampleHypTestingProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
-  const [alternative, setAlternative] = useState("Less than");
-  const [testResult, setTestResult] = useState({
-    tStatistic: -3.45,
-    pValue: 0.002,
-    conclusion: "Reject null hypothesis",
-    explanation: "There is a statistically significant difference between the before and after measurements."
-  });
+  const [alternativemean, setAlternativemean] = useState("Less than");
+  const [alternativevariance, setAlternativevariance] = useState("Less than");
+  const [alternativemedian, setAlternativemedian] = useState("Less than");
+  const [power2SMeanPower, setPower2SMeanPower] = useState("0.90");
+  const [power2SMeanAlpha, setPower2SMeanAlpha] = useState("0.05");
+  const [power2SMeanHa, setPower2SMeanHa] = useState('≠');
+  const [power2SVariancePower, setPower2SVariancePower] = useState("0.90");
+  const [power2SVarianceAlpha, setPower2SVarianceAlpha] = useState("0.05");
+  const [power2SVarianceHa, setPower2SVarianceHa] = useState('≠');
 
-  // Data input state for One Sample test
-  const [dataPoints, setDataPoints] = useState<DataPoint[]>([]);
+  const [PowerSampleSizeResults, setPowerSampleSizeResults] = useState<PowerSampleSizeResults>({
+    twoSMeansampleSize: 0,
+    twoSMeanactualPower: 0,
+    twoSVariancesampleSize: 0,
+    twoSVarianceactualPower: 0,
+  });
+  
+  const [testResults, setTestResults] = useState<RunTestResults>({
+    sampleSize: 0,
+    meanValue1: 0,
+    stdev1: 0,
+    variance1:0,
+    median1: 0,
+    SEmean1: 0,
+    SEvariance1: 0,
+    SEmedian1: 0,
+    ADvalue1: 0,
+    ADp_Value1: 0,
+    tStatistic1: 0,
+    tCriteria1: 0,
+    tp_Value1: 0,
+    mean1CI_minus: 0,
+    mean1CI_plus: 0,
+    df1: 0,
+    varStatistic: 0,
+    varCriteria: 0,
+    varp_Value: 0,
+    varianceCI_minus: 0,
+    varianceCI_plus: 0,
+    medianStatistic: 0,
+    medianCriteria: 0,
+    medianp_Value: 0,
+    medianCI_minus: 0,
+    medianCI_plus: 0
+  });
+  const [twosampleMeanTestresult, setTwosampleMeanTestresult] = useState<MeanTestResults | null>(null); // Initialize with null
+  const [twosampleVarianceTestresult, setTwosampleVarianceTestresult] = useState<VarianceTestResults | null>(null); // Initialize with null
+  const [twosampleMedianTestresult, setTwosampleMedianTestresult] = useState<MedianTestResults | null>(null); // Initialize with null
+  // Data input state for Two Sample test
+  const [dataSet1, setDataSet1] = useState<DataPoint[]>([]);
+  const [dataSet2, setDataSet2] = useState<DataPoint[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [pasteInput, setPasteInput] = useState("");
   const [focusedCell, setFocusedCell] = useState<number>(-1);
@@ -56,21 +207,188 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [editValue, setEditValue] = useState<string>("");
   const [undoState, setUndoState] = useState<DataPoint[] | null>(null);
   const [showUndoButton, setShowUndoButton] = useState(false);
+  const [showBoxPlot, setShowBoxPlot] = useState(false);
+  
+  // Ref for the scrollable table container
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize ContCTQTwoSampleHypTestData with default values
   const [ContCTQTwoSampleHypTestData, setContCTQTwoSampleHypTestData] = useState<{ [ctqId: number]: ContCTQTwoSampleHypTestData }>(() => ({
     [ctqId]: {
       ctq: ctqName,
-      testType: "One Sample Hyp-Test",
+      testType: "Two Sample Hyp-Test",
       enableMeanTest: false,
       enableVarianceTest: false,
       enableMedianTest: false,
-      targetMean: 0,
-      targetStdev: 0,
-      targetMedian: 0,
-      datasetdescrition: "",
+      deltaMean0: 0,
+      ratioVariance0: 1,
+      deltaMedian0: 0,
+      dataset1description: "",
+      dataset2description: "",
+      enableMean2SPower: false,
+      power2SMeanMean1: 0,
+      power2SMeanMean2: 0,
+      power2SMeanStdev: 0,
+      enableVariance2SPower: false,
+      power2SVarianceStdev1: 0,
+      power2SVarianceStdev2: 0,
     }
   }));
+
+  // TanStack Query for loading data from database
+  const { data: configData, isLoading, error } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`],
+    enabled: !!projectId && !!ctqId,
+    retry: false,
+  });
+
+  // Mutation for saving data to database
+  const saveConfigMutation = useMutation({
+    mutationFn: async (configData: any) => {
+      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(configData),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configuration Saved",
+        description: "Two-sample hypothesis testing configuration has been saved successfully.",
+      });
+      // Invalidate the query to refresh data
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`] });
+    },
+    tworror: (error: any) => {
+      console.error('Save configuration error:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save configuration. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Load configuration data from database when available
+  useEffect(() => {
+    if (configData && (configData as any).config && !isLoading) {
+      setTimeout(() => {
+        const config = (configData as any).config;
+        
+        // Update significanceLevel and alternative options from database
+        if (config.significanceLevel) {
+          setSignificanceLevel(config.significanceLevel);
+        }
+        if (config.alternativemean) {
+          setAlternativemean(config.alternativemean);
+        }
+        if (config.alternativevariance) {
+          setAlternativevariance(config.alternativevariance);
+        }
+        if (config.alternativemedian) {
+          setAlternativemedian(config.alternativemedian);
+        }
+        // Update data points from database
+        if (config.dataSet1 && Array.isArray(config.dataSet1)) {
+          setDataSet1(config.dataSet1);
+        }
+
+        // Update local power analysis state variables from database
+        if (config.power2SMeanPower) {
+          setPower2SMeanPower(config.power2SMeanPower);
+        }
+        if (config.power2SMeanHa) {
+          setPower2SMeanHa(config.power2SMeanHa);
+        }
+        if (config.power2SMeanAlpha) {
+          setPower2SMeanAlpha(config.power2SMeanAlpha);
+        }
+
+        // Update local power analysis state variables from database
+        if (config.power2SVariancePower) {
+          setPower2SVariancePower(config.power2SVariancePower);
+        }
+        if (config.power2SVarianceHa) {
+          setPower2SVarianceHa(config.power2SVarianceHa);
+        }
+        if (config.power2SVarianceAlpha) {
+          setPower2SVarianceAlpha(config.power2SVarianceAlpha);
+        }
+        
+        // Update ContCTQTwoSampleHypTestData from database
+        setContCTQTwoSampleHypTestData(prev => ({
+          ...prev,
+          [ctqId]: {
+            ...prev[ctqId],
+            enableMeanTest: config.enableMeanTest ?? true,
+            enableVarianceTest: config.enableVarianceTest ?? true,
+            enableMedianTest: config.enableMedianTest ?? true,
+            deltaMean0: config.deltaMean0 || 0,
+            ratioVariance0: config.ratioVariance0 || 1,
+            deltaMedian0: config.deltaMedian0 || 0,
+            dataset1description: config.dataset1Description || "",
+            dataset2description: config.dataset2Description || "",
+            enableMean2SPower: config.enableMean2SPower ?? true,
+            power2SMeanMean1: config.power2SMeanMean1 || 0,
+            power2SMeanMean2: config.power2SMeanMean2 || 0,
+            power2SMeanStdev: config.power2SMeanStdev || 0, 
+            enableVariance2SPower: config.enableVariance2SPower ?? true,
+            power2SVarianceStdev1: config.power2SVarianceStdev1 || 0,
+            power2SVarianceStdev2: config.power2SVarianceStdev2 || 0,
+          }
+        }));
+      }, 0);
+    }
+  }, [configData, ctqId, isLoading]);
+
+  // Function to save current configuration to database
+  const saveConfiguration = () => {
+    const currentConfig = ContCTQTwoSampleHypTestData[ctqId];
+    if (!currentConfig) return;
+    
+    const configToSave = {
+      testType: currentConfig.testType,
+      enableMeanTest: currentConfig.enableMeanTest,
+      enableVarianceTest: currentConfig.enableVarianceTest,
+      enableMedianTest: currentConfig.enableMedianTest,
+      significanceLevel,
+      alternativemean,
+      alternativevariance,
+      alternativemedian,
+      deltaMean0: currentConfig.deltaMean0,
+      ratioVariance0: currentConfig.ratioVariance0,
+      deltaMedian0: currentConfig.deltaMedian0,
+      dataSet1,
+      dataset1Description: currentConfig.dataset1description || "",
+      dataSet2,
+      dataset2Description: currentConfig.dataset2description || "",
+      enableMean2SPower: currentConfig.enableMean2SPower ?? true,
+      power2SMeanPower,
+      power2SMeanHa,
+      power2SMeanMean1: currentConfig.power2SMeanMean1,
+      power2SMeanMean2: currentConfig.power2SMeanMean2,
+      power2SMeanStdev: currentConfig.power2SMeanStdev,
+      power2SMeanAlpha,
+      enableVariance2SPower: currentConfig.enableVariance2SPower ?? true,
+      power2SVariancePower,
+      power2SVarianceHa,
+      power2SVarianceStdev1: currentConfig.power2SVarianceStdev1,
+      power2SVarianceStdev2: currentConfig.power2SVarianceStdev2,
+      power2SVarianceAlpha,
+    };
+    
+    saveConfigMutation.mutate(configToSave);
+  };
 
   const updateContCTQTwoSampleHypTestDataField = (
     ctqId: number, 
@@ -86,25 +404,409 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     }));
   };
 
-  const handleRunTest = () => {
-    toast({
-      title: "Test Run Successfully",
-      description: "The hypothesis test has been executed.",
-    });
+  const handlePowerSampleSize = (
+  enableMean2SPower: boolean,
+  power2SMeanPower:string,
+  power2SMeanHa: string,
+  power2SMeanMean1: number,
+  power2SMeanMean2: number,
+  power2SMeanStdev: number,
+  power2SMeanAlpha: string,
+  enableVariance2SPower: boolean,
+  power2SVariancePower:string,
+  power2SVarianceHa: string,
+  power2SVarianceStdev1: number,
+  power2SVarianceStdev2: number,
+  power2SVarianceAlpha: string,
+): PowerSampleSizeResults => {
+
+  // Initialize with default values
+  
+  let nMean = 0;
+  let actualMeanPower=0;
+  let nVariance = 0;
+  let actualVariancePower=0;
+
+  if(enableMean2SPower) {
+    if(isNaN(parseFloat(power2SMeanPower))) {
+      toast({
+        title: "Mean Power & Sample Size test run Unsuccessfully",
+        description: "No valid Mean Power value. The Mean Power & Sample Size test has not been executed.",
+      });
+    }
+    else {
+      const result = calculate2SMeanSampleSize(
+        power2SMeanPower,
+        power2SMeanHa,
+        power2SMeanMean1,
+        power2SMeanMean2,
+        power2SMeanStdev,
+        power2SMeanAlpha
+      );
+      nMean=result.sampleSize;
+      actualMeanPower= result.actualPower;      
+    }
   };
 
+  if(enableVariance2SPower) {
+    if(isNaN(parseFloat(power2SVariancePower))) {
+      toast({
+        title: "Variance Power & Sample Size test run Unsuccessfully",
+        description: "No valid Variance Power value. The Variance Power & Sample Size test has not been executed.",
+      });
+    }
+    else {
+      const result = calculate2SVarianceSampleSize(
+        power2SVariancePower,
+        power2SVarianceHa,
+        power2SVarianceStdev1,
+        power2SVarianceStdev2,
+        power2SVarianceAlpha
+      );
+      nVariance=result.sampleSize;
+      actualVariancePower= result.actualPower;      
+    }
+  };
+
+  setPowerSampleSizeResults(PowerSampleSizeResults);
+  toast({
+        title: "Power & Sample Size test Run Successfully",
+        description: "The Power & Sample Size tests have been executed.",
+      });
+  return {
+    twoSMeansampleSize: nMean,
+    twoSMeanactualPower: actualMeanPower,
+    twoSVariancesampleSize: nVariance,
+    twoSVarianceactualPower: actualVariancePower,
+  };
+
+}
+
+{/* on input change, update ContCTQTwoSampleHypTestData state */}
+useEffect(() => {
+  const currentConfig = ContCTQTwoSampleHypTestData[ctqId];
+  if (!currentConfig) return;
+
+  const results = handlePowerSampleSize(
+    currentConfig.enableMean2SPower ?? false,
+    power2SMeanPower,
+    power2SMeanHa,
+    currentConfig.power2SMeanMean1 ?? 0,
+    currentConfig.power2SMeanMean2 ?? 0,
+    currentConfig.power2SMeanStdev ?? 0,
+    power2SMeanAlpha,
+    currentConfig.enableVariance2SPower ?? false,
+    power2SVariancePower,
+    power2SVarianceHa,
+    currentConfig.power2SVarianceStdev1 ?? 0,
+    currentConfig.power2SVarianceStdev2 ?? 0,
+    power2SVarianceAlpha,
+  );
+
+  setPowerSampleSizeResults(results);
+}, [
+  ContCTQTwoSampleHypTestData[ctqId]?.enableMean2SPower,
+  power2SMeanPower,
+  power2SMeanHa,
+  ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean1,
+  ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean2,
+  ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanStdev,
+  power2SMeanAlpha,
+  ContCTQTwoSampleHypTestData[ctqId]?.enableVariance2SPower,
+  power2SVariancePower,
+  power2SVarianceHa,
+  ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev1,
+  ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev2,
+  power2SVarianceAlpha,
+]);
+
+  const handleRunTest = (
+  enableMeanTest: boolean,
+  enableVarianceTest: boolean,
+  enableMedianTest: boolean,
+  dataset1: DataPoint[],
+  dataset2: DataPoint[],
+  significance: number,
+  HaMean: "Less than" | "Greater than" | "Different",
+  HaVariance: "Less than" | "Greater than" | "Different",
+  HaMedian: "Less than" | "Greater than" | "Different",
+  deltaMean0: number,
+  ratioVariance0: number,
+  deltaMedian0: number,
+): RunTestResults => {
+
+  // Initialize with default values
+  let sampleSize: number = 0;
+  let meanValue1: number = 0;
+  let stdev1: number = 0;
+  let variance1: number = 0;
+  let median1: number = 0;
+  let SEmean1: number = 0;
+  let SEvariance1: number = 0;
+  let SEmedian1: number = 0;
+  let ADvalue1: number = 0;
+  let ADp_Value1: number = 0;
+  let tStatistic1: number | {lower: number; upper: number} = 0;
+  let tCriteria1: number | {lower: number; upper: number} = 0;
+  let tp_Value1: number = 0;
+  let mean1CI_minus: number = 0;
+  let mean1CI_plus: number = 0;
+  let df1: number = 0;
+  let varStatistic: number = 0;
+  let varCriteria: number | {lower: number; upper: number} = 0;
+  let varp_Value: number = 0;
+  let varianceCI_minus: number = 0;
+  let varianceCI_plus: number = 0;
+  let medianStatistic: number = 0;
+  let medianCriteria: number = 0;
+  let medianp_Value: number = 0;
+  let medianCI_minus: number = 0;
+  let medianCI_plus: number = 0;
+  let quartiles: { median: number } = { median: 0 };
+
+  if (!dataset1 || dataset1.length === 0) {
+    toast({
+      title: "Test Run Unsuccessfully",
+      description: "No data set. The hypothesis test has not been executed.",
+    });
+    return {
+      sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
+      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+    };
+  }
+  else if (dataset1.length === 1) {
+    toast({
+      title: "Need two data at least to run Hypothesis Testing",
+      description: "Need two data at least to run Hypothesis Testing"
+    });
+    return {
+      sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
+      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+    };
+  }
+  const dataValues = dataset1.map(point => point.dataValue) || [];
+  const n = dataValues.length;
+  const meanVal = mean(dataValues);
+  const stdDev = standardDeviation(dataValues);
+  
 
 
-  // Undo function - restore to previous state and clear undo state (like ProcessCapability)
+  // Perform normality test - will return isNormal, AD value and p_values
+  const normalityTest = performNormalityTest(dataValues, meanVal, stdDev);
+  ADvalue1 = normalityTest.adStatistic;
+  ADp_Value1 = normalityTest.pValue;
+
+  if (enableMeanTest && n > 1) {
+    // Validate and type cast the string to the expected union type
+    const validAlternatives = ["Less than", "Greater than", "Different"] as const;
+    if (!validAlternatives.includes(HaMean as any)) {
+      toast({
+        title: "Invalid Alternative Hypothesis",
+        description: "Invalid alternative hypothesis for Mean test.",
+        variant: "destructive",
+      });
+      return {
+        sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
+      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+      };
+    }
+    
+    const meanTestResult = twosampleMeanHypothesisTest({
+      dataValues,
+      significance,
+      alternativemean: HaMean as "Less than" | "Greater than" | "Different",
+      targetMean: targetmean,
+      ADvalue,
+      ADp_Value,
+    });
+    
+    // Update the variables with actual calculated values
+    sampleSize = n;
+    meanValue = meanVal;
+    stdev = stdDev;
+    SEmean = meanTestResult.SEmean;
+    tStatistic = meanTestResult.tStatistic;
+    if(typeof meanTestResult.tStatistic === 'number') {
+      tStatistic = meanTestResult.tStatistic;
+    }
+    else if(meanTestResult.tStatistic && typeof meanTestResult.tStatistic === 'object') {
+      tStatistic = {
+        lower: meanTestResult.tStatistic.lower,
+        upper: meanTestResult.tStatistic.upper
+      };
+    }
+    
+    if(typeof meanTestResult.tCriteria === 'number') {
+      tCriteria = meanTestResult.tCriteria;
+    }
+    else if(meanTestResult.tCriteria && typeof meanTestResult.tCriteria === 'object') {
+      tCriteria = {
+        lower: meanTestResult.tCriteria.lower,
+        upper: meanTestResult.tCriteria.upper
+      };
+    }
+    tp_Value = meanTestResult.tp_Value;
+    meanCI_minus = meanTestResult.meanCI_minus;
+    meanCI_plus = meanTestResult.meanCI_plus;
+    
+    // Update state as well
+    setTwosampleMeanTestresult(meanTestResult);
+  }
+  if (enableVarianceTest && n > 1) {
+    // Validate and type cast the string to the expected union type
+    const validAlternatives = ["Less than", "Greater than", "Different"] as const;
+    if (!validAlternatives.includes(HaVariance as any)) {
+      toast({
+        title: "Invalid Alternative Hypothesis",
+        description: "Invalid alternative hypothesis for Variance test.",
+        variant: "destructive",
+      });
+      return {
+        sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
+      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+      };
+    }
+    
+    const varianceTestResult = twosampleVarianceHypothesisTest({
+      dataValues,
+      significance,
+      alternativevariance: HaVariance as "Less than" | "Greater than" | "Different",
+      targetstdev: targetstdev,
+    });
+    
+    // Update the variables with actual calculated values
+    
+    sampleSize = n;
+    df = n-1;
+    stdev = stdDev;
+    variance=stdDev*stdDev;
+    varStatistic = varianceTestResult.varStatistic;
+    if(typeof varianceTestResult.varCriteria === 'number') {
+      varCriteria = varianceTestResult.varCriteria;
+    }
+    else if(varianceTestResult.varCriteria && typeof varianceTestResult.varCriteria === 'object') {
+      varCriteria = {
+        lower: varianceTestResult.varCriteria.lower,
+        upper: varianceTestResult.varCriteria.upper
+      };
+    }
+    varp_Value = varianceTestResult.varp_Value;
+    varianceCI_minus = varianceTestResult.varianceCI_minus;
+    varianceCI_plus = varianceTestResult.varianceCI_plus;
+    
+    // Update state as well
+    setTwosampleVarianceTestresult(varianceTestResult);
+  }
+
+  if (enableMedianTest && n > 1) {
+    // Validate and type cast the string to the expected union type
+    const validAlternatives = ["Less than", "Greater than", "Different"] as const;
+    if (!validAlternatives.includes(HaMedian as any)) {
+      toast({
+        title: "Invalid Alternative Hypothesis",
+        description: "Invalid alternative hypothesis for Median test.",
+        variant: "destructive",
+      });
+      return {
+        sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
+      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+      };
+    }
+    
+    const medianTestResult = twosampleMedianHypothesisTest({
+      dataValues,
+      significance,
+      alternativemedian: HaMedian as "Less than" | "Greater than" | "Different",
+      targetMedian: targetmedian,
+      useWilcoxon: true,
+    });
+    
+    // Update the variables with actual calculated values
+    
+    sampleSize = n;
+    df = n-1;
+    stdev = stdDev;
+    variance=stdDev*stdDev;
+    quartiles = calculateQuartiles(dataValues);
+    median = quartiles.median;
+    medianStatistic = medianTestResult.medianStatistic;
+    medianCriteria = medianTestResult.medianCriteria;
+    medianp_Value = medianTestResult.medianp_Value;
+    medianCI_minus = medianTestResult.medianCI_minus;
+    medianCI_plus = medianTestResult.medianCI_plus;
+    
+    // Update state as well
+    setTwosampleMedianTestresult(medianTestResult);
+  }
+
+  toast({
+    title: "Test Run Successfully",
+    description: "The hypothesis test has been executed.",
+  });
+
+  return {
+      sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
+      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
+  };
+};
+{/* on input change, update ContCTQTwoSampleHypTestData state */}
+useEffect(() => {
+  const currentConfig = ContCTQTwoSampleHypTestData[ctqId];
+  if (!currentConfig || dataSet1.length === 0) return;
+
+  const results = handleRunTest(
+    currentConfig.enableMeanTest ?? false,
+    currentConfig.enableVarianceTest ?? false,
+    currentConfig.enableMedianTest ?? false,
+    dataSet1,
+    dataSet2,
+    parseFloat(significanceLevel),
+    Ha(alternativemean),
+    Ha(alternativevariance),
+    Ha(alternativemedian),
+    currentConfig.deltaMean0 ?? 0,
+    currentConfig.ratioVariance0 ?? 1,
+    currentConfig.deltaMedian0 ?? 0
+  );
+
+  setTestResults(results);
+  setShowBoxPlot(true);
+}, [
+  dataSet1,
+  significanceLevel,
+  alternativemean,
+  alternativevariance,
+  alternativemedian,
+  ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest,
+  ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest,
+  ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest,
+  ContCTQTwoSampleHypTestData[ctqId]?.deltaMean0,
+  ContCTQTwoSampleHypTestData[ctqId]?.ratioVariance0,
+  ContCTQTwoSampleHypTestData[ctqId]?.deltaMedian0
+]);
+
+// Undo function - restore to previous state and clear undo state (like ProcessCapability)
   const handleUndo = () => {
     if (undoState) {
-      setDataPoints(JSON.parse(JSON.stringify(undoState)));
+      setDataSet1(JSON.parse(JSON.stringify(undoState)));
       setUndoState(null); // Clear the undo state after using it
       setShowUndoButton(false);
       
       toast({
         title: "Undo Complete",
-        description: "Previous operation has been undone",
+        description: "Previous operation has been undtwo",
       });
     }
   };
@@ -117,21 +819,28 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     if (isNaN(numericValue)) return;
     
     // Save current state before making changes
-    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+    setUndoState(JSON.parse(JSON.stringify(dataSet1)));
     
-    setDataPoints(prev => [
+    setDataSet1(prev => [
       ...prev,
       { indexNumber: prev.length + 1, dataValue: numericValue }
     ]);
     
     setInputValue("");
+    
+    // Auto-scroll to show the newly added row after a short delay
+    setTimeout(() => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+      }
+    }, 100);
   };
 
   const handleDeleteDataPoint = (index: number) => {
     // Save current state before making changes
-    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+    setUndoState(JSON.parse(JSON.stringify(dataSet1)));
     
-    setDataPoints(prev => {
+    setDataSet1(prev => {
       const updatedPoints = prev.filter((_, i) => i !== index);
       // Re-index the remaining points
       const reindexedPoints = updatedPoints.map((point, i) => ({
@@ -161,7 +870,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         const numericValue = parseFloat(value);
         if (!isNaN(numericValue)) {
           newDataPoints.push({
-            indexNumber: dataPoints.length + index + 1,
+            indexNumber: dataSet1.length + index + 1,
             dataValue: numericValue
           });
         }
@@ -169,14 +878,21 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       
       if (newDataPoints.length > 0) {
         // Save current state before making changes
-        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+        setUndoState(JSON.parse(JSON.stringify(dataSet1)));
         
-        setDataPoints(prev => [...prev, ...newDataPoints]);
+        setDataSet1(prev => [...prev, ...newDataPoints]);
         setPasteInput("");
         toast({
           title: "Data Imported",
           description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
         });
+        
+        // Auto-scroll to show the newly added rows after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+          }
+        }, 100);
       }
       else {
        toast({
@@ -207,9 +923,9 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       
       if (newValues.length > 0) {
         // Save current state before making changes
-        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+        setUndoState(JSON.parse(JSON.stringify(dataSet1)));
         
-        setDataPoints(prev => {
+        setDataSet1(prev => {
           const updatedPoints = [...prev];
           
           // Update existing cells starting from the clicked index
@@ -237,6 +953,17 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
           title: "Data Pasted",
           description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
         });
+        
+        // Auto-scroll to show the newly pasted data after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            const lastPastedIndex = index + newValues.length - 1;
+            // Calculate the position of the last pasted row
+            const rowHeight = 50; // Approximate row height
+            const scrollPosition = lastPastedIndex * rowHeight;
+            tableContainerRef.current.scrollTop = scrollPosition;
+          }
+        }, 100);
       }
       else {
        toast({
@@ -299,9 +1026,9 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     const numericValue = parseFloat(editValue);
     if (!isNaN(numericValue)) {
       // Save current state before making changes
-      setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+      setUndoState(JSON.parse(JSON.stringify(dataSet1)));
       
-      setDataPoints(prev => 
+      setDataSet1(prev => 
         prev.map((point, i) => 
           i === index ? { ...point, dataValue: numericValue } : point
         )
@@ -315,8 +1042,18 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     setEditingCell(-1);
     setEditValue("");
   };
+  type AlternativeMeanOption = "Less than" | "Greater than" | "Different";
 
-
+const Ha = (alternative: string): AlternativeMeanOption => {
+  switch (alternative) {
+    case "Less than":
+      return "Less than";
+    case "Greater than":
+      return "Greater than";
+    default:
+      return "Different";
+  }
+};
 
   return (
     <Card>
@@ -327,16 +1064,16 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         <p className="text-sm text-gray-500 mb-4">
             CTQ: {ctqName}
         </p>
+
         <p className="text-sm text-gray-500 mb-4">
-          Validate or invalidate assumptions and determine if differences are statistically significant or insignificant in two samples.
+          Validate or invalidate assumptions and determine if differences are statistically significant or insignificant between two samples.
         </p>
-        
         <div className="space-y-4">
           <label className="block text-sm font-medium mb-3">
             Statistical parameter to test (Select Multiple)
           </label>
           <div className="max-w-4xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-12">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id={`${ctqId}-MeanTest`}
@@ -354,7 +1091,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                   onCheckedChange={(checked) => updateContCTQTwoSampleHypTestDataField(ctqId, "enableVarianceTest", checked)}
                 />
                 <Label htmlFor={`${ctqId}-VarianceTest`} className="text-sm font-medium text-gray-700">
-                  Variance
+                  Variance/Standard Deviation
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -369,73 +1106,419 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
               </div>
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-12 items-stretch">
+              <div className="flex items-top ml-1 h-full space-x-1">
+              <Checkbox
+                id={`${ctqId}-enableMean2SPower`}
+                checked={ContCTQTwoSampleHypTestData[ctqId]?.enableMean2SPower || false}
+                onCheckedChange={(checked) => updateContCTQTwoSampleHypTestDataField(ctqId, "enableMean2SPower", checked)}
+              />
+              {!ContCTQTwoSampleHypTestData[ctqId]?.enableMean2SPower ? (
+                <Label htmlFor={`${ctqId}-enableMean2SPower`} className="items-top text-sm font-sm text-gray-400">
+                  Power & Sample Size
+                </Label>
+                ) : (
+                <div>
+                  <Label htmlFor={`${ctqId}-enableMean2SPower`} className="text-sm font-medium text-gray-700">
+                  Power & Sample Size
+                  </Label>
+                  <Card className="bg-gray-50 min-h-[560px] flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="text-sm">Power & Sample Size 2-Sample Mean Hypothesis Testing</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-xs">
+                      <tr>
+                        <Label htmlFor='power2SMeanPower'>Power of test(1-β):</Label>
+                        <Select value={power2SMeanPower} onValueChange={(value: string) => {
+                          setPower2SMeanPower(value);
+                          //updateContCTQTwoSampleHypTestDataField(ctqId, 'power2SMeanPower', value);
+                        }}>
+                        <SelectTrigger id='power2SMeanPower'>
+                            <SelectValue placeholder="Select Power of test" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.99">99%</SelectItem>
+                          <SelectItem value="0.95">95%</SelectItem>
+                          <SelectItem value="0.90">90%</SelectItem>
+                          <SelectItem value="0.85">85%</SelectItem>
+                          <SelectItem value="0.80">80%</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      <tr>
+                        <Label htmlFor="power2SMeanHa">Ha:</Label>
+                        <Select value={power2SMeanHa} onValueChange={(value: string) => {
+                          setPower2SMeanHa(value);
+                          //updateContCTQTwoSampleHypTestDataField(ctqId, 'power2SMeanHa', value);
+                        }}>
+                        <SelectTrigger id="power2SMeanHa">
+                            <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=">">&gt;</SelectItem>
+                          <SelectItem value="≠">≠</SelectItem>
+                          <SelectItem value="<">&lt;</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      <tr>
+                        <Label htmlFor="power2SMeanAlpha">Alpha (α):</Label> 
+                        <Select value={power2SMeanAlpha} onValueChange={(value: string) => {
+                          setPower2SMeanAlpha(value);
+                          //updateContCTQTwoSampleHypTestDataField(ctqId, 'power2SMeanAlpha', value);
+                        }}>
+                        <SelectTrigger id="power2SMeanAlpha">
+                            <SelectValue placeholder="Select Alpha significance level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.01">1%</SelectItem>
+                          <SelectItem value="0.05">5%</SelectItem>
+                          <SelectItem value="0.10">10%</SelectItem>
+                          <SelectItem value="0.15">15%</SelectItem>
+                          <SelectItem value="0.20">20%</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      
+                      <tr>Mean 1 (μ1): 
+                        <Input
+                          type="number"
+                          step="any"
+                          value={ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean1 ?? ''}
+                          onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                              ctqId, 
+                              "power2SMeanMean1", 
+                              e.target.value === '' ? '' : parseFloat(e.target.value)
+                          )}
+                          placeholder="Enter mean 1 value (μ1)"
+                          className="mt-1"
+                        />
+                      </tr>
+                      <tr>Mean 2 (μ2): 
+                        <Input
+                          type="number"
+                          step="any"
+                          value={ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean2 ?? ''}
+                          onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                              ctqId, 
+                              "power2SMeanMean2", 
+                              e.target.value === '' ? '' : parseFloat(e.target.value)
+                          )}
+                          placeholder="Enter mean 2 value (μ2)"
+                          className="mt-1"
+                        />
+                      </tr>
+                      
+                      <tr>Standard Deviation (σ): 
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanStdev ?? ''}
+                          onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                              ctqId, 
+                              "power2SMeanStdev", 
+                              e.target.value === '' ? '' : parseFloat(e.target.value)
+                          )}
+                          placeholder="Enter standard deviation value (σ)"
+                          className="mt-1"
+                        />
+                      </tr>
 
-          <div className="flex flex-wrap gap-4 items-end"> {/* Changed from space-y-3 to flexbox */}
-            {ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
-                <div className="flex-1 min-w-[100px]"> {/* Added flex-1 and min-width for responsiveness */}
-                    <Label>Target value for mean:</Label>
-                    <Input
-                        type="number"
-                        value={ContCTQTwoSampleHypTestData[ctqId]?.targetMean || 0}
-                        onChange={(e) => updateContCTQTwoSampleHypTestDataField(
-                            ctqId, 
-                            "targetMean", 
-                            parseFloat(e.target.value) || 0
-                        )}
-                        placeholder="Enter target mean"
-                        className="mt-1"
-                    />
+                      <tr className="font-medium text-sm">δ = (μ1-μ2): {(ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean1 -  ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean2).toFixed(3)}
+                      </tr>
+                      <tr className="font-medium text-sm">
+                      <Badge
+                        variant="default"
+                        className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
+                        title={ "Estimated Sample Size" }
+                      >
+                        Sample Size (n): {PowerSampleSizeResults.twoSMeansampleSize.toFixed(1)} <br />
+                        Actual Power: {(PowerSampleSizeResults.twoSMeanactualPower*100).toFixed(2)}%
+                      </Badge>
+                      </tr>
+                    </CardContent>
+                  </Card>
                 </div>
-            )}
-            {ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && (
-                <div className="flex-1 min-w-[100px]"> {/* Added flex-1 and min-width */}
-                    <Label>Target value for variance:</Label>
-                    <Input
-                        type="number"
-                        min="-1"
-                        value={ContCTQTwoSampleHypTestData[ctqId]?.targetStdev || 0}
-                        onChange={(e) => {
-                            const value = parseFloat(e.target.value);
-                            if (isNaN(value)) {
-                                // If input is empty or invalid number, update to 0 or undefined based on your state logic
-                                updateContCTQTwoSampleHypTestDataField(ctqId, "targetStdev", 0); 
-                            } else if (value < 0) {
-                                // Display toast message for negative input
-                                toast({
-                                title: "Target Variance",
-                                description: `Variance cannot be negative. Please enter a non-negative value.`
-                                });
-                                // Optionally, keep the previous valid value or set to 0
-                                updateContCTQTwoSampleHypTestDataField(ctqId, "targetStdev", 0); // Reset to 0
-                            } else {
-                                // Valid non-negative number
-                                updateContCTQTwoSampleHypTestDataField(ctqId, "targetStdev", value);
-                            }
-                        }}
-                        placeholder="Enter target variance"
-                        className="mt-1"
-                    />
-                </div>
-            )}
-            {ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest && (
-                <div className="flex-1 min-w-[100px]"> {/* Added flex-1 and min-width */}
-                    <Label>Target value for median:</Label>
-                    <Input
-                        type="number"
-                        value={ContCTQTwoSampleHypTestData[ctqId]?.targetMedian || 0}
-                        onChange={(e) => updateContCTQTwoSampleHypTestDataField(
-                            ctqId, 
-                            "targetMedian", 
-                            parseFloat(e.target.value) || 0
-                        )}
-                        placeholder="Enter target median"
-                        className="mt-1"
-                    />
-                </div>
-            )}
-          </div>            
+              )}
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-top ml-1 space-x-1">
+              <Checkbox
+                id={`${ctqId}-enableVariance2SPower`}
+                checked={ContCTQTwoSampleHypTestData[ctqId]?.enableVariance2SPower || false}
+                onCheckedChange={(checked) => updateContCTQTwoSampleHypTestDataField(ctqId, "enableVariance2SPower", checked)}
+              />
+              {!ContCTQTwoSampleHypTestData[ctqId]?.enableVariance2SPower ? (
+                <Label htmlFor={`${ctqId}-enableVariance2SPower`} className="items-top text-sm font-sm text-gray-400">
+                  Power & Sample Size
+                </Label>
+                ) : (
+                <div>
+                  <Label htmlFor={`${ctqId}-enableVariance2SPower`} className="text-sm font-medium text-gray-700">
+                  Power & Sample Size
+                  </Label>
+                  <Card className="bg-gray-50 min-h-[560px] flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="text-sm">Power & Sample Size 2-Sample Variance Hypothesis Testing</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-xs">
+                      <tr>
+                        <Label htmlFor='power2SVariancePower'>Power of test(1-β):</Label>
+                        <Select value={power2SVariancePower} onValueChange={(value: string) => {
+                          setPower2SVariancePower(value);
+                          //updateContCTQTwoSampleHypTestDataField(ctqId, 'power2SMeanPower', value);
+                        }}>
+                        <SelectTrigger id='power2SVariancePower'>
+                            <SelectValue placeholder="Select Power of test" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.99">99%</SelectItem>
+                          <SelectItem value="0.95">95%</SelectItem>
+                          <SelectItem value="0.90">90%</SelectItem>
+                          <SelectItem value="0.85">85%</SelectItem>
+                          <SelectItem value="0.80">80%</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      <tr>
+                        <Label htmlFor="power2SVarianceHa">Ha:</Label>
+                        <Select value={power2SVarianceHa} onValueChange={(value: string) => {
+                          setPower2SVarianceHa(value);
+                          //updateContCTQTwoSampleHypTestDataField(ctqId, 'power2SMeanHa', value);
+                        }}>
+                        <SelectTrigger id="power2SVarianceHa">
+                            <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=">">&gt;</SelectItem>
+                          <SelectItem value="≠">≠</SelectItem>
+                          <SelectItem value="<">&lt;</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      <tr>
+                        <Label htmlFor="power2SVarianceAlpha">Alpha (α):</Label> 
+                        <Select value={power2SVarianceAlpha} onValueChange={(value: string) => {
+                          setPower2SVarianceAlpha(value);
+                          //updateContCTQTwoSampleHypTestDataField(ctqId, 'power2SMeanAlpha', value);
+                        }}>
+                        <SelectTrigger id="power2SVarianceAlpha">
+                            <SelectValue placeholder="Select Alpha significance level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.01">1%</SelectItem>
+                          <SelectItem value="0.05">5%</SelectItem>
+                          <SelectItem value="0.10">10%</SelectItem>
+                          <SelectItem value="0.15">15%</SelectItem>
+                          <SelectItem value="0.20">20%</SelectItem>
+                        </SelectContent>
+                        </Select>  
+                      </tr>
+                      
+                      <tr>Standard Deviation 1 (σ1): 
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev1 ?? ''}
+                          onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                              ctqId, 
+                              "power2SVarianceStdev1", 
+                              e.target.value === '' ? '' : parseFloat(e.target.value)
+                          )}
+                          placeholder="Enter standard deviation 1 value (σ1)"
+                          className="mt-1"
+                        />
+                      </tr>
+                      <tr>Standard Deviation 2 (σ2): 
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev2 ?? ''}
+                          onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                              ctqId, 
+                              "power2SVarianceStdev2", 
+                              e.target.value === '' ? '' : parseFloat(e.target.value)
+                          )}
+                          placeholder="Enter standard deviation 2 value (σ2)"
+                          className="mt-1"
+                        />
+                      </tr>
+                      <tr className="font-medium text-sm">Std dev Ratio (σ1/σ2): {(ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev1 /  ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev2).toFixed(3)}
+                      </tr>
+                      <tr className="font-medium text-sm">
+                      <Badge
+                        variant="default"
+                        className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
+                        title={ "Estimated Sample Size" }
+                      >
+                        Sample Size (n): {PowerSampleSizeResults.twoSVariancesampleSize.toFixed(1)} <br />
+                        Actual Power: {(PowerSampleSizeResults.twoSVarianceactualPower*100).toFixed(2)}%
+                      </Badge>
+                      </tr>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              </div>
+          </div>
+          {(ContCTQTwoSampleHypTestData[ctqId]?.enableMean2SPower || 
+            ContCTQTwoSampleHypTestData[ctqId]?.enableVariance2SPower) && (    
+            <Button 
+                className="w-full" 
+                onClick={saveConfiguration} 
+                disabled={saveConfigMutation.isPending}
+                //variant="outline"
+              >
+                {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+            </Button>
+          )}
+          <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
+            {ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest ? (
+                <div className="w-1/3 min-w-[100px] pr-4">
+                  <Label>Hypothesized difference δ0 (H0):</Label>
+                  <Input
+                      type="number"
+                      step="any"
+                      value={ContCTQTwoSampleHypTestData[ctqId]?.deltaMean0 ?? ''}
+                      onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                          ctqId, 
+                          "deltaMean0", 
+                          e.target.value === '' ? '' : parseFloat(e.target.value)
+                      )}
+                      placeholder="Enter Hypothesized difference δ0 (H0):"
+                      className="mt-1"
+                  />
+              </div>
+                ) : (
+                <div className="w-1/3 min-w-[100px] pr-4">
+                </div>
+            )}
+            {ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest ? (
+                <div className="w-1/3 min-w-[100px] pr-4">
+                  <Label>H0 - Hypthesized ratio σ1/σ2:</Label>
+                  <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={ContCTQTwoSampleHypTestData[ctqId]?.ratioVariance0 ?? ''}
+                      onChange={(e) => {
+                          const inputValue = e.target.value;
+                          
+                          // Allow empty input for clearing
+                          if (inputValue === '') {
+                              updateContCTQTwoSampleHypTestDataField(ctqId, "ratioVariance0", '');
+                              return;
+                          }
+                          
+                          const value = parseFloat(inputValue);
+                          
+                          if (isNaN(value)) {
+                              // Invalid input - don't update
+                              return;
+                          } else if (value < 0) {
+                              // Display toast message for negative input
+                              toast({
+                                  title: "Target Standard Deviation",
+                                  description: `Standard deviation cannot be negative. Please enter a positive value.`
+                              });
+                              // Don't update the field, keeping the previous value
+                              return;
+                          } else {
+                              // Valid non-negative number
+                              updateContCTQTwoSampleHypTestDataField(ctqId, "ratioVariance0", value);
+                          }
+                      }}
+                      placeholder="Enter H0 - Hypthetized ratio σ1/σ2"
+                      className="mt-1"
+                  />
+              </div>
+            ) : (
+              <div className="w-1/3 min-w-[100px] pr-4">
+              </div>
+            )}
+            {ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest ? (
+              <div className="w-1/3 min-w-[100px] pr-4">
+                  <Label>Hypothesized difference δ0 (H0):</Label>
+                  <Input
+                      type="number"
+                      step="any"
+                      value={ContCTQTwoSampleHypTestData[ctqId]?.deltaMedian0 ?? ''}
+                      onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                          ctqId, 
+                          "deltaMedian0", 
+                          e.target.value === '' ? '' : parseFloat(e.target.value)
+                      )}
+                      placeholder="Enter Hypothesized difference δ0 (H0) against which ():"
+                      className="mt-1"
+                  />
+              </div>
+              ) : (
+              <div className="w-1/3 min-w-[100px] pr-4">
+              </div>
+            )}
+          </div>   
+          <div className="grid grid-cols-3 pr-10 gap-12">
+            {ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest ? (
+            <div className="w-1/3 min-w-[200px] pr-4">
+            <Label htmlFor="alternativemean">Ha hypothesis for Means</Label>
+            <Select value={alternativemean} onValueChange={setAlternativemean}>
+            <SelectTrigger id="alternativemean">
+                <SelectValue placeholder="Select Ha alternate hypothesis for means" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Different">Different</SelectItem>
+                <SelectItem value="Less than">Less than</SelectItem>
+                <SelectItem value="Greater than">Greater than</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+            ) : (
+            <div className="w-1/3 min-w-[200px] pr-4">
+            </div>
+            )}
+            {ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest ? (
+            <div className="w-1/3 min-w-[200px] pr-4">
+            <Label htmlFor="alternativevariance">Ha hypothesis for Variances</Label>
+            <Select value={alternativevariance} onValueChange={setAlternativevariance}>
+            <SelectTrigger id="alternativevariance">
+                <SelectValue placeholder="Select Ha alternate hypothesis for variances" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Different">Different</SelectItem>
+                <SelectItem value="Less than">Less than</SelectItem>
+                <SelectItem value="Greater than">Greater than</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+            ) : (
+            <div className="w-1/3 min-w-[200px] pr-4">
+            </div>
+            )}
+            {ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest ? (
+            <div className="w-1/3 min-w-[200px] pr-4">
+            <Label htmlFor="alternativemedian">Ha hypothesis for Medians</Label>
+            <Select value={alternativemedian} onValueChange={setAlternativemedian}>
+            <SelectTrigger id="alternativemedian">
+                <SelectValue placeholder="Select Ha alternate hypothesis for medians" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Different">Different</SelectItem>
+                <SelectItem value="Less than">Less than</SelectItem>
+                <SelectItem value="Greater than">Greater than</SelectItem>
+            </SelectContent>
+            </Select>
+            </div>
+            ) : (
+            <div className="w-1/3 min-w-[200px] pr-4">
+            </div>
+            )}
+          </div>
+          
+          <div>
+           <div className="grid grid-cols-2 gap-4 pr-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
             <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
@@ -449,40 +1532,43 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             </SelectContent>
             </Select>
             </div>
-            <div>
-            <Label htmlFor="alternative">Alternative Hypothesis</Label>
-            <Select value={alternative} onValueChange={setAlternative}>
-            <SelectTrigger id="alternative">
-                <SelectValue placeholder="Select alternative" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="Different">Different</SelectItem>
-                <SelectItem value="Less than">Less than</SelectItem>
-                <SelectItem value="Greater than">Greater than</SelectItem>
-            </SelectContent>
-            </Select>
-            </div>
-          </div>
+            <div></div>
 
-          <div>
-            <Label>Characterize your tested dataset:</Label>
+            <div>
+            <Label>Description of your dataset 1:</Label>
             <Input
                 type="text"
-                value={ContCTQTwoSampleHypTestData[ctqId]?.datasetdescription || ""}
+                value={ContCTQTwoSampleHypTestData[ctqId]?.dataset1description || ""}
                 onChange={(e) => updateContCTQTwoSampleHypTestDataField(
                     ctqId, 
-                    "datasetdescription", 
+                    "dataset1description", 
                     e.target.value
                 )}
-                placeholder="Enter a description of your tested dataset"
-                className="mt-1"
+                placeholder="Enter a description of your dataset 1"
+                className="mt-0"
             />
+            </div>
+            <div>
+            <Label>Description of your dataset 2:</Label>
+            <Input
+                type="text"
+                value={ContCTQTwoSampleHypTestData[ctqId]?.dataset2description || ""}
+                onChange={(e) => updateContCTQTwoSampleHypTestDataField(
+                    ctqId, 
+                    "dataset2description", 
+                    e.target.value
+                )}
+                placeholder="Enter a description of your dataset 2"
+                className="mt-0"
+            />
+            </div>
+           
 
-          {/* Data Input Section for One Sample Hypothesis Test */}
-          <div className="space-y-4">
+           {/* Data Input Section for Two Sample Hypothesis Test */}
+           <div className="space-y-4">
             <div>
             <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium mb-2">Data Input</label>
+                <label className="block text-sm font-medium mb-2">Dataset 1 Input</label>
                 {/* Undo and Paste from Excel Section */}
                 <div className="flex gap-2 mt-2 mb-2">
                 {undoState && (
@@ -535,12 +1621,12 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
             </div>
 
             <p className="text-sm text-gray-600 mb-3">
-                Enter data values and click Add, then Save Data to persist to database
+                Enter dataset 1 values and click Add, then Save Data to persist to database
             </p>
 
             {/* Data Table */}
-            <div className="border rounded-md">
-                <table className="min-w-full">
+            <div ref={tableContainerRef} className="border rounded-md max-h-[500px] overflow-y-auto">
+                <table className="min-w-full table-auto">
                 <thead className="bg-gray-50">
                     <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -555,7 +1641,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {dataPoints.length === 0 ? (
+                    {dataSet1.length === 0 ? (
                     <tr>
                         <td colSpan={3} className="text-center text-gray-500">
                         <div
@@ -569,7 +1655,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                         </td>
                     </tr>
                     ) : (
-                    dataPoints.map((point, index) => (
+                    dataSet1.map((point, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                         <td className="px-4 py-2 text-sm text-gray-900">
                             {point.indexNumber}
@@ -622,7 +1708,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                     {/* Add Data Row - Integrated within the main table */}
                     <tr className="bg-blue-50 border-t-2 border-blue-200">
                     <td className="px-4 py-2 text-sm text-gray-500">
-                        {dataPoints.length + 1}
+                        {dataSet1.length + 1}
                     </td>
                     <td className="px-4 py-2">
                         <Input
@@ -679,35 +1765,488 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
                 <div>• <strong>Data will automatically create new rows</strong> if needed</div>
             </div>
             
-            {dataPoints.length > 0 && (
+            {dataSet1.length > 0 && (
                 <div className="text-sm text-gray-600 mt-2">
-                <strong>Sample size:</strong> {dataPoints.length} data points
+                <strong>Sample size:</strong> {dataSet1.length} data points
                 </div>
             )}
             </div>
+           </div>
+
+           <div className="space-y-4">
+            <div>
+            <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium mb-2">Dataset 2 Input</label>
+                {/* Undo and Paste from Excel Section */}
+                <div className="flex gap-2 mt-2 mb-2">
+                {undoState && (
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleUndo}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                    >
+                    <Undo className="h-4 w-4 mr-1" />
+                    Undo
+                    </Button>
+                )}
+                <Button
+                    onClick={async () => {
+                    try {
+                        const clipboardData = await navigator.clipboard.readText();
+                        if (clipboardData.trim()) {
+                        // Create a synthetic paste event
+                        const syntheticEvent = {
+                            preventDefault: () => {},
+                            clipboardData: {
+                            getData: (format: string) => clipboardData
+                            }
+                        };
+                        handlePasteData(syntheticEvent as any);
+                        }
+                    } catch (error) {
+                        toast({
+                        title: "Clipboard Access",
+                        description: "Please use Ctrl+V to paste data or manually enter values.",
+                        });
+                    }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                >
+                    📋 Paste data from Excel
+                </Button>
+                </div>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
+                <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
+                <div className="text-blue-700">Copy single column of numeric values from Excel</div>
+                <div className="text-blue-600 text-xs mt-1">
+                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click table cell to paste
+                </div>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-3">
+                Enter dataset 2 values and click Add, then Save Data to persist to database
+            </p>
+
+            {/* Data Table */}
+            <div ref={tableContainerRef} className="border rounded-md max-h-[500px] overflow-y-auto">
+                <table className="min-w-full table-auto">
+                <thead className="bg-gray-50">
+                    <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Index
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Data Value
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                    {dataSet2.length === 0 ? (
+                    <tr>
+                        <td colSpan={3} className="text-center text-gray-500">
+                        <div
+                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
+                            onClick={() => document.getElementById('add-data-input')?.focus()}
+                            onPaste={(e) => handlePasteData(e)}
+                            tabIndex={0}
+                            title="Click to focus input or paste data here"
+                        >
+                        </div>
+                        </td>
+                    </tr>
+                    ) : (
+                    dataSet2.map((point, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                            {point.indexNumber}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                            {editingCell === index ? (
+                            <Input
+                                type="number"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    saveEdit(index);
+                                } else if (e.key === 'Escape') {
+                                    cancelEdit();
+                                }
+                                }}
+                                onBlur={() => saveEdit(index)}
+                                className="w-20 h-7 text-xs"
+                                step="any"
+                                autoFocus
+                            />
+                            ) : (
+                            <div
+                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                onClick={() => startEditing(index, point.dataValue)}
+                                onPaste={(e) => handleCellPaste(e, index)}
+                                tabIndex={0}
+                                title="Click to edit this value"
+                            >
+                                {point.dataValue}
+                            </div>
+                            )}
+                        </td>
+                        <td className="px-4 py-2">
+                            <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteDataPoint(index)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Delete this data point"
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </td>
+                        </tr>
+                    ))
+                    )}
+
+                    {/* Add Data Row - Integrated within the main table */}
+                    <tr className="bg-blue-50 border-t-2 border-blue-200">
+                    <td className="px-4 py-2 text-sm text-gray-500">
+                        {dataSet2.length + 1}
+                    </td>
+                    <td className="px-4 py-2">
+                        <Input
+                        id="add-data-input"
+                        type="number"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                            addDataPoint(inputValue);
+                            }
+                        }}
+                        onPaste={(e) => {
+                            e.preventDefault();
+                            const pastedData = e.clipboardData.getData('text/plain');
+                            const lines = pastedData.trim().split('\n');
+
+                            if (lines.length > 1) {
+                            // Multiple values - use the general paste handler
+                            handlePasteData(e);
+                            } else {
+                            // Single value - set it in the input field
+                            const value = lines[0]?.trim();
+                            if (value) {
+                                setInputValue(value);
+                            }
+                            }
+                        }}
+                        placeholder="Enter numeric value"
+                        className="w-full"
+                        step="any"
+                        />
+                    </td>
+                    <td className="px-4 py-2">
+                        <Button
+                        onClick={() => addDataPoint(inputValue)}
+                        disabled={!inputValue.trim()}
+                        size="sm"
+                        >
+                        Add
+                        </Button>
+                    </td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+
+            {/* Excel Import Instructions */}
+            <div className="text-xs text-blue-600 mt-2 space-y-1">
+                <div><strong>Excel Import Instructions:</strong></div>
+                <div>• <strong>Focus a cell</strong> by clicking on any measurement input field</div>
+                <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
+                <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
+                <div>• <strong>Data will automatically create new rows</strong> if needed</div>
+            </div>
+            
+            {dataSet2.length > 0 && (
+                <div className="text-sm text-gray-600 mt-2">
+                <strong>Sample size:</strong> {dataSet2.length} data points
+                </div>
+            )}
+            </div>
+           </div>
+
           </div>
           
-          <div>
-          <Button className="w-full" onClick={handleRunTest}>
-            Run Test
-          </Button>
+          <div className="mt-2 mb-3">
+            <Button 
+              className="w-full" 
+              onClick={saveConfiguration} 
+              disabled={saveConfigMutation.isPending}
+              //variant="outline"
+            >
+              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+            </Button>
+            {/* Run Test Button 
+            <Button
+              className={`w-full ${!ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest} &
+                ${!ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest} &
+                ${!ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest} ? 'opacity-50 cursor-not-allowed' : ''
+              `}
+              disabled={!ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest &&
+                !ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest &&
+                !ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest}
+              onClick={() => { // Use a block to perform multiple actions
+                  const results = handleRunTest(
+                      ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest ?? false,
+                      ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest ?? false, // Matches corrected function signature
+                      ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest ?? false,
+                      dataSet1,
+                      parseFloat(significanceLevel),
+                      Ha(alternativemean),
+                      Ha(alternativevariance),
+                      Ha(alternativemedian),
+                      ContCTQTwoSampleHypTestData[ctqId]?.targetMean ?? 0,
+                      ContCTQTwoSampleHypTestData[ctqId]?.targetstdev ?? 0,
+                      ContCTQTwoSampleHypTestData[ctqId]?.targetMedian ?? 0
+                  );
+                  setTestResults(results); // Store the returned results in your state
+                  setShowBoxPlot(true); // Show the BoxPlot comptwont after running the test
+              }}
+            >
+                Run Test
+            </Button>
+            */}
           </div>
+          {((ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest ||
+            ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest ||
+            ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest) && (twosampleMeanTestresult || twosampleVarianceTestresult || twosampleMedianTestresult) && ( testResults.sampleSize > 1)) && ( 
+          <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
+            <Card className="p-2">
+            <CardTitle className="text-lg">Results:</CardTitle>    
+            <Badge
+              variant="default"
+              className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value1 >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+              title={
+                testResults.ADp_Value1 >= parseFloat(significanceLevel)
+                  ? "Data distribution 1 follows normal distribution (P-Value ≥ ${significanceLevel})"
+                  : "Data distribution 1 does not follow normal distribution (P-Value < ${significanceLevel})"
+              }
+            >
+              {testResults.ADp_Value1 >= parseFloat(significanceLevel)
+                ? "Data follows normal distribution"
+                : "Data does not follow normal distribution"}
+            </Badge>
+            <div className="text-gray-600 font-medium">Dataset 1 Description:&nbsp;
+            {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}</div>
+            <div className="text-gray-600 font-medium">Sample size:&nbsp;
+            {testResults.sampleSize}</div>
+            <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+            {testResults.ADvalue1.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+            {testResults.ADp_Value1.toFixed(3)}</div>
+            
+            </Card>
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              {ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
+              <Card className="p-2">                
+                <CardTitle className="text-lg">Two-Sample Mean test:</CardTitle>
+                <div className="text-lg justify-left">Student T-test:</div>
+                <div className="text-gray-600 font-medium">Mean1:&nbsp;
+                  {testResults.meanValue1.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Mean2:&nbsp;
+                  {ContCTQTwoSampleHypTestData[ctqId]?.targetMean}</div>
+                <div>
+                 <Badge
+                  variant="default"
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.tp_Value1 < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                  title={
+                    testResults.tp_Value1 < parseFloat(significanceLevel)
+                      ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value1.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value1.toFixed(4)} ≥ ${significanceLevel})`
+                  }
+                 >
+                  {alternativemean==='Less than' ? "Ha: Mean < "
+                  : ( alternativemean==='Greater than' ? "Ha: Mean >"
+                    :"Ha: Mean ≠ " )} Target<br></br>
+                  {testResults.tp_Value1 < parseFloat(significanceLevel)
+                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value1.toFixed(4)} < ${significanceLevel})`
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value1.toFixed(4)} ≥ ${significanceLevel})`}
+                  
+                 </Badge>
+                </div>
+                <div className="text-gray-600 font-medium">SE Mean:&nbsp;
+                  {testResults.SEmean1.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">T-statistic:&nbsp;
+                  {typeof testResults.tStatistic1 === 'number' 
+                    ? testResults.tStatistic1.toFixed(3) 
+                    : `[${testResults.tStatistic1.lower.toFixed(3)} ; ${testResults.tStatistic1.upper.toFixed(3)}]`
+                  }
+                </div>
+                <div className="text-gray-600 font-medium">T-criteria at significance:&nbsp;
+                  {typeof testResults.tCriteria1 === 'number' 
+                    ? testResults.tCriteria1.toFixed(3) 
+                    : `[${testResults.tCriteria1.lower.toFixed(3)} ; ${testResults.tCriteria1.upper.toFixed(3)}]`
+                  }
+                </div>
+                <div className="text-gray-600 font-medium">T-test P-value:&nbsp;
+                  {testResults.tp_Value1.toFixed(4)}</div>
+                <div className="text-gray-600 font-medium">Lower CI:&nbsp;
+                {testResults.mean1CI_minus.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Upper CI:&nbsp;
+                  {testResults.mean1CI_plus.toFixed(3)}</div>
+              </Card>
+              )}
+              {ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && (
+              <Card className="p-2">                
+                <CardTitle className="text-lg">Two-Sample Variance test:</CardTitle>
+                <div className="text-lg justify-left">χ² (Chi Square) test:</div>
+                <div className="text-gray-600 font-medium">Standard Deviation:&nbsp;
+                  {testResults.stdev1.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Standard Deviation Target:&nbsp;
+                  {ContCTQTwoSampleHypTestData[ctqId]?.targetstdev}</div>
+                <div>
+                 <Badge
+                  variant="default"
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.varp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                  title={
+                    testResults.varp_Value < parseFloat(significanceLevel)
+                      ? `Reject H0. Accept Ha (P-Value ${testResults.varp_Value.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.varp_Value.toFixed(4)} ≥ ${significanceLevel})`
+                  }
+                 >
+                  {alternativevariance==='Less than' ? "Ha: Standard Deviation < "
+                  : ( alternativevariance==='Greater than' ? "Ha: Standard Deviatitwo >"
+                    :"Ha: Variance ≠ " )} Target<br></br>
+                  {testResults.varp_Value < parseFloat(significanceLevel)
+                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.varp_Value.toFixed(4)} < ${significanceLevel})`
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.varp_Value.toFixed(4)} ≥ ${significanceLevel})`}
+                  
+                 </Badge>
+                </div>
+                
+                <div className="text-gray-600 font-medium">χ² Degrees of Freedom:&nbsp;
+                  {testResults.df.toFixed(0)}</div>
+                <div className="text-gray-600 font-medium">χ² statistic:&nbsp;
+                  {testResults.varStatistic.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">χ² criteria at significance:&nbsp;
+                  {typeof testResults.varCriteria === 'number' 
+                    ? testResults.varCriteria.toFixed(3) 
+                    : `[${testResults.varCriteria.lower.toFixed(3)} ; ${testResults.varCriteria.upper.toFixed(3)}]`
+                  }
+                </div>
+                <div className="text-gray-600 font-medium">χ² P-value:&nbsp;
+                  {testResults.varp_Value.toFixed(4)}</div>
+                <div className="text-gray-600 font-medium">Standard deviation Lower CI:&nbsp;
+                {testResults.varianceCI_minus.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Standard deviation Upper CI:&nbsp;
+                  {testResults.varianceCI_plus.toFixed(3)}</div>
+              </Card>
+              )}
+              {ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest && (
+              <Card className="p-2">                
+                <CardTitle className="text-lg">Two-Sample Median-test:</CardTitle>
+                <div className="text-lg justify-left">Wilcoxon test:</div>
+                <div className="text-gray-600 font-medium">Median:&nbsp;
+                  {testResults.median1.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Target:&nbsp;
+                  {ContCTQTwoSampleHypTestData[ctqId]?.targetMedian}</div>
+                <div>
+                 <Badge
+                  variant="default"
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.medianp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                  title={
+                    testResults.medianp_Value < parseFloat(significanceLevel)
+                      ? `Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`
+                  }
+                 >
+                  {alternativemedian==='Less than' ? "Ha: Median < "
+                  : ( alternativemedian==='Greater than' ? "Ha: Median >"
+                    :"Ha: Median ≠ " )} Target<br></br>
+                  {testResults.medianp_Value < parseFloat(significanceLevel)
+                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`}
+                  
+                 </Badge>
+                </div>
+                <div className="text-gray-600 font-medium">Wilcoxon-statistic:&nbsp;
+                  {testResults.medianStatistic.toFixed(3)}</div>
+                  <div className="text-gray-600 font-medium">Wilcoxon-criteria at significance:&nbsp;
+                  {testResults.medianCriteria.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Wilcoxon-test P-value:&nbsp;
+                  {testResults.medianp_Value.toFixed(4)}</div>
+                <div className="text-gray-600 font-medium">Lower CI:&nbsp;
+                  {testResults.medianCI_minus.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Upper CI:&nbsp;
+                  {testResults.medianCI_plus.toFixed(3)}</div>
+              </Card>
+              )}            
+            </div>
+          </div>
+          )}
 
-          <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
-            <h4 className="font-medium text-sm mb-2">Results</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-600">t-statistic:</div>
-              <div className="font-medium">{testResult.tStatistic}</div>
-              <div className="text-gray-600">p-value:</div>
-              <div className="font-medium text-green-600">{testResult.pValue}</div>
-              <div className="text-gray-600">Conclusion:</div>
-              <div className="font-medium text-green-600">{testResult.conclusion}</div>
+          {/* 2 sample Student mean test BoxPlot visualization when showBoxPlot is true */}
+          {/*
+          {showBoxPlot && dataSet1.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
+            <div className="mt-6">
+              <BoxPlotWith2SMeanTest
+                data={dataSet1.map(point => point.dataValue)}
+                ctqName={ctqName}
+                mean1={testResults.meanValue1}
+                Ha={Ha(alternativemean)}
+                h0Value={ContCTQTwoSampleHypTestData[ctqId]?.targetMean ?? 0}
+                confidenceInterval={[testResults.mean1CI_minus, testResults.mean1CI_plus]}
+                title={`2-Sample Mean T-Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.tp_Value1}
+                alphalevel={significanceLevel}
+              />
             </div>
-            <div className="mt-2 text-xs text-gray-500">
-              {testResult.explanation}
+          )}
+          */}
+
+          {/* 2 sample χ² variance test BoxPlot visualization when showBoxPlot is true */}
+          {/*
+          {showBoxPlot && dataSet1.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && (
+            <div className="mt-6">
+              <TwoSVarianceTestCI
+                data={dataSet1.map(point => point.dataValue)}
+                ctqName={ctqName}
+                stdev={testResults.stdev1}
+                Ha={Ha(alternativevariance)}
+                h0Value={ContCTQTwoSampleHypTestData[ctqId]?.targetstdev ?? 0}
+                confidenceInterval={[testResults.varianceCI_minus, testResults.varianceCI_plus]}
+                title={`2-Sample χ² Variance Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.varp_Value}
+                alphalevel={significanceLevel}
+              />
             </div>
-          </div>
-          </div>
+          )}
+          */}
+          
+          {/* 2 sample Wilcoxon median test BoxPlot visualization when showBoxPlot is true */}
+          {/*
+          {showBoxPlot && dataSet1.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest && (
+            <div className="mt-6">
+              <BoxPlotWith2SMedianTest
+                data={dataSet1.map(point => point.dataValue)}
+                ctqName={ctqName}
+                median={testResults.median1}
+                Ha={Ha(alternativemedian)}
+                h0Value={ContCTQTwoSampleHypTestData[ctqId]?.targetMedian ?? 0}
+                confidenceInterval={[testResults.medianCI_minus, testResults.medianCI_plus]}
+                title={`2-Sample Wilcoxon Median Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.medianp_Value}
+                alphalevel={significanceLevel}
+              />
+            </div>
+          )}
+            */}
+          </div>         
         </div>
       </CardContent>
     </Card>
