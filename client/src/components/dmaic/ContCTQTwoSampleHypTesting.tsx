@@ -203,7 +203,8 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [inputValue1, setInputValue1] = useState("");
   const [inputValue2, setInputValue2] = useState("");
   const [pasteInput, setPasteInput] = useState("");
-  const [focusedCell, setFocusedCell] = useState<number>(-1);
+  const [focusedCell1, setFocusedCell1] = useState<number>(-1);
+  const [focusedCell2, setFocusedCell2] = useState<number>(-1);
   const [editingCell1, setEditingCell1] = useState<number>(-1);
   const [editingCell2, setEditingCell2] = useState<number>(-1);
   const [editValue1, setEditValue1] = useState<string>("");
@@ -839,7 +840,7 @@ useEffect(() => {
       setDataSet1([]);
       setInputValue1("");
       setPasteInput("");
-      setFocusedCell(-1);
+      setFocusedCell1(-1);
       setEditingCell1(-1);
       setEditValue1("");
       
@@ -860,7 +861,7 @@ useEffect(() => {
       setDataSet2([]);
       setInputValue2("");
       setPasteInput("");
-      setFocusedCell(-1);
+      setFocusedCell2(-1);
       setEditingCell2(-1);
       setEditValue2("");
       
@@ -1302,25 +1303,34 @@ useEffect(() => {
               }
             } as unknown as React.ClipboardEvent;
             
-            // Determine which dataset to paste into based on which input field is focused
-            const activeElement = document.activeElement as HTMLElement;
-            const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
-                                  activeElement?.closest('[data-dataset="1"]');
-            const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
-                                  activeElement?.closest('[data-dataset="2"]');
-            
-            if (isDataset1Input) {
-              handlePasteData1(syntheticEvent);
-            } else if (isDataset2Input) {
-              handlePasteData2(syntheticEvent);
+            // Check for focused cells first, then input fields
+            if (focusedCell1 >= 0) {
+              // Focused cell in Dataset 1 - use focused cell paste
+              handleCellPaste1(syntheticEvent, focusedCell1);
+            } else if (focusedCell2 >= 0) {
+              // Focused cell in Dataset 2 - use focused cell paste
+              handleCellPaste2(syntheticEvent, focusedCell2);
             } else {
-              // Default to dataset 1 if no specific input is focused
-              handlePasteData1(syntheticEvent);
-              toast({
-                title: "Data Pasted to Dataset 1",
-                description: "Data was pasted to Dataset 1. Click on Dataset 2 input to paste there instead.",
-                variant: "default",
-              });
+              // No focused cell - determine based on input field or container focus
+              const activeElement = document.activeElement as HTMLElement;
+              const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
+                                    activeElement?.closest('[data-dataset="1"]');
+              const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
+                                    activeElement?.closest('[data-dataset="2"]');
+              
+              if (isDataset1Input) {
+                handlePasteData1(syntheticEvent);
+              } else if (isDataset2Input) {
+                handlePasteData2(syntheticEvent);
+              } else {
+                // Default to dataset 1 if no specific input is focused
+                handlePasteData1(syntheticEvent);
+                toast({
+                  title: "Data Pasted to Dataset 1",
+                  description: "Data was pasted to Dataset 1. Click on Dataset 2 input to paste there instead.",
+                  variant: "default",
+                });
+              }
             }
           }
         }).catch(error => {
@@ -2100,11 +2110,16 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell1 === index ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
                                 onClick={() => startEditing1(index, point.dataValue)}
-                                onPaste={(e) => handleCellPaste1(e, index)}
+                                onFocus={() => setFocusedCell1(index)}
+                                onBlur={() => setFocusedCell1(-1)}
+                                onPaste={(e) => {
+                                  setFocusedCell1(index);
+                                  handleCellPaste1(e, index);
+                                }}
                                 tabIndex={0}
-                                title="Click to edit this value"
+                                title="Click to edit this value or focus and paste data"
                             >
                                 {point.dataValue}
                             </div>
@@ -2320,11 +2335,16 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell2 === index ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
                                 onClick={() => startEditing2(index, point.dataValue)}
-                                onPaste={(e) => handleCellPaste2(e, index)}
+                                onFocus={() => setFocusedCell2(index)}
+                                onBlur={() => setFocusedCell2(-1)}
+                                onPaste={(e) => {
+                                  setFocusedCell2(index);
+                                  handleCellPaste2(e, index);
+                                }}
                                 tabIndex={0}
-                                title="Click to edit this value"
+                                title="Click to edit this value or focus and paste data"
                             >
                                 {point.dataValue}
                             </div>

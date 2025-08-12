@@ -42,6 +42,7 @@ Preferred communication style: Simple, everyday language.
 - Comprehensive client-side validation and error handling.
 - Dynamic UI adjustments based on project type (e.g., White Belt/Yellow Belt).
 - **Regional Format Support**: Comprehensive French decimal format handling (comma-to-dot conversion) across all statistical input fields and paste operations.
+- **Enhanced Focused Cell Paste**: Consistent focused cell paste functionality across One Sample and Two Sample Hypothesis Testing components with proper indexing and dual-dataset support.
 
 ## External Dependencies
 
