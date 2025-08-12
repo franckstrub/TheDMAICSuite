@@ -1510,11 +1510,14 @@ useEffect(() => {
             } as unknown as React.ClipboardEvent;
             
             // Check for focused cells first, then input fields
+            console.log('Keyboard paste: focusedCell1:', focusedCell1, 'focusedCell2:', focusedCell2);
             if (focusedCell1 >= 0) {
               // Focused cell in Dataset 1 - use focused cell paste
+              console.log('Using handleFocusedCellPaste1 for cell:', focusedCell1);
               handleFocusedCellPaste1(clipboardData);
             } else if (focusedCell2 >= 0) {
               // Focused cell in Dataset 2 - use focused cell paste
+              console.log('Using handleFocusedCellPaste2 for cell:', focusedCell2);
               handleFocusedCellPaste2(clipboardData);
             } else {
               // No focused cell - determine based on input field or container focus
@@ -2318,8 +2321,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             <div
                                 className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell1 === index ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
                                 onClick={() => startEditing1(index, point.dataValue)}
-                                onFocus={() => setFocusedCell1(index)}
-                                onBlur={() => setFocusedCell1(-1)}
+                                onFocus={() => {
+                                  console.log('Dataset 1 cell focused:', index);
+                                  setFocusedCell1(index);
+                                }}
+                                onBlur={(e) => {
+                                  // Don't clear focus immediately - delay to allow paste operations
+                                  setTimeout(() => {
+                                    // Only clear if not related to paste operations
+                                    if (document.activeElement !== e.currentTarget) {
+                                      setFocusedCell1(-1);
+                                    }
+                                  }, 100);
+                                }}
                                 onPaste={(e) => {
                                   e.preventDefault();
                                   const pasteData = e.clipboardData.getData('text');
@@ -2545,8 +2559,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             <div
                                 className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell2 === index ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
                                 onClick={() => startEditing2(index, point.dataValue)}
-                                onFocus={() => setFocusedCell2(index)}
-                                onBlur={() => setFocusedCell2(-1)}
+                                onFocus={() => {
+                                  console.log('Dataset 2 cell focused:', index);
+                                  setFocusedCell2(index);
+                                }}
+                                onBlur={(e) => {
+                                  // Don't clear focus immediately - delay to allow paste operations
+                                  setTimeout(() => {
+                                    // Only clear if not related to paste operations
+                                    if (document.activeElement !== e.currentTarget) {
+                                      setFocusedCell2(-1);
+                                    }
+                                  }, 100);
+                                }}
                                 onPaste={(e) => {
                                   e.preventDefault();
                                   const pasteData = e.clipboardData.getData('text');
