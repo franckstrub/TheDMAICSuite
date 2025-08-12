@@ -2613,6 +2613,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
+                    {console.log('Dataset 2 length:', dataSet2.length, 'Data:', dataSet2)}
                     {dataSet2.length === 0 ? (
                     <tr>
                         <td colSpan={3} className="text-center text-gray-500">
