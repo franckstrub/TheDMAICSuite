@@ -43,7 +43,7 @@ Preferred communication style: Simple, everyday language.
 - Dynamic UI adjustments based on project type (e.g., White Belt/Yellow Belt).
 - **Regional Format Support**: Comprehensive French decimal format handling (comma-to-dot conversion) across all statistical input fields and paste operations.
 - **Enhanced Focused Cell Paste**: Consistent focused cell paste functionality across One Sample and Two Sample Hypothesis Testing components with proper indexing and dual-dataset support.
-- **Two Sample Focused Cell Paste**: Exact working implementation copied from One Sample component, supporting multiple paste operations and proper focus management for both datasets.
+- **Two Sample Focused Cell Paste**: Exact working implementation copied from One Sample component, supporting multiple paste operations and proper focus management for both datasets. Fixed mutual focus exclusion where clicking on one dataset clears the other's focus to ensure keyboard shortcuts (Ctrl+V) correctly target the focused dataset.
 
 ## External Dependencies
 
