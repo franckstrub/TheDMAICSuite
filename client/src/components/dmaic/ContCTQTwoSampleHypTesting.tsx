@@ -205,6 +205,9 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [pasteInput, setPasteInput] = useState("");
   const [focusedCell1, setFocusedCell1] = useState<number>(-1);
   const [focusedCell2, setFocusedCell2] = useState<number>(-1);
+  
+  // Unified focus tracking: { dataset: 1 | 2 | null, row: number }
+  const [activeDatasetFocus, setActiveDatasetFocus] = useState<{ dataset: 1 | 2 | null; row: number }>({ dataset: null, row: -1 });
   const [editingCell1, setEditingCell1] = useState<number>(-1);
   const [editingCell2, setEditingCell2] = useState<number>(-1);
   const [editValue1, setEditValue1] = useState<string>("");
@@ -1589,14 +1592,19 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            if (focusedCell1 >= 0) {
-              // Use focused cell paste for Dataset 1 if a cell is focused
+            console.log('Paste triggered - activeDatasetFocus:', activeDatasetFocus);
+            
+            if (activeDatasetFocus.dataset === 1 && activeDatasetFocus.row >= 0) {
+              // Use focused cell paste for Dataset 1
+              console.log('Pasting to Dataset 1 at row:', activeDatasetFocus.row);
               handleFocusedCellPaste1(clipboardData);
-            } else if (focusedCell2 >= 0) {
-              // Use focused cell paste for Dataset 2 if a cell is focused
+            } else if (activeDatasetFocus.dataset === 2 && activeDatasetFocus.row >= 0) {
+              // Use focused cell paste for Dataset 2
+              console.log('Pasting to Dataset 2 at row:', activeDatasetFocus.row);
               handleFocusedCellPaste2(clipboardData);
             } else {
               // Create a synthetic paste event for general paste to Dataset 1 (default)
+              console.log('No active focus, defaulting to Dataset 1 general paste');
               const syntheticEvent = {
                 preventDefault: () => {},
                 clipboardData: {
@@ -1677,7 +1685,7 @@ useEffect(() => {
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState1, undoState2, activeTab, ctqName, focusedCell1, focusedCell2]);
+  }, [undoState1, undoState2, activeTab, ctqName, focusedCell1, focusedCell2, activeDatasetFocus]);
 
   // Handle cell editing for Dataset 1
   const startEditing1 = (index: number, currentValue: number) => {
@@ -2389,8 +2397,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 }`}
                                 onClick={(e) => {
                                   e.preventDefault();
+                                  console.log('Dataset 1 cell clicked:', index);
                                   setFocusedCell1(index);
                                   setFocusedCell2(-1); // Clear Dataset 2 focus
+                                  setActiveDatasetFocus({ dataset: 1, row: index });
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2411,6 +2421,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell1(index);
                                   setFocusedCell2(-1); // Clear Dataset 2 focus
+                                  setActiveDatasetFocus({ dataset: 1, row: index });
                                 }}
                             >
                                 {point.dataValue}
@@ -2632,8 +2643,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 }`}
                                 onClick={(e) => {
                                   e.preventDefault();
+                                  console.log('Dataset 2 cell clicked:', index);
                                   setFocusedCell2(index);
                                   setFocusedCell1(-1); // Clear Dataset 1 focus
+                                  setActiveDatasetFocus({ dataset: 2, row: index });
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2654,6 +2667,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell2(index);
                                   setFocusedCell1(-1); // Clear Dataset 1 focus
+                                  setActiveDatasetFocus({ dataset: 2, row: index });
                                 }}
                             >
                                 {point.dataValue}
