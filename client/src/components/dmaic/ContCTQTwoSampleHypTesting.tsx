@@ -1215,24 +1215,46 @@ useEffect(() => {
         const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
                               activeElement?.closest('[data-dataset="2"]');
         
-        if (isDataset1Input && undoState1) {
-          handleUndo1();
-        } else if (isDataset2Input && undoState2) {
-          handleUndo2();
+        if (isDataset1Input) {
+          if (undoState1) {
+            handleUndo1();
+          } else {
+            toast({
+              title: "Nothing to Undo",
+              description: "No operations available to undo in Dataset 1.",
+              variant: "default",
+            });
+          }
+        } else if (isDataset2Input) {
+          if (undoState2) {
+            handleUndo2();
+          } else {
+            toast({
+              title: "Nothing to Undo",
+              description: "No operations available to undo in Dataset 2.",
+              variant: "default",
+            });
+          }
         } else {
-          // Fallback: undo the dataset that has undo state available, but prioritize Dataset 1
+          // Only when not focused on any specific dataset, fall back to available undo
           if (undoState1) {
             handleUndo1();
             toast({
               title: "Undoing Dataset 1",
-              description: "Undid the last operation on Dataset 1. Focus on Dataset 2 input to undo there.",
+              description: "Undid the last operation on Dataset 1. Focus on a specific dataset input to undo there.",
               variant: "default",
             });
           } else if (undoState2) {
             handleUndo2();
             toast({
               title: "Undoing Dataset 2", 
-              description: "Undid the last operation on Dataset 2.",
+              description: "Undid the last operation on Dataset 2. Focus on a specific dataset input to undo there.",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Nothing to Undo",
+              description: "No operations available to undo.",
               variant: "default",
             });
           }
