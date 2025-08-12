@@ -1589,19 +1589,14 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            console.log('Keyboard paste: focusedCell1 =', focusedCell1, 'focusedCell2 =', focusedCell2);
-            
             if (focusedCell1 >= 0) {
               // Use focused cell paste for Dataset 1 if a cell is focused
-              console.log('Using focused cell paste for Dataset 1, cell:', focusedCell1);
               handleFocusedCellPaste1(clipboardData);
             } else if (focusedCell2 >= 0) {
               // Use focused cell paste for Dataset 2 if a cell is focused
-              console.log('Using focused cell paste for Dataset 2, cell:', focusedCell2);
               handleFocusedCellPaste2(clipboardData);
             } else {
               // Create a synthetic paste event for general paste to Dataset 1 (default)
-              console.log('No focused cell detected, using general paste to Dataset 1');
               const syntheticEvent = {
                 preventDefault: () => {},
                 clipboardData: {
@@ -2394,7 +2389,6 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 }`}
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  console.log('Dataset 1 cell clicked, setting focusedCell1 to:', index);
                                   setFocusedCell1(index);
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
@@ -2636,7 +2630,6 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 }`}
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  console.log('Dataset 2 cell clicked, setting focusedCell2 to:', index);
                                   setFocusedCell2(index);
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
