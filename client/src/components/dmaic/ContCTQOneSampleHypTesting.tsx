@@ -922,18 +922,27 @@ useEffect(() => {
     const pastedData = event.clipboardData.getData('text/plain');
     
     if (pastedData.trim()) {
-      const lines = pastedData.trim().split('\n');
+      // Split by both newlines and tabs to handle Excel data properly
+      const lines = pastedData.trim().split(/[\n\r]+/);
+      const allValues: string[] = [];
+      
+      // Further split each line by tabs in case it's tab-separated data
+      lines.forEach(line => {
+        const tabSeparatedValues = line.trim().split('\t');
+        allValues.push(...tabSeparatedValues.filter(val => val.trim() !== ''));
+      });
+      
       const newValues: number[] = [];
       
-      lines.forEach((line) => {
-        const value = line.trim();
+      allValues.forEach((value) => {
+        const trimmedValue = value.trim();
         
         // Handle different decimal separators and number formats (French regional settings support)
-        let processedValue = value;
+        let processedValue = trimmedValue;
         
         // Handle European format with comma as decimal separator (but not thousands separator)
-        if (value.includes(',') && !value.includes('.')) {
-          processedValue = value.replace(',', '.');
+        if (trimmedValue.includes(',') && !trimmedValue.includes('.')) {
+          processedValue = trimmedValue.replace(',', '.');
         }
         
         // Remove any thousands separators (spaces, apostrophes)
