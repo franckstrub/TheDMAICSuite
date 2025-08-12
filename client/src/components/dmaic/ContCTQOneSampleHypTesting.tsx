@@ -938,95 +938,163 @@ useEffect(() => {
     }
   };
 
-  // Handle paste specifically for editing cells - handles multiple values starting from clicked cell
-  const handleCellPaste = (event: React.ClipboardEvent, index: number) => {
-    event.preventDefault();
-    const pastedData = event.clipboardData.getData('text/plain');
-    
-    if (pastedData.trim()) {
-      const lines = pastedData.trim().split('\n');
+  // Handle focused cell paste - similar to Process Capability functionality
+  const handleFocusedCellPaste = (pasteData: string) => {
+    if (focusedCell === -1) {
+      toast({
+        title: "No Cell Focused",
+        description: "Please click on a data cell first to set the starting position for paste.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Save current state before making changes
+      setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+      setShowUndoButton(true);
+
+      // Parse the pasted data
+      const rows = pasteData.trim().split('\n');
       const newValues: number[] = [];
       
-      lines.forEach((line) => {
-        const value = line.trim();
+      rows.forEach(row => {
+        let cells: string[] = [];
         
-        // Handle different decimal separators and number formats (French regional settings support)
-        let processedValue = value;
-        
-        // Handle European format with comma as decimal separator (but not thousands separator)
-        if (value.includes(',') && !value.includes('.')) {
-          processedValue = value.replace(',', '.');
-        }
-        
-        // Remove any thousands separators (spaces, apostrophes)
-        processedValue = processedValue.replace(/[\s']/g, '');
-        
-        // Handle thousands separators with commas (US format: 1,234.56)
-        if (processedValue.includes(',') && processedValue.includes('.')) {
-          const parts = processedValue.split('.');
-          if (parts.length === 2) {
-            const integerPart = parts[0].replace(/,/g, '');
-            processedValue = integerPart + '.' + parts[1];
+        if (row.includes('\t')) {
+          // Excel data with tabs - standard Excel copy format
+          cells = row.split('\t');
+        } else {
+          // No tabs - could be single column or comma-separated
+          // First, try to detect if this is a single French decimal number
+          const trimmedRow = row.trim();
+          
+          // Check if this looks like a single French decimal number (digits, optional comma, digits)
+          const frenchDecimalPattern = /^-?\d+,\d+$/;
+          if (frenchDecimalPattern.test(trimmedRow)) {
+            // This is a single French decimal number, don't split by comma
+            cells = [trimmedRow];
+          } else if (trimmedRow.includes(',')) {
+            // Contains commas but doesn't match French decimal pattern
+            // Split by comma but be careful about decimal commas
+            const parts = trimmedRow.split(',');
+            cells = [];
+            
+            for (let i = 0; i < parts.length; i++) {
+              const part = parts[i].trim();
+              
+              // Check if this part combined with next part could be a French decimal
+              if (i < parts.length - 1) {
+                const nextPart = parts[i + 1].trim();
+                const combined = part + ',' + nextPart;
+                
+                // If combined looks like a French decimal, combine them
+                if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
+                  cells.push(combined);
+                  i++; // Skip next part as we combined it
+                  continue;
+                }
+              }
+              
+              // Otherwise, treat as separate cell
+              if (part !== '') {
+                cells.push(part);
+              }
+            }
+          } else {
+            // No commas, treat as single cell
+            cells = [trimmedRow];
           }
         }
         
-        const numericValue = parseFloat(processedValue);
-        if (!isNaN(numericValue)) {
-          newValues.push(numericValue);
-        }
+        // Process each cell value
+        cells.forEach(cell => {
+          const trimmedCell = cell.trim();
+          if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
+            return; // Skip empty cells
+          } else {
+            // Handle different decimal separators and number formats (French regional settings support)
+            let processedValue = trimmedCell;
+            
+            // Handle European format with comma as decimal separator (but not thousands separator)
+            if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+              processedValue = trimmedCell.replace(',', '.');
+            }
+            
+            // Remove any thousands separators (spaces, apostrophes)
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            // Handle thousands separators with commas (US format: 1,234.56)
+            if (processedValue.includes(',') && processedValue.includes('.')) {
+              const parts = processedValue.split('.');
+              if (parts.length === 2) {
+                const integerPart = parts[0].replace(/,/g, '');
+                processedValue = integerPart + '.' + parts[1];
+              }
+            }
+            
+            const parsed = parseFloat(processedValue);
+            if (!isNaN(parsed) && isFinite(parsed)) {
+              newValues.push(parsed);
+            }
+          }
+        });
       });
       
-      if (newValues.length > 0) {
-        // Save current state before making changes
-        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
-        
-        setDataPoints(prev => {
-          const updatedPoints = [...prev];
-          
-          // Update existing cells starting from the clicked index
-          newValues.forEach((value, i) => {
-            const targetIndex = index + i;
-            if (targetIndex < updatedPoints.length) {
-              // Update existing cell
-              updatedPoints[targetIndex] = {
-                ...updatedPoints[targetIndex],
-                dataValue: value
-              };
-            } else {
-              // Create new data point with correct indexNumber
-              updatedPoints.push({
-                indexNumber: targetIndex + 1,
-                dataValue: value
-              });
-            }
-          });
-          
-          return updatedPoints;
-        });
-        
+      if (newValues.length === 0) {
         toast({
-          title: "Data Pasted",
-          description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Apply the pasted data starting from the focused cell
+      setDataPoints(prev => {
+        const updatedPoints = [...prev];
+        
+        newValues.forEach((value, i) => {
+          const targetIndex = focusedCell + i;
+          if (targetIndex < updatedPoints.length) {
+            // Update existing cell
+            updatedPoints[targetIndex] = {
+              ...updatedPoints[targetIndex],
+              dataValue: value
+            };
+          } else {
+            // Create new data point with correct indexNumber
+            updatedPoints.push({
+              indexNumber: targetIndex + 1,
+              dataValue: value
+            });
+          }
         });
         
-        // Auto-scroll to show the newly pasted data after a short delay
-        setTimeout(() => {
-          if (tableContainerRef.current) {
-            const lastPastedIndex = index + newValues.length - 1;
-            // Calculate the position of the last pasted row
-            const rowHeight = 50; // Approximate row height
-            const scrollPosition = lastPastedIndex * rowHeight;
-            tableContainerRef.current.scrollTop = scrollPosition;
-          }
-        }, 100);
-      }
-      else {
-       toast({
-          title: "No Data Found",
-          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
-          variant: "destructive",
-        }); 
-      }
+        return updatedPoints;
+      });
+      
+      toast({
+        title: "Data Pasted",
+        description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1}.`,
+      });
+      
+      // Auto-scroll to show the newly pasted data
+      setTimeout(() => {
+        if (tableContainerRef.current) {
+          const lastPastedIndex = focusedCell + newValues.length - 1;
+          const rowHeight = 50;
+          const scrollPosition = lastPastedIndex * rowHeight;
+          tableContainerRef.current.scrollTop = scrollPosition;
+        }
+      }, 100);
+      
+    } catch (error) {
+      toast({
+        title: "Paste Error",
+        description: "Failed to paste data. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1040,15 +1108,20 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            // Create a synthetic paste event
-            const syntheticEvent = {
-              preventDefault: () => {},
-              clipboardData: {
-                getData: (format: string) => clipboardData
-              }
-            } as unknown as React.ClipboardEvent;
-            
-            handlePasteData(syntheticEvent);
+            if (focusedCell >= 0) {
+              // Use focused cell paste if a cell is focused
+              handleFocusedCellPaste(clipboardData);
+            } else {
+              // Create a synthetic paste event for general paste
+              const syntheticEvent = {
+                preventDefault: () => {},
+                clipboardData: {
+                  getData: (format: string) => clipboardData
+                }
+              } as unknown as React.ClipboardEvent;
+              
+              handlePasteData(syntheticEvent);
+            }
           }
         }).catch(error => {
           console.error('Clipboard access failed:', error);
@@ -1069,7 +1142,7 @@ useEffect(() => {
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState, activeTab, ctqName]);
+  }, [undoState, activeTab, ctqName, focusedCell]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
@@ -1635,14 +1708,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     try {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
-                        // Create a synthetic paste event
-                        const syntheticEvent = {
+                        if (focusedCell >= 0) {
+                            // Use focused cell paste if a cell is focused
+                            handleFocusedCellPaste(clipboardData);
+                        } else {
+                            // Create a synthetic paste event for general paste
+                            const syntheticEvent = {
                             preventDefault: () => {},
                             clipboardData: {
-                            getData: (format: string) => clipboardData
+                                getData: (format: string) => clipboardData
                             }
-                        };
-                        handlePasteData(syntheticEvent as any);
+                            };
+                            handlePasteData(syntheticEvent as any);
+                        }
                         }
                     } catch (error) {
                         toast({
@@ -1728,11 +1806,21 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
-                                onClick={() => startEditing(index, point.dataValue)}
-                                onPaste={(e) => handleCellPaste(e, index)}
+                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${
+                                  focusedCell === index ? 'ring-2 ring-blue-500 bg-blue-100' : ''
+                                }`}
+                                onClick={() => {
+                                  setFocusedCell(index);
+                                  startEditing(index, point.dataValue);
+                                }}
+                                onPaste={(e) => {
+                                  e.preventDefault();
+                                  const pasteData = e.clipboardData.getData('text');
+                                  setFocusedCell(index);
+                                  handleFocusedCellPaste(pasteData);
+                                }}
                                 tabIndex={0}
-                                title="Click to edit this value"
+                                title="Click to focus cell, then Ctrl+V to paste data starting from this cell"
                             >
                                 {point.dataValue}
                             </div>
@@ -1811,10 +1899,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             {/* Excel Import Instructions */}
             <div className="text-xs text-blue-600 mt-2 space-y-1">
                 <div><strong>Excel Import Instructions:</strong></div>
-                <div>• <strong>Focus a cell</strong> by clicking on any measurement input field</div>
+                <div>• <strong>Focus a cell</strong> by clicking on any data value in the table</div>
                 <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
+                <div>• <strong>Overwrite existing data</strong> or create new rows automatically as needed</div>
                 <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
-                <div>• <strong>Data will automatically create new rows</strong> if needed</div>
+                <div>• <strong>Visual feedback:</strong> Focused cells have a blue ring indicator</div>
             </div>
             
             {dataPoints.length > 0 && (
