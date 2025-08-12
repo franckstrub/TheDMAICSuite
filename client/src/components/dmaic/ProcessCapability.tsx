@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, Save, Undo, Calculator, BarChart3, Plus } from "lucide-react";
+import { TrendingUp, Save, Undo, Calculator, BarChart3, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 //import { formatPercentage } from './ProcessCapabilityContinuous';
@@ -560,6 +560,38 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     toast({
       title: "Data Point Deleted",
       description: "The data point has been removed and the list has been re-indexed.",
+    });
+  };
+
+  // Function to clear all data points for a CTQ
+  const handleClearAllData = (ctq: string) => {
+    setDataPoints(prev => ({
+      ...prev,
+      [ctq]: []
+    }));
+
+    // Clear focused cell for this CTQ
+    setFocusedCell(prev => {
+      const updated = { ...prev };
+      delete updated[ctq];
+      return updated;
+    });
+    
+    setInputValues(prev => ({
+      ...prev,
+      [ctq]: ""
+    }));
+
+    // Clear undo state for this CTQ
+    setUndoStates(prev => {
+      const updated = { ...prev };
+      delete updated[ctq];
+      return updated;
+    });
+
+    toast({
+      title: "All Data Cleared",
+      description: "All data points for this CTQ have been cleared.",
     });
   };
 
@@ -1643,6 +1675,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                               >
                                 <Undo className="h-4 w-4 mr-2" />
                                 Undo Paste
+                              </Button>
+                            )}
+                            {(dataPoints[ctq] && dataPoints[ctq].length > 0) && (
+                              <Button
+                                onClick={() => handleClearAllData(ctq)}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-700 border-red-300 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Clear All Data
                               </Button>
                             )}
                           </div>
