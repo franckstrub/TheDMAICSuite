@@ -730,8 +730,53 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       const parsedValues: number[] = [];
       
       rows.forEach(row => {
-        // Split by tabs first (Excel default), then by commas if no tabs
-        const cells = row.includes('\t') ? row.split('\t') : row.split(',');
+        let cells: string[] = [];
+        
+        if (row.includes('\t')) {
+          // Excel data with tabs - standard Excel copy format
+          cells = row.split('\t');
+        } else {
+          // No tabs - could be single column or comma-separated
+          // First, try to detect if this is a single French decimal number
+          const trimmedRow = row.trim();
+          
+          // Check if this looks like a single French decimal number (digits, optional comma, digits)
+          const frenchDecimalPattern = /^-?\d+,\d+$/;
+          if (frenchDecimalPattern.test(trimmedRow)) {
+            // This is a single French decimal number, don't split by comma
+            cells = [trimmedRow];
+          } else if (trimmedRow.includes(',')) {
+            // Contains commas but doesn't match French decimal pattern
+            // Split by comma but be careful about decimal commas
+            const parts = trimmedRow.split(',');
+            cells = [];
+            
+            for (let i = 0; i < parts.length; i++) {
+              const part = parts[i].trim();
+              
+              // Check if this part combined with next part could be a French decimal
+              if (i < parts.length - 1) {
+                const nextPart = parts[i + 1].trim();
+                const combined = part + ',' + nextPart;
+                
+                // If combined looks like a French decimal, combine them
+                if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
+                  cells.push(combined);
+                  i++; // Skip next part as we combined it
+                  continue;
+                }
+              }
+              
+              // Otherwise, treat as separate cell
+              if (part !== '') {
+                cells.push(part);
+              }
+            }
+          } else {
+            // No commas, treat as single cell
+            cells = [trimmedRow];
+          }
+        }
         
         cells.forEach(cell => {
           const trimmedCell = cell.trim();
