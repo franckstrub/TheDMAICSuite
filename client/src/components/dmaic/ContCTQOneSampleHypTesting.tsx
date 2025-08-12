@@ -903,10 +903,8 @@ useEffect(() => {
         
         const numericValue = parseFloat(processedValue);
         if (!isNaN(numericValue)) {
-          const calculatedIndex = dataPoints.length + index + 1;
-          console.log(`Regular paste: creating data point with indexNumber: ${calculatedIndex} (dataPoints.length: ${dataPoints.length}, index: ${index})`);
           newDataPoints.push({
-            indexNumber: calculatedIndex,
+            indexNumber: dataPoints.length + index + 1,
             dataValue: numericValue
           });
         }
@@ -942,8 +940,6 @@ useEffect(() => {
 
   // Handle focused cell paste - similar to Process Capability functionality
   const handleFocusedCellPaste = (pasteData: string) => {
-    console.log(`handleFocusedCellPaste called with focusedCell: ${focusedCell}`);
-    
     if (focusedCell === -1) {
       toast({
         title: "No Cell Focused",
@@ -1072,10 +1068,8 @@ useEffect(() => {
         // Replace values ONLY from focusedCell to endIndex (inclusive)
         newValues.forEach((value, i) => {
           const targetIndex = focusedCell + i;
-          const calculatedIndexNumber = targetIndex + 1;
-          console.log(`Focused paste: setting targetIndex ${targetIndex} with indexNumber: ${calculatedIndexNumber}, value: ${value}`);
           updatedPoints[targetIndex] = {
-            indexNumber: calculatedIndexNumber,
+            indexNumber: targetIndex + 1,
             dataValue: value
           };
         });
@@ -1085,7 +1079,7 @@ useEffect(() => {
       
       toast({
         title: "Data Pasted",
-        description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1} (index ${focusedCell + 1} to ${focusedCell + newValues.length}).`,
+        description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1}.`,
       });
       
       // Auto-scroll to show the newly pasted data
@@ -1117,14 +1111,11 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            console.log(`Keyboard paste triggered. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
             if (focusedCell >= 0) {
               // Use focused cell paste if a cell is focused
-              console.log('Using focused cell paste');
               handleFocusedCellPaste(clipboardData);
             } else {
               // Create a synthetic paste event for general paste
-              console.log('Using regular paste (no focused cell)');
               const syntheticEvent = {
                 preventDefault: () => {},
                 clipboardData: {
@@ -1824,8 +1815,6 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setFocusedCell(index);
-                                  // Give visual feedback and log for debugging
-                                  console.log(`Focused cell set to index ${index} (row ${point.indexNumber})`);
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -1845,7 +1834,6 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell(index);
-                                  console.log(`Div focused: setting focusedCell to ${index}`);
                                 }}
                             >
                                 {point.dataValue}
