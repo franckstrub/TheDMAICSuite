@@ -1285,6 +1285,212 @@ useEffect(() => {
     }
   };
 
+  // Handle focused cell paste for Dataset 1 - similar to One Sample functionality
+  const handleFocusedCellPaste1 = (pasteData: string) => {
+    if (focusedCell1 === -1) {
+      toast({
+        title: "No Cell Focused",
+        description: "Please click on a data cell in Dataset 1 first to set the starting position for paste.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const lines = pasteData.trim().split('\n');
+      const newValues: number[] = [];
+      
+      lines.forEach((line) => {
+        const value = line.trim();
+        
+        // Handle different decimal separators and number formats (French regional settings support)
+        let processedValue = value;
+        
+        // Handle European format with comma as decimal separator (but not thousands separator)
+        if (value.includes(',') && !value.includes('.')) {
+          processedValue = value.replace(',', '.');
+        }
+        
+        // Remove any thousands separators (spaces, apostrophes)
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        // Handle thousands separators with commas (US format: 1,234.56)
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
+          }
+        }
+        
+        const numericValue = parseFloat(processedValue);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      });
+      
+      if (newValues.length > 0) {
+        // Save current state before making changes
+        setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
+        
+        setDataSet1(prev => {
+          const updatedPoints = [...prev];
+          
+          // Update existing cells starting from the focused index
+          newValues.forEach((value, i) => {
+            const targetIndex = focusedCell1 + i;
+            if (targetIndex < updatedPoints.length) {
+              // Update existing cell
+              updatedPoints[targetIndex] = {
+                ...updatedPoints[targetIndex],
+                dataValue: value
+              };
+            } else {
+              // Create new data point with correct indexNumber
+              updatedPoints.push({
+                indexNumber: targetIndex + 1,
+                dataValue: value
+              });
+            }
+          });
+          
+          return updatedPoints;
+        });
+        
+        toast({
+          title: "Data Pasted to Dataset 1",
+          description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell1 + 1}.`,
+        });
+        
+        // Auto-scroll to show the newly pasted data after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            const lastPastedIndex = focusedCell1 + newValues.length - 1;
+            // Calculate the position of the last pasted row
+            const rowHeight = 50; // Approximate row height
+            const scrollPosition = lastPastedIndex * rowHeight;
+            tableContainerRef.current.scrollTop = scrollPosition;
+          }
+        }, 100);
+      } else {
+        toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    } catch (error) {
+      toast({
+        title: "Paste Error",
+        description: "An error occurred while pasting data to Dataset 1.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle focused cell paste for Dataset 2 - similar to One Sample functionality
+  const handleFocusedCellPaste2 = (pasteData: string) => {
+    if (focusedCell2 === -1) {
+      toast({
+        title: "No Cell Focused",
+        description: "Please click on a data cell in Dataset 2 first to set the starting position for paste.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const lines = pasteData.trim().split('\n');
+      const newValues: number[] = [];
+      
+      lines.forEach((line) => {
+        const value = line.trim();
+        
+        // Handle different decimal separators and number formats (French regional settings support)
+        let processedValue = value;
+        
+        // Handle European format with comma as decimal separator (but not thousands separator)
+        if (value.includes(',') && !value.includes('.')) {
+          processedValue = value.replace(',', '.');
+        }
+        
+        // Remove any thousands separators (spaces, apostrophes)
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        // Handle thousands separators with commas (US format: 1,234.56)
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
+          }
+        }
+        
+        const numericValue = parseFloat(processedValue);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      });
+      
+      if (newValues.length > 0) {
+        // Save current state before making changes
+        setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+        
+        setDataSet2(prev => {
+          const updatedPoints = [...prev];
+          
+          // Update existing cells starting from the focused index
+          newValues.forEach((value, i) => {
+            const targetIndex = focusedCell2 + i;
+            if (targetIndex < updatedPoints.length) {
+              // Update existing cell
+              updatedPoints[targetIndex] = {
+                ...updatedPoints[targetIndex],
+                dataValue: value
+              };
+            } else {
+              // Create new data point with correct indexNumber
+              updatedPoints.push({
+                indexNumber: targetIndex + 1,
+                dataValue: value
+              });
+            }
+          });
+          
+          return updatedPoints;
+        });
+        
+        toast({
+          title: "Data Pasted to Dataset 2",
+          description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell2 + 1}.`,
+        });
+        
+        // Auto-scroll to show the newly pasted data after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            const lastPastedIndex = focusedCell2 + newValues.length - 1;
+            // Calculate the position of the last pasted row
+            const rowHeight = 50; // Approximate row height
+            const scrollPosition = lastPastedIndex * rowHeight;
+            tableContainerRef.current.scrollTop = scrollPosition;
+          }
+        }, 100);
+      } else {
+        toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    } catch (error) {
+      toast({
+        title: "Paste Error",
+        description: "An error occurred while pasting data to Dataset 2.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
@@ -1306,10 +1512,10 @@ useEffect(() => {
             // Check for focused cells first, then input fields
             if (focusedCell1 >= 0) {
               // Focused cell in Dataset 1 - use focused cell paste
-              handleCellPaste1(syntheticEvent, focusedCell1);
+              handleFocusedCellPaste1(clipboardData);
             } else if (focusedCell2 >= 0) {
               // Focused cell in Dataset 2 - use focused cell paste
-              handleCellPaste2(syntheticEvent, focusedCell2);
+              handleFocusedCellPaste2(clipboardData);
             } else {
               // No focused cell - determine based on input field or container focus
               const activeElement = document.activeElement as HTMLElement;
@@ -2115,8 +2321,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => setFocusedCell1(index)}
                                 onBlur={() => setFocusedCell1(-1)}
                                 onPaste={(e) => {
+                                  e.preventDefault();
+                                  const pasteData = e.clipboardData.getData('text');
                                   setFocusedCell1(index);
-                                  handleCellPaste1(e, index);
+                                  handleFocusedCellPaste1(pasteData);
                                 }}
                                 tabIndex={0}
                                 title="Click to edit this value or focus and paste data"
@@ -2340,8 +2548,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => setFocusedCell2(index)}
                                 onBlur={() => setFocusedCell2(-1)}
                                 onPaste={(e) => {
+                                  e.preventDefault();
+                                  const pasteData = e.clipboardData.getData('text');
                                   setFocusedCell2(index);
-                                  handleCellPaste2(e, index);
+                                  handleFocusedCellPaste2(pasteData);
                                 }}
                                 tabIndex={0}
                                 title="Click to edit this value or focus and paste data"
