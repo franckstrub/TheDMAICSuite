@@ -657,7 +657,29 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
         // Validate numeric input - if not a valid number, set to null
         let numericValue: number | null = null;
         if (value !== '' && value !== null && value !== undefined) {
-          const parsed = typeof value === 'string' ? parseFloat(value) : value;
+          let processedValue = typeof value === 'string' ? value : value.toString();
+          
+          // Handle different decimal separators and number formats (French regional settings support)
+          if (typeof value === 'string') {
+            // Handle European format with comma as decimal separator (but not thousands separator)
+            if (value.includes(',') && !value.includes('.')) {
+              processedValue = value.replace(',', '.');
+            }
+            
+            // Remove any thousands separators (spaces, apostrophes)
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            // Handle thousands separators with commas (US format: 1,234.56)
+            if (processedValue.includes(',') && processedValue.includes('.')) {
+              const parts = processedValue.split('.');
+              if (parts.length === 2) {
+                const integerPart = parts[0].replace(/,/g, '');
+                processedValue = integerPart + '.' + parts[1];
+              }
+            }
+          }
+          
+          const parsed = parseFloat(processedValue);
           if (!isNaN(parsed) && isFinite(parsed)) {
             numericValue = parsed;
           }
@@ -704,7 +726,27 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
             rowData.push(null);
           } else {
-            const parsed = parseFloat(trimmedCell);
+            // Handle different decimal separators and number formats (French regional settings support)
+            let processedValue = trimmedCell;
+            
+            // Handle European format with comma as decimal separator (but not thousands separator)
+            if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+              processedValue = trimmedCell.replace(',', '.');
+            }
+            
+            // Remove any thousands separators (spaces, apostrophes)
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            // Handle thousands separators with commas (US format: 1,234.56)
+            if (processedValue.includes(',') && processedValue.includes('.')) {
+              const parts = processedValue.split('.');
+              if (parts.length === 2) {
+                const integerPart = parts[0].replace(/,/g, '');
+                processedValue = integerPart + '.' + parts[1];
+              }
+            }
+            
+            const parsed = parseFloat(processedValue);
             if (!isNaN(parsed) && isFinite(parsed)) {
               rowData.push(parsed);
               totalValidNumbers++;
@@ -878,7 +920,27 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
           if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
             rowData.push(null);
           } else {
-            const parsed = parseFloat(trimmedCell);
+            // Handle different decimal separators and number formats (French regional settings support)
+            let processedValue = trimmedCell;
+            
+            // Handle European format with comma as decimal separator (but not thousands separator)
+            if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+              processedValue = trimmedCell.replace(',', '.');
+            }
+            
+            // Remove any thousands separators (spaces, apostrophes)
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            // Handle thousands separators with commas (US format: 1,234.56)
+            if (processedValue.includes(',') && processedValue.includes('.')) {
+              const parts = processedValue.split('.');
+              if (parts.length === 2) {
+                const integerPart = parts[0].replace(/,/g, '');
+                processedValue = integerPart + '.' + parts[1];
+              }
+            }
+            
+            const parsed = parseFloat(processedValue);
             if (!isNaN(parsed) && isFinite(parsed)) {
               rowData.push(parsed);
               totalValidNumbers++;
@@ -1810,7 +1872,30 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         step="0.01"
                         placeholder="Enter tolerance"
                         value={continuousMsaData[ctqItem.ctq]?.tolerance || ""}
-                        onChange={(e) => updateContinuousMsaField(ctqItem.ctq, 'tolerance', parseFloat(e.target.value) || undefined)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (!value) {
+                            updateContinuousMsaField(ctqItem.ctq, 'tolerance', undefined);
+                            return;
+                          }
+                          
+                          // Handle French decimal format
+                          let processedValue = value;
+                          if (value.includes(',') && !value.includes('.')) {
+                            processedValue = value.replace(',', '.');
+                          }
+                          processedValue = processedValue.replace(/[\s']/g, '');
+                          if (processedValue.includes(',') && processedValue.includes('.')) {
+                            const parts = processedValue.split('.');
+                            if (parts.length === 2) {
+                              const integerPart = parts[0].replace(/,/g, '');
+                              processedValue = integerPart + '.' + parts[1];
+                            }
+                          }
+                          
+                          const parsed = parseFloat(processedValue);
+                          updateContinuousMsaField(ctqItem.ctq, 'tolerance', !isNaN(parsed) ? parsed : undefined);
+                        }}
                       />
                     </div>
                     <div>
