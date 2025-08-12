@@ -903,8 +903,10 @@ useEffect(() => {
         
         const numericValue = parseFloat(processedValue);
         if (!isNaN(numericValue)) {
+          const calculatedIndex = dataPoints.length + index + 1;
+          console.log(`Regular paste: creating data point with indexNumber: ${calculatedIndex} (dataPoints.length: ${dataPoints.length}, index: ${index})`);
           newDataPoints.push({
-            indexNumber: dataPoints.length + index + 1,
+            indexNumber: calculatedIndex,
             dataValue: numericValue
           });
         }
@@ -1070,8 +1072,10 @@ useEffect(() => {
         // Replace values ONLY from focusedCell to endIndex (inclusive)
         newValues.forEach((value, i) => {
           const targetIndex = focusedCell + i;
+          const calculatedIndexNumber = targetIndex + 1;
+          console.log(`Focused paste: setting targetIndex ${targetIndex} with indexNumber: ${calculatedIndexNumber}, value: ${value}`);
           updatedPoints[targetIndex] = {
-            indexNumber: targetIndex + 1,
+            indexNumber: calculatedIndexNumber,
             dataValue: value
           };
         });
@@ -1113,11 +1117,14 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
+            console.log(`Keyboard paste triggered. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
             if (focusedCell >= 0) {
               // Use focused cell paste if a cell is focused
+              console.log('Using focused cell paste');
               handleFocusedCellPaste(clipboardData);
             } else {
               // Create a synthetic paste event for general paste
+              console.log('Using regular paste (no focused cell)');
               const syntheticEvent = {
                 preventDefault: () => {},
                 clipboardData: {
