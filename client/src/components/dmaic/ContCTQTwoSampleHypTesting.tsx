@@ -2665,6 +2665,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   setActiveDatasetFocus(newFocus);
                                   activeDatasetFocusRef.current = newFocus; // Update ref immediately
                                   console.log('State updates called for Dataset 2');
+                                  console.log('Ref after update:', activeDatasetFocusRef.current);
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2683,9 +2684,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 }}
                                 onFocus={() => {
                                   // Ensure focused cell is set when this div gets focus
+                                  console.log('Dataset 2 cell focused:', index);
                                   setFocusedCell2(index);
                                   setFocusedCell1(-1); // Clear Dataset 1 focus
-                                  setActiveDatasetFocus({ dataset: 2, row: index });
+                                  const newFocus = { dataset: 2 as const, row: index };
+                                  setActiveDatasetFocus(newFocus);
+                                  activeDatasetFocusRef.current = newFocus; // Update ref immediately
+                                  console.log('onFocus - Ref after update:', activeDatasetFocusRef.current);
                                 }}
                             >
                                 {point.dataValue}
