@@ -1244,57 +1244,50 @@ useEffect(() => {
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active AND not focused on a table cell
+      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
-        // Check if the focus is on a table cell (div with tabIndex) or an input field
-        const activeElement = document.activeElement;
-        const isTableCell = activeElement?.tagName === 'DIV' && activeElement?.getAttribute('tabIndex') === '0';
-        const isInputField = activeElement?.tagName === 'INPUT';
+        event.preventDefault();
         
-        // Only handle paste if not focused on a table cell or input field
-        if (!isTableCell && !isInputField) {
-          event.preventDefault();
-          
-          // Get clipboard data
-          navigator.clipboard.readText().then(clipboardData => {
-            if (clipboardData.trim()) {
-              // Create a synthetic paste event
-              const syntheticEvent = {
-                preventDefault: () => {},
-                clipboardData: {
-                  getData: (format: string) => clipboardData
-                }
-              } as unknown as React.ClipboardEvent;
-              
-              // Determine which dataset to paste into based on which input field is focused
-              const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
-                                    activeElement?.closest('[data-dataset="1"]');
-              const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
-                                    activeElement?.closest('[data-dataset="2"]');
-              
-              if (isDataset1Input) {
-                handlePasteData1(syntheticEvent);
-              } else if (isDataset2Input) {
-                handlePasteData2(syntheticEvent);
-              } else {
-                // Default to dataset 1 if no specific input is focused
-                handlePasteData1(syntheticEvent);
-                toast({
-                  title: "Data Pasted to Dataset 1",
-                  description: "Data was pasted to Dataset 1. Click on Dataset 2 input to paste there instead.",
-                  variant: "default",
-                });
+        // Get clipboard data
+        navigator.clipboard.readText().then(clipboardData => {
+          if (clipboardData.trim()) {
+            // Create a synthetic paste event
+            const syntheticEvent = {
+              preventDefault: () => {},
+              clipboardData: {
+                getData: (format: string) => clipboardData
               }
+            } as unknown as React.ClipboardEvent;
+            
+            // Determine which dataset to paste into based on which input field is focused
+            const activeElement = document.activeElement as HTMLElement;
+            const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
+                                  activeElement?.closest('[data-dataset="1"]');
+            const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
+                                  activeElement?.closest('[data-dataset="2"]');
+            
+            if (isDataset1Input) {
+              handlePasteData1(syntheticEvent);
+            } else if (isDataset2Input) {
+              handlePasteData2(syntheticEvent);
+            } else {
+              // Default to dataset 1 if no specific input is focused
+              handlePasteData1(syntheticEvent);
+              toast({
+                title: "Data Pasted to Dataset 1",
+                description: "Data was pasted to Dataset 1. Click on Dataset 2 input to paste there instead.",
+                variant: "default",
+              });
             }
-          }).catch(error => {
-            console.error('Clipboard access failed:', error);
-            toast({
-              title: "Clipboard Access",
-              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-              variant: "default",
-            });
+          }
+        }).catch(error => {
+          console.error('Clipboard access failed:', error);
+          toast({
+            title: "Clipboard Access",
+            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+            variant: "default",
           });
-        }
+        });
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
