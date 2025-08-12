@@ -2390,6 +2390,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setFocusedCell1(index);
+                                  setFocusedCell2(-1); // Clear Dataset 2 focus
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2409,6 +2410,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell1(index);
+                                  setFocusedCell2(-1); // Clear Dataset 2 focus
                                 }}
                             >
                                 {point.dataValue}
@@ -2631,6 +2633,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setFocusedCell2(index);
+                                  setFocusedCell1(-1); // Clear Dataset 1 focus
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2650,6 +2653,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell2(index);
+                                  setFocusedCell1(-1); // Clear Dataset 1 focus
                                 }}
                             >
                                 {point.dataValue}
