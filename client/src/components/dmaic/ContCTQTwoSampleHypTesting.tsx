@@ -928,7 +928,6 @@ useEffect(() => {
       
       lines.forEach((line, index) => {
         const value = line.trim();
-        console.log(`Dataset 1 - Processing line: "${value}"`);
         
         // Handle different decimal separators and number formats
         let processedValue = value;
@@ -936,7 +935,6 @@ useEffect(() => {
         // Handle European format with comma as decimal separator (but not thousands separator)
         if (value.includes(',') && !value.includes('.')) {
           processedValue = value.replace(',', '.');
-          console.log(`Dataset 1 - Converted comma to dot: "${processedValue}"`);
         }
         
         // Remove any thousands separators (spaces, apostrophes)
@@ -948,20 +946,16 @@ useEffect(() => {
           if (parts.length === 2) {
             const integerPart = parts[0].replace(/,/g, '');
             processedValue = integerPart + '.' + parts[1];
-            console.log(`Dataset 1 - Removed thousands separators: "${processedValue}"`);
           }
         }
         
         const numericValue = parseFloat(processedValue);
-        console.log(`Dataset 1 - Parsed value: ${numericValue}`);
         
         if (!isNaN(numericValue)) {
           newDataPoints.push({
             indexNumber: dataSet1.length + index + 1,
             dataValue: numericValue
           });
-        } else {
-          console.log(`Dataset 1 - Failed to parse: "${value}"`);
         }
       });
       
@@ -1004,7 +998,6 @@ useEffect(() => {
       
       lines.forEach((line, index) => {
         const value = line.trim();
-        console.log(`Dataset 2 - Processing line: "${value}"`);
         
         // Handle different decimal separators and number formats
         let processedValue = value;
@@ -1012,7 +1005,6 @@ useEffect(() => {
         // Handle European format with comma as decimal separator (but not thousands separator)
         if (value.includes(',') && !value.includes('.')) {
           processedValue = value.replace(',', '.');
-          console.log(`Dataset 2 - Converted comma to dot: "${processedValue}"`);
         }
         
         // Remove any thousands separators (spaces, apostrophes)
@@ -1024,20 +1016,16 @@ useEffect(() => {
           if (parts.length === 2) {
             const integerPart = parts[0].replace(/,/g, '');
             processedValue = integerPart + '.' + parts[1];
-            console.log(`Dataset 2 - Removed thousands separators: "${processedValue}"`);
           }
         }
         
         const numericValue = parseFloat(processedValue);
-        console.log(`Dataset 2 - Parsed value: ${numericValue}`);
         
         if (!isNaN(numericValue)) {
           newDataPoints.push({
             indexNumber: dataSet2.length + index + 1,
             dataValue: numericValue
           });
-        } else {
-          console.log(`Dataset 2 - Failed to parse: "${value}"`);
         }
       });
       
