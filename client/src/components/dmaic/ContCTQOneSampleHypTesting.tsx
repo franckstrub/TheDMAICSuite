@@ -1821,10 +1821,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${
                                   focusedCell === index ? 'ring-2 ring-blue-500 bg-blue-100' : ''
                                 }`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
                                   setFocusedCell(index);
-                                  // Don't automatically start editing, just focus the cell for paste
+                                  // Give visual feedback and log for debugging
                                   console.log(`Focused cell set to index ${index} (row ${point.indexNumber})`);
+                                  // Make this div focusable and focus it to maintain focus state
+                                  e.currentTarget.focus();
                                 }}
                                 onPaste={(e) => {
                                   e.preventDefault();
@@ -1835,6 +1838,15 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 tabIndex={0}
                                 title="Single click to focus (blue ring), then Ctrl+V to paste data starting from this row. Double-click to edit value."
                                 onDoubleClick={() => startEditing(index, point.dataValue)}
+                                onBlur={() => {
+                                  // Don't immediately clear focus, let user keep it for paste operations
+                                  // Only clear if they click elsewhere that sets a new focus
+                                }}
+                                onFocus={() => {
+                                  // Ensure focused cell is set when this div gets focus
+                                  setFocusedCell(index);
+                                  console.log(`Div focused: setting focusedCell to ${index}`);
+                                }}
                             >
                                 {point.dataValue}
                             </div>
