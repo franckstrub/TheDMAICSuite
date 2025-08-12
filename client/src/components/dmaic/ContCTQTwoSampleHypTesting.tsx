@@ -1677,7 +1677,7 @@ useEffect(() => {
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState1, undoState2, activeTab, ctqName]);
+  }, [undoState1, undoState2, activeTab, ctqName, focusedCell1, focusedCell2]);
 
   // Handle cell editing for Dataset 1
   const startEditing1 = (index: number, currentValue: number) => {
