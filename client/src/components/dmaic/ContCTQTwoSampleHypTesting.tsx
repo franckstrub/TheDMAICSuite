@@ -1788,11 +1788,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <label className="block text-sm font-medium mb-2">Dataset 1 Input</label>
                 {/* Undo and Paste from Excel Section */}
                 <div className="flex gap-2 mt-2 mb-2">
-                {undoState && (
+                {undoState1 && (
                     <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={handleUndo}
+                    onClick={handleUndo1}
                     className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
                     >
                     <Undo className="h-4 w-4 mr-1" />
@@ -1811,7 +1811,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             getData: (format: string) => clipboardData
                             }
                         };
-                        handlePasteData(syntheticEvent as any);
+                        handlePasteData1(syntheticEvent as any);
                         }
                     } catch (error) {
                         toast({
@@ -1996,11 +1996,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <label className="block text-sm font-medium mb-2">Dataset 2 Input</label>
                 {/* Undo and Paste from Excel Section */}
                 <div className="flex gap-2 mt-2 mb-2">
-                {undoState && (
+                {undoState2 && (
                     <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={handleUndo}
+                    onClick={handleUndo2}
                     className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
                     >
                     <Undo className="h-4 w-4 mr-1" />
@@ -2019,7 +2019,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             getData: (format: string) => clipboardData
                             }
                         };
-                        handlePasteData(syntheticEvent as any);
+                        handlePasteData2(syntheticEvent as any);
                         }
                     } catch (error) {
                         toast({
