@@ -1173,7 +1173,12 @@ useEffect(() => {
               }
             } as unknown as React.ClipboardEvent;
             
-            handlePasteData(syntheticEvent);
+            // For now, show message to use table paste functionality
+            toast({
+              title: "Paste Data",
+              description: "Please paste data directly into the table cells or use the input fields.",
+              variant: "default",
+            });
           }
         }).catch(error => {
           console.error('Clipboard access failed:', error);
@@ -1186,15 +1191,20 @@ useEffect(() => {
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && undoState && activeTab === ctqName) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && activeTab === ctqName) {
         event.preventDefault();
-        handleUndo();
+        // For simplicity, undo the most recent operation (could be enhanced to track which dataset)
+        if (undoState1) {
+          handleUndo1();
+        } else if (undoState2) {
+          handleUndo2();
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState, activeTab, ctqName]);
+  }, [undoState1, undoState2, activeTab, ctqName]);
 
   // Handle cell editing for Dataset 1
   const startEditing1 = (index: number, currentValue: number) => {
