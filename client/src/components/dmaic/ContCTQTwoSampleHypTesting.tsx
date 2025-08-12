@@ -1357,7 +1357,18 @@ useEffect(() => {
         // Parse each cell as a number
         cells.forEach(cellValue => {
           if (cellValue.trim() !== '') {
-            const numericValue = parseNumericValue(cellValue.trim());
+            // Handle different decimal separators (French regional settings)
+            let processedValue = cellValue.trim();
+            
+            // Handle European format with comma as decimal separator
+            if (processedValue.includes(',') && !processedValue.includes('.')) {
+              processedValue = processedValue.replace(',', '.');
+            }
+            
+            // Remove any thousands separators (spaces, apostrophes)
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            const numericValue = parseFloat(processedValue);
             if (!isNaN(numericValue)) {
               newValues.push(numericValue);
             }
@@ -1493,7 +1504,18 @@ useEffect(() => {
         // Parse each cell as a number
         cells.forEach(cellValue => {
           if (cellValue.trim() !== '') {
-            const numericValue = parseNumericValue(cellValue.trim());
+            // Handle different decimal separators (French regional settings)
+            let processedValue = cellValue.trim();
+            
+            // Handle European format with comma as decimal separator
+            if (processedValue.includes(',') && !processedValue.includes('.')) {
+              processedValue = processedValue.replace(',', '.');
+            }
+            
+            // Remove any thousands separators (spaces, apostrophes)
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            const numericValue = parseFloat(processedValue);
             if (!isNaN(numericValue)) {
               newValues.push(numericValue);
             }
@@ -1574,7 +1596,7 @@ useEffect(() => {
               // Use focused cell paste for Dataset 2 if a cell is focused
               handleFocusedCellPaste2(clipboardData);
             } else {
-              // Create a synthetic paste event for general paste
+              // Create a synthetic paste event for general paste to Dataset 1 (default)
               const syntheticEvent = {
                 preventDefault: () => {},
                 clipboardData: {
@@ -1582,7 +1604,7 @@ useEffect(() => {
                 }
               } as unknown as React.ClipboardEvent;
               
-              handlePasteData(syntheticEvent);
+              handlePasteData1(syntheticEvent);
             }
           }
         }).catch(error => {
