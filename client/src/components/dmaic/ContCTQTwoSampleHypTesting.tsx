@@ -2656,17 +2656,15 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   focusedCell2 === index ? 'ring-2 ring-blue-500 bg-blue-100' : ''
                                 }`}
                                 onClick={(e) => {
+                                  console.log('CLICK EVENT FIRED - Dataset 2 cell:', index);
                                   e.preventDefault();
-                                  console.log('Dataset 2 cell clicked:', index);
-                                  console.log('Setting activeDatasetFocus to:', { dataset: 2, row: index });
+                                  e.stopPropagation();
                                   setFocusedCell2(index);
-                                  setFocusedCell1(-1); // Clear Dataset 1 focus
+                                  setFocusedCell1(-1);
                                   const newFocus = { dataset: 2 as const, row: index };
                                   setActiveDatasetFocus(newFocus);
-                                  activeDatasetFocusRef.current = newFocus; // Update ref immediately
-                                  console.log('State updates called for Dataset 2');
-                                  console.log('Ref after update:', activeDatasetFocusRef.current);
-                                  // Make this div focusable and focus it to maintain focus state
+                                  activeDatasetFocusRef.current = newFocus;
+                                  console.log('Ref updated to:', activeDatasetFocusRef.current);
                                   e.currentTarget.focus();
                                 }}
                                 onPaste={(e) => {
