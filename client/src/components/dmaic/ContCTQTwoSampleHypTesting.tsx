@@ -828,6 +828,49 @@ useEffect(() => {
     }
   };
 
+  // Clear all data functions
+  const handleClearAllData1 = () => {
+    if (dataSet1.length > 0) {
+      // Save current state before clearing
+      setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
+      setShowUndoButton(true);
+      
+      // Clear all data for dataset 1
+      setDataSet1([]);
+      setInputValue1("");
+      setPasteInput("");
+      setFocusedCell(-1);
+      setEditingCell1(-1);
+      setEditValue1("");
+      
+      toast({
+        title: "Dataset 1 Cleared",
+        description: "All data in Dataset 1 has been cleared. Use Undo to restore if needed.",
+      });
+    }
+  };
+
+  const handleClearAllData2 = () => {
+    if (dataSet2.length > 0) {
+      // Save current state before clearing
+      setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+      setShowUndoButton(true);
+      
+      // Clear all data for dataset 2
+      setDataSet2([]);
+      setInputValue2("");
+      setPasteInput("");
+      setFocusedCell(-1);
+      setEditingCell2(-1);
+      setEditValue2("");
+      
+      toast({
+        title: "Dataset 2 Cleared",
+        description: "All data in Dataset 2 has been cleared. Use Undo to restore if needed.",
+      });
+    }
+  };
+
   // Functions for data input
   const addDataPoint1 = (value: string) => {
     if (!value.trim()) return;
@@ -1932,8 +1975,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             <div>
             <div className="flex justify-between items-center">
                 <label className="block text-sm font-medium mb-2">Dataset 1 Input</label>
-                {/* Undo and Paste from Excel Section */}
+                {/* Clear All Data, Undo and Paste from Excel Section */}
                 <div className="flex gap-2 mt-2 mb-2">
+                {dataSet1.length > 0 && (
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleClearAllData1}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                    title="Clear all data in Dataset 1 (can be undone)"
+                    >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear All Data
+                    </Button>
+                )}
                 {undoState1 && (
                     <Button 
                     variant="outline" 
@@ -2140,8 +2195,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             <div>
             <div className="flex justify-between items-center">
                 <label className="block text-sm font-medium mb-2">Dataset 2 Input</label>
-                {/* Undo and Paste from Excel Section */}
+                {/* Clear All Data, Undo and Paste from Excel Section */}
                 <div className="flex gap-2 mt-2 mb-2">
+                {dataSet2.length > 0 && (
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleClearAllData2}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                    title="Clear all data in Dataset 2 (can be undone)"
+                    >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear All Data
+                    </Button>
+                )}
                 {undoState2 && (
                     <Button 
                     variant="outline" 
