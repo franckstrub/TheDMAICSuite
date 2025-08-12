@@ -41,6 +41,7 @@ Preferred communication style: Simple, everyday language.
 - Role-based access control and multi-tenancy for data isolation.
 - Comprehensive client-side validation and error handling.
 - Dynamic UI adjustments based on project type (e.g., White Belt/Yellow Belt).
+- **Regional Format Support**: Comprehensive French decimal format handling (comma-to-dot conversion) across all statistical input fields and paste operations.
 
 ## External Dependencies
 

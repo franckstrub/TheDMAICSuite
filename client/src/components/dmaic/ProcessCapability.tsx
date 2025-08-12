@@ -491,7 +491,27 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
   const addDataPointToLocalState = (ctq: string, value: string) => {
     if (!value.trim()) return;
     
-    const numericValue = parseFloat(value);
+    // Handle different decimal separators and number formats (French regional settings support)
+    let processedValue = value.trim();
+    
+    // Handle European format with comma as decimal separator (but not thousands separator)
+    if (value.includes(',') && !value.includes('.')) {
+      processedValue = value.replace(',', '.');
+    }
+    
+    // Remove any thousands separators (spaces, apostrophes)
+    processedValue = processedValue.replace(/[\s']/g, '');
+    
+    // Handle thousands separators with commas (US format: 1,234.56)
+    if (processedValue.includes(',') && processedValue.includes('.')) {
+      const parts = processedValue.split('.');
+      if (parts.length === 2) {
+        const integerPart = parts[0].replace(/,/g, '');
+        processedValue = integerPart + '.' + parts[1];
+      }
+    }
+    
+    const numericValue = parseFloat(processedValue);
     if (isNaN(numericValue)) return;
     
     const currentPoints = dataPoints[ctq] || [];
@@ -643,8 +663,24 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
 
   const AddDataPoint = (ctq: string) => {
     const value = inputValues[ctq] || "";
-    if (value.trim() && !isNaN(parseFloat(value))) {
-      addDataPointToLocalState(ctq, value);
+    if (value.trim()) {
+      // Handle French decimal format before validation
+      let processedValue = value.trim();
+      if (value.includes(',') && !value.includes('.')) {
+        processedValue = value.replace(',', '.');
+      }
+      processedValue = processedValue.replace(/[\s']/g, '');
+      if (processedValue.includes(',') && processedValue.includes('.')) {
+        const parts = processedValue.split('.');
+        if (parts.length === 2) {
+          const integerPart = parts[0].replace(/,/g, '');
+          processedValue = integerPart + '.' + parts[1];
+        }
+      }
+      
+      if (!isNaN(parseFloat(processedValue))) {
+        addDataPointToLocalState(ctq, value);
+      }
     }
   };
 
@@ -668,7 +704,27 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         cells.forEach(cell => {
           const trimmedCell = cell.trim();
           if (trimmedCell !== '' && trimmedCell !== '-') {
-            const parsed = parseFloat(trimmedCell);
+            // Handle different decimal separators and number formats (French regional settings support)
+            let processedValue = trimmedCell;
+            
+            // Handle European format with comma as decimal separator (but not thousands separator)
+            if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+              processedValue = trimmedCell.replace(',', '.');
+            }
+            
+            // Remove any thousands separators (spaces, apostrophes)
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            // Handle thousands separators with commas (US format: 1,234.56)
+            if (processedValue.includes(',') && processedValue.includes('.')) {
+              const parts = processedValue.split('.');
+              if (parts.length === 2) {
+                const integerPart = parts[0].replace(/,/g, '');
+                processedValue = integerPart + '.' + parts[1];
+              }
+            }
+            
+            const parsed = parseFloat(processedValue);
             if (!isNaN(parsed) && isFinite(parsed)) {
               parsedValues.push(parsed);
             }
@@ -1782,7 +1838,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       type="number"
                       step="0.1"
                       value={capabilityData[ctq]?.zShift || 1.5}
-                      onChange={(e) => updateCapabilityField(ctq, "zShift", parseFloat(e.target.value) || 1.5)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (!value) {
+                          updateCapabilityField(ctq, "zShift", 1.5);
+                          return;
+                        }
+                        
+                        // Handle French decimal format
+                        let processedValue = value;
+                        if (value.includes(',') && !value.includes('.')) {
+                          processedValue = value.replace(',', '.');
+                        }
+                        processedValue = processedValue.replace(/[\s']/g, '');
+                        if (processedValue.includes(',') && processedValue.includes('.')) {
+                          const parts = processedValue.split('.');
+                          if (parts.length === 2) {
+                            const integerPart = parts[0].replace(/,/g, '');
+                            processedValue = integerPart + '.' + parts[1];
+                          }
+                        }
+                        
+                        const parsed = parseFloat(processedValue);
+                        updateCapabilityField(ctq, "zShift", !isNaN(parsed) ? parsed : 1.5);
+                      }}
                       placeholder="1.5"
                     />
                   </div>
@@ -1856,7 +1935,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         type="number"
                         step="0.1"
                         value={capabilityData[ctq]?.zShift || 1.5}
-                        onChange={(e) => updateCapabilityField(ctq, "zShift", parseFloat(e.target.value) || 1.5)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (!value) {
+                            updateCapabilityField(ctq, "zShift", 1.5);
+                            return;
+                          }
+                          
+                          // Handle French decimal format
+                          let processedValue = value;
+                          if (value.includes(',') && !value.includes('.')) {
+                            processedValue = value.replace(',', '.');
+                          }
+                          processedValue = processedValue.replace(/[\s']/g, '');
+                          if (processedValue.includes(',') && processedValue.includes('.')) {
+                            const parts = processedValue.split('.');
+                            if (parts.length === 2) {
+                              const integerPart = parts[0].replace(/,/g, '');
+                              processedValue = integerPart + '.' + parts[1];
+                            }
+                          }
+                          
+                          const parsed = parseFloat(processedValue);
+                          updateCapabilityField(ctq, "zShift", !isNaN(parsed) ? parsed : 1.5);
+                        }}
                         placeholder="1.5"
                       />
                       </>
@@ -2617,7 +2719,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   min="0"
                                   step="0.1"
                                   value={capabilityData[ctq]?.oeeScheduledTime || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeeScheduledTime", parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (!value) {
+                                      updateCapabilityField(ctq, "oeeScheduledTime", 0);
+                                      return;
+                                    }
+                                    
+                                    // Handle French decimal format
+                                    let processedValue = value;
+                                    if (value.includes(',') && !value.includes('.')) {
+                                      processedValue = value.replace(',', '.');
+                                    }
+                                    processedValue = processedValue.replace(/[\s']/g, '');
+                                    if (processedValue.includes(',') && processedValue.includes('.')) {
+                                      const parts = processedValue.split('.');
+                                      if (parts.length === 2) {
+                                        const integerPart = parts[0].replace(/,/g, '');
+                                        processedValue = integerPart + '.' + parts[1];
+                                      }
+                                    }
+                                    
+                                    const parsed = parseFloat(processedValue);
+                                    updateCapabilityField(ctq, "oeeScheduledTime", !isNaN(parsed) ? parsed : 0);
+                                  }}
                                   placeholder="e.g., 8.0"
                                 />
                                 <span className="text-xs text-gray-500">hours</span>
@@ -2629,7 +2754,30 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   min="0"
                                   step="0.1"
                                   value={capabilityData[ctq]?.oeeAvailableTime || ""}
-                                  onChange={(e) => updateCapabilityField(ctq, "oeeAvailableTime", parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (!value) {
+                                      updateCapabilityField(ctq, "oeeAvailableTime", 0);
+                                      return;
+                                    }
+                                    
+                                    // Handle French decimal format
+                                    let processedValue = value;
+                                    if (value.includes(',') && !value.includes('.')) {
+                                      processedValue = value.replace(',', '.');
+                                    }
+                                    processedValue = processedValue.replace(/[\s']/g, '');
+                                    if (processedValue.includes(',') && processedValue.includes('.')) {
+                                      const parts = processedValue.split('.');
+                                      if (parts.length === 2) {
+                                        const integerPart = parts[0].replace(/,/g, '');
+                                        processedValue = integerPart + '.' + parts[1];
+                                      }
+                                    }
+                                    
+                                    const parsed = parseFloat(processedValue);
+                                    updateCapabilityField(ctq, "oeeAvailableTime", !isNaN(parsed) ? parsed : 0);
+                                  }}
                                   placeholder="e.g., 7.0"
                                 />
                                 <span className="text-xs text-gray-500">hours</span>
