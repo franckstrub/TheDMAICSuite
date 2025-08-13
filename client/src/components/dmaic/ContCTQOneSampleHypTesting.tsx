@@ -1110,30 +1110,25 @@ useEffect(() => {
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
+      // Handle Ctrl+V/Cmd+V for paste - only when this CTQ is active AND a cell is focused
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
         event.preventDefault();
+        
+        if (focusedCell === -1) {
+          toast({
+            title: "No Cell Focused",
+            description: "Please click on a data cell first to set the starting position for paste.",
+            variant: "destructive",
+          });
+          return;
+        }
         
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
             console.log(`Keyboard paste triggered. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
-            if (focusedCell >= 0) {
-              // Use focused cell paste if a cell is focused
-              console.log('Using focused cell paste');
-              handleFocusedCellPaste(clipboardData);
-            } else {
-              // Create a synthetic paste event for general paste
-              console.log('Using regular paste (no focused cell)');
-              const syntheticEvent = {
-                preventDefault: () => {},
-                clipboardData: {
-                  getData: (format: string) => clipboardData
-                }
-              } as unknown as React.ClipboardEvent;
-              
-              handlePasteData(syntheticEvent);
-            }
+            console.log('Using focused cell paste');
+            handleFocusedCellPaste(clipboardData);
           }
         }).catch(error => {
           console.error('Clipboard access failed:', error);
@@ -1754,22 +1749,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 <Button
                     onClick={async () => {
+                    if (focusedCell === -1) {
+                        toast({
+                        title: "No Cell Focused",
+                        description: "Please click on a data cell first to set the starting position for paste.",
+                        variant: "destructive",
+                        });
+                        return;
+                    }
+                    
                     try {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
-                        if (focusedCell >= 0) {
-                            // Use focused cell paste if a cell is focused
-                            handleFocusedCellPaste(clipboardData);
-                        } else {
-                            // Create a synthetic paste event for general paste
-                            const syntheticEvent = {
-                            preventDefault: () => {},
-                            clipboardData: {
-                                getData: (format: string) => clipboardData
-                            }
-                            };
-                            handlePasteData(syntheticEvent as any);
-                        }
+                        // Use focused cell paste since a cell is focused
+                        handleFocusedCellPaste(clipboardData);
                         }
                     } catch (error) {
                         toast({
@@ -1780,7 +1773,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     }}
                     variant="outline"
                     size="sm"
-                    className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                    className={`border-gray-400 text-gray-700 hover:bg-gray-100 ${
+                    focusedCell === -1 ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    disabled={focusedCell === -1}
                 >
                     📋 Paste data from Excel
                 </Button>
@@ -1791,7 +1787,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                Single-click table cell to focus (blue ring) | Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo
+                <strong>Required:</strong> Click table cell to focus (blue ring) first | Then use Ctrl+V or paste button | Ctrl+Z to undo
                 </div>
             </div>
 
@@ -1962,11 +1958,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             {/* Excel Import Instructions */}
             <div className="text-xs text-blue-600 mt-2 space-y-1">
                 <div><strong>Excel Import Instructions:</strong></div>
-                <div>• <strong>Focus a cell</strong> by clicking on any data value in the table</div>
-                <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
-                <div>• <strong>Overwrite existing data</strong> or create new rows automatically as needed</div>
+                <div>• <strong>Step 1:</strong> Click on any data value in the table to focus it (blue ring appears)</div>
+                <div>• <strong>Step 2:</strong> Use Ctrl+V (or Cmd+V on Mac) or the paste button to paste data</div>
+                <div>• <strong>Note:</strong> Paste functionality is disabled until a cell is focused</div>
+                <div>• <strong>Data will overwrite</strong> existing values and create new rows as needed</div>
                 <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
-                <div>• <strong>Visual feedback:</strong> Focused cells have a blue ring indicator</div>
             </div>
             
             {dataPoints.length > 0 && (
