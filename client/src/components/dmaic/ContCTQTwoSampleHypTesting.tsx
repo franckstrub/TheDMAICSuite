@@ -1328,7 +1328,7 @@ useEffect(() => {
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName || activeTab?.includes('TwoSample'))) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab?.includes('TwoSample')) {
         event.preventDefault();
         
         // Check which dataset has a focused cell
@@ -1371,7 +1371,7 @@ useEffect(() => {
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (activeTab === ctqName || activeTab?.includes('TwoSample'))) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && activeTab?.includes('TwoSample')) {
         event.preventDefault();
         
         // Determine which dataset to undo based on which input field is focused
