@@ -1114,8 +1114,8 @@ useEffect(() => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
         event.preventDefault();
         
-        // If table is empty, allow paste from beginning. If table has data, require focused cell.
-        if (dataPoints.length > 0 && focusedCell < 0) {
+        // Always require a focused cell for paste operations
+        if (focusedCell < 0) {
           toast({
             title: "No Cell Focused",
             description: "Please click on a data cell first to set the starting position for paste.",
@@ -1128,19 +1128,8 @@ useEffect(() => {
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
             console.log(`Keyboard paste triggered. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
-            if (dataPoints.length === 0) {
-              console.log('Using regular paste for empty table');
-              const syntheticEvent = {
-                preventDefault: () => {},
-                clipboardData: {
-                  getData: (format: string) => clipboardData
-                }
-              } as unknown as React.ClipboardEvent;
-              handlePasteData(syntheticEvent);
-            } else {
-              console.log('Using focused cell paste');
-              handleFocusedCellPaste(clipboardData);
-            }
+            console.log('Using focused cell paste');
+            handleFocusedCellPaste(clipboardData);
           }
         }).catch(error => {
           console.error('Clipboard access failed:', error);
@@ -1761,17 +1750,14 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 {/* Debug display */}
                 <div className="text-xs text-red-600 mb-1">
-                    DEBUG: focusedCell = {focusedCell}, disabled = {String(dataPoints.length > 0 && focusedCell < 0)}, dataPoints.length = {dataPoints.length}
+                    DEBUG: focusedCell = {focusedCell}, disabled = {String(focusedCell < 0)}, dataPoints.length = {dataPoints.length}
                 </div>
                 <Button
                     onClick={async () => {
                     console.log(`Paste button clicked. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
                     
-                    // If table is empty, allow paste to start from beginning
-                    if (dataPoints.length === 0) {
-                        console.log('Table is empty - allowing paste from beginning');
-                    } else if (focusedCell < 0) {
-                        console.log('Button disabled - no cell focused in non-empty table');
+                    if (focusedCell < 0) {
+                        console.log('Button disabled - no cell focused');
                         toast({
                         title: "No Cell Focused",
                         description: "Please click on a data cell first to set the starting position for paste.",
@@ -1779,24 +1765,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         });
                         return;
                     }
-                    console.log('Button enabled - proceeding with paste');
+                    console.log('Button enabled - proceeding with focused cell paste');
                     
                     try {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
-                        if (dataPoints.length === 0) {
-                            // Table is empty, use regular paste
-                            const syntheticEvent = {
-                            preventDefault: () => {},
-                            clipboardData: {
-                                getData: (format: string) => clipboardData
-                            }
-                            } as unknown as React.ClipboardEvent;
-                            handlePasteData(syntheticEvent);
-                        } else {
-                            // Use focused cell paste since a cell is focused
-                            handleFocusedCellPaste(clipboardData);
-                        }
+                        // Always use focused cell paste
+                        handleFocusedCellPaste(clipboardData);
                         }
                     } catch (error) {
                         toast({
@@ -1808,9 +1783,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     variant="outline"
                     size="sm"
                     className={`border-gray-400 text-gray-700 hover:bg-gray-100 ${
-                    (dataPoints.length > 0 && focusedCell < 0) ? 'opacity-50 cursor-not-allowed' : ''
+                    focusedCell < 0 ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
-                    disabled={dataPoints.length > 0 && focusedCell < 0}
+                    disabled={focusedCell < 0}
                     title={`Focused cell: ${focusedCell}, Disabled: ${focusedCell < 0}`}
                 >
                     📋 Paste data from Excel
@@ -1822,7 +1797,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                <strong>Empty table:</strong> Paste directly with button or Ctrl+V | <strong>With data:</strong> Click cell to focus first | Ctrl+Z to undo
+                <strong>Required:</strong> Click table cell to focus (blue ring) first | Then use Ctrl+V or paste button | Ctrl+Z to undo
                 </div>
             </div>
 
@@ -1993,10 +1968,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             {/* Excel Import Instructions */}
             <div className="text-xs text-blue-600 mt-2 space-y-1">
                 <div><strong>Excel Import Instructions:</strong></div>
-                <div>• <strong>Empty table:</strong> Use paste button or Ctrl+V directly to add data</div>
-                <div>• <strong>Table with data:</strong> Click any data value first (blue ring), then paste</div>
-                <div>• <strong>Data placement:</strong> Starts from focused cell or beginning if table is empty</div>
-                <div>• <strong>Auto-creation:</strong> New rows are created automatically as needed</div>
+                <div>• <strong>Step 1:</strong> Click on any data value in the table to focus it (blue ring appears)</div>
+                <div>• <strong>Step 2:</strong> Use Ctrl+V (or Cmd+V on Mac) or the paste button to paste data</div>
+                <div>• <strong>Note:</strong> Paste functionality requires a focused cell (including cell 0 when empty)</div>
+                <div>• <strong>Data placement:</strong> Starts from the focused cell position</div>
                 <div>• <strong>Undo changes:</strong> Use Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
             </div>
             
