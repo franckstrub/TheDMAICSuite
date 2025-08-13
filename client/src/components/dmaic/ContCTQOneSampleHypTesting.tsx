@@ -1747,10 +1747,15 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     Undo
                     </Button>
                 )}
+                {/* Debug display */}
+                <div className="text-xs text-red-600 mb-1">
+                    DEBUG: focusedCell = {focusedCell}, disabled = {String(focusedCell < 0)}
+                </div>
                 <Button
                     onClick={async () => {
                     console.log(`Paste button clicked. focusedCell: ${focusedCell}, disabled: ${focusedCell < 0}`);
                     if (focusedCell < 0) {
+                        console.log('Button disabled - no cell focused');
                         toast({
                         title: "No Cell Focused",
                         description: "Please click on a data cell first to set the starting position for paste.",
@@ -1758,6 +1763,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         });
                         return;
                     }
+                    console.log('Button enabled - proceeding with paste');
                     
                     try {
                         const clipboardData = await navigator.clipboard.readText();
@@ -1778,6 +1784,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     focusedCell < 0 ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     disabled={focusedCell < 0}
+                    title={`Focused cell: ${focusedCell}, Disabled: ${focusedCell < 0}`}
                 >
                     📋 Paste data from Excel
                 </Button>
