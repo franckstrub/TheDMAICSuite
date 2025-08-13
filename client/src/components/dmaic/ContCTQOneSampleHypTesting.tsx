@@ -1817,13 +1817,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {dataPoints.length === 0 ? (
-                    <tr>
-                        <td colSpan={3} className="text-center text-gray-500 p-8">
-                            No data available. Click "Add" to enter data.
-                        </td>
-                    </tr>
-                    ) : (
+                    {dataPoints.length === 0 ? null : (
                     dataPoints.map((point, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                         <td className="px-4 py-2 text-sm text-gray-900">
