@@ -940,17 +940,26 @@ useEffect(() => {
     }
   };
 
-  // Handle focused cell paste - similar to Process Capability functionality
+  // Handle focused cell paste - unified function used by both button and Ctrl+V
   const handleFocusedCellPaste = (pasteData: string) => {
     console.log(`handleFocusedCellPaste called with focusedCell: ${focusedCell}`);
     
-    if (focusedCell === -1) {
+    // Check if a cell is focused or if dataset is empty and we should use cell 0
+    const shouldUseCell0 = dataPoints.length === 0 && focusedCell === -1;
+    const actualFocusedCell = shouldUseCell0 ? 0 : focusedCell;
+    
+    if (actualFocusedCell === -1) {
       toast({
         title: "No Cell Focused",
         description: "Please click on a data cell first to set the starting position for paste.",
         variant: "destructive",
       });
       return;
+    }
+    
+    // If dataset is empty and we're using cell 0, set the focused cell
+    if (shouldUseCell0) {
+      setFocusedCell(0);
     }
 
     try {
@@ -1059,7 +1068,7 @@ useEffect(() => {
         const updatedPoints = [...prev];
         
         // Calculate the end index for the paste operation
-        const endIndex = focusedCell + newValues.length - 1;
+        const endIndex = actualFocusedCell + newValues.length - 1;
         
         // Extend array if needed to accommodate the paste range
         while (updatedPoints.length <= endIndex) {
@@ -1069,9 +1078,9 @@ useEffect(() => {
           });
         }
         
-        // Replace values ONLY from focusedCell to endIndex (inclusive)
+        // Replace values ONLY from actualFocusedCell to endIndex (inclusive)
         newValues.forEach((value, i) => {
-          const targetIndex = focusedCell + i;
+          const targetIndex = actualFocusedCell + i;
           const calculatedIndexNumber = targetIndex + 1;
           console.log(`Focused paste: setting targetIndex ${targetIndex} with indexNumber: ${calculatedIndexNumber}, value: ${value}`);
           updatedPoints[targetIndex] = {
@@ -1085,13 +1094,13 @@ useEffect(() => {
       
       toast({
         title: "Data Pasted",
-        description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1} (index ${focusedCell + 1} to ${focusedCell + newValues.length}).`,
+        description: `Successfully pasted ${newValues.length} values starting from row ${actualFocusedCell + 1} (index ${actualFocusedCell + 1} to ${actualFocusedCell + newValues.length}).`,
       });
       
       // Auto-scroll to show the newly pasted data
       setTimeout(() => {
         if (tableContainerRef.current) {
-          const lastPastedIndex = focusedCell + newValues.length - 1;
+          const lastPastedIndex = actualFocusedCell + newValues.length - 1;
           const rowHeight = 50;
           const scrollPosition = lastPastedIndex * rowHeight;
           tableContainerRef.current.scrollTop = scrollPosition;
@@ -1110,30 +1119,28 @@ useEffect(() => {
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
+      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active and a cell is focused
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
         event.preventDefault();
+        
+        // Check if we can paste: either cell is focused or dataset is empty (will use cell 0)
+        const canPaste = focusedCell >= 0 || dataPoints.length === 0;
+        
+        if (!canPaste) {
+          toast({
+            title: "No Cell Focused",
+            description: "Please click on a data cell first to set the starting position for paste.",
+            variant: "destructive",
+          });
+          return;
+        }
         
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
             console.log(`Keyboard paste triggered. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
-            if (focusedCell >= 0) {
-              // Use focused cell paste if a cell is focused
-              console.log('Using focused cell paste');
-              handleFocusedCellPaste(clipboardData);
-            } else {
-              // Create a synthetic paste event for general paste
-              console.log('Using regular paste (no focused cell)');
-              const syntheticEvent = {
-                preventDefault: () => {},
-                clipboardData: {
-                  getData: (format: string) => clipboardData
-                }
-              } as unknown as React.ClipboardEvent;
-              
-              handlePasteData(syntheticEvent);
-            }
+            // Always use focused cell paste for consistency
+            handleFocusedCellPaste(clipboardData);
           }
         }).catch(error => {
           console.error('Clipboard access failed:', error);
@@ -1154,7 +1161,7 @@ useEffect(() => {
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState, activeTab, ctqName, focusedCell]);
+  }, [undoState, activeTab, ctqName, focusedCell, dataPoints.length]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
@@ -1757,19 +1764,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     try {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
-                        if (focusedCell >= 0) {
-                            // Use focused cell paste if a cell is focused
+                            // Always use focused cell paste for consistency
                             handleFocusedCellPaste(clipboardData);
-                        } else {
-                            // Create a synthetic paste event for general paste
-                            const syntheticEvent = {
-                            preventDefault: () => {},
-                            clipboardData: {
-                                getData: (format: string) => clipboardData
-                            }
-                            };
-                            handlePasteData(syntheticEvent as any);
-                        }
                         }
                     } catch (error) {
                         toast({
@@ -1780,7 +1776,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     }}
                     variant="outline"
                     size="sm"
-                    className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                    className={`border-gray-400 ${
+                        focusedCell >= 0 || dataPoints.length === 0 
+                        ? 'text-gray-700 hover:bg-gray-100' 
+                        : 'text-gray-400 cursor-not-allowed bg-gray-50'
+                    }`}
+                    disabled={!(focusedCell >= 0 || dataPoints.length === 0)}
                 >
                     📋 Paste data from Excel
                 </Button>
@@ -1791,7 +1792,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                Single-click table cell to focus (blue ring) | Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo
+                Single-click table cell to focus (blue ring) → button and Ctrl+V enabled | Paste starts from focused cell | Ctrl+Z to undo
                 </div>
             </div>
 
@@ -1820,11 +1821,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     <tr>
                         <td colSpan={3} className="text-center text-gray-500">
                         <div
-                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
-                            onClick={() => document.getElementById('add-data-input')?.focus()}
-                            onPaste={(e) => handlePasteData(e)}
+                            className={`cursor-pointer hover:bg-blue-50 rounded p-4 ${
+                                focusedCell === 0 ? 'ring-2 ring-blue-500 bg-blue-100' : ''
+                            }`}
+                            onClick={() => {
+                                setFocusedCell(0);
+                                console.log('Empty table clicked: setting focusedCell to 0');
+                            }}
+                            onPaste={(e) => {
+                                setFocusedCell(0);
+                                handleFocusedCellPaste(e.clipboardData.getData('text'));
+                                e.preventDefault();
+                            }}
                             tabIndex={0}
-                            title="Click to focus input or paste data here"
+                            title="Click to focus for paste operations"
                         >
                         </div>
                         </td>
