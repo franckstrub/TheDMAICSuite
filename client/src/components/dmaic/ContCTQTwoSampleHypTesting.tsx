@@ -1134,7 +1134,7 @@ useEffect(() => {
 
   // Handle focused cell paste for Dataset 1
   const handleFocusedCellPaste1 = (pasteData: string) => {
-    console.log('handleFocusedCellPaste1 called with focusedCell1 =', focusedCell1, 'data length =', pasteData.length);
+
     if (focusedCell1 === -1) {
       toast({
         title: "No Cell Focused",
@@ -2181,7 +2181,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 <Button
                     onClick={async () => {
-                    console.log('Button click: focusedCell1 =', focusedCell1);
+
                     if (focusedCell1 < 0) {
                         toast({
                         title: "No Cell Focused",
@@ -2193,7 +2193,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     
                     try {
                         const clipboardData = await navigator.clipboard.readText();
-                        console.log('Button click: Clipboard data length =', clipboardData.length);
+
                         if (clipboardData.trim()) {
                         handleFocusedCellPaste1(clipboardData);
                         } else {
