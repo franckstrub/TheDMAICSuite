@@ -1819,7 +1819,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </p>
 
             {/* Data Table */}
-            <div ref={tableContainerRef} className="border rounded-md max-h-[500px] overflow-y-auto">
+            <div ref={tableContainerRef} className="data-table-container border rounded-md max-h-[500px] overflow-y-auto">
                 <table className="min-w-full table-auto">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
