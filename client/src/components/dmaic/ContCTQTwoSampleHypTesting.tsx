@@ -1328,53 +1328,50 @@ useEffect(() => {
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName || activeTab?.includes('TwoSample'))) {
         event.preventDefault();
         
-        // Get clipboard data
-        navigator.clipboard.readText().then(clipboardData => {
-          if (clipboardData.trim()) {
-            // Create a synthetic paste event
-            const syntheticEvent = {
-              preventDefault: () => {},
-              clipboardData: {
-                getData: (format: string) => clipboardData
-              }
-            } as unknown as React.ClipboardEvent;
-            
-            // Determine which dataset to paste into based on which input field is focused
-            const activeElement = document.activeElement as HTMLElement;
-            const isDataset1Input = activeElement?.id === 'add-data-input-1' || 
-                                  activeElement?.closest('[data-dataset="1"]');
-            const isDataset2Input = activeElement?.id === 'add-data-input-2' || 
-                                  activeElement?.closest('[data-dataset="2"]');
-            
-            if (isDataset1Input) {
-              handlePasteData1(syntheticEvent);
-            } else if (isDataset2Input) {
-              handlePasteData2(syntheticEvent);
-            } else {
-              // Default to dataset 1 if no specific input is focused
-              handlePasteData1(syntheticEvent);
-              toast({
-                title: "Data Pasted to Dataset 1",
-                description: "Data was pasted to Dataset 1. Click on Dataset 2 input to paste there instead.",
-                variant: "default",
-              });
+        // Check which dataset has a focused cell
+        if (focusedCell1 >= 0) {
+          // Dataset 1 has focused cell
+          navigator.clipboard.readText().then(clipboardData => {
+            if (clipboardData.trim()) {
+              handleFocusedCellPaste1(clipboardData);
             }
-          }
-        }).catch(error => {
-          console.error('Clipboard access failed:', error);
-          toast({
-            title: "Clipboard Access",
-            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-            variant: "default",
+          }).catch(error => {
+            console.error('Clipboard access failed:', error);
+            toast({
+              title: "Clipboard Access",
+              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+              variant: "default",
+            });
           });
-        });
+        } else if (focusedCell2 >= 0) {
+          // Dataset 2 has focused cell
+          navigator.clipboard.readText().then(clipboardData => {
+            if (clipboardData.trim()) {
+              handleFocusedCellPaste2(clipboardData);
+            }
+          }).catch(error => {
+            console.error('Clipboard access failed:', error);
+            toast({
+              title: "Clipboard Access",
+              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+              variant: "default",
+            });
+          });
+        } else {
+          // No cell focused
+          toast({
+            title: "No Cell Focused",
+            description: "Please click on a data cell first to set the starting position for paste.",
+            variant: "destructive",
+          });
+        }
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && activeTab === ctqName) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (activeTab === ctqName || activeTab?.includes('TwoSample'))) {
         event.preventDefault();
         
         // Determine which dataset to undo based on which input field is focused
@@ -1433,7 +1430,7 @@ useEffect(() => {
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState1, undoState2, activeTab, ctqName]);
+  }, [undoState1, undoState2, activeTab, ctqName, focusedCell1, focusedCell2]);
 
   // Handle cell editing for Dataset 1
   const startEditing1 = (index: number, currentValue: number) => {
