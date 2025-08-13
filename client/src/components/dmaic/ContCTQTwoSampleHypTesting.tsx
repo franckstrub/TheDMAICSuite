@@ -1143,36 +1143,90 @@ useEffect(() => {
       return;
     }
 
-    const lines = pasteData.trim().split('\n');
+    // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
+    const rows = pasteData.trim().split('\n');
     const newValues: number[] = [];
-
-    lines.forEach((line) => {
-      const value = line.trim();
-      if (value) {
-        let processedValue = value;
+    
+    rows.forEach(row => {
+      let cells: string[] = [];
+      
+      if (row.includes('\t')) {
+        // Excel data with tabs - standard Excel copy format
+        cells = row.split('\t');
+      } else {
+        // No tabs - could be single column or comma-separated
+        const trimmedRow = row.trim();
         
-        // Handle French decimal format (comma to dot conversion)
-        if (value.includes(',') && !value.includes('.')) {
-          processedValue = value.replace(',', '.');
-        }
-        
-        // Remove any thousands separators
-        processedValue = processedValue.replace(/[\s']/g, '');
-        
-        // Handle thousands separators with commas (US format)
-        if (processedValue.includes(',') && processedValue.includes('.')) {
-          const parts = processedValue.split('.');
-          if (parts.length === 2) {
-            const integerPart = parts[0].replace(/,/g, '');
-            processedValue = integerPart + '.' + parts[1];
+        // Check if this looks like a single French decimal number (digits, optional comma, digits)
+        const frenchDecimalPattern = /^-?\d+,\d+$/;
+        if (frenchDecimalPattern.test(trimmedRow)) {
+          // This is a single French decimal number, don't split by comma
+          cells = [trimmedRow];
+        } else if (trimmedRow.includes(',')) {
+          // Contains commas but doesn't match French decimal pattern
+          // Split by comma but be careful about decimal commas
+          const parts = trimmedRow.split(',');
+          cells = [];
+          
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i].trim();
+            
+            // Check if this part combined with next part could be a French decimal
+            if (i < parts.length - 1) {
+              const nextPart = parts[i + 1].trim();
+              const combined = part + ',' + nextPart;
+              
+              // If combined looks like a French decimal, combine them
+              if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
+                cells.push(combined);
+                i++; // Skip next part as we combined it
+                continue;
+              }
+            }
+            
+            // Otherwise, treat as separate cell
+            if (part !== '') {
+              cells.push(part);
+            }
           }
-        }
-
-        const numericValue = parseFloat(processedValue);
-        if (!isNaN(numericValue)) {
-          newValues.push(numericValue);
+        } else {
+          // No commas, treat as single cell
+          cells = [trimmedRow];
         }
       }
+      
+      // Process each cell value
+      cells.forEach(cell => {
+        const trimmedCell = cell.trim();
+        if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
+          return; // Skip empty cells
+        } else {
+          // Handle different decimal separators and number formats (French regional settings support)
+          let processedValue = trimmedCell;
+          
+          // Handle French decimal format (comma to dot conversion)
+          if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+            processedValue = trimmedCell.replace(',', '.');
+          }
+          
+          // Remove any thousands separators
+          processedValue = processedValue.replace(/[\s']/g, '');
+          
+          // Handle thousands separators with commas (US format)
+          if (processedValue.includes(',') && processedValue.includes('.')) {
+            const parts = processedValue.split('.');
+            if (parts.length === 2) {
+              const integerPart = parts[0].replace(/,/g, '');
+              processedValue = integerPart + '.' + parts[1];
+            }
+          }
+
+          const numericValue = parseFloat(processedValue);
+          if (!isNaN(numericValue)) {
+            newValues.push(numericValue);
+          }
+        }
+      });
     });
 
     if (newValues.length === 0) {
@@ -1228,36 +1282,90 @@ useEffect(() => {
       return;
     }
 
-    const lines = pasteData.trim().split('\n');
+    // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
+    const rows = pasteData.trim().split('\n');
     const newValues: number[] = [];
-
-    lines.forEach((line) => {
-      const value = line.trim();
-      if (value) {
-        let processedValue = value;
+    
+    rows.forEach(row => {
+      let cells: string[] = [];
+      
+      if (row.includes('\t')) {
+        // Excel data with tabs - standard Excel copy format
+        cells = row.split('\t');
+      } else {
+        // No tabs - could be single column or comma-separated
+        const trimmedRow = row.trim();
         
-        // Handle French decimal format (comma to dot conversion)
-        if (value.includes(',') && !value.includes('.')) {
-          processedValue = value.replace(',', '.');
-        }
-        
-        // Remove any thousands separators
-        processedValue = processedValue.replace(/[\s']/g, '');
-        
-        // Handle thousands separators with commas (US format)
-        if (processedValue.includes(',') && processedValue.includes('.')) {
-          const parts = processedValue.split('.');
-          if (parts.length === 2) {
-            const integerPart = parts[0].replace(/,/g, '');
-            processedValue = integerPart + '.' + parts[1];
+        // Check if this looks like a single French decimal number (digits, optional comma, digits)
+        const frenchDecimalPattern = /^-?\d+,\d+$/;
+        if (frenchDecimalPattern.test(trimmedRow)) {
+          // This is a single French decimal number, don't split by comma
+          cells = [trimmedRow];
+        } else if (trimmedRow.includes(',')) {
+          // Contains commas but doesn't match French decimal pattern
+          // Split by comma but be careful about decimal commas
+          const parts = trimmedRow.split(',');
+          cells = [];
+          
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i].trim();
+            
+            // Check if this part combined with next part could be a French decimal
+            if (i < parts.length - 1) {
+              const nextPart = parts[i + 1].trim();
+              const combined = part + ',' + nextPart;
+              
+              // If combined looks like a French decimal, combine them
+              if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
+                cells.push(combined);
+                i++; // Skip next part as we combined it
+                continue;
+              }
+            }
+            
+            // Otherwise, treat as separate cell
+            if (part !== '') {
+              cells.push(part);
+            }
           }
-        }
-
-        const numericValue = parseFloat(processedValue);
-        if (!isNaN(numericValue)) {
-          newValues.push(numericValue);
+        } else {
+          // No commas, treat as single cell
+          cells = [trimmedRow];
         }
       }
+      
+      // Process each cell value
+      cells.forEach(cell => {
+        const trimmedCell = cell.trim();
+        if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
+          return; // Skip empty cells
+        } else {
+          // Handle different decimal separators and number formats (French regional settings support)
+          let processedValue = trimmedCell;
+          
+          // Handle French decimal format (comma to dot conversion)
+          if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+            processedValue = trimmedCell.replace(',', '.');
+          }
+          
+          // Remove any thousands separators
+          processedValue = processedValue.replace(/[\s']/g, '');
+          
+          // Handle thousands separators with commas (US format)
+          if (processedValue.includes(',') && processedValue.includes('.')) {
+            const parts = processedValue.split('.');
+            if (parts.length === 2) {
+              const integerPart = parts[0].replace(/,/g, '');
+              processedValue = integerPart + '.' + parts[1];
+            }
+          }
+
+          const numericValue = parseFloat(processedValue);
+          if (!isNaN(numericValue)) {
+            newValues.push(numericValue);
+          }
+        }
+      });
     });
 
     if (newValues.length === 0) {
