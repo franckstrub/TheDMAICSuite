@@ -1819,13 +1819,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <tbody className="bg-white divide-y divide-gray-200">
                     {dataPoints.length === 0 ? (
                     <tr>
-                        <td colSpan={3} className="text-center text-gray-500">
-                        <div
-                            className="cursor-pointer hover:bg-blue-50 rounded p-4"
-                            onClick={() => document.getElementById('add-data-input')?.focus()}
-                            onPaste={(e) => handlePasteData(e)}
-                        >
-                        </div>
+                        <td colSpan={3} className="text-center text-gray-500 p-8">
+                            No data available. Click "Add" to enter data.
                         </td>
                     </tr>
                     ) : (
