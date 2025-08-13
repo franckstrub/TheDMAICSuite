@@ -1135,30 +1135,33 @@ useEffect(() => {
     }
   };
 
+  // Set component focus context when cells are focused
+  useEffect(() => {
+    if (focusedCell >= 0) {
+      // Set global context for focused component
+      (window as any).focusedComponent = 'one-sample';
+      (window as any).focusedCellIndex = focusedCell;
+    } else {
+      // Clear context when no cells are focused
+      if ((window as any).focusedComponent === 'one-sample') {
+        (window as any).focusedComponent = null;
+        (window as any).focusedCellIndex = -1;
+      }
+    }
+  }, [focusedCell]);
+
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - only when this component has focus
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
-        // Only handle if this component has focused cells OR focus is in a One Sample input
-        const activeElement = document.activeElement as HTMLElement;
-        const isInOneSample = activeElement?.closest('[data-component="one-sample"]') || 
-                             focusedCell >= 0;
+        // Check if this One Sample component should handle the paste based on global context
+        const focusedComponent = (window as any).focusedComponent;
         
-        if (isInOneSample) {
+        if (focusedComponent === 'one-sample') {
           event.preventDefault();
           
-          // Always require a focused cell for paste operations
-          if (focusedCell < 0) {
-            toast({
-              title: "No Cell Focused",
-              description: "Please click on a data cell first to set the starting position for paste.",
-              variant: "destructive",
-            });
-            return;
-          }
-          
-          // Get clipboard data
+          // Get clipboard data and paste to focused cell
           navigator.clipboard.readText().then(clipboardData => {
             if (clipboardData.trim()) {
               handleFocusedCellPaste(clipboardData);

@@ -1433,62 +1433,63 @@ useEffect(() => {
     }
   };
 
+  // Set component focus context when cells are focused
+  useEffect(() => {
+    if (focusedCell1 >= 0) {
+      // Set global context for focused component
+      (window as any).focusedComponent = 'two-sample-dataset1';
+      (window as any).focusedCellIndex = focusedCell1;
+    } else if (focusedCell2 >= 0) {
+      (window as any).focusedComponent = 'two-sample-dataset2';
+      (window as any).focusedCellIndex = focusedCell2;
+    } else {
+      // Clear context when no cells are focused
+      if ((window as any).focusedComponent?.startsWith('two-sample')) {
+        (window as any).focusedComponent = null;
+        (window as any).focusedCellIndex = -1;
+      }
+    }
+  }, [focusedCell1, focusedCell2]);
+
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === 'TwoSample' || activeTab?.includes('Two Sample'))) {
         
-        // Only handle if this component has focused cells OR focus is in a Two Sample input
-        const activeElement = document.activeElement as HTMLElement;
-        const isInTwoSample = activeElement?.closest('[data-component="two-sample"]') || 
-                             focusedCell1 >= 0 || focusedCell2 >= 0;
+        // Check if this Two Sample component should handle the paste based on global context
+        const focusedComponent = (window as any).focusedComponent;
         
-        if (isInTwoSample) {
+        if (focusedComponent === 'two-sample-dataset1') {
+          // Dataset 1 has focused cell
           event.preventDefault();
-          
-          // Check which dataset has a focused cell
-          if (focusedCell1 >= 0) {
-            // Dataset 1 has focused cell
-            console.log('Keyboard Ctrl+V: Dataset 1 focused, focusedCell1 =', focusedCell1);
-            navigator.clipboard.readText().then(clipboardData => {
-              console.log('Keyboard Ctrl+V: Clipboard data length =', clipboardData.length);
-              if (clipboardData.trim()) {
-                handleFocusedCellPaste1(clipboardData);
-              }
-            }).catch(error => {
-              console.error('Clipboard access failed:', error);
-              toast({
-                title: "Clipboard Access",
-                description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-                variant: "default",
-              });
-            });
-          } else if (focusedCell2 >= 0) {
-            // Dataset 2 has focused cell
-            console.log('Keyboard Ctrl+V: Dataset 2 focused, focusedCell2 =', focusedCell2);
-            navigator.clipboard.readText().then(clipboardData => {
-              console.log('Keyboard Ctrl+V: Clipboard data length =', clipboardData.length);
-              if (clipboardData.trim()) {
-                handleFocusedCellPaste2(clipboardData);
-              }
-            }).catch(error => {
-              console.error('Clipboard access failed:', error);
-              toast({
-                title: "Clipboard Access",
-                description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-                variant: "default",
-              });
-            });
-          } else {
-            // No cell focused
-            console.log('Keyboard Ctrl+V: No cell focused, focusedCell1 =', focusedCell1, 'focusedCell2 =', focusedCell2);
+          navigator.clipboard.readText().then(clipboardData => {
+            if (clipboardData.trim()) {
+              handleFocusedCellPaste1(clipboardData);
+            }
+          }).catch(error => {
+            console.error('Clipboard access failed:', error);
             toast({
-              title: "No Cell Focused",
-              description: "Please click on a data cell first to set the starting position for paste.",
-              variant: "destructive",
+              title: "Clipboard Access",
+              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+              variant: "default",
             });
-          }
+          });
+        } else if (focusedComponent === 'two-sample-dataset2') {
+          // Dataset 2 has focused cell
+          event.preventDefault();
+          navigator.clipboard.readText().then(clipboardData => {
+            if (clipboardData.trim()) {
+              handleFocusedCellPaste2(clipboardData);
+            }
+          }).catch(error => {
+            console.error('Clipboard access failed:', error);
+            toast({
+              title: "Clipboard Access",
+              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+              variant: "default",
+            });
+          });
         }
       }
 
