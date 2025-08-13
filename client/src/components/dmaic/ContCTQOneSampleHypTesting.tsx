@@ -944,22 +944,13 @@ useEffect(() => {
   const handleFocusedCellPaste = (pasteData: string) => {
     console.log(`handleFocusedCellPaste called with focusedCell: ${focusedCell}`);
     
-    // Check if a cell is focused or if dataset is empty and we should use cell 0
-    const shouldUseCell0 = dataPoints.length === 0 && focusedCell === -1;
-    const actualFocusedCell = shouldUseCell0 ? 0 : focusedCell;
-    
-    if (actualFocusedCell === -1) {
+    if (focusedCell === -1) {
       toast({
         title: "No Cell Focused",
         description: "Please click on a data cell first to set the starting position for paste.",
         variant: "destructive",
       });
       return;
-    }
-    
-    // If dataset is empty and we're using cell 0, set the focused cell
-    if (shouldUseCell0) {
-      setFocusedCell(0);
     }
 
     try {
@@ -1068,7 +1059,7 @@ useEffect(() => {
         const updatedPoints = [...prev];
         
         // Calculate the end index for the paste operation
-        const endIndex = actualFocusedCell + newValues.length - 1;
+        const endIndex = focusedCell + newValues.length - 1;
         
         // Extend array if needed to accommodate the paste range
         while (updatedPoints.length <= endIndex) {
@@ -1078,9 +1069,9 @@ useEffect(() => {
           });
         }
         
-        // Replace values ONLY from actualFocusedCell to endIndex (inclusive)
+        // Replace values ONLY from focusedCell to endIndex (inclusive)
         newValues.forEach((value, i) => {
-          const targetIndex = actualFocusedCell + i;
+          const targetIndex = focusedCell + i;
           const calculatedIndexNumber = targetIndex + 1;
           console.log(`Focused paste: setting targetIndex ${targetIndex} with indexNumber: ${calculatedIndexNumber}, value: ${value}`);
           updatedPoints[targetIndex] = {
@@ -1094,13 +1085,13 @@ useEffect(() => {
       
       toast({
         title: "Data Pasted",
-        description: `Successfully pasted ${newValues.length} values starting from row ${actualFocusedCell + 1} (index ${actualFocusedCell + 1} to ${actualFocusedCell + newValues.length}).`,
+        description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1} (index ${focusedCell + 1} to ${focusedCell + newValues.length}).`,
       });
       
       // Auto-scroll to show the newly pasted data
       setTimeout(() => {
         if (tableContainerRef.current) {
-          const lastPastedIndex = actualFocusedCell + newValues.length - 1;
+          const lastPastedIndex = focusedCell + newValues.length - 1;
           const rowHeight = 50;
           const scrollPosition = lastPastedIndex * rowHeight;
           tableContainerRef.current.scrollTop = scrollPosition;
@@ -1123,8 +1114,8 @@ useEffect(() => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
         event.preventDefault();
         
-        // Check if we can paste: either cell is focused or dataset is empty (will use cell 0)
-        const canPaste = focusedCell >= 0 || dataPoints.length === 0;
+        // Check if we can paste: only when a cell is focused
+        const canPaste = focusedCell >= 0;
         
         if (!canPaste) {
           toast({
@@ -1777,11 +1768,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     variant="outline"
                     size="sm"
                     className={`border-gray-400 ${
-                        focusedCell >= 0 || dataPoints.length === 0 
+                        focusedCell >= 0 
                         ? 'text-gray-700 hover:bg-gray-100' 
                         : 'text-gray-400 cursor-not-allowed bg-gray-50'
                     }`}
-                    disabled={!(focusedCell >= 0 || dataPoints.length === 0)}
+                    disabled={!(focusedCell >= 0)}
                 >
                     📋 Paste data from Excel
                 </Button>
