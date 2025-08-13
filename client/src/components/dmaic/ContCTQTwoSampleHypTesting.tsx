@@ -1466,6 +1466,12 @@ useEffect(() => {
           navigator.clipboard.readText().then(clipboardData => {
             if (clipboardData.trim()) {
               handleFocusedCellPaste1(clipboardData);
+            } else {
+              toast({
+                title: "No Data Found",
+                description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+                variant: "destructive",
+              });
             }
           }).catch(error => {
             console.error('Clipboard access failed:', error);
@@ -1481,6 +1487,12 @@ useEffect(() => {
           navigator.clipboard.readText().then(clipboardData => {
             if (clipboardData.trim()) {
               handleFocusedCellPaste2(clipboardData);
+            } else {
+              toast({
+                title: "No Data Found",
+                description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+                variant: "destructive",
+              });
             }
           }).catch(error => {
             console.error('Clipboard access failed:', error);
@@ -2184,6 +2196,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         console.log('Button click: Clipboard data length =', clipboardData.length);
                         if (clipboardData.trim()) {
                         handleFocusedCellPaste1(clipboardData);
+                        } else {
+                        toast({
+                            title: "No Data Found",
+                            description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+                            variant: "destructive",
+                        });
                         }
                     } catch (error) {
                         toast({
@@ -2411,6 +2429,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
                         handleFocusedCellPaste2(clipboardData);
+                        } else {
+                        toast({
+                            title: "No Data Found",
+                            description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+                            variant: "destructive",
+                        });
                         }
                     } catch (error) {
                         toast({
