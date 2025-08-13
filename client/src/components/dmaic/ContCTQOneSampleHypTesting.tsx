@@ -1748,10 +1748,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     Undo
                     </Button>
                 )}
-                {/* Debug display */}
-                <div className="text-xs text-red-600 mb-1">
-                    DEBUG: focusedCell = {focusedCell}, disabled = {String(focusedCell < 0)}, dataPoints.length = {dataPoints.length}
-                </div>
+
                 <Button
                     onClick={async () => {
                     console.log(`Paste button clicked. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
@@ -1823,35 +1820,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {dataPoints.length === 0 ? (
-                    <tr className="hover:bg-gray-50">
-                        <td className="px-4 py-2 text-sm text-gray-900">
-                        1
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-900">
-                        <div
-                            className={`cursor-pointer hover:bg-blue-50 p-1 rounded min-h-[24px] ${
-                            focusedCell === 0 ? 'ring-2 ring-blue-500 bg-blue-100' : ''
-                            }`}
-                            onClick={(e) => {
-                            e.preventDefault();
-                            setFocusedCell(0);
-                            console.log(`Focused empty cell 0`);
-                            e.currentTarget.focus();
-                            }}
-                            onPaste={(e) => {
-                            e.preventDefault();
-                            const pasteData = e.clipboardData.getData('text');
-                            setFocusedCell(0);
-                            handleFocusedCellPaste(pasteData);
-                            }}
-                            tabIndex={0}
-                            title="Click to focus this empty cell (blue ring), then Ctrl+V to paste data starting here"
-                        >
-                            <span className="text-gray-400 italic">Click to focus, then paste</span>
-                        </div>
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-900">
-                        {/* Empty actions column for empty row */}
+                    <tr>
+                        <td colSpan={3} className="text-center text-gray-500 py-8">
+                        <div>No data points yet. Use the input above to add values.</div>
                         </td>
                     </tr>
                     ) : (
@@ -1935,6 +1906,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         {dataPoints.length + 1}
                     </td>
                     <td className="px-4 py-2">
+                        <div
+                        className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${
+                            focusedCell === dataPoints.length ? 'ring-2 ring-blue-500 bg-blue-100' : ''
+                        }`}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setFocusedCell(dataPoints.length);
+                            console.log(`Focused input cell ${dataPoints.length} (next available position)`);
+                            // Focus the actual input inside
+                            document.getElementById('add-data-input')?.focus();
+                        }}
+                        title="Click to focus this input cell for paste operations"
+                        >
                         <Input
                         id="add-data-input"
                         type="number"
@@ -1951,8 +1935,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             const lines = pastedData.trim().split('\n');
 
                             if (lines.length > 1) {
-                            // Multiple values - use the general paste handler
-                            handlePasteData(e);
+                            // Set focused cell and use focused cell paste for multiple values
+                            setFocusedCell(dataPoints.length);
+                            handleFocusedCellPaste(pastedData);
                             } else {
                             // Single value - set it in the input field with decimal format handling
                             let value = lines[0]?.trim();
@@ -1965,10 +1950,15 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             }
                             }
                         }}
+                        onFocus={() => {
+                            setFocusedCell(dataPoints.length);
+                            console.log(`Input focused: setting focusedCell to ${dataPoints.length}`);
+                        }}
                         placeholder="Enter numeric value"
-                        className="w-full"
+                        className="w-full border-0 p-0 shadow-none focus:ring-0"
                         step="any"
                         />
+                        </div>
                     </td>
                     <td className="px-4 py-2">
                         <Button
