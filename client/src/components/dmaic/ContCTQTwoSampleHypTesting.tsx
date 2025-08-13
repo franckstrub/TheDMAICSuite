@@ -1327,12 +1327,18 @@ useEffect(() => {
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
+      // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab?.includes('TwoSample')) {
-        event.preventDefault();
+        // Only handle if this component has focused cells OR focus is in a Two Sample input
+        const activeElement = document.activeElement as HTMLElement;
+        const isInTwoSample = activeElement?.closest('[data-component="two-sample"]') || 
+                             focusedCell1 >= 0 || focusedCell2 >= 0;
         
-        // Check which dataset has a focused cell
-        if (focusedCell1 >= 0) {
+        if (isInTwoSample) {
+          event.preventDefault();
+          
+          // Check which dataset has a focused cell
+          if (focusedCell1 >= 0) {
           // Dataset 1 has focused cell
           navigator.clipboard.readText().then(clipboardData => {
             if (clipboardData.trim()) {
@@ -1367,6 +1373,7 @@ useEffect(() => {
             description: "Please click on a data cell first to set the starting position for paste.",
             variant: "destructive",
           });
+        }
         }
       }
 
@@ -1499,7 +1506,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
 };
 
   return (
-    <Card>
+    <Card data-component="two-sample">
       <CardHeader>
         <CardTitle>Two-Sample Hypothesis Testing</CardTitle>
       </CardHeader>

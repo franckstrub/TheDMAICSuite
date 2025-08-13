@@ -1138,35 +1138,40 @@ useEffect(() => {
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Handle Ctrl+V/Cmd+V for paste - only when this CTQ is active AND a cell is focused
+      // Handle Ctrl+V/Cmd+V for paste - only when this component has focus
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
-        event.preventDefault();
+        // Only handle if this component has focused cells OR focus is in a One Sample input
+        const activeElement = document.activeElement as HTMLElement;
+        const isInOneSample = activeElement?.closest('[data-component="one-sample"]') || 
+                             focusedCell >= 0;
         
-        // Always require a focused cell for paste operations
-        if (focusedCell < 0) {
-          toast({
-            title: "No Cell Focused",
-            description: "Please click on a data cell first to set the starting position for paste.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Get clipboard data
-        navigator.clipboard.readText().then(clipboardData => {
-          if (clipboardData.trim()) {
-
-
-            handleFocusedCellPaste(clipboardData);
+        if (isInOneSample) {
+          event.preventDefault();
+          
+          // Always require a focused cell for paste operations
+          if (focusedCell < 0) {
+            toast({
+              title: "No Cell Focused",
+              description: "Please click on a data cell first to set the starting position for paste.",
+              variant: "destructive",
+            });
+            return;
           }
-        }).catch(error => {
-          console.error('Clipboard access failed:', error);
-          toast({
-            title: "Clipboard Access",
-            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-            variant: "default",
+          
+          // Get clipboard data
+          navigator.clipboard.readText().then(clipboardData => {
+            if (clipboardData.trim()) {
+              handleFocusedCellPaste(clipboardData);
+            }
+          }).catch(error => {
+            console.error('Clipboard access failed:', error);
+            toast({
+              title: "Clipboard Access",
+              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+              variant: "default",
+            });
           });
-        });
+        }
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
@@ -1220,7 +1225,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
 };
 
   return (
-    <Card>
+    <Card data-component="one-sample">
       <CardHeader>
         <CardTitle>One-Sample Hypothesis Testing</CardTitle>
       </CardHeader>
