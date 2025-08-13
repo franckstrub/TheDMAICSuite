@@ -1134,6 +1134,7 @@ useEffect(() => {
 
   // Handle focused cell paste for Dataset 1
   const handleFocusedCellPaste1 = (pasteData: string) => {
+    console.log('handleFocusedCellPaste1 called with focusedCell1 =', focusedCell1, 'data length =', pasteData.length);
     if (focusedCell1 === -1) {
       toast({
         title: "No Cell Focused",
@@ -1447,41 +1448,46 @@ useEffect(() => {
           
           // Check which dataset has a focused cell
           if (focusedCell1 >= 0) {
-          // Dataset 1 has focused cell
-          navigator.clipboard.readText().then(clipboardData => {
-            if (clipboardData.trim()) {
-              handleFocusedCellPaste1(clipboardData);
-            }
-          }).catch(error => {
-            console.error('Clipboard access failed:', error);
-            toast({
-              title: "Clipboard Access",
-              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-              variant: "default",
+            // Dataset 1 has focused cell
+            console.log('Keyboard Ctrl+V: Dataset 1 focused, focusedCell1 =', focusedCell1);
+            navigator.clipboard.readText().then(clipboardData => {
+              console.log('Keyboard Ctrl+V: Clipboard data length =', clipboardData.length);
+              if (clipboardData.trim()) {
+                handleFocusedCellPaste1(clipboardData);
+              }
+            }).catch(error => {
+              console.error('Clipboard access failed:', error);
+              toast({
+                title: "Clipboard Access",
+                description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+                variant: "default",
+              });
             });
-          });
-        } else if (focusedCell2 >= 0) {
-          // Dataset 2 has focused cell
-          navigator.clipboard.readText().then(clipboardData => {
-            if (clipboardData.trim()) {
-              handleFocusedCellPaste2(clipboardData);
-            }
-          }).catch(error => {
-            console.error('Clipboard access failed:', error);
-            toast({
-              title: "Clipboard Access",
-              description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
-              variant: "default",
+          } else if (focusedCell2 >= 0) {
+            // Dataset 2 has focused cell
+            console.log('Keyboard Ctrl+V: Dataset 2 focused, focusedCell2 =', focusedCell2);
+            navigator.clipboard.readText().then(clipboardData => {
+              console.log('Keyboard Ctrl+V: Clipboard data length =', clipboardData.length);
+              if (clipboardData.trim()) {
+                handleFocusedCellPaste2(clipboardData);
+              }
+            }).catch(error => {
+              console.error('Clipboard access failed:', error);
+              toast({
+                title: "Clipboard Access",
+                description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+                variant: "default",
+              });
             });
-          });
-        } else {
-          // No cell focused
-          toast({
-            title: "No Cell Focused",
-            description: "Please click on a data cell first to set the starting position for paste.",
-            variant: "destructive",
-          });
-        }
+          } else {
+            // No cell focused
+            console.log('Keyboard Ctrl+V: No cell focused, focusedCell1 =', focusedCell1, 'focusedCell2 =', focusedCell2);
+            toast({
+              title: "No Cell Focused",
+              description: "Please click on a data cell first to set the starting position for paste.",
+              variant: "destructive",
+            });
+          }
         }
       }
 
@@ -2161,6 +2167,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 <Button
                     onClick={async () => {
+                    console.log('Button click: focusedCell1 =', focusedCell1);
                     if (focusedCell1 < 0) {
                         toast({
                         title: "No Cell Focused",
@@ -2172,6 +2179,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     
                     try {
                         const clipboardData = await navigator.clipboard.readText();
+                        console.log('Button click: Clipboard data length =', clipboardData.length);
                         if (clipboardData.trim()) {
                         handleFocusedCellPaste1(clipboardData);
                         }
