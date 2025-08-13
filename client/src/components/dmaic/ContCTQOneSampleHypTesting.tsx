@@ -1852,7 +1852,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             ) : (
                             <div
                                 className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${
-                                  focusedCell === index ? 'ring-2 ring-blue-500 bg-blue-100' : ''
+                                  focusedCell === index ? 'bg-blue-100' : ''
                                 }`}
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -1908,7 +1908,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     <td className="px-4 py-2">
                         <div
                         className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${
-                            focusedCell === dataPoints.length ? 'ring-2 ring-blue-500 bg-blue-100' : ''
+                            focusedCell === dataPoints.length ? 'bg-blue-100' : ''
                         }`}
                         onClick={(e) => {
                             e.preventDefault();
