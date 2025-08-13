@@ -872,8 +872,7 @@ useEffect(() => {
       // Clear all data for dataset 1
       setDataSet1([]);
       setInputValue1("");
-      setPasteInput("");
-      setFocusedCell(-1);
+      setFocusedCell1(-1);
       setEditingCell1(-1);
       setEditValue1("");
       
@@ -893,8 +892,7 @@ useEffect(() => {
       // Clear all data for dataset 2
       setDataSet2([]);
       setInputValue2("");
-      setPasteInput("");
-      setFocusedCell(-1);
+      setFocusedCell2(-1);
       setEditingCell2(-1);
       setEditValue2("");
       
