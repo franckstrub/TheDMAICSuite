@@ -2289,13 +2289,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             ) : (
                             <div
                                 className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell1 === index ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
                                   setFocusedCell1(index);
-                                  startEditing1(index, point.dataValue);
+                                  // Make this div focusable and focus it to maintain focus state
+                                  e.currentTarget.focus();
                                 }}
                                 onPaste={(e) => handleCellPaste1(e, index)}
                                 tabIndex={0}
-                                title="Click to edit this value"
+                                title="Single click to focus (blue ring), then Ctrl+V to paste data starting from this row. Double-click to edit value."
+                                onDoubleClick={() => startEditing1(index, point.dataValue)}
+                                onFocus={() => {
+                                  // Ensure focused cell is set when this div gets focus
+                                  setFocusedCell1(index);
+                                }}
                             >
                                 {point.dataValue}
                             </div>
@@ -2522,13 +2529,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             ) : (
                             <div
                                 className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell2 === index ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
                                   setFocusedCell2(index);
-                                  startEditing2(index, point.dataValue);
+                                  // Make this div focusable and focus it to maintain focus state
+                                  e.currentTarget.focus();
                                 }}
                                 onPaste={(e) => handleCellPaste2(e, index)}
                                 tabIndex={0}
-                                title="Click to edit this value"
+                                title="Single click to focus (blue ring), then Ctrl+V to paste data starting from this row. Double-click to edit value."
+                                onDoubleClick={() => startEditing2(index, point.dataValue)}
+                                onFocus={() => {
+                                  // Ensure focused cell is set when this div gets focus
+                                  setFocusedCell2(index);
+                                }}
                             >
                                 {point.dataValue}
                             </div>
