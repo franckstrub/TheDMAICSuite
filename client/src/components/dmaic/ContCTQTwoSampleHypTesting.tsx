@@ -1437,7 +1437,8 @@ useEffect(() => {
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab?.includes('TwoSample')) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === 'TwoSample' || activeTab?.includes('Two Sample'))) {
+        
         // Only handle if this component has focused cells OR focus is in a Two Sample input
         const activeElement = document.activeElement as HTMLElement;
         const isInTwoSample = activeElement?.closest('[data-component="two-sample"]') || 
@@ -1492,7 +1493,7 @@ useEffect(() => {
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && activeTab?.includes('TwoSample')) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (activeTab === 'TwoSample' || activeTab?.includes('Two Sample'))) {
         event.preventDefault();
         
         // Determine which dataset to undo based on which input field is focused
