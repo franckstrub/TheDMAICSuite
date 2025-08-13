@@ -1187,41 +1187,29 @@ useEffect(() => {
     // Save current state for undo
     setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
 
-    // Handle paste based on focused cell
-    if (focusedCell1 === 0) {
-      // Input area focused - append to end (like regular paste)
-      const newDataPoints: DataPoint[] = newValues.map((value, index) => ({
-        indexNumber: dataSet1.length + index + 1,
-        dataValue: value
-      }));
-      
-      setDataSet1(prev => [...prev, ...newDataPoints]);
-    } else {
-      // Data cell focused - start from focused position
-      // focusedCell1 is the indexNumber (1-based), convert to array index (0-based)
-      const startIndex = focusedCell1 - 1;
-      const updatedPoints = [...dataSet1];
-      const endIndex = startIndex + newValues.length - 1;
-
-      // Extend array if necessary
-      while (updatedPoints.length <= endIndex) {
-        updatedPoints.push({
-          indexNumber: updatedPoints.length + 1,
-          dataValue: 0
-        });
-      }
-
-      // Replace values from startIndex to endIndex
-      newValues.forEach((value, i) => {
-        const targetIndex = startIndex + i;
-        updatedPoints[targetIndex] = {
-          indexNumber: targetIndex + 1,
-          dataValue: value
-        };
+    // Use focused cell as starting position (like One Sample component)
+    const startIndex = focusedCell1;
+    const updatedPoints = [...dataSet1];
+    
+    // Extend array if necessary
+    const endIndex = startIndex + newValues.length - 1;
+    while (updatedPoints.length <= endIndex) {
+      updatedPoints.push({
+        indexNumber: updatedPoints.length + 1,
+        dataValue: 0
       });
-
-      setDataSet1(updatedPoints);
     }
+
+    // Replace/insert values starting from focused position
+    newValues.forEach((value, i) => {
+      const targetIndex = startIndex + i;
+      updatedPoints[targetIndex] = {
+        indexNumber: targetIndex + 1,
+        dataValue: value
+      };
+    });
+
+    setDataSet1(updatedPoints);
     
     toast({
       title: "Data Pasted to Dataset 1",
@@ -1284,41 +1272,29 @@ useEffect(() => {
     // Save current state for undo
     setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
 
-    // Handle paste based on focused cell
-    if (focusedCell2 === 0) {
-      // Input area focused - append to end (like regular paste)
-      const newDataPoints: DataPoint[] = newValues.map((value, index) => ({
-        indexNumber: dataSet2.length + index + 1,
-        dataValue: value
-      }));
-      
-      setDataSet2(prev => [...prev, ...newDataPoints]);
-    } else {
-      // Data cell focused - start from focused position
-      // focusedCell2 is the indexNumber (1-based), convert to array index (0-based)
-      const startIndex = focusedCell2 - 1;
-      const updatedPoints = [...dataSet2];
-      const endIndex = startIndex + newValues.length - 1;
-
-      // Extend array if necessary
-      while (updatedPoints.length <= endIndex) {
-        updatedPoints.push({
-          indexNumber: updatedPoints.length + 1,
-          dataValue: 0
-        });
-      }
-
-      // Replace values from startIndex to endIndex
-      newValues.forEach((value, i) => {
-        const targetIndex = startIndex + i;
-        updatedPoints[targetIndex] = {
-          indexNumber: targetIndex + 1,
-          dataValue: value
-        };
+    // Use focused cell as starting position (like One Sample component)
+    const startIndex = focusedCell2;
+    const updatedPoints = [...dataSet2];
+    
+    // Extend array if necessary
+    const endIndex = startIndex + newValues.length - 1;
+    while (updatedPoints.length <= endIndex) {
+      updatedPoints.push({
+        indexNumber: updatedPoints.length + 1,
+        dataValue: 0
       });
-
-      setDataSet2(updatedPoints);
     }
+
+    // Replace/insert values starting from focused position
+    newValues.forEach((value, i) => {
+      const targetIndex = startIndex + i;
+      updatedPoints[targetIndex] = {
+        indexNumber: targetIndex + 1,
+        dataValue: value
+      };
+    });
+
+    setDataSet2(updatedPoints);
     
     toast({
       title: "Data Pasted to Dataset 2",
@@ -2334,9 +2310,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell1 === point.indexNumber ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
+                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell1 === index ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
                                 onClick={() => {
-                                  setFocusedCell1(point.indexNumber);
+                                  setFocusedCell1(index);
                                   startEditing1(index, point.dataValue);
                                 }}
                                 onPaste={(e) => handleCellPaste1(e, index)}
@@ -2378,7 +2354,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             addDataPoint1(inputValue1);
                             }
                         }}
-                        onFocus={() => setFocusedCell1(0)} // Focus input area as cell 0
+                        onFocus={() => setFocusedCell1(dataSet1.length)} // Focus input area at end position
                         onPaste={(e) => {
                             e.preventDefault();
                             const pastedData = e.clipboardData.getData('text/plain');
@@ -2396,7 +2372,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             }
                         }}
                         placeholder="Enter numeric value"
-                        className={`w-full ${focusedCell1 === 0 ? 'ring-2 ring-blue-500' : ''}`}
+                        className={`w-full ${focusedCell1 === dataSet1.length ? 'ring-2 ring-blue-500' : ''}`}
                         step="any"
                         />
                     </td>
@@ -2561,9 +2537,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell2 === point.indexNumber ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
+                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell2 === index ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
                                 onClick={() => {
-                                  setFocusedCell2(point.indexNumber);
+                                  setFocusedCell2(index);
                                   startEditing2(index, point.dataValue);
                                 }}
                                 onPaste={(e) => handleCellPaste2(e, index)}
@@ -2605,7 +2581,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             addDataPoint2(inputValue2);
                             }
                         }}
-                        onFocus={() => setFocusedCell2(0)} // Focus input area as cell 0
+                        onFocus={() => setFocusedCell2(dataSet2.length)} // Focus input area at end position
                         onPaste={(e) => {
                             e.preventDefault();
                             const pastedData = e.clipboardData.getData('text/plain');
@@ -2623,7 +2599,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             }
                         }}
                         placeholder="Enter numeric value"
-                        className={`w-full ${focusedCell2 === 0 ? 'ring-2 ring-blue-500' : ''}`}
+                        className={`w-full ${focusedCell2 === dataSet2.length ? 'ring-2 ring-blue-500' : ''}`}
                         step="any"
                         />
                     </td>
