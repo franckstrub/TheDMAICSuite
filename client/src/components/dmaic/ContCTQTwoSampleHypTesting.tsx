@@ -203,7 +203,8 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [inputValue1, setInputValue1] = useState("");
   const [inputValue2, setInputValue2] = useState("");
   const [pasteInput, setPasteInput] = useState("");
-  const [focusedCell, setFocusedCell] = useState<number>(-1);
+  const [focusedCell1, setFocusedCell1] = useState<number>(-1);
+  const [focusedCell2, setFocusedCell2] = useState<number>(-1);
   const [editingCell1, setEditingCell1] = useState<number>(-1);
   const [editingCell2, setEditingCell2] = useState<number>(-1);
   const [editValue1, setEditValue1] = useState<string>("");
@@ -354,6 +355,39 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       }, 0);
     }
   }, [configData, ctqId, isLoading]);
+
+  // Handle clicks outside the tables to unfocus cells
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
+      // Don't unfocus if clicking on buttons, inputs, or interactive elements
+      if (target.closest('button') || 
+          target.closest('input') || 
+          target.closest('select') || 
+          target.closest('[role="button"]') ||
+          target.closest('.paste-button') ||
+          target.closest('.clear-button') ||
+          target.closest('.undo-button')) {
+        return;
+      }
+      
+      const table1 = document.querySelector('.data-table-container-1');
+      const table2 = document.querySelector('.data-table-container-2');
+      
+      if (table1 && !table1.contains(target)) {
+        setFocusedCell1(-1);
+      }
+      if (table2 && !table2.contains(target)) {
+        setFocusedCell2(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Function to save current configuration to database
   const saveConfiguration = () => {
@@ -1098,6 +1132,178 @@ useEffect(() => {
         }); 
       }
     }
+  };
+
+  // Handle focused cell paste for Dataset 1
+  const handleFocusedCellPaste1 = (pasteData: string) => {
+    if (focusedCell1 === -1) {
+      toast({
+        title: "No Cell Focused",
+        description: "Please click on a data cell first to set the starting position for paste.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const lines = pasteData.trim().split('\n');
+    const newValues: number[] = [];
+
+    lines.forEach((line) => {
+      const value = line.trim();
+      if (value) {
+        let processedValue = value;
+        
+        // Handle French decimal format (comma to dot conversion)
+        if (value.includes(',') && !value.includes('.')) {
+          processedValue = value.replace(',', '.');
+        }
+        
+        // Remove any thousands separators
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        // Handle thousands separators with commas (US format)
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
+          }
+        }
+
+        const numericValue = parseFloat(processedValue);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      }
+    });
+
+    if (newValues.length === 0) {
+      toast({
+        title: "No Valid Data",
+        description: "No valid numeric data found in clipboard.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Save current state for undo
+    setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
+
+    // Create new data points starting from focused cell
+    const updatedPoints = [...dataSet1];
+    const endIndex = focusedCell1 + newValues.length - 1;
+
+    // Extend array if necessary
+    while (updatedPoints.length <= endIndex) {
+      updatedPoints.push({
+        indexNumber: updatedPoints.length + 1,
+        dataValue: 0
+      });
+    }
+
+    // Replace values from focusedCell1 to endIndex
+    newValues.forEach((value, i) => {
+      const targetIndex = focusedCell1 + i;
+      const calculatedIndexNumber = targetIndex + 1;
+
+      updatedPoints[targetIndex] = {
+        indexNumber: calculatedIndexNumber,
+        dataValue: value
+      };
+    });
+
+    setDataSet1(updatedPoints);
+    
+    toast({
+      title: "Data Pasted to Dataset 1",
+      description: `Pasted ${newValues.length} values starting from position ${focusedCell1 + 1}.`,
+    });
+  };
+
+  // Handle focused cell paste for Dataset 2
+  const handleFocusedCellPaste2 = (pasteData: string) => {
+    if (focusedCell2 === -1) {
+      toast({
+        title: "No Cell Focused",
+        description: "Please click on a data cell first to set the starting position for paste.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const lines = pasteData.trim().split('\n');
+    const newValues: number[] = [];
+
+    lines.forEach((line) => {
+      const value = line.trim();
+      if (value) {
+        let processedValue = value;
+        
+        // Handle French decimal format (comma to dot conversion)
+        if (value.includes(',') && !value.includes('.')) {
+          processedValue = value.replace(',', '.');
+        }
+        
+        // Remove any thousands separators
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        // Handle thousands separators with commas (US format)
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
+          }
+        }
+
+        const numericValue = parseFloat(processedValue);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      }
+    });
+
+    if (newValues.length === 0) {
+      toast({
+        title: "No Valid Data",
+        description: "No valid numeric data found in clipboard.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Save current state for undo
+    setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+
+    // Create new data points starting from focused cell
+    const updatedPoints = [...dataSet2];
+    const endIndex = focusedCell2 + newValues.length - 1;
+
+    // Extend array if necessary
+    while (updatedPoints.length <= endIndex) {
+      updatedPoints.push({
+        indexNumber: updatedPoints.length + 1,
+        dataValue: 0
+      });
+    }
+
+    // Replace values from focusedCell2 to endIndex
+    newValues.forEach((value, i) => {
+      const targetIndex = focusedCell2 + i;
+      const calculatedIndexNumber = targetIndex + 1;
+
+      updatedPoints[targetIndex] = {
+        indexNumber: calculatedIndexNumber,
+        dataValue: value
+      };
+    });
+
+    setDataSet2(updatedPoints);
+    
+    toast({
+      title: "Data Pasted to Dataset 2",
+      description: `Pasted ${newValues.length} values starting from position ${focusedCell2 + 1}.`,
+    });
   };
 
   // Handle paste specifically for editing cells - Dataset 1
@@ -2009,17 +2215,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 <Button
                     onClick={async () => {
+                    if (focusedCell1 < 0) {
+                        toast({
+                        title: "No Cell Focused",
+                        description: "Please click on a data cell first to set the starting position for paste.",
+                        variant: "destructive",
+                        });
+                        return;
+                    }
+                    
                     try {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
-                        // Create a synthetic paste event
-                        const syntheticEvent = {
-                            preventDefault: () => {},
-                            clipboardData: {
-                            getData: (format: string) => clipboardData
-                            }
-                        };
-                        handlePasteData1(syntheticEvent as any);
+                        handleFocusedCellPaste1(clipboardData);
                         }
                     } catch (error) {
                         toast({
@@ -2031,6 +2239,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     variant="outline"
                     size="sm"
                     className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                    disabled={focusedCell1 < 0}
                 >
                     📋 Paste data from Excel
                 </Button>
@@ -2050,7 +2259,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </p>
 
             {/* Data Table */}
-            <div ref={tableContainerRef} className="border rounded-md max-h-[500px] overflow-y-auto">
+            <div ref={tableContainerRef} className="data-table-container-1 border rounded-md max-h-[500px] overflow-y-auto">
                 <table className="min-w-full table-auto">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -2105,8 +2314,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
-                                onClick={() => startEditing1(index, point.dataValue)}
+                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell1 === index ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
+                                onClick={() => {
+                                  setFocusedCell1(index);
+                                  startEditing1(index, point.dataValue);
+                                }}
                                 onPaste={(e) => handleCellPaste1(e, index)}
                                 tabIndex={0}
                                 title="Click to edit this value"
@@ -2146,6 +2358,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             addDataPoint1(inputValue1);
                             }
                         }}
+                        onFocus={() => setFocusedCell1(0)} // Focus input area as cell 0
                         onPaste={(e) => {
                             e.preventDefault();
                             const pastedData = e.clipboardData.getData('text/plain');
@@ -2163,7 +2376,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             }
                         }}
                         placeholder="Enter numeric value"
-                        className="w-full"
+                        className={`w-full ${focusedCell1 === 0 ? 'ring-2 ring-blue-500' : ''}`}
                         step="any"
                         />
                     </td>
@@ -2229,17 +2442,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 <Button
                     onClick={async () => {
+                    if (focusedCell2 < 0) {
+                        toast({
+                        title: "No Cell Focused",
+                        description: "Please click on a data cell first to set the starting position for paste.",
+                        variant: "destructive",
+                        });
+                        return;
+                    }
+                    
                     try {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
-                        // Create a synthetic paste event
-                        const syntheticEvent = {
-                            preventDefault: () => {},
-                            clipboardData: {
-                            getData: (format: string) => clipboardData
-                            }
-                        };
-                        handlePasteData2(syntheticEvent as any);
+                        handleFocusedCellPaste2(clipboardData);
                         }
                     } catch (error) {
                         toast({
@@ -2251,6 +2466,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     variant="outline"
                     size="sm"
                     className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                    disabled={focusedCell2 < 0}
                 >
                     📋 Paste data from Excel
                 </Button>
@@ -2270,7 +2486,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </p>
 
             {/* Data Table */}
-            <div ref={tableContainerRef} className="border rounded-md max-h-[500px] overflow-y-auto">
+            <div ref={tableContainerRef} className="data-table-container-2 border rounded-md max-h-[500px] overflow-y-auto">
                 <table className="min-w-full table-auto">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -2325,8 +2541,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             />
                             ) : (
                             <div
-                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
-                                onClick={() => startEditing2(index, point.dataValue)}
+                                className={`cursor-pointer hover:bg-blue-50 p-1 rounded ${focusedCell2 === index ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`}
+                                onClick={() => {
+                                  setFocusedCell2(index);
+                                  startEditing2(index, point.dataValue);
+                                }}
                                 onPaste={(e) => handleCellPaste2(e, index)}
                                 tabIndex={0}
                                 title="Click to edit this value"
@@ -2366,6 +2585,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             addDataPoint2(inputValue2);
                             }
                         }}
+                        onFocus={() => setFocusedCell2(0)} // Focus input area as cell 0
                         onPaste={(e) => {
                             e.preventDefault();
                             const pastedData = e.clipboardData.getData('text/plain');
@@ -2383,7 +2603,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             }
                         }}
                         placeholder="Enter numeric value"
-                        className="w-full"
+                        className={`w-full ${focusedCell2 === 0 ? 'ring-2 ring-blue-500' : ''}`}
                         step="any"
                         />
                     </td>
