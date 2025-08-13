@@ -1821,20 +1821,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     <tr>
                         <td colSpan={3} className="text-center text-gray-500">
                         <div
-                            className={`cursor-pointer hover:bg-blue-50 rounded p-4 ${
-                                focusedCell === 0 ? 'ring-2 ring-blue-500 bg-blue-100' : ''
-                            }`}
-                            onClick={() => {
-                                setFocusedCell(0);
-                                console.log('Empty table clicked: setting focusedCell to 0');
-                            }}
-                            onPaste={(e) => {
-                                setFocusedCell(0);
-                                handleFocusedCellPaste(e.clipboardData.getData('text'));
-                                e.preventDefault();
-                            }}
-                            tabIndex={0}
-                            title="Click to focus for paste operations"
+                            className="cursor-pointer hover:bg-blue-50 rounded p-4"
+                            onClick={() => document.getElementById('add-data-input')?.focus()}
+                            onPaste={(e) => handlePasteData(e)}
                         >
                         </div>
                         </td>
