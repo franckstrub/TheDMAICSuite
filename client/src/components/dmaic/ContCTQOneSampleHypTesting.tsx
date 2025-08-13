@@ -1823,16 +1823,35 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {dataPoints.length === 0 ? (
-                    <tr>
-                        <td colSpan={3} className="text-center text-gray-500">
+                    <tr className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                        1
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900">
                         <div
-                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
-                            onClick={() => document.getElementById('add-data-input')?.focus()}
-                            onPaste={(e) => handlePasteData(e)}
+                            className={`cursor-pointer hover:bg-blue-50 p-1 rounded min-h-[24px] ${
+                            focusedCell === 0 ? 'ring-2 ring-blue-500 bg-blue-100' : ''
+                            }`}
+                            onClick={(e) => {
+                            e.preventDefault();
+                            setFocusedCell(0);
+                            console.log(`Focused empty cell 0`);
+                            e.currentTarget.focus();
+                            }}
+                            onPaste={(e) => {
+                            e.preventDefault();
+                            const pasteData = e.clipboardData.getData('text');
+                            setFocusedCell(0);
+                            handleFocusedCellPaste(pasteData);
+                            }}
                             tabIndex={0}
-                            title="Click to focus input or paste data here"
+                            title="Click to focus this empty cell (blue ring), then Ctrl+V to paste data starting here"
                         >
+                            <span className="text-gray-400 italic">Click to focus, then paste</span>
                         </div>
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                        {/* Empty actions column for empty row */}
                         </td>
                     </tr>
                     ) : (
