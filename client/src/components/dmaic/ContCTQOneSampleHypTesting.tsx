@@ -1267,8 +1267,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <CardTitle className="text-sm">Power & Sample Size 1-Sample Mean Hypothesis Testing</CardTitle>
                     </CardHeader>
                     <CardContent className="text-xs">
-                      <tr>
+                      <div>
+                      
                         <Label htmlFor='power1SMeanPower'>Power of test(1-β):</Label>
+                        
                         <Select value={power1SMeanPower} onValueChange={(value: string) => {
                           setPower1SMeanPower(value);
                           //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanPower', value);
@@ -1284,9 +1286,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.80">80%</SelectItem>
                         </SelectContent>
                         </Select>  
-                      </tr>
-                      <tr>
+                       
+                      </div>
+                      <div>
+                      
                         <Label htmlFor="power1SMeanHa">Ha:</Label>
+                        
                         <Select value={power1SMeanHa} onValueChange={(value: string) => {
                           setPower1SMeanHa(value);
                           //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanHa', value);
@@ -1299,10 +1304,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="≠">≠</SelectItem>
                           <SelectItem value="<">&lt;</SelectItem>
                         </SelectContent>
-                        </Select>  
-                      </tr>
-                      <tr>
+                        </Select> 
+                        
+                      </div>
+                      <div>                      
                         <Label htmlFor="power1SMeanAlpha">Alpha (α):</Label> 
+                        
                         <Select value={power1SMeanAlpha} onValueChange={(value: string) => {
                           setPower1SMeanAlpha(value);
                           //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanAlpha', value);
@@ -1317,10 +1324,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.15">15%</SelectItem>
                           <SelectItem value="0.20">20%</SelectItem>
                         </SelectContent>
-                        </Select>  
-                      </tr>
+                        </Select> 
+                        
+                      </div>
                       
-                      <tr>Mean (μ): 
+                      <div>
+                      Mean (μ): 
+                        
                         <Input
                           type="number"
                           step="any"
@@ -1333,8 +1343,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter mean value (μ)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr>Standard Deviation (σ): 
+                        
+                      </div>
+                      <div>
+                      Standard Deviation (σ): 
+                        
                         <Input
                           type="number"
                           min="0"
@@ -1348,8 +1361,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter standard deviation value (σ)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr>Hypothetized mean H0 (μ0): 
+                        
+                      </div>
+                      <div>
+                      Hypothetized mean H0 (μ0): 
+                        
                         <Input
                           type="number"
                           step="any"
@@ -1362,10 +1378,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter hypothetized mean (μ0)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr className="font-medium text-sm">Delta (δ = μ-μ0): {(ContCTQOneSampleHypTestData[ctqId]?.power1SMeanMean -  ContCTQOneSampleHypTestData[ctqId]?.power1SMeanH0).toFixed(3)}
-                      </tr>
-                      <tr className="font-medium text-sm">
+                      </div>
+
+                      <div className="font-medium text-sm">Delta (δ = μ-μ0): {(ContCTQOneSampleHypTestData[ctqId]?.power1SMeanMean -  ContCTQOneSampleHypTestData[ctqId]?.power1SMeanH0).toFixed(3)}
+                      </div>
+                      <div className="font-medium text-sm">
+                      
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
@@ -1374,7 +1392,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower*100).toFixed(2)}%
                       </Badge>
-                      </tr>
+                      
+                      </div>
+                      
                     </CardContent>
                   </Card>
                 </div>
@@ -1401,8 +1421,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <CardTitle className="text-sm">Power & Sample Size 1-Sample Variance Hypothesis Testing</CardTitle>
                     </CardHeader>
                     <CardContent className="text-xs">
-                      <tr>
+                      <div>
+                      
                         <Label htmlFor='power1SVariancePower'>Power of test(1-β):</Label>
+                        
                         <Select value={power1SVariancePower} onValueChange={(value: string) => {
                           setPower1SVariancePower(value);
                           //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanPower', value);
@@ -1417,10 +1439,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.85">85%</SelectItem>
                           <SelectItem value="0.80">80%</SelectItem>
                         </SelectContent>
-                        </Select>  
-                      </tr>
-                      <tr>
+                        </Select> 
+                       
+                      </div>
+                      <div>
+                      
                         <Label htmlFor="power1SVarianceHa">Ha:</Label>
+                        
                         <Select value={power1SVarianceHa} onValueChange={(value: string) => {
                           setPower1SVarianceHa(value);
                           //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanHa', value);
@@ -1433,10 +1458,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="≠">≠</SelectItem>
                           <SelectItem value="<">&lt;</SelectItem>
                         </SelectContent>
-                        </Select>  
-                      </tr>
-                      <tr>
+                        </Select> 
+                        
+                      </div>
+
+                      <div>                      
                         <Label htmlFor="power1SVarianceAlpha">Alpha (α):</Label> 
+                        
                         <Select value={power1SVarianceAlpha} onValueChange={(value: string) => {
                           setPower1SVarianceAlpha(value);
                           //updateContCTQOneSampleHypTestDataField(ctqId, 'power1SMeanAlpha', value);
@@ -1451,10 +1479,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.15">15%</SelectItem>
                           <SelectItem value="0.20">20%</SelectItem>
                         </SelectContent>
-                        </Select>  
-                      </tr>
+                        </Select> 
+                        
+                      </div>
                       
-                      <tr>Standard Deviation (σ): 
+                      <div>
+                      Standard Deviation (σ): 
+                        
                         <Input
                           type="number"
                           min="0"
@@ -1468,8 +1499,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter standard deviation value (σ)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr>Hypothetized std dev H0 (σ0): 
+                        
+                      </div>
+                      <div>
+                      Hypothetized std dev H0 (σ0): 
+                        
                         <Input
                           type="number"
                           step="any"
@@ -1482,10 +1516,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter hypothetized standard deviation (σ0)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr className="font-medium text-sm">Std dev Ratio (σ/σ0): {(ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceStdev /  ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceH0).toFixed(3)}
-                      </tr>
-                      <tr className="font-medium text-sm">
+                        
+                      </div>
+                      <div className="font-medium text-sm">Std dev Ratio (σ/σ0): {(ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceStdev /  ContCTQOneSampleHypTestData[ctqId]?.power1SVarianceH0).toFixed(3)}
+                      </div>
+                      <div className="font-medium text-sm">
+                      
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
@@ -1494,7 +1530,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         Sample Size (n): {PowerSampleSizeResults.oneSVariancesampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSVarianceactualPower*100).toFixed(2)}%
                       </Badge>
-                      </tr>
+                      
+                      </div>
                     </CardContent>
                   </Card>
                 </div>

@@ -1533,7 +1533,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <CardTitle className="text-sm">Power & Sample Size 2-Sample Mean Hypothesis Testing</CardTitle>
                     </CardHeader>
                     <CardContent className="text-xs">
-                      <tr>
+                      <div>
+                        
                         <Label htmlFor='power2SMeanPower'>Power of test(1-β):</Label>
                         <Select value={power2SMeanPower} onValueChange={(value: string) => {
                           setPower2SMeanPower(value);
@@ -1550,8 +1551,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.80">80%</SelectItem>
                         </SelectContent>
                         </Select>  
-                      </tr>
-                      <tr>
+                      
+                      </div>
+                      <div>
+                      
                         <Label htmlFor="power2SMeanHa">Ha:</Label>
                         <Select value={power2SMeanHa} onValueChange={(value: string) => {
                           setPower2SMeanHa(value);
@@ -1566,8 +1569,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="<">&lt;</SelectItem>
                         </SelectContent>
                         </Select>  
-                      </tr>
-                      <tr>
+                      
+                      </div>
+                      <div>
                         <Label htmlFor="power2SMeanAlpha">Alpha (α):</Label> 
                         <Select value={power2SMeanAlpha} onValueChange={(value: string) => {
                           setPower2SMeanAlpha(value);
@@ -1584,9 +1588,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.20">20%</SelectItem>
                         </SelectContent>
                         </Select>  
-                      </tr>
+                      </div>
                       
-                      <tr>Mean 1 (μ1): 
+                      <div>Mean 1 (μ1): 
                         <Input
                           type="number"
                           step="any"
@@ -1599,8 +1603,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter mean 1 value (μ1)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr>Mean 2 (μ2): 
+                      </div>
+                      <div>Mean 2 (μ2): 
                         <Input
                           type="number"
                           step="any"
@@ -1613,9 +1617,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter mean 2 value (μ2)"
                           className="mt-1"
                         />
-                      </tr>
+                      </div>
                       
-                      <tr>Standard Deviation (σ): 
+                      <div>Standard Deviation (σ): 
                         <Input
                           type="number"
                           min="0"
@@ -1629,11 +1633,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter standard deviation value (σ)"
                           className="mt-1"
                         />
-                      </tr>
+                      </div>
 
-                      <tr className="font-medium text-sm">δ = (μ1-μ2): {(ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean1 -  ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean2).toFixed(3)}
-                      </tr>
-                      <tr className="font-medium text-sm">
+                      <div className="font-medium text-sm">δ = (μ1-μ2): {(ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean1 -  ContCTQTwoSampleHypTestData[ctqId]?.power2SMeanMean2).toFixed(3)}
+                      </div>
+                      <div className="font-medium text-sm">
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
@@ -1642,7 +1646,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         Sample Size (n): {PowerSampleSizeResults.twoSMeansampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.twoSMeanactualPower*100).toFixed(2)}%
                       </Badge>
-                      </tr>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -1669,7 +1673,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <CardTitle className="text-sm">Power & Sample Size 2-Sample Variance Hypothesis Testing</CardTitle>
                     </CardHeader>
                     <CardContent className="text-xs">
-                      <tr>
+                      <div>
                         <Label htmlFor='power2SVariancePower'>Power of test(1-β):</Label>
                         <Select value={power2SVariancePower} onValueChange={(value: string) => {
                           setPower2SVariancePower(value);
@@ -1686,8 +1690,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.80">80%</SelectItem>
                         </SelectContent>
                         </Select>  
-                      </tr>
-                      <tr>
+                      </div>
+                      <div>
                         <Label htmlFor="power2SVarianceHa">Ha:</Label>
                         <Select value={power2SVarianceHa} onValueChange={(value: string) => {
                           setPower2SVarianceHa(value);
@@ -1702,8 +1706,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="<">&lt;</SelectItem>
                         </SelectContent>
                         </Select>  
-                      </tr>
-                      <tr>
+                      </div>
+                      <div>
                         <Label htmlFor="power2SVarianceAlpha">Alpha (α):</Label> 
                         <Select value={power2SVarianceAlpha} onValueChange={(value: string) => {
                           setPower2SVarianceAlpha(value);
@@ -1720,9 +1724,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           <SelectItem value="0.20">20%</SelectItem>
                         </SelectContent>
                         </Select>  
-                      </tr>
+                      </div>
                       
-                      <tr>Standard Deviation 1 (σ1): 
+                      <div>Standard Deviation 1 (σ1): 
                         <Input
                           type="number"
                           min="0"
@@ -1736,8 +1740,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter standard deviation 1 value (σ1)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr>Standard Deviation 2 (σ2): 
+                      </div>
+                      <div>
+                        Standard Deviation 2 (σ2): 
                         <Input
                           type="number"
                           min="0"
@@ -1751,10 +1756,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                           placeholder="Enter standard deviation 2 value (σ2)"
                           className="mt-1"
                         />
-                      </tr>
-                      <tr className="font-medium text-sm">Std dev Ratio (σ1/σ2): {(ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev1 /  ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev2).toFixed(3)}
-                      </tr>
-                      <tr className="font-medium text-sm">
+                      </div>
+                      <div className="font-medium text-sm">Std dev Ratio (σ1/σ2): {(ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev1 /  ContCTQTwoSampleHypTestData[ctqId]?.power2SVarianceStdev2).toFixed(3)}
+                      </div>
+                      <div className="font-medium text-sm">
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
@@ -1763,7 +1768,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         Sample Size (n): {PowerSampleSizeResults.twoSVariancesampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.twoSVarianceactualPower*100).toFixed(2)}%
                       </Badge>
-                      </tr>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
