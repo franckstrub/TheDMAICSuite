@@ -1114,7 +1114,7 @@ useEffect(() => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
         event.preventDefault();
         
-        if (focusedCell === -1) {
+        if (focusedCell < 0) {
           toast({
             title: "No Cell Focused",
             description: "Please click on a data cell first to set the starting position for paste.",
@@ -1749,7 +1749,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 <Button
                     onClick={async () => {
-                    if (focusedCell === -1) {
+                    if (focusedCell < 0) {
                         toast({
                         title: "No Cell Focused",
                         description: "Please click on a data cell first to set the starting position for paste.",
@@ -1774,9 +1774,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     variant="outline"
                     size="sm"
                     className={`border-gray-400 text-gray-700 hover:bg-gray-100 ${
-                    focusedCell === -1 ? 'opacity-50 cursor-not-allowed' : ''
+                    focusedCell < 0 ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
-                    disabled={focusedCell === -1}
+                    disabled={focusedCell < 0}
                 >
                     📋 Paste data from Excel
                 </Button>
