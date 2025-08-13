@@ -940,7 +940,7 @@ useEffect(() => {
     }
   };
 
-  // Handle focused cell paste - unified function used by both button and Ctrl+V
+  // Handle focused cell paste - similar to Process Capability functionality
   const handleFocusedCellPaste = (pasteData: string) => {
     console.log(`handleFocusedCellPaste called with focusedCell: ${focusedCell}`);
     
@@ -1110,28 +1110,30 @@ useEffect(() => {
   // Add keyboard shortcut support for paste and undo functionality
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
-      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active and a cell is focused
+      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
         event.preventDefault();
-        
-        // Check if we can paste: only when a cell is focused
-        const canPaste = focusedCell >= 0;
-        
-        if (!canPaste) {
-          toast({
-            title: "No Cell Focused",
-            description: "Please click on a data cell first to set the starting position for paste.",
-            variant: "destructive",
-          });
-          return;
-        }
         
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
             console.log(`Keyboard paste triggered. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
-            // Always use focused cell paste for consistency
-            handleFocusedCellPaste(clipboardData);
+            if (focusedCell >= 0) {
+              // Use focused cell paste if a cell is focused
+              console.log('Using focused cell paste');
+              handleFocusedCellPaste(clipboardData);
+            } else {
+              // Create a synthetic paste event for general paste
+              console.log('Using regular paste (no focused cell)');
+              const syntheticEvent = {
+                preventDefault: () => {},
+                clipboardData: {
+                  getData: (format: string) => clipboardData
+                }
+              } as unknown as React.ClipboardEvent;
+              
+              handlePasteData(syntheticEvent);
+            }
           }
         }).catch(error => {
           console.error('Clipboard access failed:', error);
@@ -1152,7 +1154,7 @@ useEffect(() => {
 
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [undoState, activeTab, ctqName, focusedCell, dataPoints.length]);
+  }, [undoState, activeTab, ctqName, focusedCell]);
 
   // Handle cell editing
   const startEditing = (index: number, currentValue: number) => {
@@ -1755,8 +1757,19 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     try {
                         const clipboardData = await navigator.clipboard.readText();
                         if (clipboardData.trim()) {
-                            // Always use focused cell paste for consistency
+                        if (focusedCell >= 0) {
+                            // Use focused cell paste if a cell is focused
                             handleFocusedCellPaste(clipboardData);
+                        } else {
+                            // Create a synthetic paste event for general paste
+                            const syntheticEvent = {
+                            preventDefault: () => {},
+                            clipboardData: {
+                                getData: (format: string) => clipboardData
+                            }
+                            };
+                            handlePasteData(syntheticEvent as any);
+                        }
                         }
                     } catch (error) {
                         toast({
@@ -1767,12 +1780,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     }}
                     variant="outline"
                     size="sm"
-                    className={`border-gray-400 ${
-                        focusedCell >= 0 
-                        ? 'text-gray-700 hover:bg-gray-100' 
-                        : 'text-gray-400 cursor-not-allowed bg-gray-50'
-                    }`}
-                    disabled={!(focusedCell >= 0)}
+                    className="border-gray-400 text-gray-700 hover:bg-gray-100"
                 >
                     📋 Paste data from Excel
                 </Button>
@@ -1783,7 +1791,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                Single-click table cell to focus (blue ring) → button and Ctrl+V enabled | Paste starts from focused cell | Ctrl+Z to undo
+                Single-click table cell to focus (blue ring) | Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo
                 </div>
             </div>
 
@@ -1808,7 +1816,20 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {dataPoints.length === 0 ? null : (
+                    {dataPoints.length === 0 ? (
+                    <tr>
+                        <td colSpan={3} className="text-center text-gray-500">
+                        <div
+                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
+                            onClick={() => document.getElementById('add-data-input')?.focus()}
+                            onPaste={(e) => handlePasteData(e)}
+                            tabIndex={0}
+                            title="Click to focus input or paste data here"
+                        >
+                        </div>
+                        </td>
+                    </tr>
+                    ) : (
                     dataPoints.map((point, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                         <td className="px-4 py-2 text-sm text-gray-900">
