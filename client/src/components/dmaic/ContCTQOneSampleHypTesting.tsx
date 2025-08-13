@@ -365,7 +365,6 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       const table = document.querySelector('.data-table-container');
       if (table && !table.contains(target)) {
         setFocusedCell(-1);
-        console.log('Clicked outside table - unfocusing cell');
       }
     };
 
@@ -933,7 +932,7 @@ useEffect(() => {
         const numericValue = parseFloat(processedValue);
         if (!isNaN(numericValue)) {
           const calculatedIndex = dataPoints.length + index + 1;
-          console.log(`Regular paste: creating data point with indexNumber: ${calculatedIndex} (dataPoints.length: ${dataPoints.length}, index: ${index})`);
+
           newDataPoints.push({
             indexNumber: calculatedIndex,
             dataValue: numericValue
@@ -971,7 +970,7 @@ useEffect(() => {
 
   // Handle focused cell paste - similar to Process Capability functionality
   const handleFocusedCellPaste = (pasteData: string) => {
-    console.log(`handleFocusedCellPaste called with focusedCell: ${focusedCell}`);
+
     
     if (focusedCell === -1) {
       toast({
@@ -1102,7 +1101,7 @@ useEffect(() => {
         newValues.forEach((value, i) => {
           const targetIndex = focusedCell + i;
           const calculatedIndexNumber = targetIndex + 1;
-          console.log(`Focused paste: setting targetIndex ${targetIndex} with indexNumber: ${calculatedIndexNumber}, value: ${value}`);
+
           updatedPoints[targetIndex] = {
             indexNumber: calculatedIndexNumber,
             dataValue: value
@@ -1156,8 +1155,8 @@ useEffect(() => {
         // Get clipboard data
         navigator.clipboard.readText().then(clipboardData => {
           if (clipboardData.trim()) {
-            console.log(`Keyboard paste triggered. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
-            console.log('Using focused cell paste');
+
+
             handleFocusedCellPaste(clipboardData);
           }
         }).catch(error => {
@@ -1780,10 +1779,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
 
                 <Button
                     onClick={async () => {
-                    console.log(`Paste button clicked. focusedCell: ${focusedCell}, dataPoints.length: ${dataPoints.length}`);
+
                     
                     if (focusedCell < 0) {
-                        console.log('Button disabled - no cell focused');
+
                         toast({
                         title: "No Cell Focused",
                         description: "Please click on a data cell first to set the starting position for paste.",
@@ -1791,7 +1790,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         });
                         return;
                     }
-                    console.log('Button enabled - proceeding with focused cell paste');
+
                     
                     try {
                         const clipboardData = await navigator.clipboard.readText();
@@ -1848,13 +1847,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {dataPoints.length === 0 ? (
-                    <tr>
-                        <td colSpan={3} className="text-center text-gray-500 py-8">
-                        <div>No data points yet. Use the input above to add values.</div>
-                        </td>
-                    </tr>
-                    ) : (
+                    {dataPoints.length > 0 && (
                     dataPoints.map((point, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                         <td className="px-4 py-2 text-sm text-gray-900">
@@ -1887,7 +1880,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                   e.preventDefault();
                                   setFocusedCell(index);
                                   // Give visual feedback and log for debugging
-                                  console.log(`Focused cell set to index ${index} (row ${point.indexNumber})`);
+
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -1907,7 +1900,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell(index);
-                                  console.log(`Div focused: setting focusedCell to ${index}`);
+
                                 }}
                             >
                                 {point.dataValue}
@@ -1942,7 +1935,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         onClick={(e) => {
                             e.preventDefault();
                             setFocusedCell(dataPoints.length);
-                            console.log(`Focused input cell ${dataPoints.length} (next available position)`);
+
                             // Focus the actual input inside
                             document.getElementById('add-data-input')?.focus();
                         }}
@@ -1981,7 +1974,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         }}
                         onFocus={() => {
                             setFocusedCell(dataPoints.length);
-                            console.log(`Input focused: setting focusedCell to ${dataPoints.length}`);
+
                         }}
                         placeholder="Enter numeric value"
                         className="w-full border-0 p-0 shadow-none focus:ring-0"
