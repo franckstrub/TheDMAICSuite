@@ -346,6 +346,22 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     }
   }, [configData, ctqId, isLoading]);
 
+  // Handle clicks outside the table to unfocus cells
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const table = document.querySelector('.data-table-container');
+      if (table && !table.contains(event.target as Node)) {
+        setFocusedCell(-1);
+        console.log('Clicked outside table - unfocusing cell');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Function to save current configuration to database
   const saveConfiguration = () => {
     const currentConfig = ContCTQOneSampleHypTestData[ctqId];
