@@ -1165,6 +1165,12 @@ useEffect(() => {
           navigator.clipboard.readText().then(clipboardData => {
             if (clipboardData.trim()) {
               handleFocusedCellPaste(clipboardData);
+            } else {
+              toast({
+                title: "No Data Found",
+                description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+                variant: "destructive",
+              });
             }
           }).catch(error => {
             console.error('Clipboard access failed:', error);
@@ -1805,6 +1811,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                         if (clipboardData.trim()) {
                         // Always use focused cell paste
                         handleFocusedCellPaste(clipboardData);
+                        } else {
+                        toast({
+                            title: "No Data Found",
+                            description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+                            variant: "destructive",
+                        });
                         }
                     } catch (error) {
                         toast({
