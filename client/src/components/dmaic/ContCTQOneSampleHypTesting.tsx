@@ -349,8 +349,21 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   // Handle clicks outside the table to unfocus cells
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
+      // Don't unfocus if clicking on buttons, inputs, or interactive elements
+      if (target.closest('button') || 
+          target.closest('input') || 
+          target.closest('select') || 
+          target.closest('[role="button"]') ||
+          target.closest('.paste-button') ||
+          target.closest('.clear-button') ||
+          target.closest('.undo-button')) {
+        return;
+      }
+      
       const table = document.querySelector('.data-table-container');
-      if (table && !table.contains(event.target as Node)) {
+      if (table && !table.contains(target)) {
         setFocusedCell(-1);
         console.log('Clicked outside table - unfocusing cell');
       }
