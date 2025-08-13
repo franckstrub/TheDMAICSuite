@@ -1749,6 +1749,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 )}
                 <Button
                     onClick={async () => {
+                    console.log(`Paste button clicked. focusedCell: ${focusedCell}, disabled: ${focusedCell < 0}`);
                     if (focusedCell < 0) {
                         toast({
                         title: "No Cell Focused",
