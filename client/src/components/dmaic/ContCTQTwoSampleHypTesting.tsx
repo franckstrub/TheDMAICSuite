@@ -275,7 +275,6 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`] });
     },
     onError: (error: any) => {
-      console.error('Save configuration error:', error);
       toast({
         title: "Save Failed",
         description: "Failed to save configuration. Please try again.",
@@ -1474,7 +1473,6 @@ useEffect(() => {
               });
             }
           }).catch(error => {
-            console.error('Clipboard access failed:', error);
             toast({
               title: "Clipboard Access",
               description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
@@ -1495,7 +1493,6 @@ useEffect(() => {
               });
             }
           }).catch(error => {
-            console.error('Clipboard access failed:', error);
             toast({
               title: "Clipboard Access",
               description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
