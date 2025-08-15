@@ -2088,4 +2088,116 @@ export function calculate2SVarianceSampleSize(
     sampleSize: bestN, // Sample size per group
     actualPower: Math.round(actualPower * 10000) / 10000
   };
+};
+
+export function calculate2StCriticalValue(
+  significance: number,
+  degreesOfFreedom: number,
+  alternativemean: "Less than" | "Greater than" | "Different"
+): number | { lower: number; upper: number } {
+  // Validate inputs
+  if (significance <= 0 || significance >= 1) {
+    throw new Error('Significance level must be between 0 and 1');
+  }
+  if (degreesOfFreedom <= 0) {
+    throw new Error('Degrees of freedom must be positive');
+  }
+    
+    // Calculate critical values and p-value based on alternative hypothesis using jStat
+  let tCriteria: number | {lower: number; upper: number};
+  
+  switch (alternativemean) {
+    case "Less than":
+      // H1: μ1 - μ2 < δ0 (left-tailed)
+      tCriteria = jStat.studentt.inv(significance, degreesOfFreedom);
+      break;
+      
+    case "Greater than":
+      // H1: μ1 - μ2 > δ0 (right-tailed)
+      tCriteria = jStat.studentt.inv(1 - significance, degreesOfFreedom);
+      break;
+      
+    case "Different":
+      // H1: μ1 - μ2 ≠ δ0 (two-tailed)
+      const tCrit = jStat.studentt.inv(1 - significance/2, degreesOfFreedom);
+      tCriteria = {lower: -tCrit, upper: tCrit};
+      break;
+      
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+  return tCriteria;
+  };
+
+export function calculate2SMeanPValue(
+  tStatistic: number,
+  degreesOfFreedom: number,
+  alternativemean: "Less than" | "Greater than" | "Different"
+): number {
+  // Validate inputs
+  if (degreesOfFreedom <= 0) {
+    throw new Error('Degrees of freedom must be positive');
+  }
+    
+    // Calculate critical values and p-value based on alternative hypothesis using jStat
+  let tp_Value: number;
+  
+  switch (alternativemean) {
+    case "Less than":
+      // H1: μ1 - μ2 < δ0 (left-tailed)
+      tp_Value = jStat.studentt.cdf(tStatistic, degreesOfFreedom);
+      break;
+      
+    case "Greater than":
+      // H1: μ1 - μ2 > δ0 (right-tailed)
+      tp_Value = 1 - jStat.studentt.cdf(tStatistic, degreesOfFreedom);
+      break;
+      
+    case "Different":
+      // H1: μ1 - μ2 ≠ δ0 (two-tailed)
+      tp_Value = 2 * (1 - jStat.studentt.cdf(Math.abs(tStatistic), degreesOfFreedom));
+      break;
+      
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+  return tp_Value;
+};
+
+export function calculate2SMeanConfidenceInterval(
+  significance: number,
+  stats1: { mean: number; standardError: number; n: number },
+  stats2: { mean: number; standardError: number; n: number }  
+): { lower1: number; upper1: number; lower2: number; upper2: number } {
+  // Validate inputs
+  if (significance <= 0 || significance >= 1) {
+    throw new Error('Significance level must be between 0 and 1');
+  }
+  
+  // Calculate confidence intervals for individual means using jStat
+  const tCI = jStat.studentt.inv(1 - significance/2, stats1.n - 1); // for sample 1
+  const tCI2 = jStat.studentt.inv(1 - significance/2, stats2.n - 1); // for sample 2
+  
+  const mean1CI_minus = stats1.mean - tCI * stats1.standardError;
+  const mean1CI_plus = stats1.mean + tCI * stats1.standardError;
+  
+  const mean2CI_minus = stats2.mean - tCI2 * stats2.standardError;
+  const mean2CI_plus = stats2.mean + tCI2 * stats2.standardError;
+
+  return {
+    lower1: mean1CI_minus,
+    upper1: mean1CI_plus,
+    lower2: mean2CI_minus,
+    upper2: mean2CI_plus,
+  };
+
+};
+// Helper function to calculate sample statistics
+export function calculateSampleStats(data: number[]) {
+  const n = data.length;
+  const mean = jStat.mean(data);
+  const variance = jStat.variance(data, true); // true for sample variance (n-1)
+  const standardError = Math.sqrt(variance / n);
+  
+  return { mean, variance, standardError, n };
 }
