@@ -1872,7 +1872,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                <strong>Required:</strong> Click table cell to focus (blue ring) first | Then use Ctrl+V or paste button | Ctrl+Z to undo
+                <strong>Required:</strong> Click any cell in the tale to focus (black ring) first | Then use Ctrl+V or paste button | Ctrl+Z to undo
                 </div>
               </div>
 
@@ -2047,14 +2047,13 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               </div>
 
               {/* Excel Import Instructions */}
-              <div className="text-xs text-blue-600 mt-2 space-y-1">
+              <div className="text-xs text-blue-600 mt-2 mb-2 space-y-1">
                 <div><strong>Excel Import Instructions:</strong></div>
-                <div>• <strong>Step 1:</strong> Click on any data value in the table to focus it (blue ring appears)</div>
-                <div>• <strong>Step 2:</strong> Use Ctrl+V (or Cmd+V on Mac) or the paste button to paste data</div>
-                <div>• <strong>Note:</strong> Paste functionality requires a focused cell (including cell 0 when empty)</div>
-                <div>• <strong>Data placement:</strong> Starts from the focused cell position</div>
-                <div>• <strong>Undo changes:</strong> Use Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
-              </div>
+                <div>• <strong>Focus a cell</strong> by clicking on any cell in the table</div>
+                <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
+                <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
+                <div>• <strong>Data will automatically create new rows</strong> if needed</div>
+            </div>
             
               {dataPoints.length > 0 && (
                 <div className="text-sm text-gray-600 mt-2">
