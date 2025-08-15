@@ -728,13 +728,22 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       // Parse tab-separated or comma-separated values (Excel format)
       const rows = pasteData.trim().split('\n');
       const parsedValues: number[] = [];
+      let hasMultipleColumns = false;
       
       rows.forEach(row => {
         let cells: string[] = [];
         
         if (row.includes('\t')) {
           // Excel data with tabs - standard Excel copy format
-          cells = row.split('\t');
+          const allCells = row.split('\t');
+          // Check if there are multiple columns
+          if (allCells.length > 1) {
+            hasMultipleColumns = true;
+            // Only use the first column
+            cells = [allCells[0]];
+          } else {
+            cells = allCells;
+          }
         } else {
           // No tabs - could be single column or comma-separated
           // First, try to detect if this is a single French decimal number
@@ -749,7 +758,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             // Contains commas but doesn't match French decimal pattern
             // Split by comma but be careful about decimal commas
             const parts = trimmedRow.split(',');
-            cells = [];
+            const tempCells = [];
             
             for (let i = 0; i < parts.length; i++) {
               const part = parts[i].trim();
@@ -761,7 +770,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                 
                 // If combined looks like a French decimal, combine them
                 if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
-                  cells.push(combined);
+                  tempCells.push(combined);
                   i++; // Skip next part as we combined it
                   continue;
                 }
@@ -769,8 +778,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
               
               // Otherwise, treat as separate cell
               if (part !== '') {
-                cells.push(part);
+                tempCells.push(part);
               }
+            }
+
+            // Check if there are multiple columns after processing
+            if (tempCells.length > 1) {
+              hasMultipleColumns = true;
+              // Only use the first column
+              cells = [tempCells[0]];
+            } else {
+              cells = tempCells;
             }
           } else {
             // No commas, treat as single cell
@@ -853,6 +871,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         title: "Success",
         description: `Pasted ${parsedValues.length} data points from position ${startIndex + 1} to ${startIndex + parsedValues.length}`,
       });
+
+      // Show warning if multiple columns were detected
+      if (hasMultipleColumns) {
+        setTimeout(() => {
+          toast({
+            title: "Warning",
+            description: "Warning: Clipboard contains multiple columns. Only first copied column has been pasted!",
+            variant: "destructive",
+          });
+        }, 500);
+      }
 
       // Auto-save will be triggered by useEffect watching dataPoints changes
       

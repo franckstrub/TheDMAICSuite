@@ -1139,7 +1139,7 @@ useEffect(() => {
         setTimeout(() => {
           toast({
             title: "Warning",
-            description: "Warning: only first copied column was pasted!",
+            description: "Warning: Clipboard contains multiple columns. Only first copied column has been pasted!",
             variant: "destructive",
           });
         }, 500);
