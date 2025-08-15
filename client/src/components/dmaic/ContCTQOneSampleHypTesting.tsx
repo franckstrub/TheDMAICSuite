@@ -989,13 +989,22 @@ useEffect(() => {
       // Parse the pasted data
       const rows = pasteData.trim().split('\n');
       const newValues: number[] = [];
+      let hasMultipleColumns = false;
       
       rows.forEach(row => {
         let cells: string[] = [];
         
         if (row.includes('\t')) {
           // Excel data with tabs - standard Excel copy format
-          cells = row.split('\t');
+          const allCells = row.split('\t');
+          // Check if there are multiple columns
+          if (allCells.length > 1) {
+            hasMultipleColumns = true;
+            // Only use the first column
+            cells = [allCells[0]];
+          } else {
+            cells = allCells;
+          }
         } else {
           // No tabs - could be single column or comma-separated
           // First, try to detect if this is a single French decimal number
@@ -1010,7 +1019,7 @@ useEffect(() => {
             // Contains commas but doesn't match French decimal pattern
             // Split by comma but be careful about decimal commas
             const parts = trimmedRow.split(',');
-            cells = [];
+            const tempCells = [];
             
             for (let i = 0; i < parts.length; i++) {
               const part = parts[i].trim();
@@ -1022,7 +1031,7 @@ useEffect(() => {
                 
                 // If combined looks like a French decimal, combine them
                 if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
-                  cells.push(combined);
+                  tempCells.push(combined);
                   i++; // Skip next part as we combined it
                   continue;
                 }
@@ -1030,8 +1039,17 @@ useEffect(() => {
               
               // Otherwise, treat as separate cell
               if (part !== '') {
-                cells.push(part);
+                tempCells.push(part);
               }
+            }
+
+            // Check if there are multiple columns after processing
+            if (tempCells.length > 1) {
+              hasMultipleColumns = true;
+              // Only use the first column
+              cells = [tempCells[0]];
+            } else {
+              cells = tempCells;
             }
           } else {
             // No commas, treat as single cell
@@ -1115,6 +1133,17 @@ useEffect(() => {
         title: "Data Pasted",
         description: `Successfully pasted ${newValues.length} values starting from row ${focusedCell + 1} (index ${focusedCell + 1} to ${focusedCell + newValues.length}).`,
       });
+
+      // Show warning if multiple columns were detected
+      if (hasMultipleColumns) {
+        setTimeout(() => {
+          toast({
+            title: "Warning",
+            description: "Warning: only first copied column was pasted!",
+            variant: "destructive",
+          });
+        }, 500);
+      }
       
       // Auto-scroll to show the newly pasted data
       setTimeout(() => {
@@ -1425,7 +1454,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                        title={ "Estimated Sample Size" }
+                        title={ "Estimated minimum Sample Size and Actual Power of the test" }
                       >
                         Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower*100).toFixed(2)}%
@@ -1563,7 +1592,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                        title={ "Estimated Sample Size" }
+                        title={ "Estimated minimum Sample Size and Actual Power of the test" }
                       >
                         Sample Size (n): {PowerSampleSizeResults.oneSVariancesampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSVarianceactualPower*100).toFixed(2)}%
@@ -2086,8 +2115,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
               title={
                 testResults.ADp_Value >= parseFloat(significanceLevel)
-                  ? "Data follows normal distribution (P-Value ≥ ${significanceLevel})"
-                  : "Data does not follow normal distribution (P-Value < ${significanceLevel})"
+                  ? `Data follows normal distribution (P-Value ≥ ${significanceLevel})`
+                  : `Data does not follow normal distribution (P-Value < ${significanceLevel})`
               }
             >
               {testResults.ADp_Value >= parseFloat(significanceLevel)

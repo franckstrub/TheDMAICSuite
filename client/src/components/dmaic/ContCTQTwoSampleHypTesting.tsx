@@ -411,9 +411,11 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       
       if (table1 && !table1.contains(target)) {
         setFocusedCell1(-1);
+        setFocusedCell2(-1);
       }
       if (table2 && !table2.contains(target)) {
         setFocusedCell2(-1);
+        setFocusedCell1(-1);
       }
     };
 
@@ -1890,7 +1892,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                        title={ "Estimated Sample Size" }
+                        title={ "Estimated minimum size of each data sample and actual power of the test" }
                       >
                         Sample Size (n): {PowerSampleSizeResults.twoSMeansampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.twoSMeanactualPower*100).toFixed(2)}%
@@ -2012,7 +2014,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                        title={ "Estimated Sample Size" }
+                        title={ "Estimated minimum size of each data sample and actual power of the test" }
                       >
                         Sample Size (n): {PowerSampleSizeResults.twoSVariancesampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.twoSVarianceactualPower*100).toFixed(2)}%
@@ -2370,6 +2372,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setFocusedCell1(index);
+                                  setFocusedCell2(-1);
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2380,6 +2383,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell1(index);
+                                  setFocusedCell2(-1);
                                 }}
                             >
                                 {point.dataValue}
@@ -2417,7 +2421,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             addDataPoint1(inputValue1);
                             }
                         }}
-                        onFocus={() => setFocusedCell1(dataSet1.length)} // Focus input area at end position
+                        onFocus={() => {
+                                  // Ensure focused cell is set when this div gets focus
+                                  setFocusedCell1(dataSet1.length);
+                                  setFocusedCell2(-1);
+                                }} // Focus input area at end position
                         onPaste={(e) => {
                             e.preventDefault();
                             const pastedData = e.clipboardData.getData('text/plain');
@@ -2610,6 +2618,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   setFocusedCell2(index);
+                                  setFocusedCell1(-1);
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
                                 }}
@@ -2620,6 +2629,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                                 onFocus={() => {
                                   // Ensure focused cell is set when this div gets focus
                                   setFocusedCell2(index);
+                                  setFocusedCell1(-1);
                                 }}
                             >
                                 {point.dataValue}
@@ -2657,7 +2667,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                             addDataPoint2(inputValue2);
                             }
                         }}
-                        onFocus={() => setFocusedCell2(dataSet2.length)} // Focus input area at end position
+                        onFocus={() => {setFocusedCell2(dataSet2.length);
+                                        setFocusedCell1(-1);
+                                } 
+                        } // Focus input area at end position
                         onPaste={(e) => {
                             e.preventDefault();
                             const pastedData = e.clipboardData.getData('text/plain');
@@ -2763,8 +2776,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value1 >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
               title={
                 testResults.ADp_Value1 >= parseFloat(significanceLevel)
-                  ? "Dataset 1 distribution follows normal distribution (P-Value ≥ ${significanceLevel})"
-                  : "Dataset 1 distribution does not follow normal distribution (P-Value < ${significanceLevel})"
+                  ? `Dataset 1 distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
+                  : `Dataset 1 distribution does not follow normal distribution (P-Value < ${significanceLevel})`
               }
             >
               {testResults.ADp_Value1 >= parseFloat(significanceLevel)
@@ -2787,8 +2800,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value2 >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
               title={
                 testResults.ADp_Value2 >= parseFloat(significanceLevel)
-                  ? "Dataset 2 distribution follows normal distribution (P-Value ≥ ${significanceLevel})"
-                  : "Dataset 2 distribution does not follow normal distribution (P-Value < ${significanceLevel})"
+                  ? `Dataset 2 distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
+                  : `Dataset 2 distribution does not follow normal distribution (P-Value < ${significanceLevel})`
               }
             >
               {testResults.ADp_Value2 >= parseFloat(significanceLevel)
