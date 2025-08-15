@@ -1213,9 +1213,8 @@ useEffect(() => {
     }
   };
 
-  // Handle focused cell paste for Dataset 1
+  // Handle focused cell paste for Dataset 1 (with dual-column paste capability)
   const handleFocusedCellPaste1 = (pasteData: string) => {
-
     if (focusedCell1 === -1) {
       toast({
         title: "No Cell Focused",
@@ -1250,7 +1249,7 @@ useEffect(() => {
           // Contains commas but doesn't match French decimal pattern
           // Split by comma but be careful about decimal commas
           const parts = trimmedRow.split(',');
-          cells = [];
+          const tempCells = [];
           
           for (let i = 0; i < parts.length; i++) {
             const part = parts[i].trim();
@@ -1262,7 +1261,7 @@ useEffect(() => {
               
               // If combined looks like a French decimal, combine them
               if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
-                cells.push(combined);
+                tempCells.push(combined);
                 i++; // Skip next part as we combined it
                 continue;
               }
@@ -1270,28 +1269,27 @@ useEffect(() => {
             
             // Otherwise, treat as separate cell
             if (part !== '') {
-              cells.push(part);
+              tempCells.push(part);
             }
           }
+          cells = tempCells;
         } else {
           // No commas, treat as single cell
           cells = [trimmedRow];
         }
       }
       
-      // Check if there are multiple columns
-      if (cells.length > 1) {
+      // Check for multiple columns and handle accordingly
+      if (cells.length > 2) {
         hasMoreThanTwoColumns = true;
-        // Only use the first column for Dataset 1
-        cells = [cells[0]];
+        // Use only first two columns
+        cells = [cells[0], cells[1]];
       }
       
-      // Process each cell value (now only first column)
-      cells.forEach(cell => {
-        const trimmedCell = cell.trim();
-        if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
-          return; // Skip empty cells
-        } else {
+      // Process first column (Dataset 1)
+      if (cells[0]) {
+        const trimmedCell = cells[0].trim();
+        if (!(trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null')) {
           // Handle different decimal separators and number formats (French regional settings support)
           let processedValue = trimmedCell;
           
@@ -1317,7 +1315,38 @@ useEffect(() => {
             dataset1Values.push(numericValue);
           }
         }
-      });
+      }
+      
+      // Process second column (Dataset 2) if it exists
+      if (cells[1]) {
+        const trimmedCell = cells[1].trim();
+        if (!(trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null')) {
+          // Handle different decimal separators and number formats (French regional settings support)
+          let processedValue = trimmedCell;
+          
+          // Handle French decimal format (comma to dot conversion)
+          if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+            processedValue = trimmedCell.replace(',', '.');
+          }
+          
+          // Remove any thousands separators
+          processedValue = processedValue.replace(/[\s']/g, '');
+          
+          // Handle thousands separators with commas (US format)
+          if (processedValue.includes(',') && processedValue.includes('.')) {
+            const parts = processedValue.split('.');
+            if (parts.length === 2) {
+              const integerPart = parts[0].replace(/,/g, '');
+              processedValue = integerPart + '.' + parts[1];
+            }
+          }
+
+          const numericValue = parseFloat(processedValue);
+          if (!isNaN(numericValue) && isFinite(numericValue)) {
+            dataset2Values.push(numericValue);
+          }
+        }
+      }
     });
 
     if (dataset1Values.length === 0) {
@@ -1331,42 +1360,71 @@ useEffect(() => {
 
     // Save current state for undo
     setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
+    if (dataset2Values.length > 0) {
+      setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+    }
 
-    // Use focused cell as starting position (like One Sample component)
+    // Use focused cell as starting position for both datasets
     const startIndex = focusedCell1;
-    const updatedPoints = [...dataSet1];
     
-    // Extend array if necessary
-    const endIndex = startIndex + dataset1Values.length - 1;
-    while (updatedPoints.length <= endIndex) {
-      updatedPoints.push({
-        indexNumber: updatedPoints.length + 1,
+    // Update Dataset 1
+    const updatedPoints1 = [...dataSet1];
+    const endIndex1 = startIndex + dataset1Values.length - 1;
+    while (updatedPoints1.length <= endIndex1) {
+      updatedPoints1.push({
+        indexNumber: updatedPoints1.length + 1,
         dataValue: 0
       });
     }
 
-    // Replace/insert values starting from focused position
     dataset1Values.forEach((value, i) => {
       const targetIndex = startIndex + i;
-      updatedPoints[targetIndex] = {
+      updatedPoints1[targetIndex] = {
         indexNumber: targetIndex + 1,
         dataValue: value
       };
     });
 
-    setDataSet1(updatedPoints);
+    setDataSet1(updatedPoints1);
     
-    toast({
-      title: "Data Pasted to Dataset 1",
-      description: `Pasted ${dataset1Values.length} values starting from position ${focusedCell1 + 1}.`,
-    });
+    // Update Dataset 2 if second column data exists
+    if (dataset2Values.length > 0) {
+      const updatedPoints2 = [...dataSet2];
+      const endIndex2 = startIndex + dataset2Values.length - 1;
+      while (updatedPoints2.length <= endIndex2) {
+        updatedPoints2.push({
+          indexNumber: updatedPoints2.length + 1,
+          dataValue: 0
+        });
+      }
 
-    // Show warning if multiple columns were detected
+      dataset2Values.forEach((value, i) => {
+        const targetIndex = startIndex + i;
+        updatedPoints2[targetIndex] = {
+          indexNumber: targetIndex + 1,
+          dataValue: value
+        };
+      });
+
+      setDataSet2(updatedPoints2);
+      
+      toast({
+        title: "Data Pasted to Both Datasets",
+        description: `Pasted ${dataset1Values.length} values to Dataset 1 and ${dataset2Values.length} values to Dataset 2 starting from position ${focusedCell1 + 1}.`,
+      });
+    } else {
+      toast({
+        title: "Data Pasted to Dataset 1",
+        description: `Pasted ${dataset1Values.length} values starting from position ${focusedCell1 + 1}.`,
+      });
+    }
+
+    // Show warning if more than two columns were detected
     if (hasMoreThanTwoColumns) {
       setTimeout(() => {
         toast({
           title: "Warning",
-          description: "Warning: only first copied column was pasted!",
+          description: "Warning: Clipboard contains more than two columns. Only two first copied columns were pasted!",
           variant: "destructive",
         });
       }, 500);
