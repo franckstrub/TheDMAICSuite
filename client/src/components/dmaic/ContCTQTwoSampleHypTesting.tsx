@@ -2304,7 +2304,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click table cell to paste
+                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click any cell in the table to paste
                 </div>
             </div>
 
@@ -2464,7 +2464,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             {/* Excel Import Instructions */}
             <div className="text-xs text-blue-600 mt-2 space-y-1">
                 <div><strong>Excel Import Instructions:</strong></div>
-                <div>• <strong>Focus a cell</strong> by clicking on any measurement input field</div>
+                <div>• <strong>Focus a cell</strong> by clicking on any cell in the table</div>
                 <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
                 <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
                 <div>• <strong>Data will automatically create new rows</strong> if needed</div>
@@ -2550,7 +2550,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
-                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click table cell to paste
+                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click any cell in the table to paste
                 </div>
             </div>
 
@@ -2709,7 +2709,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             {/* Excel Import Instructions */}
             <div className="text-xs text-blue-600 mt-2 space-y-1">
                 <div><strong>Excel Import Instructions:</strong></div>
-                <div>• <strong>Focus a cell</strong> by clicking on any measurement input field</div>
+                <div>• <strong>Focus a cell</strong> by clicking on any cell in the table</div>
                 <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
                 <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
                 <div>• <strong>Data will automatically create new rows</strong> if needed</div>

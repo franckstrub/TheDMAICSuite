@@ -1766,7 +1766,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           <div className="text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded border border-blue-200 mt-2">
                             <div className="font-medium text-blue-700 mb-1">Excel Import Format:</div>
                             <div>Copy single column of numeric values from Excel</div>
-                            <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click table cell to paste</div>
+                            <div className="text-blue-600 mt-1">Ctrl+V to paste | Ctrl+Z to undo | Click any cell in the table to paste</div>
                           </div>
                       </div>
                       <p className="text-xs text-gray-500 pb-1">Enter data values and click Add, then Save Data to persist to database</p>
@@ -1898,12 +1898,17 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="font-medium text-sm text-blue-700 mb-1">Excel Import Instructions:</div>
                         <div className="text-xs text-blue-600">
-                          <p>• <strong>Focus a cell</strong> by clicking on any measurement input field</p>
+                          <p>• <strong>Focus a cell</strong> by clicking on any cell in the table to paste</p>
                           <p>• <strong>Paste data</strong> using Ctrl+V - data will start from the focused cell</p>
                           <p>• <strong>Undo changes</strong> using Ctrl+Z after pasting</p>
                           {/* <p>• <strong>Redo changes</strong> using Shift+Ctrl+Z after undoing</p> */}
                           <p>• Data will automatically create new rows if needed</p>
                         </div>
+                        {dataPoints[ctq] && dataPoints[ctq].length > 0 && (
+                          <div className="text-sm text-blue-600 mt-2">
+                          <strong>Sample size:</strong> {dataPoints[ctq].length} data points
+                          </div>
+                        )}
                       </div>
 
                       {/* Auto-save status and manual save button */}
