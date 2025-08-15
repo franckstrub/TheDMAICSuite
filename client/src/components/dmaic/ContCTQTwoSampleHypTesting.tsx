@@ -241,6 +241,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [editValue2, setEditValue2] = useState<string>("");
   const [undoState1, setUndoState1] = useState<DataPoint[] | null>(null);
   const [undoState2, setUndoState2] = useState<DataPoint[] | null>(null);
+  const [isDualColumnPaste, setIsDualColumnPaste] = useState(false);
   const [showUndoButton, setShowUndoButton] = useState(false);
   const [showBoxPlot, setShowBoxPlot] = useState(false);
   
@@ -921,12 +922,25 @@ useEffect(() => {
     if (undoState1) {
       setDataSet1(JSON.parse(JSON.stringify(undoState1)));
       setUndoState1(null); // Clear the undo state after using it
-      setShowUndoButton(false);
       
-      toast({
-        title: "Undo Complete",
-        description: "Previous operation on Dataset 1 has been undone",
-      });
+      // If this was a dual-column paste, also undo Dataset 2
+      if (isDualColumnPaste && undoState2) {
+        setDataSet2(JSON.parse(JSON.stringify(undoState2)));
+        setUndoState2(null);
+        setIsDualColumnPaste(false);
+        
+        toast({
+          title: "Dual-Column Undo Complete",
+          description: "Previous dual-column paste operation has been undone for both datasets",
+        });
+      } else {
+        toast({
+          title: "Undo Complete",
+          description: "Previous operation on Dataset 1 has been undone",
+        });
+      }
+      
+      setShowUndoButton(false);
     }
   };
 
@@ -935,6 +949,11 @@ useEffect(() => {
       setDataSet2(JSON.parse(JSON.stringify(undoState2)));
       setUndoState2(null); // Clear the undo state after using it
       setShowUndoButton(false);
+      
+      // Reset dual-column flag if it was set (though this shouldn't be the main undo for dual-column)
+      if (isDualColumnPaste) {
+        setIsDualColumnPaste(false);
+      }
       
       toast({
         title: "Undo Complete",
@@ -948,6 +967,7 @@ useEffect(() => {
     if (dataSet1.length > 0) {
       // Save current state before clearing
       setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
+      setIsDualColumnPaste(false); // Clear dual-column flag for this operation
       setShowUndoButton(true);
       
       // Clear all data for dataset 1
@@ -968,6 +988,7 @@ useEffect(() => {
     if (dataSet2.length > 0) {
       // Save current state before clearing
       setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+      setIsDualColumnPaste(false); // Clear dual-column flag for this operation
       setShowUndoButton(true);
       
       // Clear all data for dataset 2
@@ -993,6 +1014,7 @@ useEffect(() => {
     
     // Save current state before making changes
     setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
+    setIsDualColumnPaste(false); // Clear dual-column flag for this operation
     
     setDataSet1(prev => [
       ...prev,
@@ -1017,6 +1039,7 @@ useEffect(() => {
     
     // Save current state before making changes
     setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+    setIsDualColumnPaste(false); // Clear dual-column flag for this operation
     
     setDataSet2(prev => [
       ...prev,
@@ -1362,6 +1385,9 @@ useEffect(() => {
     setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
     if (dataset2Values.length > 0) {
       setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+      setIsDualColumnPaste(true); // Mark this as a dual-column paste
+    } else {
+      setIsDualColumnPaste(false); // Single column paste
     }
 
     // Use focused cell as starting position for both datasets
@@ -1557,6 +1583,7 @@ useEffect(() => {
 
     // Save current state for undo
     setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
+    setIsDualColumnPaste(false); // Clear dual-column flag for single-dataset operation
 
     // Use focused cell as starting position (like One Sample component)
     const startIndex = focusedCell2;
