@@ -1227,7 +1227,9 @@ useEffect(() => {
 
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
-    const newValues: number[] = [];
+    const dataset1Values: number[] = [];
+    const dataset2Values: number[] = [];
+    let hasMoreThanTwoColumns = false;
     
     rows.forEach(row => {
       let cells: string[] = [];
