@@ -1279,7 +1279,14 @@ useEffect(() => {
         }
       }
       
-      // Process each cell value
+      // Check if there are multiple columns
+      if (cells.length > 1) {
+        hasMoreThanTwoColumns = true;
+        // Only use the first column for Dataset 1
+        cells = [cells[0]];
+      }
+      
+      // Process each cell value (now only first column)
       cells.forEach(cell => {
         const trimmedCell = cell.trim();
         if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
@@ -1306,14 +1313,14 @@ useEffect(() => {
           }
 
           const numericValue = parseFloat(processedValue);
-          if (!isNaN(numericValue)) {
-            newValues.push(numericValue);
+          if (!isNaN(numericValue) && isFinite(numericValue)) {
+            dataset1Values.push(numericValue);
           }
         }
       });
     });
 
-    if (newValues.length === 0) {
+    if (dataset1Values.length === 0) {
       toast({
         title: "No Valid Data",
         description: "No valid numeric data found in clipboard.",
@@ -1330,7 +1337,7 @@ useEffect(() => {
     const updatedPoints = [...dataSet1];
     
     // Extend array if necessary
-    const endIndex = startIndex + newValues.length - 1;
+    const endIndex = startIndex + dataset1Values.length - 1;
     while (updatedPoints.length <= endIndex) {
       updatedPoints.push({
         indexNumber: updatedPoints.length + 1,
@@ -1339,7 +1346,7 @@ useEffect(() => {
     }
 
     // Replace/insert values starting from focused position
-    newValues.forEach((value, i) => {
+    dataset1Values.forEach((value, i) => {
       const targetIndex = startIndex + i;
       updatedPoints[targetIndex] = {
         indexNumber: targetIndex + 1,
@@ -1351,8 +1358,19 @@ useEffect(() => {
     
     toast({
       title: "Data Pasted to Dataset 1",
-      description: `Pasted ${newValues.length} values starting from position ${focusedCell1 + 1}.`,
+      description: `Pasted ${dataset1Values.length} values starting from position ${focusedCell1 + 1}.`,
     });
+
+    // Show warning if multiple columns were detected
+    if (hasMoreThanTwoColumns) {
+      setTimeout(() => {
+        toast({
+          title: "Warning",
+          description: "Warning: only first copied column was pasted!",
+          variant: "destructive",
+        });
+      }, 500);
+    }
   };
 
   // Handle focused cell paste for Dataset 2
@@ -1369,13 +1387,22 @@ useEffect(() => {
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
     const newValues: number[] = [];
+    let hasMultipleColumns = false;
     
     rows.forEach(row => {
       let cells: string[] = [];
       
       if (row.includes('\t')) {
         // Excel data with tabs - standard Excel copy format
-        cells = row.split('\t');
+        const allCells = row.split('\t');
+        // Check if there are multiple columns
+        if (allCells.length > 1) {
+          hasMultipleColumns = true;
+          // Only use the first column for Dataset 2
+          cells = [allCells[0]];
+        } else {
+          cells = allCells;
+        }
       } else {
         // No tabs - could be single column or comma-separated
         const trimmedRow = row.trim();
@@ -1389,7 +1416,7 @@ useEffect(() => {
           // Contains commas but doesn't match French decimal pattern
           // Split by comma but be careful about decimal commas
           const parts = trimmedRow.split(',');
-          cells = [];
+          const tempCells = [];
           
           for (let i = 0; i < parts.length; i++) {
             const part = parts[i].trim();
@@ -1401,7 +1428,7 @@ useEffect(() => {
               
               // If combined looks like a French decimal, combine them
               if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
-                cells.push(combined);
+                tempCells.push(combined);
                 i++; // Skip next part as we combined it
                 continue;
               }
@@ -1409,8 +1436,17 @@ useEffect(() => {
             
             // Otherwise, treat as separate cell
             if (part !== '') {
-              cells.push(part);
+              tempCells.push(part);
             }
+          }
+          
+          // Check if there are multiple columns after processing
+          if (tempCells.length > 1) {
+            hasMultipleColumns = true;
+            // Only use the first column
+            cells = [tempCells[0]];
+          } else {
+            cells = tempCells;
           }
         } else {
           // No commas, treat as single cell
@@ -1418,7 +1454,7 @@ useEffect(() => {
         }
       }
       
-      // Process each cell value
+      // Process each cell value (first column only)
       cells.forEach(cell => {
         const trimmedCell = cell.trim();
         if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
@@ -1492,6 +1528,17 @@ useEffect(() => {
       title: "Data Pasted to Dataset 2",
       description: `Pasted ${newValues.length} values starting from position ${focusedCell2 + 1}.`,
     });
+
+    // Show warning if multiple columns were detected
+    if (hasMultipleColumns) {
+      setTimeout(() => {
+        toast({
+          title: "Warning",
+          description: "Warning: only first copied column was pasted!",
+          variant: "destructive",
+        });
+      }, 500);
+    }
   };
 
   // Handle paste specifically for editing cells - Dataset 1
