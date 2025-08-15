@@ -1729,6 +1729,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             )}
           </div>
 
+          {(ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest || ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest || ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) && (
           <div>
            <div className="grid grid-cols-2 gap-4 pr-4">
             <div>
@@ -1760,8 +1761,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </div>
            </div>
 
-          {/* Data Input Section for One Sample Hypothesis Test */}
-          <div className="space-y-4">
+           {/* Data Input Section for One Sample Hypothesis Test */}
+           <div className="space-y-4">
             <div>
             <div className="flex justify-between items-center">
                 <label className="block text-sm font-medium mb-2">Data Input</label>
@@ -1836,22 +1837,22 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     📋 Paste data from Excel
                 </Button>
                 </div>
-            </div>
+              </div>
             
-            <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
+              <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
                 <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                 <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                 <div className="text-blue-600 text-xs mt-1">
                 <strong>Required:</strong> Click table cell to focus (blue ring) first | Then use Ctrl+V or paste button | Ctrl+Z to undo
                 </div>
-            </div>
+              </div>
 
-            <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-gray-600 mb-3">
                 Enter data values and click Add, then Save Data to persist to database
-            </p>
+              </p>
 
-            {/* Data Table */}
-            <div ref={tableContainerRef} className="data-table-container border rounded-md max-h-[500px] overflow-y-auto">
+              {/* Data Table */}
+              <div ref={tableContainerRef} className="data-table-container border rounded-md max-h-[500px] overflow-y-auto">
                 <table className="min-w-full table-auto">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -2014,27 +2015,27 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                     </tr>
                 </tbody>
                 </table>
-            </div>
+              </div>
 
-            {/* Excel Import Instructions */}
-            <div className="text-xs text-blue-600 mt-2 space-y-1">
+              {/* Excel Import Instructions */}
+              <div className="text-xs text-blue-600 mt-2 space-y-1">
                 <div><strong>Excel Import Instructions:</strong></div>
                 <div>• <strong>Step 1:</strong> Click on any data value in the table to focus it (blue ring appears)</div>
                 <div>• <strong>Step 2:</strong> Use Ctrl+V (or Cmd+V on Mac) or the paste button to paste data</div>
                 <div>• <strong>Note:</strong> Paste functionality requires a focused cell (including cell 0 when empty)</div>
                 <div>• <strong>Data placement:</strong> Starts from the focused cell position</div>
                 <div>• <strong>Undo changes:</strong> Use Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
-            </div>
+              </div>
             
-            {dataPoints.length > 0 && (
+              {dataPoints.length > 0 && (
                 <div className="text-sm text-gray-600 mt-2">
                 <strong>Sample size:</strong> {dataPoints.length} data points
                 </div>
-            )}
+              )}
             </div>
-          </div>
+           </div>
           
-          <div className="mt-2 mb-3">
+           <div className="mt-2 mb-3">
             <Button 
               className="w-full" 
               onClick={saveConfiguration} 
@@ -2073,11 +2074,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 Run Test
             </Button>
             */}
-          </div>
-          {((ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ||
+           </div>
+           {((ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ||
             ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ||
             ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) && (onesampleMeanTestresult || onesampleVarianceTestresult || onesampleMedianTestresult) && ( testResults.sampleSize > 1)) && ( 
-          <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
+           <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
             <Card className="p-2">
             <CardTitle className="text-lg">Results:</CardTitle>    
             <Badge
@@ -2238,11 +2239,11 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               </Card>
               )}            
             </div>
-          </div>
-          )}
+           </div>
+           )}
 
-          {/* 1 sample Student mean test BoxPlot visualization when showBoxPlot is true */}
-          {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
+           {/* 1 sample Student mean test BoxPlot visualization when showBoxPlot is true */}
+           {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
             <div className="mt-6">
               <BoxPlotWith1SMeanTest
                 data={dataPoints.map(point => point.dataValue)}
@@ -2256,10 +2257,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 alphalevel={significanceLevel}
               />
             </div>
-          )}
+           )}
 
-          {/* 1 sample χ² variance test BoxPlot visualization when showBoxPlot is true */}
-          {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
+           {/* 1 sample χ² variance test BoxPlot visualization when showBoxPlot is true */}
+           {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
             <div className="mt-6">
               <OneSVarianceTestCI
                 data={dataPoints.map(point => point.dataValue)}
@@ -2273,10 +2274,10 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 alphalevel={significanceLevel}
               />
             </div>
-          )}
+           )}
           
-          {/* 1 sample Wilcoxon median test BoxPlot visualization when showBoxPlot is true */}
-          {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
+           {/* 1 sample Wilcoxon median test BoxPlot visualization when showBoxPlot is true */}
+           {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest && (
             <div className="mt-6">
               <BoxPlotWith1SMedianTest
                 data={dataPoints.map(point => point.dataValue)}
@@ -2290,8 +2291,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 alphalevel={significanceLevel}
               />
             </div>
-          )}
-          </div>         
+           )}
+          </div> 
+          )}        
         </div>
       </CardContent>
     </Card>

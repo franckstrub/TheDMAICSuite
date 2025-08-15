@@ -31,14 +31,14 @@ interface VarianceTestResults {
 }  
     
 interface twosampleVarianceHypothesisTestProps {
-  dataValues: number[];
+  dataValues1: number[];
   significance: number;
   alternativevariance: "Less than" | "Greater than" | "Different";
   targetstdev: number;
 }
 
 export function twosampleVarianceHypothesisTest({
-  dataValues,
+  dataValues1,
   significance,
   alternativevariance,                        
   targetstdev,
@@ -46,8 +46,8 @@ export function twosampleVarianceHypothesisTest({
   
   // Example calculations (replace with your actual statistical calculations)
   //const dataValues = dataPoints.map(point => point.dataValue) || [];
-  const n = dataValues.length;
-  const Samplevariance = variance(dataValues);
+  const n = dataValues1.length;
+  const Samplevariance = variance(dataValues1);
   // Calculate degrees of freedom
   const df = n - 1;
   

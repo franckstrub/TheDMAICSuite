@@ -35,7 +35,7 @@ interface MedianTestResults {
 }  
     
 interface twosampleMedianHypothesisTestProps {
-  dataValues: number[];
+  dataValues1: number[];
   significance: number;
   alternativemedian: "Less than" | "Greater than" | "Different";
   targetMedian: number;
@@ -115,21 +115,21 @@ function calculateMedianConfidenceInterval(
 }
 
 export function twosampleMedianHypothesisTest({
-  dataValues,
+  dataValues1,
   significance,
   alternativemedian,                        
   targetMedian,
   useWilcoxon,
 }: twosampleMedianHypothesisTestProps): MedianTestResults {
   
-  const n = dataValues.length;
-  const quartiles = calculateQuartiles(dataValues);
+  const n = dataValues1.length;
+  const quartiles = calculateQuartiles(dataValues1);
   const actualMedian = quartiles.median;
   
   if (useWilcoxon) {
     // Wilcoxon Signed-Rank Test implementation using jStat
     // Calculate differences from target median
-    const differences = dataValues
+    const differences = dataValues1
       .map(x => x - targetMedian)
       .filter(d => d !== 0); // Remove zeros
     
@@ -236,7 +236,7 @@ export function twosampleMedianHypothesisTest({
     }
     
     // Confidence interval
-    const sortedData = [...dataValues].sort((a, b) => a - b);
+    const sortedData = [...dataValues1].sort((a, b) => a - b);
     const { lower: medianCI_minus, upper: medianCI_plus } = 
       calculateMedianConfidenceInterval(sortedData, significance, alternativemedian);
     
@@ -255,7 +255,7 @@ export function twosampleMedianHypothesisTest({
     let below = 0;
     let equal = 0;
     
-    for (const value of dataValues) {
+    for (const value of dataValues1) {
       if (value > targetMedian) above++;
       else if (value < targetMedian) below++;
       else equal++;
@@ -323,7 +323,7 @@ export function twosampleMedianHypothesisTest({
     const medianCriteria = calculateSignTestCriticalValue(effectiveN, significance, alternativemedian);
     
     // Calculate confidence interval
-    const sortedData = [...dataValues].sort((a, b) => a - b);
+    const sortedData = [...dataValues1].sort((a, b) => a - b);
     const { lower: medianCI_minus, upper: medianCI_plus } = 
       calculateMedianConfidenceInterval(sortedData, significance, alternativemedian);
     

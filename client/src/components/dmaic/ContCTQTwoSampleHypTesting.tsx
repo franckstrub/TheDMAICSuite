@@ -84,7 +84,7 @@ interface PowerSampleSizeResults {
 }
 
 interface RunTestResults {
-  sampleSize: number;
+  sampleSize1: number;
   meanValue1: number;
   stdev1: number;
   variance1: number;
@@ -94,12 +94,25 @@ interface RunTestResults {
   SEmedian1: number;
   ADvalue1: number;
   ADp_Value1: number;
-  tStatistic1: number | {lower: number; upper: number};
-  tCriteria1: number | {lower: number; upper: number};
-  tp_Value1: number;
+  tStatistic: number | {lower: number; upper: number};
+  tCriteria: number | {lower: number; upper: number};
+  tp_Value: number;
   mean1CI_minus: number;
   mean1CI_plus: number;
   df1: number;
+  sampleSize2: number;
+  meanValue2: number;
+  stdev2: number;
+  variance2: number;
+  median2: number;
+  SEmean2: number;
+  SEvariance2: number;
+  SEmedian2: number;
+  ADvalue2: number;
+  ADp_Value2: number;
+  mean2CI_minus: number;
+  mean2CI_plus: number;
+  df2: number;
   varStatistic: number;
   varCriteria: number | {
     lower: number;
@@ -115,13 +128,17 @@ interface RunTestResults {
   medianCI_plus: number;
 }
 interface MeanTestResults {
-  meanValue: number;
-  SEmean: number;
+  meanValue1: number;
+  SEmean1: number;
+  meanValue2: number;
+  SEmean2: number;
   tStatistic: number | {lower: number; upper: number};
   tCriteria: number | {lower: number; upper: number};
   tp_Value: number;
-  meanCI_minus: number;
-  meanCI_plus: number;
+  mean1CI_minus: number;
+  mean1CI_plus: number;
+  mean2CI_minus: number;
+  mean2CI_plus: number;
 }
 
 interface VarianceTestResults {
@@ -167,7 +184,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   });
   
   const [testResults, setTestResults] = useState<RunTestResults>({
-    sampleSize: 0,
+    sampleSize1: 0,
     meanValue1: 0,
     stdev1: 0,
     variance1:0,
@@ -177,12 +194,25 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     SEmedian1: 0,
     ADvalue1: 0,
     ADp_Value1: 0,
-    tStatistic1: 0,
-    tCriteria1: 0,
-    tp_Value1: 0,
+    tStatistic: 0,
+    tCriteria: 0,
+    tp_Value: 0,
     mean1CI_minus: 0,
     mean1CI_plus: 0,
     df1: 0,
+    sampleSize2: 0,
+    meanValue2: 0,
+    stdev2: 0,
+    variance2:0,
+    median2: 0,
+    SEmean2: 0,
+    SEvariance2: 0,
+    SEmedian2: 0,
+    ADvalue2: 0,
+    ADp_Value2: 0,
+    mean2CI_minus: 0,
+    mean2CI_plus: 0,
+    df2: 0,
     varStatistic: 0,
     varCriteria: 0,
     varp_Value: 0,
@@ -305,6 +335,11 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         // Update data points from database
         if (config.dataSet1 && Array.isArray(config.dataSet1)) {
           setDataSet1(config.dataSet1);
+        }
+
+        // Update data points from database
+        if (config.dataSet2 && Array.isArray(config.dataSet2)) {
+          setDataSet2(config.dataSet2);
         }
 
         // Update local power analysis state variables from database
@@ -573,7 +608,7 @@ useEffect(() => {
 ): RunTestResults => {
 
   // Initialize with default values
-  let sampleSize: number = 0;
+  let sampleSize1: number = 0;
   let meanValue1: number = 0;
   let stdev1: number = 0;
   let variance1: number = 0;
@@ -583,12 +618,25 @@ useEffect(() => {
   let SEmedian1: number = 0;
   let ADvalue1: number = 0;
   let ADp_Value1: number = 0;
-  let tStatistic1: number | {lower: number; upper: number} = 0;
-  let tCriteria1: number | {lower: number; upper: number} = 0;
-  let tp_Value1: number = 0;
+  let tStatistic: number | {lower: number; upper: number} = 0;
+  let tCriteria: number | {lower: number; upper: number} = 0;
+  let tp_Value: number = 0;
   let mean1CI_minus: number = 0;
   let mean1CI_plus: number = 0;
   let df1: number = 0;
+  let sampleSize2: number = 0;
+  let meanValue2: number = 0;
+  let stdev2: number = 0;
+  let variance2: number = 0;
+  let median2: number = 0;
+  let SEmean2: number = 0;
+  let SEvariance2: number = 0;
+  let SEmedian2: number = 0;
+  let ADvalue2: number = 0;
+  let ADp_Value2: number = 0;
+  let mean2CI_minus: number = 0;
+  let mean2CI_plus: number = 0;
+  let df2: number = 0;
   let varStatistic: number = 0;
   let varCriteria: number | {lower: number; upper: number} = 0;
   let varp_Value: number = 0;
@@ -601,43 +649,54 @@ useEffect(() => {
   let medianCI_plus: number = 0;
   let quartiles: { median: number } = { median: 0 };
 
-  if (!dataset1 || dataset1.length === 0) {
+  if (!dataset1 || dataset1.length === 0 || !dataset2 || dataset2.length === 0) {
     toast({
       title: "Test Run Unsuccessfully",
-      description: "No data set. The hypothesis test has not been executed.",
+      description: "No dataset 1 or 2. The hypothesis test has not been executed.",
     });
     return {
-      sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
-      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
-      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      sampleSize1, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic, tCriteria, tp_Value, mean1CI_minus, mean1CI_plus, df1,
+      sampleSize2, meanValue2, stdev2, variance2, median2, SEmean2, SEvariance2, SEmedian2, ADvalue2, ADp_Value2,
+      mean2CI_minus, mean2CI_plus, df2,
+      varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
     };
   }
-  else if (dataset1.length === 1) {
+  else if (dataset1.length === 1 || dataset2.length === 1) {
     toast({
-      title: "Need two data at least to run Hypothesis Testing",
-      description: "Need two data at least to run Hypothesis Testing"
+      title: "Need two data at least in each dataset to run Hypothesis Testing",
+      description: "Need two data at least in each dataset to run Hypothesis Testing"
     });
     return {
-      sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
-      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
-      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      sampleSize1, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic, tCriteria, tp_Value, mean1CI_minus, mean1CI_plus, df1,
+      sampleSize2, meanValue2, stdev2, variance2, median2, SEmean2, SEvariance2, SEmedian2, ADvalue2, ADp_Value2,
+      mean2CI_minus, mean2CI_plus, df2,
+      varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
     };
   }
-  const dataValues = dataset1.map(point => point.dataValue) || [];
-  const n = dataValues.length;
-  const meanVal = mean(dataValues);
-  const stdDev = standardDeviation(dataValues);
-  
+  const dataValues1 = dataset1.map(point => point.dataValue) || [];
+  const n1 = dataValues1.length;
+  const meanVal1 = mean(dataValues1);
+  const stdDev1 = standardDeviation(dataValues1);
 
+  const dataValues2 = dataset2.map(point => point.dataValue) || [];
+  const n2 = dataValues2.length;
+  const meanVal2 = mean(dataValues2);
+  const stdDev2 = standardDeviation(dataValues2);
 
   // Perform normality test - will return isNormal, AD value and p_values
-  const normalityTest = performNormalityTest(dataValues, meanVal, stdDev);
+  const normalityTest = performNormalityTest(dataValues1, meanVal1, stdDev1);
   ADvalue1 = normalityTest.adStatistic;
   ADp_Value1 = normalityTest.pValue;
 
-  if (enableMeanTest && n > 1) {
+  const normalityTest2 = performNormalityTest(dataValues2, meanVal2, stdDev2);
+  ADvalue2 = normalityTest2.adStatistic;
+  ADp_Value2 = normalityTest2.pValue;
+
+  if (enableMeanTest && n1 > 1 && n2 > 1) {
     // Validate and type cast the string to the expected union type
     const validAlternatives = ["Less than", "Greater than", "Different"] as const;
     if (!validAlternatives.includes(HaMean as any)) {
@@ -647,55 +706,67 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-        sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
-      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
-      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      sampleSize1, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic, tCriteria, tp_Value, mean1CI_minus, mean1CI_plus, df1,
+      sampleSize2, meanValue2, stdev2, variance2, median2, SEmean2, SEvariance2, SEmedian2, ADvalue2, ADp_Value2,
+      mean2CI_minus, mean2CI_plus, df2,
+      varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-      };
+    };
     }
     
     const meanTestResult = twosampleMeanHypothesisTest({
-      dataValues,
+      dataValues1,
+      dataValues2,
       significance,
       alternativemean: HaMean as "Less than" | "Greater than" | "Different",
-      targetMean: 1,
-      ADvalue: ADvalue1,
-      ADp_Value: ADp_Value1,
+      deltaMean0,
+      ADvalue1: ADvalue1,
+      ADp_Value1: ADp_Value1,
+      ADvalue2: ADvalue2, // Placeholder for second dataset
+      ADp_Value2: ADp_Value2, // Placeholder for second dataset
     });
     
     // Update the variables with actual calculated values
-    sampleSize = n;
-    meanValue1 = meanVal;
-    stdev1 = stdDev;
-    SEmean1 = meanTestResult.SEmean;
-    tStatistic1 = meanTestResult.tStatistic;
+    sampleSize1 = n1;
+    meanValue1 = meanVal1;
+    stdev1 = stdDev1;
+    SEmean1 = meanTestResult.SEmean1;
+    tStatistic = meanTestResult.tStatistic;
     if(typeof meanTestResult.tStatistic === 'number') {
-      tStatistic1 = meanTestResult.tStatistic;
+      tStatistic = meanTestResult.tStatistic;
     }
     else if(meanTestResult.tStatistic && typeof meanTestResult.tStatistic === 'object') {
-      tStatistic1 = {
+      tStatistic = {
         lower: meanTestResult.tStatistic.lower,
         upper: meanTestResult.tStatistic.upper
       };
     }
     
     if(typeof meanTestResult.tCriteria === 'number') {
-      tCriteria1 = meanTestResult.tCriteria;
+      tCriteria = meanTestResult.tCriteria;
     }
     else if(meanTestResult.tCriteria && typeof meanTestResult.tCriteria === 'object') {
-      tCriteria1 = {
+      tCriteria = {
         lower: meanTestResult.tCriteria.lower,
         upper: meanTestResult.tCriteria.upper
       };
     }
-    tp_Value1 = meanTestResult.tp_Value;
-    mean1CI_minus = meanTestResult.meanCI_minus;
-    mean1CI_plus = meanTestResult.meanCI_plus;
+    tp_Value = meanTestResult.tp_Value;
+    mean1CI_minus = meanTestResult.mean1CI_minus;
+    mean1CI_plus = meanTestResult.mean1CI_plus;
+
+    sampleSize2 = n2;
+    meanValue2 = meanVal2;
+    stdev2 = stdDev2;
+    SEmean2 = meanTestResult.SEmean2;
+    mean2CI_minus = meanTestResult.mean2CI_minus;
+    mean2CI_plus = meanTestResult.mean2CI_plus;
     
     // Update state as well
     setTwosampleMeanTestresult(meanTestResult);
   }
-  if (enableVarianceTest && n > 1) {
+  if (enableVarianceTest && n1 > 1) {
     // Validate and type cast the string to the expected union type
     const validAlternatives = ["Less than", "Greater than", "Different"] as const;
     if (!validAlternatives.includes(HaVariance as any)) {
@@ -705,15 +776,17 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-        sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
-      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
-      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      sampleSize1, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic, tCriteria, tp_Value, mean1CI_minus, mean1CI_plus, df1,
+      sampleSize2, meanValue2, stdev2, variance2, median2, SEmean2, SEvariance2, SEmedian2, ADvalue2, ADp_Value2,
+      mean2CI_minus, mean2CI_plus, df2,
+      varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-      };
+    };
     }
     
     const varianceTestResult = twosampleVarianceHypothesisTest({
-      dataValues,
+      dataValues1,
       significance,
       alternativevariance: HaVariance as "Less than" | "Greater than" | "Different",
       targetstdev: 1,
@@ -721,10 +794,10 @@ useEffect(() => {
     
     // Update the variables with actual calculated values
     
-    sampleSize = n;
-    df1 = n-1;
-    stdev1 = stdDev;
-    variance1=stdDev*stdDev;
+    sampleSize1 = n1;
+    df1 = n1-1;
+    stdev1 = stdDev1;
+    variance1=stdDev1*stdDev1;
     varStatistic = varianceTestResult.varStatistic;
     if(typeof varianceTestResult.varCriteria === 'number') {
       varCriteria = varianceTestResult.varCriteria;
@@ -743,7 +816,7 @@ useEffect(() => {
     setTwosampleVarianceTestresult(varianceTestResult);
   }
 
-  if (enableMedianTest && n > 1) {
+  if (enableMedianTest && n1 > 1) {
     // Validate and type cast the string to the expected union type
     const validAlternatives = ["Less than", "Greater than", "Different"] as const;
     if (!validAlternatives.includes(HaMedian as any)) {
@@ -753,15 +826,17 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-        sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
-      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
-      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      sampleSize1, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic, tCriteria, tp_Value, mean1CI_minus, mean1CI_plus, df1,
+      sampleSize2, meanValue2, stdev2, variance2, median2, SEmean2, SEvariance2, SEmedian2, ADvalue2, ADp_Value2,
+      mean2CI_minus, mean2CI_plus, df2,
+      varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-      };
+    };
     }
     
     const medianTestResult = twosampleMedianHypothesisTest({
-      dataValues,
+      dataValues1,
       significance,
       alternativemedian: HaMedian as "Less than" | "Greater than" | "Different",
       targetMedian: 1,
@@ -770,11 +845,11 @@ useEffect(() => {
     
     // Update the variables with actual calculated values
     
-    sampleSize = n;
-    df1 = n-1;
-    stdev1 = stdDev;
-    variance1=stdDev*stdDev;
-    quartiles = calculateQuartiles(dataValues);
+    sampleSize1 = n1;
+    df1 = n1-1;
+    stdev1 = stdDev1;
+    variance1=stdDev1*stdDev1;
+    quartiles = calculateQuartiles(dataValues1);
     median1 = quartiles.median;
     medianStatistic = medianTestResult.medianStatistic;
     medianCriteria = medianTestResult.medianCriteria;
@@ -792,16 +867,18 @@ useEffect(() => {
   });
 
   return {
-      sampleSize, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
-      tStatistic1, tCriteria1, tp_Value1, mean1CI_minus, mean1CI_plus,
-      df1, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
+      sampleSize1, meanValue1, stdev1, variance1, median1, SEmean1, SEvariance1, SEmedian1, ADvalue1, ADp_Value1,
+      tStatistic, tCriteria, tp_Value, mean1CI_minus, mean1CI_plus, df1,
+      sampleSize2, meanValue2, stdev2, variance2, median2, SEmean2, SEvariance2, SEmedian2, ADvalue2, ADp_Value2,
+      mean2CI_minus, mean2CI_plus, df2,
+      varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-  };
+    };
 };
 {/* on input change, update ContCTQTwoSampleHypTestData state */}
 useEffect(() => {
   const currentConfig = ContCTQTwoSampleHypTestData[ctqId];
-  if (!currentConfig || dataSet1.length === 0) return;
+  if (!currentConfig || dataSet1.length === 0 || dataSet2.length ===0) return;
 
   const results = handleRunTest(
     currentConfig.enableMeanTest ?? false,
@@ -820,8 +897,11 @@ useEffect(() => {
 
   setTestResults(results);
   setShowBoxPlot(true);
+  setFocusedCell1(-1);
+  setFocusedCell2(-1);
 }, [
   dataSet1,
+  dataSet2,
   significanceLevel,
   alternativemean,
   alternativevariance,
@@ -1454,7 +1534,7 @@ useEffect(() => {
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === 'TwoSample' || activeTab?.includes('Two Sample'))) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName)) {
         
         // Check if this Two Sample component should handle the paste based on global context
         const focusedComponent = (window as any).focusedComponent;
@@ -1503,7 +1583,7 @@ useEffect(() => {
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (activeTab === 'TwoSample' || activeTab?.includes('Two Sample'))) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (activeTab === ctqName)) {
         event.preventDefault();
         
         // Determine which dataset to undo based on which input field is focused
@@ -2097,6 +2177,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             )}
           </div>
           
+          {(ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest || ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest || ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest) && (
           <div>
            <div className="grid grid-cols-2 gap-4 pr-4">
             <div>
@@ -2655,6 +2736,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest ?? false, // Matches corrected function signature
                       ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest ?? false,
                       dataSet1,
+                      dataSet2,
                       parseFloat(significanceLevel),
                       Ha(alternativemean),
                       Ha(alternativevariance),
@@ -2671,10 +2753,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </Button>
             */}
           </div>
-          {((ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest ||
-            ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest ||
-            ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest) && (twosampleMeanTestresult || twosampleVarianceTestresult || twosampleMedianTestresult) && ( testResults.sampleSize > 1)) && ( 
-          <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
+          {((twosampleMeanTestresult || twosampleVarianceTestresult || twosampleMedianTestresult)  && ( testResults.sampleSize1 > 1) && ( testResults.sampleSize2 > 1)) && ( 
+          <div className="border border-gray-200 rounded-md bg-gray-50">          
+            <div className =  "p-4 grid grid-cols-2 gap-4 text-sm">
             <Card className="p-2">
             <CardTitle className="text-lg">Results:</CardTitle>    
             <Badge
@@ -2682,24 +2763,49 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value1 >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
               title={
                 testResults.ADp_Value1 >= parseFloat(significanceLevel)
-                  ? "Data distribution 1 follows normal distribution (P-Value ≥ ${significanceLevel})"
-                  : "Data distribution 1 does not follow normal distribution (P-Value < ${significanceLevel})"
+                  ? "Dataset 1 distribution follows normal distribution (P-Value ≥ ${significanceLevel})"
+                  : "Dataset 1 distribution does not follow normal distribution (P-Value < ${significanceLevel})"
               }
             >
               {testResults.ADp_Value1 >= parseFloat(significanceLevel)
-                ? "Data follows normal distribution"
-                : "Data does not follow normal distribution"}
+                ? "Dataset 1 follows normal distribution"
+                : "Dataset 1 does not follow normal distribution"}
             </Badge>
             <div className="text-gray-600 font-medium">Dataset 1 Description:&nbsp;
             {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}</div>
             <div className="text-gray-600 font-medium">Sample size:&nbsp;
-            {testResults.sampleSize}</div>
+            {testResults.sampleSize1}</div>
             <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
             {testResults.ADvalue1.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
-            {testResults.ADp_Value1.toFixed(3)}</div>
-            
+            {testResults.ADp_Value1.toFixed(3)}</div> 
             </Card>
-            <div className="grid grid-cols-3 gap-2 text-sm">
+
+            <Card className="p-2">
+            <CardTitle className="text-lg">Results:</CardTitle>    
+            <Badge
+              variant="default"
+              className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value2 >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+              title={
+                testResults.ADp_Value2 >= parseFloat(significanceLevel)
+                  ? "Dataset 2 distribution follows normal distribution (P-Value ≥ ${significanceLevel})"
+                  : "Dataset 2 distribution does not follow normal distribution (P-Value < ${significanceLevel})"
+              }
+            >
+              {testResults.ADp_Value2 >= parseFloat(significanceLevel)
+                ? "Dataset 2 follows normal distribution"
+                : "Dataset 2 does not follow normal distribution"}
+            </Badge>
+            <div className="text-gray-600 font-medium">Dataset 2 Description:&nbsp;
+            {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}</div>
+            <div className="text-gray-600 font-medium">Sample size:&nbsp;
+            {testResults.sampleSize2}</div>
+            <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+            {testResults.ADvalue2.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+            {testResults.ADp_Value2.toFixed(3)}</div> 
+            </Card>
+            </div>
+
+            <div className="pl-4 pr-4 grid grid-cols-3 gap-4 text-sm">
               {ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
               <Card className="p-2">                
                 <CardTitle className="text-lg">Two-Sample Mean test:</CardTitle>
@@ -2713,38 +2819,38 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 <div>
                  <Badge
                   variant="default"
-                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.tp_Value1 < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.tp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
                   title={
-                    testResults.tp_Value1 < parseFloat(significanceLevel)
-                      ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value1.toFixed(4)} < ${significanceLevel})`
-                      : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value1.toFixed(4)} ≥ ${significanceLevel})`
+                    testResults.tp_Value < parseFloat(significanceLevel)
+                      ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
                   {alternativemean==='Less than' ? "Ha: Mean < "
                   : ( alternativemean==='Greater than' ? "Ha: Mean >"
                     :"Ha: Mean ≠ " )} Target<br></br>
-                  {testResults.tp_Value1 < parseFloat(significanceLevel)
-                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value1.toFixed(4)} < ${significanceLevel})`
-                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value1.toFixed(4)} ≥ ${significanceLevel})`}
+                  {testResults.tp_Value < parseFloat(significanceLevel)
+                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`}
                   
                  </Badge>
                 </div>
                 <div className="text-gray-600 font-medium">SE Mean 1:&nbsp;
                   {testResults.SEmean1.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">T-statistic 1:&nbsp;
-                  {typeof testResults.tStatistic1 === 'number' 
-                    ? testResults.tStatistic1.toFixed(3) 
-                    : `[${testResults.tStatistic1.lower.toFixed(3)} ; ${testResults.tStatistic1.upper.toFixed(3)}]`
+                  {typeof testResults.tStatistic === 'number' 
+                    ? testResults.tStatistic.toFixed(3) 
+                    : `[${testResults.tStatistic.lower.toFixed(3)} ; ${testResults.tStatistic.upper.toFixed(3)}]`
                   }
                 </div>
                 <div className="text-gray-600 font-medium">T-criteria at significance:&nbsp;
-                  {typeof testResults.tCriteria1 === 'number' 
-                    ? testResults.tCriteria1.toFixed(3) 
-                    : `[${testResults.tCriteria1.lower.toFixed(3)} ; ${testResults.tCriteria1.upper.toFixed(3)}]`
+                  {typeof testResults.tCriteria === 'number' 
+                    ? testResults.tCriteria.toFixed(3) 
+                    : `[${testResults.tCriteria.lower.toFixed(3)} ; ${testResults.tCriteria.upper.toFixed(3)}]`
                   }
                 </div>
                 <div className="text-gray-600 font-medium">T-test P-value:&nbsp;
-                  {testResults.tp_Value1.toFixed(4)}</div>
+                  {testResults.tp_Value.toFixed(4)}</div>
                 <div className="text-gray-600 font-medium">μ1 Lower CI:&nbsp;
                 {testResults.mean1CI_minus.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">μ1 Upper CI:&nbsp;
@@ -2855,7 +2961,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 h0Value={ContCTQTwoSampleHypTestData[ctqId]?.targetMean ?? 0}
                 confidenceInterval={[testResults.mean1CI_minus, testResults.mean1CI_plus]}
                 title={`2-Sample Mean T-Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
-                pValue={testResults.tp_Value1}
+                pValue={testResults.tp_Value}
                 alphalevel={significanceLevel}
               />
             </div>
@@ -2899,7 +3005,8 @@ const Ha = (alternative: string): AlternativeMeanOption => {
             </div>
           )}
             */}
-          </div>         
+          </div>  
+          )}       
         </div>
       </CardContent>
     </Card>
