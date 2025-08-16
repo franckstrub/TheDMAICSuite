@@ -1,3 +1,4 @@
+import * as jStat from 'jstat'
 import { 
   mean, 
   standardDeviation, 
