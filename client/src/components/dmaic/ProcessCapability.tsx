@@ -34,7 +34,10 @@ import {
   calculateCapabilityIndexes,
   calculateObservedPerformanceMetrics,
   assessProcessVariation,
-  inverseNormCDF
+  inverseNormCDF,
+  calculateMeanConfidenceInterval,
+  calculateStdevConfidenceInterval,
+  calculateMedianConfidenceInterval,
 } from "@/lib/statisticsUtils";
 import React from 'react';
 import {ProcessCapabilityContinuousCards} from '@/components/dmaic/ProcessCapabilityContinuous'; 
@@ -85,6 +88,8 @@ interface ProcessCapabilityData {
   
   // Calculated results
   calculatedNonConformityRate?: number;
+  CI_minus: number;
+  CI_plus: number;
   calculatedZValue_LT?: number;
   calculatedZValue_ST?: number;
   calculatedDPMO?: number;
@@ -108,6 +113,7 @@ interface ProcessCapabilityData {
   // DPU Analysis fields
   dpuDefects?: number;
   dpuUnits?: number;
+  calculatedDPU?: number;
   calculatedDPU_Z_LT?: number;
   calculatedDPU_Z_ST?: number;
   calculatedDPU_LT?: number;
@@ -1230,6 +1236,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
             // Update the capability data with calculated results
             //console.log('Updating capability data with results:', results);
             updateCapabilityField(ctq, "calculatedNonConformityRate", results.nonConformityRate);
+            updateCapabilityField(ctq, "CI_minus", results.CI_minus);
+            updateCapabilityField(ctq, "CI_plus", results.CI_plus);
             updateCapabilityField(ctq, "calculatedZValue_LT", results.zValue_LT);
             updateCapabilityField(ctq, "calculatedZValue_ST", results.zValue_ST);
             //console.log('Updated Z value in state:', results.zValue);
@@ -1372,7 +1380,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     }
   };
   
-  // Calculate process capability statistics
+  // Calculate Basic Stats & Process capability statistics
   const calculateProcessCapabilityStats = (ctq: string) => {
     const data = capabilityData[ctq];
     const dataPointsArray = dataPoints[ctq]?.map(dp => dp.dataValue) || [];
@@ -1399,6 +1407,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     //normalityTest.isNormal=true;
     const myquartiles = calculateQuartiles(dataPointsArray);
     const Mode = calculateMode(dataPointsArray);
+    const meanCI = calculateMeanConfidenceInterval(meanValue, stdDev, sampleSize, 0.05);
+    const stDevCI = calculateStdevConfidenceInterval(stdDev, sampleSize, 0.05);
+    const medianCI = calculateMedianConfidenceInterval(dataPointsArray, sampleSize, 0.05);
     
     // Calculate Long Term and Short Term Z scores with normality test
     const zScoreData = calculateZScoreLongShortTerm(
@@ -1450,6 +1461,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       variance: varianceValue,
       quartiles: myquartiles,
       Mode,
+      meanCI: meanCI,
+      stDevCI: stDevCI,
+      medianCI: medianCI,
       cp: capabilityIndexes.cp,
       cpk: capabilityIndexes.cpk,
       pp: capabilityIndexes.pp,
@@ -2256,6 +2270,14 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       {formatnonconformrate(capabilityData[ctq].calculatedNonConformityRate)}%
                                       <br></br>
                                     </span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-700">
+                                      <span title="CI 95% for Non-Conform Rate:">
+                                        CI 95% for NC Rate:
+                                      </span>
+                                      <span className="font-small">
+                                        [{formatnonconformrate(capabilityData[ctq].CI_minus)}%, {formatnonconformrate(capabilityData[ctq].CI_plus)}%]
+                                      </span>
                                     </div>
                                     <div title="Non-conform PPM = (number of non-conform units / number of units) * 1000000">
                                     <span className="font-medium">Non-Conform PPM: </span>

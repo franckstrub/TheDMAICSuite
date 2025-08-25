@@ -32,16 +32,16 @@ export default function BoxPlotWith1SMedianTest({
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = "Ha: Median < H0";
+      Hatext = `Ha: μ < ${h0Value}`;
       break;
     case "Greater than":
-      Hatext = "Ha: Median > H0";
+      Hatext = `Ha: μ > ${h0Value}`;
       break;
     case "Different":
-      Hatext = "Ha: Median ≠ H0";
+      Hatext = `Ha: μ ≠ ${h0Value}`;
       break;
     default:
-      Hatext = "Ha: Median ≠ H0";
+      Hatext = `Ha: μ ≠ ${h0Value}`;
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
@@ -55,23 +55,35 @@ export default function BoxPlotWith1SMedianTest({
     shownconfidenceInterval[1]=Math.max(...data, h0Value);
     CIplustext = '+∞';
   }
-  const yBadge=0.95*(Math.max(...data)-Math.min(...data))+ Math.min(...data);
+  const yExtraScale=(Math.max(...data)-Math.min(...data))/5;  
+  const yBadge = (Math.max(...data)-Math.min(...data))+ Math.min(...data) + yExtraScale;
 
-  let Badgetext='Ha: Median ';
+  let BadgetextH0='H0: Median ';
   if (Ha==='Less than'){
-    Badgetext = Badgetext + " < Target H0";
+    BadgetextH0 = BadgetextH0 + ` ≥ ${h0Value}`
   }
   else if (Ha==='Greater than') {
-    Badgetext = Badgetext + " > Target H0";
+    BadgetextH0 = BadgetextH0 + ` ≤ ${h0Value}`
   }
   else {
-    Badgetext = Badgetext + " ≠ Target H0";
+    BadgetextH0 = BadgetextH0 + ` = ${h0Value}`
+  }
+
+  let Badgetext=BadgetextH0+'<br>Ha: Median ';  
+  if (Ha==='Less than'){
+    Badgetext = Badgetext + ` < ${h0Value}`
+  }
+  else if (Ha==='Greater than') {
+    Badgetext = Badgetext + ` > ${h0Value}`
+  }
+  else {
+    Badgetext = Badgetext + ` ≠ ${h0Value}`
   }
   if( pValue < parseFloat(alphalevel)) {
     Badgetext = Badgetext + `<br>Result => Reject H0. Accept Ha (P-Value ${pValue.toFixed(4)} < ${alphalevel})`;
   }
   else {
-    Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} >= ${alphalevel})`;
+    Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} ≥ ${alphalevel})`;
   }
 
   return (
@@ -212,7 +224,7 @@ export default function BoxPlotWith1SMedianTest({
             
             // Annotations for CI plot
             {
-              x: 1.15,
+              x: 1.03,
               y: median,
               text: 'Median',
               showarrow: false,
@@ -221,16 +233,16 @@ export default function BoxPlotWith1SMedianTest({
               yanchor: 'middle'
             },
             {
-              x: 1.15,
+              x: 1.03,
               y: h0Value,
-              text: 'H0',
+              text: 'Median0 (H0)',
               showarrow: false,
               font: { size: 12, color: 'black' },
               xanchor: 'left',
               yanchor: 'middle'
             },
             {
-              x: 1.15,
+              x: 1.30,
               y: shownconfidenceInterval[0],
               text: CIminustext,
               showarrow: false,
@@ -239,7 +251,7 @@ export default function BoxPlotWith1SMedianTest({
               yanchor: 'middle'
             },
             {
-              x: 1.15,
+              x: 1.30,
               y: shownconfidenceInterval[1],
               text: CIplustext,
               showarrow: false,

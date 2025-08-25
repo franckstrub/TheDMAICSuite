@@ -32,16 +32,16 @@ export default function BoxPlotWith1SMeanTest({
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = "Ha: Mean < H0";
+      Hatext = `Ha: μ < ${h0Value}`;
       break;
     case "Greater than":
-      Hatext = "Ha: Mean > H0";
+      Hatext = `Ha: μ > ${h0Value}`;
       break;
     case "Different":
-      Hatext = "Ha: Mean ≠ H0";
+      Hatext = `Ha: μ ≠ ${h0Value}`;
       break;
     default:
-      Hatext = "Ha: Mean ≠ H0";
+      Hatext = `Ha: μ ≠ ${h0Value}`;
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
@@ -55,23 +55,35 @@ export default function BoxPlotWith1SMeanTest({
     shownconfidenceInterval[1]=Math.max(...data, h0Value);
     CIplustext = '+∞';
   }
-  const yBadge=0.95*(Math.max(...data)-Math.min(...data))+ Math.min(...data);
+  const yExtraScale=(Math.max(...data)-Math.min(...data))/5;  
+  const yBadge = (Math.max(...data)-Math.min(...data))+ Math.min(...data) + yExtraScale;
 
-  let Badgetext='Ha: Mean ';
+  let BadgetextH0='H0: μ ';
   if (Ha==='Less than'){
-    Badgetext = Badgetext + " < Target H0";
+    BadgetextH0 = BadgetextH0 + ` ≥ ${h0Value}`
   }
   else if (Ha==='Greater than') {
-    Badgetext = Badgetext + " > Target H0";
+    BadgetextH0 = BadgetextH0 + ` ≤ ${h0Value}`
   }
   else {
-    Badgetext = Badgetext + " ≠ Target H0";
+    BadgetextH0 = BadgetextH0 + ` = ${h0Value}`
+  }
+
+  let Badgetext=BadgetextH0+'<br>Ha: μ ';
+  if (Ha==='Less than'){
+    Badgetext = Badgetext + ` < ${h0Value}`
+  }
+  else if (Ha==='Greater than') {
+    Badgetext = Badgetext + ` > ${h0Value}`
+  }
+  else {
+    Badgetext = Badgetext + ` ≠ ${h0Value}`
   }
   if( pValue < parseFloat(alphalevel)) {
     Badgetext = Badgetext + `<br>Result => Reject H0. Accept Ha (P-Value ${pValue.toFixed(4)} < ${alphalevel})`;
   }
   else {
-    Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} >= ${alphalevel})`;
+    Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} ≥ ${alphalevel})`;
   }
 
   return (
@@ -102,7 +114,7 @@ export default function BoxPlotWith1SMeanTest({
             y: [mean],
             type: 'scatter',
             mode: 'markers',
-            name: 'Mean',
+            name: 'μ',
             marker: { color: 'red', size: 8, symbol: 'circle' },
           },
           {
@@ -110,7 +122,7 @@ export default function BoxPlotWith1SMeanTest({
             y: [h0Value],
             type: 'scatter',
             mode: 'markers',
-            name: 'H0',
+            name: 'μ0 (H0)',
             marker: { color: 'black', size: 8, symbol: 'square' },
           },
           {
@@ -201,7 +213,7 @@ export default function BoxPlotWith1SMeanTest({
               {
                 x: 0.0,
                 y: mean,
-                text: 'Mean',
+                text: 'μ',
                 showarrow: false,
                 font: { size: 12, color: 'red' },
                 xanchor: 'center',
@@ -209,25 +221,25 @@ export default function BoxPlotWith1SMeanTest({
                 yshift: 5,
               },
               {
-                x: 1.15,
+                x: 1.03,
                 y: mean,
-                text: 'Mean',
+                text: 'μ',
                 showarrow: false,
                 font: { size: 12, color: 'red' },
                 xanchor: 'left',
                 yanchor: 'middle'
               },
               {
-                x: 1.15,
+                x: 1.03,
                 y: h0Value,
-                text: 'H0',
+                text: 'μ0 (H0)',
                 showarrow: false,
                 font: { size: 12, color: 'black' },
                 xanchor: 'left',
                 yanchor: 'middle'
               },
               {
-                x: 1.15,
+                x: 1.20,
                 y: shownconfidenceInterval[0],
                 text: CIminustext,
                 showarrow: false,
@@ -236,7 +248,7 @@ export default function BoxPlotWith1SMeanTest({
                 yanchor: 'middle'
               },
               {
-                x: 1.15,
+                x: 1.20,
                 y: shownconfidenceInterval[1],
                 text: CIplustext,
                 showarrow: false,
