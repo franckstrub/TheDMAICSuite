@@ -378,6 +378,9 @@ interface ProcessCapabilityStats {
     max: number;
   } | null;
   Mode: number | null;
+  meanCI: {lower:number, upper:number};
+  stDevCI: {lower:number, upper:number};
+  medianCI: {lower:number, upper:number};
   lsl: number | null;
   usl: number | null;
   pp: number | null;
@@ -788,6 +791,14 @@ export function ProcessCapabilityContinuousCards({
                     <span>Mean (μ):</span>
                     <span className="font-medium">{stats.mean.toFixed(4)}</span>
                   </div>
+                  <div className="flex justify-between text-xs text-gray-700">
+                    <span title="CI 95% for Mean:">
+                      CI 95% for μ:
+                    </span>
+                    <span className="font-small">
+                      [{stats.meanCI.lower?.toFixed(4)}, {stats.meanCI.upper?.toFixed(4)}]
+                    </span>
+                  </div>
                   <div
                     className="flex justify-between"
                     title="SQRT( Σ(Xi-μ) / (n-1) )"
@@ -795,6 +806,14 @@ export function ProcessCapabilityContinuousCards({
                     <span>Std Dev (σ):</span>
                     <span className="font-medium">
                       {stats.standardDeviation.toFixed(4)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-700">
+                    <span title="CI 95% for Std Dev:">
+                      CI 95% for σ:
+                    </span>
+                    <span className="font-small">
+                      [{stats.stDevCI.lower?.toFixed(4)}, {stats.stDevCI.upper?.toFixed(4)}]
                     </span>
                   </div>
                   <div className="flex justify-between" title="σ²=σ*σ">
@@ -883,6 +902,14 @@ export function ProcessCapabilityContinuousCards({
                     </span>
                     <span className="font-medium">
                       {stats.quartiles?.median?.toFixed(4) || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-700">
+                    <span title="CI 95% for Median:">
+                      CI 95% for Median:
+                    </span>
+                    <span className="font-small">
+                      [{stats.medianCI.lower?.toFixed(4)}, {stats.medianCI.upper?.toFixed(4)}]
                     </span>
                   </div>
                   <div className="flex justify-between">

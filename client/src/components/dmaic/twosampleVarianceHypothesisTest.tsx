@@ -16,13 +16,24 @@ import {
   calculateObservedPerformanceMetrics,
   assessProcessVariation,
   inverseNormCDF,
-  calculate1SvarChiSquareValue,
-  calculate1SvarChiSquareCriticalValue,
-  calculate1SvarChiSquarePValue,
-  calculate1SvarChiSquareConfidenceInterval,
+  calculate2SvarFischerValue,
+  calculate2SvarFischerCriticalValue,
+  calculate2SvarFischerPValue,
+  calculate2SvarFischerConfidenceInterval,
+  calculate2SvarLeveneValue,
+  calculate2SvarLeveneCriticalValue,
+  calculate2SvarLevenePValue,
+  calculate2SvarLeveneConfidenceInterval,
 } from "@/lib/statisticsUtils";
 
 interface VarianceTestResults {
+  varTestName: string;
+  varn1: number;
+  varDF1: number;
+  varStdev1: number;
+  varn2: number;
+  varDF2: number;
+  varStdev2: number;
   varStatistic: number;
   varCriteria: number | {lower: number; upper: number};
   varp_Value: number;
@@ -32,44 +43,100 @@ interface VarianceTestResults {
     
 interface twosampleVarianceHypothesisTestProps {
   dataValues1: number[];
+  dataValues2: number[];
   significance: number;
   alternativevariance: "Less than" | "Greater than" | "Different";
-  targetstdev: number;
+  ratioVariance0: number;
+  ADp_Value1: number;
+  ADp_Value2: number;
 }
 
 export function twosampleVarianceHypothesisTest({
   dataValues1,
+  dataValues2,
   significance,
   alternativevariance,                        
-  targetstdev,
+  ratioVariance0,
+  ADp_Value1,
+  ADp_Value2,
 }: twosampleVarianceHypothesisTestProps): VarianceTestResults {
   
-  // Example calculations (replace with your actual statistical calculations)
-  //const dataValues = dataPoints.map(point => point.dataValue) || [];
-  const n = dataValues1.length;
-  const Samplevariance = variance(dataValues1);
-  // Calculate degrees of freedom
-  const df = n - 1;
+  const n1 = dataValues1.length;  
+  const n2 = dataValues2.length;
   
-  // Calculate f-statistic
-  const varStatistic = calculate1SvarChiSquareValue(df, Samplevariance, targetstdev);
+  // Calculate sample variances
+  const sample1Variance = variance(dataValues1);
+  const sample2Variance = variance(dataValues2);
   
-  // - f-critical value calculation
-  const varCriteria = calculate1SvarChiSquareCriticalValue(significance, df, alternativevariance);
+  // Initialize variables
+  let varTestName: string;
+  let df1: number;
+  let df2: number;
+  let varStatistic: number;
+  let varCriteria: number | {lower: number; upper: number};
+  let varp_Value: number;
+  let varianceCI_minus: number;
+  let varianceCI_plus: number;
+  
+  if (ADp_Value1 >= significance && ADp_Value2 >= significance) {
+    // Use Fischer (F-test) for normal data
+    varTestName = "Fischer Test";
+    df1 = n1 - 1;
+    df2 = n2 - 1;
+    
+    // Calculate F-statistic
+    varStatistic = calculate2SvarFischerValue(sample1Variance, sample2Variance, ratioVariance0);
+    
+    // Calculate F-critical value
+    varCriteria = calculate2SvarFischerCriticalValue(significance, df1, df2, alternativevariance);
 
-  // Calculate p-value based on alternative hypothesis
-  const varp_Value = calculate1SvarChiSquarePValue(varStatistic, df, alternativevariance);
+    // Calculate p-value
+    varp_Value = calculate2SvarFischerPValue(varStatistic, df1, df2, alternativevariance);
 
-  // Calculate confidence intervals
-  const { lower: varianceCI_minus, upper: varianceCI_plus } = calculate1SvarChiSquareConfidenceInterval(
-    Samplevariance,
-    significance,
-    df,
-    alternativevariance
-  );
+    // Calculate confidence intervals
+    const confidenceInterval = calculate2SvarFischerConfidenceInterval(
+      sample1Variance,
+      sample2Variance,
+      df1,
+      df2,
+      significance
+    );
+    varianceCI_minus = confidenceInterval.lower;
+    varianceCI_plus = confidenceInterval.upper;
+    
+  } else {
+    // Use Levene's test for non-normal data
+    varTestName = "Levene Test";
+    df1 = 1; // k-1 where k=2 groups
+    df2 = n1 + n2 - 2; // n-k where k=2 groups
+    
+    // Calculate Levene statistic
+    varStatistic = calculate2SvarLeveneValue(dataValues1, dataValues2);
+    
+    // Calculate critical value
+    varCriteria = calculate2SvarLeveneCriticalValue(significance, df1, df2, alternativevariance);
 
+    // Calculate p-value
+    varp_Value = calculate2SvarLevenePValue(varStatistic, df1, df2, alternativevariance);
+
+    // Calculate confidence intervals
+    const confidenceInterval = calculate2SvarLeveneConfidenceInterval(
+      dataValues1,
+      dataValues2,
+      significance
+    );
+    varianceCI_minus = confidenceInterval.lower;
+    varianceCI_plus = confidenceInterval.upper;
+  } 
 
   return {
+    varTestName,
+    varn1: n1,
+    varDF1: df1,
+    varStdev1: Math.sqrt(sample1Variance),
+    varn2: n2,
+    varDF2: df2,
+    varStdev2: Math.sqrt(sample2Variance),
     varStatistic,
     varCriteria: typeof varCriteria === 'number' ? varCriteria : { lower: varCriteria.lower, upper: varCriteria.upper },
     varp_Value,

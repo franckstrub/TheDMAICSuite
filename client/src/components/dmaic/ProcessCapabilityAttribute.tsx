@@ -1,4 +1,5 @@
 {/*   Attribute CTQ Process Capability Utils */}
+import * as jStat from 'jstat';
 import { 
     normalCDF, inverseNormCDF,
 } from "@/lib/statisticsUtils";
@@ -6,17 +7,74 @@ import { infiniteQueryOptions } from "@tanstack/react-query";
 
 // Function to calculate Non-Conformity analysis results
 
-  export const calculateNonConformityResults = (ctq: string, capabilityData: any) => {
-    const data = capabilityData[ctq];
-    if (!data || data.nonConformityUnits === undefined || !data.totalUnits || data.totalUnits <= 0) {
-      return null;
-    }
+export const calculateNonConformityResults = (ctq: string, capabilityData: any) => {
+  const data = capabilityData[ctq];
+  if (!data || data.nonConformityUnits === undefined || !data.totalUnits || data.totalUnits <= 0) {
+    return null;
+  }
 
-    let nonConformityRate=0;
-    nonConformityRate = (data.nonConformityUnits / data.totalUnits) * 100;
+  const x = data.nonConformityUnits; // Number of successes (non-conforming units)
+  const n = data.totalUnits;         // Total number of trials
+  const defectRate = x / n;          // Sample proportion
+  let nonConformityRate = defectRate * 100;
+
+  // Calculate Clopper-Pearson 95% confidence interval using F-distribution
+  const alpha = 0.05; // For 95% confidence interval
+  let CI_minus = 0;
+  let CI_plus = 100;
+
+  if (x === 0) {
+    // Special case: no non-conforming units observed
+    CI_minus = 0;
+  } else {
+    // General case for x>0: use F-distribution    
+    // Lower bound calculation
+    // p_lower = x / (x + (n-x+1) * F_(alpha/2, 2*(n-x+1), 2*x))
+    //C13/(C13+(1+C12-C13)*INVERSE.LOI.F((1-D12)/2;2*(1+C12-C13);2*C13))))
+    const df1_lower = 2 * (n - x + 1);
+    const df2_lower = 2 * x;
+    
+    if (df2_lower > 0) {
+      const f_lower = jStat.centralF.inv(1-alpha/2, df1_lower, df2_lower);
+      const denominator_lower = x + (n - x + 1) * f_lower;
+      CI_minus = 100 * (x / denominator_lower);
+    } else {
+      CI_minus = 0;
+    }
+  }
+
+  // Upper bound calculation  
+  // p_upper = (x+1) * F_(1-alpha/2, 2*(x+1), 2*(n-x)) / ((n-x) + (x+1) * F_(1-alpha/2, 2*(x+1), 2*(n-x)))
+  // (C13+1)*INVERSE.LOI.F((1-D12)/2;2*(C13+1);2*(C12-C13))/(C12-C13+(C13+1)*INVERSE.LOI.F((1-D12)/2;2*(C13+1);2*(C12-C13))))
+  if (x === n) {
+      CI_plus = 100;
+  } else
+  {
+    const df1_upper = 2 * (x + 1);
+    const df2_upper = 2 * (n - x);
+    
+    if (df1_upper > 0 && df2_upper > 0) {
+      const f_upper = jStat.centralF.inv(1 - alpha/2, df1_upper, df2_upper);
+      const numerator_upper = (x + 1) * f_upper;
+      const denominator_upper = (n - x) + (x + 1) * f_upper;
+      CI_plus = 100 * (numerator_upper / denominator_upper);
+    } else if (df2_upper === 0) {
+      CI_plus = 100;
+    } else {
+      CI_plus = 100 * (x + 1) / n; // Fallback approximation
+    }
+  }
+
+  // Ensure bounds are within [0, 100] range
+  CI_minus = Math.max(0, Math.min(100, CI_minus));
+  CI_plus = Math.max(0, Math.min(100, CI_plus));
+
+  // Ensure CI_minus <= CI_plus (should already be true with proper calculation)
+  if (CI_minus > CI_plus) {
+    [CI_minus, CI_plus] = [CI_plus, CI_minus];
+  }
     
     // Calculate Z equivalent from defect rate using inverse normal CDF
-    const defectRate = data.nonConformityUnits / data.totalUnits;
     let zValue = null;
     let zValue_LT=null;
     let zValue_ST=null;
@@ -57,18 +115,20 @@ import { infiniteQueryOptions } from "@tanstack/react-query";
       }
     }
     else if (defectRate <= 0 ) {
-      nonConformityRate = 100;
-      zValue_LT = -Infinity;
-      zValue_ST = -Infinity;
-    }
-    else {
       nonConformityRate = 0;
       zValue_LT = Infinity;
       zValue_ST = Infinity;
     }
+    else if (defectRate >= 1) {
+      nonConformityRate = 100;
+      zValue_LT = -Infinity;
+      zValue_ST = -Infinity;
+    }
 
     return {
       nonConformityRate,
+      CI_minus,
+      CI_plus,
       zValue_LT,
       zValue_ST
     };

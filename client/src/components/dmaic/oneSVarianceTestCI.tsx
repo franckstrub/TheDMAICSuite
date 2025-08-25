@@ -32,16 +32,16 @@ export default function OneSVarianceTestCI({
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = "Ha: Standard deviation < H0";
+      Hatext = `Ha: σ < ${h0Value}`;
       break;
     case "Greater than":
-      Hatext = "Ha: Standard deviation > H0";
+      Hatext = `Ha: σ > ${h0Value}`;
       break;
     case "Different":
-      Hatext = "Ha: Standard deviation ≠ H0";
+      Hatext = `Ha: σ ≠ ${h0Value}`;
       break;
     default:
-      Hatext = "Ha: Standard deviation ≠ H0";
+      Hatext = `Ha: σ ≠ ${h0Value}`;
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
@@ -55,29 +55,37 @@ export default function OneSVarianceTestCI({
     shownconfidenceInterval[1]= Math.max(stdev, h0Value) + 2*Math.abs(stdev - h0Value);
     CIplustext = '+∞';
   }
-  let xshiftforCIminus = 0.15;
-  if (confidenceInterval[0]=== h0Value) {
-    xshiftforCIminus = 0.20;
-    };
   
   const yExtraScale=(shownconfidenceInterval[1]-shownconfidenceInterval[0])/5;
-  const yBadge=0.99*(shownconfidenceInterval[1] + yExtraScale);
+  const yBadge=0.98*(shownconfidenceInterval[1] + yExtraScale);
 
-  let Badgetext='Ha: Standard deviation ';
+  let BadgetextH0='H0: σ ';
   if (Ha==='Less than'){
-    Badgetext = Badgetext + " < Target H0";
+    BadgetextH0 = BadgetextH0 + ` ≥ ${h0Value}`
   }
   else if (Ha==='Greater than') {
-    Badgetext = Badgetext + " > Target H0";
+    BadgetextH0 = BadgetextH0 + ` ≤ ${h0Value}`
   }
   else {
-    Badgetext = Badgetext + " ≠ Target H0";
+    BadgetextH0 = BadgetextH0 + ` = ${h0Value}`
   }
+
+  let Badgetext=BadgetextH0+'<br>Ha: σ ';
+  if (Ha==='Less than'){
+    Badgetext = Badgetext + ` < ${h0Value}`
+  }
+  else if (Ha==='Greater than') {
+    Badgetext = Badgetext + ` > ${h0Value}`
+  }
+  else {
+    Badgetext = Badgetext + ` ≠ ${h0Value}`
+  }
+  
   if( pValue < parseFloat(alphalevel)) {
     Badgetext = Badgetext + `<br>Result => Reject H0. Accept Ha (P-Value ${pValue.toFixed(4)} < ${alphalevel})`;
   }
   else {
-    Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} >= ${alphalevel})`;
+    Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} ≥ ${alphalevel})`;
   }
 
   return (
@@ -220,25 +228,25 @@ export default function OneSVarianceTestCI({
               },
               */
               {
-                x: 0.15,
+                x: 0.03,
                 y: stdev,
-                text: 'Standard Deviation',
+                text: 'σ',
                 showarrow: false,
                 font: { size: 12, color: 'green' },
                 xanchor: 'left',
                 yanchor: 'middle'
               },
               {
-                x: 0.15,
+                x: 0.03,
                 y: h0Value,
-                text: 'H0',
+                text: 'σ0 (H0)',
                 showarrow: false,
                 font: { size: 12, color: 'black' },
                 xanchor: 'left',
                 yanchor: 'middle'
               },
               {
-                x: xshiftforCIminus,
+                x: 0.12,
                 y: shownconfidenceInterval[0],
                 text: CIminustext,
                 showarrow: false,
@@ -247,7 +255,7 @@ export default function OneSVarianceTestCI({
                 yanchor: 'middle'
               },
               {
-                x: 0.15,
+                x: 0.12,
                 y: shownconfidenceInterval[1],
                 text: CIplustext,
                 showarrow: false,
@@ -273,7 +281,7 @@ export default function OneSVarianceTestCI({
                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'], // Remove specific tools
                     toImageButtonOptions: {
                         format: 'png',
-                        filename: '1-sample Student Mean test',
+                        filename: '1-sample Variance test',
                         height: 500,
                         width: 700,
                         scale: 1

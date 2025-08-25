@@ -1,4 +1,5 @@
 import * as jStat from 'jstat'
+import { number } from 'zod';
 // Simple statistics utilities for Lean Six Sigma calculations
 
 /**
@@ -621,6 +622,100 @@ export function performNormalityTest(values: number[], meanval: number, stdeviat
   return { isNormal, adStatistic: AD_value, pValue: p_value };
 }
 
+export function calculateMeanConfidenceInterval(mean: number, stdDev: number, n: number, significance: number
+
+): {lower:number; upper:number}
+{
+  let CI_minus = 0;
+  let CI_plus = 0;
+  const tCI = jStat.studentt.inv(1 - significance/2, n - 1); // for sample
+  const standardError = stdDev / Math.sqrt(n)
+  
+  CI_minus = mean - tCI * standardError;
+  CI_plus = mean + tCI * standardError;
+
+  if (CI_minus > CI_plus) {
+    const lowestval = CI_plus;
+    CI_plus = CI_minus;
+    CI_minus = lowestval;
+  }
+  
+return { lower: CI_minus, upper: CI_plus };
+};
+
+export function calculateStdevConfidenceInterval(stdDev: number, n: number, significance: number
+
+): {lower:number; upper:number}
+{
+  if (n <= 1) {
+    throw new Error("Sample size must be greater than 1");
+  }
+  
+  if (stdDev <= 0) {
+    throw new Error("Standard deviation must be positive");
+  }
+  const df = n - 1; // degrees of freedom
+  const alpha = significance; // significance level (e.g., 0.05 for 95% CI)
+  
+  // For standard deviation CI, we use the chi-square distribution
+  // The formula is: sqrt((n-1)*s²/χ²) where s² is sample variance
+  
+  // Chi-square critical values
+  const chiSquareUpper = jStat.chisquare.inv(1 - alpha/2, df); // Upper critical value
+  const chiSquareLower = jStat.chisquare.inv(alpha/2, df);     // Lower critical value
+  
+  // Sample variance
+  const sampleVariance = stdDev * stdDev;
+  
+  // Confidence interval for standard deviation
+  // Lower bound uses upper chi-square value (inverse relationship)
+  const CI_lower = Math.sqrt((df * sampleVariance) / chiSquareUpper);
+  
+  // Upper bound uses lower chi-square value (inverse relationship)  
+  const CI_upper = Math.sqrt((df * sampleVariance) / chiSquareLower);
+  
+  return { 
+    lower: CI_lower, 
+    upper: CI_upper 
+  };
+};
+
+// Method: Wilcoxon Signed-Rank based CI (for symmetric distributions)
+export function calculateMedianConfidenceInterval(data: number[], n: number, significance: number
+): {lower: number; upper: number} {
+  
+  if (data.length < 6) {
+    throw new Error("Wilcoxon method requires at least 6 data points");
+  }
+  
+  //const n = data.length;
+  const sortedData = [...data].sort((a, b) => a - b);
+  
+  // Calculate all possible pairwise averages (Walsh averages)
+  const walshAverages: number[] = [];
+  
+  for (let i = 0; i < n; i++) {
+    for (let j = i; j < n; j++) {
+      walshAverages.push((sortedData[i] + sortedData[j]) / 2);
+    }
+  }
+  
+  walshAverages.sort((a, b) => a - b);
+  
+  // Use normal approximation for Wilcoxon critical value
+  const z = jStat.normal.inv(1 - significance/2, 0, 1);
+  const wilcoxonSE = Math.sqrt(n * (n + 1) * (2 * n + 1) / 24);
+  const k = Math.floor(n * (n + 1) / 4 - z * wilcoxonSE);
+  
+  const lowerIndex = Math.max(0, k - 1);
+  const upperIndex = Math.min(walshAverages.length - 1, walshAverages.length - k);
+  
+  return {
+    lower: walshAverages[lowerIndex],
+    upper: walshAverages[upperIndex],
+  };
+};
+
 /**
  * Calculate Z-score for Long Term and Short Term based on data term, normality, and specification limits
  */
@@ -1059,11 +1154,11 @@ export function inverseNormCDF(p: number): number {
     }
     const decimalPlaces = nonconformrate === 0  || nonconformrate === null ? 0
       : nonconformrate <= 0.001 ? 6
-      : nonconformrate <= 0.01 ? 5
+      : nonconformrate <= 0.01 ? 4
       : nonconformrate <= 0.1 ? 4
       : nonconformrate <= 1 ? 3
-      : nonconformrate <= 10 ? 2
-      : nonconformrate < 100 ? 1
+      : nonconformrate <= 10 ? 3
+      : nonconformrate <= 100 ? 3
       : 0;
   
     return nonconformrate.toFixed(decimalPlaces);
@@ -2164,6 +2259,256 @@ export function calculate2SMeanPValue(
   return tp_Value;
 };
 
+export function calculate2SDiffConfidenceInterval(
+    difference: number,
+      pooledSE: number,
+      tCriteria:  number | { lower: number; upper: number }, 
+      alternativemean: "Less than" | "Greater than" | "Different",
+): { lower1: number; upper1: number } {
+  // Validate inputs
+  let diffCI_minus: number = 0;
+  let diffCI_plus: number = 0;
+
+  switch(alternativemean) {
+    case "Less than":
+      // H1: μ1 - μ2 < δ0 (left-tailed)      
+      diffCI_minus = -Infinity; // No upper limit for left-tailed
+      if (typeof tCriteria === 'number') {
+        diffCI_plus = difference + tCriteria * pooledSE; 
+      }
+      break;  
+
+    case "Greater than":
+      // H1: μ1 - μ2 > δ0 (right-tailed)
+      if (typeof tCriteria === 'number') {
+        diffCI_minus = difference - tCriteria * pooledSE;
+      }
+      diffCI_plus = Infinity; // No upper limit for right-tailed
+      break;
+
+    case "Different":
+      // H1: μ1 - μ2 ≠ δ0 (two-tailed)
+      // H1: μ1 - μ2 > δ0 (right-tailed)
+
+      // Calculate confidence intervals for means difference
+      if (typeof tCriteria === 'object') {
+        // Two-tailed case
+        diffCI_minus = difference - tCriteria.upper * pooledSE;
+        diffCI_plus = difference + tCriteria.upper * pooledSE;
+      };
+      break;
+    default:
+      // Calculate confidence intervals for means difference
+      if (typeof tCriteria === 'object') {
+        // Two-tailed case
+        diffCI_minus = difference - tCriteria.upper * pooledSE;
+        diffCI_plus = difference + tCriteria.upper * pooledSE;
+      }
+      else{
+        diffCI_minus = difference - tCriteria * pooledSE;
+        diffCI_plus = difference + tCriteria * pooledSE;
+      };
+      break;
+  }
+   
+  if (diffCI_minus > diffCI_plus) {
+    const low = diffCI_plus;
+    diffCI_plus = diffCI_minus;
+    diffCI_minus = low;   
+  }
+
+  return {
+    lower1: diffCI_minus,
+    upper1: diffCI_plus,
+  };
+};
+// Helper function to calculate sample statistics
+export function calculateSampleStats(data: number[]) {
+  const n = data.length;
+  const mean = jStat.mean(data);
+  const variance = jStat.variance(data); // true for sample variance (n-1)
+  const standardError = Math.sqrt(variance / n);
+  
+  return { mean, variance, standardError, n };
+}
+
+// F-test for equality of variances using proper F-distribution
+export function testEqualVariances(var1: number, var2: number, n1: number, n2: number, alpha: number) {
+  // Calculate F-stat value using jStat
+  const fStat = Math.max(var1, var2) / Math.min(var1, var2);
+
+  // Calculate F-critical value using jStat
+  const df1 = Math.max(var1, var2) === var1 ? n1 - 1 : n2 - 1;
+  const df2 = Math.max(var1, var2) === var1 ? n2 - 1 : n1 - 1;
+  
+  // Calculate critical value for F-distribution
+  const fCritical = jStat.centralF.inv(1 - alpha/2, df1, df2); 
+
+  // Calculate p-Value for F-distribution wit a 2-tailed test
+  const pValue = 2 * (1 - jStat.centralF.cdf(fStat, df1, df2));
+
+  return {fStat, fCritical, pValue, equalVariances: fStat <= fCritical};
+}
+// Helper function implementations using jStat
+
+export function calculate2SvarFischerValue(var1: number, var2: number, ratioVariance0: number): number {
+  // F-statistic for Fischer test: (s1²/s2²) / ratio0
+  const observedRatio = var1 / var2;
+  return observedRatio / ratioVariance0;
+}
+
+export function calculate2SvarFischerCriticalValue(significance: number, df1: number, df2: number, alternativevariance: string): number | {lower: number; upper: number} {
+  switch (alternativevariance) {
+    case "Less than":
+      // Left-tailed test
+      return jStat.centralF.inv(significance, df1, df2);
+    case "Greater than":
+      // Right-tailed test
+      return jStat.centralF.inv(1 - significance, df1, df2);
+    case "Different":
+      // Two-tailed test
+      const fLower = jStat.centralF.inv(significance/2, df1, df2);
+      const fUpper = jStat.centralF.inv(1 - significance/2, df1, df2);
+      return {lower: fLower, upper: fUpper};
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+}
+
+export function calculate2SvarFischerPValue(fStat: number, df1: number, df2: number, alternativevariance: string): number {
+  switch (alternativevariance) {
+    case "Less than":
+      return jStat.centralF.cdf(fStat, df1, df2);
+    case "Greater than":
+      return 1 - jStat.centralF.cdf(fStat, df1, df2);
+    case "Different":
+      // Two-tailed test
+      const leftTail = jStat.centralF.cdf(fStat, df1, df2);
+      const rightTail = 1 - jStat.centralF.cdf(fStat, df1, df2);
+      return 2 * Math.min(leftTail, rightTail);
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+}
+
+export function calculate2SvarFischerConfidenceInterval(
+  var1: number, 
+  var2: number, 
+  df1: number, 
+  df2: number, 
+  significance: number
+): {lower: number; upper: number} {
+  const alpha = significance;
+  const fLower = jStat.centralF.inv(alpha/2, df1, df2);
+  const fUpper = jStat.centralF.inv(1 - alpha/2, df1, df2);
+  
+  const ratio = var1 / var2;
+  
+  return {
+    lower: ratio / fUpper,
+    upper: ratio / fLower
+  };
+}
+
+export function calculate2SvarLeveneValue(data1: number[], data2: number[]): number {
+  // Levene's test statistic calculation
+  // Calculate absolute deviations from median for each group
+  const median1 = jStat.median(data1);
+  const median2 = jStat.median(data2);
+  
+  const deviations1 = data1.map(x => Math.abs(x - median1));
+  const deviations2 = data2.map(x => Math.abs(x - median2));
+  
+  const n1 = data1.length;
+  const n2 = data2.length;
+  const n = n1 + n2;
+  
+  const meanDev1 = jStat.mean(deviations1);
+  const meanDev2 = jStat.mean(deviations2);
+  const grandMeanDev = (n1 * meanDev1 + n2 * meanDev2) / n;
+  
+  // Between-group sum of squares
+  const ssBetween = n1 * Math.pow(meanDev1 - grandMeanDev, 2) + n2 * Math.pow(meanDev2 - grandMeanDev, 2);
+  
+  // Within-group sum of squares
+  const ssWithin1 = deviations1.reduce((sum, dev) => sum + Math.pow(dev - meanDev1, 2), 0);
+  const ssWithin2 = deviations2.reduce((sum, dev) => sum + Math.pow(dev - meanDev2, 2), 0);
+  const ssWithin = ssWithin1 + ssWithin2;
+  
+  // Levene's test statistic
+  const msBetween = ssBetween / (2 - 1); // k-1 where k=2 groups
+  const msWithin = ssWithin / (n - 2);   // n-k where k=2 groups
+  
+  return msBetween / msWithin;
+}
+
+export function calculate2SvarLeveneCriticalValue(significance: number, df1: number, df2: number, alternativevariance: string): number | {lower: number; upper: number} {
+  // Levene's test uses F-distribution
+  switch (alternativevariance) {
+    case "Less than":
+      return jStat.centralF.inv(significance, df1, df2);
+    case "Greater than":
+      return jStat.centralF.inv(1 - significance, df1, df2);
+    case "Different":
+      const fLower = jStat.centralF.inv(significance/2, df1, df2);
+      const fUpper = jStat.centralF.inv(1 - significance/2, df1, df2);
+      return {lower: fLower, upper: fUpper};
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+}
+
+export function calculate2SvarLevenePValue(fStat: number, df1: number, df2: number, alternativevariance: string): number {
+  switch (alternativevariance) {
+    case "Less than":
+      return jStat.centralF.cdf(fStat, df1, df2);
+    case "Greater than":
+      return 1 - jStat.centralF.cdf(fStat, df1, df2);
+    case "Different":
+      const leftTail = jStat.centralF.cdf(fStat, df1, df2);
+      const rightTail = 1 - jStat.centralF.cdf(fStat, df1, df2);
+      return 2 * Math.min(leftTail, rightTail);
+    default:
+      throw new Error("Invalid alternative hypothesis");
+  }
+}
+
+export function calculate2SvarLeveneConfidenceInterval(
+  data1: number[], 
+  data2: number[], 
+  significance: number
+): {lower: number; upper: number} {
+  // For Levene's test, confidence intervals are typically not calculated
+  // as it tests equality of variances, not the ratio itself
+  // Returning placeholder values
+  const var1 = variance(data1);
+  const var2 = variance(data2);
+  const ratio = var1 / var2;
+  let constant: number;
+  switch (significance) {
+    case 0.01:
+      constant = 3.29;
+      break;
+    case 0.05:
+      constant = 1.96;
+      break;
+    case 0.10:
+      constant = 1.645;
+      break;
+    default:
+      constant = 1.96; // Default to 95% CI
+      break;    
+  }
+  
+  // Simple approximation - in practice, you might want bootstrap CI
+  const margin = constant * Math.sqrt(ratio); // rough approximation
+  
+  return {
+    lower: Math.max(0, ratio - margin),
+    upper: ratio + margin
+  };
+};
+
 export function calculate2SMeanConfidenceInterval(
   significance: number,
   stats1: { mean: number; standardError: number; n: number },
@@ -2192,12 +2537,3 @@ export function calculate2SMeanConfidenceInterval(
   };
 
 };
-// Helper function to calculate sample statistics
-export function calculateSampleStats(data: number[]) {
-  const n = data.length;
-  const mean = jStat.mean(data);
-  const variance = jStat.variance(data, true); // true for sample variance (n-1)
-  const standardError = Math.sqrt(variance / n);
-  
-  return { mean, variance, standardError, n };
-}
