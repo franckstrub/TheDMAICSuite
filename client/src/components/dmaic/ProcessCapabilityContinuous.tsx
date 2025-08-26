@@ -792,7 +792,7 @@ export function ProcessCapabilityContinuousCards({
                     <span className="font-medium">{stats.mean.toFixed(4)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-700">
-                    <span title="CI 95% for Mean:">
+                    <span title="CI 95% for Mean (using Student's constant):">
                       CI 95% for μ:
                     </span>
                     <span className="font-small">
@@ -809,7 +809,7 @@ export function ProcessCapabilityContinuousCards({
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-700">
-                    <span title="CI 95% for Std Dev:">
+                    <span title="CI 95% for Standard Deviation (using χ²):">
                       CI 95% for σ:
                     </span>
                     <span className="font-small">
@@ -898,15 +898,15 @@ export function ProcessCapabilityContinuousCards({
                   </div>
                   <div className="flex justify-between">
                     <span title="Q2 = 2nd quartile value = percentile(50%)">
-                      Median:
+                      Median (η):
                     </span>
                     <span className="font-medium">
                       {stats.quartiles?.median?.toFixed(4) || "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-700">
-                    <span title="CI 95% for Median:">
-                      CI 95% for Median:
+                    <span title="CI 95% for Median (Wilcoxon Signed-Rank method):">
+                      CI 95% for η:
                     </span>
                     <span className="font-small">
                       [{stats.medianCI.lower?.toFixed(4)}, {stats.medianCI.upper?.toFixed(4)}]
