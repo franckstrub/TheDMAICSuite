@@ -2272,7 +2272,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                     </span>
                                     </div>
                                     <div className="flex justify-between text-xs text-gray-700">
-                                      <span title="CI 95% for Non-Conform Rate:">
+                                      <span title="CI 95% for Non-Conform Rate (Clopper-Pearson method using F-distribution):">
                                         CI 95% for NC Rate:
                                       </span>
                                       <span className="font-small">
