@@ -2192,7 +2192,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               <Card className="p-2">                
                 <CardTitle className="text-lg">One-Sample Variance test:</CardTitle>
                 <div className="text-lg justify-left">χ² (Chi Square) test:</div>
-                <div className="text-gray-600 font-medium">Standard Deviation σ:&nbsp;
+                <div className="text-gray-600 font-medium">Standard Deviation (σ):&nbsp;
                   {testResults.stdev.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Hypothesized Std Dev σ0 (H0):&nbsp;
                   {ContCTQOneSampleHypTestData[ctqId]?.targetstdev}</div>
@@ -2241,9 +2241,9 @@ const Ha = (alternative: string): AlternativeMeanOption => {
               <Card className="p-2">                
                 <CardTitle className="text-lg">One-Sample Median-test:</CardTitle>
                 <div className="text-lg justify-left">Wilcoxon test:</div>
-                <div className="text-gray-600 font-medium">Median:&nbsp;
+                <div className="text-gray-600 font-medium">Median (η):&nbsp;
                   {testResults.median.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Hypothesized Median0 (H0):&nbsp;
+                <div className="text-gray-600 font-medium">Hypothesized Median η0 (H0):&nbsp;
                   {ContCTQOneSampleHypTestData[ctqId]?.targetMedian}</div>
                 <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
                   {parseFloat(significanceLevel)*100}%</div>
@@ -2257,12 +2257,12 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                       : `Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
-                  {alternativemedian==='Less than' ? "H0: Median ≥ "
-                  : ( alternativemedian==='Greater than' ? "H0: Median ≤ "
-                    :"Ha: Median = " )} {ContCTQOneSampleHypTestData[ctqId]?.targetMedian}<br></br>
-                  {alternativemedian==='Less than' ? "Ha: Median < "
-                  : ( alternativemedian==='Greater than' ? "Ha: Median > "
-                    :"Ha: Median ≠ " )} {ContCTQOneSampleHypTestData[ctqId]?.targetMedian}<br></br>
+                  {alternativemedian==='Less than' ? "H0: η ≥ "
+                  : ( alternativemedian==='Greater than' ? "H0: η ≤ "
+                    :"Ha: η = " )} {ContCTQOneSampleHypTestData[ctqId]?.targetMedian}<br></br>
+                  {alternativemedian==='Less than' ? "Ha: η < "
+                  : ( alternativemedian==='Greater than' ? "Ha: η > "
+                    :"Ha: η ≠ " )} {ContCTQOneSampleHypTestData[ctqId]?.targetMedian}<br></br>
                   {testResults.medianp_Value < parseFloat(significanceLevel)
                     ? `Result => Reject H0. Accept Ha (P-Value ${testResults.medianp_Value.toFixed(4)} < ${significanceLevel})`
                     : `Result => Accept H0. Reject Ha (P-Value ${testResults.medianp_Value.toFixed(4)} ≥ ${significanceLevel})`}
@@ -2281,7 +2281,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   
                 <div className="text-gray-600 font-medium">Wilcoxon-test P-value:&nbsp;
                   {testResults.medianp_Value.toFixed(4)}</div>
-                <div className="text-gray-600 font-medium">CI {(100*(1-parseFloat(significanceLevel)))}% for Median: [
+                <div className="text-gray-600 font-medium">CI {(100*(1-parseFloat(significanceLevel)))}% for η: [
                 {testResults.medianCI_minus.toFixed(3)}, {testResults.medianCI_plus.toFixed(3)}]</div>
               </Card>
               )}            
@@ -2307,7 +2307,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
            )}
 
            {/* 1 sample χ² variance test BoxPlot visualization when showBoxPlot is true */}
-           {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
+           {showBoxPlot && dataPoints.length > 2 && ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && (
             <div className="mt-6">
               <OneSVarianceTestCI
                 data={dataPoints.map(point => point.dataValue)}
@@ -2333,7 +2333,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                 Ha={Ha(alternativemedian)}
                 h0Value={ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? 0}
                 confidenceInterval={[testResults.medianCI_minus, testResults.medianCI_plus]}
-                title={`1-Sample Wilcoxon Median Test vs Median0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                title={`1-Sample Wilcoxon Median Test vs η0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
                 pValue={testResults.medianp_Value}
                 alphalevel={significanceLevel}
               />

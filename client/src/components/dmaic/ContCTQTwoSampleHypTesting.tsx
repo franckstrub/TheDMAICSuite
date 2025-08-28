@@ -35,9 +35,9 @@ import {
   calculate2SMeanSampleSize,
   calculate2SVarianceSampleSize
 } from "@/lib/statisticsUtils";
-//import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
-//import BoxPlotWith2SMedianTest from './BoxPlotWith2SMedianTest';
-//import TwoSVarianceTestCI from './twoSVarianceTestCI';
+import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
+import BoxPlotWith2SMedianTest from './BoxPlotWith2SMedianTest';
+import TwoSVarianceTestCI from './twoSVarianceTestCI';
 
 interface DataPoint {
   indexNumber: number;
@@ -3101,7 +3101,7 @@ const Ha = (alternative: string): AlternativeMeanOption => {
                   {testResults.median2.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Difference (η1 - η2):&nbsp;
                   {(testResults.median1 - testResults.median2).toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Grand Median:&nbsp;
+                <div className="text-gray-600 font-medium">Grand Median (ηG):&nbsp;
                   {testResults.grandMedian.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
                   {parseFloat(significanceLevel)*100}%</div>
@@ -3142,61 +3142,70 @@ const Ha = (alternative: string): AlternativeMeanOption => {
           )}
 
           {/* 2 sample Student mean test BoxPlot visualization when showBoxPlot is true */}
-          {/*
-          {showBoxPlot && dataSet1.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
+          
+          {showBoxPlot && dataSet1.length > 1 && dataSet2.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
             <div className="mt-6">
               <BoxPlotWith2SMeanTest
-                data={dataSet1.map(point => point.dataValue)}
+                data1={dataSet1.map(point => point.dataValue)}
+                data2={dataSet2.map(point => point.dataValue)}
                 ctqName={ctqName}
                 mean1={testResults.meanValue1}
+                mean2={testResults.meanValue2}
                 Ha={Ha(alternativemean)}
-                h0Value={ContCTQTwoSampleHypTestData[ctqId]?.targetMean ?? 0}
-                confidenceInterval={[testResults.mean1CI_minus, testResults.mean1CI_plus]}
-                title={`2-Sample Mean T-Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                h0Value={ContCTQTwoSampleHypTestData[ctqId]?.deltaMean0 ?? 0}
+                confidenceInterval={[testResults.diffCI_minus, testResults.diffCI_plus]}
+                title={`2-Sample Mean T-Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
                 pValue={testResults.tp_Value}
                 alphalevel={significanceLevel}
+                description1={ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                description2={ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
+                equalVariances={testResults.equalVariances}
               />
             </div>
           )}
-          */}
 
-          {/* 2 sample χ² variance test BoxPlot visualization when showBoxPlot is true */}
-          {/*
-          {showBoxPlot && dataSet1.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && (
+          {/* 2 sample Fischer or Levene variance test visualization when showBoxPlot is true */}
+          
+          {showBoxPlot && dataSet1.length > 2  && dataSet2.length > 2 && ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && (
             <div className="mt-6">
               <TwoSVarianceTestCI
-                data={dataSet1.map(point => point.dataValue)}
                 ctqName={ctqName}
-                stdev={testResults.stdev1}
+                stdev1={testResults.stdev1}
+                stdev2={testResults.stdev2}
+                ratioVariance0={ContCTQTwoSampleHypTestData[ctqId]?.ratioVariance0}
                 Ha={Ha(alternativevariance)}
-                h0Value={ContCTQTwoSampleHypTestData[ctqId]?.targetstdev ?? 0}
                 confidenceInterval={[testResults.varianceCI_minus, testResults.varianceCI_plus]}
-                title={`2-Sample χ² Variance Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                title={`2-Sample Variance ${testResults.varTestName} (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
                 pValue={testResults.varp_Value}
                 alphalevel={significanceLevel}
+                description1={ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                description2={ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
               />
             </div>
           )}
-          */}
           
-          {/* 2 sample Wilcoxon median test BoxPlot visualization when showBoxPlot is true */}
-          {/*
-          {showBoxPlot && dataSet1.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest && (
+          {/* 2 sample Mann-Whitney Median test BoxPlot visualization when showBoxPlot is true */}
+          
+          {showBoxPlot && dataSet1.length > 1  && dataSet2.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest && (
             <div className="mt-6">
               <BoxPlotWith2SMedianTest
-                data={dataSet1.map(point => point.dataValue)}
+                data1={dataSet1.map(point => point.dataValue)}
+                data2={dataSet2.map(point => point.dataValue)}
                 ctqName={ctqName}
-                median={testResults.median1}
-                Ha={Ha(alternativemedian)}
-                h0Value={ContCTQTwoSampleHypTestData[ctqId]?.targetMedian ?? 0}
+                median1={testResults.median1}
+                median2={testResults.median2}
+                grandMedian={testResults.grandMedian}
+                Ha={Ha(alternativemedian)}                
                 confidenceInterval={[testResults.medianCI_minus, testResults.medianCI_plus]}
-                title={`2-Sample Wilcoxon Median Test vs H0 (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                title={`2-Sample Mann-Whitney Median Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
                 pValue={testResults.medianp_Value}
                 alphalevel={significanceLevel}
+                description1={ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                description2={ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
               />
             </div>
           )}
-            */}
+          
           </div>  
           )}       
         </div>
