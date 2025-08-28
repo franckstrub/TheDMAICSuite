@@ -510,7 +510,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   if(enableMean2SPower) {
     if(isNaN(parseFloat(power2SMeanPower))) {
       toast({
-        title: "Mean Power & Sample Size test run Unsuccessfully",
+        title: "2S-Mean Power & Sample Size test run Unsuccessfully",
         description: "No valid Mean Power value. The Mean Power & Sample Size test has not been executed.",
       });
     }
@@ -1827,18 +1827,19 @@ useEffect(() => {
     setEditingCell2(-1);
     setEditValue2("");
   };
+
   type AlternativeMeanOption = "Less than" | "Greater than" | "Different";
 
-const Ha = (alternative: string): AlternativeMeanOption => {
-  switch (alternative) {
-    case "Less than":
-      return "Less than";
-    case "Greater than":
-      return "Greater than";
-    default:
-      return "Different";
-  }
-};
+  const Ha = (alternative: string): AlternativeMeanOption => {
+    switch (alternative) {
+      case "Less than":
+        return "Less than";
+      case "Greater than":
+        return "Greater than";
+      default:
+        return "Different";
+    }
+  };
 
   return (
     <Card data-component="two-sample">

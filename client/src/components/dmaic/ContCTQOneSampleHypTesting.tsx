@@ -451,7 +451,7 @@ export function ContCTQOneSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   if(enableMean1SPower) {
     if(isNaN(parseFloat(power1SMeanPower))) {
       toast({
-        title: "Mean Power & Sample Size test run Unsuccessfully",
+        title: "1S Mean Power & Sample Size test run Unsuccessfully",
         description: "No valid Mean Power value. The Mean Power & Sample Size test has not been executed.",
       });
     }
@@ -1249,18 +1249,19 @@ useEffect(() => {
     setEditingCell(-1);
     setEditValue("");
   };
+
   type AlternativeMeanOption = "Less than" | "Greater than" | "Different";
 
-const Ha = (alternative: string): AlternativeMeanOption => {
-  switch (alternative) {
-    case "Less than":
-      return "Less than";
-    case "Greater than":
-      return "Greater than";
-    default:
-      return "Different";
-  }
-};
+  const Ha = (alternative: string): AlternativeMeanOption => {
+    switch (alternative) {
+      case "Less than":
+        return "Less than";
+      case "Greater than":
+        return "Greater than";
+      default:
+        return "Different";
+    }
+  };
 
   return (
     <Card data-component="one-sample">
