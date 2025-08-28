@@ -28,20 +28,21 @@ export default function BoxPlotWith1SMedianTest({
     return <div>No data available for visualization</div>;
   }
   const boldTitle = `<b>${title}</b>`;
+  const Confidence = 100*(1-parseFloat(alphalevel));
 
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = `Ha: μ < ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: η < ${h0Value}`;
       break;
     case "Greater than":
-      Hatext = `Ha: μ > ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: η > ${h0Value}`;
       break;
     case "Different":
-      Hatext = `Ha: μ ≠ ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: η ≠ ${h0Value}`;
       break;
     default:
-      Hatext = `Ha: μ ≠ ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: η ≠ ${h0Value}`;
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
@@ -58,7 +59,7 @@ export default function BoxPlotWith1SMedianTest({
   const yExtraScale=(Math.max(...data)-Math.min(...data))/5;  
   const yBadge = (Math.max(...data)-Math.min(...data))+ Math.min(...data) + yExtraScale;
 
-  let BadgetextH0='H0: Median ';
+  let BadgetextH0='H0: η ';
   if (Ha==='Less than'){
     BadgetextH0 = BadgetextH0 + ` ≥ ${h0Value}`
   }
@@ -69,7 +70,7 @@ export default function BoxPlotWith1SMedianTest({
     BadgetextH0 = BadgetextH0 + ` = ${h0Value}`
   }
 
-  let Badgetext=BadgetextH0+'<br>Ha: Median ';  
+  let Badgetext=BadgetextH0+'<br>Ha: η ';  
   if (Ha==='Less than'){
     Badgetext = Badgetext + ` < ${h0Value}`
   }
@@ -85,6 +86,7 @@ export default function BoxPlotWith1SMedianTest({
   else {
     Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} ≥ ${alphalevel})`;
   }
+  const boxplottext = 'Boxplot of ' + ctqName;
 
   return (
     <div className="w-full h-[400px]">
@@ -96,7 +98,7 @@ export default function BoxPlotWith1SMedianTest({
             y: [median],
             type: 'scatter',
             mode: 'markers',
-            name: 'Median',
+            name: 'Median (η)',
             marker: { color: 'blue', size: 8, symbol: 'square' },
           },
           {
@@ -104,7 +106,7 @@ export default function BoxPlotWith1SMedianTest({
             type: 'box',
             name: ctqName,
             boxpoints: 'outliers',
-            marker: { color: '#1e3a8a' },
+            marker: { color: '#1e3a8a', symbol: 'star' },
             line: { color: '#1e3a8a' },
             fillcolor: '#bfdbfe',
             boxmean: false, // optionally set to 'sd' or true
@@ -114,7 +116,7 @@ export default function BoxPlotWith1SMedianTest({
             y: [median],
             type: 'scatter',
             mode: 'markers',
-            name: 'Median',
+            name: 'Median (η)',
             marker: { color: 'blue', size: 8, symbol: 'square' },
           },
           {
@@ -149,14 +151,14 @@ export default function BoxPlotWith1SMedianTest({
           margin: { l: 70, r: 160, t: 30, b: 20 },
           xaxis: {
             tickvals: [0, 1],
-            ticktext: [ctqName, Hatext],
+            ticktext: [boxplottext, Hatext],
             range: [-0.5, 1.5],
             showline: true,
             zeroline: false,
           },
           yaxis: { 
             title: {
-              text: 'Y values'
+              text: ctqName
             },
           showline: true,
           },
@@ -214,7 +216,7 @@ export default function BoxPlotWith1SMedianTest({
             {
               x: 0,
               y: median,
-              text: 'Median',
+              text: 'Median (η)',
               showarrow: false,
               font: { size: 12, color: 'blue' },
               xanchor: 'center',
@@ -226,7 +228,7 @@ export default function BoxPlotWith1SMedianTest({
             {
               x: 1.03,
               y: median,
-              text: 'Median',
+              text: 'Median (η)',
               showarrow: false,
               font: { size: 12, color: 'blue' },
               xanchor: 'left',
@@ -235,7 +237,7 @@ export default function BoxPlotWith1SMedianTest({
             {
               x: 1.03,
               y: h0Value,
-              text: 'Median0 (H0)',
+              text: 'η0 (H0)',
               showarrow: false,
               font: { size: 12, color: 'black' },
               xanchor: 'left',

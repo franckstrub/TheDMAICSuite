@@ -4,7 +4,7 @@ import Plot from 'react-plotly.js';
 interface OneSVarianceTestCIProps {
   data: number[];
   ctqName: string;
-  stdev: number
+  stdev: number;
   Ha: string;
   h0Value: number;
   confidenceInterval: [number, number];
@@ -28,20 +28,21 @@ export default function OneSVarianceTestCI({
     return <div>No data available for visualization</div>;
   }
   const boldTitle = `<b>${title}</b>`;
+  const Confidence = 100*(1-parseFloat(alphalevel));
 
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = `Ha: σ < ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: σ < ${h0Value}`;
       break;
     case "Greater than":
-      Hatext = `Ha: σ > ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: σ > ${h0Value}`;
       break;
     case "Different":
-      Hatext = `Ha: σ ≠ ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: σ ≠ ${h0Value}`;
       break;
     default:
-      Hatext = `Ha: σ ≠ ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: σ ≠ ${h0Value}`;
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
@@ -57,7 +58,7 @@ export default function OneSVarianceTestCI({
   }
   
   const yExtraScale=(shownconfidenceInterval[1]-shownconfidenceInterval[0])/5;
-  const yBadge=0.98*(shownconfidenceInterval[1] + yExtraScale);
+  const yBadge=0.96*(shownconfidenceInterval[1] + yExtraScale);
 
   let BadgetextH0='H0: σ ';
   if (Ha==='Less than'){
@@ -160,7 +161,7 @@ export default function OneSVarianceTestCI({
           },
           yaxis: { 
             title: {
-              text: 'Y'
+              text: ctqName
             },
             range: [(shownconfidenceInterval[0]-yExtraScale), (shownconfidenceInterval[1]+yExtraScale)],
             showline: true,
