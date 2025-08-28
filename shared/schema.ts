@@ -1400,6 +1400,88 @@ export type InsertOneSampleHypothesisConfig = z.infer<
 export type OneSampleHypothesisConfig =
   typeof oneSampleHypothesisConfig.$inferSelect;
 
+// Two Sample Hypothesis Testing Configuration - stores user data and settings for two-sample tests
+export const twoSampleHypothesisConfig = pgTable(
+  "two_sample_hypothesis_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
+
+    // Test configuration
+    testType: text("test_type").default("Two Sample Hyp-Test"),
+
+    // Statistical parameter enablers
+    enableMeanTest: boolean("enable_mean_test").default(true),
+    enableVarianceTest: boolean("enable_variance_test").default(false),
+    enableMedianTest: boolean("enable_median_test").default(false),
+
+    // Target values for hypothesis tests
+    deltaMean0: real("delta_mean_0").default(0), // H0: μ1 - μ2 = deltaMean0
+    ratioVariance0: real("ratio_variance_0").default(1), // H0: σ1²/σ2² = ratioVariance0
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternativemean: text("alternativemean").default("Less than"),
+    alternativevariance: text("alternativevariance").default("Less than"),
+    alternativemedian: text("alternativemedian").default("Less than"),
+
+    // Data points for both datasets
+    dataSet1: jsonb("data_set_1")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+    dataSet2: jsonb("data_set_2")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+
+    // Dataset descriptions
+    dataset1Description: text("dataset_1_description"),
+    dataset2Description: text("dataset_2_description"),
+
+    // Power analysis fields for Mean Test
+    enableMean2SPower: boolean("enable_mean_2s_power").default(false),
+    power2SMeanPower: text("power_2s_mean_power"),
+    power2SMeanHa: text("power_2s_mean_ha"),
+    power2SMeanMean1: real("power_2s_mean_mean_1"),
+    power2SMeanMean2: real("power_2s_mean_mean_2"),
+    power2SMeanStdev: real("power_2s_mean_stdev"),
+    power2SMeanAlpha: text("power_2s_mean_alpha"),
+
+    // Power analysis fields for Variance Test
+    enableVariance2SPower: boolean("enable_variance_2s_power").default(false),
+    power2SVariancePower: text("power_2s_variance_power"),
+    power2SVarianceHa: text("power_2s_variance_ha"),
+    power2SVarianceStdev1: real("power_2s_variance_stdev_1"),
+    power2SVarianceStdev2: real("power_2s_variance_stdev_2"),
+    power2SVarianceAlpha: text("power_2s_variance_alpha"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertTwoSampleHypothesisConfigSchema = createInsertSchema(
+  twoSampleHypothesisConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertTwoSampleHypothesisConfig = z.infer<
+  typeof insertTwoSampleHypothesisConfigSchema
+>;
+export type TwoSampleHypothesisConfig =
+  typeof twoSampleHypothesisConfig.$inferSelect;
+
 // Main Hypothesis Testing Configuration - stores which types of hypothesis tests are enabled
 export const hypothesisTestingConfig = pgTable(
   "hypothesis_testing_config",
