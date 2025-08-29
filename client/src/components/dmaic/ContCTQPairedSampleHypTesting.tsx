@@ -1538,6 +1538,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
     }
   };
   const mu_subscript_d = 'μ<sub>d</sub>';
+  
   return (
     <Card data-component="paired-sample">
       <CardHeader>
@@ -2366,6 +2367,11 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
               <Card className="p-2">                
                 <CardTitle className="text-lg">Paired-Sample Mean test:</CardTitle>
                 <div className="text-lg justify-left">Student T-test:</div>
+                <div className="text-gray-600 font-medium">
+                  ({(ContCTQPairedSampleHypTestData[ctqId]?.dataset1description || 'Dataset #1')} -&nbsp;
+                  {(ContCTQPairedSampleHypTestData[ctqId]?.dataset2description || 'Dataset #2')})
+                </div>
+                  
                 <div className="text-gray-600 font-medium">Mean of paired difference (μ<sub>d</sub>):&nbsp;
                   {testResults.meanValue.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">SE Mean:&nbsp;

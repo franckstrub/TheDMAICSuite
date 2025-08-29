@@ -12,11 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ContCTQHypTesting } from "./ContCTQHypTesting";
-import { ContCTQSimpleRegression } from "./ContCTQSimpleRegression";
 import { ContCTQMultiVariChart } from "./ContCTQMultiVariChart";
-import { ContCTQANOVA2Way } from "./ContCTQANOVA2Way";
-import { ContCTQMultipleRegression } from "./ContCTQMultipleRegression";
-import { ContCTQDOE } from "./ContCTQDOE";
 import { ParetoAnalysis } from "./ParetoAnalysis";
 
 interface CTQAnalysisData {
@@ -25,11 +21,7 @@ interface CTQAnalysisData {
   ctqId?: number; // Foreign key to CTS characteristics
   // Boolean enablers for each analysis type
   enableContYHypothesisTest?: boolean;
-  enableContYSimpleRegression?: boolean;
   enableContYMultiVariChart?: boolean;
-  enableContYANOVA2way?: boolean;
-  enableContYMultipleRegression?: boolean;
-  enableContYDOE?: boolean;
   enablePareto?: boolean;
 }
 
@@ -38,11 +30,7 @@ interface SavedConfigData {
   ctq?: string;
   ctqId?: number;
   enableContYHypothesisTest?: boolean;
-  enableContYSimpleRegression?: boolean;
   enableContYMultiVariChart?: boolean;
-  enableContYANOVA2way?: boolean;
-  enableContYMultipleRegression?: boolean;
-  enableContYDOE?: boolean;
   enablePareto?: boolean;
 }
 
@@ -63,11 +51,7 @@ export default function ContinuousCTQAnalysis({ projectId, ctqId, ctqName, activ
     ctq: ctqName,
     ctqId: ctqId,
     enableContYHypothesisTest: false,
-    enableContYSimpleRegression: false,
     enableContYMultiVariChart: false,
-    enableContYANOVA2way: false,
-    enableContYMultipleRegression: false,
-    enableContYDOE: false,
     enablePareto: false,
   });
 
@@ -175,11 +159,7 @@ useEffect(() => {
           ctq: config.ctq ?? ctqName,
           ctqId: config.ctqId ?? ctqId,
           enableContYHypothesisTest: config.enableContYHypothesisTest ?? false,
-          enableContYSimpleRegression: config.enableContYSimpleRegression ?? false,
           enableContYMultiVariChart: config.enableContYMultiVariChart ?? false,
-          enableContYANOVA2way: config.enableContYANOVA2way ?? false,
-          enableContYMultipleRegression: config.enableContYMultipleRegression ?? false,
-          enableContYDOE: config.enableContYDOE ?? false,
           enablePareto: config.enablePareto ?? false,
         },
       });
@@ -213,11 +193,7 @@ useEffect(() => {
       // Prepare the data for saving (exclude UI-only fields)
       const configToSave = {
         enableContYHypothesisTest: currentConfig.enableContYHypothesisTest,
-        enableContYSimpleRegression: currentConfig.enableContYSimpleRegression,
         enableContYMultiVariChart: currentConfig.enableContYMultiVariChart,
-        enableContYANOVA2way: currentConfig.enableContYANOVA2way,
-        enableContYMultipleRegression: currentConfig.enableContYMultipleRegression,
-        enableContYDOE: currentConfig.enableContYDOE,
         enablePareto: currentConfig.enablePareto,
       };
       
@@ -294,52 +270,12 @@ useEffect(() => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id={`${ctqId}-ContYSimpleRegression`}
-                    checked={Boolean(ctqAnalysisData[ctqId]?.enableContYSimpleRegression)}
-                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYSimpleRegression", checked)}
-                  />
-                  <Label htmlFor={`${ctqId}-ContYSimpleRegression`} className="text-sm font-medium text-gray-700">
-                    Simple Regression
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
                     id={`${ctqId}-ContYMultiVariChart`}
                     checked={ctqAnalysisData[ctqId]?.enableContYMultiVariChart || false}
                     onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYMultiVariChart", checked)}
                   />
                   <Label htmlFor={`${ctqId}-ContYMultiVariChart`} className="text-sm font-medium text-gray-700">
                     Multi-Vari Chart
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${ctqId}-ContYANOVA2way`}
-                    checked={ctqAnalysisData[ctqId]?.enableContYANOVA2way || false}
-                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYANOVA2way", checked)}
-                  />
-                  <Label htmlFor={`${ctqId}-ContYANOVA2way`} className="text-sm font-medium text-gray-700">
-                    ANOVA Two-way
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${ctqId}-ContYMultipleRegression`}
-                    checked={ctqAnalysisData[ctqId]?.enableContYMultipleRegression || false}
-                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYMultipleRegression", checked)}
-                  />
-                  <Label htmlFor={`${ctqId}-ContYMultipleRegression`} className="text-sm font-medium text-gray-700">
-                    Multiple Regression
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${ctqId}-ContYDOE`}
-                    checked={ctqAnalysisData[ctqId]?.enableContYDOE || false}
-                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableContYDOE", checked)}
-                  />
-                  <Label htmlFor={`${ctqId}-ContYDOE`} className="text-sm font-medium text-gray-700">
-                    DOE (Design of Experiment)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -358,11 +294,7 @@ useEffect(() => {
           
           {/* Show selected analysis types */}
           {(ctqAnalysisData[ctqId]?.enableContYHypothesisTest || 
-            ctqAnalysisData[ctqId]?.enableContYSimpleRegression || 
             ctqAnalysisData[ctqId]?.enableContYMultiVariChart || 
-            ctqAnalysisData[ctqId]?.enableContYANOVA2way || 
-            ctqAnalysisData[ctqId]?.enableContYMultipleRegression || 
-            ctqAnalysisData[ctqId]?.enableContYDOE || 
             ctqAnalysisData[ctqId]?.enablePareto) && (
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h4 className="text-sm font-medium mb-2">Selected Analysis Types:</h4>
@@ -370,20 +302,8 @@ useEffect(() => {
                 {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
                   <li>• Hypothesis Testing Analysis</li>
                 )}
-                {ctqAnalysisData[ctqId]?.enableContYSimpleRegression && (
-                  <li>• Simple Regression Analysis</li>
-                )}
                 {ctqAnalysisData[ctqId]?.enableContYMultiVariChart && (
                   <li>• Multi-Vari Chart</li>
-                )}
-                {ctqAnalysisData[ctqId]?.enableContYANOVA2way && (
-                  <li>• ANOVA Two-way Analysis</li>
-                )}
-                {ctqAnalysisData[ctqId]?.enableContYMultipleRegression && (
-                  <li>• Multiple Regression Analysis</li>
-                )}
-                {ctqAnalysisData[ctqId]?.enableContYDOE && (
-                  <li>• DOE (Design of Experiment) Analysis</li>
                 )}
                 {ctqAnalysisData[ctqId]?.enablePareto && (
                   <li>• Pareto Analysis</li>
@@ -412,30 +332,10 @@ useEffect(() => {
             {ctqAnalysisData[ctqId]?.enableContYHypothesisTest && (
               <ContCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
             )}
-          
-            {/* Simple Regression Analysis */}
-            {ctqAnalysisData[ctqId]?.enableContYSimpleRegression && (
-              <ContCTQSimpleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-            )}
 
             {/* Multi-Vari Chart Analysis */}
             {ctqAnalysisData[ctqId]?.enableContYMultiVariChart && (
               <ContCTQMultiVariChart projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-            )}
-            
-            {/* ANOVA 2-Way Analysis */}
-            {ctqAnalysisData[ctqId]?.enableContYANOVA2way && (
-              <ContCTQANOVA2Way projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-            )}
-
-            {/* Multiple Regression Analysis */}
-            {ctqAnalysisData[ctqId]?.enableContYMultipleRegression && (
-              <ContCTQMultipleRegression projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
-            )}
-
-            {/* DOE Analysis */}
-            {ctqAnalysisData[ctqId]?.enableContYDOE && (
-              <ContCTQDOE projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
             )}
           
             {/* Pareto Analysis */}
