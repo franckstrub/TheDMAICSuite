@@ -96,6 +96,7 @@ export default function BoxPlotWithPairedSMeanTest({
   const boxplottext = 'Boxplot of paired difference (' + ctq1 + ' vs ' + ctq2 + ')';
 
   const boxplotofctq1txt = 'Boxplot of '  + ctq1;
+  const mu_subscript_d = 'μ<sub>d</sub>';
 
   return (
     <div className="w-full h-[400px]">
@@ -107,7 +108,7 @@ export default function BoxPlotWithPairedSMeanTest({
             y: [mean],
             type: 'scatter',
             mode: 'markers',
-            name: 'Mean',
+            name: mu_subscript_d,
             marker: { color: 'red', size: 8, symbol: 'circle' },
           },
           {
@@ -125,7 +126,7 @@ export default function BoxPlotWithPairedSMeanTest({
             y: [mean],
             type: 'scatter',
             mode: 'markers',
-            name: 'μd',
+            name: mu_subscript_d,
             marker: { color: 'red', size: 8, symbol: 'circle' },
           },
           {
@@ -224,7 +225,7 @@ export default function BoxPlotWithPairedSMeanTest({
               {
                 x: 0.0,
                 y: mean,
-                text: 'μd',
+                text: mu_subscript_d,
                 showarrow: false,
                 font: { size: 12, color: 'red' },
                 xanchor: 'center',
@@ -234,7 +235,7 @@ export default function BoxPlotWithPairedSMeanTest({
               {
                 x: 1.03,
                 y: mean,
-                text: 'μd',
+                text: mu_subscript_d,
                 showarrow: false,
                 font: { size: 12, color: 'red' },
                 xanchor: 'left',

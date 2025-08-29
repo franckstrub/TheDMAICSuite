@@ -76,6 +76,12 @@ interface RunTestResults {
   sampleSize2: number;
   ADvalue2: number;
   ADp_Value2: number;
+  meanValue1: number;
+  stdev1: number;
+  SEmean1: number;
+  meanValue2: number;
+  stdev2: number;
+  SEmean2: number;
 }
 interface MeanTestResults {
   meanValue: number;
@@ -124,6 +130,12 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
       sampleSize2: 0,
       ADvalue2: 0,
       ADp_Value2: 0,
+      meanValue1: 0,
+      stdev1: 0,
+      SEmean1: 0,
+      meanValue2: 0,
+      stdev2: 0,
+      SEmean2: 0,
     });
     const [pairedsampleMeanTestresult, setPairedsampleMeanTestresult] = useState<MeanTestResults | null>(null); // Initialize with null
 
@@ -436,6 +448,13 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
     let sampleSize2: number =0;
     let ADvalue2: number = 0;
     let ADp_Value2: number = 0;
+    let meanValue1: number = 0;
+    let stdev1: number = 0;
+    let SEmean1: number = 0;
+    let meanValue2: number = 0;
+    let stdev2: number = 0;
+    let SEmean2: number = 0;
+    
   
     if (!dataset1 || dataset1.length === 0 || !dataset2 || dataset2.length === 0) {
       toast({
@@ -445,6 +464,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
       return {
         dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
         tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
+        meanValue1, stdev1, SEmean1, meanValue2, stdev2, SEmean2,
       };
     }
     else if (dataset1.length === 1 || dataset2.length === 1) {
@@ -455,25 +475,28 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
       return {
         dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
         tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
+        meanValue1, stdev1, SEmean1, meanValue2, stdev2, SEmean2,         
       };
     }
     const dataValues1 = dataset1.map(point => point.dataValue) || [];
     const n1 = dataValues1.length;
-    const meanVal1 = mean(dataValues1);
-    const stdDev1 = standardDeviation(dataValues1);
+    meanValue1 = mean(dataValues1);
+    stdev1 = standardDeviation(dataValues1);
+    SEmean1 = stdev1 / Math.sqrt(n1);
   
     const dataValues2 = dataset2.map(point => point.dataValue) || [];
     const n2 = dataValues2.length;
-    const meanVal2 = mean(dataValues2);
-    const stdDev2 = standardDeviation(dataValues2);
+    meanValue2 = mean(dataValues2);
+    stdev2 = standardDeviation(dataValues2);
+    SEmean2 = stdev2 / Math.sqrt(n2);
   
     // Perform normality test - will return isNormal, AD value and p_values
-    const normalityTest1 = performNormalityTest(dataValues1, meanVal1, stdDev1);
+    const normalityTest1 = performNormalityTest(dataValues1, meanValue1, stdev1);
     ADvalue1 = normalityTest1.adStatistic;
     ADp_Value1 = normalityTest1.pValue;
     sampleSize1 = n1;
   
-    const normalityTest2 = performNormalityTest(dataValues2, meanVal2, stdDev2);
+    const normalityTest2 = performNormalityTest(dataValues2, meanValue2, stdev2);
     ADvalue2 = normalityTest2.adStatistic;
     ADp_Value2 = normalityTest2.pValue;
     sampleSize2 = n2;
@@ -506,6 +529,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
         return {
           dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
           tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
+          meanValue1, stdev1, SEmean1, meanValue2, stdev2, SEmean2,
         };
       }
       
@@ -558,6 +582,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
     return {
       dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
       tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
+      meanValue1, stdev1, SEmean1, meanValue2, stdev2, SEmean2,
     };
   };
 
@@ -1512,7 +1537,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
         return "Different";
     }
   };
-
+  const mu_subscript_d = 'μ<sub>d</sub>';
   return (
     <Card data-component="paired-sample">
       <CardHeader>
@@ -2296,6 +2321,12 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
               <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
               {testResults.ADvalue1.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
               {testResults.ADp_Value1.toFixed(3)}</div> 
+              <div className="text-gray-600 font-medium">Mean:&nbsp;
+              {testResults.meanValue1.toFixed(3)}</div>
+              <div className="text-gray-600 font-medium">SE Mean:&nbsp;
+              {testResults.SEmean1.toFixed(3)}</div>
+              <div className="text-gray-600 font-medium">Standard Deviation:&nbsp;
+              {testResults.stdev1.toFixed(3)}</div>
               </Card>
   
               <Card className="p-2">
@@ -2322,6 +2353,12 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
               <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
               {testResults.ADvalue2.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
               {testResults.ADp_Value2.toFixed(3)}</div> 
+              <div className="text-gray-600 font-medium">Mean:&nbsp;
+              {testResults.meanValue2.toFixed(3)}</div>
+              <div className="text-gray-600 font-medium">SE Mean:&nbsp;
+              {testResults.SEmean2.toFixed(3)}</div>
+              <div className="text-gray-600 font-medium">Standard Deviation:&nbsp;
+              {testResults.stdev2.toFixed(3)}</div>
               </Card>
               </div>
             <div className="grid grid-cols-1 gap-2 text-sm">
@@ -2349,16 +2386,18 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                       : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
-                  {alternativemean==='Less than' ? 'H0: μd ≥ '
-                  : ( alternativemean==='Greater than' ? "H0: μd ≤ "
-                    :"H0: μd = " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
-                  {alternativemean==='Less than' ? "Ha: μd < "
-                  : ( alternativemean==='Greater than' ? "Ha: μd > "
-                    :"Ha: μd ≠ " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
+                  <div className="text-center justify-center"> H0: μ<sub>d</sub> 
+                  {alternativemean==='Less than' ? ' ≥ '
+                  : ( alternativemean==='Greater than' ? " ≤ "
+                    :" = " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
+                  Ha: μ<sub>d</sub> 
+                  {alternativemean==='Less than' ? " < "
+                  : ( alternativemean==='Greater than' ? " > "
+                    :" ≠ " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
                   {testResults.tp_Value < parseFloat(significanceLevel)
                     ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
                     : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`}
-                  
+                  </div>
                  </Badge>
                 </div>
                 <div className="text-gray-600 font-medium">T-statistic:&nbsp;
@@ -2367,6 +2406,8 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                     : `[${testResults.tStatistic.lower.toFixed(3)} ; ${testResults.tStatistic.upper.toFixed(3)}]`
                   }
                 </div>
+                <div className="text-gray-600 font-medium">Degrees of Freedom:&nbsp;{testResults.sampleSize-1}
+                  </div>
                 <div className="text-gray-600 font-medium">T-criteria
                   {typeof testResults.tCriteria === 'number' 
                     ? (alternativemean==='Less than' ? <> (T<sub>{significanceLevel}</sub>): {testResults.tCriteria.toFixed(3)} </> : <> (T<sub>{(1 - parseFloat(significanceLevel)).toFixed(2)}</sub>): {testResults.tCriteria.toFixed(3)}</>)
