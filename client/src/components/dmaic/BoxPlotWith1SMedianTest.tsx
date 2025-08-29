@@ -56,8 +56,8 @@ export default function BoxPlotWith1SMedianTest({
     shownconfidenceInterval[1]=Math.max(...data, h0Value);
     CIplustext = '+∞';
   }
-  const yExtraScale=(Math.max(...data)-Math.min(...data))/5;  
-  const yBadge = (Math.max(...data)-Math.min(...data))+ Math.min(...data) + yExtraScale;
+  const yExtraScale=(Math.max(...data, h0Value) - Math.min(...data, h0Value))/5;  
+  const yBadge = (Math.max(...data, h0Value) - Math.min(...data,h0Value)) + Math.min(...data, h0Value) + yExtraScale;
 
   let BadgetextH0='H0: η ';
   if (Ha==='Less than'){

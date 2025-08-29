@@ -11,7 +11,7 @@ import { Trash2, Undo } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {onesampleMeanHypothesisTest} from "./onesampleMeanHypothesisTest";
-import BoxPlotWith1SMeanTest from './BoxPlotWith1SMeanTest';
+import BoxPlotWithPairedSMeanTest from './BoxPlotWithPairedSMeanTest';
 import { 
   mean, 
   standardDeviation, 
@@ -54,7 +54,7 @@ interface PowerSampleSizeResults {
 }
 
 interface RunTestResults {
-  dataValues: Number[];
+  dataValues: number[];
   sampleSize: number;
   meanValue: number;
   stdev: number;
@@ -70,6 +70,12 @@ interface RunTestResults {
   tp_Value: number;
   meanCI_minus: number;
   meanCI_plus: number;
+  sampleSize1: number;
+  ADvalue1: number;
+  ADp_Value1: number;
+  sampleSize2: number;
+  ADvalue2: number;
+  ADp_Value2: number;
 }
 interface MeanTestResults {
   meanValue: number;
@@ -112,6 +118,12 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
       tp_Value: 0,
       meanCI_minus: 0,
       meanCI_plus: 0,
+      sampleSize1: 0,
+      ADvalue1: 0,
+      ADp_Value1: 0,
+      sampleSize2: 0,
+      ADvalue2: 0,
+      ADp_Value2: 0,
     });
     const [pairedsampleMeanTestresult, setPairedsampleMeanTestresult] = useState<MeanTestResults | null>(null); // Initialize with null
 
@@ -418,6 +430,12 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
     let tp_Value: number = 0;
     let meanCI_minus: number = 0;
     let meanCI_plus: number = 0;
+    let sampleSize1: number =0;
+    let ADvalue1: number = 0;
+    let ADp_Value1: number = 0;
+    let sampleSize2: number =0;
+    let ADvalue2: number = 0;
+    let ADp_Value2: number = 0;
   
     if (!dataset1 || dataset1.length === 0 || !dataset2 || dataset2.length === 0) {
       toast({
@@ -426,7 +444,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
       });
       return {
         dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
-        tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus,
+        tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
       };
     }
     else if (dataset1.length === 1 || dataset2.length === 1) {
@@ -436,7 +454,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
       });
       return {
         dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
-        tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus,
+        tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
       };
     }
     const dataValues1 = dataset1.map(point => point.dataValue) || [];
@@ -450,13 +468,15 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
     const stdDev2 = standardDeviation(dataValues2);
   
     // Perform normality test - will return isNormal, AD value and p_values
-    //const normalityTest1 = performNormalityTest(dataValues1, meanVal1, stdDev1);
-    //ADvalue1 = normalityTest1.adStatistic;
-    //ADp_Value1 = normalityTest1.pValue;
+    const normalityTest1 = performNormalityTest(dataValues1, meanVal1, stdDev1);
+    ADvalue1 = normalityTest1.adStatistic;
+    ADp_Value1 = normalityTest1.pValue;
+    sampleSize1 = n1;
   
-    //const normalityTest2 = performNormalityTest(dataValues2, meanVal2, stdDev2);
-    //ADvalue2 = normalityTest2.adStatistic;
-    //ADp_Value2 = normalityTest2.pValue;
+    const normalityTest2 = performNormalityTest(dataValues2, meanVal2, stdDev2);
+    ADvalue2 = normalityTest2.adStatistic;
+    ADp_Value2 = normalityTest2.pValue;
+    sampleSize2 = n2;
 
     //const dataValues[] = dataset1[] - dataset2[];
     const maxLength = Math.min(dataSet1.length, dataSet2.length);
@@ -485,7 +505,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
         });
         return {
           dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
-          tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus,
+          tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
         };
       }
       
@@ -537,7 +557,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
 
     return {
       dataValues, sampleSize, meanValue, stdev, variance, median, SEmean, SEvariance, SEmedian, ADvalue, ADp_Value,
-      tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus,
+      tStatistic, tCriteria, tp_Value, meanCI_minus, meanCI_plus, sampleSize1, ADvalue1, ADp_Value1, sampleSize2, ADvalue2, ADp_Value2,
     };
   };
 
@@ -1507,7 +1527,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
           Determine whether the mean of the differences between two paired samples differs from 0 (or a target value) and is statistically significant or insignificant.
         </p>
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-12 items-stretch">
+          <div className="grid grid-cols-1 gap-12 items-stretch">
               <div className="flex items-top ml-1 h-full space-x-1">
               <Checkbox
                 id={`${ctqId}-enableMean1SPower`}
@@ -1525,7 +1545,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                   </Label>
                   <Card className="bg-gray-50 min-h-[540px] flex flex-col">
                     <CardHeader>
-                      <CardTitle className="text-sm">Power & Sample Size 1-Sample Mean Hypothesis Testing</CardTitle>
+                      <CardTitle className="text-sm">Power & Sample Size Paired-Sample Mean Hypothesis Testing</CardTitle>
                     </CardHeader>
                     <CardContent className="text-xs">
                       <div>
@@ -1561,9 +1581,9 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                             <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value=">">&gt;</SelectItem>
-                          <SelectItem value="≠">≠</SelectItem>
-                          <SelectItem value="<">&lt;</SelectItem>
+                          <SelectItem value=">">&gt; 0</SelectItem>
+                          <SelectItem value="≠">≠ 0</SelectItem>
+                          <SelectItem value="<">&lt; 0</SelectItem>
                         </SelectContent>
                         </Select> 
                         
@@ -1589,7 +1609,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                       </div>
                       
                       <div>
-                      Mean (μ): 
+                      Mean of paired difference (μ<sub>d</sub>): 
                         
                         <Input
                           type="number"
@@ -1600,13 +1620,13 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                               "power1SMeanMean", 
                               e.target.value === '' ? '' : parseFloat(e.target.value)
                           )}
-                          placeholder="Enter mean value (μ)"
+                          placeholder="Enter mean of difference (μsub>d</sub>)"
                           className="mt-1"
                         />
                         
                       </div>
                       <div>
-                      Standard Deviation (σ): 
+                      Standard Deviation of paired difference (σ<sub>d</sub>): 
                         
                         <Input
                           type="number"
@@ -1618,36 +1638,22 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                               "power1SMeanStdev", 
                               e.target.value === '' ? '' : parseFloat(e.target.value)
                           )}
-                          placeholder="Enter standard deviation value (σ)"
+                          placeholder="Enter standard deviation of difference (σ<sub>d</sub>)"
                           className="mt-1"
                         />
                         
                       </div>
-                      <div>
-                      Hypothesized difference μd (H0): 
-                        
-                        <Input
-                          type="number"
-                          step="any"
-                          value={ContCTQPairedSampleHypTestData[ctqId]?.power1SMeanH0 ?? ''}
-                          onChange={(e) => updateContCTQPairedSampleHypTestDataField(
-                              ctqId, 
-                              "power1SMeanH0", 
-                              e.target.value === '' ? '' : parseFloat(e.target.value)
-                          )}
-                          placeholder="Enter hypothesized mean difference (H0)"
-                          className="mt-1"
-                        />
+                     
+                      <div>                      
+                        Hypothesized difference δ0 (H0): 0
                       </div>
 
-                      <div className="font-medium text-sm">Delta (δ = μ-μd): {(ContCTQPairedSampleHypTestData[ctqId]?.power1SMeanMean -  ContCTQPairedSampleHypTestData[ctqId]?.power1SMeanH0).toFixed(3)}
-                      </div>
                       <div className="font-medium text-sm">
                       
                       <Badge
                         variant="default"
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                        title={ "Estimated minimum Sample Size and Actual Power of the test" }
+                        title={ "Estimated minimum size of each data sample and and Actual Power of the test" }
                       >
                         Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower*100).toFixed(2)}%
@@ -1673,25 +1679,25 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
           )}
           <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
             
-          <div className="w-1/3 min-w-[100px] pr-4">
-            <Label>Hypothesized mean μ0 (H0):</Label>
+          <div className="w-1/2 min-w-[200px] pr-4">
+            <Label>Hypothesized difference δ0 (H0):</Label>
             <Input
                 type="number"
                 step="any"
-                value={ContCTQPairedSampleHypTestData[ctqId]?.targetMean ?? ''}
+                value={ContCTQPairedSampleHypTestData[ctqId]?.H0difference ?? ''}
                 onChange={(e) => updateContCTQPairedSampleHypTestDataField(
                     ctqId, 
-                    "targetMean", 
+                    "H0difference", 
                     e.target.value === '' ? '' : parseFloat(e.target.value)
                 )}
-                placeholder="Enter Hypothesized mean μ0 (H0)"
+                placeholder="Enter Hypothesized difference δ0 (H0)"
                 className="mt-1"
             />
           </div>
-          </div> 
-          <div className="grid grid-cols-3 pr-10 gap-12">
+          
+          {/* <div className="grid grid-cols-3 pr-10 gap-12"> */}
             
-          <div className="w-1/3 min-w-[200px] pr-4">
+          <div className="w-1/2 min-w-[200px] pr-4">
           <Label htmlFor="alternativemean">Ha hypothesis for Mean</Label>
           <Select value={alternativemean} onValueChange={setAlternativemean}>
           <SelectTrigger id="alternativemean">
@@ -1704,10 +1710,11 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
           </SelectContent>
           </Select>
           </div>
-          </div>
+          </div> 
+          {/*</div>*/}
 
           <div>
-           <div className="grid grid-cols-2 gap-4 pr-4">
+           <div className="grid grid-cols-1 gap-4 pr-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
             <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
@@ -2262,48 +2269,73 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
               {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
             </Button>
            </div>
-           {((pairedsampleMeanTestresult) && ( testResults.sampleSize > 1)) && ( 
+           {((pairedsampleMeanTestresult) && ( testResults.sampleSize > 1) && ( testResults.sampleSize1 > 1) && ( testResults.sampleSize2 > 1)) && ( 
            <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
-            <Card className="p-2">
-            <CardTitle className="text-lg">Results:</CardTitle>    
-            <Badge
-              variant="default"
-              className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
-              title={
-                testResults.ADp_Value >= parseFloat(significanceLevel)
-                  ? `Data follows normal distribution (P-Value ≥ ${significanceLevel})`
-                  : `Data does not follow normal distribution (P-Value < ${significanceLevel})`
-              }
-            >
-              {testResults.ADp_Value >= parseFloat(significanceLevel)
-                ? "Data follows normal distribution"
-                : "Data does not follow normal distribution"}
-            </Badge>
-            <div className="text-gray-600 font-medium">Dataset 1 Description:&nbsp;
-            {ContCTQPairedSampleHypTestData[ctqId]?.dataset1description}</div>
-            <div className="text-gray-600 font-medium">Dataset 2 Description:&nbsp;
-            {ContCTQPairedSampleHypTestData[ctqId]?.dataset2description}</div>
-            <div className="text-gray-600 font-medium">Paired sample size:&nbsp;
-            {testResults.sampleSize}</div>
-            <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
-            {parseFloat(significanceLevel)*100}%</div>
-            <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
-            {testResults.ADvalue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
-            {testResults.ADp_Value.toFixed(3)}</div>
-            
-            </Card>
-            <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className =  "p-4 grid grid-cols-2 gap-4 text-sm">
+              <Card className="p-2">
+              <CardTitle className="text-lg">Results:</CardTitle>    
+              <Badge
+                variant="default"
+                className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value1 >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+                title={
+                  testResults.ADp_Value1 >= parseFloat(significanceLevel)
+                    ? `Dataset 1 distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
+                    : `Dataset 1 distribution does not follow normal distribution (P-Value < ${significanceLevel})`
+                }
+              >
+                {testResults.ADp_Value1 >= parseFloat(significanceLevel)
+                  ? "Dataset 1 follows normal distribution"
+                  : "Dataset 1 does not follow normal distribution"}
+              </Badge>
+              <div className="text-gray-600 font-medium">Dataset 1 Description:&nbsp;
+              {ContCTQPairedSampleHypTestData[ctqId]?.dataset1description}</div>
+              <div className="text-gray-600 font-medium">Sample size:&nbsp;
+              {testResults.sampleSize1}</div>
+              <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+              {parseFloat(significanceLevel)*100}%</div>
+              <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+              {testResults.ADvalue1.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+              {testResults.ADp_Value1.toFixed(3)}</div> 
+              </Card>
+  
+              <Card className="p-2">
+              <CardTitle className="text-lg">Results:</CardTitle>    
+              <Badge
+                variant="default"
+                className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.ADp_Value2 >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+                title={
+                  testResults.ADp_Value2 >= parseFloat(significanceLevel)
+                    ? `Dataset 2 distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
+                    : `Dataset 2 distribution does not follow normal distribution (P-Value < ${significanceLevel})`
+                }
+              >
+                {testResults.ADp_Value2 >= parseFloat(significanceLevel)
+                  ? "Dataset 2 follows normal distribution"
+                  : "Dataset 2 does not follow normal distribution"}
+              </Badge>
+              <div className="text-gray-600 font-medium">Dataset 2 Description:&nbsp;
+              {ContCTQPairedSampleHypTestData[ctqId]?.dataset2description}</div>
+              <div className="text-gray-600 font-medium">Sample size:&nbsp;
+              {testResults.sampleSize2}</div>
+              <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+              {parseFloat(significanceLevel)*100}%</div>
+              <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+              {testResults.ADvalue2.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+              {testResults.ADp_Value2.toFixed(3)}</div> 
+              </Card>
+              </div>
+            <div className="grid grid-cols-1 gap-2 text-sm">
               
               <Card className="p-2">                
                 <CardTitle className="text-lg">Paired-Sample Mean test:</CardTitle>
                 <div className="text-lg justify-left">Student T-test:</div>
-                <div className="text-gray-600 font-medium">Mean (μ):&nbsp;
+                <div className="text-gray-600 font-medium">Mean of paired difference (μ<sub>d</sub>):&nbsp;
                   {testResults.meanValue.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">SE Mean:&nbsp;
                   {testResults.SEmean.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Standard Deviation (σ):&nbsp;
+                <div className="text-gray-600 font-medium">Standard Deviation of paired difference (σ<sub>d</sub>):&nbsp;
                   {testResults.stdev.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Hypothesized difference μd (H0):&nbsp;
+                <div className="text-gray-600 font-medium">Hypothesized difference δ0 (H0):&nbsp;
                   {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}</div>
                 <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
                   {parseFloat(significanceLevel)*100}%</div>
@@ -2317,12 +2349,12 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                       : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`
                   }
                  >
-                  {alternativemean==='Less than' ? "H0: μ ≥ "
-                  : ( alternativemean==='Greater than' ? "H0: μ ≤ "
-                    :"Ha: μ = " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
-                  {alternativemean==='Less than' ? "Ha: μ < "
-                  : ( alternativemean==='Greater than' ? "Ha: μ > "
-                    :"Ha: μ ≠ " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
+                  {alternativemean==='Less than' ? 'H0: μd ≥ '
+                  : ( alternativemean==='Greater than' ? "H0: μd ≤ "
+                    :"H0: μd = " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
+                  {alternativemean==='Less than' ? "Ha: μd < "
+                  : ( alternativemean==='Greater than' ? "Ha: μd > "
+                    :"Ha: μd ≠ " )} {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}<br></br>
                   {testResults.tp_Value < parseFloat(significanceLevel)
                     ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
                     : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`}
@@ -2343,7 +2375,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                 </div>
                 <div className="text-gray-600 font-medium">T-test P-value:&nbsp;
                   {testResults.tp_Value.toFixed(4)}</div>
-                <div className="text-gray-600 font-medium">CI {(100*(1-parseFloat(significanceLevel)))}% for μd: [
+                <div className="text-gray-600 font-medium">CI {(100*(1-parseFloat(significanceLevel)))}% for μ<sub>d</sub>: [
                 {testResults.meanCI_minus.toFixed(3)}, {testResults.meanCI_plus.toFixed(3)}]</div>
               </Card>       
             </div>
@@ -2353,7 +2385,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
            {/* Paired sample Student mean test BoxPlot visualization when showBoxPlot is true */}
            {showBoxPlot && testResults.dataValues.length > 1 && (
             <div className="mt-6">
-              <BoxPlotWith1SMeanTest
+              <BoxPlotWithPairedSMeanTest
                 data={testResults.dataValues}
                 ctqName={ctqName}
                 mean={testResults.meanValue}
@@ -2363,6 +2395,8 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                 title={`Paired-Sample Mean T-Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
                 pValue={testResults.tp_Value}
                 alphalevel={significanceLevel}
+                description1={ContCTQPairedSampleHypTestData[ctqId]?.dataset1description}
+                description2={ContCTQPairedSampleHypTestData[ctqId]?.dataset2description}
               />
             </div>
            )}
