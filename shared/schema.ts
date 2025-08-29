@@ -1287,17 +1287,9 @@ export const continuousCtqAnalysisConfig = pgTable(
     enableContYHypothesisTest: boolean("enable_cont_y_hypothesis_test").default(
       true,
     ),
-    enableContYSimpleRegression: boolean(
-      "enable_cont_y_simple_regression",
-    ).default(false),
     enableContYMultiVariChart: boolean(
       "enable_cont_y_multi_vari_chart",
     ).default(false),
-    enableContYANOVA2way: boolean("enable_cont_y_anova_2way").default(false),
-    enableContYMultipleRegression: boolean(
-      "enable_cont_y_multiple_regression",
-    ).default(false),
-    enableContYDOE: boolean("enable_cont_y_doe").default(false),
     enablePareto: boolean("enable_pareto").default(false),
 
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),

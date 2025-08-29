@@ -93,7 +93,7 @@ export default function BoxPlotWithPairedSMeanTest({
   
   const ctq1 = description1 || 'Dataset #1';
   const ctq2 = description2 || 'Dataset #2';
-  const boxplottext = 'Boxplot of paired difference (' + ctq1 + ' vs ' + ctq2 + ')';
+  const boxplottext = 'Boxplot of paired difference (' + ctq1 + ' - ' + ctq2 + ')';
 
   const boxplotofctq1txt = 'Boxplot of '  + ctq1;
   const mu_subscript_d = 'μ<sub>d</sub>';
