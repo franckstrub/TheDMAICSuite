@@ -1504,7 +1504,7 @@ export function calculate1SMeanSampleSize(
   if (oneSMeanAlpha <= 0 || oneSMeanAlpha >= 1) {
     throw new Error("Alpha must be between 0 and 1");
   }
-  if (power1SMeanStdev <= 0 || power1SMeanMean === power1SMeanH0) {
+  if (power1SMeanStdev <= 0) {
     return { sampleSize: 0, actualPower: 0 };
   }
 
@@ -1792,7 +1792,7 @@ export function calculate2SMeanSampleSize(
   if (alpha <= 0 || alpha >= 1) {
     throw new Error("Alpha must be between 0 and 1");
   }
-  if (power2SMeanStdev <= 0 || power2SMeanMean1 === power2SMeanMean2) {
+  if (power2SMeanStdev <= 0) {
     return { sampleSize: 0, actualPower: 0 };
   }
 
@@ -2713,7 +2713,7 @@ export function calculatePairedSMeanSampleSize(
   if (oneSMeanAlpha <= 0 || oneSMeanAlpha >= 1) {
     throw new Error("Alpha must be between 0 and 1");
   }
-  if (power1SMeanStdev <= 0 || power1SMeanMean === power1SMeanH0) {
+  if (power1SMeanStdev <= 0) {
     return { sampleSize: 0, actualPower: 0 };
   }
 

@@ -1482,6 +1482,75 @@ export type InsertTwoSampleHypothesisConfig = z.infer<
 export type TwoSampleHypothesisConfig =
   typeof twoSampleHypothesisConfig.$inferSelect;
 
+// Paired Sample Hypothesis Testing Configuration - stores user data and settings for paired-sample tests
+export const pairedSampleHypothesisConfig = pgTable(
+  "paired_sample_hypothesis_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
+
+    // Test configuration
+    testType: text("test_type").default("Paired Sample Hyp-Test"),
+
+    // Statistical parameter enablers
+    enableMeanTest: boolean("enable_mean_test").default(true),
+
+    // Target values for hypothesis tests
+    h0Difference: real("h0_difference").default(0), // H0: μd = h0Difference
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternativemean: text("alternativemean").default("Less than"),
+
+    // Data points for both datasets (paired observations)
+    dataSet1: jsonb("data_set_1")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+    dataSet2: jsonb("data_set_2")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+
+    // Dataset descriptions
+    dataset1Description: text("dataset_1_description"),
+    dataset2Description: text("dataset_2_description"),
+
+    // Power analysis fields for Mean Test
+    enableMean1SPower: boolean("enable_mean_1s_power").default(false),
+    power1SMeanPower: text("power_1s_mean_power"),
+    power1SMeanHa: text("power_1s_mean_ha"),
+    power1SMeanMean: real("power_1s_mean_mean"),
+    power1SMeanH0: real("power_1s_mean_h0"),
+    power1SMeanStdev: real("power_1s_mean_stdev"),
+    power1SMeanAlpha: text("power_1s_mean_alpha"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertPairedSampleHypothesisConfigSchema = createInsertSchema(
+  pairedSampleHypothesisConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertPairedSampleHypothesisConfig = z.infer<
+  typeof insertPairedSampleHypothesisConfigSchema
+>;
+export type PairedSampleHypothesisConfig =
+  typeof pairedSampleHypothesisConfig.$inferSelect;
+
 // Main Hypothesis Testing Configuration - stores which types of hypothesis tests are enabled
 export const hypothesisTestingConfig = pgTable(
   "hypothesis_testing_config",

@@ -1,7 +1,7 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 
-interface BoxPlotWith1SMeanTestProps {
+interface BoxPlotWithPairedSMeanTestProps {
   data: number[];
   ctqName: string;
   mean: number
@@ -11,9 +11,11 @@ interface BoxPlotWith1SMeanTestProps {
   title?: string;
   pValue: number;
   alphalevel: string;
+  description1: string | undefined;
+  description2: string | undefined;
 }
 
-export default function BoxPlotWith1SMeanTest({
+export default function BoxPlotWithPairedSMeanTest({
   data,
   ctqName,
   mean,
@@ -22,8 +24,10 @@ export default function BoxPlotWith1SMeanTest({
   confidenceInterval,
   title,
   pValue,
-  alphalevel
-}: BoxPlotWith1SMeanTestProps): JSX.Element {
+  alphalevel,
+  description1,
+  description2,
+}: BoxPlotWithPairedSMeanTestProps): JSX.Element {
   if (!data || data.length === 0) {
     return <div>No data available for visualization</div>;
   }
@@ -33,16 +37,16 @@ export default function BoxPlotWith1SMeanTest({
   var Hatext: string;
   switch (Ha) {
     case "Less than":
-      Hatext = Confidence + `% CI for Ha: μ < ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: μ<sub>d</sub> < ${h0Value}`;
       break;
     case "Greater than":
-      Hatext = Confidence + `% CI for Ha: μ > ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: μ<sub>d</sub> > ${h0Value}`;
       break;
     case "Different":
-      Hatext = Confidence + `% CI for Ha: μ ≠ ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: μ<sub>d</sub> ≠ ${h0Value}`;
       break;
     default:
-      Hatext = Confidence + `% CI for Ha: μ ≠ ${h0Value}`;
+      Hatext = Confidence + `% CI for Ha: μ<sub>d</sub> ≠ ${h0Value}`;
   }
   let shownconfidenceInterval: [number, number] = [...confidenceInterval];
   let CIminustext: string = 'CI-';
@@ -59,7 +63,7 @@ export default function BoxPlotWith1SMeanTest({
   const yExtraScale=(Math.max(...data, h0Value) - Math.min(...data, h0Value))/5;  
   const yBadge = (Math.max(...data, h0Value) - Math.min(...data,h0Value)) + Math.min(...data, h0Value) + yExtraScale;
 
-  let BadgetextH0='H0: μ ';
+  let BadgetextH0='H0: μ<sub>d</sub> ';
   if (Ha==='Less than'){
     BadgetextH0 = BadgetextH0 + ` ≥ ${h0Value}`
   }
@@ -70,7 +74,7 @@ export default function BoxPlotWith1SMeanTest({
     BadgetextH0 = BadgetextH0 + ` = ${h0Value}`
   }
 
-  let Badgetext=BadgetextH0+'<br>Ha: μ ';
+  let Badgetext=BadgetextH0+'<br>Ha: μ<sub>d</sub> ';
   if (Ha==='Less than'){
     Badgetext = Badgetext + ` < ${h0Value}`
   }
@@ -86,7 +90,12 @@ export default function BoxPlotWith1SMeanTest({
   else {
     Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} ≥ ${alphalevel})`;
   }
-  const boxplottext = 'Boxplot of ' + ctqName;
+  
+  const ctq1 = description1 || 'Dataset #1';
+  const ctq2 = description2 || 'Dataset #2';
+  const boxplottext = 'Boxplot of paired difference (' + ctq1 + ' vs ' + ctq2 + ')';
+
+  const boxplotofctq1txt = 'Boxplot of '  + ctq1;
 
   return (
     <div className="w-full h-[400px]">
@@ -116,7 +125,7 @@ export default function BoxPlotWith1SMeanTest({
             y: [mean],
             type: 'scatter',
             mode: 'markers',
-            name: 'μ',
+            name: 'μd',
             marker: { color: 'red', size: 8, symbol: 'circle' },
           },
           {
@@ -124,7 +133,7 @@ export default function BoxPlotWith1SMeanTest({
             y: [h0Value],
             type: 'scatter',
             mode: 'markers',
-            name: 'μ0 (H0)',
+            name: 'δ0 (H0)',
             marker: { color: 'black', size: 8, symbol: 'square' },
           },
           {
@@ -158,7 +167,7 @@ export default function BoxPlotWith1SMeanTest({
           },
           yaxis: { 
             title: {
-              text: ctqName
+              text: 'Paired Difference of ' + ctqName
             },
           showline: true,
           },
@@ -215,7 +224,7 @@ export default function BoxPlotWith1SMeanTest({
               {
                 x: 0.0,
                 y: mean,
-                text: 'μ',
+                text: 'μd',
                 showarrow: false,
                 font: { size: 12, color: 'red' },
                 xanchor: 'center',
@@ -225,7 +234,7 @@ export default function BoxPlotWith1SMeanTest({
               {
                 x: 1.03,
                 y: mean,
-                text: 'μ',
+                text: 'μd',
                 showarrow: false,
                 font: { size: 12, color: 'red' },
                 xanchor: 'left',
@@ -234,7 +243,7 @@ export default function BoxPlotWith1SMeanTest({
               {
                 x: 1.03,
                 y: h0Value,
-                text: 'μ0 (H0)',
+                text: 'δ0 (H0)',
                 showarrow: false,
                 font: { size: 12, color: 'black' },
                 xanchor: 'left',
@@ -276,7 +285,7 @@ export default function BoxPlotWith1SMeanTest({
                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'], // Remove specific tools
                     toImageButtonOptions: {
                         format: 'png',
-                        filename: '1-sample Student Mean test',
+                        filename: 'Paired-sample Student Mean test',
                         height: 500,
                         width: 700,
                         scale: 1
