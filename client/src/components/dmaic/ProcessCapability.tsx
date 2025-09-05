@@ -2997,7 +2997,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                   <h4 className="font-semibold text-purple-800 mb-2">OEE (Overall Equipment Effectiveness)</h4>
                                   <div className="grid grid-cols-1 gap-4 text-sm">
                                     {/*<div className="space-y-2">
-                                      *<div className="flex justify-between">
+                                      <div className="flex justify-between">
                                         <span className="font-medium">SCHEDULED TIME</span>
                                         <span className="text-purple-700">{scheduledTime.toFixed(1)}</span>
                                         <span className="text-xs text-gray-500">hours</span>
