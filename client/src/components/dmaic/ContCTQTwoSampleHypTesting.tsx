@@ -2023,7 +2023,7 @@ useEffect(() => {
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
                         title={ "Estimated minimum size of each data sample and actual power of the test" }
                       >
-                        Sample Size (n): {PowerSampleSizeResults.twoSMeansampleSize.toFixed(0)} <br />
+                        Sample Size (n): {PowerSampleSizeResults.twoSMeansampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.twoSMeanactualPower*100).toFixed(2)}%
                       </Badge>
                       </div>
@@ -2145,7 +2145,7 @@ useEffect(() => {
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
                         title={ "Estimated minimum size of each data sample and actual power of the test" }
                       >
-                        Sample Size (n): {PowerSampleSizeResults.twoSVariancesampleSize.toFixed(0)} <br />
+                        Sample Size (n): {PowerSampleSizeResults.twoSVariancesampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.twoSVarianceactualPower*100).toFixed(2)}%
                       </Badge>
                       </div>

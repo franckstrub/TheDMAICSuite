@@ -1681,7 +1681,7 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
                         title={ "Estimated minimum size of each data sample and and Actual Power of the test" }
                       >
-                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(0)} <br />
+                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower*100).toFixed(2)}%
                       </Badge>
                       
