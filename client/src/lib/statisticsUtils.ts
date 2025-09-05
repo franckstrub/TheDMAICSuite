@@ -2926,7 +2926,7 @@ export function calculateMultipleSMeanSampleSize(
     } else {
       low = mid + 1;
     }
-  }
+  };
  //bestPower = currentPower;  
   // If we didn't find a solution within range, calculate actual power for max n
   if (bestPower < targetPower) {
