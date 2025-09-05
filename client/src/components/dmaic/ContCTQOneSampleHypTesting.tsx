@@ -2075,10 +2075,7 @@ useEffect(() => {
             </Button>
 {/* Run Test Button 
             <Button
-              className={`w-full ${!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest} &
-                ${!ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest} &
-                ${!ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest} ? 'opacity-50 cursor-not-allowed' : ''
-              `}
+              className={`w-full ${(!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && !ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && !ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest &&
                 !ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest &&
                 !ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest}
