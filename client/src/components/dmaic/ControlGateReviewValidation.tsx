@@ -896,7 +896,7 @@ export default function controlGateReviewValidation({ projectId }: controlGateRe
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : (
-                                /* Only show paperclip for user-added deliverables if no file exists */
+                                // Only show paperclip for user-added deliverables if no file exists
                                 deliverable.isRequired === "Added by User" && (
                                   <TooltipProvider>
                                     <Tooltip>
