@@ -301,7 +301,7 @@ export default function MSAAttributeStatisticsDisplay({
                   {getStatusIcon(appraiser.repeatability.Percent)}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Progress value={appraiser.repeatability} className="flex-1" />
+                  <Progress value={appraiser.repeatability.Percent} className="flex-1" />
                   <span className={`text-sm font-medium hover:bg-gray-200 ${getAgreementColor(appraiser.repeatability.Percent)}`}
                   title={`${getTitle(appraiser.repeatability.Percent)}: ${appraiser.repeatability.NbFullRowAgrees} / ${appraiser.repeatability.NbRows}`}>
                     {formatPercentage(appraiser.repeatability.Percent)}
