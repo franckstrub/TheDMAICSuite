@@ -6,19 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Trash2, Undo } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  mean, 
-  standardDeviation, 
-  variance,
-  calculateMultipleSMeanSampleSize,
-} from "@/lib/statisticsUtils";
-
 
 interface DataPoint {
-  indexRowNumber: number;
+  indexNumber: number;
   dataValue: number;
 }
 
@@ -26,27 +17,15 @@ interface ContCTQMultipleSampleHypTestData {
   id?: number;
   ctq: string;
   ctqId?: number;
-  testType: 'Multiple-Sample Hyp test'
-  enableMeanTest: boolean;
-  enableMeanMultipleSPower: boolean;
-  powerPower: string;
-  powerAlpha: string;
-  powerNbrDistri: number;
-  powerDifference: number;
-  powerStdev: number;
-  significanceLevel: string;
-  alternateMean: string;
+  testType: string;
+  enableMeanTest?: boolean;
   enableVarianceTest?: boolean;
-  alternateVariance: string;
-  enableMedianTest: boolean;
-  alternateMedian: string;
-  dataPoints: DataPoint[];
-  datasetDescription: string[];
-}
-
-interface PowerSampleSizeResults {
-  multipleSMeansampleSize: number;
-  multipleSMeanactualPower: number;
+  enableMedianTest?: boolean;
+  targetMean?: number;
+  targetStdev?: number;
+  targetMedian?: number;
+  dataPoints?: DataPoint[];
+  datasetdescription?: string;
 }
 
 interface ContCTQMultipleSampleHypTestingProps {
@@ -59,117 +38,39 @@ interface ContCTQMultipleSampleHypTestingProps {
 
 export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQMultipleSampleHypTestingProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
-  const [alternateMean, setAlternateMean] = useState("Less than");
-  const [alternateVariance, setAlternateVariance] = useState("Less than");
-  const [alternateMedian, setAlternateMedian] = useState("Less than");
-  const [PowerMultipleSMeanPower, setPowerMultipleSMeanPower] = useState("0.90");
-  const [powerMultipleSMeanAlpha, setPowerMultipleSMeanAlpha] = useState("0.05");
-  const [powerMultipleSMeanHa, setPowerMultipleSMeanHa] = useState('≠');
-  const [PowerSampleSizeResults, setPowerSampleSizeResults] = useState<PowerSampleSizeResults>({
-      multipleSMeansampleSize: 0,
-      multipleSMeanactualPower: 0,
-    });
+  const [alternative, setAlternative] = useState("Less than");
   const [testResult, setTestResult] = useState({
-    MeanTestStatistic: -3.45,
-    MeanTestCriteria: 3.12,
-    MeanTestpValue: 0.002,
-    VarianceTestStatistic: 2.45,
-    VarianceTestCriteria: 2.12,
-    VarianceTestpValue: 0.022,
-    MedianTestStatistic: -1.45,
-    MedianTestCriteria: -1.12,
-    MedianTestpValue: 0.004,
+    tStatistic: -3.45,
+    pValue: 0.002,
+    conclusion: "Reject null hypothesis",
+    explanation: "There is a statistically significant difference between the before and after measurements."
   });
 
   // Data input state for One Sample test
+  const [dataPoints, setDataPoints] = useState<DataPoint[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [pasteInput, setPasteInput] = useState("");
+  const [focusedCell, setFocusedCell] = useState<number>(-1);
+  const [editingCell, setEditingCell] = useState<number>(-1);
+  const [editValue, setEditValue] = useState<string>("");
+  const [undoState, setUndoState] = useState<DataPoint[] | null>(null);
+  const [showUndoButton, setShowUndoButton] = useState(false);
 
   // Initialize ContCTQMultipleSampleHypTestData with default values
-  // Fixed state initialization
   const [ContCTQMultipleSampleHypTestData, setContCTQMultipleSampleHypTestData] = useState<{ [ctqId: number]: ContCTQMultipleSampleHypTestData }>(() => ({
-  [ctqId]: {
-    ctq: ctqName,
-    testType: "Multiple-Sample Hyp test", // Fixed: added missing hyphen to match interface
-    enableMeanTest: false,
-    enableMeanMultipleSPower: false,
-    powerPower: "0.90" ,
-    powerAlpha: "0.05" ,
-    powerNbrDistri: 2,
-    powerDifference: 0,
-    powerStdev: 0,
-    significanceLevel: "0.05",
-    alternateMean: "Less than",
-    enableVarianceTest: false,
-    alternateVariance: "Less than",
-    enableMedianTest: false,
-    alternateMedian: "Less than",
-    dataPoints: [], 
-    datasetDescription: [""],
-  } 
+    [ctqId]: {
+      ctq: ctqName,
+      testType: "One Sample Hyp-Test",
+      enableMeanTest: false,
+      enableVarianceTest: false,
+      enableMedianTest: false,
+      targetMean: 0,
+      targetStdev: 0,
+      targetMedian: 0,
+      datasetdescrition: "",
+    }
   }));
-
-  // Mutation for saving data to database
-    const saveConfigMutation = useMutation({
-      mutationFn: async (configData: any) => {
-        const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/multiple-sample-hypothesis-config`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(configData),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`${response.status}: ${errorText}`);
-        }        
-        return response.json();
-      },
-      onSuccess: () => {
-        toast({
-          title: "Configuration Saved",
-          description: "Multiple-sample hypothesis testing configuration has been saved successfully.",
-        });
-        // Invalidate the query to refresh data
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/multiple-sample-hypothesis-config`] });
-      },
-      onError: (error: any) => {
-        toast({
-          title: "Save Failed",
-          description: "Failed to save configuration. Please try again.",
-          variant: "destructive",
-        });
-      },
-    });
-
-  // Function to save current configuration to database
-  const saveConfiguration = () => {
-    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
-    if (!currentConfig) return;
-    
-    const configToSave = {
-      testType: currentConfig.testType,
-      enableMeanTest: currentConfig.enableMeanTest,
-      enableMeanMultipleSPower: currentConfig.enableMeanMultipleSPower,
-      powerPower: currentConfig.powerPower,
-      powerAlpha: currentConfig.powerAlpha ,
-      powerNbrDistri: currentConfig.powerNbrDistri,
-      powerDifference: currentConfig.powerDifference,
-      powerStdev: currentConfig.powerStdev,
-      significanceLevel: currentConfig.significanceLevel,
-      alternateMean: currentConfig.alternateMean,
-      enableVarianceTest: currentConfig.enableVarianceTest,
-      alternateVariance: currentConfig.alternateVariance,
-      enableMedianTest: currentConfig.enableMedianTest,
-      alternateMedian: currentConfig.alternateMedian,
-      dataPoints: currentConfig.dataPoints,
-      datasetDescription: currentConfig.datasetDescription,
-    };
-    
-    saveConfigMutation.mutate(configToSave);
-  };
 
   const updateContCTQMultipleSampleHypTestDataField = (
     ctqId: number, 
@@ -185,87 +86,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     }));
   };
 
-  const handlePowerSampleSize = (    
-    enableMeanMultipleSPower: boolean,
-    powerPower:string,
-    powerAlpha: string,
-    powerNbrDistri: number,
-    powerDifference: number,
-    powerStdev: number,
-  ): PowerSampleSizeResults => {
-  
-    // Initialize with default values
-    
-    let nMean = 0;
-    let actualMeanPower=0;
-    let nVariance = 0;
-    let actualVariancePower=0;
-  
-    if(enableMeanMultipleSPower) {
-      if(isNaN(parseFloat(powerPower))) {
-        toast({
-          title: "Multiple Sample-Mean Power & Sample Size test run Unsuccessfully",
-          description: "No valid Mean Power value. The Mean Power & Sample Size test has not been executed.",
-        });
-      }
-      else {
-        const result = calculateMultipleSMeanSampleSize(
-          powerPower,
-          powerNbrDistri,
-          powerDifference,
-          powerStdev,
-          powerAlpha,
-        );
-        nMean=result.sampleSize;
-        actualMeanPower= result.actualPower;      
-      }
-    };
-  
-    setPowerSampleSizeResults(PowerSampleSizeResults);
-    toast({
-          title: "Power & Sample Size test Run Successfully",
-          description: "The Power & Sample Size tests have been executed.",
-        });
-    return {
-      multipleSMeansampleSize: nMean,
-      multipleSMeanactualPower: actualMeanPower,
-    };  
-  }
-  
-  {/* on input change, update ContCTQTwoSampleHypTestData state */}
-  useEffect(() => {
-    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
-    if (!currentConfig) return;
-  
-    const results = handlePowerSampleSize(
-      //testType: currentConfig.testType,
-      //enableMeanTest: currentConfig.enableMeanTest,
-      currentConfig.enableMeanMultipleSPower ?? false,
-      currentConfig.powerPower ?? "0.90",
-      currentConfig.powerAlpha ?? "0.05",
-      currentConfig.powerNbrDistri ?? 2,
-      currentConfig.powerDifference ?? 0,
-      currentConfig.powerStdev ?? 0,
-      //currentConfig.significanceLevel,
-      //currentConfig.alternateMean,
-      //currentConfig.enableVarianceTest,
-      //currentConfig.alternateVariance,
-      //currentConfig.enableMedianTest,
-      //currentConfig.alternateMedian,
-      //currentConfig.dataPoints,
-      //currentConfig.datasetDescription,
-    );
-  
-    setPowerSampleSizeResults(results);
-  }, [
-    ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanMultipleSPower,
-    ContCTQMultipleSampleHypTestData[ctqId]?.powerPower,
-    ContCTQMultipleSampleHypTestData[ctqId]?.powerAlpha,
-    ContCTQMultipleSampleHypTestData[ctqId]?.powerNbrDistri,
-    ContCTQMultipleSampleHypTestData[ctqId]?.powerDifference,
-    ContCTQMultipleSampleHypTestData[ctqId]?.powerStdev,
-  ]);
-
   const handleRunTest = () => {
     toast({
       title: "Test Run Successfully",
@@ -273,7 +93,230 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     });
   };
 
-  // useEffect
+
+
+  // Undo function - restore to previous state and clear undo state (like ProcessCapability)
+  const handleUndo = () => {
+    if (undoState) {
+      setDataPoints(JSON.parse(JSON.stringify(undoState)));
+      setUndoState(null); // Clear the undo state after using it
+      setShowUndoButton(false);
+      
+      toast({
+        title: "Undo Complete",
+        description: "Previous operation has been undone",
+      });
+    }
+  };
+
+  // Functions for data input
+  const addDataPoint = (value: string) => {
+    if (!value.trim()) return;
+    
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return;
+    
+    // Save current state before making changes
+    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+    
+    setDataPoints(prev => [
+      ...prev,
+      { indexNumber: prev.length + 1, dataValue: numericValue }
+    ]);
+    
+    setInputValue("");
+  };
+
+  const handleDeleteDataPoint = (index: number) => {
+    // Save current state before making changes
+    setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+    
+    setDataPoints(prev => {
+      const updatedPoints = prev.filter((_, i) => i !== index);
+      // Re-index the remaining points
+      const reindexedPoints = updatedPoints.map((point, i) => ({
+        ...point,
+        indexNumber: i + 1
+      }));
+      return reindexedPoints;
+    });
+    
+    toast({
+      title: "Data Point Deleted",
+      description: "The data point has been removed and the list has been re-indexed.",
+    });
+  };
+
+  // Handle paste from Excel functionality
+  const handlePasteData = (event: React.ClipboardEvent) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const lines = pastedData.trim().split('\n');
+      const newDataPoints: DataPoint[] = [];
+      
+      lines.forEach((line, index) => {
+        const value = line.trim();
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          newDataPoints.push({
+            indexNumber: dataPoints.length + index + 1,
+            dataValue: numericValue
+          });
+        }
+      });
+      
+      if (newDataPoints.length > 0) {
+        // Save current state before making changes
+        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+        
+        setDataPoints(prev => [...prev, ...newDataPoints]);
+        setPasteInput("");
+        toast({
+          title: "Data Imported",
+          description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
+        });
+      }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    }
+  };
+
+  // Handle paste specifically for editing cells - handles multiple values starting from clicked cell
+  const handleCellPaste = (event: React.ClipboardEvent, index: number) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const lines = pastedData.trim().split('\n');
+      const newValues: number[] = [];
+      
+      lines.forEach((line) => {
+        const value = line.trim();
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+          newValues.push(numericValue);
+        }
+      });
+      
+      if (newValues.length > 0) {
+        // Save current state before making changes
+        setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+        
+        setDataPoints(prev => {
+          const updatedPoints = [...prev];
+          
+          // Update existing cells starting from the clicked index
+          newValues.forEach((value, i) => {
+            const targetIndex = index + i;
+            if (targetIndex < updatedPoints.length) {
+              // Update existing cell
+              updatedPoints[targetIndex] = {
+                ...updatedPoints[targetIndex],
+                dataValue: value
+              };
+            } else {
+              // Create new data point
+              updatedPoints.push({
+                indexNumber: updatedPoints.length + 1,
+                dataValue: value
+              });
+            }
+          });
+          
+          return updatedPoints;
+        });
+        
+        toast({
+          title: "Data Pasted",
+          description: `Successfully pasted ${newValues.length} values starting from row ${index + 1}.`,
+        });
+      }
+      else {
+       toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        }); 
+      }
+    }
+  };
+
+  // Add keyboard shortcut support for paste and undo functionality
+  useEffect(() => {
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      // Handle Ctrl+V/Cmd+V for paste - when this CTQ is active
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && activeTab === ctqName) {
+        event.preventDefault();
+        
+        // Get clipboard data
+        navigator.clipboard.readText().then(clipboardData => {
+          if (clipboardData.trim()) {
+            // Create a synthetic paste event
+            const syntheticEvent = {
+              preventDefault: () => {},
+              clipboardData: {
+                getData: (format: string) => clipboardData
+              }
+            } as unknown as React.ClipboardEvent;
+            
+            handlePasteData(syntheticEvent);
+          }
+        }).catch(error => {
+          console.error('Clipboard access failed:', error);
+          toast({
+            title: "Clipboard Access",
+            description: "Please use the 'Paste data from Excel' button or paste directly into the table.",
+            variant: "default",
+          });
+        });
+      }
+
+      // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && undoState && activeTab === ctqName) {
+        event.preventDefault();
+        handleUndo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyboardShortcut);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [undoState, activeTab, ctqName]);
+
+  // Handle cell editing
+  const startEditing = (index: number, currentValue: number) => {
+    setEditingCell(index);
+    setEditValue(currentValue.toString());
+  };
+
+  const saveEdit = (index: number) => {
+    const numericValue = parseFloat(editValue);
+    if (!isNaN(numericValue)) {
+      // Save current state before making changes
+      setUndoState(JSON.parse(JSON.stringify(dataPoints)));
+      
+      setDataPoints(prev => 
+        prev.map((point, i) => 
+          i === index ? { ...point, dataValue: numericValue } : point
+        )
+      );
+    }
+    setEditingCell(-1);
+    setEditValue("");
+  };
+
+  const cancelEdit = () => {
+    setEditingCell(-1);
+    setEditValue("");
+  };
+
+
 
   return (
     <Card>
@@ -325,143 +368,72 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 </Label>
               </div>
             </div>
-          </div> 
-          <div className="grid grid-cols-3 gap-12 items-stretch">
-            <div className="flex items-top ml-1 h-full space-x-1">
-            <Checkbox
-              id={`${ctqId}-enableMeanMultipleSPower`}
-              checked={ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanMultipleSPower || false}
-              onCheckedChange={(checked) => updateContCTQMultipleSampleHypTestDataField(ctqId, "enableMeanMultipleSPower", checked)}
-            />
-            {!ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanMultipleSPower ? (
-              <Label htmlFor={`${ctqId}-enableMeanMultipleSPower`} className="items-top text-sm font-sm text-gray-400">
-                Power & Sample Size
-              </Label>
-              ) : (
-              <div>
-                <Label htmlFor={`${ctqId}-enableMeanMultipleSPower`} className="text-sm font-medium text-gray-700">
-                Power & Sample Size
-                </Label>
-                <Card className="bg-gray-50 min-h-[420px] flex flex-col mt-1">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Power & Sample Size Multiple-Sample Mean Hypothesis Testing</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm font-medium">
-                    <div>                      
-                      <Label htmlFor='powerMultipleSMeanPower'>Power of test(1-β):</Label>
-                      <Select value={PowerMultipleSMeanPower} onValueChange={(value: string) => {
-                        setPowerMultipleSMeanPower(value);
-                      }}>
-                      <SelectTrigger id='powerMultipleSMeanPower'>
-                          <SelectValue placeholder="Select Power of test" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0.99">99%</SelectItem>
-                        <SelectItem value="0.95">95%</SelectItem>
-                        <SelectItem value="0.90">90%</SelectItem>
-                        <SelectItem value="0.85">85%</SelectItem>
-                        <SelectItem value="0.80">80%</SelectItem>
-                      </SelectContent>
-                      </Select>                     
-                    </div>
+          </div>
 
-                    <div className="mt-2 mb-2">                    
-                      Ha: At least one mean is ≠ than the other means                    
-                    </div>
-
-                    <div>
-                      <Label htmlFor="powerMultipleSMeanAlpha">Alpha (α):</Label> 
-                      <Select value={powerMultipleSMeanAlpha} onValueChange={(value: string) => {
-                        setPowerMultipleSMeanAlpha(value);
-                        //updateContCTQMultipleSampleHypTestDataField(ctqId, 'powerMultipleSMeanAlpha', value);
-                      }}>
-                      <SelectTrigger id="powerMultipleSMeanAlpha">
-                          <SelectValue placeholder="Select Alpha significance level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0.01">1%</SelectItem>
-                        <SelectItem value="0.05">5%</SelectItem>
-                        <SelectItem value="0.10">10%</SelectItem>
-                        <SelectItem value="0.15">15%</SelectItem>
-                        <SelectItem value="0.20">20%</SelectItem>
-                      </SelectContent>
-                      </Select>  
-                    </div>
-                    
-                    <div>Number of distributions to test: 
-                      <Input
+          <div className="flex flex-wrap gap-4 items-end"> {/* Changed from space-y-3 to flexbox */}
+            {ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && (
+                <div className="flex-1 min-w-[100px]"> {/* Added flex-1 and min-width for responsiveness */}
+                    <Label>Target value for mean:</Label>
+                    <Input
                         type="number"
-                        min="2"
-                        step="any"
-                        value={ContCTQMultipleSampleHypTestData[ctqId]?.powerNbrDistri ?? ''}
+                        value={ContCTQMultipleSampleHypTestData[ctqId]?.targetMean || 0}
                         onChange={(e) => updateContCTQMultipleSampleHypTestDataField(
                             ctqId, 
-                            "powerNbrDistri", 
-                            e.target.value === '' ? '' : parseFloat(e.target.value)
+                            "targetMean", 
+                            parseFloat(e.target.value) || 0
                         )}
-                        placeholder="Enter Number of distributions to test:"
+                        placeholder="Enter target mean"
                         className="mt-1"
-                      />
-                    </div>  
-                    
-                    <div>Maximum difference between means (δ): 
-                      <Input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={ContCTQMultipleSampleHypTestData[ctqId]?.powerDifference?? ''}
-                        onChange={(e) => updateContCTQMultipleSampleHypTestDataField(
-                            ctqId, 
-                            "powerDifference", 
-                            e.target.value === '' ? '' : parseFloat(e.target.value)
-                        )}
-                        placeholder="Enter Maximum difference between means (δ)"
-                        className="mt-1"
-                      />
-                    </div>  
-                    
-                    <div>Standard Deviation (σ): 
-                      <Input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={ContCTQMultipleSampleHypTestData[ctqId]?.powerStdev ?? ''}
-                        onChange={(e) => updateContCTQMultipleSampleHypTestDataField(
-                            ctqId, 
-                            "powerStdev", 
-                            e.target.value === '' ? '' : parseFloat(e.target.value)
-                        )}
-                        placeholder="Enter standard deviation value (σ)"
-                        className="mt-1"
-                      />
-                    </div>                   
-
-                    <div className="font-medium text-sm">
-                    <Badge
-                      variant="default"
-                      className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                      title={ "Estimated minimum size of each data sample and actual power of the test" }
-                    >
-                      Sample Size (n): {PowerSampleSizeResults.multipleSMeansampleSize.toFixed(0)} <br />
-                      Actual Power: {(PowerSampleSizeResults.multipleSMeanactualPower*100).toFixed(2)}%
-                    </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    />
+                </div>
             )}
-            </div>
-        </div>
-        {(ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanMultipleSPower) && (    
-          <Button 
-              className="w-full" 
-              onClick={saveConfiguration} 
-              disabled={saveConfigMutation.isPending}
-              //variant="outline"
-            >
-              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
-          </Button>
-        )}          
+            {ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && (
+                <div className="flex-1 min-w-[100px]"> {/* Added flex-1 and min-width */}
+                    <Label>Target value for variance:</Label>
+                    <Input
+                        type="number"
+                        min="-1"
+                        value={ContCTQMultipleSampleHypTestData[ctqId]?.targetStdev || 0}
+                        onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (isNaN(value)) {
+                                // If input is empty or invalid number, update to 0 or undefined based on your state logic
+                                updateContCTQMultipleSampleHypTestDataField(ctqId, "targetStdev", 0); 
+                            } else if (value < 0) {
+                                // Display toast message for negative input
+                                toast({
+                                title: "Target Variance",
+                                description: `Variance cannot be negative. Please enter a non-negative value.`
+                                });
+                                // Optionally, keep the previous valid value or set to 0
+                                updateContCTQMultipleSampleHypTestDataField(ctqId, "targetStdev", 0); // Reset to 0
+                            } else {
+                                // Valid non-negative number
+                                updateContCTQMultipleSampleHypTestDataField(ctqId, "targetStdev", value);
+                            }
+                        }}
+                        placeholder="Enter target variance"
+                        className="mt-1"
+                    />
+                </div>
+            )}
+            {ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && (
+                <div className="flex-1 min-w-[100px]"> {/* Added flex-1 and min-width */}
+                    <Label>Target value for median:</Label>
+                    <Input
+                        type="number"
+                        value={ContCTQMultipleSampleHypTestData[ctqId]?.targetMedian || 0}
+                        onChange={(e) => updateContCTQMultipleSampleHypTestDataField(
+                            ctqId, 
+                            "targetMedian", 
+                            parseFloat(e.target.value) || 0
+                        )}
+                        placeholder="Enter target median"
+                        className="mt-1"
+                    />
+                </div>
+            )}
+          </div>            
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -478,8 +450,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             </Select>
             </div>
             <div>
-            <Label htmlFor="alternateMean">Alternative Hypothesis</Label>
-            <Select value={alternateMean} onValueChange={setAlternateMean}>
+            <Label htmlFor="alternative">Alternative Hypothesis</Label>
+            <Select value={alternative} onValueChange={setAlternative}>
             <SelectTrigger id="alternative">
                 <SelectValue placeholder="Select alternative" />
             </SelectTrigger>
@@ -496,45 +468,243 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             <Label>Characterize your tested dataset:</Label>
             <Input
                 type="text"
-                value={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescription[0] || ""}
+                value={ContCTQMultipleSampleHypTestData[ctqId]?.datasetdescription || ""}
                 onChange={(e) => updateContCTQMultipleSampleHypTestDataField(
                     ctqId, 
-                    "datasetDescription", 
+                    "datasetdescription", 
                     e.target.value
                 )}
                 placeholder="Enter a description of your tested dataset"
                 className="mt-1"
             />
 
-          {/* Data Input Section for Multiple Sample Hypothesis Test */}
+          {/* Data Input Section for One Sample Hypothesis Test */}
+          <div className="space-y-4">
+            <div>
+            <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium mb-2">Data Input</label>
+                {/* Undo and Paste from Excel Section */}
+                <div className="flex gap-2 mt-2 mb-2">
+                {undoState && (
+                    <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleUndo}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                    >
+                    <Undo className="h-4 w-4 mr-1" />
+                    Undo
+                    </Button>
+                )}
+                <Button
+                    onClick={async () => {
+                    try {
+                        const clipboardData = await navigator.clipboard.readText();
+                        if (clipboardData.trim()) {
+                        // Create a synthetic paste event
+                        const syntheticEvent = {
+                            preventDefault: () => {},
+                            clipboardData: {
+                            getData: (format: string) => clipboardData
+                            }
+                        };
+                        handlePasteData(syntheticEvent as any);
+                        }
+                    } catch (error) {
+                        toast({
+                        title: "Clipboard Access",
+                        description: "Please use Ctrl+V to paste data or manually enter values.",
+                        });
+                    }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-400 text-gray-700 hover:bg-gray-100"
+                >
+                    📋 Paste data from Excel
+                </Button>
+                </div>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
+                <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
+                <div className="text-blue-700">Copy single column of numeric values from Excel</div>
+                <div className="text-blue-600 text-xs mt-1">
+                Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click table cell to paste
+                </div>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-3">
+                Enter data values and click Add, then Save Data to persist to database
+            </p>
+
+            {/* Data Table */}
+            <div className="border rounded-md">
+                <table className="min-w-full">
+                <thead className="bg-gray-50">
+                    <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Index
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Data Value
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                    {dataPoints.length === 0 ? (
+                    <tr>
+                        <td colSpan={3} className="text-center text-gray-500">
+                        <div
+                            className="cursor-pointer hover:bg-blue-50 rounded" // Added padding for better click target
+                            onClick={() => document.getElementById('add-data-input')?.focus()}
+                            onPaste={(e) => handlePasteData(e)}
+                            tabIndex={0}
+                            title="Click to focus input or paste data here"
+                        >
+                        </div>
+                        </td>
+                    </tr>
+                    ) : (
+                    dataPoints.map((point, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                            {point.indexNumber}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                            {editingCell === index ? (
+                            <Input
+                                type="number"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    saveEdit(index);
+                                } else if (e.key === 'Escape') {
+                                    cancelEdit();
+                                }
+                                }}
+                                onBlur={() => saveEdit(index)}
+                                className="w-20 h-7 text-xs"
+                                step="any"
+                                autoFocus
+                            />
+                            ) : (
+                            <div
+                                className="cursor-pointer hover:bg-blue-50 p-1 rounded"
+                                onClick={() => startEditing(index, point.dataValue)}
+                                onPaste={(e) => handleCellPaste(e, index)}
+                                tabIndex={0}
+                                title="Click to edit this value"
+                            >
+                                {point.dataValue}
+                            </div>
+                            )}
+                        </td>
+                        <td className="px-4 py-2">
+                            <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteDataPoint(index)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Delete this data point"
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </td>
+                        </tr>
+                    ))
+                    )}
+
+                    {/* Add Data Row - Integrated within the main table */}
+                    <tr className="bg-blue-50 border-t-2 border-blue-200">
+                    <td className="px-4 py-2 text-sm text-gray-500">
+                        {dataPoints.length + 1}
+                    </td>
+                    <td className="px-4 py-2">
+                        <Input
+                        id="add-data-input"
+                        type="number"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                            addDataPoint(inputValue);
+                            }
+                        }}
+                        onPaste={(e) => {
+                            e.preventDefault();
+                            const pastedData = e.clipboardData.getData('text/plain');
+                            const lines = pastedData.trim().split('\n');
+
+                            if (lines.length > 1) {
+                            // Multiple values - use the general paste handler
+                            handlePasteData(e);
+                            } else {
+                            // Single value - set it in the input field
+                            const value = lines[0]?.trim();
+                            if (value) {
+                                setInputValue(value);
+                            }
+                            }
+                        }}
+                        placeholder="Enter numeric value"
+                        className="w-full"
+                        step="any"
+                        />
+                    </td>
+                    <td className="px-4 py-2">
+                        <Button
+                        onClick={() => addDataPoint(inputValue)}
+                        disabled={!inputValue.trim()}
+                        size="sm"
+                        >
+                        Add
+                        </Button>
+                    </td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+
+            {/* Excel Import Instructions */}
+            <div className="text-xs text-blue-600 mt-2 space-y-1">
+                <div><strong>Excel Import Instructions:</strong></div>
+                <div>• <strong>Focus a cell</strong> by clicking on any measurement input field</div>
+                <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
+                <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
+                <div>• <strong>Data will automatically create new rows</strong> if needed</div>
+            </div>
+            
+            {dataPoints.length > 0 && (
+                <div className="text-sm text-gray-600 mt-2">
+                <strong>Sample size:</strong> {dataPoints.length} data points
+                </div>
+            )}
+            </div>
+          </div>
           
+          <div>
+          <Button className="w-full" onClick={handleRunTest}>
+            Run Test
+          </Button>
+          </div>
+
           <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
             <h4 className="font-medium text-sm mb-2">Results</h4>
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div>
-                <div className="text-gray-600">Mean test statistic:</div>
-                <div className="font-medium">{testResult.MeanTestStatistic}</div>
-                <div className="text-gray-600">Mean test criteria:</div>
-                <div className="font-medium">{testResult.MeanTestStatistic}</div>
-                <div className="text-gray-600">Mean test p-value:</div>
-                <div className="font-medium text-green-600">{testResult.MeanTestpValue}</div>
-              </div>
-              <div>
-                <div className="text-gray-600">Variance test statistic:</div>
-                <div className="font-medium">{testResult.VarianceTestStatistic}</div>
-                <div className="text-gray-600">Variance test criteria:</div>
-                <div className="font-medium">{testResult.VarianceTestStatistic}</div>
-                <div className="text-gray-600">Variance test p-value:</div>
-                <div className="font-medium text-green-600">{testResult.VarianceTestpValue}</div>
-              </div>
-              <div> 
-                <div className="text-gray-600">Median test statistic:</div>
-                <div className="font-medium">{testResult.MedianTestStatistic}</div>
-                <div className="text-gray-600">Median test criteria:</div>
-                <div className="font-medium">{testResult.MedianTestStatistic}</div>
-                <div className="text-gray-600">Median test p-value:</div>
-                <div className="font-medium text-green-600">{testResult.MedianTestpValue}</div>
-              </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="text-gray-600">t-statistic:</div>
+              <div className="font-medium">{testResult.tStatistic}</div>
+              <div className="text-gray-600">p-value:</div>
+              <div className="font-medium text-green-600">{testResult.pValue}</div>
+              <div className="text-gray-600">Conclusion:</div>
+              <div className="font-medium text-green-600">{testResult.conclusion}</div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              {testResult.explanation}
             </div>
           </div>
           </div>
