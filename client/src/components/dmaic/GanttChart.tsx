@@ -1627,24 +1627,24 @@ export default function GanttChart({ projectId, projectStartDate, projectEndDate
                       isTaskLate(task) ? 'border-2 border-red-500' : ''
                     )}
                     style={{...getTaskBarStyle(task), zIndex: 10}}
-                    title={`${task.name} (${task.progress}%) - ${task.status || 'No description'} ${isTaskLate(task) ? ' - Late - ' : ''} ${task.startDate} - ${task.endDate}
-  ${task.comments ? ` ${task.comments}` : ''}`}
+                    title={`${task.name} (${task.progress}%) - ${task.status || 'No description'} ${isTaskLate(task) ? ' - Late - ' : ''} ${task.startDate} - ${task.endDate}${task.comments ? ` - ${task.comments}` : ''}`}
                   >
                     <div className="truncate max-w-full">
                       {task.name} ({task.progress}%)
                     </div>
-                    {/* Custom Tooltip */}
-  {/* <div className="absolute bottom-full left-0 mb-2 w-64 bg-gray-800 text-white text-sm rounded p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-    <div className="font-bold">{task.name}</div>
-    <div>Progress: {task.progress}%</div>
-    <div>Status: {task.status}</div>
-    <div>Phase: {task.phase}</div>
-    <div>Priority: {task.priority}</div> */}
-    {/* {task.description && <div className="mt-1 text-xs">{task.description}</div>} */}
-    
-    {/* Tooltip Arrow */}
-    {/* <div className="absolute top-full left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-gray-800"></div>
-  </div> */}
+                    {/* Custom Tooltip 
+                    <div className="absolute bottom-full left-0 mb-2 w-64 bg-gray-800 text-white text-sm rounded p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                      <div className="font-bold">{task.name}</div>
+                      <div>Progress: {task.progress}%</div>
+                      <div>Status: {task.status}</div>
+                      <div>Phase: {task.phase}</div>
+                      <div>Priority: {task.priority}</div>
+                      {task.description && <div className="mt-1 text-xs">{task.description}</div>}
+                      
+                      Tooltip Arrow
+                      <div className="absolute top-full left-4 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-gray-800"></div>
+                    </div>
+                    */}
 
                     {/* Progress Overlay */}
                     <div 
