@@ -1457,7 +1457,7 @@ useEffect(() => {
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
                         title={ "Estimated minimum Sample Size and Actual Power of the test" }
                       >
-                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(1)} <br />
+                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(0)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower*100).toFixed(2)}%
                       </Badge>
                       
@@ -1595,7 +1595,7 @@ useEffect(() => {
                         className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
                         title={ "Estimated minimum Sample Size and Actual Power of the test" }
                       >
-                        Sample Size (n): {PowerSampleSizeResults.oneSVariancesampleSize.toFixed(1)} <br />
+                        Sample Size (n): {PowerSampleSizeResults.oneSVariancesampleSize.toFixed(0)} <br />
                         Actual Power: {(PowerSampleSizeResults.oneSVarianceactualPower*100).toFixed(2)}%
                       </Badge>
                       
