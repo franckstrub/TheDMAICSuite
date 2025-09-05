@@ -4,7 +4,7 @@ import Plot from 'react-plotly.js';
 interface BoxPlotWithPairedSMeanTestProps {
   data: number[];
   ctqName: string;
-  mean: number;
+  mean: number
   Ha: string;
   h0Value: number;
   confidenceInterval: [number, number];
