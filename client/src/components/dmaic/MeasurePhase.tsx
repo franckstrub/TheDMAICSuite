@@ -234,7 +234,7 @@ export default function MeasurePhase() {
 
   // Process Capability Analysis state
   {/*
-    const [selectedMetric, setSelectedMetric] = useState("Processing Time");
+  const [selectedMetric, setSelectedMetric] = useState("Processing Time");
   const [lsl, setLsl] = useState(0);
   const [usl, setUsl] = useState(10);
   
@@ -920,9 +920,9 @@ export default function MeasurePhase() {
               <PlusCircle className="h-4 w-4" />
               <span>Add CTQ/Variable</span>
             </Button>
-          {/* </div>
-          
-          <div className="mt-4"> */}
+            {/* </div>
+            
+            <div className="mt-4"> */}
             <Button 
               onClick={handleSavePlans}
               disabled={savePlansMutation.isPending}

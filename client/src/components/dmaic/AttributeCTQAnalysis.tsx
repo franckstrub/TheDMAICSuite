@@ -112,7 +112,7 @@ export default function AttributeCTQAnalysis({ projectId, ctqId, ctqName, onSave
             </AlertDialogHeader>
             <AlertDialogFooter>
               {/*<AlertDialogCancel
-              onClick={handleCancelDelete}>
+                onClick={handleCancelDelete}>
                 Cancel
               </AlertDialogCancel>
               
