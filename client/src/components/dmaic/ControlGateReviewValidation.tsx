@@ -227,10 +227,10 @@ const getDefaultcontrolValidators = (charter?: Charter): Omit<Validator, 'id' | 
   return defaultValidators;
 };
 
-interface ControlGateReviewValidationProps {
+interface controlGateReviewValidationProps {
   projectId: number;
 }
-export default function ControlGateReviewValidation({ projectId }: ControlGateReviewValidationProps) {
+export default function controlGateReviewValidation({ projectId }: controlGateReviewValidationProps) {
   //const { projectId } = useParams();
   const { project_type_in_project } = useParams();
   const { toast } = useToast();
@@ -369,13 +369,13 @@ export default function ControlGateReviewValidation({ projectId }: ControlGateRe
     // If API failed or returned empty, initialize with defaults
     if (!deliverablesData || !deliverablesData.deliverables || deliverablesData.deliverables.length === 0) {
       //console.log("No deliverables found, creating defaults based on project type");
-      const controlDefaults = getDefaultcontrolDeliverables(projectType || undefined);
+      const controlDefaults = getDefaultcontrolDeliverables(projectType);
       setDefaultcontrolDeliverables(controlDefaults);
       
       // Create defaults with project ID using the fresh control defaults
       const defaultsWithProjectId = controlDefaults.map(deliverable => ({
         ...deliverable,
-        projectId: parseInt(String(projectId || "0"))
+        projectId: parseInt(projectId || "0")
       }));
       
       setDeliverables(defaultsWithProjectId);
@@ -386,7 +386,7 @@ export default function ControlGateReviewValidation({ projectId }: ControlGateRe
         const defaultValidators = getDefaultcontrolValidators(charter?.charter);
         const validatorsWithProjectId = defaultValidators.map(validator => ({
           ...validator,
-          projectId: parseInt(String(projectId || "0"))
+          projectId: parseInt(projectId || "0")
         }));
         setValidators(validatorsWithProjectId);
         //console.log("Created default validators:", validatorsWithProjectId.length);
@@ -398,7 +398,7 @@ export default function ControlGateReviewValidation({ projectId }: ControlGateRe
     //console.log("Setting deliverables from data:", deliverablesData.deliverables);
 
     // Get fresh control defaults for comparison
-    const controlDefaults = getDefaultcontrolDeliverables(projectType || undefined);
+    const controlDefaults = getDefaultcontrolDeliverables(projectType);
     setDefaultcontrolDeliverables(controlDefaults);
 
     // Keep track of what default deliverables exist in the database
@@ -438,7 +438,7 @@ export default function ControlGateReviewValidation({ projectId }: ControlGateRe
         // Default deliverable doesn't exist in database, add it from template
         orderedDeliverables.push({
           ...defaultDeliverable,
-          projectId: parseInt(String(projectId || "0"))
+          projectId: parseInt(projectId || "0")
         });
       }
     });
@@ -469,7 +469,7 @@ export default function ControlGateReviewValidation({ projectId }: ControlGateRe
       const defaultValidators = getDefaultcontrolValidators(charter?.charter);
       const validatorsWithProjectId = defaultValidators.map(validator => ({
         ...validator,
-        projectId: parseInt(String(projectId || "0"))
+        projectId: parseInt(projectId || "0")
       }));
       setValidators(validatorsWithProjectId);
       //console.log("Created default control validators:", validatorsWithProjectId.length);
@@ -502,7 +502,7 @@ export default function ControlGateReviewValidation({ projectId }: ControlGateRe
     if (!newDeliverable.trim()) return;
 
     const newDeliverableObj: Deliverable = {
-      projectId: parseInt(String(projectId || "0")),
+      projectId: parseInt(projectId || "0"),
       phase: "control",
       name: newDeliverable,
       description: newDeliverableDescription || null,
@@ -525,7 +525,7 @@ export default function ControlGateReviewValidation({ projectId }: ControlGateRe
     if (!newValidatorName.trim() || !newValidatorRole.trim()) return;
 
     const newValidatorObj: Validator = {
-      projectId: parseInt(String(projectId || "0")),
+      projectId: parseInt(projectId || "0"),
       phase: "control",
       validatorName: newValidatorName,
       validatorRole: newValidatorRole,
