@@ -76,6 +76,18 @@ export default function DrawIoFishbone({ projectId, ctqId, ctqName, onSave }: Dr
       return;
     }
 
+    // Check if event.data is a string before parsing
+    if (typeof event.data !== 'string') {
+      console.warn('Received non-string data from Draw.io:', event.data);
+      return;
+    }
+
+    // Check if data is not empty and looks like JSON
+    if (!event.data || event.data.trim() === '') {
+      console.warn('Received empty data from Draw.io');
+      return;
+    }
+
     try {
       const data = JSON.parse(event.data);
       
