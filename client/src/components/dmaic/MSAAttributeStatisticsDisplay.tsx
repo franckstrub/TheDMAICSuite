@@ -447,7 +447,7 @@ export default function MSAAttributeStatisticsDisplay({
                 )}
                 <AlertDescription>
                   <strong>
-                    {/*}
+                    {/*
                     {statistics.summary.allAgreements == "excellent" ? "Excellent" :
                      statistics.summary.allAgreements == "acceptable but needs improvement" ? "Acceptable but Needs Improvement" :
                      "Unacceptable"} 
