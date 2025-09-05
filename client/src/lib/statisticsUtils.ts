@@ -2912,7 +2912,7 @@ export function calculateMultipleSMeanSampleSize(
   let high = 1000;
   let bestN = high;
   let bestPower = 0;
-  let currentPower = 0;
+  //let currentPower = 0;
   
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
@@ -2926,7 +2926,7 @@ export function calculateMultipleSMeanSampleSize(
     } else {
       low = mid + 1;
     }
-  };
+  }
  //bestPower = currentPower;  
   // If we didn't find a solution within range, calculate actual power for max n
   if (bestPower < targetPower) {
@@ -2936,5 +2936,5 @@ export function calculateMultipleSMeanSampleSize(
   return {
     sampleSize: Math.ceil(bestN),
     actualPower: Math.round(bestPower * 10000) / 10000,
-  };
+  }
 }
