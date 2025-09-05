@@ -115,10 +115,18 @@ function App() {
     // Load user data
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
+      // Additional validation before parsing
+      if (storedUser.trim() === '' || storedUser === 'undefined' || storedUser === 'null') {
+        console.warn("Invalid stored user data, clearing:", storedUser);
+        localStorage.removeItem("user");
+        return;
+      }
+      
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
       } catch (error) {
-        console.error("Failed to parse stored user:", error);
+        console.error("Failed to parse stored user:", error, "Data:", storedUser);
         localStorage.removeItem("user");
       }
     }
