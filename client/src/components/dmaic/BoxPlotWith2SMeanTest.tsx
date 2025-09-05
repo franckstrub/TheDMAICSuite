@@ -297,4 +297,3 @@ export default function BoxPlotWith2SMeanTest({
     </div>
   );
 }
-
