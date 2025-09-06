@@ -2847,82 +2847,6 @@ function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol =
 }
 
 // Custom non-central F CDF implementation
-  // Helper function to calculate factorial
-  function factorial(n: number): number {
-    if (n < 0) return NaN;
-    if (n === 0 || n === 1) return 1;
-    let result = 1;
-    for (let i = 2; i <= n; i++) {
-      result *= i;
-    }
-    return result;
-  }
-
-  // Helper function for incomplete beta function (regularized)
-  // This is equivalent to the beta CDF
-  function incompleteBeta(x: number, a: number, b: number): number {
-    if (x < 0 || x > 1) return NaN;
-    if (x === 0) return 0;
-    if (x === 1) return 1;
-    
-    // Use continued fraction expansion for better accuracy
-    // This is a simplified implementation
-    const maxIterations = 100;
-    const epsilon = 1e-10;
-    
-    // Beta function approximation using gamma functions
-    const logBeta = lgamma(a) + lgamma(b) - lgamma(a + b);
-    
-    // Continued fraction for incomplete beta
-    let result = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - logBeta) / a;
-    
-    let m = 1;
-    let qab = a + b;
-    let qap = a + 1;
-    let qam = a - 1;
-    let c = 1;
-    let d = 1 - qab * x / qap;
-    
-    if (Math.abs(d) < 1e-30) d = 1e-30;
-    d = 1 / d;
-    let h = d;
-    
-    for (let i = 1; i <= maxIterations; i++) {
-      let m2 = 2 * m;
-      let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
-      d = 1 + aa * d;
-      if (Math.abs(d) < 1e-30) d = 1e-30;
-      c = 1 + aa / c;
-      if (Math.abs(c) < 1e-30) c = 1e-30;
-      d = 1 / d;
-      h *= d * c;
-      
-      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
-      d = 1 + aa * d;
-      if (Math.abs(d) < 1e-30) d = 1e-30;
-      c = 1 + aa / c;
-      if (Math.abs(c) < 1e-30) c = 1e-30;
-      d = 1 / d;
-      let del = d * c;
-      h *= del;
-      
-      if (Math.abs(del - 1) < epsilon) break;
-      m++;
-    }
-    
-    return result * h;
-  }
-
-  // Log gamma function approximation
-  function lgamma(x: number): number {
-    // Stirling's approximation for log gamma
-    if (x < 0) return NaN;
-    if (x === 0) return Infinity;
-    if (x === 1 || x === 2) return 0;
-    
-    return (x - 0.5) * Math.log(x) - x + 0.5 * Math.log(2 * Math.PI) + 1 / (12 * x);
-  }
-
   function GroknonCentralFCDF (x: number, df1: number, df2: number, ncp: number, maxTerms = 100): number {
     if (x < 0 || df1 <= 0 || df2 <= 0 || ncp < 0) return NaN;
 
@@ -2932,11 +2856,10 @@ function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol =
 
     for (let j = 0; j < maxTerms; j++) {
       // Poisson weight: e^(-λ/2) * (λ/2)^j / j!
-      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / factorial(j);
+      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / jStat.factorial(j);
       // Beta CDF: I(d1*x/(d1*x + d2); (d1 + 2j)/2, d2/2)
       const betaArg = (df1 * x) / (df1 * x + df2);
-      // Use beta distribution CDF - this is the incomplete beta function
-      const betaCDF = incompleteBeta(betaArg, (df1 + 2 * j) / 2, df2 / 2);
+      const betaCDF = jStat.beta.cdf(betaArg, (df1 + 2 * j) / 2, df2 / 2);
       const term = poissonWeight * betaCDF;
       sum += term;
       if (term < epsilon * sum && j > 0) break; // Stop if term is negligible
@@ -3002,6 +2925,8 @@ export function calculateMultipleSMeanSampleSize(
     // Power using non-central F distribution
     //const powertest = 1 - jStat.noncentralF.cdf(fCritical, df1, df2, ncp);
     //const power = 1 - noncentralFcdf(fCritical, df1, df2, ncp);
+    console.log(jStat);
+    const test = jStat.beta(2);
     const power = 1 - GroknonCentralFCDF(fCritical, df1, df2, ncp);
     
     //const power = 1 - noncentralFcdf(2.94, 3, 28, 2.88);
