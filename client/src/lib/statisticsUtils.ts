@@ -1,4 +1,5 @@
 import * as jStat from 'jstat'
+//import { jStat } from 'jstat'
 import { number } from 'zod';
 // Simple statistics utilities for Lean Six Sigma calculations
 
@@ -2827,6 +2828,7 @@ export function calculatePairedSMeanSampleSize(
     actualPower: actualPower
     };
 };
+
 function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol = 1e-8, maxIter = 200): number {
   let sum = 0;
   let weight = Math.exp(-lambda / 2);
@@ -2843,6 +2845,28 @@ function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol =
 
   return sum;
 }
+
+// Custom non-central F CDF implementation
+  function GroknonCentralFCDF (x: number, df1: number, df2: number, ncp: number, maxTerms = 100): number {
+    if (x < 0 || df1 <= 0 || df2 <= 0 || ncp < 0) return NaN;
+
+    let sum = 0;
+    const lambdaHalf = ncp / 2;
+    const epsilon = 1e-10; // Convergence threshold
+
+    for (let j = 0; j < maxTerms; j++) {
+      // Poisson weight: e^(-λ/2) * (λ/2)^j / j!
+      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / jStat.factorial(j);
+      // Beta CDF: I(d1*x/(d1*x + d2); (d1 + 2j)/2, d2/2)
+      const betaArg = (df1 * x) / (df1 * x + df2);
+      const betaCDF = jStat.beta.cdf(betaArg, (df1 + 2 * j) / 2, df2 / 2);
+      const term = poissonWeight * betaCDF;
+      sum += term;
+      if (term < epsilon * sum && j > 0) break; // Stop if term is negligible
+    }
+
+    return Math.min(Math.max(sum, 0), 1); // Clamp to [0, 1]
+  };
 
 export function calculateMultipleSMeanSampleSize(
           powerPower: string,
@@ -2899,7 +2923,12 @@ export function calculateMultipleSMeanSampleSize(
     //const fCritical = jStat.centralF.inv(1-0.05, 3, 28);
     
     // Power using non-central F distribution
-    const power = 1 - noncentralFcdf(fCritical, df1, df2, ncp);
+    //const powertest = 1 - jStat.noncentralF.cdf(fCritical, df1, df2, ncp);
+    //const power = 1 - noncentralFcdf(fCritical, df1, df2, ncp);
+    console.log(jStat);
+    const test = jStat.beta(2);
+    const power = 1 - GroknonCentralFCDF(fCritical, df1, df2, ncp);
+    
     //const power = 1 - noncentralFcdf(2.94, 3, 28, 2.88);
     // Better approximation using normal distribution
     
@@ -2911,7 +2940,7 @@ export function calculateMultipleSMeanSampleSize(
   let high = 1000;
   let bestN = high;
   let bestPower = 0;
-  let currentPower = 0;
+  //let currentPower = 0;
   
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
