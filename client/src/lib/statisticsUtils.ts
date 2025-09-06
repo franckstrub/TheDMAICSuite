@@ -2856,10 +2856,10 @@ function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol =
 
     for (let j = 0; j < maxTerms; j++) {
       // Poisson weight: e^(-λ/2) * (λ/2)^j / j!
-      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / jStat.factorial(j);
+      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / (jStat as any).factorial(j);
       // Beta CDF: I(d1*x/(d1*x + d2); (d1 + 2j)/2, d2/2)
       const betaArg = (df1 * x) / (df1 * x + df2);
-      const betaCDF = jStat.beta.cdf(betaArg, (df1 + 2 * j) / 2, df2 / 2);
+      const betaCDF = (jStat as any).beta.cdf(betaArg, (df1 + 2 * j) / 2, df2 / 2);
       const term = poissonWeight * betaCDF;
       sum += term;
       if (term < epsilon * sum && j > 0) break; // Stop if term is negligible
@@ -2925,8 +2925,6 @@ export function calculateMultipleSMeanSampleSize(
     // Power using non-central F distribution
     //const powertest = 1 - jStat.noncentralF.cdf(fCritical, df1, df2, ncp);
     //const power = 1 - noncentralFcdf(fCritical, df1, df2, ncp);
-    console.log(jStat);
-    const test = jStat.beta(2);
     const power = 1 - GroknonCentralFCDF(fCritical, df1, df2, ncp);
     
     //const power = 1 - noncentralFcdf(2.94, 3, 28, 2.88);
