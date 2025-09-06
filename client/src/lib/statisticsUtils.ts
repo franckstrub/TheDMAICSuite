@@ -161,13 +161,13 @@ export function calculateCapabilityIndexes(
   pp: number | null;
   ppk: number | null;
 } {
-  if (dataPointsArray.length < 30 || (lsl !== undefined && usl !== undefined && lsl >= usl) || stdDev === 0) {
+  if (dataPointsArray.length < 30 || lsl >= usl || stdDev === 0) {
     return { cp: null, cpk: null, pp: null, ppk: null };
   }
   if (dataSetTerm === "Long Term") {
      // Calculate Pp (Process Performance)
     let pp: number | null;
-    if (usl !== undefined && lsl !== undefined) {
+    if (!isNaN(usl) && !isNaN(lsl)) {
       pp = (usl - lsl) / (6 * stdDev);  
     }
     else {
@@ -175,16 +175,16 @@ export function calculateCapabilityIndexes(
     }
     
     // Calculate Ppk (Process Performance Index)
-    const ppupper = usl !== undefined ? (usl - meanValue) / (3 * stdDev) : 0;
-    const pplower = lsl !== undefined ? (meanValue - lsl) / (3 * stdDev) : 0;
+    const ppupper = (usl - meanValue) / (3 * stdDev);
+    const pplower = (meanValue - lsl) / (3 * stdDev);
     let ppk: number | null;
-    if (lsl !== undefined && usl !== undefined) {
+    if (!isNaN(lsl) && !isNaN(usl)) {
       ppk = Math.min(ppupper, pplower); 
     }
-    else if (usl !== undefined) {
+    else if (!isNaN(usl)) {
       ppk = ppupper; 
     }
-    else if (lsl !== undefined) {
+    else if (!isNaN(lsl)) {
       ppk = pplower; 
     }
     else {
@@ -194,17 +194,17 @@ export function calculateCapabilityIndexes(
     const cpk = null;
 
     return {
-      cp: cp !== null && cp > 0 ? cp : null,
-      cpk: cpk !== null && cpk > 0 ? cpk : null,
-      pp: pp !== null && pp > 0 ? pp : null,
-      ppk: ppk !== null && ppk > 0 ? ppk : null
+      cp: cp > 0 ? cp : null,
+      cpk: cpk > 0 ? cpk : null,
+      pp: pp > 0 ? pp : null,
+      ppk: ppk > 0 ? ppk : null
     };
   }
   else {
     // Calculate Cp (Process Capability)
 
     let cp: number | null;
-    if (usl !== undefined && lsl !== undefined) {
+    if (!isNaN(usl) && !isNaN(lsl)) {
       cp = (usl - lsl) / (6 * stdDev);  
     }
     else {
@@ -212,16 +212,16 @@ export function calculateCapabilityIndexes(
     }
     
     // Calculate Cpk (Process Performance Index)
-    const cpupper = usl !== undefined ? (usl - meanValue) / (3 * stdDev) : 0;
-    const cplower = lsl !== undefined ? (meanValue - lsl) / (3 * stdDev) : 0;
+    const cpupper = (usl - meanValue) / (3 * stdDev);
+    const cplower = (meanValue - lsl) / (3 * stdDev);
     let cpk: number | null;
-    if (lsl !== undefined && usl !== undefined) {
+    if (!isNaN(lsl) && !isNaN(usl)) {
       cpk = Math.min(cpupper, cplower); 
     }
-    else if (usl !== undefined) {
+    else if (!isNaN(usl)) {
       cpk = cpupper; 
     }
-    else if (lsl !== undefined) {
+    else if (!isNaN(lsl)) {
       cpk = cplower; 
     }
     else {
@@ -231,10 +231,10 @@ export function calculateCapabilityIndexes(
     const ppk = null;
   
     return {
-      cp: cp !== null && cp > 0 ? cp : null,
-      cpk: cpk !== null && cpk > 0 ? cpk : null,
-      pp: pp !== null && pp > 0 ? pp : null,
-      ppk: ppk !== null && ppk > 0 ? ppk : null
+      cp: cp > 0 ? cp : null,
+      cpk: cpk > 0 ? cpk : null,
+      pp: pp > 0 ? pp : null,
+      ppk: ppk > 0 ? ppk : null
     };
   }
 }
@@ -2557,10 +2557,8 @@ export function calculate2SMedianStatistic(
   const n2 = dataValues2.length;
   
   // Combine and rank all observations
-  const combined: Array<{value: number, group: number, rank?: number}> = [
-    ...dataValues1.map(x => ({value: x, group: 1})), 
-    ...dataValues2.map(x => ({value: x, group: 2}))
-  ];
+  const combined = [...dataValues1.map(x => ({value: x, group: 1})), 
+                   ...dataValues2.map(x => ({value: x, group: 2}))];
   
   combined.sort((a, b) => a.value - b.value);
   
@@ -2575,7 +2573,7 @@ export function calculate2SMedianStatistic(
     
     const avgRank = currentRank + (tieCount - 1) / 2;
     for (let j = i; j < i + tieCount; j++) {
-      combined[j].rank = avgRank;
+      (combined[j] as any).rank = avgRank;
     }
     
     currentRank += tieCount;
@@ -2858,10 +2856,10 @@ function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol =
 
     for (let j = 0; j < maxTerms; j++) {
       // Poisson weight: e^(-λ/2) * (λ/2)^j / j!
-      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / (jStat as any).factorial(j);
+      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / jStat.factorial(j);
       // Beta CDF: I(d1*x/(d1*x + d2); (d1 + 2j)/2, d2/2)
       const betaArg = (df1 * x) / (df1 * x + df2);
-      const betaCDF = (jStat as any).beta.cdf(betaArg, (df1 + 2 * j) / 2, df2 / 2);
+      const betaCDF = jStat.beta.cdf(betaArg, (df1 + 2 * j) / 2, df2 / 2);
       const term = poissonWeight * betaCDF;
       sum += term;
       if (term < epsilon * sum && j > 0) break; // Stop if term is negligible
@@ -2926,9 +2924,10 @@ export function calculateMultipleSMeanSampleSize(
     
     // Power using non-central F distribution
     //const powertest = 1 - jStat.noncentralF.cdf(fCritical, df1, df2, ncp);
-    //const power = 1 - noncentralFcdf(fCritical, df1, df2, ncp);
-    const power = 1 - GroknonCentralFCDF(fCritical, df1, df2, ncp);
+    const power = 1 - noncentralFcdf(fCritical, df1, df2, ncp);
+    //console.log(jStat);
     
+    //const power = 1 - GroknonCentralFCDF(fCritical, df1, df2, ncp);
     //const power = 1 - noncentralFcdf(2.94, 3, 28, 2.88);
     // Better approximation using normal distribution
     
