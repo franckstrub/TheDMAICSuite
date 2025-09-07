@@ -498,6 +498,112 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     };
   };
 
+  const calculateMean = (dataset: DataPoint[]) => {
+    if (dataset.length === 0) return 0;
+    const sum = dataset.reduce((acc, point) => acc + point.dataValue, 0);
+    return sum / dataset.length;
+  };
+
+  const calculateStdDev = (dataset: DataPoint[]) => {
+    if (dataset.length <= 1) return 0;
+    const mean = calculateMean(dataset);
+    const squaredDiffs = dataset.map(point => Math.pow(point.dataValue - mean, 2));
+    const variance = squaredDiffs.reduce((acc, diff) => acc + diff, 0) / (dataset.length - 1);
+    return Math.sqrt(variance);
+  };
+
+  const handleUpdateDataPoint = (datasetIndex: number, pointIndex: number, newValue: string) => {
+    const numericValue = parseFloat(newValue);
+    if (isNaN(numericValue)) return;
+    
+    // Save current state for undo
+    setUndoStates(prev => ({
+      ...prev,
+      [datasetIndex]: [...datasets[datasetIndex]]
+    }));
+    setShowUndoButton(true);
+    
+    setDatasets(prev => {
+      const newDatasets = [...prev];
+      newDatasets[datasetIndex] = newDatasets[datasetIndex].map((point, idx) => 
+        idx === pointIndex ? { ...point, dataValue: numericValue } : point
+      );
+      return newDatasets;
+    });
+    
+    // Clear editing state
+    const newEditingCells = [...editingCells];
+    newEditingCells[datasetIndex] = -1;
+    setEditingCells(newEditingCells);
+  };
+
+  const handleFocusedCellPaste = (datasetIndex: number, clipboardData: string) => {
+    const lines = clipboardData.trim().split('\n');
+    const values: number[] = [];
+    
+    for (const line of lines) {
+      // Handle both comma and tab separated values
+      const parts = line.split(/[\t,]/);
+      for (const part of parts) {
+        const cleanedValue = part.trim().replace(/,/g, '.');
+        const numericValue = parseFloat(cleanedValue);
+        if (!isNaN(numericValue)) {
+          values.push(numericValue);
+        }
+      }
+    }
+    
+    if (values.length === 0) {
+      toast({
+        title: "No Valid Data",
+        description: "No valid numeric data found in clipboard.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Save current state for undo
+    setUndoStates(prev => ({
+      ...prev,
+      [datasetIndex]: [...datasets[datasetIndex]]
+    }));
+    setShowUndoButton(true);
+    
+    setDatasets(prev => {
+      const newDatasets = [...prev];
+      const focusedIndex = focusedCells[datasetIndex];
+      const currentDataset = [...newDatasets[datasetIndex]];
+      
+      // Insert values starting from focused cell
+      values.forEach((value, index) => {
+        const targetIndex = focusedIndex + index;
+        if (targetIndex < currentDataset.length) {
+          // Replace existing value
+          currentDataset[targetIndex] = { ...currentDataset[targetIndex], dataValue: value };
+        } else {
+          // Add new value
+          currentDataset.push({ 
+            indexNumber: currentDataset.length + 1, 
+            dataValue: value 
+          });
+        }
+      });
+      
+      // Reindex the dataset
+      currentDataset.forEach((point, index) => {
+        point.indexNumber = index + 1;
+      });
+      
+      newDatasets[datasetIndex] = currentDataset;
+      return newDatasets;
+    });
+    
+    toast({
+      title: "Data Pasted",
+      description: `${values.length} values pasted successfully into Dataset ${datasetIndex + 1}.`,
+    });
+  };
+
   const calculateNormalityTests = (datasets: DataPoint[][]) => {
     return datasets.map((dataset, index) => {
       if (dataset.length === 0) {
@@ -856,8 +962,474 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
           <div>
           {/* Data Input Section for Multiple Sample Hypothesis Test */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">Data Input</h3>
+            
+            {/* Number of Datasets Control */}
+            <div className="space-y-2">
+              <Label htmlFor="num-datasets">Number of Datasets</Label>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNumDatasets(Math.max(2, numDatasets - 1))}
+                  disabled={numDatasets <= 2}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium w-12 text-center">
+                  {numDatasets}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNumDatasets(Math.min(10, numDatasets + 1))}
+                  disabled={numDatasets >= 10}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Dataset Descriptions */}
+            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(numDatasets, 3)}, 1fr)` }}>
+              {Array.from({ length: numDatasets }, (_, i) => (
+                <div key={i} className="space-y-2">
+                  <Label htmlFor={`dataset-desc-${i}`}>Dataset {i + 1} Description</Label>
+                  <Input
+                    id={`dataset-desc-${i}`}
+                    type="text"
+                    value={datasetDescriptions[i] || ""}
+                    onChange={(e) => {
+                      const newDescriptions = [...datasetDescriptions];
+                      newDescriptions[i] = e.target.value;
+                      setDatasetDescriptions(newDescriptions);
+                    }}
+                    placeholder={`Description for dataset ${i + 1}`}
+                    className="text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Data Input Tables */}
+            <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${Math.min(numDatasets, 3)}, 1fr)` }}>
+              {Array.from({ length: numDatasets }, (_, datasetIndex) => (
+                <div key={datasetIndex} className="space-y-4 border rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium text-sm">Dataset {datasetIndex + 1}</h4>
+                    {numDatasets > 2 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeDataset(datasetIndex)}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Control Buttons */}
+                  <div className="flex gap-2 flex-wrap">
+                    {datasets[datasetIndex].length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => clearDataset(datasetIndex)}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Clear
+                      </Button>
+                    )}
+                    
+                    {undoStates[datasetIndex] && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => undoDatasetChange(datasetIndex)}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                      >
+                        <Undo className="h-4 w-4 mr-1" />
+                        Undo
+                      </Button>
+                    )}
+
+                    <Button
+                      onClick={async () => {
+                        if (focusedCells[datasetIndex] < 0) {
+                          toast({
+                            title: "No Cell Focused",
+                            description: `Please click on a data cell in Dataset ${datasetIndex + 1} first to set the starting position for paste.`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        
+                        try {
+                          const clipboardData = await navigator.clipboard.readText();
+                          if (clipboardData.trim()) {
+                            handleFocusedCellPaste(datasetIndex, clipboardData);
+                          } else {
+                            toast({
+                              title: "No Data Found",
+                              description: "No valid numeric data found in clipboard.",
+                              variant: "destructive",
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Clipboard Access",
+                            description: "Please use Ctrl+V to paste data.",
+                          });
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      disabled={focusedCells[datasetIndex] < 0}
+                    >
+                      📋 Paste
+                    </Button>
+                  </div>
+
+                  {/* Data Input */}
+                  <div className="flex gap-2">
+                    <Input
+                      id={`add-data-input-${datasetIndex}`}
+                      type="number"
+                      value={inputValues[datasetIndex] || ""}
+                      onChange={(e) => {
+                        const newInputValues = [...inputValues];
+                        newInputValues[datasetIndex] = e.target.value;
+                        setInputValues(newInputValues);
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          addDataPoint(datasetIndex, inputValues[datasetIndex] || "");
+                        }
+                      }}
+                      placeholder="Enter value"
+                      className="text-sm"
+                    />
+                    <Button
+                      onClick={() => addDataPoint(datasetIndex, inputValues[datasetIndex] || "")}
+                      size="sm"
+                      disabled={!inputValues[datasetIndex]?.trim()}
+                    >
+                      Add
+                    </Button>
+                  </div>
+
+                  {/* Data Table */}
+                  <div className="border rounded-md max-h-[300px] overflow-y-auto bg-white">
+                    <table className="min-w-full table-auto text-sm">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase">
+                            #
+                          </th>
+                          <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase">
+                            Value
+                          </th>
+                          <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {datasets[datasetIndex].length === 0 ? (
+                          <tr>
+                            <td colSpan={3} className="text-center text-gray-500 py-4">
+                              <div
+                                className="cursor-pointer hover:bg-blue-50 rounded p-2"
+                                onClick={() => document.getElementById(`add-data-input-${datasetIndex}`)?.focus()}
+                                title="Click to focus input or paste data here"
+                              >
+                                No data - click to add values
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          datasets[datasetIndex].map((point, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-2 py-1 text-xs text-gray-900">
+                                {point.indexNumber}
+                              </td>
+                              <td 
+                                className="px-2 py-1 text-xs text-gray-900 cursor-pointer"
+                                onClick={() => {
+                                  const newFocused = [...focusedCells];
+                                  newFocused[datasetIndex] = index;
+                                  setFocusedCells(newFocused);
+                                }}
+                                style={{
+                                  backgroundColor: focusedCells[datasetIndex] === index ? '#dbeafe' : 'transparent'
+                                }}
+                              >
+                                {editingCells[datasetIndex] === index ? (
+                                  <Input
+                                    type="number"
+                                    value={editValues[datasetIndex] || ""}
+                                    onChange={(e) => {
+                                      const newEditValues = [...editValues];
+                                      newEditValues[datasetIndex] = e.target.value;
+                                      setEditValues(newEditValues);
+                                    }}
+                                    onKeyPress={(e) => {
+                                      if (e.key === 'Enter') {
+                                        handleUpdateDataPoint(datasetIndex, index, editValues[datasetIndex] || "");
+                                      }
+                                      if (e.key === 'Escape') {
+                                        const newEditingCells = [...editingCells];
+                                        newEditingCells[datasetIndex] = -1;
+                                        setEditingCells(newEditingCells);
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      const newEditingCells = [...editingCells];
+                                      newEditingCells[datasetIndex] = -1;
+                                      setEditingCells(newEditingCells);
+                                    }}
+                                    className="w-full text-xs p-1"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <span
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const newEditingCells = [...editingCells];
+                                      newEditingCells[datasetIndex] = index;
+                                      setEditingCells(newEditingCells);
+                                      const newEditValues = [...editValues];
+                                      newEditValues[datasetIndex] = point.dataValue.toString();
+                                      setEditValues(newEditValues);
+                                    }}
+                                  >
+                                    {point.dataValue}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-2 py-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteDataPoint(datasetIndex, index)}
+                                  className="text-red-600 hover:text-red-800 h-6 w-6 p-0"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Data Summary */}
+                  {datasets[datasetIndex].length > 0 && (
+                    <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                      <div>Count: {datasets[datasetIndex].length}</div>
+                      <div>Mean: {calculateMean(datasets[datasetIndex]).toFixed(3)}</div>
+                      <div>Std Dev: {calculateStdDev(datasets[datasetIndex]).toFixed(3)}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Add Dataset Button */}
+            {numDatasets < 10 && (
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  onClick={addDataset}
+                  className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Dataset
+                </Button>
+              </div>
+            )}
+
+            {/* Run Test Button */}
+            <div className="flex gap-4">
+              <Button
+                onClick={handleRunTest}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                disabled={datasets.every(dataset => dataset.length === 0)}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Run Test
+              </Button>
+
+              {showUndoButton && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Undo last change across all datasets
+                    Object.keys(undoStates).forEach(key => {
+                      const datasetIndex = parseInt(key);
+                      if (undoStates[datasetIndex]) {
+                        undoDatasetChange(datasetIndex);
+                      }
+                    });
+                  }}
+                  className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                >
+                  <Undo className="h-4 w-4 mr-1" />
+                  Undo All
+                </Button>
+              )}
+            </div>
+          </div>
           
-          {/* Results for Multiple Sample Hypothesis Testof Means, Variances and Medians */}
+          {/* Results for Multiple Sample Hypothesis Test of Means, Variances and Medians */}
+          {testResults && (
+            <div className="space-y-6 mt-8">
+              <h3 className="text-lg font-semibold">Test Results</h3>
+              
+              {/* Mean Test Results */}
+              {enableMeanTest && testResults.meanTest && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Mean Test Results</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium text-gray-700">F-Statistic</div>
+                        <div className="text-lg font-semibold">{testResults.meanTest.fStatistic.toFixed(4)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">P-Value</div>
+                        <div className="text-lg font-semibold">{testResults.meanTest.pValue.toFixed(4)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">Decision</div>
+                        <div className={`text-lg font-semibold ${testResults.meanTest.decision === 'Reject H0' ? 'text-red-600' : 'text-green-600'}`}>
+                          {testResults.meanTest.decision}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">Conclusion</div>
+                        <div className="text-sm">{testResults.meanTest.conclusion}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Variance Test Results */}
+              {enableVarianceTest && testResults.varianceTest && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Variance Test Results</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium text-gray-700">Test Statistic</div>
+                        <div className="text-lg font-semibold">{testResults.varianceTest.testStatistic.toFixed(4)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">P-Value</div>
+                        <div className="text-lg font-semibold">{testResults.varianceTest.pValue.toFixed(4)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">Decision</div>
+                        <div className={`text-lg font-semibold ${testResults.varianceTest.decision === 'Reject H0' ? 'text-red-600' : 'text-green-600'}`}>
+                          {testResults.varianceTest.decision}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">Conclusion</div>
+                        <div className="text-sm">{testResults.varianceTest.conclusion}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Median Test Results */}
+              {enableMedianTest && testResults.medianTest && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Median Test Results</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="font-medium text-gray-700">Test Statistic</div>
+                        <div className="text-lg font-semibold">{testResults.medianTest.testStatistic.toFixed(4)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">P-Value</div>
+                        <div className="text-lg font-semibold">{testResults.medianTest.pValue.toFixed(4)}</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">Decision</div>
+                        <div className={`text-lg font-semibold ${testResults.medianTest.decision === 'Reject H0' ? 'text-red-600' : 'text-green-600'}`}>
+                          {testResults.medianTest.decision}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-700">Conclusion</div>
+                        <div className="text-sm">{testResults.medianTest.conclusion}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Normality Test Results */}
+              {normalityResults && normalityResults.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Normality Test Results</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {normalityResults.map((result, index) => (
+                        <div key={index} className="border-b pb-2 last:border-b-0">
+                          <h4 className="font-medium text-sm mb-2">Dataset {index + 1}</h4>
+                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
+                            <div>
+                              <div className="font-medium text-gray-700">Sample Size</div>
+                              <div>{result.sampleSize}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">Mean</div>
+                              <div>{result.mean.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">Std Dev</div>
+                              <div>{result.stdev.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">Median</div>
+                              <div>{result.median.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">AD Value</div>
+                              <div>{result.adValue.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">P-Value</div>
+                              <div>{result.adPValue.toFixed(4)}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
           
           </div>
         </div>
