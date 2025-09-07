@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Undo } from "lucide-react";
+import { Trash2, Undo, Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   mean, 
@@ -18,7 +18,7 @@ import {
 
 
 interface DataPoint {
-  indexRowNumber: number;
+  indexNumber: number;
   dataValue: number;
 }
 
@@ -40,13 +40,47 @@ interface ContCTQMultipleSampleHypTestData {
   alternateVariance: string;
   enableMedianTest: boolean;
   alternateMedian: string;
-  dataPoints: DataPoint[];
-  datasetDescription: string[];
+  datasets: DataPoint[][];
+  datasetDescriptions: string[];
 }
 
 interface PowerSampleSizeResults {
   multipleSMeansampleSize: number;
   multipleSMeanactualPower: number;
+}
+
+interface TestResults {
+  // Normality test results for each dataset
+  normalityResults: Array<{
+    sampleSize: number;
+    mean: number;
+    stdev: number;
+    median: number;
+    adValue: number;
+    adPValue: number;
+  }>;
+  
+  // Test results
+  meanTest: {
+    testStatistic: number;
+    pValue: number;
+    criticalValue: number;
+    conclusion: string;
+  };
+  
+  varianceTest: {
+    testStatistic: number;
+    pValue: number;
+    criticalValue: number;
+    conclusion: string;
+  };
+  
+  medianTest: {
+    testStatistic: number;
+    pValue: number;
+    criticalValue: number;
+    conclusion: string;
+  };
 }
 
 interface ContCTQMultipleSampleHypTestingProps {
@@ -71,19 +105,32 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       multipleSMeansampleSize: 0,
       multipleSMeanactualPower: 0,
     });
-  const [testResult, setTestResult] = useState({
-    MeanTestStatistic: -3.45,
-    MeanTestCriteria: 3.12,
-    MeanTestpValue: 0.002,
-    VarianceTestStatistic: 2.45,
-    VarianceTestCriteria: 2.12,
-    VarianceTestpValue: 0.022,
-    MedianTestStatistic: -1.45,
-    MedianTestCriteria: -1.12,
-    MedianTestpValue: 0.004,
+  // State for multiple datasets and UI management
+  const [datasets, setDatasets] = useState<DataPoint[][]>([[], []]); // Start with 2 empty datasets
+  const [datasetDescriptions, setDatasetDescriptions] = useState<string[]>(['Dataset 1', 'Dataset 2']);
+  const [numDatasets, setNumDatasets] = useState(2);
+  
+  // Focused cell states for each dataset
+  const [focusedCells, setFocusedCells] = useState<number[]>(new Array(2).fill(-1));
+  const [editingCells, setEditingCells] = useState<number[]>(new Array(2).fill(-1));
+  const [editValues, setEditValues] = useState<string[]>(new Array(2).fill(''));
+  const [inputValues, setInputValues] = useState<string[]>(new Array(2).fill(''));
+  
+  // Undo states for each dataset
+  const [undoStates, setUndoStates] = useState<{[key: number]: DataPoint[]}>({});
+  const [showUndoButton, setShowUndoButton] = useState(false);
+  
+  // Test results
+  const [testResults, setTestResults] = useState<TestResults>({
+    normalityResults: [],
+    meanTest: { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: '' },
+    varianceTest: { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: '' },
+    medianTest: { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: '' }
   });
-
-  // Data input state for One Sample test
+  
+  // Paste and clipboard management
+  const [pasteInput, setPasteInput] = useState('');
+  const [isDualColumnPaste, setIsDualColumnPaste] = useState(false);
 
   // Initialize ContCTQMultipleSampleHypTestData with default values
   // Fixed state initialization
@@ -104,8 +151,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     alternateVariance: "Less than",
     enableMedianTest: false,
     alternateMedian: "Less than",
-    dataPoints: [], 
-    datasetDescription: [""],
+    datasets: [[], []], 
+    datasetDescriptions: ['Dataset 1', 'Dataset 2'],
   } 
   }));
 
@@ -164,8 +211,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       alternateVariance: currentConfig.alternateVariance,
       enableMedianTest: currentConfig.enableMedianTest,
       alternateMedian: currentConfig.alternateMedian,
-      dataPoints: currentConfig.dataPoints,
-      datasetDescription: currentConfig.datasetDescription,
+      datasets,
+      datasetDescriptions,
     };
     
     saveConfigMutation.mutate(configToSave);
@@ -183,6 +230,172 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         [field]: value,
       }
     }));
+  };
+
+  // Functions for managing multiple datasets
+  const addDataset = () => {
+    setDatasets(prev => [...prev, []]);
+    setDatasetDescriptions(prev => [...prev, `Dataset ${prev.length + 1}`]);
+    setFocusedCells(prev => [...prev, -1]);
+    setEditingCells(prev => [...prev, -1]);
+    setEditValues(prev => [...prev, '']);
+    setInputValues(prev => [...prev, '']);
+    setNumDatasets(prev => prev + 1);
+  };
+
+  const removeDataset = (index: number) => {
+    if (numDatasets <= 2) return; // Don't allow removing if only 2 datasets remain
+    
+    setDatasets(prev => prev.filter((_, i) => i !== index));
+    setDatasetDescriptions(prev => prev.filter((_, i) => i !== index));
+    setFocusedCells(prev => prev.filter((_, i) => i !== index));
+    setEditingCells(prev => prev.filter((_, i) => i !== index));
+    setEditValues(prev => prev.filter((_, i) => i !== index));
+    setInputValues(prev => prev.filter((_, i) => i !== index));
+    setNumDatasets(prev => prev - 1);
+  };
+
+  const addDataPoint = (datasetIndex: number, value: string) => {
+    if (!value.trim()) return;
+    
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return;
+    
+    // Save current state for undo
+    setUndoStates(prev => ({
+      ...prev,
+      [datasetIndex]: [...datasets[datasetIndex]]
+    }));
+    setShowUndoButton(true);
+    
+    setDatasets(prev => {
+      const newDatasets = [...prev];
+      newDatasets[datasetIndex] = [
+        ...newDatasets[datasetIndex],
+        { indexNumber: newDatasets[datasetIndex].length + 1, dataValue: numericValue }
+      ];
+      return newDatasets;
+    });
+    
+    setInputValues(prev => {
+      const newInputValues = [...prev];
+      newInputValues[datasetIndex] = '';
+      return newInputValues;
+    });
+  };
+
+  const deleteDataPoint = (datasetIndex: number, pointIndex: number) => {
+    // Save current state for undo
+    setUndoStates(prev => ({
+      ...prev,
+      [datasetIndex]: [...datasets[datasetIndex]]
+    }));
+    setShowUndoButton(true);
+    
+    setDatasets(prev => {
+      const newDatasets = [...prev];
+      newDatasets[datasetIndex] = newDatasets[datasetIndex]
+        .filter((_, i) => i !== pointIndex)
+        .map((point, i) => ({ ...point, indexNumber: i + 1 }));
+      return newDatasets;
+    });
+  };
+
+  const clearDataset = (datasetIndex: number) => {
+    if (datasets[datasetIndex].length > 0) {
+      // Save current state for undo
+      setUndoStates(prev => ({
+        ...prev,
+        [datasetIndex]: [...datasets[datasetIndex]]
+      }));
+      setShowUndoButton(true);
+      
+      setDatasets(prev => {
+        const newDatasets = [...prev];
+        newDatasets[datasetIndex] = [];
+        return newDatasets;
+      });
+      
+      setInputValues(prev => {
+        const newInputValues = [...prev];
+        newInputValues[datasetIndex] = '';
+        return newInputValues;
+      });
+      
+      setFocusedCells(prev => {
+        const newFocused = [...prev];
+        newFocused[datasetIndex] = -1;
+        return newFocused;
+      });
+      
+      toast({
+        title: `Dataset ${datasetIndex + 1} Cleared`,
+        description: `All data in Dataset ${datasetIndex + 1} has been cleared. Use Undo to restore if needed.`,
+      });
+    }
+  };
+
+  const undoDatasetChange = (datasetIndex: number) => {
+    const undoState = undoStates[datasetIndex];
+    if (undoState) {
+      setDatasets(prev => {
+        const newDatasets = [...prev];
+        newDatasets[datasetIndex] = [...undoState];
+        return newDatasets;
+      });
+      
+      setUndoStates(prev => {
+        const newUndoStates = { ...prev };
+        delete newUndoStates[datasetIndex];
+        return newUndoStates;
+      });
+      
+      toast({
+        title: 'Changes Undone',
+        description: `Dataset ${datasetIndex + 1} has been restored to its previous state.`,
+      });
+    }
+  };
+
+  const setFocusedCell = (datasetIndex: number, cellIndex: number) => {
+    setFocusedCells(prev => {
+      const newFocused = [...prev];
+      // Clear all other focused cells
+      for (let i = 0; i < newFocused.length; i++) {
+        newFocused[i] = i === datasetIndex ? cellIndex : -1;
+      }
+      return newFocused;
+    });
+  };
+
+  const setEditingCell = (datasetIndex: number, cellIndex: number, value: string = '') => {
+    setEditingCells(prev => {
+      const newEditing = [...prev];
+      newEditing[datasetIndex] = cellIndex;
+      return newEditing;
+    });
+    
+    setEditValues(prev => {
+      const newEditValues = [...prev];
+      newEditValues[datasetIndex] = value;
+      return newEditValues;
+    });
+  };
+
+  const setInputValue = (datasetIndex: number, value: string) => {
+    setInputValues(prev => {
+      const newInputValues = [...prev];
+      newInputValues[datasetIndex] = value;
+      return newInputValues;
+    });
+  };
+
+  const updateDatasetDescription = (datasetIndex: number, description: string) => {
+    setDatasetDescriptions(prev => {
+      const newDescriptions = [...prev];
+      newDescriptions[datasetIndex] = description;
+      return newDescriptions;
+    });
   };
 
   const handlePowerSampleSize = (    
@@ -229,6 +442,134 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       multipleSMeanactualPower: actualMeanPower,
     };  
   }
+
+  // Fake test functions (to be implemented later)
+  const performMultipleSampleMeanTest = (datasets: DataPoint[][], significanceLevel: number, alternative: string) => {
+    // Fake implementation - returns random test results
+    const testStatistic = Math.random() * 10 - 5; // Random between -5 and 5
+    const pValue = Math.random() * 0.2; // Random p-value between 0 and 0.2
+    const criticalValue = 2.576; // Fixed critical value for demonstration
+    
+    const conclusion = pValue < significanceLevel 
+      ? "Reject H0: At least one mean is significantly different"
+      : "Accept H0: No significant difference between means";
+    
+    return {
+      testStatistic,
+      pValue,
+      criticalValue,
+      conclusion
+    };
+  };
+
+  const performMultipleSampleVarianceTest = (datasets: DataPoint[][], significanceLevel: number, alternative: string) => {
+    // Fake implementation - returns random test results
+    const testStatistic = Math.random() * 20 + 5; // Random between 5 and 25
+    const pValue = Math.random() * 0.3; // Random p-value between 0 and 0.3
+    const criticalValue = 12.592; // Fixed critical value for demonstration
+    
+    const conclusion = pValue < significanceLevel 
+      ? "Reject H0: Variances are significantly different"
+      : "Accept H0: No significant difference between variances";
+    
+    return {
+      testStatistic,
+      pValue,
+      criticalValue,
+      conclusion
+    };
+  };
+
+  const performMultipleSampleMedianTest = (datasets: DataPoint[][], significanceLevel: number, alternative: string) => {
+    // Fake implementation - returns random test results
+    const testStatistic = Math.random() * 15 + 2; // Random between 2 and 17
+    const pValue = Math.random() * 0.25; // Random p-value between 0 and 0.25
+    const criticalValue = 9.488; // Fixed critical value for demonstration
+    
+    const conclusion = pValue < significanceLevel 
+      ? "Reject H0: At least one median is significantly different"
+      : "Accept H0: No significant difference between medians";
+    
+    return {
+      testStatistic,
+      pValue,
+      criticalValue,
+      conclusion
+    };
+  };
+
+  const calculateNormalityTests = (datasets: DataPoint[][]) => {
+    return datasets.map((dataset, index) => {
+      if (dataset.length === 0) {
+        return {
+          sampleSize: 0,
+          mean: 0,
+          stdev: 0,
+          median: 0,
+          adValue: 0,
+          adPValue: 0
+        };
+      }
+
+      const values = dataset.map(d => d.dataValue);
+      const meanVal = mean(values);
+      const stdevVal = standardDeviation(values);
+      
+      // Calculate median
+      const sortedValues = [...values].sort((a, b) => a - b);
+      const medianVal = sortedValues.length % 2 === 0
+        ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
+        : sortedValues[Math.floor(sortedValues.length / 2)];
+
+      // Fake Anderson-Darling test results
+      const adValue = Math.random() * 2 + 0.1; // Random between 0.1 and 2.1
+      const adPValue = Math.random() * 0.5; // Random p-value between 0 and 0.5
+
+      return {
+        sampleSize: dataset.length,
+        mean: meanVal,
+        stdev: stdevVal,
+        median: medianVal,
+        adValue,
+        adPValue
+      };
+    });
+  };
+
+  const handleRunTest = () => {
+    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
+    if (!currentConfig) return;
+
+    const significance = parseFloat(significanceLevel);
+    
+    // Calculate normality tests
+    const normalityResults = calculateNormalityTests(datasets);
+
+    // Perform hypothesis tests if enabled
+    const meanTest = currentConfig.enableMeanTest 
+      ? performMultipleSampleMeanTest(datasets, significance, alternateMean)
+      : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
+
+    const varianceTest = currentConfig.enableVarianceTest 
+      ? performMultipleSampleVarianceTest(datasets, significance, alternateVariance)
+      : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
+
+    const medianTest = currentConfig.enableMedianTest 
+      ? performMultipleSampleMedianTest(datasets, significance, alternateMedian)
+      : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
+
+    setTestResults({
+      normalityResults,
+      meanTest,
+      varianceTest,
+      medianTest
+    });
+
+    toast({
+      title: "Tests Run Successfully",
+      description: "Multiple-sample hypothesis tests have been executed.",
+    });
+  };
   
   // Synchronize local state with main state
   useEffect(() => {
@@ -243,7 +584,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     }
   }, [ContCTQMultipleSampleHypTestData[ctqId]?.powerPower, ContCTQMultipleSampleHypTestData[ctqId]?.powerAlpha, PowerMultipleSMeanPower, powerMultipleSMeanAlpha]);
 
-  {/* on input change, update ContCTQTwoSampleHypTestData state */}
+  {/* on input change, update ContCTQMultipleSampleHypTestData state */}
   useEffect(() => {
     const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
     if (!currentConfig) return;
@@ -277,12 +618,21 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     ContCTQMultipleSampleHypTestData[ctqId]?.powerStdev,
   ]);
 
-  const handleRunTest = () => {
-    toast({
-      title: "Test Run Successfully",
-      description: "The hypothesis test has been executed.",
-    });
-  };
+  // useEffect to trigger test calculations when significance or alternative hypotheses change
+  useEffect(() => {
+    // Only run tests if we have data and at least one test is enabled
+    const hasData = datasets.some(dataset => dataset.length > 0);
+    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
+    const hasEnabledTests = currentConfig && (
+      currentConfig.enableMeanTest || 
+      currentConfig.enableVarianceTest || 
+      currentConfig.enableMedianTest
+    );
+    
+    if (hasData && hasEnabledTests) {
+      handleRunTest();
+    }
+  }, [significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
 
   // useEffect
 
@@ -452,7 +802,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     <Badge
                       variant="default"
                       className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                      title={ "Estimated minimum size of each data sample and actual power of the test" }
+                      title={ "Minimum sample size of each data sample and actual power of the test" }
                     >
                       Sample Size (n): {PowerSampleSizeResults.multipleSMeansampleSize.toFixed(0)} <br />
                       Actual Power: {(PowerSampleSizeResults.multipleSMeanactualPower*100).toFixed(2)}%
@@ -505,50 +855,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           </div>
 
           <div>
-            <Label>Characterize your tested dataset:</Label>
-            <Input
-                type="text"
-                value={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescription[0] || ""}
-                onChange={(e) => updateContCTQMultipleSampleHypTestDataField(
-                    ctqId, 
-                    "datasetDescription", 
-                    e.target.value
-                )}
-                placeholder="Enter a description of your tested dataset"
-                className="mt-1"
-            />
-
           {/* Data Input Section for Multiple Sample Hypothesis Test */}
           
-          <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
-            <h4 className="font-medium text-sm mb-2">Results</h4>
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div>
-                <div className="text-gray-600">Mean test statistic:</div>
-                <div className="font-medium">{testResult.MeanTestStatistic}</div>
-                <div className="text-gray-600">Mean test criteria:</div>
-                <div className="font-medium">{testResult.MeanTestStatistic}</div>
-                <div className="text-gray-600">Mean test p-value:</div>
-                <div className="font-medium text-green-600">{testResult.MeanTestpValue}</div>
-              </div>
-              <div>
-                <div className="text-gray-600">Variance test statistic:</div>
-                <div className="font-medium">{testResult.VarianceTestStatistic}</div>
-                <div className="text-gray-600">Variance test criteria:</div>
-                <div className="font-medium">{testResult.VarianceTestStatistic}</div>
-                <div className="text-gray-600">Variance test p-value:</div>
-                <div className="font-medium text-green-600">{testResult.VarianceTestpValue}</div>
-              </div>
-              <div> 
-                <div className="text-gray-600">Median test statistic:</div>
-                <div className="font-medium">{testResult.MedianTestStatistic}</div>
-                <div className="text-gray-600">Median test criteria:</div>
-                <div className="font-medium">{testResult.MedianTestStatistic}</div>
-                <div className="text-gray-600">Median test p-value:</div>
-                <div className="font-medium text-green-600">{testResult.MedianTestpValue}</div>
-              </div>
-            </div>
-          </div>
+          {/* Results for Multiple Sample Hypothesis Testof Means, Variances and Medians */}
+          
           </div>
         </div>
       </CardContent>
