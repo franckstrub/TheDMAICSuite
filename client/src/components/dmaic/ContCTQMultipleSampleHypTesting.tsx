@@ -66,7 +66,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   const [alternateMedian, setAlternateMedian] = useState("Less than");
   const [PowerMultipleSMeanPower, setPowerMultipleSMeanPower] = useState("0.90");
   const [powerMultipleSMeanAlpha, setPowerMultipleSMeanAlpha] = useState("0.05");
-  const [powerMultipleSMeanHa, setPowerMultipleSMeanHa] = useState('≠');
+  //const [powerMultipleSMeanHa, setPowerMultipleSMeanHa] = useState('≠');
   const [PowerSampleSizeResults, setPowerSampleSizeResults] = useState<PowerSampleSizeResults>({
       multipleSMeansampleSize: 0,
       multipleSMeanactualPower: 0,
@@ -198,8 +198,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     
     let nMean = 0;
     let actualMeanPower=0;
-    let nVariance = 0;
-    let actualVariancePower=0;
   
     if(enableMeanMultipleSPower) {
       if(isNaN(parseFloat(powerPower))) {
