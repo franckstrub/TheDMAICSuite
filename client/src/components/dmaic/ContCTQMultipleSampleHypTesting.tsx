@@ -1032,7 +1032,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
                   {/* Control Buttons */}
                   <div className="flex gap-2 flex-wrap">
-                    {datasets[datasetIndex].length > 0 && (
+                    {datasets[datasetIndex]?.length > 0 && (
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -1088,7 +1088,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       variant="outline"
                       size="sm"
                       className="text-xs"
-                      disabled={focusedCells[datasetIndex] < 0}
+                      disabled={!focusedCells[datasetIndex] || focusedCells[datasetIndex] < 0}
                     >
                       📋 Paste
                     </Button>
@@ -1139,7 +1139,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {datasets[datasetIndex].length === 0 ? (
+                        {!datasets[datasetIndex] || datasets[datasetIndex].length === 0 ? (
                           <tr>
                             <td colSpan={3} className="text-center text-gray-500 py-4">
                               <div
@@ -1152,7 +1152,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                             </td>
                           </tr>
                         ) : (
-                          datasets[datasetIndex].map((point, index) => (
+                          datasets[datasetIndex]?.map((point, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="px-2 py-1 text-xs text-gray-900">
                                 {point.indexNumber}
@@ -1229,11 +1229,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   </div>
 
                   {/* Data Summary */}
-                  {datasets[datasetIndex].length > 0 && (
+                  {datasets[datasetIndex]?.length > 0 && (
                     <div className="text-xs text-gray-600 bg-white p-2 rounded border">
-                      <div>Count: {datasets[datasetIndex].length}</div>
-                      <div>Mean: {calculateMean(datasets[datasetIndex]).toFixed(3)}</div>
-                      <div>Std Dev: {calculateStdDev(datasets[datasetIndex]).toFixed(3)}</div>
+                      <div>Count: {datasets[datasetIndex]?.length || 0}</div>
+                      <div>Mean: {datasets[datasetIndex] ? calculateMean(datasets[datasetIndex]).toFixed(3) : '0.000'}</div>
+                      <div>Std Dev: {datasets[datasetIndex] ? calculateStdDev(datasets[datasetIndex]).toFixed(3) : '0.000'}</div>
                     </div>
                   )}
                 </div>
