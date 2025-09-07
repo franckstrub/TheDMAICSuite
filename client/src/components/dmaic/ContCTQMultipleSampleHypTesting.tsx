@@ -230,6 +230,19 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     };  
   }
   
+  // Synchronize local state with main state
+  useEffect(() => {
+    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
+    if (currentConfig) {
+      if (currentConfig.powerPower && currentConfig.powerPower !== PowerMultipleSMeanPower) {
+        setPowerMultipleSMeanPower(currentConfig.powerPower);
+      }
+      if (currentConfig.powerAlpha && currentConfig.powerAlpha !== powerMultipleSMeanAlpha) {
+        setPowerMultipleSMeanAlpha(currentConfig.powerAlpha);
+      }
+    }
+  }, [ContCTQMultipleSampleHypTestData[ctqId]?.powerPower, ContCTQMultipleSampleHypTestData[ctqId]?.powerAlpha, PowerMultipleSMeanPower, powerMultipleSMeanAlpha]);
+
   {/* on input change, update ContCTQTwoSampleHypTestData state */}
   useEffect(() => {
     const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
@@ -349,6 +362,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       <Label htmlFor='powerMultipleSMeanPower'>Power of test(1-β):</Label>
                       <Select value={PowerMultipleSMeanPower} onValueChange={(value: string) => {
                         setPowerMultipleSMeanPower(value);
+                        updateContCTQMultipleSampleHypTestDataField(ctqId, 'powerPower', value);
                       }}>
                       <SelectTrigger id='powerMultipleSMeanPower'>
                           <SelectValue placeholder="Select Power of test" />
@@ -371,7 +385,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       <Label htmlFor="powerMultipleSMeanAlpha">Alpha (α):</Label> 
                       <Select value={powerMultipleSMeanAlpha} onValueChange={(value: string) => {
                         setPowerMultipleSMeanAlpha(value);
-                        //updateContCTQMultipleSampleHypTestDataField(ctqId, 'powerMultipleSMeanAlpha', value);
+                        updateContCTQMultipleSampleHypTestDataField(ctqId, 'powerAlpha', value);
                       }}>
                       <SelectTrigger id="powerMultipleSMeanAlpha">
                           <SelectValue placeholder="Select Alpha significance level" />
