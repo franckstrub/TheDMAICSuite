@@ -2830,7 +2830,7 @@ export function calculatePairedSMeanSampleSize(
     };
 };
 
-function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol = 1e-8, maxIter = 200): number {
+function old_noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol = 1e-8, maxIter = 200): number {
   let sum = 0;
   let weight = Math.exp(-lambda / 2);
   let j = 0;
@@ -2845,7 +2845,7 @@ function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol =
   }
 
   return sum;
-}
+};
 
 // Custom non-central F CDF implementation
   function GroknonCentralFCDF (x: number, df1: number, df2: number, ncp: number, maxTerms = 100): number {
@@ -2870,99 +2870,101 @@ function noncentralFcdf(x: number, d1: number, d2: number, lambda: number, tol =
   };
 
 export function calculateMultipleSMeanSampleSize(
-          powerPower: string,
-          powerNbrDistri: number,    // Number of groups (k)
-          powerDifference: number,   // Effect size or difference between means
-          powerStdev: number,        // Within-group standard deviation
-          powerAlpha: string,
-        ) : PowerAnalysisResult {
-
+  powerPower: string,
+  powerNbrDistri: number, // Number of groups (k)
+  powerDifference: number, // Maximum difference between means (δ)
+  powerStdev: number, // Within-group standard deviation (σ)
+  powerAlpha: string
+): PowerAnalysisResult {
+  // Parse inputs
   const targetPower = parseFloat(powerPower);
   const alpha = parseFloat(powerAlpha);
-  const k = powerNbrDistri; // number of groups
-  
-  // Calculate Cohen's f effect size
-  const effectSize = powerDifference / powerStdev;
-  //const effectSize = 0.3;
-  
+  const k = Math.floor(powerNbrDistri); // Number of groups
+  const delta = powerDifference; // Maximum difference between means
+  const sigma = powerStdev; // Within-group standard deviation
+
   // Validate inputs
-  if (k < 2) {
-    return {
-    sampleSize: 0,
-    actualPower: 0,
-    };
-    //throw new Error("Number of groups must be at least 2 for ANOVA");
+  if (
+    isNaN(targetPower) || targetPower <= 0 || targetPower >= 1 ||
+    isNaN(alpha) || alpha <= 0 || alpha >= 1 ||
+    k < 2 || isNaN(k) ||
+    delta <= 0 || isNaN(delta) ||
+    sigma <= 0 || isNaN(sigma)
+  ) {
+    return { sampleSize: NaN, actualPower: NaN };
   }
-  
-  if (effectSize <= 0) {
-    //throw new Error("Effect size must be positive");
-    return {
-    sampleSize: 0,
-    actualPower: 0,
-    };
-  }
-  
-  if (targetPower <= 0 || targetPower >= 1) {
-    //throw new Error("Target power must be between 0 and 1");
-    return {
-    sampleSize: 0,
-    actualPower: 0,
-    };
-  }
-  
-  // Power calculation function using jStat
-  function calculatePower(n: number): number {
-    const totalN = n * k;
-    const df1 = k - 1;           // between groups degrees of freedom
-    const df2 = totalN - k;      // within groups degrees of freedom
-    
-    // Non-centrality parameter for ANOVA
-    const ncp = n * effectSize * effectSize;
-    
-    // Critical F-value using jStat
-    const fCritical = jStat.centralF.inv(1 - alpha, df1, df2);
-    //const fCritical = jStat.centralF.inv(1-0.05, 3, 28);
-    
-    // Power using non-central F distribution
-    //const powertest = 1 - jStat.noncentralF.cdf(fCritical, df1, df2, ncp);
-    const power = 1 - noncentralFcdf(fCritical, df1, df2, ncp);
-    //console.log(jStat);
-    
-    //const power = 1 - GroknonCentralFCDF(fCritical, df1, df2, ncp);
-    //const power = 1 - noncentralFcdf(2.94, 3, 28, 2.88);
-    // Better approximation using normal distribution
-    
-    return power;
-  };
-  
-  // Binary search for optimal sample size
-  let low = 2;
-  let high = 1000;
-  let bestN = high;
-  let bestPower = 0;
-  //let currentPower = 0;
-  
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    const currentPower = calculatePower(mid);
-    //currentPower = calculatePower(mid);
-    
-    if (currentPower >= targetPower) {
-      bestN = mid;
-      bestPower = currentPower;
-      high = mid - 1;
-    } else {
-      low = mid + 1;
+
+  // Convert δ to Cohen's f: f ≈ δ / (σ * sqrt(2k))
+  const f = delta / (sigma * Math.sqrt(2 * k));
+
+  // Custom non-central F CDF implementation
+  const nonCentralFCDF = (x: number, df1: number, df2: number, ncp: number, maxTerms = 100): number => {
+    if (x < 0 || df1 <= 0 || df2 <= 0 || ncp < 0) return NaN;
+
+    let sum = 0;
+    const lambdaHalf = ncp / 2;
+    const epsilon = 1e-10; // Convergence threshold
+
+    for (let j = 0; j < maxTerms; j++) {
+      // Poisson weight: e^(-λ/2) * (λ/2)^j / j!
+      const poissonWeight = Math.exp(-lambdaHalf) * Math.pow(lambdaHalf, j) / (jStat as any).factorial(j);
+      // Beta CDF: I(d1*x/(d1*x + d2); (d1 + 2j)/2, d2/2)
+      const betaArg = (df1 * x) / (df1 * x + df2);
+      const betaCDF = (jStat as any).beta.cdf(betaArg, (df1 + 2 * j) / 2, df2 / 2);
+      const term = poissonWeight * betaCDF;
+      sum += term;
+      if (term < epsilon * sum && j > 0) break;
     }
+
+    return Math.min(Math.max(sum, 0), 1);
+  };
+
+  // Degrees of freedom for numerator
+  const df1 = k - 1;
+
+  // Critical F value for the given alpha (using central F distribution)
+  //const criticalF = (jStat as any).centralF.inv(1 - alpha, df1, 1000); // Approximate for large df2
+
+  // Iterative search for sample size
+  let n = 2; // Start with minimum sample size per group
+  let actualPower = 0;
+  const maxIterations = 1000;
+  const powerThreshold = targetPower - 0.005; // Allow small tolerance
+
+  while (n < maxIterations) {
+    // Degrees of freedom for denominator: k * (n - 1)
+    const df2 = k * (n - 1);
+    if (df2 <= 0) {
+      n++;
+      continue;
+    }
+
+    // Non-centrality parameter: λ = n * k * f^2
+    const lambda = n * k * f * f;
+
+    // Power = 1 - P(F <= criticalF | df1, df2, λ)
+    try {
+      const criticalF = (jStat as any).centralF.inv(1 - alpha, df1, df2); // Approximate for large df2
+      const cdf = nonCentralFCDF(criticalF, df1, df2, lambda);
+      actualPower = 1 - cdf;
+
+      if (actualPower >= powerThreshold) {
+        return {
+          sampleSize: n,
+          actualPower: actualPower,
+        };
+      }
+    } catch (error) {
+      console.error('Power calculation error:', error);
+      return { sampleSize: NaN, actualPower: NaN };
+    }
+
+    n++;
   }
- //bestPower = currentPower;  
-  // If we didn't find a solution within range, calculate actual power for max n
-  if (bestPower < targetPower) {
-    bestPower = calculatePower(bestN);
-  }
-  
+
+  // If no solution is found within maxIterations
   return {
-    sampleSize: Math.ceil(bestN),
-    actualPower: Math.round(bestPower * 10000) / 10000,
+    sampleSize: NaN,
+    actualPower: NaN,
   };
 }
