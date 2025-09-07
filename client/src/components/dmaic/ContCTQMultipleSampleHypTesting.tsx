@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Undo, Plus } from "lucide-react";
+import { Trash2, Undo, Plus, Minus, X, Play } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   mean, 
@@ -1293,7 +1293,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               <h3 className="text-lg font-semibold">Test Results</h3>
               
               {/* Mean Test Results */}
-              {enableMeanTest && testResults.meanTest && (
+              {ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Mean Test Results</CardTitle>
@@ -1301,8 +1301,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <div className="font-medium text-gray-700">F-Statistic</div>
-                        <div className="text-lg font-semibold">{testResults.meanTest.fStatistic.toFixed(4)}</div>
+                        <div className="font-medium text-gray-700">Test Statistic</div>
+                        <div className="text-lg font-semibold">{testResults.meanTest.testStatistic.toFixed(4)}</div>
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">P-Value</div>
@@ -1310,8 +1310,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Decision</div>
-                        <div className={`text-lg font-semibold ${testResults.meanTest.decision === 'Reject H0' ? 'text-red-600' : 'text-green-600'}`}>
-                          {testResults.meanTest.decision}
+                        <div className={`text-lg font-semibold ${testResults.meanTest.pValue < parseFloat(significanceLevel) ? 'text-red-600' : 'text-green-600'}`}>
+                          {testResults.meanTest.pValue < parseFloat(significanceLevel) ? 'Reject H0' : 'Accept H0'}
                         </div>
                       </div>
                       <div>
@@ -1324,7 +1324,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               )}
 
               {/* Variance Test Results */}
-              {enableVarianceTest && testResults.varianceTest && (
+              {ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && testResults.varianceTest && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Variance Test Results</CardTitle>
@@ -1341,8 +1341,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Decision</div>
-                        <div className={`text-lg font-semibold ${testResults.varianceTest.decision === 'Reject H0' ? 'text-red-600' : 'text-green-600'}`}>
-                          {testResults.varianceTest.decision}
+                        <div className={`text-lg font-semibold ${testResults.varianceTest.pValue < parseFloat(significanceLevel) ? 'text-red-600' : 'text-green-600'}`}>
+                          {testResults.varianceTest.pValue < parseFloat(significanceLevel) ? 'Reject H0' : 'Accept H0'}
                         </div>
                       </div>
                       <div>
@@ -1355,7 +1355,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               )}
 
               {/* Median Test Results */}
-              {enableMedianTest && testResults.medianTest && (
+              {ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && testResults.medianTest && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Median Test Results</CardTitle>
@@ -1372,8 +1372,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Decision</div>
-                        <div className={`text-lg font-semibold ${testResults.medianTest.decision === 'Reject H0' ? 'text-red-600' : 'text-green-600'}`}>
-                          {testResults.medianTest.decision}
+                        <div className={`text-lg font-semibold ${testResults.medianTest.pValue < parseFloat(significanceLevel) ? 'text-red-600' : 'text-green-600'}`}>
+                          {testResults.medianTest.pValue < parseFloat(significanceLevel) ? 'Reject H0' : 'Accept H0'}
                         </div>
                       </div>
                       <div>
@@ -1386,14 +1386,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               )}
 
               {/* Normality Test Results */}
-              {normalityResults && normalityResults.length > 0 && (
+              {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Normality Test Results</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {normalityResults.map((result, index) => (
+                      {testResults.normalityResults.map((result: any, index: number) => (
                         <div key={index} className="border-b pb-2 last:border-b-0">
                           <h4 className="font-medium text-sm mb-2">Dataset {index + 1}</h4>
                           <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
