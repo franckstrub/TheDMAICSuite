@@ -273,6 +273,13 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   } 
   }));
 
+  // TanStack Query for loading data from database
+  const { data: configData, isLoading, error } = useQuery({
+    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/multiple-sample-hypothesis-config`],
+    enabled: !!projectId && !!ctqId,
+    retry: false,
+  });
+
   // Mutation for saving data to database
     const saveConfigMutation = useMutation({
       mutationFn: async (configData: any) => {
@@ -334,6 +341,71 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     
     saveConfigMutation.mutate(configToSave);
   };
+
+  // Load configuration data from database when available
+  useEffect(() => {
+    if (configData && (configData as any).config && !isLoading) {
+      setTimeout(() => {
+        const config = (configData as any).config;
+        
+        // Update local state variables from database
+        if (config.significanceLevel) {
+          setSignificanceLevel(config.significanceLevel);
+        }
+        if (config.alternateMean) {
+          setAlternateMean(config.alternateMean);
+        }
+        if (config.alternateVariance) {
+          setAlternateVariance(config.alternateVariance);
+        }
+        if (config.alternateMedian) {
+          setAlternateMedian(config.alternateMedian);
+        }
+        
+        // Update datasets from database
+        if (config.datasets && Array.isArray(config.datasets)) {
+          setDatasets(config.datasets);
+          setNumDatasets(config.datasets.length);
+        }
+        
+        // Update dataset descriptions from database
+        if (config.datasetDescriptions && Array.isArray(config.datasetDescriptions)) {
+          setDatasetDescriptions(config.datasetDescriptions);
+        }
+        
+        // Update power analysis state variables from database
+        if (config.PowerMultipleSMeanPower) {
+          setPowerMultipleSMeanPower(config.PowerMultipleSMeanPower);
+        }
+        if (config.powerMultipleSMeanAlpha) {
+          setPowerMultipleSMeanAlpha(config.powerMultipleSMeanAlpha);
+        }
+        
+        // Update ContCTQMultipleSampleHypTestData from database
+        setContCTQMultipleSampleHypTestData(prev => ({
+          ...prev,
+          [ctqId]: {
+            ...prev[ctqId],
+            enableMeanTest: config.enableMeanTest ?? false,
+            enableVarianceTest: config.enableVarianceTest ?? false,
+            enableMedianTest: config.enableMedianTest ?? false,
+            enableMeanMultipleSPower: config.enableMeanMultipleSPower ?? false,
+            powerPower: config.powerPower || "0.90",
+            powerAlpha: config.powerAlpha || "0.05",
+            powerNbrDistri: config.powerNbrDistri || 2,
+            powerDifference: config.powerDifference || 0,
+            powerStdev: config.powerStdev || 0,
+            significanceLevel: config.significanceLevel || "0.05",
+            alternateMean: config.alternateMean || "Less than",
+            alternateVariance: config.alternateVariance || "Less than",
+            alternateMedian: config.alternateMedian || "Less than",
+            datasets: config.datasets || [[], []],
+            datasetDescriptions: config.datasetDescriptions || ['Dataset 1', 'Dataset 2'],
+          }
+        }));
+      }, 0);
+    }
+  }, [configData, ctqId, isLoading]);
 
   const updateContCTQMultipleSampleHypTestDataField = (
     ctqId: number, 
