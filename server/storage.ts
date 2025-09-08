@@ -1,7 +1,7 @@
 import {
   users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements,
   datasets, dataCollectionPlans, storageConfigs, activityLogs, processData, projectRaciMatrix,
-  gateReviewDeliverables, gateReviewValidators, ganttTasks,
+  gateReviewDeliverables, gateReviewValidators, ganttTasks, multipleSampleHypothesisConfig,
   type InsertUser,
   type Project, type InsertProject,
   type ProjectCharter, type InsertCharter,
@@ -16,7 +16,8 @@ import {
   type ProjectRaciMatrix, type InsertRaciMatrix, type RaciMatrixData,
   type GateReviewDeliverable, type InsertGateReviewDeliverable,
   type GateReviewValidator, type InsertGateReviewValidator,
-  type GanttTask, type InsertGanttTask
+  type GanttTask, type InsertGanttTask,
+  type MultipleSampleHypothesisConfig, type InsertMultipleSampleHypothesisConfig
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, gt, sql } from "drizzle-orm";
