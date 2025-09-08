@@ -1009,15 +1009,20 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     );
     
     if (hasData && hasEnabledTests) {
+      console.log('Running hypothesis test due to state change');
       handleRunTest();
     }
-  }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMean, ContCTQMultipleSampleHypTestData[ctqId]?.alternateVariance, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMedian, datasets]);
-
-  // Synchronize datasets with main state whenever they change
-  useEffect(() => {
-    updateContCTQMultipleSampleHypTestDataField(ctqId, "datasets", datasets);
-    updateContCTQMultipleSampleHypTestDataField(ctqId, "datasetDescriptions", datasetDescriptions);
-  }, [datasets, datasetDescriptions, ctqId]);
+  }, [
+    significanceLevel,
+    alternateMean, 
+    alternateVariance, 
+    alternateMedian, 
+    datasets,
+    ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest,
+    ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest,
+    ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest,
+    ctqId
+  ]);
 
   return (
     <Card>
