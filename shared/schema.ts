@@ -1543,6 +1543,73 @@ export type InsertPairedSampleHypothesisConfig = z.infer<
 export type PairedSampleHypothesisConfig =
   typeof pairedSampleHypothesisConfig.$inferSelect;
 
+// Multiple Sample Hypothesis Testing Configuration - stores user data and settings for multiple-sample tests
+export const multipleSampleHypothesisConfig = pgTable(
+  "multiple_sample_hypothesis_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
+
+    // Test configuration
+    testType: text("test_type").default("Multiple-Sample Hyp test"),
+
+    // Statistical parameter enablers
+    enableMeanTest: boolean("enable_mean_test").default(true),
+    enableVarianceTest: boolean("enable_variance_test").default(false),
+    enableMedianTest: boolean("enable_median_test").default(false),
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternateMean: text("alternate_mean").default("Less than"),
+    alternateVariance: text("alternate_variance").default("Less than"),
+    alternateMedian: text("alternate_median").default("Less than"),
+
+    // Multiple datasets - array of arrays of data points
+    datasets: jsonb("datasets")
+      .$type<Array<Array<{ indexNumber: number; dataValue: number }>>>()
+      .default([]),
+
+    // Dataset descriptions - array of strings
+    datasetDescriptions: jsonb("dataset_descriptions")
+      .$type<Array<string>>()
+      .default([]),
+
+    // Power analysis fields for Multiple Sample Mean Test
+    enableMeanMultipleSPower: boolean("enable_mean_multiple_s_power").default(false),
+    powerPower: text("power_power"),
+    powerAlpha: text("power_alpha"),
+    powerNbrDistri: integer("power_nbr_distri"),
+    powerDifference: real("power_difference"),
+    powerStdev: real("power_stdev"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertMultipleSampleHypothesisConfigSchema = createInsertSchema(
+  multipleSampleHypothesisConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertMultipleSampleHypothesisConfig = z.infer<
+  typeof insertMultipleSampleHypothesisConfigSchema
+>;
+export type MultipleSampleHypothesisConfig =
+  typeof multipleSampleHypothesisConfig.$inferSelect;
+
 // Main Hypothesis Testing Configuration - stores which types of hypothesis tests are enabled
 export const hypothesisTestingConfig = pgTable(
   "hypothesis_testing_config",
