@@ -1030,7 +1030,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     if (hasData && hasEnabledTests) {
       handleRunTest();
     }
-  }, [significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
+  }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
 
 
   return (
@@ -1225,7 +1225,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           <div className="grid grid-cols-2 gap-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
-            <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
+            <Select value={significanceLevel} onValueChange={(value) => {
+              setSignificanceLevel(value);
+              updateContCTQMultipleSampleHypTestDataField(ctqId, "significanceLevel", value);
+            }}>
             <SelectTrigger id="significance">
                 <SelectValue placeholder="Select significance level" />
             </SelectTrigger>
