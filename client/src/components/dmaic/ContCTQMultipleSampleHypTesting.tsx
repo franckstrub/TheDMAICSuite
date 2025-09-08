@@ -997,6 +997,25 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     ContCTQMultipleSampleHypTestData[ctqId]?.powerStdev,
   ]);
 
+  // Synchronize local state with main state
+  useEffect(() => {
+    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
+    if (currentConfig) {
+      if (currentConfig.significanceLevel && currentConfig.significanceLevel !== significanceLevel) {
+        setSignificanceLevel(currentConfig.significanceLevel);
+      }
+      if (currentConfig.alternateMean && currentConfig.alternateMean !== alternateMean) {
+        setAlternateMean(currentConfig.alternateMean);
+      }
+      if (currentConfig.alternateVariance && currentConfig.alternateVariance !== alternateVariance) {
+        setAlternateVariance(currentConfig.alternateVariance);
+      }
+      if (currentConfig.alternateMedian && currentConfig.alternateMedian !== alternateMedian) {
+        setAlternateMedian(currentConfig.alternateMedian);
+      }
+    }
+  }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMean, ContCTQMultipleSampleHypTestData[ctqId]?.alternateVariance, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMedian]);
+
   // useEffect to trigger test calculations when significance or alternative hypotheses change
   useEffect(() => {
     // Only run tests if we have data and at least one test is enabled
@@ -1013,7 +1032,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     }
   }, [significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
 
-  // useEffect
 
   return (
     <Card>
