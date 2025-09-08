@@ -1032,6 +1032,22 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     }
   }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
 
+  // useEffect to run handleRunTest on component mount/rendering
+  useEffect(() => {
+    // Only run tests if we have data and at least one test is enabled
+    const hasData = datasets.some(dataset => dataset.length > 0);
+    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
+    const hasEnabledTests = currentConfig && (
+      currentConfig.enableMeanTest || 
+      currentConfig.enableVarianceTest || 
+      currentConfig.enableMedianTest
+    );
+    
+    if (hasData && hasEnabledTests) {
+      console.log("Running handleRunTest on component render/mount");
+      handleRunTest();
+    }
+  }, []); // Empty dependency array means this runs only on mount
 
   return (
     <Card>
