@@ -403,6 +403,17 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             datasetDescriptions: config.datasetDescriptions || ['Dataset 1', 'Dataset 2'],
           }
         }));
+        
+        // Run tests after loading config from database
+        setTimeout(() => {
+          const hasData = config.datasets && config.datasets.some((dataset: any) => dataset.length > 0);
+          const hasEnabledTests = config.enableMeanTest || config.enableVarianceTest || config.enableMedianTest;
+          
+          if (hasData && hasEnabledTests) {
+            console.log("Running handleRunTest after loading config from database");
+            handleRunTest();
+          }
+        }, 100);
       }, 0);
     }
   }, [configData, ctqId, isLoading]);
