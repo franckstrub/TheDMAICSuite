@@ -411,7 +411,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           
           if (hasData && hasEnabledTests) {
             console.log("Running handleRunTest after loading config from database");
-            handleRunTest();
+            handleRunTest(
+              config.enableMeanTest ?? false,
+              config.enableVarianceTest ?? false,
+              config.enableMedianTest ?? false,
+              config.datasets || [[], []],
+              parseFloat(config.significanceLevel || "0.05"),
+              config.alternateMean || "Different",
+              config.alternateVariance || "Different",
+              config.alternateMedian || "Different"
+            );
           }
         }, 100);
       }, 0);
@@ -926,26 +935,32 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     });
   };
 
-  const handleRunTest = () => {
-    const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
-    if (!currentConfig) return;
-
-    const significance = parseFloat(significanceLevel);
+  const handleRunTest = (
+    enableMeanTest: boolean,
+    enableVarianceTest: boolean,
+    enableMedianTest: boolean,
+    datasetsParam: DataPoint[][],
+    significance: number,
+    HaMean: string,
+    HaVariance: string,
+    HaMedian: string
+  ) => {
+    console.log("handleRunTest called with params:", { enableMeanTest, enableVarianceTest, enableMedianTest, significance });
     
     // Calculate normality tests
-    const normalityResults = calculateNormalityTests(datasets);
+    const normalityResults = calculateNormalityTests(datasetsParam);
 
     // Perform hypothesis tests if enabled
-    const meanTest = currentConfig.enableMeanTest 
-      ? performMultipleSampleMeanTest(datasets, significance, alternateMean)
+    const meanTest = enableMeanTest 
+      ? performMultipleSampleMeanTest(datasetsParam, significance, HaMean)
       : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
 
-    const varianceTest = currentConfig.enableVarianceTest 
-      ? performMultipleSampleVarianceTest(datasets, significance, alternateVariance)
+    const varianceTest = enableVarianceTest 
+      ? performMultipleSampleVarianceTest(datasetsParam, significance, HaVariance)
       : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
 
-    const medianTest = currentConfig.enableMedianTest 
-      ? performMultipleSampleMedianTest(datasets, significance, alternateMedian)
+    const medianTest = enableMedianTest 
+      ? performMultipleSampleMedianTest(datasetsParam, significance, HaMedian)
       : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
 
     setTestResults({
@@ -1036,7 +1051,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     if (!hasEnabledTests) return;
 
     console.log("Running handleRunTest from useEffect - significance level:", significanceLevel);
-    handleRunTest();
+    handleRunTest(
+      currentConfig.enableMeanTest ?? false,
+      currentConfig.enableVarianceTest ?? false,
+      currentConfig.enableMedianTest ?? false,
+      datasets,
+      parseFloat(significanceLevel),
+      alternateMean,
+      alternateVariance,
+      alternateMedian
+    );
   }, [
     datasets,
     significanceLevel,
@@ -1061,7 +1085,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     
     if (hasData && hasEnabledTests) {
       console.log("Running handleRunTest on component render/mount");
-      handleRunTest();
+      handleRunTest(
+        currentConfig.enableMeanTest ?? false,
+        currentConfig.enableVarianceTest ?? false,
+        currentConfig.enableMedianTest ?? false,
+        datasets,
+        parseFloat(significanceLevel),
+        alternateMean,
+        alternateVariance,
+        alternateMedian
+      );
     }
   }, []); // Empty dependency array means this runs only on mount
 
