@@ -992,9 +992,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             </div>
 
             {/* Dataset Descriptions */}
-            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(numDatasets, 3)}, 1fr)` }}>
+            <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
               {Array.from({ length: numDatasets }, (_, i) => (
-                <div key={i} className="space-y-2">
+                <div key={i} className="space-y-2 flex-shrink-0" style={{ minWidth: '280px' }}>
                   <Label htmlFor={`dataset-desc-${i}`}>Dataset {i + 1} Description</Label>
                   <Input
                     id={`dataset-desc-${i}`}
@@ -1013,9 +1013,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             </div>
 
             {/* Data Input Tables */}
-            <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${Math.min(numDatasets, 3)}, 1fr)` }}>
+            <div className="flex gap-6 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
               {Array.from({ length: numDatasets }, (_, datasetIndex) => (
-                <div key={datasetIndex} className="space-y-4 border rounded-lg p-4 bg-gray-50">
+                <div key={datasetIndex} className="space-y-4 border rounded-lg p-4 bg-gray-50 flex-shrink-0" style={{ minWidth: '320px' }}>
                   <div className="flex justify-between items-center">
                     <h4 className="font-medium text-sm">Dataset {datasetIndex + 1}</h4>
                     {numDatasets > 2 && (
