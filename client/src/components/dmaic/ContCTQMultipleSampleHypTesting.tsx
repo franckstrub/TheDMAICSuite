@@ -436,7 +436,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     if (numDatasets <= 2) return; // Don't allow removing if only 2 datasets remain
     
     setDatasets(prev => prev.filter((_, i) => i !== index));
-    setDatasetDescriptions(prev => prev.filter((_, i) => i !== index));
+    setDatasetDescriptions(prev => {
+      const filteredDescriptions = prev.filter((_, i) => i !== index);
+      // Re-index descriptions to match dataset positions
+      return filteredDescriptions.map((_, i) => `Dataset ${i + 1}`);
+    });
     setFocusedCells(prev => prev.filter((_, i) => i !== index));
     setEditingCells(prev => prev.filter((_, i) => i !== index));
     setEditValues(prev => prev.filter((_, i) => i !== index));
