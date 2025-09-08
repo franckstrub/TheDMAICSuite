@@ -1112,23 +1112,58 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
                     <Button
                       onClick={async () => {
-                        if (focusedCells[datasetIndex] < 0) {
-                          toast({
-                            title: "No Cell Focused",
-                            description: `Please click on a data cell in Dataset ${datasetIndex + 1} first to set the starting position for paste.`,
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                        
                         try {
                           const clipboardData = await navigator.clipboard.readText();
                           if (clipboardData.trim()) {
-                            handleFocusedCellPaste(datasetIndex, clipboardData);
+                            // Parse clipboard data and add to end of dataset
+                            const lines = clipboardData.trim().split('\n');
+                            const newDataPoints: DataPoint[] = [];
+                            
+                            lines.forEach(line => {
+                              const values = line.split(/[\t,;\s]+/).filter(val => val.trim() !== '');
+                              values.forEach(val => {
+                                const numValue = parseFloat(val.replace(',', '.'));
+                                if (!isNaN(numValue)) {
+                                  newDataPoints.push({
+                                    indexNumber: (datasets[datasetIndex]?.length || 0) + newDataPoints.length + 1,
+                                    dataValue: numValue
+                                  });
+                                }
+                              });
+                            });
+                            
+                            if (newDataPoints.length > 0) {
+                              // Save undo state
+                              setUndoStates(prev => ({
+                                ...prev,
+                                [datasetIndex]: datasets[datasetIndex] || []
+                              }));
+                              
+                              // Add new data points
+                              setDatasets(prev => {
+                                const newDatasets = [...prev];
+                                if (!newDatasets[datasetIndex]) {
+                                  newDatasets[datasetIndex] = [];
+                                }
+                                newDatasets[datasetIndex] = [...newDatasets[datasetIndex], ...newDataPoints];
+                                return newDatasets;
+                              });
+                              
+                              toast({
+                                title: "Data Pasted",
+                                description: `Added ${newDataPoints.length} values to Dataset ${datasetIndex + 1}`,
+                              });
+                            } else {
+                              toast({
+                                title: "No Valid Data",
+                                description: "No valid numeric data found in clipboard.",
+                                variant: "destructive",
+                              });
+                            }
                           } else {
                             toast({
                               title: "No Data Found",
-                              description: "No valid numeric data found in clipboard.",
+                              description: "Clipboard is empty.",
                               variant: "destructive",
                             });
                           }
@@ -1142,7 +1177,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       variant="outline"
                       size="sm"
                       className="text-xs"
-                      disabled={!focusedCells[datasetIndex] || focusedCells[datasetIndex] < 0}
                     >
                       📋 Paste
                     </Button>
