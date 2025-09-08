@@ -1288,33 +1288,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     </div>
                   </div>
 
-                  {/* Data Input */}
-                  <div className="flex gap-2">
-                    <Input
-                      id={`add-data-input-${datasetIndex}`}
-                      type="number"
-                      value={inputValues[datasetIndex] || ""}
-                      onChange={(e) => {
-                        const newInputValues = [...inputValues];
-                        newInputValues[datasetIndex] = e.target.value;
-                        setInputValues(newInputValues);
-                      }}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          addDataPoint(datasetIndex, inputValues[datasetIndex] || "");
-                        }
-                      }}
-                      placeholder="Enter value"
-                      className="text-sm"
-                    />
-                    <Button
-                      onClick={() => addDataPoint(datasetIndex, inputValues[datasetIndex] || "")}
-                      size="sm"
-                      disabled={!inputValues[datasetIndex]?.trim()}
-                    >
-                      Add
-                    </Button>
-                  </div>
 
                   {/* Data Table */}
                   <div className="border rounded-md max-h-[300px] overflow-y-auto bg-white">
@@ -1433,6 +1406,66 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                             </tr>
                           ))
                         )}
+
+                        {/* Add Data Row - Integrated within the table */}
+                        <tr className="bg-blue-50 border-t-2 border-blue-200">
+                          <td className="px-4 py-2 text-sm text-gray-500">
+                            {(datasets[datasetIndex]?.length || 0) + 1}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              id={`add-data-input-${datasetIndex}`}
+                              type="number"
+                              value={inputValues[datasetIndex] || ""}
+                              onChange={(e) => {
+                                const newInputValues = [...inputValues];
+                                newInputValues[datasetIndex] = e.target.value;
+                                setInputValues(newInputValues);
+                              }}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  addDataPoint(datasetIndex, inputValues[datasetIndex] || "");
+                                }
+                              }}
+                              onFocus={() => {
+                                const newFocused = [...focusedCells];
+                                newFocused[datasetIndex] = datasets[datasetIndex]?.length || 0;
+                                setFocusedCells(newFocused);
+                                (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
+                              }}
+                              onPaste={(e) => {
+                                e.preventDefault();
+                                const pastedData = e.clipboardData.getData('text/plain');
+                                const lines = pastedData.trim().split('\\n');
+
+                                if (lines.length > 1) {
+                                  // Multiple values - use the general paste handler
+                                  handlePasteData(datasetIndex)(e);
+                                } else {
+                                  // Single value - set it in the input field
+                                  const value = lines[0]?.trim();
+                                  if (value) {
+                                    const newInputValues = [...inputValues];
+                                    newInputValues[datasetIndex] = value;
+                                    setInputValues(newInputValues);
+                                  }
+                                }
+                              }}
+                              placeholder="Enter numeric value"
+                              className={`w-full ${focusedCells[datasetIndex] === (datasets[datasetIndex]?.length || 0) ? 'ring-2 ring-blue-500' : ''}`}
+                              step="any"
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Button
+                              onClick={() => addDataPoint(datasetIndex, inputValues[datasetIndex] || "")}
+                              size="sm"
+                              disabled={!inputValues[datasetIndex]?.trim()}
+                            >
+                              Add
+                            </Button>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
