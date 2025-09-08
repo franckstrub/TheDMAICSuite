@@ -1291,17 +1291,17 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
                   {/* Data Table */}
                   <div className="border rounded-md max-h-[300px] overflow-y-auto bg-white">
-                    <table className="min-w-full table-auto text-sm">
-                      <thead className="bg-gray-50 sticky top-0">
+                    <table className="min-w-full table-auto">
+                      <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase">
-                            #
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
+                            Index
                           </th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase">
-                            Value
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
+                            Data Value
                           </th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase">
-                            Action
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
+                            Actions
                           </th>
                         </tr>
                       </thead>
@@ -1326,11 +1326,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                         ) : (
                           datasets[datasetIndex]?.map((point, index) => (
                             <tr key={index} className="hover:bg-gray-50">
-                              <td className="px-2 py-1 text-xs text-gray-900">
+                              <td className="px-4 py-2 text-xs text-gray-900">
                                 {point.indexNumber}
                               </td>
                               <td 
-                                className="px-2 py-1 text-xs text-gray-900 cursor-pointer"
+                                className="px-4 py-2 text-xs text-gray-900 cursor-pointer"
                                 onClick={() => {
                                   const newFocused = [...focusedCells];
                                   newFocused[datasetIndex] = index;
@@ -1393,14 +1393,15 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                   </span>
                                 )}
                               </td>
-                              <td className="px-2 py-1">
+                              <td className="px-4 py-2">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => deleteDataPoint(datasetIndex, index)}
-                                  className="text-red-600 hover:text-red-800 h-6 w-6 p-0"
+                                  className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                  title="Delete this data point"
                                 >
-                                  <Trash2 className="h-3 w-3" />
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </td>
                             </tr>
