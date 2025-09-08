@@ -132,6 +132,62 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   const [pasteInput, setPasteInput] = useState('');
   const [isDualColumnPaste, setIsDualColumnPaste] = useState(false);
 
+  // Sync array states when numDatasets changes
+  useEffect(() => {
+    const currentLength = datasets.length;
+    
+    if (numDatasets !== currentLength) {
+      // Resize all arrays to match numDatasets
+      setDatasets(prev => {
+        const newDatasets = [...prev];
+        while (newDatasets.length < numDatasets) {
+          newDatasets.push([]);
+        }
+        return newDatasets.slice(0, numDatasets);
+      });
+      
+      setDatasetDescriptions(prev => {
+        const newDescs = [...prev];
+        while (newDescs.length < numDatasets) {
+          newDescs.push(`Dataset ${newDescs.length + 1}`);
+        }
+        return newDescs.slice(0, numDatasets);
+      });
+      
+      setFocusedCells(prev => {
+        const newFocused = [...prev];
+        while (newFocused.length < numDatasets) {
+          newFocused.push(-1);
+        }
+        return newFocused.slice(0, numDatasets);
+      });
+      
+      setEditingCells(prev => {
+        const newEditing = [...prev];
+        while (newEditing.length < numDatasets) {
+          newEditing.push(-1);
+        }
+        return newEditing.slice(0, numDatasets);
+      });
+      
+      setEditValues(prev => {
+        const newEditValues = [...prev];
+        while (newEditValues.length < numDatasets) {
+          newEditValues.push('');
+        }
+        return newEditValues.slice(0, numDatasets);
+      });
+      
+      setInputValues(prev => {
+        const newInputValues = [...prev];
+        while (newInputValues.length < numDatasets) {
+          newInputValues.push('');
+        }
+        return newInputValues.slice(0, numDatasets);
+      });
+    }
+  }, [numDatasets]);
+
   // Initialize ContCTQMultipleSampleHypTestData with default values
   // Fixed state initialization
   const [ContCTQMultipleSampleHypTestData, setContCTQMultipleSampleHypTestData] = useState<{ [ctqId: number]: ContCTQMultipleSampleHypTestData }>(() => ({
