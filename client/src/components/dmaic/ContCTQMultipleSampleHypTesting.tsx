@@ -1011,9 +1011,13 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     if (hasData && hasEnabledTests) {
       handleRunTest();
     }
-  }, [significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
+  }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMean, ContCTQMultipleSampleHypTestData[ctqId]?.alternateVariance, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMedian, datasets]);
 
-  // useEffect
+  // Synchronize datasets with main state whenever they change
+  useEffect(() => {
+    updateContCTQMultipleSampleHypTestDataField(ctqId, "datasets", datasets);
+    updateContCTQMultipleSampleHypTestDataField(ctqId, "datasetDescriptions", datasetDescriptions);
+  }, [datasets, datasetDescriptions, ctqId]);
 
   return (
     <Card>
@@ -1207,7 +1211,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           <div className="grid grid-cols-2 gap-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
-            <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
+            <Select value={significanceLevel} onValueChange={(value) => {
+              setSignificanceLevel(value);
+              updateContCTQMultipleSampleHypTestDataField(ctqId, "significanceLevel", value);
+            }}>
             <SelectTrigger id="significance">
                 <SelectValue placeholder="Select significance level" />
             </SelectTrigger>
@@ -1225,6 +1232,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               setAlternateMean(value);
               setAlternateVariance(value);
               setAlternateMedian(value);
+              // Synchronize with main state
+              updateContCTQMultipleSampleHypTestDataField(ctqId, "alternateMean", value);
+              updateContCTQMultipleSampleHypTestDataField(ctqId, "alternateVariance", value);
+              updateContCTQMultipleSampleHypTestDataField(ctqId, "alternateMedian", value);
             }}>
             <SelectTrigger id="alternativeHa">
                 <SelectValue placeholder="Select alternative" />
