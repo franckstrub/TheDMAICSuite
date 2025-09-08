@@ -898,6 +898,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   };
 
   const calculateNormalityTests = (datasets: DataPoint[][]) => {
+    if (!datasets || datasets.length === 0) {
+      return [];
+    }
     return datasets.map((dataset, index) => {
       if (dataset.length === 0) {
         return {
@@ -946,6 +949,12 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     HaMedian: string
   ) => {
     console.log("handleRunTest called with params:", { enableMeanTest, enableVarianceTest, enableMedianTest, significance });
+    
+    // Guard against undefined datasets
+    if (!datasetsParam || datasetsParam.length === 0) {
+      console.log("No datasets provided to handleRunTest");
+      return;
+    }
     
     // Calculate normality tests
     const normalityResults = calculateNormalityTests(datasetsParam);
