@@ -1009,20 +1009,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     );
     
     if (hasData && hasEnabledTests) {
-      console.log('Running hypothesis test due to state change');
       handleRunTest();
     }
-  }, [
-    significanceLevel,
-    alternateMean, 
-    alternateVariance, 
-    alternateMedian, 
-    datasets,
-    ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest,
-    ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest,
-    ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest,
-    ctqId
-  ]);
+  }, [significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
+
+  // useEffect
 
   return (
     <Card>
@@ -1216,10 +1207,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           <div className="grid grid-cols-2 gap-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
-            <Select value={significanceLevel} onValueChange={(value) => {
-              setSignificanceLevel(value);
-              updateContCTQMultipleSampleHypTestDataField(ctqId, "significanceLevel", value);
-            }}>
+            <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
             <SelectTrigger id="significance">
                 <SelectValue placeholder="Select significance level" />
             </SelectTrigger>
@@ -1237,10 +1225,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               setAlternateMean(value);
               setAlternateVariance(value);
               setAlternateMedian(value);
-              // Synchronize with main state
-              updateContCTQMultipleSampleHypTestDataField(ctqId, "alternateMean", value);
-              updateContCTQMultipleSampleHypTestDataField(ctqId, "alternateVariance", value);
-              updateContCTQMultipleSampleHypTestDataField(ctqId, "alternateMedian", value);
             }}>
             <SelectTrigger id="alternativeHa">
                 <SelectValue placeholder="Select alternative" />
