@@ -314,6 +314,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     if (!currentConfig) return;
     
     const configToSave = {
+      ctq: currentConfig.ctq, // Include the CTQ name which is required by the schema
       testType: currentConfig.testType,
       enableMeanTest: currentConfig.enableMeanTest,
       enableMeanMultipleSPower: currentConfig.enableMeanMultipleSPower,
