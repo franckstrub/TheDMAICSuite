@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -131,6 +131,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   // Paste and clipboard management
   const [pasteInput, setPasteInput] = useState('');
   const [isDualColumnPaste, setIsDualColumnPaste] = useState(false);
+  
+  // Ref for auto-scrolling
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync array states when numDatasets changes
   useEffect(() => {
@@ -187,6 +190,64 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       });
     }
   }, [numDatasets]);
+
+  // Keyboard shortcuts for paste and undo
+  useEffect(() => {
+    const handleKeyboardShortcut = (event: KeyboardEvent) => {
+      // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName)) {
+        
+        // Check if this Multiple Sample component should handle the paste based on global context
+        const focusedComponent = (window as any).focusedComponent;
+        
+        // Check if any of our datasets is focused
+        for (let i = 0; i < numDatasets; i++) {
+          if (focusedComponent === `multiple-sample-dataset${i}`) {
+            event.preventDefault();
+            navigator.clipboard.readText().then(clipboardData => {
+              if (clipboardData.trim()) {
+                handlePasteData(i)({ clipboardData: { getData: () => clipboardData }, preventDefault: () => {} } as any);
+              } else {
+                toast({
+                  title: "No Data Found",
+                  description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
+                  variant: "destructive",
+                });
+              }
+            }).catch(error => {
+              toast({
+                title: "Clipboard Access",
+                description: "Please use Ctrl+V to paste data or manually enter values.",
+                variant: "default",
+              });
+            });
+            break;
+          }
+        }
+      }
+
+      // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && Object.keys(undoStates).length > 0 && (activeTab === ctqName)) {
+        event.preventDefault();
+        
+        // Find the most recent undo state to revert
+        const availableUndos = Object.keys(undoStates);
+        if (availableUndos.length > 0) {
+          const lastDatasetIndex = parseInt(availableUndos[availableUndos.length - 1]);
+          undoDatasetChange(lastDatasetIndex);
+        } else {
+          toast({
+            title: "Nothing to Undo",
+            description: "No operations available to undo.",
+            variant: "default",
+          });
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyboardShortcut);
+    return () => document.removeEventListener('keydown', handleKeyboardShortcut);
+  }, [undoStates, activeTab, ctqName, numDatasets]);
 
   // Initialize ContCTQMultipleSampleHypTestData with default values
   // Fixed state initialization
@@ -309,6 +370,86 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     setEditValues(prev => prev.filter((_, i) => i !== index));
     setInputValues(prev => prev.filter((_, i) => i !== index));
     setNumDatasets(prev => prev - 1);
+  };
+
+  // Handle paste from Excel functionality for each dataset
+  const handlePasteData = (datasetIndex: number) => (event: React.ClipboardEvent) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      const lines = pastedData.trim().split('\n');
+      const newDataPoints: DataPoint[] = [];
+      
+      lines.forEach((line, index) => {
+        const value = line.trim();
+        
+        // Handle different decimal separators and number formats
+        let processedValue = value;
+        
+        // Handle European format with comma as decimal separator (but not thousands separator)
+        if (value.includes(',') && !value.includes('.')) {
+          processedValue = value.replace(',', '.');
+        }
+        
+        // Remove any thousands separators (spaces, apostrophes)
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        // Handle thousands separators with commas (US format: 1,234.56)
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
+          }
+        }
+        
+        const numericValue = parseFloat(processedValue);
+        
+        if (!isNaN(numericValue)) {
+          newDataPoints.push({
+            indexNumber: (datasets[datasetIndex]?.length || 0) + index + 1,
+            dataValue: numericValue
+          });
+        }
+      });
+      
+      if (newDataPoints.length > 0) {
+        // Save current state before making changes
+        setUndoStates(prev => ({
+          ...prev,
+          [datasetIndex]: datasets[datasetIndex] || []
+        }));
+        
+        setDatasets(prev => {
+          const newDatasets = [...prev];
+          if (!newDatasets[datasetIndex]) {
+            newDatasets[datasetIndex] = [];
+          }
+          newDatasets[datasetIndex] = [...newDatasets[datasetIndex], ...newDataPoints];
+          return newDatasets;
+        });
+        
+        setPasteInput("");
+        toast({
+          title: `Data Imported to Dataset ${datasetIndex + 1}`,
+          description: `Successfully imported ${newDataPoints.length} data points from Excel.`,
+        });
+        
+        // Auto-scroll to show the newly added rows after a short delay
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+          }
+        }, 100);
+      } else {
+        toast({
+          title: "No Data Found",
+          description: "No valid numeric data found in clipboard. Please copy data from Excel first.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const addDataPoint = (datasetIndex: number, value: string) => {
@@ -1115,71 +1256,36 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                         try {
                           const clipboardData = await navigator.clipboard.readText();
                           if (clipboardData.trim()) {
-                            // Parse clipboard data and add to end of dataset
-                            const lines = clipboardData.trim().split('\n');
-                            const newDataPoints: DataPoint[] = [];
-                            
-                            lines.forEach(line => {
-                              const values = line.split(/[\t,;\s]+/).filter(val => val.trim() !== '');
-                              values.forEach(val => {
-                                const numValue = parseFloat(val.replace(',', '.'));
-                                if (!isNaN(numValue)) {
-                                  newDataPoints.push({
-                                    indexNumber: (datasets[datasetIndex]?.length || 0) + newDataPoints.length + 1,
-                                    dataValue: numValue
-                                  });
-                                }
-                              });
-                            });
-                            
-                            if (newDataPoints.length > 0) {
-                              // Save undo state
-                              setUndoStates(prev => ({
-                                ...prev,
-                                [datasetIndex]: datasets[datasetIndex] || []
-                              }));
-                              
-                              // Add new data points
-                              setDatasets(prev => {
-                                const newDatasets = [...prev];
-                                if (!newDatasets[datasetIndex]) {
-                                  newDatasets[datasetIndex] = [];
-                                }
-                                newDatasets[datasetIndex] = [...newDatasets[datasetIndex], ...newDataPoints];
-                                return newDatasets;
-                              });
-                              
-                              toast({
-                                title: "Data Pasted",
-                                description: `Added ${newDataPoints.length} values to Dataset ${datasetIndex + 1}`,
-                              });
-                            } else {
-                              toast({
-                                title: "No Valid Data",
-                                description: "No valid numeric data found in clipboard.",
-                                variant: "destructive",
-                              });
-                            }
+                            handlePasteData(datasetIndex)({ clipboardData: { getData: () => clipboardData }, preventDefault: () => {} } as any);
                           } else {
                             toast({
                               title: "No Data Found",
-                              description: "Clipboard is empty.",
+                              description: "No valid numeric data found in clipboard. Please copy measurement data from Excel first.",
                               variant: "destructive",
                             });
                           }
                         } catch (error) {
                           toast({
                             title: "Clipboard Access",
-                            description: "Please use Ctrl+V to paste data.",
+                            description: "Please use Ctrl+V to paste data or manually enter values.",
                           });
                         }
                       }}
                       variant="outline"
                       size="sm"
-                      className="text-xs"
+                      className="border-gray-400 text-gray-700 hover:bg-gray-100"
                     >
-                      📋 Paste
+                      📋 Paste data from Excel
                     </Button>
+                  </div>
+
+                  {/* Excel Import Instructions */}
+                  <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
+                    <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
+                    <div className="text-blue-700">Copy single column of numeric values from Excel</div>
+                    <div className="text-blue-600 text-xs mt-1">
+                      Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click any cell in the table to paste
+                    </div>
                   </div>
 
                   {/* Data Input */}
@@ -1232,7 +1338,12 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                             <td colSpan={3} className="text-center text-gray-500 py-4">
                               <div
                                 className="cursor-pointer hover:bg-blue-50 rounded p-2"
-                                onClick={() => document.getElementById(`add-data-input-${datasetIndex}`)?.focus()}
+                                onClick={() => {
+                                  document.getElementById(`add-data-input-${datasetIndex}`)?.focus();
+                                  (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
+                                }}
+                                onPaste={handlePasteData(datasetIndex)}
+                                tabIndex={0}
                                 title="Click to focus input or paste data here"
                               >
                                 No data - click to add values
@@ -1251,10 +1362,20 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                   const newFocused = [...focusedCells];
                                   newFocused[datasetIndex] = index;
                                   setFocusedCells(newFocused);
+                                  (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
+                                }}
+                                onDoubleClick={() => {
+                                  const newEditingCells = [...editingCells];
+                                  newEditingCells[datasetIndex] = index;
+                                  setEditingCells(newEditingCells);
+                                  const newEditValues = [...editValues];
+                                  newEditValues[datasetIndex] = datasets[datasetIndex][index].dataValue.toString();
+                                  setEditValues(newEditValues);
                                 }}
                                 style={{
                                   backgroundColor: focusedCells[datasetIndex] === index ? '#dbeafe' : 'transparent'
                                 }}
+                                title="Click to focus for paste | Double-click to edit value | Use Ctrl+V to paste from focused position"
                               >
                                 {editingCells[datasetIndex] === index ? (
                                   <Input
