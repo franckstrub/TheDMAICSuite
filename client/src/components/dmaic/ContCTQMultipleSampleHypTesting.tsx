@@ -991,31 +991,29 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               </div>
             </div>
 
-            {/* Dataset Descriptions */}
-            <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
-              {Array.from({ length: numDatasets }, (_, i) => (
-                <div key={i} className="space-y-2 flex-shrink-0" style={{ minWidth: '280px' }}>
-                  <Label htmlFor={`dataset-desc-${i}`}>Dataset {i + 1} Description</Label>
-                  <Input
-                    id={`dataset-desc-${i}`}
-                    type="text"
-                    value={datasetDescriptions[i] || ""}
-                    onChange={(e) => {
-                      const newDescriptions = [...datasetDescriptions];
-                      newDescriptions[i] = e.target.value;
-                      setDatasetDescriptions(newDescriptions);
-                    }}
-                    placeholder={`Description for dataset ${i + 1}`}
-                    className="text-sm"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Data Input Tables */}
+            {/* Dataset Descriptions and Data Input Tables */}
             <div className="flex gap-6 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
               {Array.from({ length: numDatasets }, (_, datasetIndex) => (
-                <div key={datasetIndex} className="space-y-4 border rounded-lg p-4 bg-gray-50 flex-shrink-0" style={{ minWidth: '320px' }}>
+                <div key={datasetIndex} className="flex-shrink-0 space-y-4" style={{ minWidth: '320px' }}>
+                  {/* Dataset Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor={`dataset-desc-${datasetIndex}`}>Dataset {datasetIndex + 1} Description</Label>
+                    <Input
+                      id={`dataset-desc-${datasetIndex}`}
+                      type="text"
+                      value={datasetDescriptions[datasetIndex] || ""}
+                      onChange={(e) => {
+                        const newDescriptions = [...datasetDescriptions];
+                        newDescriptions[datasetIndex] = e.target.value;
+                        setDatasetDescriptions(newDescriptions);
+                      }}
+                      placeholder={`Description for dataset ${datasetIndex + 1}`}
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                  {/* Data Input Table */}
+                  <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
                   <div className="flex justify-between items-center">
                     <h4 className="font-medium text-sm">Dataset {datasetIndex + 1}</h4>
                     {numDatasets > 2 && (
@@ -1236,6 +1234,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       <div>Std Dev: {datasets[datasetIndex] ? calculateStdDev(datasets[datasetIndex]).toFixed(3) : '0.000'}</div>
                     </div>
                   )}
+                  </div>
                 </div>
               ))}
             </div>
