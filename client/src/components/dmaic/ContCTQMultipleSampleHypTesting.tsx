@@ -95,9 +95,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
-  const [alternateMean, setAlternateMean] = useState("Less than");
-  const [alternateVariance, setAlternateVariance] = useState("Less than");
-  const [alternateMedian, setAlternateMedian] = useState("Less than");
+  const [alternateMean, setAlternateMean] = useState("Different");
+  const [alternateVariance, setAlternateVariance] = useState("Different");
+  const [alternateMedian, setAlternateMedian] = useState("Different");
   const [PowerMultipleSMeanPower, setPowerMultipleSMeanPower] = useState("0.90");
   const [powerMultipleSMeanAlpha, setPowerMultipleSMeanAlpha] = useState("0.05");
   //const [powerMultipleSMeanHa, setPowerMultipleSMeanHa] = useState('≠');
@@ -263,11 +263,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     powerDifference: 0,
     powerStdev: 0,
     significanceLevel: "0.05",
-    alternateMean: "Less than",
+    alternateMean: "Different",
     enableVarianceTest: false,
-    alternateVariance: "Less than",
+    alternateVariance: "Different",
     enableMedianTest: false,
-    alternateMedian: "Less than",
+    alternateMedian: "Different",
     datasets: [[], []], 
     datasetDescriptions: ['Dataset 1', 'Dataset 2'],
   } 
@@ -396,9 +396,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             powerDifference: config.powerDifference || 0,
             powerStdev: config.powerStdev || 0,
             significanceLevel: config.significanceLevel || "0.05",
-            alternateMean: config.alternateMean || "Less than",
-            alternateVariance: config.alternateVariance || "Less than",
-            alternateMedian: config.alternateMedian || "Less than",
+            alternateMean: config.alternateMean || "Different",
+            alternateVariance: config.alternateVariance || "Different",
+            alternateMedian: config.alternateMedian || "Different",
             datasets: config.datasets || [[], []],
             datasetDescriptions: config.datasetDescriptions || ['Dataset 1', 'Dataset 2'],
           }
@@ -1219,15 +1219,18 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             </Select>
             </div>
             <div>
-            <Label htmlFor="alternateMean">Alternative Hypothesis</Label>
-            <Select value={alternateMean} onValueChange={setAlternateMean}>
-            <SelectTrigger id="alternative">
+            <Label htmlFor="alternativeHa">Alternative Ha (applies to all tests)</Label>
+            <Select value="Different" onValueChange={(value) => {
+              // Always set all three alternatives to the selected value
+              setAlternateMean(value);
+              setAlternateVariance(value);
+              setAlternateMedian(value);
+            }}>
+            <SelectTrigger id="alternativeHa">
                 <SelectValue placeholder="Select alternative" />
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="Different">Different</SelectItem>
-                <SelectItem value="Less than">Less than</SelectItem>
-                <SelectItem value="Greater than">Greater than</SelectItem>
             </SelectContent>
             </Select>
             </div>
