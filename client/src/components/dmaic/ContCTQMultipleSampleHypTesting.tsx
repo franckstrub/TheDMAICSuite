@@ -1029,19 +1029,24 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
   // useEffect to trigger test calculations when significance or alternative hypotheses change
   useEffect(() => {
-    // Only run tests if we have data and at least one test is enabled
-    const hasData = datasets.some(dataset => dataset.length > 0);
     const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
-    const hasEnabledTests = currentConfig && (
-      currentConfig.enableMeanTest || 
-      currentConfig.enableVarianceTest || 
-      currentConfig.enableMedianTest
-    );
-    
-    if (hasData && hasEnabledTests) {
-      handleRunTest();
-    }
-  }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, alternateMean, alternateVariance, alternateMedian, datasets]);
+    if (!currentConfig || datasets.length === 0 || !datasets.some(dataset => dataset.length > 0)) return;
+
+    const hasEnabledTests = currentConfig.enableMeanTest || currentConfig.enableVarianceTest || currentConfig.enableMedianTest;
+    if (!hasEnabledTests) return;
+
+    console.log("Running handleRunTest from useEffect - significance level:", significanceLevel);
+    handleRunTest();
+  }, [
+    datasets,
+    significanceLevel,
+    alternateMean,
+    alternateVariance,
+    alternateMedian,
+    ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest,
+    ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest,
+    ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest,
+  ]);
 
   // useEffect to run handleRunTest on component mount/rendering
   useEffect(() => {
@@ -1252,10 +1257,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           <div className="grid grid-cols-2 gap-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
-            <Select value={significanceLevel} onValueChange={(value) => {
-              setSignificanceLevel(value);
-              updateContCTQMultipleSampleHypTestDataField(ctqId, "significanceLevel", value);
-            }}>
+            <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
             <SelectTrigger id="significance">
                 <SelectValue placeholder="Select significance level" />
             </SelectTrigger>
