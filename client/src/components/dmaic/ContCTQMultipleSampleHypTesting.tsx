@@ -1684,6 +1684,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       undoDatasetChange(datasetIndex);
                     }
                   });
+                  // After undoing all changes, disable the button
+                  setShowUndoButton(false);
                 }}
                 disabled={!showUndoButton}
                 className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300 disabled:text-gray-400 disabled:border-gray-300 disabled:hover:bg-transparent"
