@@ -1655,20 +1655,43 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               ))}
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-            {/* Add Dataset Button */}
-            {numDatasets < 10 && (
-              <div className="text-center">
-                <Button
-                  variant="outline"
-                  onClick={addDataset}
-                  className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Dataset
-                </Button>
-              </div>
-            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+            {/* Add Dataset Button and Undo All Button */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+              {/* Add Dataset Button */}
+              {numDatasets < 10 && (
+                <div className="text-center">
+                  <Button
+                    variant="outline"
+                    onClick={addDataset}
+                    className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Dataset
+                  </Button>
+                </div>
+              )}
+              
+              {/* Undo All Button - Always visible but disabled when needed */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Undo last change across all datasets
+                  Object.keys(undoStates).forEach(key => {
+                    const datasetIndex = parseInt(key);
+                    if (undoStates[datasetIndex]) {
+                      undoDatasetChange(datasetIndex);
+                    }
+                  });
+                }}
+                disabled={!showUndoButton}
+                className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300 disabled:text-gray-400 disabled:border-gray-300 disabled:hover:bg-transparent"
+              >
+                <Undo className="h-4 w-4 mr-1" />
+                Undo All
+              </Button>
+            </div>            
   
             <Button 
                 className="w-full" 
@@ -1678,53 +1701,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               >
                 {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
             </Button>
-            </div>
-
-            {/* Run Test Button */}
-            <div className="flex gap-4">
-              <Button
-                onClick={() => {
-                  const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
-                  if (currentConfig) {
-                    handleRunTest(
-                      currentConfig.enableMeanTest ?? false,
-                      currentConfig.enableVarianceTest ?? false,
-                      currentConfig.enableMedianTest ?? false,
-                      datasets,
-                      parseFloat(significanceLevel),
-                      alternateMean,
-                      alternateVariance,
-                      alternateMedian
-                    );
-                  }
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-                disabled={datasets.every(dataset => dataset.length === 0)}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Run Test
-              </Button>
-
-              {showUndoButton && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Undo last change across all datasets
-                    Object.keys(undoStates).forEach(key => {
-                      const datasetIndex = parseInt(key);
-                      if (undoStates[datasetIndex]) {
-                        undoDatasetChange(datasetIndex);
-                      }
-                    });
-                  }}
-                  className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
-                >
-                  <Undo className="h-4 w-4 mr-1" />
-                  Undo All
-                </Button>
-              )}
-            </div>
+          </div>          
           </div>
           
           {/* Results for Multiple Sample Hypothesis Test of Means, Variances and Medians */}
