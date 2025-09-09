@@ -1046,6 +1046,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   useEffect(() => {
     const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
     if (!currentConfig || datasets.length === 0 || !datasets.some(dataset => dataset.length > 0)) return;
+    //if (!currentConfig || datasets[0].length < 2 || datasets[1].length < 2 ) return;
 
     const hasEnabledTests = currentConfig.enableMeanTest || currentConfig.enableVarianceTest || currentConfig.enableMedianTest;
     if (!hasEnabledTests) return;
@@ -1061,6 +1062,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       alternateVariance,
       alternateMedian
     );
+    //setTestResults(testResults);
   }, [
     datasets,
     significanceLevel,
@@ -1285,8 +1287,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             >
               {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
           </Button>
-        )}          
-
+        )} 
+                 
+        {(ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest) && (  
+        <div>
           <div className="grid grid-cols-2 gap-4">
             <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
@@ -1446,7 +1450,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
                     <div className="text-blue-700">Copy single column of numeric values from Excel</div>
                     <div className="text-blue-600 text-xs mt-1">
-                      Ctrl+V (Cmd+V on Mac) to paste | Ctrl+Z (Cmd+Z on Mac) to undo | Click any cell in the table to paste
+                      Ctrl+V (Cmd+V on Mac) to paste <br></br>
+                      Ctrl+Z (Cmd+Z on Mac) to undo <br></br>
+                      Click any cell in the table to paste
                     </div>
                   </div>
 
@@ -1645,7 +1651,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 </div>
               ))}
             </div>
-
+            
             {/* Add Dataset Button */}
             {numDatasets < 10 && (
               <div className="text-center">
@@ -1659,6 +1665,15 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 </Button>
               </div>
             )}
+  
+            <Button 
+                className="w-full" 
+                onClick={saveConfiguration} 
+                disabled={saveConfigMutation.isPending}
+                //variant="outline"
+              >
+                {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+            </Button>
 
             {/* Run Test Button */}
             <div className="flex gap-4">
@@ -1838,6 +1853,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           )}
           
           </div>
+        </div>
+        )}      
         </div>
       </CardContent>
     </Card>
