@@ -1289,7 +1289,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           </Button>
         )} 
                  
-        {(ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest) && (  
+        {((ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest)) && (  
         <div>
           <div className="grid grid-cols-2 gap-4">
             <div>
