@@ -1709,7 +1709,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           {/* Results for Multiple Sample Hypothesis Test of Means, Variances and Medians */}
           {testResults && (
             <div className="space-y-6 mt-8 border border-gray-200 rounded-md bg-gray-50">
-              {/* <h3 className="text-lg font-semibold">Test Results</h3> */}
               {/* Normality Test Results */}
               {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
               <div className="flex gap-6 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
