@@ -453,13 +453,22 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     setInputValues(prev => [...prev, '']);
     setNumDatasets(prev => prev + 1);
     
-    // Show warning toast when reaching the 10 dataset limit
+    // Test: Show toast for any dataset addition to verify toast is working
+    toast({
+      title: `Dataset ${newNumDatasets} Added`,
+      description: `You now have ${newNumDatasets} datasets`,
+      variant: newNumDatasets === 10 ? "destructive" : "default",
+    });
+    
+    // Show special warning when reaching the 10 dataset limit
     if (newNumDatasets === 10) {
-      toast({
-        title: "Dataset Limit Reached",
-        description: "You have reached the maximum limit of 10 datasets for multiple-sample hypothesis testing.",
-        variant: "destructive",
-      });
+      setTimeout(() => {
+        toast({
+          title: "Dataset Limit Reached",
+          description: "You have reached the maximum limit of 10 datasets for multiple-sample hypothesis testing.",
+          variant: "destructive",
+        });
+      }, 1000);
     }
   };
 
