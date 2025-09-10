@@ -2898,7 +2898,7 @@ useEffect(() => {
                 ? "Dataset 1 follows normal distribution"
                 : "Dataset 1 does not follow normal distribution"}
             </Badge>
-            <div className="text-gray-600 font-medium">Dataset 1 Description:&nbsp;
+            <div className="text-gray-600 font-medium">Dataset 1 description:&nbsp;
             {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}</div>
             <div className="text-gray-600 font-medium">Sample size:&nbsp;
             {testResults.sampleSize1}</div>
@@ -2924,7 +2924,7 @@ useEffect(() => {
                 ? "Dataset 2 follows normal distribution"
                 : "Dataset 2 does not follow normal distribution"}
             </Badge>
-            <div className="text-gray-600 font-medium">Dataset 2 Description:&nbsp;
+            <div className="text-gray-600 font-medium">Dataset 2 description:&nbsp;
             {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}</div>
             <div className="text-gray-600 font-medium">Sample size:&nbsp;
             {testResults.sampleSize2}</div>

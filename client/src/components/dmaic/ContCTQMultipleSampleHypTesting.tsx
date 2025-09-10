@@ -329,12 +329,12 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       powerNbrDistri: currentConfig.powerNbrDistri,
       powerDifference: currentConfig.powerDifference,
       powerStdev: currentConfig.powerStdev,
-      significanceLevel: currentConfig.significanceLevel,
-      alternateMean: currentConfig.alternateMean,
+      significanceLevel: significanceLevel,
+      alternateMean: alternateMean,
       enableVarianceTest: currentConfig.enableVarianceTest,
-      alternateVariance: currentConfig.alternateVariance,
+      alternateVariance: alternateVariance,
       enableMedianTest: currentConfig.enableMedianTest,
-      alternateMedian: currentConfig.alternateMedian,
+      alternateMedian: alternateMedian,
       datasets,
       datasetDescriptions,
     };
@@ -1657,7 +1657,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
             {/* Add Dataset Button and Undo All Button */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               {/* Add Dataset Button */}
               {numDatasets < 10 && (
                 <div className="text-center">
@@ -1693,7 +1693,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 <Undo className="h-4 w-4 mr-1" />
                 Undo All
               </Button>
-            </div>            
+              </div>            
   
             <Button 
                 className="w-full" 
@@ -1708,9 +1708,92 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           
           {/* Results for Multiple Sample Hypothesis Test of Means, Variances and Medians */}
           {testResults && (
-            <div className="space-y-6 mt-8">
-              <h3 className="text-lg font-semibold">Test Results</h3>
-              
+            <div className="space-y-6 mt-8 border border-gray-200 rounded-md bg-gray-50">
+              {/* <h3 className="text-lg font-semibold">Test Results</h3> */}
+              {/* Normality Test Results */}
+              {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
+              <div className="flex gap-6 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+              {testResults.normalityResults.map((result: any, index: number) => (
+                <div key={index} className="flex-shrink-0 space-y-4" style={{ minWidth: '320px' }}>
+                <Card className="p-2">
+                  <CardTitle className="text-lg">Results:</CardTitle>    
+                  <Badge
+                    variant="default"
+                    className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+                    title={
+                      testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel)
+                        ? `Dataset ${index} distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
+                        : `Dataset ${index} distribution does not follow normal distribution (P-Value < ${significanceLevel})`
+                    }
+                  >
+                    {testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel)
+                      ? "Dataset ${index} follows normal distribution"
+                      : "Dataset ${index} does not follow normal distribution"}
+                  </Badge>
+                  <div className="text-gray-600 font-medium">Dataset {index} description:&nbsp;
+                  {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[index]}</div>
+                  <div className="text-gray-600 font-medium">Sample size:&nbsp;
+                  {testResults.normalityResults[index].sampleSize}</div>
+                  <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                  {parseFloat(significanceLevel)*100}%</div>
+                  <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+                  {testResults.normalityResults[index].adValue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+                  {testResults.normalityResults[index].adPValue.toFixed(3)}</div> 
+                  </Card>
+                </div>
+              ))}              
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Normality Test Results (Anderson-Darling)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {testResults.normalityResults.map((result: any, index: number) => (
+                        
+            
+
+                        <div key={index} className="border-b pb-2 last:border-b-0">
+                          <h4 className="font-medium text-sm mb-2">Dataset {index + 1}</h4>
+                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
+                            <div>
+                              <div className="font-medium text-gray-700">Description: &nbsp;
+                              {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[index]}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">Sample Size</div>
+                              <div>{result.sampleSize}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">Mean</div>
+                              <div>{result.mean.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">Std Dev</div>
+                              <div>{result.stdev.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">Median</div>
+                              <div>{result.median.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">AD Value</div>
+                              <div>{result.adValue.toFixed(3)}</div>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-700">P-Value</div>
+                              <div>{result.adPValue.toFixed(4)}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                  </CardContent>                  
+                </Card>
+              </div>
+              )}              
+
               {/* Mean Test Results */}
               {ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest && (
                 <Card>
@@ -1804,49 +1887,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 </Card>
               )}
 
-              {/* Normality Test Results */}
-              {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Normality Test Results</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {testResults.normalityResults.map((result: any, index: number) => (
-                        <div key={index} className="border-b pb-2 last:border-b-0">
-                          <h4 className="font-medium text-sm mb-2">Dataset {index + 1}</h4>
-                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
-                            <div>
-                              <div className="font-medium text-gray-700">Sample Size</div>
-                              <div>{result.sampleSize}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">Mean</div>
-                              <div>{result.mean.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">Std Dev</div>
-                              <div>{result.stdev.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">Median</div>
-                              <div>{result.median.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">AD Value</div>
-                              <div>{result.adValue.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">P-Value</div>
-                              <div>{result.adPValue.toFixed(4)}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           )}
           

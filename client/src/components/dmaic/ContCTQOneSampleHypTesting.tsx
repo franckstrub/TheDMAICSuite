@@ -2120,7 +2120,7 @@ useEffect(() => {
                 ? "Data follows normal distribution"
                 : "Data does not follow normal distribution"}
             </Badge>
-            <div className="text-gray-600 font-medium">Dataset Description:&nbsp;
+            <div className="text-gray-600 font-medium">Dataset description:&nbsp;
             {ContCTQOneSampleHypTestData[ctqId]?.datasetdescription}</div>
             <div className="text-gray-600 font-medium">Sample size:&nbsp;
             {testResults.sampleSize}</div>
