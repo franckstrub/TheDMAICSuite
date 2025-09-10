@@ -1670,18 +1670,18 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             {/* Add Dataset Button and Undo All Button */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               {/* Add Dataset Button */}
-              {numDatasets < 10 && (
-                <div className="text-center">
-                  <Button
-                    variant="outline"
-                    onClick={addDataset}
-                    className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Dataset
-                  </Button>
-                </div>
-              )}
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  onClick={addDataset}
+                  disabled={numDatasets >= 10}
+                  className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-300 disabled:hover:text-gray-600"
+                  title={numDatasets >= 10 ? "Maximum limit of 10 datasets reached" : "Add a new dataset"}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Dataset
+                </Button>
+              </div>
               
               {/* Undo All Button - Always visible but disabled when needed */}
               <Button
