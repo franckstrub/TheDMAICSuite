@@ -1664,6 +1664,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   <Button
                     variant="outline"
                     onClick={addDataset}
+                    disabled={numDatasets >= 10}
                     className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 w-full"
                   >
                     <Plus className="h-4 w-4 mr-2" />
