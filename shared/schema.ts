@@ -636,8 +636,11 @@ export const activityLogs = pgTable("activity_logs", {
   organizationId: integer("organization_id")
     .references(() => organizations.id)
     .notNull(),
-  userId: integer("user_id").notNull(),
-  projectId: integer("project_id"),
+  userId: text("user_id")
+    .references(() => users.id)
+    .notNull(),
+  projectId: integer("project_id")
+    .references(() => projects.id),
   action: text("action").notNull(),
   details: text("details"),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
