@@ -300,6 +300,12 @@ export default function GateReviewValidation() {
       projectType = project.project.projectType;
     }
     //console.log("projectType for deliverables:", projectType);
+
+    // If data is still loading, wait
+    if (isLoadingDeliverables || isLoadingValidators) {
+      //console.log("Still loading data...");
+      return;
+    }
   
     // function to create default deliverables with project ID
     const createDefaultDeliverables = () => {
@@ -391,7 +397,7 @@ export default function GateReviewValidation() {
 
     //console.log("Ordered deliverables with preserved custom order:", orderedDeliverables);
     setDeliverables(orderedDeliverables);
-  }, [deliverablesData, projectId, defaultDefineDeliverables]);
+  }, [deliverablesData, validatorsData, projectId, charter, project, isLoadingDeliverables, isLoadingValidators]);
 
   // Initialize validators from charter if none exist
   useEffect(() => {
