@@ -1515,9 +1515,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
       const transformedData = {
         ctq: data.ctq,
         ctqId: ctqId, // Include CTQ ID for proper foreign key relationship
-        lsl: (data.lsl && data.lsl.trim() !== '') ? String(data.lsl) : null,
-        usl: (data.usl && data.usl.trim() !== '') ? String(data.usl) : null,
-        target: (data.target && data.target.trim() !== '') ? String(data.target) : null,
+        lsl: (data.lsl && typeof data.lsl === 'string' && data.lsl.trim() !== '') ? String(data.lsl) : null,
+        usl: (data.usl && typeof data.usl === 'string' && data.usl.trim() !== '') ? String(data.usl) : null,
+        target: (data.target && typeof data.target === 'string' && data.target.trim() !== '') ? String(data.target) : null,
         zShift: Number(data.zShift) || 1.5,
         dataSetTerm: data.dataSetTerm || "Long Term",
         capabilityIndex: data.capabilityIndex || "Z",
