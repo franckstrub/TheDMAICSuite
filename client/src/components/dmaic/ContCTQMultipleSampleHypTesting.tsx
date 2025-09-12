@@ -11,11 +11,12 @@ import { Trash2, Undo, Plus, Minus, X, Play } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   mean, 
-  standardDeviation, 
-  variance,
+  standardDeviation,
+  calculateMedian,
   calculateMultipleSMeanSampleSize,
-} from "@/lib/statisticsUtils";
-
+  performNormalityTest,    
+  } from "@/lib/statisticsUtils";
+//import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
 
 interface DataPoint {
   indexNumber: number;
@@ -918,22 +919,31 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       const stdevVal = standardDeviation(values);
       
       // Calculate median
-      const sortedValues = [...values].sort((a, b) => a - b);
-      const medianVal = sortedValues.length % 2 === 0
-        ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
-        : sortedValues[Math.floor(sortedValues.length / 2)];
+      //const sortedValues = [...values].sort((a, b) => a - b);
+      //const medianVal = sortedValues.length % 2 === 0
+      //  ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
+      //  : sortedValues[Math.floor(sortedValues.length / 2)];
 
       // Fake Anderson-Darling test results
-      const adValue = Math.random() * 2 + 0.1; // Random between 0.1 and 2.1
-      const adPValue = Math.random() * 0.5; // Random p-value between 0 and 0.5
+      //const adValue = Math.random() * 2 + 0.1; // Random between 0.1 and 2.1
+      //const adPValue = Math.random() * 0.5; // Random p-value between 0 and 0.5
+
+      //const dataValues = datasetsParam[0].map(point => point.dataValue) || [];    
+      //const n = dataValues.length;
+      //const meanVal = mean(dataValues);
+      //const stdDev = standardDeviation(dataValues);
+    
+      // Perform normality test - will return isNormal, AD value and p_values
+      const normalityTest = performNormalityTest(values, meanVal, stdevVal);
+      const medianVal = calculateMedian(values);
 
       return {
         sampleSize: dataset.length,
         mean: meanVal,
         stdev: stdevVal,
         median: medianVal,
-        adValue,
-        adPValue
+        adValue: normalityTest.adStatistic,
+        adPValue: normalityTest.pValue,
       };
     });
   };
@@ -1333,7 +1343,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             
             {/* Number of Datasets Control */}
             <div className="space-y-2">
-              <Label htmlFor="num-datasets">Number of Datasets</Label>
+              <Label htmlFor="num-datasets">Number of Datasets (Maximum: 13)</Label>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
@@ -1349,8 +1359,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setNumDatasets(Math.min(10, numDatasets + 1))}
-                  disabled={numDatasets >= 10}
+                  onClick={() => setNumDatasets(Math.min(13, numDatasets + 1))}
+                  disabled={numDatasets >= 13}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -1651,6 +1661,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     </div>
                   )}
                   </div>
+                  
                 </div>
               ))}
             </div>
@@ -1659,19 +1670,17 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             {/* Add Dataset Button and Undo All Button */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               {/* Add Dataset Button */}
-              {numDatasets < 10 && (
-                <div className="text-center">
-                  <Button
-                    variant="outline"
-                    onClick={addDataset}
-                    disabled={numDatasets >= 10}
-                    className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Dataset
-                  </Button>
-                </div>
-              )}
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  onClick={addDataset}
+                  disabled={numDatasets >= 13}
+                  className="border-dashed border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Dataset (Max. 13)
+                </Button>
+              </div>
               
               {/* Undo All Button - Always visible but disabled when needed */}
               <Button
@@ -1712,25 +1721,26 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             <div className="space-y-6 mt-8 border border-gray-200 rounded-md bg-gray-50">
               {/* Normality Test Results */}
               {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
-              <div className="flex gap-6 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+              <div className="flex gap-2 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
               {testResults.normalityResults.map((result: any, index: number) => (
-                <div key={index} className="flex-shrink-0 space-y-4" style={{ minWidth: '320px' }}>
+                <div key={index} className="flex-shrink-0 space-y-4 p-4" style={{ minWidth: '404px' }}>
+                {testResults.normalityResults[index] && testResults.normalityResults[index].sampleSize > 1 ? (
                 <Card className="p-2">
-                  <CardTitle className="text-lg">Results:</CardTitle>    
+                  <CardTitle className="text-lg">Normality test results:</CardTitle>    
                   <Badge
                     variant="default"
                     className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
                     title={
                       testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel)
-                        ? `Dataset ${index} distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
-                        : `Dataset ${index} distribution does not follow normal distribution (P-Value < ${significanceLevel})`
+                        ? `Dataset ${index + 1} distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
+                        : `Dataset ${index + 1} distribution does not follow normal distribution (P-Value < ${significanceLevel})`
                     }
                   >
                     {testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel)
-                      ? "Dataset ${index} follows normal distribution"
-                      : "Dataset ${index} does not follow normal distribution"}
+                      ? `Dataset ${index + 1} follows normal distribution`
+                      : `Dataset ${index + 1} does not follow normal distribution`}
                   </Badge>
-                  <div className="text-gray-600 font-medium">Dataset {index} description:&nbsp;
+                  <div className="text-gray-600 font-medium">Dataset {index + 1} description:&nbsp;
                   {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[index]}</div>
                   <div className="text-gray-600 font-medium">Sample size:&nbsp;
                   {testResults.normalityResults[index].sampleSize}</div>
@@ -1739,58 +1749,32 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
                   {testResults.normalityResults[index].adValue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
                   {testResults.normalityResults[index].adPValue.toFixed(3)}</div> 
-                  </Card>
+                </Card>
+                ) : (
+                <Card>
+                  <CardTitle className="text-lg">Normality test results:</CardTitle>    
+                  <Badge
+                    variant="default"
+                    className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+                    title={
+                       `Cannot test Normality of Dataset ${index + 1} distribution`                        
+                    }
+                  >                    
+                    N/A. Cannot test Normality of Dataset {index + 1} distribution
+                  </Badge>
+                  <div className="text-gray-600 font-medium">Dataset {index + 1} description:&nbsp;
+                  {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[index]}</div>
+                  <div className="text-gray-600 font-medium">Sample size:&nbsp;
+                  {testResults.normalityResults[index].sampleSize}</div>
+                  <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                  {parseFloat(significanceLevel)*100}%</div>
+                  <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+                  {testResults.normalityResults[index].adValue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+                  {testResults.normalityResults[index].adPValue.toFixed(3)}</div> 
+                </Card>
+                )}
                 </div>
               ))}              
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Normality Test Results (Anderson-Darling)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {testResults.normalityResults.map((result: any, index: number) => (
-                        
-            
-
-                        <div key={index} className="border-b pb-2 last:border-b-0">
-                          <h4 className="font-medium text-sm mb-2">Dataset {index + 1}</h4>
-                          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
-                            <div>
-                              <div className="font-medium text-gray-700">Description: &nbsp;
-                              {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[index]}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">Sample Size</div>
-                              <div>{result.sampleSize}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">Mean</div>
-                              <div>{result.mean.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">Std Dev</div>
-                              <div>{result.stdev.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">Median</div>
-                              <div>{result.median.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">AD Value</div>
-                              <div>{result.adValue.toFixed(3)}</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-700">P-Value</div>
-                              <div>{result.adPValue.toFixed(4)}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                  </CardContent>                  
-                </Card>
               </div>
               )}              
 
