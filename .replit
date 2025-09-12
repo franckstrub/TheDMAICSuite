@@ -44,3 +44,6 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[objectStorage]
+defaultBucketID = "replit-objstore-13967cc4-3574-49b5-91d2-51d1a4e9f010"
