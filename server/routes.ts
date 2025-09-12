@@ -1918,15 +1918,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           elevatorSpeech
         });
         
-        // Log activity if userId provided
-        if (userId) {
-          await storage.createActivityLog({
-            organizationId: user.organizationId,
-            userId,
-            projectId,
-            action: "generate_elevator_speech",
-            details: "Generated elevator speech using AI"
-          });
+        // Log activity if authenticated user available
+        if (req.user) {
+          const authenticatedUserId = req.user.claims.sub;
+          const authenticatedUser = await storage.getUser(authenticatedUserId);
+          if (authenticatedUser) {
+            await storage.createActivityLog({
+              organizationId: authenticatedUser.organizationId,
+              userId: authenticatedUserId,
+              projectId,
+              action: "generate_elevator_speech",
+              details: "Generated elevator speech using AI"
+            });
+          }
         }
         
         return res.status(200).json({ elevatorSpeech });
