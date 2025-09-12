@@ -306,15 +306,6 @@ export default function GateReviewValidation() {
       //console.log("Still loading data...");
       return;
     }
-  
-    // function to create default deliverables with project ID
-    const createDefaultDeliverables = () => {
-      //console.log("Creating default deliverables");
-      return defaultDefineDeliverables.map(deliverable => ({
-        ...deliverable,
-        projectId: parseInt(projectId || "0")
-      }));
-    };
 
     if (!deliverablesData) {
       //console.log("No deliverables data yet");
@@ -327,12 +318,18 @@ export default function GateReviewValidation() {
     }
 
     if (deliverablesData.deliverables.length === 0) {
-      //console.log("No deliverables found, create & using defaults based on project type");
-      // If no deliverables exist yet, use & create the defaults
-      setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
-      const defaultsWithProjectId = createDefaultDeliverables();
+      //console.log("No deliverables found, creating defaults based on project type");
+      const defineDefaults = getDefaultDefineDeliverables(projectType);
+      setDefaultDefineDeliverables(defineDefaults);
+      
+      // Create defaults with project ID using the fresh define defaults
+      const defaultsWithProjectId = defineDefaults.map(deliverable => ({
+        ...deliverable,
+        projectId: parseInt(projectId || "0")
+      }));
+      
       setDeliverables(defaultsWithProjectId);
-      // console.log("Default deliverables available:", defaultDefineDeliverables.length);
+      //console.log("Created define phase deliverables:", defaultsWithProjectId.length);
       return;
     }
 
