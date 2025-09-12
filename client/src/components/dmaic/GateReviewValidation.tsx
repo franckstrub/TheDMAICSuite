@@ -326,22 +326,6 @@ export default function GateReviewValidation() {
       setDefaultDefineDeliverables(getDefaultDefineDeliverables(projectType));
       const defaultsWithProjectId = createDefaultDeliverables();
       setDeliverables(defaultsWithProjectId);
-      
-      // Automatically save the default deliverables to the database
-      const saveDefaultDeliverables = async () => {
-        try {
-          for (const deliverable of defaultsWithProjectId) {
-            await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
-          }
-          // Refresh the deliverables data after saving
-          queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-          console.log("Default deliverables created successfully");
-        } catch (error) {
-          console.error("Error creating default deliverables:", error);
-        }
-      };
-      
-      saveDefaultDeliverables();
       // console.log("Default deliverables available:", defaultDefineDeliverables.length);
       return;
     }
