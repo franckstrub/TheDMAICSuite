@@ -1661,7 +1661,67 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     </div>
                   )}
                   </div>
+
+                  {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
+                  <div>
                   
+                    {testResults.normalityResults[datasetIndex] && testResults.normalityResults[datasetIndex].sampleSize > 1 ? (
+                    <Card className="p-2">
+                      <CardTitle className="text-lg">Normality test results:</CardTitle>    
+                      <Badge
+                        variant="default"
+                        className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.normalityResults[datasetIndex].adPValue >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+                        title={
+                          testResults.normalityResults[datasetIndex].adPValue >= parseFloat(significanceLevel)
+                            ? `Dataset ${datasetIndex + 1} distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
+                            : `Dataset ${datasetIndex + 1} distribution does not follow normal distribution (P-Value < ${significanceLevel})`
+                        }
+                      >
+                        {testResults.normalityResults[datasetIndex].adPValue >= parseFloat(significanceLevel)
+                          ? `Dataset ${datasetIndex + 1} follows normal distribution`
+                          : `Dataset ${datasetIndex + 1} does not follow normal distribution`}
+                      </Badge>
+                      <div className="text-gray-600 font-medium">Dataset {datasetIndex + 1} description:&nbsp;
+                      {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[datasetIndex]}</div>
+                      <div className="text-gray-600 font-medium">Sample size:&nbsp;
+                      {testResults.normalityResults[datasetIndex].sampleSize}</div>
+                      <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                      {parseFloat(significanceLevel)*100}%</div>
+                      <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+                      {testResults.normalityResults[datasetIndex].adValue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+                      {testResults.normalityResults[datasetIndex].adPValue.toFixed(3)}</div> 
+                    </Card>
+                    ) : (
+                    <Card>
+                      <CardTitle className="text-lg">Normality test results:</CardTitle>    
+                      <Badge
+                        variant="default"
+                        className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center text-white bg-red-600`}
+                        title={
+                          `Cannot test Normality of Dataset ${datasetIndex + 1} distribution`                        
+                        }
+                      >                    
+                        N/A. Cannot test Normality of Dataset {datasetIndex + 1} distribution
+                      </Badge>
+                      <div className="text-gray-600 font-medium">Dataset {datasetIndex + 1} description:&nbsp;
+                      {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[datasetIndex]}</div>
+                      {testResults.normalityResults[datasetIndex]  && (
+                        <div className="text-gray-600 font-medium">Sample size:&nbsp;
+                        {testResults.normalityResults[datasetIndex].sampleSize}</div>
+                      )}
+                      
+                      <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                      {parseFloat(significanceLevel)*100}%</div>
+                      {testResults.normalityResults[datasetIndex]  && (
+                        <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
+                        {testResults.normalityResults[datasetIndex].adValue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
+                        {testResults.normalityResults[datasetIndex].adPValue.toFixed(3)}</div> 
+                      )}
+                    </Card>
+                    )}
+                                  
+                  </div>
+                  )} 
                 </div>
               ))}
             </div>
@@ -1755,7 +1815,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   <CardTitle className="text-lg">Normality test results:</CardTitle>    
                   <Badge
                     variant="default"
-                    className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.normalityResults[index].adPValue >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
+                    className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center text-white bg-red-600`}
                     title={
                        `Cannot test Normality of Dataset ${index + 1} distribution`                        
                     }
