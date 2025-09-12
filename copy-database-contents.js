@@ -18,7 +18,7 @@ dotenv.config();
 neonConfig.webSocketConstructor = ws;
 
 // Source database (DMAICSuiteold)
-const SOURCE_DB_URL = "postgresql://neondb_owner:npg_1OteSyUrukD9@ep-jolly-union-a4anqqse.us-east-1.aws.neon.tech/DMAICSuiteold?sslmode=require";
+const SOURCE_DB_URL = "postgresql://neondb_owner:npg_1OteSyUrukD9@ep-jolly-union-a4anqqse.us-east-1.aws.neon.tech/neondb?sslmode=require";
 
 // Destination database (DMAICSuite) - using current DATABASE_URL
 const DEST_DB_URL = process.env.DATABASE_URL;
