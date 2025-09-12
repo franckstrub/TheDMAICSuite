@@ -78,10 +78,6 @@ async function copyDatabaseContents() {
     const remainingTables = tables.filter(table => !orderedTables.includes(table));
     const allTables = [...orderedTables, ...remainingTables];
 
-    // Disable foreign key checks temporarily
-    console.log('Disabling foreign key constraints...');
-    await destPool.query('SET session_replication_role = replica;');
-
     // Copy data from each table
     for (const tableName of allTables) {
       try {
@@ -111,7 +107,7 @@ async function copyDatabaseContents() {
         }
 
         // Clear existing data in destination table
-        await destPool.query(`DELETE FROM "${tableName}"`);
+        await destPool.query(`TRUNCATE TABLE "${tableName}" CASCADE`);
         console.log(`Cleared existing data from ${tableName}`);
 
         // Get column names
@@ -131,13 +127,14 @@ async function copyDatabaseContents() {
             
             try {
               await destPool.query(
-                `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders})`,
+                `INSERT INTO "${tableName}" (${columnNames}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
                 values
               );
               insertedCount++;
             } catch (error) {
               console.error(`Error inserting row into ${tableName}:`, error.message);
               console.log('Row data:', row);
+              // Continue with next row instead of failing completely
             }
           }
         }
@@ -170,22 +167,11 @@ async function copyDatabaseContents() {
       }
     }
 
-    // Re-enable foreign key checks
-    console.log('\nRe-enabling foreign key constraints...');
-    await destPool.query('SET session_replication_role = DEFAULT;');
-
     console.log('\n✅ Database migration completed successfully!');
     console.log(`Processed ${allTables.length} tables`);
 
   } catch (error) {
     console.error('Migration failed:', error);
-    
-    // Try to re-enable foreign key checks even if migration failed
-    try {
-      await destPool.query('SET session_replication_role = DEFAULT;');
-    } catch (resetError) {
-      console.error('Could not reset foreign key constraints:', resetError.message);
-    }
   } finally {
     await sourcePool.end();
     await destPool.end();
