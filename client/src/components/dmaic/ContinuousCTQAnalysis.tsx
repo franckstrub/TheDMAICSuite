@@ -197,12 +197,6 @@ useEffect(() => {
         enablePareto: currentConfig.enablePareto,
       };
       
-      console.log('Saving configuration:', {
-        projectId,
-        ctqId,
-        configToSave,
-        url: `/api/projects/${projectId}/ctq/${ctqId}/continuous-analysis-config`
-      });
       
       saveConfigMutation.mutate(configToSave);
     }
