@@ -314,7 +314,7 @@ useEffect(() => {
             </Button>
             <Button 
               onClick={handleSaveAnalysis}
-              disabled={saveConfigMutation.isPending || !ctqAnalysisData[ctqId]}
+              disabled={saveConfigMutation.isPending}
             >
               {saveConfigMutation.isPending ? 'Saving...' : 'Save Analysis Configuration'}
             </Button>
