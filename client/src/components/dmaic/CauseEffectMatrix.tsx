@@ -246,7 +246,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
   const [hasInitialized, setHasInitialized] = useState(false);
   
   useEffect(() => {
-    if (existingMatrix && !hasInitialized) {
+    if (existingMatrix) {
       //console.log('Initializing with existing matrix:', existingMatrix);
       //console.log('Existing root causes:', existingMatrix.rootCauses);
       //console.log('Existing importance scores:', existingMatrix.importanceScores);
@@ -285,7 +285,7 @@ export default function CauseEffectMatrix({ projectId, ctqlist, onSave }: CauseE
       }
       setHasInitialized(true);
     }
-  }, [existingMatrix, maxCTQs, hasInitialized]);
+  }, [existingMatrix, maxCTQs]);
 
   // Keep importance scores in sync with editableCtqs length
   useEffect(() => {
