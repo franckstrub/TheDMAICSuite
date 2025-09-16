@@ -742,7 +742,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     const numericDatasets = datasets.map(dataset => dataset.map(d => d.dataValue));
     const multipleSMeanTestResult = multipleSMeanTest({
       datasets: numericDatasets, 
-      normalityresults: normalityResults, 
+      normalityResults: normalityResults, 
       significanceLevel, 
       alternative
     });
