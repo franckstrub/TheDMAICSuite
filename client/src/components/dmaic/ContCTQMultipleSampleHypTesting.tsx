@@ -16,6 +16,7 @@ import {
   calculateMultipleSMeanSampleSize,
   performNormalityTest,    
   } from "@/lib/statisticsUtils";
+import {multipleSMeanTest} from "./multipleSMeanTest";
 //import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
 
 interface DataPoint {
@@ -66,21 +67,18 @@ interface TestResults {
     testStatistic: number;
     pValue: number;
     criticalValue: number;
-    conclusion: string;
   };
   
   varianceTest: {
     testStatistic: number;
     pValue: number;
     criticalValue: number;
-    conclusion: string;
   };
   
   medianTest: {
     testStatistic: number;
     pValue: number;
     criticalValue: number;
-    conclusion: string;
   };
 }
 
@@ -124,9 +122,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   // Test results
   const [testResults, setTestResults] = useState<TestResults>({
     normalityResults: [],
-    meanTest: { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: '' },
-    varianceTest: { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: '' },
-    medianTest: { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: '' }
+    meanTest: { testStatistic: 0, pValue: 0, criticalValue: 0, },
+    varianceTest: { testStatistic: 0, pValue: 0, criticalValue: 0, },
+    medianTest: { testStatistic: 0, pValue: 0, criticalValue: 0, }
   });
   
   // Paste and clipboard management
@@ -740,19 +738,26 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   // Fake test functions (to be implemented later)
   const performMultipleSampleMeanTest = (datasets: DataPoint[][], significanceLevel: number, alternative: string) => {
     // Fake implementation - returns random test results
+    //const values[] = datasets[].map(d => d.dataValue);
+    const numericDatasets = datasets.map(dataset => dataset.map(d => d.dataValue));
+    const multipleSMeanTestResult = multipleSMeanTest({
+      datasets: numericDatasets, 
+      normalityresults: [], 
+      significanceLevel, 
+      alternative
+    });
     const testStatistic = Math.random() * 10 - 5; // Random between -5 and 5
     const pValue = Math.random() * 0.2; // Random p-value between 0 and 0.2
     const criticalValue = 2.576; // Fixed critical value for demonstration
     
-    const conclusion = pValue < significanceLevel 
-      ? "Reject H0: At least one mean is significantly different"
-      : "Accept H0: No significant difference between means";
+   // const conclusion = pValue < significanceLevel 
+   //   ? "Reject H0: At least one mean is significantly different"
+   //   : "Accept H0: No significant difference between means";
     
     return {
       testStatistic,
       pValue,
-      criticalValue,
-      conclusion
+      criticalValue
     };
   };
 
@@ -762,15 +767,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     const pValue = Math.random() * 0.3; // Random p-value between 0 and 0.3
     const criticalValue = 12.592; // Fixed critical value for demonstration
     
-    const conclusion = pValue < significanceLevel 
-      ? "Reject H0: Variances are significantly different"
-      : "Accept H0: No significant difference between variances";
+    //const conclusion = pValue < significanceLevel 
+    //  ? "Reject H0: Variances are significantly different"
+    //  : "Accept H0: No significant difference between variances";
     
     return {
       testStatistic,
       pValue,
       criticalValue,
-      conclusion
     };
   };
 
@@ -780,15 +784,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     const pValue = Math.random() * 0.25; // Random p-value between 0 and 0.25
     const criticalValue = 9.488; // Fixed critical value for demonstration
     
-    const conclusion = pValue < significanceLevel 
-      ? "Reject H0: At least one median is significantly different"
-      : "Accept H0: No significant difference between medians";
+    //const conclusion = pValue < significanceLevel 
+      //? "Reject H0: At least one median is significantly different"
+      //: "Accept H0: No significant difference between medians";
     
     return {
       testStatistic,
       pValue,
       criticalValue,
-      conclusion
     };
   };
 
@@ -958,7 +961,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     HaVariance: string,
     HaMedian: string
   ) => {
-    console.log("handleRunTest called with params:", { enableMeanTest, enableVarianceTest, enableMedianTest, significance });
+    // console.log("handleRunTest called with params:", { enableMeanTest, enableVarianceTest, enableMedianTest, significance });
     
     // Calculate normality tests
     const normalityResults = calculateNormalityTests(datasetsParam);
@@ -966,15 +969,15 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     // Perform hypothesis tests if enabled
     const meanTest = enableMeanTest 
       ? performMultipleSampleMeanTest(datasetsParam, significance, HaMean)
-      : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
+      : { testStatistic: 0, pValue: 0, criticalValue: 0 };
 
     const varianceTest = enableVarianceTest 
       ? performMultipleSampleVarianceTest(datasetsParam, significance, HaVariance)
-      : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
+      : { testStatistic: 0, pValue: 0, criticalValue: 0 };
 
     const medianTest = enableMedianTest 
       ? performMultipleSampleMedianTest(datasetsParam, significance, HaMedian)
-      : { testStatistic: 0, pValue: 0, criticalValue: 0, conclusion: 'Test not enabled' };
+      : { testStatistic: 0, pValue: 0, criticalValue: 0 };
 
     setTestResults({
       normalityResults,
@@ -1661,67 +1664,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     </div>
                   )}
                   </div>
-
-                  {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
-                  <div>
-                  
-                    {testResults.normalityResults[datasetIndex] && testResults.normalityResults[datasetIndex].sampleSize > 1 ? (
-                    <Card className="p-2">
-                      <CardTitle className="text-lg">Normality test results:</CardTitle>    
-                      <Badge
-                        variant="default"
-                        className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center ${testResults.normalityResults[datasetIndex].adPValue >= parseFloat(significanceLevel) ? "text-white bg-green-600 " : "text-white bg-red-600"}`}
-                        title={
-                          testResults.normalityResults[datasetIndex].adPValue >= parseFloat(significanceLevel)
-                            ? `Dataset ${datasetIndex + 1} distribution follows normal distribution (P-Value ≥ ${significanceLevel})`
-                            : `Dataset ${datasetIndex + 1} distribution does not follow normal distribution (P-Value < ${significanceLevel})`
-                        }
-                      >
-                        {testResults.normalityResults[datasetIndex].adPValue >= parseFloat(significanceLevel)
-                          ? `Dataset ${datasetIndex + 1} follows normal distribution`
-                          : `Dataset ${datasetIndex + 1} does not follow normal distribution`}
-                      </Badge>
-                      <div className="text-gray-600 font-medium">Dataset {datasetIndex + 1} description:&nbsp;
-                      {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[datasetIndex]}</div>
-                      <div className="text-gray-600 font-medium">Sample size:&nbsp;
-                      {testResults.normalityResults[datasetIndex].sampleSize}</div>
-                      <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
-                      {parseFloat(significanceLevel)*100}%</div>
-                      <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
-                      {testResults.normalityResults[datasetIndex].adValue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
-                      {testResults.normalityResults[datasetIndex].adPValue.toFixed(3)}</div> 
-                    </Card>
-                    ) : (
-                    <Card>
-                      <CardTitle className="text-lg">Normality test results:</CardTitle>    
-                      <Badge
-                        variant="default"
-                        className={`mt-2 mb-2 p-2 font-medium text-xs text-center justify-center text-white bg-red-600`}
-                        title={
-                          `Cannot test Normality of Dataset ${datasetIndex + 1} distribution`                        
-                        }
-                      >                    
-                        N/A. Cannot test Normality of Dataset {datasetIndex + 1} distribution
-                      </Badge>
-                      <div className="text-gray-600 font-medium">Dataset {datasetIndex + 1} description:&nbsp;
-                      {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[datasetIndex]}</div>
-                      {testResults.normalityResults[datasetIndex]  && (
-                        <div className="text-gray-600 font-medium">Sample size:&nbsp;
-                        {testResults.normalityResults[datasetIndex].sampleSize}</div>
-                      )}
-                      
-                      <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
-                      {parseFloat(significanceLevel)*100}%</div>
-                      {testResults.normalityResults[datasetIndex]  && (
-                        <div className="text-gray-600 font-medium">Normality test (Anderson-Darling):<br></br> &nbsp;&nbsp; . AD value:&nbsp;
-                        {testResults.normalityResults[datasetIndex].adValue.toFixed(3)} <br></br> &nbsp;&nbsp; . P-value:&nbsp;&nbsp;&nbsp;
-                        {testResults.normalityResults[datasetIndex].adPValue.toFixed(3)}</div> 
-                      )}
-                    </Card>
-                    )}
-                                  
-                  </div>
-                  )} 
                 </div>
               ))}
             </div>
@@ -1730,7 +1672,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             {/* Add Dataset Button and Undo All Button */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               {/* Add Dataset Button */}
-              <div className="text-center">
+              {/* <div className="text-center">
                 <Button
                   variant="outline"
                   onClick={addDataset}
@@ -1740,6 +1682,32 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   <Plus className="h-4 w-4 mr-2" />
                   Add Dataset (Max. 13)
                 </Button>
+              </div> */}
+
+              {/* Number of Datasets Control */}
+              <div className="space-y-2">
+                <Label htmlFor="num-datasets">Number of Datasets (Max.: 13)</Label>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNumDatasets(Math.max(2, numDatasets - 1))}
+                    disabled={numDatasets <= 2}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium w-12 text-center">
+                    {numDatasets}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNumDatasets(Math.min(13, numDatasets + 1))}
+                    disabled={numDatasets >= 13}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               
               {/* Undo All Button - Always visible but disabled when needed */}
@@ -1811,7 +1779,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   {testResults.normalityResults[index].adPValue.toFixed(3)}</div> 
                 </Card>
                 ) : (
-                <Card>
+                <Card className="p-2">
                   <CardTitle className="text-lg">Normality test results:</CardTitle>    
                   <Badge
                     variant="default"
@@ -1862,7 +1830,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Conclusion</div>
-                        <div className="text-sm">{testResults.meanTest.conclusion}</div>
+                        
                       </div>
                     </div>
                   </CardContent>
@@ -1893,7 +1861,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Conclusion</div>
-                        <div className="text-sm">{testResults.varianceTest.conclusion}</div>
+                        
                       </div>
                     </div>
                   </CardContent>
@@ -1924,7 +1892,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Conclusion</div>
-                        <div className="text-sm">{testResults.medianTest.conclusion}</div>
+                        
                       </div>
                     </div>
                   </CardContent>
