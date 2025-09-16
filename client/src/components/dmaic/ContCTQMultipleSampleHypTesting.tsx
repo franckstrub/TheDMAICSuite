@@ -736,28 +736,28 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   }
 
   // Fake test functions (to be implemented later)
-  const performMultipleSampleMeanTest = (datasets: DataPoint[][], significanceLevel: number, alternative: string) => {
+  const performMultipleSampleMeanTest = (datasets: DataPoint[][], normalityResults: any[], significanceLevel: number, alternative: string) => {
     // Fake implementation - returns random test results
     //const values[] = datasets[].map(d => d.dataValue);
     const numericDatasets = datasets.map(dataset => dataset.map(d => d.dataValue));
     const multipleSMeanTestResult = multipleSMeanTest({
       datasets: numericDatasets, 
-      normalityresults: [], 
+      normalityresults: normalityResults, 
       significanceLevel, 
       alternative
     });
-    const testStatistic = Math.random() * 10 - 5; // Random between -5 and 5
-    const pValue = Math.random() * 0.2; // Random p-value between 0 and 0.2
-    const criticalValue = 2.576; // Fixed critical value for demonstration
+    //const testStatistic = Math.random() * 10 - 5; // Random between -5 and 5
+    //const pValue = Math.random() * 0.2; // Random p-value between 0 and 0.2
+    //const criticalValue = 2.576; // Fixed critical value for demonstration
     
    // const conclusion = pValue < significanceLevel 
    //   ? "Reject H0: At least one mean is significantly different"
    //   : "Accept H0: No significant difference between means";
     
     return {
-      testStatistic,
-      pValue,
-      criticalValue
+      testStatistic: multipleSMeanTestResult.testStatistic,
+      pValue: multipleSMeanTestResult.pValue,
+      criticalValue: 0 // TODO: Add proper critical value calculation
     };
   };
 
@@ -968,7 +968,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
     // Perform hypothesis tests if enabled
     const meanTest = enableMeanTest 
-      ? performMultipleSampleMeanTest(datasetsParam, significance, HaMean)
+      ? performMultipleSampleMeanTest(datasetsParam, normalityResults, significance, HaMean)
       : { testStatistic: 0, pValue: 0, criticalValue: 0 };
 
     const varianceTest = enableVarianceTest 
