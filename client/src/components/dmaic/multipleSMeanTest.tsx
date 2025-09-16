@@ -1,28 +1,8 @@
 import * as jStat from 'jstat'
 import { 
-  mean, 
-  standardDeviation, 
-  variance,
-  parseNumericValue,
-  calculateMode,
-  performNormalityTest,
-  getHistogramData,
-  calculateQuartiles,
-  calculateMovingRange,
-  calculateIndividualControlLimits,
-  calculateMovingRangeControlLimits,
-  calculateZScoreLongShortTerm,
-  calculatePerformanceMetrics,
-  calculateCapabilityIndexes,
-  calculateObservedPerformanceMetrics,
-  assessProcessVariation,
-  inverseNormCDF,
-  calculate2StCriticalValue,
-  calculate2SMeanPValue,
-  calculate2SDiffConfidenceInterval,
-  calculateSampleStats,
-  testEqualVariances
+  anovaOneWay
 } from "@/lib/statisticsUtils";
+import {twosampleMeanHypothesisTest} from "./twosampleMeanHypothesisTest";
 import { NumericKeys } from "node_modules/react-hook-form/dist/types/path/common";
 
 interface MeanTestResults {
@@ -56,17 +36,33 @@ export function multipleSMeanTest({
     throw new Error("Alternative hypothesis must be 'Less than', 'Greater than', or 'Different'.");
   } 
   // Check normality results
-  const allNormal = normalityresults.every(p => p > significanceLevel);
-  if (!allNormal) {
-    console.warn("Not all groups passed the normality test. ANOVA may not be appropriate.");
+  const allNormal = normalityresults.every(adPValue => adPValue > significanceLevel);
+  let testName = "";
+  let results: any;
+  if (!allNormal || datasets.length > 2) {
+    testName = "ANOVA One-way";
+    results = anovaOneWay(datasets, significanceLevel, alternative);
   }
-
-  // Perform ANOVA using jStat
-  //const anovaResult = jStat.anovaftest(...datasets);
+  else if (allNormal && datasets.length === 2) {
+    testName = "Two-sample t-test";
+    const meanTestResult = twosampleMeanHypothesisTest({
+          dataValues1:  datasets[0],
+          dataValues2: datasets[1],
+          significance:  significanceLevel,
+          alternativemean: alternative,
+          deltaMean0: 0,
+          ADp_Value1: normalityresults[0],
+          ADp_Value2: normalityresults[1],
+        });
+    results = {
+      testStatistic: meanTestResult.tStatistic,
+      pValue: meanTestResult.tp_Value
+    };
+  };
   
   return {
-    testName: "ANOVA One-Way",
-    testStatistic: 0.045,
-    pValue: 0.045,
+    testName: testName,
+    testStatistic: results.testStatistic,
+    pValue: results.pValue,
   };  
 }

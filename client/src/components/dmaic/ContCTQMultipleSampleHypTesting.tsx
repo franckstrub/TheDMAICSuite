@@ -64,9 +64,9 @@ interface TestResults {
   
   // Test results
   meanTest: {
+    testName: string;
     testStatistic: number;
     pValue: number;
-    criticalValue: number;
   };
   
   varianceTest: {
@@ -122,7 +122,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   // Test results
   const [testResults, setTestResults] = useState<TestResults>({
     normalityResults: [],
-    meanTest: { testStatistic: 0, pValue: 0, criticalValue: 0, },
+    meanTest: { testName: "", testStatistic: 0, pValue: 0, },
     varianceTest: { testStatistic: 0, pValue: 0, criticalValue: 0, },
     medianTest: { testStatistic: 0, pValue: 0, criticalValue: 0, }
   });
@@ -755,9 +755,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
    //   : "Accept H0: No significant difference between means";
     
     return {
+      testName: multipleSMeanTestResult.testName,
       testStatistic: multipleSMeanTestResult.testStatistic,
       pValue: multipleSMeanTestResult.pValue,
-      criticalValue: 0 // TODO: Add proper critical value calculation
     };
   };
 
@@ -969,7 +969,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     // Perform hypothesis tests if enabled
     const meanTest = enableMeanTest 
       ? performMultipleSampleMeanTest(datasetsParam, normalityResults, significance, HaMean)
-      : { testStatistic: 0, pValue: 0, criticalValue: 0 };
+      : { testName: "", testStatistic: 0, pValue: 0 };
 
     const varianceTest = enableVarianceTest 
       ? performMultipleSampleVarianceTest(datasetsParam, significance, HaVariance)
