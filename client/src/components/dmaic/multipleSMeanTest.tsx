@@ -13,14 +13,21 @@ interface MeanTestResults {
     
 interface multipleSMeanTestProps {
   datasets: number[][];
-  normalityresults: number[];
+  normalityResults: Array<{
+        sampleSize: number;
+        mean: number;
+        stdev: number;
+        median: number;
+        adValue: number;
+        adPValue: number;
+      }>;
   significanceLevel: number;
   alternative: string;
 }
 
 export function multipleSMeanTest({
   datasets,
-  normalityresults,
+  normalityResults,
   significanceLevel,
   alternative,
 }: multipleSMeanTestProps): MeanTestResults {
@@ -36,7 +43,7 @@ export function multipleSMeanTest({
     throw new Error("Alternative hypothesis must be 'Less than', 'Greater than', or 'Different'.");
   } 
   // Check normality results
-  const allNormal = normalityresults.every(adPValue => adPValue > significanceLevel);
+  const allNormal = normalityResults.every(result => result.adPValue > significanceLevel);
   let testName = "";
   let results: any;
   if (!allNormal || datasets.length > 2) {
@@ -51,8 +58,8 @@ export function multipleSMeanTest({
           significance:  significanceLevel,
           alternativemean: alternative,
           deltaMean0: 0,
-          ADp_Value1: normalityresults[0],
-          ADp_Value2: normalityresults[1],
+          ADp_Value1: normalityResults[0].adPValue,
+          ADp_Value2: normalityResults[1].adPValue,
         });
     results = {
       testStatistic: meanTestResult.tStatistic,

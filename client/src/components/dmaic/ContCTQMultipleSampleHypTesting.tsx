@@ -1067,7 +1067,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     const hasEnabledTests = currentConfig.enableMeanTest || currentConfig.enableVarianceTest || currentConfig.enableMedianTest;
     if (!hasEnabledTests) return;
 
-    console.log("Running handleRunTest from useEffect - significance level:", significanceLevel);
     handleRunTest(
       currentConfig.enableMeanTest ?? false,
       currentConfig.enableVarianceTest ?? false,
