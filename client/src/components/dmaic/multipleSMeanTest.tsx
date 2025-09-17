@@ -12,8 +12,8 @@ interface MeanTestResults {
   studentStatistic: number;
   studentpValue: number;
   studentVarEquality: boolean;
-  fStat: number;
-  fTestpValue: number;
+  studentfStat: number;
+  studentfTestpValue: number;
 }
     
 interface multipleSMeanTestProps {
@@ -50,8 +50,8 @@ export function multipleSMeanTest({
   // Check normality results
   const allNormal = normalityResults.every(result => result.adPValue > significanceLevel);  
   const studentTestdone = allNormal && datasets.length === 2;
-  let meanTestResult = 0 as any;
-  let anovaResults= 0 as any;
+  let meanTestResult: any = null;
+  let anovaResults: any = null;
   
   if (allNormal && datasets.length === 2) { //let's do a Student test if 2 distrib. and all are normal
     meanTestResult = twosampleMeanHypothesisTest({
@@ -69,13 +69,13 @@ export function multipleSMeanTest({
   }
   
   return {
-    anovaFStatistic: anovaResults.fStatistic,
-    anovapValue: anovaResults.pValue,
+    anovaFStatistic: anovaResults?.fStatistic || 0,
+    anovapValue: anovaResults?.pValue || 0,
     studentTestdone: studentTestdone,
-    studentStatistic: meanTestResult.tStatistic,
-    studentpValue: meanTestResult.tp_Value,
-    studentVarEquality: meanTestResult.equalVariances,
-    fStat: meanTestResult.fStat,
-    fTestpValue: meanTestResult.fTestpValue,
+    studentStatistic: meanTestResult?.tStatistic || 0,
+    studentpValue: meanTestResult?.tp_Value || 0,
+    studentVarEquality: meanTestResult?.equalVariances || false,
+    studentfStat: meanTestResult?.fStat || 0,
+    studentfTestpValue: meanTestResult?.fTestpValue || 0,
   };  
 }
