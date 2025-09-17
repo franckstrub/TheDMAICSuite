@@ -2970,19 +2970,94 @@ export function calculateMultipleSMeanSampleSize(
 }
 
 interface anovaOneWayResult {
-  testStatistic: number; // F-statistic
-  pValue: number; // p-value
+  fStatistic: number;     // F-statistic
+  pValue: number;            // p-value
+  dfBetween: number;         // degrees of freedom between groups
+  dfWithin: number;          // degrees of freedom within groups
+  ssBetween: number;         // sum of squares between groups
+  ssWithin: number;          // sum of squares within groups
+  msBetween: number;         // mean square between groups
+  msWithin: number;          // mean square within groups
+  grandMean: number;         // overall mean
+  groupMeans: number[];      // means for each group
+  isSignificant: boolean;    // whether result is significant
 } 
 // One-way ANOVA test implementation
 export function anovaOneWay(
   datasets:number[][], significanceLevel: number, alternative: string
 ): anovaOneWayResult {
-  // Parse inputs
-  const alpha = significanceLevel;
+// One-way ANOVA test implementation using jStat
 
-  // If no solution is found within maxIterations
+  const alpha = significanceLevel;
+  const k = datasets.length; // number of groups
+
+  // Calculate sample sizes and check validity
+  const sampleSizes = datasets.map(group => group.length);
+  const totalN = sampleSizes.reduce((sum, n) => sum + n, 0);
+
+  if (k < 2) throw new Error('Need at least 2 groups');
+  if (totalN < k + 1) throw new Error('Insufficient sample size');
+
+  // Calculate group means
+  const groupMeans = datasets.map(group => 
+      group.reduce((sum, val) => sum + val, 0) / group.length
+  );
+
+  // Calculate grand mean
+  const allValues = datasets.flat();
+  const grandMean = allValues.reduce((sum, val) => sum + val, 0) / totalN;
+
+  // Calculate Sum of Squares Between (SSB)
+  let ssBetween = 0;
+  for (let i = 0; i < k; i++) {
+      ssBetween += sampleSizes[i] * Math.pow(groupMeans[i] - grandMean, 2);
+  }
+
+  // Calculate Sum of Squares Within (SSW)
+  let ssWithin = 0;
+  for (let i = 0; i < k; i++) {
+      for (let j = 0; j < datasets[i].length; j++) {
+          ssWithin += Math.pow(datasets[i][j] - groupMeans[i], 2);
+      }
+  }
+
+  // Calculate degrees of freedom
+  const dfBetween = k - 1;
+  const dfWithin = totalN - k;
+
+  // Calculate Mean Squares
+  const msBetween = ssBetween / dfBetween;
+  const msWithin = ssWithin / dfWithin;
+
+  // Calculate F-statistic
+  const fStatistic = msBetween / msWithin;
+
+  // Calculate p-value using jStat F-distribution
+  let pValue;
+  if (jStat && jStat.centralF) {
+      pValue = 1 - jStat.centralF.cdf(fStatistic, dfBetween, dfWithin);
+  } else {
+      // Fallback approximation if jStat isn't loaded
+      console.warn('jStat not available, using approximation');
+      if (fStatistic <= 0) pValue = 1;
+      else if (fStatistic < 1) pValue = 0.9 - 0.4 * fStatistic;
+      else if (fStatistic < 2) pValue = 0.5 - 0.3 * (fStatistic - 1);
+      else if (fStatistic < 3) pValue = 0.2 - 0.15 * (fStatistic - 2);
+      else if (fStatistic < 4) pValue = 0.05 - 0.03 * (fStatistic - 3);
+      else pValue = 0.02 * Math.exp(-(fStatistic - 4));
+  }
+
   return {
-    testStatistic: 4.5 ,
-    pValue: 0.045,
+      fStatistic,
+      pValue,
+      dfBetween,
+      dfWithin,
+      ssBetween,
+      ssWithin,
+      msBetween,
+      msWithin,
+      grandMean,
+      groupMeans,
+      isSignificant: pValue < alpha
   };
 }

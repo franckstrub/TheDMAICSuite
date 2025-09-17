@@ -6,9 +6,14 @@ import {twosampleMeanHypothesisTest} from "./twosampleMeanHypothesisTest";
 import { NumericKeys } from "node_modules/react-hook-form/dist/types/path/common";
 
 interface MeanTestResults {
-  testName: string;
-  testStatistic: number;
-  pValue: number;
+  anovaFStatistic: number;
+  anovapValue: number;
+  studentTestdone: boolean;
+  studentStatistic: number;
+  studentpValue: number;
+  studentVarEquality: boolean;
+  fStat: number;
+  fTestpValue: number;
 }
     
 interface multipleSMeanTestProps {
@@ -43,16 +48,13 @@ export function multipleSMeanTest({
     throw new Error("Alternative hypothesis must be 'Less than', 'Greater than', or 'Different'.");
   } 
   // Check normality results
-  const allNormal = normalityResults.every(result => result.adPValue > significanceLevel);
-  let testName = "";
-  let results: any;
-  if (!allNormal || datasets.length > 2) {
-    testName = "ANOVA One-way";
-    results = anovaOneWay(datasets, significanceLevel, alternative);
-  }
-  else if (allNormal && datasets.length === 2) {
-    testName = "Two-sample t-test";
-    const meanTestResult = twosampleMeanHypothesisTest({
+  const allNormal = normalityResults.every(result => result.adPValue > significanceLevel);  
+  const studentTestdone = allNormal && datasets.length === 2;
+  let meanTestResult = 0 as any;
+  let anovaResults= 0 as any;
+  
+  if (allNormal && datasets.length === 2) { //let's do a Student test if 2 distrib. and all are normal
+    meanTestResult = twosampleMeanHypothesisTest({
           dataValues1:  datasets[0],
           dataValues2: datasets[1],
           significance:  significanceLevel,
@@ -61,15 +63,19 @@ export function multipleSMeanTest({
           ADp_Value1: normalityResults[0].adPValue,
           ADp_Value2: normalityResults[1].adPValue,
         });
-    results = {
-      testStatistic: meanTestResult.tStatistic,
-      pValue: meanTestResult.tp_Value
-    };
-  };
+  }
+  else { //do an ANOVA 1-way
+    anovaResults = anovaOneWay(datasets, significanceLevel, alternative);
+  }
   
   return {
-    testName: testName,
-    testStatistic: results.testStatistic,
-    pValue: results.pValue,
+    anovaFStatistic: anovaResults.fStatistic,
+    anovapValue: anovaResults.pValue,
+    studentTestdone: studentTestdone,
+    studentStatistic: meanTestResult.tStatistic,
+    studentpValue: meanTestResult.tp_Value,
+    studentVarEquality: meanTestResult.equalVariances,
+    fStat: meanTestResult.fStat,
+    fTestpValue: meanTestResult.fTestpValue,
   };  
 }

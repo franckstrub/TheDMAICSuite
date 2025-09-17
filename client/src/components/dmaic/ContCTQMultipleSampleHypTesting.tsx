@@ -64,9 +64,14 @@ interface TestResults {
   
   // Test results
   meanTest: {
-    testName: string;
-    testStatistic: number;
-    pValue: number;
+  anovaFStatistic: number;
+  anovapValue: number;
+  studentTestdone: boolean;
+  studentStatistic: number;
+  studentpValue: number;
+  studentVarEquality: boolean;
+  studentfStat: number;
+  studentfTestpValue: number;
   };
   
   varianceTest: {
@@ -122,7 +127,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   // Test results
   const [testResults, setTestResults] = useState<TestResults>({
     normalityResults: [],
-    meanTest: { testName: "", testStatistic: 0, pValue: 0, },
+    meanTest: { anovaFStatistic: 0,
+              anovapValue: 0,
+              studentTestdone: false,
+              studentStatistic: 0,
+              studentpValue: 0,
+              studentVarEquality: true,
+              studentfStat: 0,
+              studentfTestpValue: 0,},
     varianceTest: { testStatistic: 0, pValue: 0, criticalValue: 0, },
     medianTest: { testStatistic: 0, pValue: 0, criticalValue: 0, }
   });
@@ -736,7 +748,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   }
 
   // Fake test functions (to be implemented later)
-  const performMultipleSampleMeanTest = (datasets: DataPoint[][], normalityResults: any[], significanceLevel: number, alternative: string) => {
+  const performMultipleSampleMeanTest = (datasets: DataPoint[][],
+    normalityResults: Array<{
+      sampleSize: number;
+      mean: number;
+      stdev: number;
+      median: number;
+      adValue: number;
+      adPValue: number;
+    }>,
+    significanceLevel: number, alternative: string) => {
     // Fake implementation - returns random test results
     //const values[] = datasets[].map(d => d.dataValue);
     const numericDatasets = datasets.map(dataset => dataset.map(d => d.dataValue));
@@ -755,9 +776,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
    //   : "Accept H0: No significant difference between means";
     
     return {
-      testName: multipleSMeanTestResult.testName,
-      testStatistic: multipleSMeanTestResult.testStatistic,
-      pValue: multipleSMeanTestResult.pValue,
+      anovaFStatistic: multipleSMeanTestResult.anovaFStatistic,
+      anovapValue: multipleSMeanTestResult.anovapValue,
+      studentTestdone: multipleSMeanTestResult.studentTestdone,
+      studentStatistic: multipleSMeanTestResult.studentStatistic,
+      studentpValue: multipleSMeanTestResult.studentpValue,
+      studentVarEquality: multipleSMeanTestResult.studentVarEquality,
+      studentfStat: multipleSMeanTestResult.fStat,
+      studentfTestpValue: multipleSMeanTestResult.fTestpValue,
     };
   };
 
@@ -969,7 +995,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     // Perform hypothesis tests if enabled
     const meanTest = enableMeanTest 
       ? performMultipleSampleMeanTest(datasetsParam, normalityResults, significance, HaMean)
-      : { testName: "", testStatistic: 0, pValue: 0 };
+      : { anovaFStatistic: 0,
+          anovapValue: 0,
+          studentTestdone: false,
+          studentStatistic: 0,
+          studentpValue: 0,
+          studentVarEquality: true,
+          studentfStat: 0,
+          studentfTestpValue:  0, };
 
     const varianceTest = enableVarianceTest 
       ? performMultipleSampleVarianceTest(datasetsParam, significance, HaVariance)
@@ -1804,6 +1837,146 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               ))}              
               </div>
               )}              
+              <div className="pl-4 pr-4 grid grid-cols-3 gap-4 text-sm">
+                {ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest && (
+                  <Card className="p-2">                
+                    <CardTitle className="text-lg">Multiple Sample Mean test:</CardTitle>
+                    {!testResults.meanTest.studentTestdone ? (
+                    <>
+                    <div className="text-lg justify-left">ANOVA One-Way:</div>
+                    <div className="text-gray-600 font-medium">F-Test Statistic (F):&nbsp;
+                      {testResults.meanTest.anovaFStatistic.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">P-Value:&nbsp;
+                      {testResults.meanTest.anovapValue.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                      {parseFloat(significanceLevel)*100}%</div>
+                    <div>
+                      <Badge
+                      variant="default"
+                      className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.meanTest.anovapValue < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                      title={
+                        testResults.meanTest.anovapValue < parseFloat(significanceLevel)
+                          ? `Reject H0. Accept Ha (P-Value ${testResults.meanTest.anovapValue.toFixed(4)} ≠ ${significanceLevel})`
+                          : `Accept H0. Reject Ha (P-Value ${testResults.meanTest.anovapValue.toFixed(4)} = ${significanceLevel})`
+                      }
+                      >
+                      H0: All group means are equal (μ1 = μ2 = ... = μn) <br></br>
+                      Ha: At least one group mean is different (μi ≠ μj for some i ≠ j) <br></br>
+                      {testResults.meanTest.anovapValue < parseFloat(significanceLevel)
+                        ? `Result => Reject H0. Accept Ha (P-Value ${testResults.meanTest.anovapValue.toFixed(4)} ≠ ${significanceLevel})`
+                        : `Result => Accept H0. Reject Ha (P-Value ${testResults.meanTest.anovapValue.toFixed(4)} = ${significanceLevel})`}
+                      
+                      </Badge>
+                    </div>
+                    </>
+                    ) 
+                    : (
+                    <>
+                    <div className="text-lg justify-left">Student T-test:</div>
+                    {testResults.meanTest.studentVarEquality ?
+                      (<div className="text-gray-600 font-medium">Equal Variances (F-stat: {testResults.meanTest.studentfStat.toFixed(3)}, p-Value: {testResults.meanTest.studentfTestpValue.toFixed(3)})
+                      </div>                  
+                      ) : (
+                      <div className="text-gray-600 font-medium">Unequal Variances (F-stat: {testResults.meanTest.studentfStat.toFixed(3)}, p-Value: {testResults.meanTest.studentfTestpValue.toFixed(3)})
+                      </div>
+                    )}
+                    <div className="text-gray-600 font-medium">Test Statistic:&nbsp;
+                      {testResults.meanTest.studentStatistic.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">P-Value:&nbsp;
+                      {testResults.meanTest.studentpValue.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                      {parseFloat(significanceLevel)*100}%</div>
+                    <div>
+                      <Badge
+                      variant="default"
+                      className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.meanTest.studentpValue < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                      title={
+                        testResults.meanTest.anovapValue < parseFloat(significanceLevel)
+                          ? `Reject H0. Accept Ha (P-Value ${testResults.meanTest.studentpValue.toFixed(4)} < ${significanceLevel})`
+                          : `Accept H0. Reject Ha (P-Value ${testResults.meanTest.studentpValue.toFixed(4)} ≥ ${significanceLevel})`
+                      }
+                      >
+                      H0: All group means are equal (μ1 = μ2) <br></br>
+                      Ha: (μ1 ≠ μ2) <br></br>
+                      {testResults.meanTest.studentpValue < parseFloat(significanceLevel)
+                        ? `Result => Reject H0. Accept Ha (P-Value ${testResults.meanTest.studentpValue.toFixed(4)} < ${significanceLevel})`
+                        : `Result => Accept H0. Reject Ha (P-Value ${testResults.meanTest.studentpValue.toFixed(4)} ≥ ${significanceLevel})`}
+                      
+                      </Badge>
+                    </div>
+                    </>
+                    )}
+                  </Card>                
+                )}
+                    {/*<div className="text-lg justify-left">Student T-test:</div>
+                    {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}</div>)}
+                    <div className="text-gray-600 font-medium">Mean 1 (μ1):&nbsp;
+                      {testResults.meanValue1.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">SE Mean 1:&nbsp;
+                      {testResults.SEmean1.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">Standard Deviation 1:&nbsp;
+                      {testResults.stdev1.toFixed(3)}</div>
+                    {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}</div>)}
+                    <div className="text-gray-600 font-medium">Mean 2 (μ2):&nbsp;
+                      {testResults.meanValue2.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">SE Mean 2:&nbsp;
+                      {testResults.SEmean2.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">Standard Deviation 2:&nbsp;
+                      {testResults.stdev2.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">Difference (μ1-μ2):&nbsp;
+                      {(testResults.meanValue1 - testResults.meanValue2).toFixed(3)}</div>
+                      <div className="text-gray-600 font-medium">Hypothesized Difference (δ0):&nbsp;
+                      {ContCTQTwoSampleHypTestData[ctqId]?.deltaMean0}</div>
+                    <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                      {parseFloat(significanceLevel)*100}%</div>
+                    <div>
+                      <Badge
+                      variant="default"
+                      className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.tp_Value < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                      title={
+                        testResults.tp_Value < parseFloat(significanceLevel)
+                          ? `Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                          : `Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`
+                      }
+                      >
+                      {alternativemean==='Less than' ? "H0: (μ1 - μ2) ≥ "
+                      : ( alternativemean==='Greater than' ? "H0: (μ1 - μ2) ≤ "
+                        :"H0: (μ1 - μ2) = " )} {ContCTQTwoSampleHypTestData[ctqId]?.deltaMean0}<br></br>
+                      {alternativemean==='Less than' ? "Ha: (μ1 - μ2) < "
+                      : ( alternativemean==='Greater than' ? "Ha: (μ1 - μ2) > "
+                        :"Ha: (μ1 - μ2) ≠ " )} {ContCTQTwoSampleHypTestData[ctqId]?.deltaMean0}<br></br>
+                      {testResults.tp_Value < parseFloat(significanceLevel)
+                        ? `Result => Reject H0. Accept Ha (P-Value ${testResults.tp_Value.toFixed(4)} < ${significanceLevel})`
+                        : `Result => Accept H0. Reject Ha (P-Value ${testResults.tp_Value.toFixed(4)} ≥ ${significanceLevel})`}
+                      
+                      </Badge>
+                    </div>
+                    
+                    {testResults.equalVariances ?
+                      (<div className="text-gray-600 font-medium">Equal Variances (F-stat: {testResults.fStat.toFixed(3)}, p-Value: {testResults.fTestpValue.toFixed(3)})
+                      </div>                  
+                      ) : (
+                      <div className="text-gray-600 font-medium">Unequal Variances (F-stat: {testResults.fStat.toFixed(3)}, p-Value: {testResults.fTestpValue.toFixed(3)})
+                      </div>
+                    )}
+                    <div className="text-gray-600 font-medium">T-statistic: {testResults.tStatistic.toFixed(3)}
+                    </div>
+                    <div className="text-gray-600 font-medium">T-test Degrees of Freedom:&nbsp;
+                      {testResults.degreesOfFreedom.toFixed(0)}</div>
+                    <div className="text-gray-600 font-medium">T-test Pooled Standard Deviation:&nbsp;
+                      {testResults.pooledSE.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">T-criteria
+                      {typeof testResults.tCriteria === 'number' 
+                        ? (alternativemean==='Less than' ? <> (T<sub>{significanceLevel}</sub>): {testResults.tCriteria.toFixed(3)} </> : <> (T<sub>{(1 - parseFloat(significanceLevel)).toFixed(2)}</sub>): {testResults.tCriteria.toFixed(3)}</>)
+                        : <> (T<sub>{(parseFloat(significanceLevel)/2).toFixed(3)}</sub>, T<sub>{(1-parseFloat(significanceLevel)/2).toFixed(3)}</sub>): [{testResults.tCriteria.lower.toFixed(3)}, {testResults.tCriteria.upper.toFixed(3)}]</>
+                      }
+                    </div>
+                    <div className="text-gray-600 font-medium">T-test P-value:&nbsp;
+                      {testResults.tp_Value.toFixed(4)}</div>
+                    <div className="text-gray-600 font-medium">CI {(100*(1-parseFloat(significanceLevel)))}% for (μ1 - μ2): [
+                    {testResults.diffCI_minus.toFixed(3)}, {testResults.diffCI_plus.toFixed(3)}]</div> */}
+
+              </div>
 
               {/* Mean Test Results */}
               {ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest && (
@@ -1815,16 +1988,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <div className="font-medium text-gray-700">Test Statistic</div>
-                        <div className="text-lg font-semibold">{testResults.meanTest.testStatistic.toFixed(4)}</div>
+                        <div className="text-lg font-semibold">{testResults.meanTest.anovaFStatistic.toFixed(4)}</div>
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">P-Value</div>
-                        <div className="text-lg font-semibold">{testResults.meanTest.pValue.toFixed(4)}</div>
+                        <div className="text-lg font-semibold">{testResults.meanTest.anovapValue.toFixed(4)}</div>
                       </div>
                       <div>
                         <div className="font-medium text-gray-700">Decision</div>
-                        <div className={`text-lg font-semibold ${testResults.meanTest.pValue < parseFloat(significanceLevel) ? 'text-red-600' : 'text-green-600'}`}>
-                          {testResults.meanTest.pValue < parseFloat(significanceLevel) ? 'Reject H0' : 'Accept H0'}
+                        <div className={`text-lg font-semibold ${testResults.meanTest.anovapValue < parseFloat(significanceLevel) ? 'text-red-600' : 'text-green-600'}`}>
+                          {testResults.meanTest.anovapValue < parseFloat(significanceLevel) ? 'Reject H0' : 'Accept H0'}
                         </div>
                       </div>
                       <div>
@@ -1897,10 +2070,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   </CardContent>
                 </Card>
               )}
-
             </div>
-          )}
-          
+          )}  
           </div>
         </div>
         )}      
