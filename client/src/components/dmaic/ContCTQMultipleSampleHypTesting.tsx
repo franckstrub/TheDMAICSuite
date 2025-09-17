@@ -782,8 +782,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       studentStatistic: multipleSMeanTestResult.studentStatistic,
       studentpValue: multipleSMeanTestResult.studentpValue,
       studentVarEquality: multipleSMeanTestResult.studentVarEquality,
-      studentfStat: multipleSMeanTestResult.fStat,
-      studentfTestpValue: multipleSMeanTestResult.fTestpValue,
+      studentfStat: multipleSMeanTestResult.studentfStat,
+      studentfTestpValue: multipleSMeanTestResult.studentfTestpValue,
     };
   };
 
