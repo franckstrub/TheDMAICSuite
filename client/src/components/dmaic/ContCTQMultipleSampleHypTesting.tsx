@@ -65,6 +65,8 @@ interface TestResults {
   
   // Test results
   meanTest: {
+  anovagroupMeans: number[];
+  anovaPooledStdev: number;
   anovaFStatistic: number;
   anovapValue: number;
   studentTestdone: boolean;
@@ -129,7 +131,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   // Test results
   const [testResults, setTestResults] = useState<TestResults>({
     normalityResults: [],
-    meanTest: { anovaFStatistic: 0,
+    meanTest: { anovagroupMeans: [],
+              anovaPooledStdev: 0,
+              anovaFStatistic: 0,
               anovapValue: 0,
               studentTestdone: false,
               studentStatistic: 0,
@@ -785,6 +789,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
    //   : "Accept H0: No significant difference between means";
     
     return {
+      anovagroupMeans: multipleSMeanTestResult.anovagroupMeans,
+      anovaPooledStdev: multipleSMeanTestResult.anovaPooledStdev,
       anovaFStatistic: multipleSMeanTestResult.anovaFStatistic,
       anovapValue: multipleSMeanTestResult.anovapValue,
       studentTestdone: multipleSMeanTestResult.studentTestdone,
@@ -1005,7 +1011,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     // Perform hypothesis tests if enabled
     const meanTest = enableMeanTest 
       ? performMultipleSampleMeanTest(datasetsParam, normalityResults, significance, HaMean)
-      : { anovaFStatistic: 0,
+      : { anovagroupMeans: [],
+          anovaPooledStdev: 0,
+          anovaFStatistic: 0,
           anovapValue: 0,
           studentTestdone: false,
           studentStatistic: 0,
@@ -1389,33 +1397,36 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
           <div>
           {/* Data Input Section for Multiple Sample Hypothesis Test */}
-          <div className="space-y-6">
+          <div className="mt-2 space-y-1">
             <h3 className="text-lg font-semibold">Data Input</h3>
             
             {/* Number of Datasets Control */}
-            <div className="space-y-2">
-              <Label htmlFor="num-datasets">Number of Datasets (Maximum: 13)</Label>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setNumDatasets(Math.max(2, numDatasets - 1))}
-                  disabled={numDatasets <= 2}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium w-12 text-center">
-                  {numDatasets}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setNumDatasets(Math.min(13, numDatasets + 1))}
-                  disabled={numDatasets >= 13}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <div>Factor used for dataset classifications:
+            <div className="grid grid-cols-2 gap-4">
+              <div> 
+                <Label htmlFor="num-datasets">Number of Datasets (Maximum: 13)</Label>                           
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNumDatasets(Math.max(2, numDatasets - 1))}
+                    disabled={numDatasets <= 2}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium w-12 text-center">
+                    {numDatasets}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNumDatasets(Math.min(13, numDatasets + 1))}
+                    disabled={numDatasets >= 13}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="text-sm mb-4">Factor used for dataset classifications:
                 <Input
                   id={`dataset-desc-${factorOfClassification}`}
                   type="text"
@@ -1426,8 +1437,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   placeholder={`Factor used for dataset classifications`}
                   className="text-sm"
                 />
-                </div>
-              </div>
+              </div>              
             </div>
 
             {/* Dataset Descriptions and Data Input Tables */}
@@ -1872,6 +1882,20 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     {!testResults.meanTest.studentTestdone ? (
                     <>
                     <div className="text-lg justify-left">ANOVA One-Way:</div>
+                    <div className="text-gray-600 font-medium">Factor of classifications:&nbsp;
+                      {factorOfClassification} </div>
+                    <div className="text-gray-600 font-medium">Number of Distributions:&nbsp;
+                      {numDatasets}</div>
+{testResults.meanTest.anovagroupMeans && testResults.meanTest.anovagroupMeans.length > 0 && (
+  <div className="text-gray-600 font-medium">
+    Means (μi): {testResults.meanTest.anovagroupMeans.map((mean, index) => 
+      `μ${index + 1}=${mean.toFixed(3)}`
+    ).join(', ')}
+  </div>
+)}
+
+                    <div className="text-gray-600 font-medium">Pooled Standard Dev. (s):&nbsp;
+                      {testResults.meanTest.anovaPooledStdev.toFixed(3)}</div>
                     <div className="text-gray-600 font-medium">F-Test Statistic (F):&nbsp;
                       {testResults.meanTest.anovaFStatistic.toFixed(3)}</div>
                     <div className="text-gray-600 font-medium">P-Value:&nbsp;

@@ -6,6 +6,8 @@ import {twosampleMeanHypothesisTest} from "./twosampleMeanHypothesisTest";
 import { NumericKeys } from "node_modules/react-hook-form/dist/types/path/common";
 
 interface MeanTestResults {
+  anovagroupMeans:  number[];
+  anovaPooledStdev: number;
   anovaFStatistic: number;
   anovapValue: number;
   studentTestdone: boolean;
@@ -69,6 +71,8 @@ export function multipleSMeanTest({
   }
   
   return {
+    anovagroupMeans: anovaResults?.groupMeans || [],
+    anovaPooledStdev: anovaResults?.pooledstdev || 0,
     anovaFStatistic: anovaResults?.fStatistic || 0,
     anovapValue: anovaResults?.pValue || 0,
     studentTestdone: studentTestdone,
