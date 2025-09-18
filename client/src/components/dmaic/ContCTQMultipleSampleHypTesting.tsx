@@ -42,6 +42,7 @@ interface ContCTQMultipleSampleHypTestData {
   alternateVariance: string;
   enableMedianTest: boolean;
   alternateMedian: string;
+  factorOfClassification: string;
   datasets: DataPoint[][];
   datasetDescriptions: string[];
 }
@@ -113,6 +114,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   const [datasets, setDatasets] = useState<DataPoint[][]>([[], []]); // Start with 2 empty datasets
   const [datasetDescriptions, setDatasetDescriptions] = useState<string[]>(['Dataset 1', 'Dataset 2']);
   const [numDatasets, setNumDatasets] = useState(2);
+  const [factorOfClassification, setFactorOfClassification] = useState("Miscellaneous");
   
   // Focused cell states for each dataset
   const [focusedCells, setFocusedCells] = useState<number[]>(new Array(2).fill(-1));
@@ -279,6 +281,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     alternateVariance: "Different",
     enableMedianTest: false,
     alternateMedian: "Different",
+    factorOfClassification: "Miscellaneous",
     datasets: [[], []], 
     datasetDescriptions: ['Dataset 1', 'Dataset 2'],
   } 
@@ -346,6 +349,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       alternateVariance: alternateVariance,
       enableMedianTest: currentConfig.enableMedianTest,
       alternateMedian: alternateMedian,
+      factorOfClassification: factorOfClassification,
       datasets,
       datasetDescriptions,
     };
@@ -391,6 +395,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         if (config.powerMultipleSMeanAlpha) {
           setPowerMultipleSMeanAlpha(config.powerMultipleSMeanAlpha);
         }
+        if (config.factorOfClassification) {
+          setFactorOfClassification(config.factorOfClassification);
+        }
         
         // Update ContCTQMultipleSampleHypTestData from database
         setContCTQMultipleSampleHypTestData(prev => ({
@@ -410,6 +417,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             alternateMean: config.alternateMean || "Different",
             alternateVariance: config.alternateVariance || "Different",
             alternateMedian: config.alternateMedian || "Different",
+            factorOfClassification: config.factorOfClassification || "Miscellaneous",
             datasets: config.datasets || [[], []],
             datasetDescriptions: config.datasetDescriptions || ['Dataset 1', 'Dataset 2'],
           }
@@ -430,7 +438,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               parseFloat(config.significanceLevel || "0.05"),
               config.alternateMean || "Different",
               config.alternateVariance || "Different",
-              config.alternateMedian || "Different"
+              config.alternateMedian || "Different",
+              config.factorOfClassification || "Miscellaneous",
             );
           }
         }, 100);
@@ -985,7 +994,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     significance: number,
     HaMean: string,
     HaVariance: string,
-    HaMedian: string
+    HaMedian: string,
+    factorOfClassification: string,
   ) => {
     // console.log("handleRunTest called with params:", { enableMeanTest, enableVarianceTest, enableMedianTest, significance });
     
@@ -1088,8 +1098,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       if (currentConfig.alternateMedian && currentConfig.alternateMedian !== alternateMedian) {
         setAlternateMedian(currentConfig.alternateMedian);
       }
+      if (currentConfig.factorOfClassification && currentConfig.factorOfClassification !== factorOfClassification) {
+        setFactorOfClassification(currentConfig.factorOfClassification);
+      }
     }
-  }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMean, ContCTQMultipleSampleHypTestData[ctqId]?.alternateVariance, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMedian]);
+  }, [ContCTQMultipleSampleHypTestData[ctqId]?.significanceLevel, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMean, ContCTQMultipleSampleHypTestData[ctqId]?.alternateVariance, ContCTQMultipleSampleHypTestData[ctqId]?.alternateMedian, ContCTQMultipleSampleHypTestData[ctqId]?.factorOfClassification]);
 
   // useEffect to trigger test calculations when significance or alternative hypotheses change
   useEffect(() => {
@@ -1108,7 +1121,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       parseFloat(significanceLevel),
       alternateMean,
       alternateVariance,
-      alternateMedian
+      alternateMedian,
+      factorOfClassification,
     );
     //setTestResults(testResults);
   }, [
@@ -1120,6 +1134,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest,
     ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest,
     ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest,
+    factorOfClassification,
   ]);
 
   // useEffect to run handleRunTest on component mount/rendering
@@ -1143,7 +1158,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         parseFloat(significanceLevel),
         alternateMean,
         alternateVariance,
-        alternateMedian
+        alternateMedian,
+        factorOfClassification,
       );
     }
   }, []); // Empty dependency array means this runs only on mount
@@ -1399,6 +1415,18 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
+                <div>Factor used for dataset classifications:
+                <Input
+                  id={`dataset-desc-${factorOfClassification}`}
+                  type="text"
+                  value={factorOfClassification || ""}
+                  onChange={(e) => {
+                    setFactorOfClassification(e.target.value);
+                  }}
+                  placeholder={`Factor used for dataset classifications`}
+                  className="text-sm"
+                />
+                </div>
               </div>
             </div>
 
@@ -1860,7 +1888,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                           : `Accept H0. Reject Ha (P-Value ${testResults.meanTest.anovapValue.toFixed(4)} = ${significanceLevel})`
                       }
                       >
-                      H0: All group means are equal (μ1 = μ2 = ... = μn) <br></br>
+                      H0: (μ1 = μ2 = ... = μn) <br></br>
                       Ha: At least one group mean is different (μi ≠ μj for some i ≠ j) <br></br>
                       {testResults.meanTest.anovapValue < parseFloat(significanceLevel)
                         ? `Result => Reject H0. Accept Ha (P-Value ${testResults.meanTest.anovapValue.toFixed(4)} ≠ ${significanceLevel})`

@@ -1562,6 +1562,7 @@ export const multipleSampleHypothesisConfig = pgTable(
 
     // Test configuration
     testType: text("test_type").default("Multiple-Sample Hyp test"),
+    factorOfClassification: text("factor_of_classification"),
 
     // Statistical parameter enablers
     enableMeanTest: boolean("enable_mean_test").default(true),
