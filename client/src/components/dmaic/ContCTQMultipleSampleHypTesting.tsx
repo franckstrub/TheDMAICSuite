@@ -69,6 +69,10 @@ interface TestResults {
   anovaPooledStdev: number;
   anovaFStatistic: number;
   anovapValue: number;
+  anovaconfidenceIntervals: Array<{  // confidence intervals for each group mean
+    lower: number;
+    upper: number;
+  }>;
   studentTestdone: boolean;
   studentStatistic: number;
   studentpValue: number;
@@ -135,6 +139,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               anovaPooledStdev: 0,
               anovaFStatistic: 0,
               anovapValue: 0,
+              anovaconfidenceIntervals: [],
               studentTestdone: false,
               studentStatistic: 0,
               studentpValue: 0,
@@ -793,6 +798,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       anovaPooledStdev: multipleSMeanTestResult.anovaPooledStdev,
       anovaFStatistic: multipleSMeanTestResult.anovaFStatistic,
       anovapValue: multipleSMeanTestResult.anovapValue,
+      anovaconfidenceIntervals: multipleSMeanTestResult.anovaconfidenceIntervals,
       studentTestdone: multipleSMeanTestResult.studentTestdone,
       studentStatistic: multipleSMeanTestResult.studentStatistic,
       studentpValue: multipleSMeanTestResult.studentpValue,
@@ -1015,6 +1021,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           anovaPooledStdev: 0,
           anovaFStatistic: 0,
           anovapValue: 0,
+          anovaconfidenceIntervals: [],
           studentTestdone: false,
           studentStatistic: 0,
           studentpValue: 0,
@@ -1882,19 +1889,44 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     {!testResults.meanTest.studentTestdone ? (
                     <>
                     <div className="text-lg justify-left">ANOVA One-Way:</div>
-                    <div className="text-gray-600 font-medium">Factor of classifications:&nbsp;
-                      {factorOfClassification} </div>
                     <div className="text-gray-600 font-medium">Number of Distributions:&nbsp;
                       {numDatasets}</div>
-{testResults.meanTest.anovagroupMeans && testResults.meanTest.anovagroupMeans.length > 0 && (
-  <div className="text-gray-600 font-medium">
-    Means (μi): {testResults.meanTest.anovagroupMeans.map((mean, index) => 
-      `μ${index + 1}=${mean.toFixed(3)}`
-    ).join(', ')}
+                    <div className="text-gray-600 font-medium">Factor of classifications:&nbsp;
+                      {factorOfClassification} </div>
+                    {testResults.meanTest.anovagroupMeans && testResults.meanTest.anovagroupMeans.length > 0 && (
+  <div className="mt-4">
+    <div className="text-sm font-medium text-gray-700 mb-2">Group Statistics:</div>
+    <table className="w-full text-xs border-collapse border border-gray-300">
+      <thead>
+        <tr className="bg-gray-50">
+          <th className="border border-gray-300 px-2 py-1 text-left">Factor</th>
+          <th className="border border-gray-300 px-2 py-1 text-left">Mean (μ)</th>
+          <th className="border border-gray-300 px-2 py-1 text-left">CI {((1-parseFloat(significanceLevel))*100).toFixed(0)}%</th>
+          <th className="border border-gray-300 px-2 py-1 text-left">Sample Size (n)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {testResults.meanTest.anovagroupMeans.map((mean: number, index: number) => (
+          <tr key={index} className="hover:bg-gray-50">
+            <td className="border border-gray-300 px-2 py-1 text-gray-600">
+              {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[index]}
+            </td>
+            <td className="border border-gray-300 px-2 py-1 text-gray-600 font-medium">
+              μ<sub>{index + 1}</sub>: {mean.toFixed(3)}
+            </td>
+            <td className="border border-gray-300 px-2 py-1 text-gray-600 font-medium">
+              [{testResults.meanTest.anovaconfidenceIntervals[index].lower.toFixed(3)}, {testResults.meanTest.anovaconfidenceIntervals[index].upper.toFixed(3)}]
+            </td>
+            <td className="border border-gray-300 px-2 py-1 text-gray-600 text-center">
+              {testResults.normalityResults[index].sampleSize}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </div>
 )}
-
-                    <div className="text-gray-600 font-medium">Pooled Standard Dev. (s):&nbsp;
+                    <div className="text-gray-600 font-medium">Pooled Standard Dev. (σ <sub>pooled</sub>):&nbsp;
                       {testResults.meanTest.anovaPooledStdev.toFixed(3)}</div>
                     <div className="text-gray-600 font-medium">F-Test Statistic (F):&nbsp;
                       {testResults.meanTest.anovaFStatistic.toFixed(3)}</div>

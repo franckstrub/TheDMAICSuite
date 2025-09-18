@@ -2981,14 +2981,18 @@ interface anovaOneWayResult {
   pooledstdev: number;       // pooled standard deviation
   grandMean: number;         // overall mean
   groupMeans: number[];      // means for each group
+  confidenceIntervals: Array<{  // confidence intervals for each group mean
+    lower: number;
+    upper: number;
+  }>;
   isSignificant: boolean;    // whether result is significant
 } 
 // One-way ANOVA test implementation
 export function anovaOneWay(
-  datasets:number[][], significanceLevel: number, alternative: string
+  datasets: number[][], 
+  significanceLevel: number, 
+  alternative: string
 ): anovaOneWayResult {
-// One-way ANOVA test implementation using jStat
-
   const alpha = significanceLevel;
   const k = datasets.length; // number of groups
 
@@ -3031,7 +3035,7 @@ export function anovaOneWay(
   const msWithin = ssWithin / dfWithin;
 
   // Calculate pooled standard deviation
-   const pooledstdev = Math.sqrt(msWithin);
+  const pooledstdev = Math.sqrt(msWithin);
 
   // Calculate F-statistic
   const fStatistic = msBetween / msWithin;
@@ -3051,6 +3055,27 @@ export function anovaOneWay(
       else pValue = 0.02 * Math.exp(-(fStatistic - 4));
   }
 
+  // Calculate confidence intervals for each group mean
+  let tCritical;
+  if (jStat && jStat.studentt) {
+      // Two-tailed t-critical value for confidence interval
+      tCritical = jStat.studentt.inv(1 - alpha / 2, dfWithin);
+  } else {
+      // Fallback approximation for t-critical (rough approximation)
+      tCritical = alpha === 0.05 ? 1.96 : (alpha === 0.01 ? 2.576 : 2.326);
+  }
+
+  const confidenceIntervals = datasets.map((dataset, i) => {
+      const n = sampleSizes[i];
+      const standardError = pooledstdev / Math.sqrt(n);
+      const margin = tCritical * standardError;
+      
+      return {
+          lower: groupMeans[i] - margin,
+          upper: groupMeans[i] + margin
+      };
+  });
+
   return {
       fStatistic,
       pValue,
@@ -3063,6 +3088,7 @@ export function anovaOneWay(
       pooledstdev,
       grandMean,
       groupMeans,
+      confidenceIntervals,
       isSignificant: pValue < alpha
   };
 }
