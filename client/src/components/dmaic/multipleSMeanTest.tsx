@@ -10,6 +10,10 @@ interface MeanTestResults {
   anovaPooledStdev: number;
   anovaFStatistic: number;
   anovapValue: number;
+  anovaconfidenceIntervals: Array<{  // confidence intervals for each group mean
+    lower: number;
+    upper: number;
+  }>;
   studentTestdone: boolean;
   studentStatistic: number;
   studentpValue: number;
@@ -75,6 +79,7 @@ export function multipleSMeanTest({
     anovaPooledStdev: anovaResults?.pooledstdev || 0,
     anovaFStatistic: anovaResults?.fStatistic || 0,
     anovapValue: anovaResults?.pValue || 0,
+    anovaconfidenceIntervals: anovaResults?.confidenceIntervals || [],
     studentTestdone: studentTestdone,
     studentStatistic: meanTestResult?.tStatistic || 0,
     studentpValue: meanTestResult?.tp_Value || 0,
