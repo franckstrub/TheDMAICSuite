@@ -2978,6 +2978,7 @@ interface anovaOneWayResult {
   ssWithin: number;          // sum of squares within groups
   msBetween: number;         // mean square between groups
   msWithin: number;          // mean square within groups
+  pooledstdev: number;       // pooled standard deviation
   grandMean: number;         // overall mean
   groupMeans: number[];      // means for each group
   isSignificant: boolean;    // whether result is significant
@@ -3029,6 +3030,9 @@ export function anovaOneWay(
   const msBetween = ssBetween / dfBetween;
   const msWithin = ssWithin / dfWithin;
 
+  // Calculate pooled standard deviation
+   const pooledstdev = Math.sqrt(msWithin);
+
   // Calculate F-statistic
   const fStatistic = msBetween / msWithin;
 
@@ -3056,6 +3060,7 @@ export function anovaOneWay(
       ssWithin,
       msBetween,
       msWithin,
+      pooledstdev,
       grandMean,
       groupMeans,
       isSignificant: pValue < alpha
