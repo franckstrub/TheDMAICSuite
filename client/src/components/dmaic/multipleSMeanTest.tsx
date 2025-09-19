@@ -8,6 +8,16 @@ import { NumericKeys } from "node_modules/react-hook-form/dist/types/path/common
 interface MeanTestResults {
   anovagroupMeans:  number[];
   anovaPooledStdev: number;
+  anovagrandMean: number;
+  anovadfBetween: number;
+  anovadfWithin: number;
+  anovassBetween: number;
+  anovassWithin: number;
+  anovamsBetween: number;
+  anovamsWithin: number;
+  anovarSquared: number;        // R-squared (optional)
+  anovarSquaredAdj: number;     // Adjusted R-squared (optional)
+  anovarSquaredPred: number;    // Predicted R-squared (optional)
   anovaFStatistic: number;
   anovapValue: number;
   anovaconfidenceIntervals: Array<{  // confidence intervals for each group mean
@@ -16,6 +26,11 @@ interface MeanTestResults {
   }>;
   studentTestdone: boolean;
   studentStatistic: number;
+  studentpooledSE: number;
+  studentDegreesOfFreedom: number;
+  studenttCriteria: number | {lower: number; upper: number};
+  studentdiffCI_minus: number;
+  studentdiffCI_plus: number;
   studentpValue: number;
   studentVarEquality: boolean;
   studentfStat: number;
@@ -77,11 +92,26 @@ export function multipleSMeanTest({
   return {
     anovagroupMeans: anovaResults?.groupMeans || [],
     anovaPooledStdev: anovaResults?.pooledstdev || 0,
+    anovagrandMean: anovaResults?.grandMean || 0,
+    anovadfBetween: anovaResults?.dfBetween || 0,
+    anovadfWithin: anovaResults?.dfWithin || 0,
+    anovassBetween: anovaResults?.ssBetween || 0,
+    anovassWithin: anovaResults?.ssWithin || 0,
+    anovamsBetween: anovaResults?.msBetween || 0,
+    anovamsWithin: anovaResults?.msWithin || 0,
+    anovarSquared: anovaResults?.rSquared || 0,
+    anovarSquaredAdj: anovaResults?.rSquaredAdj || 0,
+    anovarSquaredPred: anovaResults?.rSquaredPred || 0,
     anovaFStatistic: anovaResults?.fStatistic || 0,
     anovapValue: anovaResults?.pValue || 0,
     anovaconfidenceIntervals: anovaResults?.confidenceIntervals || [],
     studentTestdone: studentTestdone,
     studentStatistic: meanTestResult?.tStatistic || 0,
+    studentpooledSE: meanTestResult?.pooledSE || 0,
+    studentDegreesOfFreedom: meanTestResult?.degreesOfFreedom || 0,
+    studenttCriteria: meanTestResult?.tCriteria || 0,
+    studentdiffCI_minus: meanTestResult?.diffCI_minus || 0,
+    studentdiffCI_plus: meanTestResult?.diffCI_plus || 0,
     studentpValue: meanTestResult?.tp_Value || 0,
     studentVarEquality: meanTestResult?.equalVariances || false,
     studentfStat: meanTestResult?.fStat || 0,

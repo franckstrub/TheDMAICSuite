@@ -2978,6 +2978,9 @@ interface anovaOneWayResult {
   ssWithin: number;          // sum of squares within groups
   msBetween: number;         // mean square between groups
   msWithin: number;          // mean square within groups
+  rSquared: number;          // R-squared (optional)
+  rSquaredAdj: number;       // Adjusted R-squared (optional)
+  rSquaredPred: number;      // Predicted R-squared (optional)
   pooledstdev: number;       // pooled standard deviation
   grandMean: number;         // overall mean
   groupMeans: number[];      // means for each group
@@ -3034,6 +3037,12 @@ export function anovaOneWay(
   const msBetween = ssBetween / dfBetween;
   const msWithin = ssWithin / dfWithin;
 
+  //R-Squared calculations
+  const sst = ssBetween + ssWithin; // Total Sum of Squares
+  const rSquared = ssBetween / sst;
+  const rSquaredAdj = 1 - (1 - rSquared) * (totalN - 1) / (totalN - k);
+  const rSquaredPred = 1 - (1 - rSquared) * (totalN - k - 1) / (totalN - k - 1);
+
   // Calculate pooled standard deviation
   const pooledstdev = Math.sqrt(msWithin);
 
@@ -3085,6 +3094,9 @@ export function anovaOneWay(
       ssWithin,
       msBetween,
       msWithin,
+      rSquared,
+      rSquaredAdj,
+      rSquaredPred,
       pooledstdev,
       grandMean,
       groupMeans,
