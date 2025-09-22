@@ -17,6 +17,8 @@ import {
   performNormalityTest,    
   } from "@/lib/statisticsUtils";
 import {multipleSMeanTest} from "./multipleSMeanTest";
+import {multipleSVarianceTest} from "./multipleSVarianceTest";
+import { stdev } from 'jstat';
 //import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
 
 interface DataPoint {
@@ -97,9 +99,10 @@ interface TestResults {
   };
   
   varianceTest: {
+    testName: string;
     testStatistic: number;
     pValue: number;
-    criticalValue: number;
+    criticalValue: number | {lower: number; upper: number};
   };
   
   medianTest: {
@@ -176,7 +179,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               studentVarEquality: true,
               studentfStat: 0,
               studentfTestpValue: 0,},
-    varianceTest: { testStatistic: 0, pValue: 0, criticalValue: 0, },
+    varianceTest: { testName: "Fischer", testStatistic: 0, pValue: 0, criticalValue: 0, },
     medianTest: { testStatistic: 0, pValue: 0, criticalValue: 0, }
   });
   
@@ -806,8 +809,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       adPValue: number;
     }>,
     significanceLevel: number, alternative: string) => {
-    // Fake implementation - returns random test results
-    //const values[] = datasets[].map(d => d.dataValue);
+    // Convert datasets to numeric arrays
     const numericDatasets = datasets.map(dataset => dataset.map(d => d.dataValue));
     const multipleSMeanTestResult = multipleSMeanTest({
       datasets: numericDatasets, 
@@ -815,13 +817,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       significanceLevel, 
       alternative
     });
-    //const testStatistic = Math.random() * 10 - 5; // Random between -5 and 5
-    //const pValue = Math.random() * 0.2; // Random p-value between 0 and 0.2
-    //const criticalValue = 2.576; // Fixed critical value for demonstration
-    
-   // const conclusion = pValue < significanceLevel 
-   //   ? "Reject H0: At least one mean is significantly different"
-   //   : "Accept H0: No significant difference between means";
     
     return {
       anovagroupMeans: multipleSMeanTestResult.anovagroupMeans,
@@ -853,20 +848,37 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     };
   };
 
-  const performMultipleSampleVarianceTest = (datasets: DataPoint[][], significanceLevel: number, alternative: string) => {
-    // Fake implementation - returns random test results
-    const testStatistic = Math.random() * 20 + 5; // Random between 5 and 25
-    const pValue = Math.random() * 0.3; // Random p-value between 0 and 0.3
-    const criticalValue = 12.592; // Fixed critical value for demonstration
+  const performMultipleSampleVarianceTest = (datasets: DataPoint[][],
+    normalityResults: Array<{
+      sampleSize: number;
+      mean: number;
+      stdev: number;
+      median: number;
+      adValue: number;
+      adPValue: number;
+    }>,
+    significanceLevel: number, alternative: string) => {
+    const numericDatasets = datasets.map(dataset => dataset.map(d => d.dataValue));
+    const multipleSVarianceTestResult = multipleSVarianceTest({
+      datasets: numericDatasets, 
+      normalityResults: normalityResults, 
+      significanceLevel, 
+      alternative
+    });// Fake implementation - returns random test results
+    //const testName = "Fischer";
+    //const testStatistic = Math.random() * 20 + 5; // Random between 5 and 25
+    //const pValue = Math.random() * 0.3; // Random p-value between 0 and 0.3
+    //const criticalValue = 12.592; // Fixed critical value for demonstration
     
     //const conclusion = pValue < significanceLevel 
     //  ? "Reject H0: Variances are significantly different"
     //  : "Accept H0: No significant difference between variances";
     
     return {
-      testStatistic,
-      pValue,
-      criticalValue,
+      testName: multipleSVarianceTestResult.testName,
+      testStatistic: multipleSVarianceTestResult.testStatistic,
+      pValue: multipleSVarianceTestResult.pValue,
+      criticalValue: multipleSVarianceTestResult.criticalValue,
     };
   };
 
@@ -1090,7 +1102,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           studentfTestpValue:  0, };
 
     const varianceTest = enableVarianceTest 
-      ? performMultipleSampleVarianceTest(datasetsParam, significance, HaVariance)
+      ? performMultipleSampleVarianceTest(datasetsParam, normalityResults, significance, HaVariance)
       : { testStatistic: 0, pValue: 0, criticalValue: 0 };
 
     const medianTest = enableMedianTest 
@@ -1960,7 +1972,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                           <thead>
                             <tr className="bg-gray-50">
                               <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Factor</th>
-                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[60px]">Mean (μ)</th>
+                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[60px]">Mean (μ<sub>i</sub>)</th>
                               <th className="border border-gray-300 px-1 py-1 text-left min-w-[90px]">CI {((1-parseFloat(significanceLevel))*100).toFixed(0)}%</th>
                               <th className="border border-gray-300 px-1 py-1 text-left">Sample Size (n)</th>
                             </tr>
@@ -2167,6 +2179,74 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     )}
                   </Card>                
                 )}
+
+                {ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && testResults.varianceTest && (
+                  <Card className="p-2">                
+                    <CardTitle className="text-lg">Multiple Sample Variance test:</CardTitle>
+                    <div className="text-lg justify-left">{testResults.varianceTest.testName}'s Test <span className="text-[11px]">for Homogeneity of Variances:</span></div>                    
+                    <div className="text-gray-600 font-medium">Number of Distributions:&nbsp;
+                      {numDatasets}</div>
+                    <div className="text-gray-600 font-medium">Factor of classifications:&nbsp;
+                      {factorOfClassification} </div>
+                    {testResults.varianceTest && testResults.normalityResults.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-sm font-medium text-gray-700 mb-2">Group Statistics:</div>
+                        <table className="w-full text-xs border-collapse border border-gray-300">
+                          <thead>
+                            <tr className="bg-gray-50">
+                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Factor</th>
+                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[60px]">Std Dev (σ<sub>i</sub>)</th>
+                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[90px]">CI {((1-parseFloat(significanceLevel))*100).toFixed(0)}%</th>
+                              <th className="border border-gray-300 px-1 py-1 text-left">Sample Size (n)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {testResults.normalityResults.map((result: any, index: number) => (
+                              <tr key={index} className="hover:bg-gray-50">
+                                <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
+                                  {ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions[index]}
+                                </td>
+                                <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                                  σ<sub>{index + 1}</sub>: {result.stdev.toFixed(3)}
+                                </td>
+                                <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                                  [{testResults.meanTest.anovaconfidenceIntervals[index].lower.toFixed(3)}, {testResults.meanTest.anovaconfidenceIntervals[index].upper.toFixed(3)}]
+                                </td>
+                                <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                                  {testResults.normalityResults[index].sampleSize}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    <div className="text-gray-600 font-medium">Test Statistic:&nbsp;
+                      {testResults.varianceTest.testStatistic.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">Degrees of Freedom:&nbsp;
+                      {/*{testResults.varianceTest.leveneDf1.toFixed(0)}, {testResults.varianceTest.leveneDf2.toFixed(0)}*/}</div>
+                    <div className="text-gray-600 font-medium">P-Value:&nbsp;
+                      {testResults.varianceTest.pValue.toFixed(4)}</div>
+                    <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
+                      {parseFloat(significanceLevel)*100}%</div>
+                    <div>
+                      <Badge
+                      variant="default"
+                      className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.varianceTest.pValue < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                      title={
+                       `Accept H0. Reject Ha (P-Value {testResults.varianceTest.pValue} ≥ ${significanceLevel}`
+                      }
+                      >
+                      H0: (σ1² = σ2² = ... = σn²) <br></br>
+                      Ha: At least one group variance is different (σi² ≠ σj² for some i ≠ j) <br></br>
+                      {testResults.varianceTest.pValue < parseFloat(significanceLevel)
+                        ? `Result => Reject H0. Accept Ha (P-Value ${testResults.varianceTest.pValue.toFixed(4)} < ${significanceLevel})`
+                        : `Result => Accept H0. Reject Ha (P-Value ${testResults.varianceTest.pValue.toFixed(4)} ≥ ${significanceLevel})`
+                      }                      
+                      </Badge>
+                    </div>
+                    </Card>
+                    )}
               </div>
             </div>
           )}  
