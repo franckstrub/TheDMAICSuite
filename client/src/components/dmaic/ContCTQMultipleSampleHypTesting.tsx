@@ -103,6 +103,12 @@ interface TestResults {
     testStatistic: number;
     pValue: number;
     criticalValue: number | {lower: number; upper: number};
+    confidenceIntervals: Array<{ // confidence intervals for each group variance 
+      groupIndex: number; 
+      variance: number;
+      lower: number;
+      upper: number;
+    }>;
   };
   
   medianTest: {
@@ -179,7 +185,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               studentVarEquality: true,
               studentfStat: 0,
               studentfTestpValue: 0,},
-    varianceTest: { testName: "Fischer", testStatistic: 0, pValue: 0, criticalValue: 0, },
+    varianceTest: { testName: "Fischer", testStatistic: 0, pValue: 0, criticalValue: 0, confidenceIntervals: []},
     medianTest: { testStatistic: 0, pValue: 0, criticalValue: 0, }
   });
   
@@ -864,21 +870,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       normalityResults: normalityResults, 
       significanceLevel, 
       alternative
-    });// Fake implementation - returns random test results
-    //const testName = "Fischer";
-    //const testStatistic = Math.random() * 20 + 5; // Random between 5 and 25
-    //const pValue = Math.random() * 0.3; // Random p-value between 0 and 0.3
-    //const criticalValue = 12.592; // Fixed critical value for demonstration
-    
-    //const conclusion = pValue < significanceLevel 
-    //  ? "Reject H0: Variances are significantly different"
-    //  : "Accept H0: No significant difference between variances";
+    });
     
     return {
       testName: multipleSVarianceTestResult.testName,
       testStatistic: multipleSVarianceTestResult.testStatistic,
       pValue: multipleSVarianceTestResult.pValue,
       criticalValue: multipleSVarianceTestResult.criticalValue,
+      confidenceIntervals: multipleSVarianceTestResult.varianceConfidenceIntervals,
     };
   };
 
@@ -1103,7 +1102,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
     const varianceTest = enableVarianceTest 
       ? performMultipleSampleVarianceTest(datasetsParam, normalityResults, significance, HaVariance)
-      : { testStatistic: 0, pValue: 0, criticalValue: 0 };
+      : { testName: "", testStatistic: 0, pValue: 0, criticalValue: 0, confidenceIntervals: [] };
 
     const medianTest = enableMedianTest 
       ? performMultipleSampleMedianTest(datasetsParam, significance, HaMedian)
@@ -2169,7 +2168,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     <div className="text-gray-600 font-medium">T-test Pooled Standard Deviation:&nbsp;
                       {testResults.meanTest.studentpooledSE.toFixed(3)}</div>
                     <div className="text-gray-600 font-medium">T-criteria
-                      (T<sub>{(parseFloat(significanceLevel)/2).toFixed(3)}</sub>, T<sub>{(1-parseFloat(significanceLevel)/2).toFixed(3)}</sub>): [{testResults.meanTest.studenttCriteria.lower.toFixed(3)}, {testResults.meanTest.studenttCriteria.upper.toFixed(3)}]
+                      (T<sub>{(parseFloat(significanceLevel)/2).toFixed(3)}</sub>, T<sub>{(1-parseFloat(significanceLevel)/2).toFixed(3)}</sub>): [{typeof testResults.meanTest.studenttCriteria === 'object' ? testResults.meanTest.studenttCriteria.lower.toFixed(3) : testResults.meanTest.studenttCriteria.toFixed(3)}, {typeof testResults.meanTest.studenttCriteria === 'object' ? testResults.meanTest.studenttCriteria.upper.toFixed(3) : testResults.meanTest.studenttCriteria.toFixed(3)}]
                     </div>
                     <div className="text-gray-600 font-medium">P-Value:&nbsp;
                       {testResults.meanTest.studentpValue.toFixed(4)}</div>
@@ -2210,7 +2209,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                   σ<sub>{index + 1}</sub>: {result.stdev.toFixed(3)}
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
-                                  [{testResults.meanTest.anovaconfidenceIntervals[index].lower.toFixed(3)}, {testResults.meanTest.anovaconfidenceIntervals[index].upper.toFixed(3)}]
+                                  {testResults.varianceTest.confidenceIntervals && testResults.varianceTest.confidenceIntervals[index] ? `[${testResults.varianceTest.confidenceIntervals[index].lower.toFixed(3)}, ${testResults.varianceTest.confidenceIntervals[index].upper.toFixed(3)}]` : 'N/A'}
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
                                   {testResults.normalityResults[index].sampleSize}
