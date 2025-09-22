@@ -3104,3 +3104,351 @@ export function anovaOneWay(
       isSignificant: pValue < alpha
   };
 }
+
+interface BartlettTestResult {
+  varTestName: string;
+  varStatistic: number;
+  varp_Value: number;
+  varCriteria: number;
+  varianceConfidenceIntervals: Array<{
+    groupIndex: number;
+    variance: number;
+    lower: number;
+    upper: number;
+  }>;
+}
+
+export function bartlettTest(
+  datasets: number[][],
+  significanceLevel: number,
+  alternative: string
+): BartlettTestResult {
+  
+  if (datasets.length < 2) {
+    throw new Error("Bartlett's test requires at least 2 groups");
+  }
+  
+  // Calculate sample sizes, means, and variances for each group
+  const k = datasets.length; // number of groups
+  const sampleSizes = datasets.map(group => group.length);
+  const totalN = sampleSizes.reduce((sum, n) => sum + n, 0);
+  
+  // Check that all groups have at least 2 observations
+  if (sampleSizes.some(n => n < 2)) {
+    throw new Error("Each group must have at least 2 observations");
+  }
+  
+  // Calculate sample variances for each group
+  const sampleVariances = datasets.map((group, i) => {
+    const mean = group.reduce((sum, val) => sum + val, 0) / group.length;
+    const sumSquaredDeviations = group.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0);
+    return sumSquaredDeviations / (group.length - 1); // sample variance (n-1 denominator)
+  });
+  
+  // Calculate degrees of freedom for each group
+  const degreesOfFreedom = sampleSizes.map(n => n - 1);
+  const totalDF = degreesOfFreedom.reduce((sum, df) => sum + df, 0);
+  
+  // Calculate pooled variance
+  const pooledVariance = degreesOfFreedom.reduce((sum, df, i) => 
+    sum + df * sampleVariances[i], 0
+  ) / totalDF;
+  
+  // Calculate Bartlett's test statistic
+  // B = (total_df * ln(pooled_variance) - sum(df_i * ln(variance_i))) / C
+  
+  const numerator = totalDF * Math.log(pooledVariance) - 
+    degreesOfFreedom.reduce((sum, df, i) => sum + df * Math.log(sampleVariances[i]), 0);
+  
+  // Calculate correction factor C
+  const correctionFactor = 1 + (1 / (3 * (k - 1))) * 
+    (degreesOfFreedom.reduce((sum, df) => sum + (1 / df), 0) - (1 / totalDF));
+  
+  const bartlettStatistic = numerator / correctionFactor;
+  
+  // Calculate p-value using chi-squared distribution with (k-1) degrees of freedom
+  const dfBartlett = k - 1;
+  let pValue: number;
+  let criticalValue: number;
+  
+  if (jStat && jStat.chisquare) {
+  pValue = 1 - jStat.chisquare.cdf(bartlettStatistic, dfBartlett);
+  criticalValue = jStat.chisquare.inv(1 - significanceLevel, dfBartlett);
+} else {
+  console.warn('jStat not available for Bartlett test, using approximation');
+  
+  // Improved approximation for different significance levels
+  if (bartlettStatistic < 1) pValue = 0.9;
+  else if (bartlettStatistic < 3) pValue = 0.7 - 0.2 * (bartlettStatistic - 1);
+  else if (bartlettStatistic < 5) pValue = 0.3 - 0.2 * (bartlettStatistic - 3);
+  else if (bartlettStatistic < 7) pValue = 0.1 - 0.05 * (bartlettStatistic - 5);
+  else pValue = 0.01;
+  
+  // Updated critical value approximation for different significance levels
+  if (significanceLevel === 0.01) {
+    criticalValue = dfBartlett === 1 ? 6.635 : 9.210; // Rough approximation
+  } else if (significanceLevel === 0.05) {
+    criticalValue = dfBartlett === 1 ? 3.841 : 5.991; // Rough approximation
+  } else if (significanceLevel === 0.10) {
+    criticalValue = dfBartlett === 1 ? 2.706 : 4.605; // Added 0.10 level
+  } else {
+    // Default approximation for other levels
+    criticalValue = 5.0;
+  }
+}
+  // Calculate Bonferroni-adjusted confidence intervals for individual variances
+  const bonferroniAlpha = significanceLevel / k; // Bonferroni correction
+  const varianceConfidenceIntervals = sampleVariances.map((variance, i) => {
+    const df = degreesOfFreedom[i];
+    const sampleSize = sampleSizes[i];
+    
+    let lowerBound: number;
+    let upperBound: number;
+    
+
+    if (jStat && jStat.chisquare) {
+      const chiUpper = jStat.chisquare.inv(1 - bonferroniAlpha / 2, df);
+      const chiLower = jStat.chisquare.inv(bonferroniAlpha / 2, df);
+      
+      lowerBound = (df * variance) / chiUpper;
+      upperBound = (df * variance) / chiLower;
+    } else {
+      // Fallback approximation
+      console.warn('jStat not available for confidence intervals, using approximation');
+      const margin = variance * 0.3; // Very rough approximation
+      lowerBound = Math.max(0, variance - margin);
+      upperBound = variance + margin;
+    }
+    
+    return {
+      groupIndex: i,
+      variance: variance,
+      lower: Math.sqrt(lowerBound),
+      upper: Math.sqrt(upperBound),
+    };
+  });
+  
+  return {
+    varTestName: "Bartlett",
+    varStatistic: bartlettStatistic,
+    varp_Value: pValue,
+    varCriteria: criticalValue,
+    varianceConfidenceIntervals
+  };
+}
+
+interface LeveneTestResult {
+  varTestName: string;
+  varStatistic: number;
+  varp_Value: number;
+  varCriteria: number;
+  varianceConfidenceIntervals: Array<{
+    groupIndex: number;
+    variance: number;
+    lower: number;
+    upper: number;
+  }>;
+}
+
+export function leveneTest(
+  datasets: number[][],
+  significanceLevel: number,
+  alternative: string,
+  center: 'mean' | 'median' = 'median'
+): LeveneTestResult {
+  
+  if (datasets.length < 2) {
+    throw new Error("Levene's test requires at least 2 groups");
+  }
+  
+  const k = datasets.length;
+  const sampleSizes = datasets.map(group => group.length);
+  const totalN = sampleSizes.reduce((sum, n) => sum + n, 0);
+  
+  if (sampleSizes.some(n => n < 2)) {
+    throw new Error("Each group must have at least 2 observations");
+  }
+  
+  // Calculate sample variances for confidence intervals
+  const sampleVariances = datasets.map((group, i) => {
+    const mean = group.reduce((sum, val) => sum + val, 0) / group.length;
+    const sumSquaredDeviations = group.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0);
+    return sumSquaredDeviations / (group.length - 1);
+  });
+  
+  // Calculate center (mean or median) for each group
+  const groupCenters = datasets.map(group => {
+    if (center === 'median') {
+      const sorted = [...group].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 === 0 
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid];
+    } else {
+      return group.reduce((sum, val) => sum + val, 0) / group.length;
+    }
+  });
+  
+  // Calculate absolute deviations from group centers
+  const absoluteDeviations = datasets.map((group, i) =>
+    group.map(value => Math.abs(value - groupCenters[i]))
+  );
+  
+  // Calculate mean of absolute deviations for each group
+  const groupMeanDeviations = absoluteDeviations.map(deviations =>
+    deviations.reduce((sum, dev) => sum + dev, 0) / deviations.length
+  );
+  
+  // Calculate overall mean of absolute deviations
+  const allDeviations = absoluteDeviations.flat();
+  const overallMeanDeviation = allDeviations.reduce((sum, dev) => sum + dev, 0) / allDeviations.length;
+  
+  // Calculate Levene's test statistic
+  let ssBetween = 0;
+  for (let i = 0; i < k; i++) {
+    ssBetween += sampleSizes[i] * Math.pow(groupMeanDeviations[i] - overallMeanDeviation, 2);
+  }
+  
+  let ssWithin = 0;
+  for (let i = 0; i < k; i++) {
+    for (let j = 0; j < absoluteDeviations[i].length; j++) {
+      ssWithin += Math.pow(absoluteDeviations[i][j] - groupMeanDeviations[i], 2);
+    }
+  }
+  
+  const dfBetween = k - 1;
+  const dfWithin = totalN - k;
+  const msBetween = ssBetween / dfBetween;
+  const msWithin = ssWithin / dfWithin;
+  const leveneStatistic = msBetween / msWithin;
+  
+  let pValue: number;
+  let criticalValue: number;
+  
+  if (jStat && jStat.centralF) {
+  pValue = 1 - jStat.centralF.cdf(leveneStatistic, dfBetween, dfWithin);
+  criticalValue = jStat.centralF.inv(1 - significanceLevel, dfBetween, dfWithin);
+} else {
+  console.warn('jStat not available for Levene test, using approximation');
+  
+  // Improved approximation for different significance levels
+  if (leveneStatistic < 1) pValue = 0.9;
+  else if (leveneStatistic < 2) pValue = 0.6 - 0.3 * (leveneStatistic - 1);
+  else if (leveneStatistic < 3) pValue = 0.3 - 0.2 * (leveneStatistic - 2);
+  else if (leveneStatistic < 4) pValue = 0.1 - 0.05 * (leveneStatistic - 3);
+  else pValue = 0.01;
+  
+  // Updated critical value approximation for F-distribution
+  if (significanceLevel === 0.01) {
+    criticalValue = 4.0; // Rough approximation for F(k-1, N-k) at α=0.01
+  } else if (significanceLevel === 0.05) {
+    criticalValue = 2.5; // Rough approximation for F(k-1, N-k) at α=0.05
+  } else if (significanceLevel === 0.10) {
+    criticalValue = 2.0; // Added approximation for F(k-1, N-k) at α=0.10
+  } else {
+    // Default approximation for other levels
+    criticalValue = 2.5;
+  }
+}
+  
+  // Calculate Bonferroni-adjusted confidence intervals for individual variances
+  const bonferroniAlpha = significanceLevel / k;
+  const varianceConfidenceIntervals = sampleVariances.map((variance, i) => {
+    const df = sampleSizes[i] - 1;
+    
+    let lowerBound: number;
+    let upperBound: number;
+    
+    if (jStat && jStat.chisquare) {
+      const chiUpper = jStat.chisquare.inv(1 - bonferroniAlpha / 2, df);
+      const chiLower = jStat.chisquare.inv(bonferroniAlpha / 2, df);
+      
+      lowerBound = (df * variance) / chiUpper;
+      upperBound = (df * variance) / chiLower;
+    } else {
+      console.warn('jStat not available for confidence intervals, using approximation');
+      const margin = variance * 0.3;
+      lowerBound = Math.max(0, variance - margin);
+      upperBound = variance + margin;
+    }
+    
+    return {
+      groupIndex: i,
+      variance: variance,
+      lower: Math.sqrt(lowerBound),
+      upper: Math.sqrt(upperBound),
+    };
+  });
+  
+  return {
+    varTestName: `Levene (${center})`,
+    varStatistic: leveneStatistic,
+    varp_Value: pValue,
+    varCriteria: criticalValue,
+    varianceConfidenceIntervals
+  };
+}
+
+interface BonferroniResult {
+  varianceConfidenceIntervals: Array<{
+    groupIndex: number;
+    variance: number;
+    lower: number;
+    upper: number;
+  }>;
+}
+
+export function Bonferroni(
+  datasets: number[][],
+  significanceLevel: number,
+): BonferroniResult {
+  
+  if (datasets.length < 2) {
+    throw new Error("BBonferrono's CI calculation requires at least 2 groups");
+  }
+  
+  const k = datasets.length;
+  const sampleSizes = datasets.map(group => group.length);
+  
+  if (sampleSizes.some(n => n < 2)) {
+    throw new Error("Each group must have at least 2 observations");
+  }
+  
+  // Calculate sample variances for confidence intervals
+  const sampleVariances = datasets.map((group, i) => {
+    const mean = group.reduce((sum, val) => sum + val, 0) / group.length;
+    const sumSquaredDeviations = group.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0);
+    return sumSquaredDeviations / (group.length - 1);
+  });
+
+  
+  // Calculate Bonferroni-adjusted confidence intervals for individual variances
+  const bonferroniAlpha = significanceLevel / k;
+  const varianceConfidenceIntervals = sampleVariances.map((variance, i) => {
+    const df = sampleSizes[i] - 1;
+    
+    let lowerBound: number;
+    let upperBound: number;
+    
+    if (jStat && jStat.chisquare) {
+      const chiUpper = jStat.chisquare.inv(1 - bonferroniAlpha / 2, df);
+      const chiLower = jStat.chisquare.inv(bonferroniAlpha / 2, df);
+      
+      lowerBound = (df * variance) / chiUpper;
+      upperBound = (df * variance) / chiLower;
+    } else {
+      console.warn('jStat not available for confidence intervals, using approximation');
+      const margin = variance * 0.3;
+      lowerBound = Math.max(0, variance - margin);
+      upperBound = variance + margin;
+    }
+    
+    return {
+      groupIndex: i,
+      variance: variance,
+      lower: Math.sqrt(lowerBound),
+      upper: Math.sqrt(upperBound),
+    };
+  });
+return { varianceConfidenceIntervals };
+}
