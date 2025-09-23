@@ -2941,20 +2941,55 @@ useEffect(() => {
               <Card className="p-2">                
                 <CardTitle className="text-lg">Two-Sample Mean test:</CardTitle>
                 <div className="text-lg justify-left">Student T-test:</div>
-                {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}</div>)}
-                <div className="text-gray-600 font-medium">Mean 1 (μ1):&nbsp;
-                  {testResults.meanValue1.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">SE Mean 1:&nbsp;
-                  {testResults.SEmean1.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Standard Deviation 1:&nbsp;
-                  {testResults.stdev1.toFixed(3)}</div>
-                {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}</div>)}
-                <div className="text-gray-600 font-medium">Mean 2 (μ2):&nbsp;
-                  {testResults.meanValue2.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">SE Mean 2:&nbsp;
-                  {testResults.SEmean2.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Standard Deviation 2:&nbsp;
-                  {testResults.stdev2.toFixed(3)}</div>
+
+                  <table className="w-full text-xs border-collapse border border-gray-300 mb-2">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Dataset</th>
+                        <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Mean (μ<sub>i</sub>)</th>
+                        <th className="border border-gray-300 px-1 py-1 text-left min-w-[45px]">SE Mean</th>
+                        <th className="border border-gray-300 px-1 py-1 text-left min-w-[45px]">Std Dev (σ<sub>i</sub>)</th>
+                        <th className="border border-gray-300 px-1 py-1 text-left">Sample size (n)</th>
+                      </tr>
+                    </thead>
+                    <tbody>                    
+                      <tr className="hover:bg-gray-50">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
+                          {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                          μ<sub>1</sub>: {testResults.meanValue1.toFixed(3)}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                          {testResults.SEmean1.toFixed(3)}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                          {testResults.stdev1.toFixed(3)}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                          {testResults.sampleSize1.toFixed(0)}
+                        </td>
+                      </tr> 
+                      <tr className="hover:bg-gray-50">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
+                          {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                          μ<sub>2</sub>: {testResults.meanValue2.toFixed(3)}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                          {testResults.SEmean2.toFixed(3)}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                          {testResults.stdev2.toFixed(3)}
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                          {testResults.sampleSize2.toFixed(0)}
+                        </td>
+                      </tr>                    
+                    </tbody>
+                  </table>
+
                 <div className="text-gray-600 font-medium">Difference (μ1-μ2):&nbsp;
                   {(testResults.meanValue1 - testResults.meanValue2).toFixed(3)}</div>
                  <div className="text-gray-600 font-medium">Hypothesized Difference (δ0):&nbsp;
@@ -3012,19 +3047,46 @@ useEffect(() => {
               {ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && (
               <Card className="p-2">                
                 <CardTitle className="text-lg">Two-Sample Variance test:</CardTitle>
-                <div className="text-lg justify-left">{testResults.varTestName}:</div>
-                {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}</div>)}
-                <div className="text-gray-600 font-medium">Standard Deviation 1 (σ1):&nbsp;
-                  {testResults.stdev1.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Variance 1:&nbsp;
-                  {(testResults.stdev1*testResults.stdev1).toFixed(3)}</div>
-                {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}</div>)}
-                <div className="text-gray-600 font-medium">Standard Deviation 2 (σ2):&nbsp;
-                  {testResults.stdev2.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Variance 2:&nbsp;
-                  {(testResults.stdev2*testResults.stdev2).toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Standard Dev. ratio (σ1/σ2):&nbsp;
-                  {(testResults.stdev1/testResults.stdev2).toFixed(4)}</div>
+                <div className="text-lg justify-left">{testResults.varTestName}'s test:</div>
+                <table className="w-full text-xs border-collapse border border-gray-300 mb-6">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Dataset</th>
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Std Dev (σ<sub>i</sub>)</th>                      
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Variance (σ<sup>2</sup><sub>i</sub>)</th>  
+                      <th className="border border-gray-300 px-1 py-1 text-left">Sample size (n)</th>
+                    </tr>
+                  </thead>
+                  <tbody>                    
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        σ<sub>1</sub>: {testResults.stdev1.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        {(testResults.stdev1*testResults.stdev1).toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                        {testResults.sampleSize1.toFixed(0)}
+                      </td>
+                    </tr> 
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        σ<sub>2</sub>: {testResults.stdev2.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        {(testResults.stdev2*testResults.stdev2).toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                        {testResults.sampleSize2.toFixed(0)}
+                      </td>                   
+                  </tbody>
+                </table> 
+                
                 <div className="text-gray-600 font-medium">Variance ratio (σ<sup>2</sup>1/σ<sup>2</sup>2):&nbsp;
                   {((testResults.stdev1*testResults.stdev1)/(testResults.stdev2*testResults.stdev2)).toFixed(2)}</div>
                 <div className="text-gray-600 font-medium">Hypothesized Std Dev Ratio:&nbsp;
@@ -3061,7 +3123,7 @@ useEffect(() => {
                 <div className="text-gray-600 font-medium">Test-statistic:&nbsp;
                   {testResults.varStatistic.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Test-criteria
-                {testResults.varTestName === "Fischer Test" ?
+                {testResults.varTestName === "Fisher" ?
                 (
                   <>
                   {typeof testResults.varCriteria === 'number'
@@ -3091,12 +3153,41 @@ useEffect(() => {
               <Card className="p-2">                
                 <CardTitle className="text-lg">Two-Sample Median-test:</CardTitle>
                 <div className="text-lg justify-left">Mann-Whitney test:</div>
-                {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}</div>)}
-                <div className="text-gray-600 font-medium">Median 1 (η1):&nbsp;
-                  {testResults.median1.toFixed(3)}</div>
-                {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description && (<div className="text-gray-800 font-medium">{ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}</div>)}
-                <div className="text-gray-600 font-medium">Median 2 (η2):&nbsp;
-                  {testResults.median2.toFixed(3)}</div>
+
+                <table className="w-full text-xs border-collapse border border-gray-300 mb-6">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[120px]">Dataset</th>
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[85px]">Median (η<sub>i</sub>)</th>
+                      <th className="border border-gray-300 px-1 py-1 text-left">Sample size (n)</th>
+                    </tr>
+                  </thead>
+                  <tbody>                    
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        η<sub>1</sub>: {testResults.median1.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                        {testResults.sampleSize1.toFixed(0)}
+                      </td>
+                    </tr> 
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        η<sub>2</sub>: {testResults.median2.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                        {testResults.sampleSize2.toFixed(0)}
+                      </td>
+                    </tr>                    
+                  </tbody>
+                </table>
+
                 <div className="text-gray-600 font-medium">Difference (η1 - η2):&nbsp;
                   {(testResults.median1 - testResults.median2).toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Grand Median (ηG):&nbsp;
@@ -3162,7 +3253,7 @@ useEffect(() => {
             </div>
           )}
 
-          {/* 2 sample Fischer or Levene variance test visualization when showBoxPlot is true */}
+          {/* 2 sample Fisher or Levene variance test visualization when showBoxPlot is true */}
           
           {showBoxPlot && dataSet1.length > 2  && dataSet2.length > 2 && ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && (
             <div className="mt-6">

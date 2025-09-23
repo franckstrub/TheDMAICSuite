@@ -2378,6 +2378,8 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                   {testResults.SEmean.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Standard Deviation of paired difference (σ<sub>d</sub>):&nbsp;
                   {testResults.stdev.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Sample size of paired difference:&nbsp;
+                  {Math.min(testResults.sampleSize1, testResults.sampleSize2)}</div>
                 <div className="text-gray-600 font-medium">Hypothesized difference δ0 (H0):&nbsp;
                   {ContCTQPairedSampleHypTestData[ctqId]?.H0difference}</div>
                 <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;

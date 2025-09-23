@@ -2142,6 +2142,8 @@ useEffect(() => {
                   {testResults.SEmean.toFixed(3)}</div>
                 <div className="text-gray-600 font-medium">Standard Deviation (σ):&nbsp;
                   {testResults.stdev.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Sample size:&nbsp;
+                  {testResults.sampleSize}</div>
                 <div className="text-gray-600 font-medium">Hypothesized mean μ0 (H0):&nbsp;
                   {ContCTQOneSampleHypTestData[ctqId]?.targetMean}</div>
                 <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
@@ -2192,6 +2194,8 @@ useEffect(() => {
                 <div className="text-lg justify-left">χ² (Chi Square) test:</div>
                 <div className="text-gray-600 font-medium">Standard Deviation (σ):&nbsp;
                   {testResults.stdev.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Sample size:&nbsp;
+                  {testResults.sampleSize}</div>
                 <div className="text-gray-600 font-medium">Hypothesized Std Dev σ0 (H0):&nbsp;
                   {ContCTQOneSampleHypTestData[ctqId]?.targetstdev}</div>
                 <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;
@@ -2241,6 +2245,8 @@ useEffect(() => {
                 <div className="text-lg justify-left">Wilcoxon test:</div>
                 <div className="text-gray-600 font-medium">Median (η):&nbsp;
                   {testResults.median.toFixed(3)}</div>
+                <div className="text-gray-600 font-medium">Sample size:&nbsp;
+                  {testResults.sampleSize}</div>
                 <div className="text-gray-600 font-medium">Hypothesized Median η0 (H0):&nbsp;
                   {ContCTQOneSampleHypTestData[ctqId]?.targetMedian}</div>
                 <div className="text-gray-600 font-medium">Significance Level (α):&nbsp;

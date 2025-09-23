@@ -20,6 +20,8 @@ interface VarianceTestResults {
       lower: number;
       upper: number;
     }>; 
+    df1?: number;
+    df2?: number;
 }
     
 interface multipleSVarianceTestProps {
@@ -60,7 +62,7 @@ export function multipleSVarianceTest({
 
 
   if (allNormal && datasets.length === 2) {
-    testName = "Fischer";
+    testName = "Fisher";
     const ratio = normalityResults[0].stdev/normalityResults[1].stdev;
     varianceTestResult = twosampleVarianceHypothesisTest({
           dataValues1:  datasets[0],
@@ -78,6 +80,8 @@ export function multipleSVarianceTest({
           pValue: varianceTestResult.varp_Value,
           criticalValue: varianceTestResult.varCriteria,
           varianceConfidenceIntervals: varConfidenceIntervals.varianceConfidenceIntervals,
+          df1: varianceTestResult.varDF1,
+          df2: varianceTestResult.varDF2,
           };  
   }
   else if (allNormal) {
@@ -88,18 +92,22 @@ export function multipleSVarianceTest({
       testStatistic: varianceTestResult.varStatistic,
       pValue: varianceTestResult.varp_Value,
       criticalValue: varianceTestResult.varCriteria,
-      varianceConfidenceIntervals: varianceTestResult.varConfidenceIntervals,
+      varianceConfidenceIntervals: varianceTestResult.varianceConfidenceIntervals,
+      df1: varianceTestResult.vardfBarlett,
+      df2: varianceTestResult.varDF2,
     };  
   }
   else {
     testName = "Levene";
-      varianceTestResult = leveneTest(datasets, significanceLevel, alternative);
+      varianceTestResult = leveneTest(datasets, significanceLevel, alternative,'median');
       return {
         testName: varianceTestResult.varTestName,
         testStatistic: varianceTestResult.varStatistic,
         pValue: varianceTestResult.varp_Value,
         criticalValue: varianceTestResult.varCriteria,
-        varianceConfidenceIntervals: varianceTestResult.varConfidenceIntervals,
+        varianceConfidenceIntervals: varianceTestResult.varianceConfidenceIntervals,
+        df1: varianceTestResult.vardfBetween,
+        df2: varianceTestResult.vardfWithin,
      };  
   };
 }
