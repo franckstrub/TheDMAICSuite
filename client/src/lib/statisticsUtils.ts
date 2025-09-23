@@ -2351,13 +2351,13 @@ export function testEqualVariances(var1: number, var2: number, n1: number, n2: n
 }
 // Helper function implementations using jStat
 
-export function calculate2SvarFischerValue(var1: number, var2: number, ratioVariance0: number): number {
-  // F-statistic for Fischer test: (s1²/s2²) / ratio0
+export function calculate2SvarFisherValue(var1: number, var2: number, ratioVariance0: number): number {
+  // F-statistic for Fisher test: (s1²/s2²) / ratio0
   const observedRatio = var1 / var2;
   return observedRatio / ratioVariance0;
 }
 
-export function calculate2SvarFischerCriticalValue(significance: number, df1: number, df2: number, alternativevariance: string): number | {lower: number; upper: number} {
+export function calculate2SvarFisherCriticalValue(significance: number, df1: number, df2: number, alternativevariance: string): number | {lower: number; upper: number} {
   switch (alternativevariance) {
     case "Less than":
       // Left-tailed test
@@ -2375,7 +2375,7 @@ export function calculate2SvarFischerCriticalValue(significance: number, df1: nu
   }
 }
 
-export function calculate2SvarFischerPValue(fStat: number, df1: number, df2: number, alternativevariance: string): number {
+export function calculate2SvarFisherPValue(fStat: number, df1: number, df2: number, alternativevariance: string): number {
   switch (alternativevariance) {
     case "Less than":
       return jStat.centralF.cdf(fStat, df1, df2);
@@ -2391,7 +2391,7 @@ export function calculate2SvarFischerPValue(fStat: number, df1: number, df2: num
   }
 }
 
-export function calculate2SvarFischerConfidenceInterval(
+export function calculate2SvarFisherConfidenceInterval(
   var1: number, 
   var2: number, 
   df1: number, 
@@ -3116,8 +3116,15 @@ interface BartlettTestResult {
     lower: number;
     upper: number;
   }>;
+  vardfBarlett: number;
+  varDF2: number;
 }
 
+// multiple sample homogeneity of variances - Bartlett's test - When nbr of distributions > 2 and all distributions are normally distributed
+// H0: all group variances are equal
+// H1: at least one group variance is different
+// Assumes normality within groups
+// Returns test statistic, p-value, degrees of freedom, and confidence intervals for variances
 export function bartlettTest(
   datasets: number[][],
   significanceLevel: number,
@@ -3233,7 +3240,9 @@ export function bartlettTest(
     varStatistic: bartlettStatistic,
     varp_Value: pValue,
     varCriteria: criticalValue,
-    varianceConfidenceIntervals
+    varianceConfidenceIntervals,
+    vardfBarlett: dfBartlett,
+    vardf2: 0,
   };
 }
 
@@ -3248,13 +3257,22 @@ interface LeveneTestResult {
     lower: number;
     upper: number;
   }>;
+  vardfBetween: number;
+  vardfWithin: number;
 }
+
+// Levene'stest for homgeneity of variances - When nbr of distributions >=  2 and normality is not assumed
+// H0: all group variances are equal
+// H1: at least one group variance is different
+// More robust to non-normality than Bartlett's test
+// Returns test statistic, p-value, degrees of freedom, and confidence intervals for variances
+// Center can be 'mean' (more sensitive to non-normality) or 'median' (more robust)
 
 export function leveneTest(
   datasets: number[][],
   significanceLevel: number,
   alternative: string,
-  center: 'mean' | 'median' = 'median'
+  center: 'mean' | 'median',
 ): LeveneTestResult {
   
   if (datasets.length < 2) {
@@ -3381,11 +3399,13 @@ export function leveneTest(
   });
   
   return {
-    varTestName: `Levene (${center})`,
+    varTestName: `Levene`,
     varStatistic: leveneStatistic,
     varp_Value: pValue,
     varCriteria: criticalValue,
-    varianceConfidenceIntervals
+    varianceConfidenceIntervals,
+    vardfWithin: dfWithin,
+    vardfBetween: dfBetween,
   };
 }
 
@@ -3398,13 +3418,17 @@ interface BonferroniResult {
   }>;
 }
 
+// Bonferroni confidence intervals for variances - When nbr of distributions >= 2 and normality is not assumed but works also when. normality is assumed
+// Returns confidence intervals for variances of each group with Bonferroni adjustment
+// Note: This is not a hypothesis test, just confidence intervals
+
 export function Bonferroni(
   datasets: number[][],
   significanceLevel: number,
 ): BonferroniResult {
   
   if (datasets.length < 2) {
-    throw new Error("BBonferrono's CI calculation requires at least 2 groups");
+    throw new Error("Bonferroni's CI calculation requires at least 2 groups");
   }
   
   const k = datasets.length;
