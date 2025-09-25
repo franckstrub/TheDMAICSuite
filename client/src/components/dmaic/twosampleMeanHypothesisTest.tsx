@@ -19,6 +19,7 @@ import {
   inverseNormCDF,
   calculate2StCriticalValue,
   calculate2SMeanPValue,
+  calculate2SMeanConfidenceInterval,
   calculate2SDiffConfidenceInterval,
   calculateSampleStats,
   testEqualVariances
@@ -42,6 +43,8 @@ interface MeanTestResults {
   tp_Value: number;
   diffCI_minus: number;
   diffCI_plus: number;
+  mean1CI: { lower: number; upper: number };
+  mean2CI: { lower: number; upper: number };
 }  
     
 interface twosampleMeanHypothesisTestProps {
@@ -113,6 +116,12 @@ export function twosampleMeanHypothesisTest({
 
   const tp_Value = calculate2SMeanPValue(tStatistic, degreesOfFreedom, alternativemean);
 
+  const meanCI = calculate2SMeanConfidenceInterval(
+    significance,
+    stats1,
+    stats2,
+  );
+
   const { lower1: diffCI_minus, upper1: diffCI_plus } = calculate2SDiffConfidenceInterval(
       difference,
       pooledSE,
@@ -137,5 +146,7 @@ export function twosampleMeanHypothesisTest({
     tp_Value,
     diffCI_minus,
     diffCI_plus,
+    mean1CI: {lower: meanCI.lower1, upper: meanCI.upper1},
+    mean2CI: {lower: meanCI.lower2, upper: meanCI.upper2},
   };
 }

@@ -85,8 +85,10 @@ interface PowerSampleSizeResults {
 interface RunTestResults {
   sampleSize1: number;
   meanValue1: number;
+  mean1CI: { lower: number, upper: number };
   stdev1: number;
   median1: number;
+  median1CI: { lower: number, upper: number };
   SEmean1: number;
   ADvalue1: number;
   ADp_Value1: number;
@@ -95,8 +97,10 @@ interface RunTestResults {
   tp_Value: number;
   sampleSize2: number;
   meanValue2: number;
+  mean2CI: { lower: number, upper: number };
   stdev2: number;
   median2: number;
+  median2CI: { lower: number, upper: number };
   SEmean2: number;
   ADvalue2: number;
   ADp_Value2: number;
@@ -128,8 +132,10 @@ interface RunTestResults {
 }
 interface MeanTestResults {
   meanValue1: number;
+  mean1CI: { lower: number, upper: number };
   SEmean1: number;
   meanValue2: number;
+  mean2CI: { lower: number, upper: number };
   SEmean2: number;
   fStat: number;
   fCritical: number;
@@ -168,6 +174,8 @@ interface MedianTestResults {
   medianp_Value: number;
   medianCI_minus: number;
   medianCI_plus: number;
+  median1CI: { lower: number, upper: number };
+  median2CI: { lower: number, upper: number };
 }
 
 export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQTwoSampleHypTestingProps) {
@@ -194,8 +202,10 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   const [testResults, setTestResults] = useState<RunTestResults>({
     sampleSize1: 0,
     meanValue1: 0,
+    mean1CI: { lower: 0, upper: 0 },
     stdev1: 0,
     median1: 0,
+    median1CI: { lower: 0, upper: 0 },
     SEmean1: 0,
     ADvalue1: 0,
     ADp_Value1: 0,
@@ -204,8 +214,10 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     tp_Value: 0,
     sampleSize2: 0,
     meanValue2: 0,
+    mean2CI: { lower: 0, upper: 0 },
     stdev2: 0,
     median2: 0,
+    median2CI: { lower: 0, upper: 0 },
     SEmean2: 0,
     ADvalue2: 0,
     ADp_Value2: 0,
@@ -617,8 +629,10 @@ useEffect(() => {
   // Initialize with default values
   let sampleSize1: number = 0;
   let meanValue1: number = 0;
+  let mean1CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let stdev1: number = 0;
   let median1: number = 0;
+  let median1CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let SEmean1: number = 0;
   let ADvalue1: number = 0;
   let ADp_Value1: number = 0;
@@ -627,8 +641,10 @@ useEffect(() => {
   let tp_Value: number = 0;
   let sampleSize2: number = 0;
   let meanValue2: number = 0;
+  let mean2CI: { lower: number; upper: number } = { lower: 0, upper: 0 };;
   let stdev2: number = 0;
   let median2: number = 0;
+  let median2CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let SEmean2: number = 0;
   let ADvalue2: number = 0;
   let ADp_Value2: number = 0;
@@ -661,8 +677,8 @@ useEffect(() => {
       description: "No dataset 1 or 2. The hypothesis test has not been executed.",
     });
     return {
-      sampleSize1, meanValue1, stdev1, median1, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, stdev2, median2, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -674,8 +690,8 @@ useEffect(() => {
       description: "Need two data at least in each dataset to run Hypothesis Testing"
     });
     return {
-      sampleSize1, meanValue1, stdev1, median1, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, stdev2, median2, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -710,12 +726,12 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-      sampleSize1, meanValue1, stdev1, median1, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, stdev2, median2, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-      };
+    };
     }
     
     const meanTestResult = twosampleMeanHypothesisTest({
@@ -731,6 +747,10 @@ useEffect(() => {
     // Update the variables with actual calculated values
     sampleSize1 = n1;
     meanValue1 = meanVal1;
+    mean1CI = {
+        lower: meanTestResult.mean1CI.lower,
+        upper: meanTestResult.mean1CI.upper
+      };
     stdev1 = stdDev1;
     SEmean1 = meanTestResult.SEmean1;
     tStatistic = meanTestResult.tStatistic;
@@ -747,6 +767,10 @@ useEffect(() => {
     tp_Value = meanTestResult.tp_Value;
     sampleSize2 = n2;
     meanValue2 = meanVal2;
+    mean2CI = {
+        lower: meanTestResult.mean2CI.lower,
+        upper: meanTestResult.mean2CI.upper
+      };
     stdev2 = stdDev2;
     SEmean2 = meanTestResult.SEmean2;
     diffCI_minus = meanTestResult.diffCI_minus;
@@ -770,12 +794,12 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-      sampleSize1, meanValue1, stdev1, median1, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, stdev2, median2, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-     };
+    };
     }
     
     const varianceTestResult = twosampleVarianceHypothesisTest({
@@ -827,12 +851,12 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-      sampleSize1, meanValue1, stdev1, median1, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, stdev2, median2, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-      };
+    };
     }
     
     sampleSize1 = n1;
@@ -856,6 +880,14 @@ useEffect(() => {
     medianp_Value = medianTestResult.medianp_Value;
     medianCI_minus = medianTestResult.medianCI_minus;
     medianCI_plus = medianTestResult.medianCI_plus;
+    median1CI = {
+      lower: medianTestResult.median1CI.lower,
+      upper: medianTestResult.median1CI.upper
+    };
+    median2CI = {
+      lower: medianTestResult.median2CI.lower,
+      upper: medianTestResult.median2CI.upper
+    };
     
     // Update state as well
     setTwosampleMedianTestresult(medianTestResult);
@@ -867,12 +899,12 @@ useEffect(() => {
   });
 
   return {
-      sampleSize1, meanValue1, stdev1, median1, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, stdev2, median2, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
-     };
+    };
 };
 {/* on input change, update ContCTQTwoSampleHypTestData state */}
 useEffect(() => {
@@ -2936,7 +2968,7 @@ useEffect(() => {
             </Card>
             </div>
 
-            <div className="pl-4 pr-4 grid grid-cols-3 gap-4 text-sm">
+            <div className="pl-4 pr-4 grid grid-cols-3 gap-1 text-sm">
               {ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
               <Card className="p-2">                
                 <CardTitle className="text-lg">Two-Sample Mean test:</CardTitle>
@@ -2947,43 +2979,58 @@ useEffect(() => {
                       <tr className="bg-gray-50">
                         <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Dataset</th>
                         <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Mean (μ<sub>i</sub>)</th>
-                        <th className="border border-gray-300 px-1 py-1 text-left min-w-[45px]">SE Mean</th>
-                        <th className="border border-gray-300 px-1 py-1 text-left min-w-[45px]">Std Dev (σ<sub>i</sub>)</th>
-                        <th className="border border-gray-300 px-1 py-1 text-left">Sample size (n)</th>
+                          <th className="border border-gray-300 px-1 py-1 text-left min-w-[30px] text-[9px]">SE Mean</th>
+                          <th className="border border-gray-300 px-1 py-1 text-left min-w-[45px] text-[9px]">CI {((1-parseFloat(significanceLevel))*100).toFixed(0)}%</th>
+                          <th className="border border-gray-300 px-1 py-1 text-left min-w-[30px] text-[9px]">Std Dev (σ<sub>i</sub>)</th>
+                          <th className="border border-gray-300 px-1 py-1 text-left text-[9px]">(n)</th>
                       </tr>
                     </thead>
                     <tbody>                    
                       <tr className="hover:bg-gray-50">
                         <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
-                          {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                          {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description ? (
+                              ContCTQTwoSampleHypTestData[ctqId]?.dataset1description
+                          ) : (
+                            `Dataset 1`
+                          )}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                           μ<sub>1</sub>: {testResults.meanValue1.toFixed(3)}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                           {testResults.SEmean1.toFixed(3)}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
+                              [{testResults.mean1CI.lower.toFixed(3)},{testResults.mean1CI.upper.toFixed(3)}]
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                           {testResults.stdev1.toFixed(3)}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[8px]">
                           {testResults.sampleSize1.toFixed(0)}
                         </td>
                       </tr> 
                       <tr className="hover:bg-gray-50">
                         <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
-                          {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
+                          {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description ? (
+                              ContCTQTwoSampleHypTestData[ctqId]?.dataset2description
+                          ) : (
+                            `Dataset 2`
+                          )}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                           μ<sub>2</sub>: {testResults.meanValue2.toFixed(3)}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                           {testResults.SEmean2.toFixed(3)}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
+                              [{testResults.mean2CI.lower.toFixed(3)},{testResults.mean2CI.upper.toFixed(3)}]
+                        </td>
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                           {testResults.stdev2.toFixed(3)}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                        <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[8px]">
                           {testResults.sampleSize2.toFixed(0)}
                         </td>
                       </tr>                    
@@ -3060,7 +3107,11 @@ useEffect(() => {
                   <tbody>                    
                     <tr className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
-                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description ? (
+                            ContCTQTwoSampleHypTestData[ctqId]?.dataset1description
+                        ) : (
+                          `Dataset 1`
+                        )}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         σ<sub>1</sub>: {testResults.stdev1.toFixed(3)}
@@ -3073,7 +3124,11 @@ useEffect(() => {
                       </td>
                     </tr> 
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
-                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description ? (
+                            ContCTQTwoSampleHypTestData[ctqId]?.dataset2description
+                        ) : (
+                          `Dataset 2`
+                        )}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         σ<sub>2</sub>: {testResults.stdev2.toFixed(3)}
@@ -3156,19 +3211,27 @@ useEffect(() => {
 
                 <table className="w-full text-xs border-collapse border border-gray-300 mb-6">
                   <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[120px]">Dataset</th>
-                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[85px]">Median (η<sub>i</sub>)</th>
-                      <th className="border border-gray-300 px-1 py-1 text-left">Sample size (n)</th>
-                    </tr>
-                  </thead>
+                            <tr className="bg-gray-50">
+                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Dataset</th>
+                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[60px]">Median (η<sub>i</sub>)</th>
+                              <th className="border border-gray-300 px-1 py-1 text-left min-w-[90px]">CI {((1-parseFloat(significanceLevel))*100).toFixed(0)}%</th>
+                              <th className="border border-gray-300 px-1 py-1 text-left">Sample Size (n)</th>
+                            </tr>
+                          </thead>
                   <tbody>                    
                     <tr className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
-                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description}
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset1description ? (
+                            ContCTQTwoSampleHypTestData[ctqId]?.dataset1description
+                        ) : (
+                          `Dataset 1`
+                        )}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         η<sub>1</sub>: {testResults.median1.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
+                        {testResults.median1CI ? `[${testResults.median1CI.lower.toFixed(3)}, ${testResults.median1CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
                         {testResults.sampleSize1.toFixed(0)}
@@ -3176,10 +3239,17 @@ useEffect(() => {
                     </tr> 
                     <tr className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
-                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description}
+                        {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description ? (
+                            ContCTQTwoSampleHypTestData[ctqId]?.dataset2description
+                        ) : (
+                          `Dataset 2`
+                        )}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         η<sub>2</sub>: {testResults.median2.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
+                        {testResults.median2CI ? `[${testResults.median2CI.lower.toFixed(3)}, ${testResults.median2CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
                         {testResults.sampleSize2.toFixed(0)}

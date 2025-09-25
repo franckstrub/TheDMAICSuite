@@ -3476,3 +3476,203 @@ export function Bonferroni(
   });
 return { varianceConfidenceIntervals };
 }
+
+interface kruskalWallisTestResult {
+  medianTestName: string;
+  medianStatistic: number;
+  medianp_Value: number;
+  medianCriteria: number;
+  medianConfidenceIntervals: Array<{
+    groupIndex: number;
+    median: number;
+    lower: number;
+    upper: number;
+  }>;
+  dfKruskal: number;  
+}
+
+// Kruskal-Wallis test for medians - When nbr of distributions >= 2
+// H0: all group medians are equal
+// H1: at least one group median is different
+// Returns test statistic, p-value, test critical value and confidence intervals for medians
+export function kruskalWallisTest(
+  datasets: number[][],
+  significanceLevel: number,
+  alternative: string,
+): kruskalWallisTestResult {
+  
+  if (datasets.length < 2) {
+    throw new Error("Kruskal-Wallis test requires at least 2 groups");
+  }
+
+  // Remove empty groups and validate data
+  const validDatasets = datasets.filter(group => group.length > 0);
+  if (validDatasets.length < 2) {
+    throw new Error("Kruskal-Wallis test requires at least 2 non-empty groups");
+  }
+
+  // Combine all data points with their group labels
+  const allData: { value: number; group: number }[] = [];
+  validDatasets.forEach((group, groupIndex) => {
+    group.forEach(value => {
+      if (typeof value !== 'number' || isNaN(value)) {
+        throw new Error(`Invalid data point in group ${groupIndex}: ${value}`);
+      }
+      allData.push({ value, group: groupIndex });
+    });
+  });
+
+  const N = allData.length; // Total sample size
+  const k = validDatasets.length; // Number of groups
+
+  // Sort all data by value
+  allData.sort((a, b) => a.value - b.value);
+
+  // Assign ranks (handle ties by averaging ranks)
+  const ranks: number[] = new Array(N);
+  let i = 0;
+  
+  while (i < N) {
+    let j = i;
+    // Find the end of the current tie group
+    while (j < N - 1 && allData[j].value === allData[j + 1].value) {
+      j++;
+    }
+    
+    // Calculate average rank for tied values
+    const avgRank = (i + j + 2) / 2; // +2 because ranks start from 1
+    
+    // Assign average rank to all tied values
+    for (let t = i; t <= j; t++) {
+      ranks[t] = avgRank;
+    }
+    
+    i = j + 1;
+  }
+
+  // Calculate rank sums for each group
+  const rankSums: number[] = new Array(k).fill(0);
+  const groupSizes: number[] = new Array(k).fill(0);
+  
+  for (let idx = 0; idx < N; idx++) {
+    const groupIndex = allData[idx].group;
+    rankSums[groupIndex] += ranks[idx];
+    groupSizes[groupIndex]++;
+  }
+
+  // Calculate Kruskal-Wallis test statistic H
+  let H = 0;
+  for (let g = 0; g < k; g++) {
+    if (groupSizes[g] > 0) {
+      H += (rankSums[g] * rankSums[g]) / groupSizes[g];
+    }
+  }
+  
+  H = (12 / (N * (N + 1))) * H - 3 * (N + 1);
+
+  // Degrees of freedom
+  const df = k - 1;
+
+  // Calculate p-value using chi-square distribution
+  const pValue = 1 - jStat.chisquare.cdf(H, df);
+
+  // Calculate critical value
+  const criticalValue = jStat.chisquare.inv(1 - significanceLevel, df);
+
+  // Calculate confidence intervals for medians
+  const confidenceLevel = 1 - significanceLevel;
+  const ConfidenceIntervals = validDatasets.map((group, groupIndex) => {
+    const sortedGroup = [...group].sort((a, b) => a - b);
+    const n = sortedGroup.length;
+    
+    // Calculate median
+    let median: number;
+    if (n % 2 === 0) {
+      median = (sortedGroup[n/2 - 1] + sortedGroup[n/2]) / 2;
+    } else {
+      median = sortedGroup[Math.floor(n/2)];
+    }
+
+    // Calculate confidence interval for median using normal approximation
+    // This is a simplified approach - for small samples, exact methods would be preferred
+    const zAlpha = jStat.normal.inv(1 - significanceLevel/2, 0, 1);
+    const se = Math.sqrt(n * 0.25); // Standard error approximation for median
+    
+    // For confidence interval calculation, we use order statistics approach
+    // This is a simplified version - in practice, you might want more sophisticated methods
+    const marginIndex = Math.max(0, Math.floor(zAlpha * Math.sqrt(n) / 2));
+    const lowerIndex = Math.max(0, Math.floor(n/2) - marginIndex);
+    const upperIndex = Math.min(n - 1, Math.floor(n/2) + marginIndex);
+    
+    const lower = sortedGroup[lowerIndex];
+    const upper = sortedGroup[upperIndex];
+
+    return {
+      groupIndex,
+      median: median, // Note: keeping the interface name as provided
+      lower,
+      upper,
+    };
+  });
+
+  return {
+    medianTestName: `Kruskal-Wallis`,
+    medianStatistic: H,
+    medianp_Value: pValue,
+    medianCriteria: criticalValue,
+    medianConfidenceIntervals: ConfidenceIntervals,
+    dfKruskal: df,
+  };
+}
+
+
+interface MedianCI {
+  groupIndex: number;
+  median: number;
+  lower: number;
+  upper: number;
+}
+
+export function mannWhitneyCI(
+  datasets: number[][],
+  significanceLevel: number
+): MedianCI[] {
+  if (datasets.length !== 2) {
+    throw new Error("Mann–Whitney requires exactly 2 datasets.");
+  }
+
+  const z = jStat.normal.inv(1 - significanceLevel / 2, 0, 1); // critical z for CI
+  const results: MedianCI[] = [];
+
+  datasets.forEach((data, idx) => {
+    const sorted = [...data].sort((a, b) => a - b);
+    const n = sorted.length;
+
+    // Median
+    const median =
+      n % 2 === 0
+        ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+        : sorted[Math.floor(n / 2)];
+
+    // Standard error of the median approximation (based on binomial CI for quantiles)
+    // Uses order statistics with approx normal CI
+    const alpha = significanceLevel;
+    const lowerRank = Math.floor((n / 2) - z * Math.sqrt(n) / 2);
+    const upperRank = Math.ceil((n / 2) + z * Math.sqrt(n) / 2);
+
+    const lowerIndex = Math.max(0, lowerRank);
+    const upperIndex = Math.min(n - 1, upperRank);
+
+    const lower = sorted[lowerIndex];
+    const upper = sorted[upperIndex];
+
+    results.push({
+      groupIndex: idx,
+      median,
+      lower,
+      upper,
+    });
+  });
+
+  return results;
+}

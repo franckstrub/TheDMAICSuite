@@ -1,11 +1,7 @@
-import * as jStat from 'jstat'
-import { 
-  anovaOneWay
-} from "@/lib/statisticsUtils";
+
 import {twosampleMedianHypothesisTest} from "./twosampleMedianHypothesisTest";
-import {bartlettTest} from "@/lib/statisticsUtils";
-import {leveneTest} from "@/lib/statisticsUtils";
-import {Bonferroni} from "@/lib/statisticsUtils";
+import {kruskalWallisTest} from "@/lib/statisticsUtils";
+import {mannWhitneyCI} from "@/lib/statisticsUtils";
 
 import { NumericKeys } from "node_modules/react-hook-form/dist/types/path/common";
 
@@ -21,7 +17,6 @@ interface MedianTestResults {
       upper: number;
     }>; 
     df1?: number;
-    df2?: number;
 }
     
 interface multipleSMedianTestProps {
@@ -62,49 +57,32 @@ export function multipleSMedianTest({
 
   if (datasets.length === 2) {
     
-    const ratio = normalityResults[0].stdev/normalityResults[1].stdev;
     medianTestResult = twosampleMedianHypothesisTest({
           dataValues1:  datasets[0],
           dataValues2: datasets[1],
           significance:  significanceLevel,
           alternativemedian: alternative,
         });
-    const medianConfidenceIntervals = Bonferroni(datasets, significanceLevel);
+    const medianConfidenceIntervals = mannWhitneyCI(datasets, significanceLevel);
     return {
           testName: 'Mann-Whitney',
           testStatistic: medianTestResult.medianStatistic,
           pValue: medianTestResult.medianp_Value,
           criticalValue: medianTestResult.medianCriteria,
-          //medianConfidenceIntervals: medianConfidenceIntervals.varianceConfidenceIntervals,
-          medianConfidenceIntervals: [],
-          df1: medianTestResult.varDF1,
-          df2: medianTestResult.varDF2,
+          medianConfidenceIntervals: medianConfidenceIntervals,
+          df1: 0,
           };  
-  }
-  else if (allNormal) {
-    
-    medianTestResult = bartlettTest(datasets, significanceLevel, alternative);
-    return {
-      testName: medianTestResult.varTestName,
-      testStatistic: medianTestResult.varStatistic,
-      pValue: medianTestResult.varp_Value,
-      criticalValue: medianTestResult.varCriteria,
-      medianConfidenceIntervals: medianTestResult.medianConfidenceIntervals,
-      df1: medianTestResult.vardfBarlett,
-      df2: medianTestResult.varDF2,
-    };  
   }
   else {
     
-      medianTestResult = leveneTest(datasets, significanceLevel, alternative,'median');
-      return {
-        testName: medianTestResult.varTestName,
-        testStatistic: medianTestResult.varStatistic,
-        pValue: medianTestResult.varp_Value,
-        criticalValue: medianTestResult.varCriteria,
-        medianConfidenceIntervals: medianTestResult.medianConfidenceIntervals,
-        df1: medianTestResult.vardfBetween,
-        df2: medianTestResult.vardfWithin,
-     };  
-  };
+    medianTestResult = kruskalWallisTest(datasets, significanceLevel, alternative);
+    return {
+      testName: medianTestResult.medianTestName,
+      testStatistic: medianTestResult.medianStatistic,
+      pValue: medianTestResult.medianp_Value,
+      criticalValue: medianTestResult.medianCriteria,
+      medianConfidenceIntervals: medianTestResult.medianConfidenceIntervals,
+      df1: medianTestResult.dfKruskal,
+    };  
+  }
 }
