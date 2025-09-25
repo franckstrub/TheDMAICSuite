@@ -87,6 +87,7 @@ interface RunTestResults {
   meanValue1: number;
   mean1CI: { lower: number, upper: number };
   stdev1: number;
+  variance1CI: { lower: number, upper: number };
   median1: number;
   median1CI: { lower: number, upper: number };
   SEmean1: number;
@@ -99,6 +100,7 @@ interface RunTestResults {
   meanValue2: number;
   mean2CI: { lower: number, upper: number };
   stdev2: number;
+  variance2CI: { lower: number, upper: number };
   median2: number;
   median2CI: { lower: number, upper: number };
   SEmean2: number;
@@ -164,6 +166,8 @@ interface VarianceTestResults {
   varp_Value: number;
   varianceCI_minus: number;
   varianceCI_plus: number;
+  variance1CI: { lower: number, upper: number };
+  variance2CI: { lower: number, upper: number };
 }
 
 interface MedianTestResults {
@@ -204,6 +208,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     meanValue1: 0,
     mean1CI: { lower: 0, upper: 0 },
     stdev1: 0,
+    variance1CI: { lower: 0, upper: 0 },
     median1: 0,
     median1CI: { lower: 0, upper: 0 },
     SEmean1: 0,
@@ -216,6 +221,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     meanValue2: 0,
     mean2CI: { lower: 0, upper: 0 },
     stdev2: 0,
+    variance2CI: { lower: 0, upper: 0 },
     median2: 0,
     median2CI: { lower: 0, upper: 0 },
     SEmean2: 0,
@@ -631,6 +637,7 @@ useEffect(() => {
   let meanValue1: number = 0;
   let mean1CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let stdev1: number = 0;
+  let variance1CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let median1: number = 0;
   let median1CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let SEmean1: number = 0;
@@ -643,6 +650,7 @@ useEffect(() => {
   let meanValue2: number = 0;
   let mean2CI: { lower: number; upper: number } = { lower: 0, upper: 0 };;
   let stdev2: number = 0;
+  let variance2CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let median2: number = 0;
   let median2CI: { lower: number; upper: number } = { lower: 0, upper: 0 };
   let SEmean2: number = 0;
@@ -677,8 +685,8 @@ useEffect(() => {
       description: "No dataset 1 or 2. The hypothesis test has not been executed.",
     });
     return {
-      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, variance1CI, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, variance2CI, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -690,8 +698,8 @@ useEffect(() => {
       description: "Need two data at least in each dataset to run Hypothesis Testing"
     });
     return {
-      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, variance1CI, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, variance2CI, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -726,8 +734,8 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, variance1CI, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, variance2CI, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -794,8 +802,8 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, variance1CI, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, variance2CI, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -836,6 +844,15 @@ useEffect(() => {
     varp_Value = varianceTestResult.varp_Value;
     varianceCI_minus = varianceTestResult.varianceCI_minus;
     varianceCI_plus = varianceTestResult.varianceCI_plus;
+
+    variance1CI = {
+      lower: varianceTestResult.variance1CI.lower,
+      upper: varianceTestResult.variance1CI.upper
+    };
+    variance2CI = {
+      lower: varianceTestResult.variance2CI.lower,
+      upper: varianceTestResult.variance2CI.upper
+    };
     
     // Update state as well
     setTwosampleVarianceTestresult(varianceTestResult);
@@ -851,8 +868,8 @@ useEffect(() => {
         variant: "destructive",
       });
       return {
-      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, variance1CI, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, variance2CI, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -899,8 +916,8 @@ useEffect(() => {
   });
 
   return {
-      sampleSize1, meanValue1, mean1CI, stdev1, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
-      sampleSize2, meanValue2, mean2CI, stdev2, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
+      sampleSize1, meanValue1, mean1CI, stdev1, variance1CI, median1, median1CI, SEmean1, ADvalue1, ADp_Value1, tStatistic, tCriteria, tp_Value,
+      sampleSize2, meanValue2, mean2CI, stdev2, variance2CI, median2, median2CI, SEmean2, ADvalue2, ADp_Value2,
       diffCI_minus, diffCI_plus, fStat, fCritical, fTestpValue, equalVariances, pooledSE, degreesOfFreedom,
       varTestName, varDF1, varDF2, varStatistic, varCriteria, varp_Value, varianceCI_minus, varianceCI_plus,
       grandMedian, medianStatistic, medianCriteria, medianp_Value, medianCI_minus, medianCI_plus
@@ -3099,9 +3116,10 @@ useEffect(() => {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Dataset</th>
-                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Std Dev (σ<sub>i</sub>)</th>                      
-                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Variance (σ<sup>2</sup><sub>i</sub>)</th>  
-                      <th className="border border-gray-300 px-1 py-1 text-left">Sample size (n)</th>
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Std Dev (σ<sub>i</sub>)</th>
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[60px] text-[9px]">CI {((1-parseFloat(significanceLevel))*100).toFixed(0)}% (Bonferroni)</th>                   
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px] text-[9px]">Var (σ<sup>2</sup><sub>i</sub>)</th>  
+                      <th className="border border-gray-300 px-1 py-1 text-left text-[9px]">(n)</th>
                     </tr>
                   </thead>
                   <tbody>                    
@@ -3115,6 +3133,9 @@ useEffect(() => {
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         σ<sub>1</sub>: {testResults.stdev1.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
+                        {testResults.variance1CI ? `[${testResults.variance1CI.lower.toFixed(3)}, ${testResults.variance1CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         {(testResults.stdev1*testResults.stdev1).toFixed(3)}
@@ -3132,6 +3153,9 @@ useEffect(() => {
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         σ<sub>2</sub>: {testResults.stdev2.toFixed(3)}
+                      </td>
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
+                        {testResults.variance2CI ? `[${testResults.variance2CI.lower.toFixed(3)}, ${testResults.variance2CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
                         {(testResults.stdev2*testResults.stdev2).toFixed(3)}
