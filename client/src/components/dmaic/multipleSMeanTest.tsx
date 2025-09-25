@@ -2,7 +2,7 @@ import * as jStat from 'jstat'
 import { 
   anovaOneWay
 } from "@/lib/statisticsUtils";
-import {twosampleMeanHypothesisTest} from "./twosampleMeanHypothesisTest";
+import {twosampleMeanHypothesisTest, MeanTestResults as TwoSampleMeanTestResults} from "./twosampleMeanHypothesisTest";
 import { NumericKeys } from "node_modules/react-hook-form/dist/types/path/common";
 
 interface MeanTestResults {
@@ -29,6 +29,7 @@ interface MeanTestResults {
   studentpooledSE: number;
   studentDegreesOfFreedom: number;
   studenttCriteria: number | {lower: number; upper: number};
+  studentmeanCI: Array<{ lower: number; upper: number }>;
   studentdiffCI_minus: number;
   studentdiffCI_plus: number;
   studentpValue: number;
@@ -71,7 +72,7 @@ export function multipleSMeanTest({
   // Check normality results
   const allNormal = normalityResults.every(result => result.adPValue > significanceLevel);  
   const studentTestdone = allNormal && datasets.length === 2;
-  let meanTestResult: any = null;
+  let meanTestResult: TwoSampleMeanTestResults | null = null;
   let anovaResults: any = null;
   
   if (allNormal && datasets.length === 2) { //let's do a Student test if 2 distrib. and all are normal
@@ -110,6 +111,7 @@ export function multipleSMeanTest({
     studentpooledSE: meanTestResult?.pooledSE || 0,
     studentDegreesOfFreedom: meanTestResult?.degreesOfFreedom || 0,
     studenttCriteria: meanTestResult?.tCriteria || 0,
+    studentmeanCI: meanTestResult ? [meanTestResult.mean1CI, meanTestResult.mean2CI] : [],
     studentdiffCI_minus: meanTestResult?.diffCI_minus || 0,
     studentdiffCI_plus: meanTestResult?.diffCI_plus || 0,
     studentpValue: meanTestResult?.tp_Value || 0,
