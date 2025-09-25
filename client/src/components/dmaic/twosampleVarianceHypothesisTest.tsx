@@ -24,6 +24,7 @@ import {
   calculate2SvarLeveneCriticalValue,
   calculate2SvarLevenePValue,
   calculate2SvarLeveneConfidenceInterval,
+  Bonferroni,
 } from "@/lib/statisticsUtils";
 
 interface VarianceTestResults {
@@ -39,6 +40,8 @@ interface VarianceTestResults {
   varp_Value: number;
   varianceCI_minus: number;
   varianceCI_plus: number;
+  variance1CI: {lower: number, upper: number};
+  variance2CI: {lower: number, upper: number};
 }  
     
 interface twosampleVarianceHypothesisTestProps {
@@ -128,6 +131,7 @@ export function twosampleVarianceHypothesisTest({
     varianceCI_minus = confidenceInterval.lower;
     varianceCI_plus = confidenceInterval.upper;
   } 
+  const varianceConfidenceIntervals = Bonferroni([dataValues1, dataValues2], significance);
 
   return {
     varTestName,
@@ -142,5 +146,13 @@ export function twosampleVarianceHypothesisTest({
     varp_Value,
     varianceCI_minus,
     varianceCI_plus,
+    variance1CI: {
+      lower: varianceConfidenceIntervals.varianceConfidenceIntervals[0].lower,
+      upper: varianceConfidenceIntervals.varianceConfidenceIntervals[0].upper
+    },
+    variance2CI: {
+      lower: varianceConfidenceIntervals.varianceConfidenceIntervals[1].lower,
+      upper: varianceConfidenceIntervals.varianceConfidenceIntervals[1].upper
+    },
   };
 }
