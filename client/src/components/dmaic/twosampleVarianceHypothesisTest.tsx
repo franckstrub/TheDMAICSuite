@@ -109,7 +109,7 @@ export function twosampleVarianceHypothesisTest({
     
   } else {
     // Use Levene's test for non-normal data
-    varTestName = "Levene Test";
+    varTestName = "Levene";
     df1 = 1; // k-1 where k=2 groups
     df2 = n1 + n2 - 2; // n-k where k=2 groups
     

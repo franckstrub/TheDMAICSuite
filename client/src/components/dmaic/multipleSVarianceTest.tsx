@@ -13,7 +13,7 @@ interface VarianceTestResults {
     testName: string;
     testStatistic: number;
     pValue: number;
-    criticalValue: number; 
+    criticalValue: number | {lower: number; upper: number};
     varianceConfidenceIntervals: Array<{
       groupIndex: number;
       variance: number;
@@ -78,7 +78,7 @@ export function multipleSVarianceTest({
           testName: varianceTestResult.varTestName,
           testStatistic: varianceTestResult.varStatistic,
           pValue: varianceTestResult.varp_Value,
-          criticalValue: varianceTestResult.varCriteria,
+          criticalValue: typeof varianceTestResult.varCriteria === 'number' ? varianceTestResult.varCriteria : { lower: varianceTestResult.varCriteria.lower, upper: varianceTestResult.varCriteria.upper },
           varianceConfidenceIntervals: varConfidenceIntervals.varianceConfidenceIntervals,
           df1: varianceTestResult.varDF1,
           df2: varianceTestResult.varDF2,
