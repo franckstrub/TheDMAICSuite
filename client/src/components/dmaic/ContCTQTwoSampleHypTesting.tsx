@@ -3112,13 +3112,13 @@ useEffect(() => {
               <Card className="p-2">                
                 <CardTitle className="text-lg">Two-Sample Variance test:</CardTitle>
                 <div className="text-lg justify-left">{testResults.varTestName}'s test:</div>
-                <table className="w-full text-xs border-collapse border border-gray-300 mb-6">
+                <table className="w-full text-xs border-collapse border border-gray-300 mb-2">
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Dataset</th>
-                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Std Dev (σ<sub>i</sub>)</th>
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px]">Std Dev. (σ<sub>i</sub>)</th>
                       <th className="border border-gray-300 px-1 py-1 text-left min-w-[60px] text-[9px]">CI {((1-parseFloat(significanceLevel))*100).toFixed(0)}% (Bonferroni)</th>                   
-                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px] text-[9px]">Var (σ<sup>2</sup><sub>i</sub>)</th>  
+                      <th className="border border-gray-300 px-1 py-1 text-left min-w-[55px] text-[9px]">Variance (σ<sup>2</sup><sub>i</sub>)</th>  
                       <th className="border border-gray-300 px-1 py-1 text-left text-[9px]">(n)</th>
                     </tr>
                   </thead>
@@ -3137,10 +3137,10 @@ useEffect(() => {
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                         {testResults.variance1CI ? `[${testResults.variance1CI.lower.toFixed(3)}, ${testResults.variance1CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
-                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                         {(testResults.stdev1*testResults.stdev1).toFixed(3)}
                       </td>
-                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[8px]">
                         {testResults.sampleSize1.toFixed(0)}
                       </td>
                     </tr> 
@@ -3157,16 +3157,16 @@ useEffect(() => {
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                         {testResults.variance2CI ? `[${testResults.variance2CI.lower.toFixed(3)}, ${testResults.variance2CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
-                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                         {(testResults.stdev2*testResults.stdev2).toFixed(3)}
                       </td>
-                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[8px]">
                         {testResults.sampleSize2.toFixed(0)}
                       </td>                   
                   </tbody>
                 </table> 
                 
-                <div className="text-gray-600 font-medium">Variance ratio (σ<sup>2</sup>1/σ<sup>2</sup>2):&nbsp;
+                <div className="text-gray-600 font-medium">Variance ratio (σ1<sup>2</sup>/σ2<sup>2</sup>):&nbsp;
                   {((testResults.stdev1*testResults.stdev1)/(testResults.stdev2*testResults.stdev2)).toFixed(2)}</div>
                 <div className="text-gray-600 font-medium">Hypothesized Std Dev Ratio:&nbsp;
                   {ContCTQTwoSampleHypTestData[ctqId]?.ratioVariance0}</div>
@@ -3199,9 +3199,9 @@ useEffect(() => {
                   {testResults.varDF1.toFixed(0)}</div>
                 <div className="text-gray-600 font-medium">Degrees of Freedom 2:&nbsp;
                   {testResults.varDF2.toFixed(0)}</div>
-                <div className="text-gray-600 font-medium">Test-statistic:&nbsp;
+                <div className="text-gray-600 font-medium">{testResults.varTestName} Test-statistic:&nbsp;
                   {testResults.varStatistic.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Test-criteria
+                <div className="text-gray-600 font-medium">{testResults.varTestName} Test-criteria
                 {testResults.varTestName === "Fisher" ?
                 (
                   <>
@@ -3223,7 +3223,7 @@ useEffect(() => {
                 
                 <div className="text-gray-600 font-medium">P-value:&nbsp;
                   {testResults.varp_Value.toFixed(4)}</div>
-                <div className="text-gray-600 font-medium">CI {(100*(1-parseFloat(significanceLevel)))}% for (σ1/σ2): [
+                <div className="text-gray-600 font-medium">CI {(100*(1-parseFloat(significanceLevel)))}% for (σ1<sup>2</sup>/σ2<sup>2</sup>): [
                 {testResults.varianceCI_minus.toFixed(3)}, {testResults.varianceCI_plus.toFixed(3)}]</div>
               </Card>
               )}
@@ -3233,7 +3233,7 @@ useEffect(() => {
                 <CardTitle className="text-lg">Two-Sample Median-test:</CardTitle>
                 <div className="text-lg justify-left">Mann-Whitney test:</div>
 
-                <table className="w-full text-xs border-collapse border border-gray-300 mb-6">
+                <table className="w-full text-xs border-collapse border border-gray-300 mb-2">
                   <thead>
                             <tr className="bg-gray-50">
                               <th className="border border-gray-300 px-1 py-1 text-left min-w-[70px]">Dataset</th>
@@ -3257,7 +3257,7 @@ useEffect(() => {
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                         {testResults.median1CI ? `[${testResults.median1CI.lower.toFixed(3)}, ${testResults.median1CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
-                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[8px]">
                         {testResults.sampleSize1.toFixed(0)}
                       </td>
                     </tr> 
@@ -3275,7 +3275,7 @@ useEffect(() => {
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[8px]">
                         {testResults.median2CI ? `[${testResults.median2CI.lower.toFixed(3)}, ${testResults.median2CI.upper.toFixed(3)}]` : 'N/A'}
                       </td>
-                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
+                      <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[8px]">
                         {testResults.sampleSize2.toFixed(0)}
                       </td>
                     </tr>                    
@@ -3310,9 +3310,9 @@ useEffect(() => {
                   
                  </Badge>
                 </div>
-                <div className="text-gray-600 font-medium">Mann-Whitney-statistic:&nbsp;
+                <div className="text-gray-600 font-medium">Mann-Whitney-statistic (M-W):&nbsp;
                   {testResults.medianStatistic.toFixed(3)}</div>
-                <div className="text-gray-600 font-medium">Mann-Whitney-criteria (W<sub>{1-parseFloat(significanceLevel)/2}</sub>): {testResults.medianCriteria.toFixed(3)}
+                <div className="text-gray-600 font-medium">Mann-Whitney-criteria (M-W<sub>{1-parseFloat(significanceLevel)/2}</sub>): {testResults.medianCriteria.toFixed(3)}
                 </div>
                 <div className="text-gray-600 font-medium">Mann-Whitney P-value:&nbsp;
                   {testResults.medianp_Value.toFixed(4)}</div>

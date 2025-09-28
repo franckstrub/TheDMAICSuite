@@ -20,7 +20,7 @@ import {multipleSMeanTest} from "./multipleSMeanTest";
 import {multipleSVarianceTest} from "./multipleSVarianceTest";
 import {multipleSMedianTest} from "./multipleSMedianTest";
 import { stdev } from 'jstat';
-//import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
+import BoxPlotWithNSMeanTest from './BoxPlotWithNSMeanTest.tsx';
 
 interface DataPoint {
   indexNumber: number;
@@ -890,7 +890,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       testName: multipleSVarianceTestResult.testName,
       testStatistic: multipleSVarianceTestResult.testStatistic,
       pValue: multipleSVarianceTestResult.pValue,
-      criticalValue: multipleSVarianceTestResult.criticalValue,
+      criticalValue: typeof multipleSVarianceTestResult.criticalValue === 'number' ? multipleSVarianceTestResult.criticalValue : { lower: multipleSVarianceTestResult.criticalValue.lower, upper: multipleSVarianceTestResult.criticalValue.upper },
       confidenceIntervals: multipleSVarianceTestResult.varianceConfidenceIntervals,
       df1: multipleSVarianceTestResult.df1,
       df2: multipleSVarianceTestResult.df2,
@@ -2309,6 +2309,33 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     
                     <div className="text-gray-600 font-medium">{testResults.varianceTest.testName}'s Test Statistic:&nbsp;
                       {testResults.varianceTest.testStatistic.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">{testResults.varianceTest.testName}'s Test-criteria
+                    {testResults.varianceTest.testName === "Fisher" ?
+                    (
+                      <>
+                      {typeof testResults.varianceTest.criticalValue === 'number'
+                        ? (alternateVariance==='Less than' ? <> (F<sub>{significanceLevel}</sub>): {testResults.varianceTest.criticalValue.toFixed(3)} </> : <> (F<sub>{(1 - parseFloat(significanceLevel)).toFixed(2)}</sub>): {testResults.varianceTest.criticalValue.toFixed(3)}</>)
+                        : <> (F<sub>{(parseFloat(significanceLevel)/2).toFixed(3)}</sub>, F<sub>{(1-parseFloat(significanceLevel)/2).toFixed(3)}</sub>): [{testResults.varianceTest.criticalValue.lower.toFixed(3)}, {testResults.varianceTest.criticalValue.upper.toFixed(3)}]</>
+                      }
+                      </>
+                    ) : (
+                      <>
+                      {testResults.varianceTest.testName === "Bartlett" ?
+                        <>
+                        {typeof testResults.varianceTest.criticalValue === 'number'
+                          ? (alternateVariance==='Less than' ? <> (B<sub>{significanceLevel}</sub>): {testResults.varianceTest.criticalValue.toFixed(3)} </> : <> (B<sub>{(1 - parseFloat(significanceLevel)).toFixed(2)}</sub>): {testResults.varianceTest.criticalValue.toFixed(3)}</>)
+                          : <> (B<sub>{(parseFloat(significanceLevel)/2).toFixed(3)}</sub>, B<sub>{(1-parseFloat(significanceLevel)/2).toFixed(3)}</sub>): [{testResults.varianceTest.criticalValue.lower.toFixed(3)}, {testResults.varianceTest.criticalValue.upper.toFixed(3)}]</>
+                        }
+                        </>
+                        :
+                        <>
+                        {typeof testResults.varianceTest.criticalValue === 'number'
+                          ? (alternateVariance==='Less than' ? <> (L<sub>{significanceLevel}</sub>): {testResults.varianceTest.criticalValue.toFixed(3)} </> : <> (L<sub>{(1 - parseFloat(significanceLevel)).toFixed(2)}</sub>): {testResults.varianceTest.criticalValue.toFixed(3)}</>)
+                          : <> (L<sub>{(parseFloat(significanceLevel)/2).toFixed(3)}</sub>, L<sub>{(1-parseFloat(significanceLevel)/2).toFixed(3)}</sub>): [{testResults.varianceTest.criticalValue.lower.toFixed(3)}, {testResults.varianceTest.criticalValue.upper.toFixed(3)}]</>
+                        }
+                        </>}
+                      </>)}
+                    </div>
                     <div className="text-gray-600 font-medium">P-Value:&nbsp;
                       {testResults.varianceTest.pValue.toFixed(4)}</div>
                     <div className="text-gray-600 font-medium">Degrees of Freedom:
@@ -2404,6 +2431,13 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     
                     <div className="text-gray-600 font-medium">{testResults.medianTest.testName}'s Test Statistic:&nbsp;
                       {testResults.medianTest.testStatistic.toFixed(3)}</div>
+                    <div className="text-gray-600 font-medium">
+                      {testResults.medianTest.testName === 'Mann-Whitney' ? (
+                        <>{testResults.medianTest.testName}'s Test-criteria (M-W<sub>{1-parseFloat(significanceLevel)}</sub>): {testResults.medianTest.criticalValue.toFixed(3)}</>
+                      ) : (
+                        <>{testResults.medianTest.testName}'s Test-criteria (K-W<sub>{1-parseFloat(significanceLevel)}</sub>): {testResults.medianTest.criticalValue.toFixed(3)}</>  
+                      )}
+                    </div>
                     <div className="text-gray-600 font-medium">P-Value:&nbsp;
                       {testResults.medianTest.pValue.toFixed(4)}</div>
                     <div className="text-gray-600 font-medium">
@@ -2425,7 +2459,40 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           )}  
           </div>
         </div>
-        )}      
+        )}  
+        {/* multiple sample mean test BoxPlot visualization when showBoxPlot is true */}
+                  
+        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest.studentTestdone ? (
+          <div className="mt-6">
+            <BoxPlotWithNSMeanTest
+              data={datasets.map(dataset => dataset.map(d => d.dataValue))}
+              ctqName={ctqName}
+              means={testResults.normalityResults.map(mean => mean.mean)}
+              Ha={alternateMean}
+              confidenceIntervals={testResults.meanTest.studentmeanCI}
+              title={`Multiple-Sample Mean Student Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+              pValue={testResults.meanTest.studentpValue}
+              alphalevel={significanceLevel}
+              descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
+              equalVariances={testResults.meanTest.studentVarEquality}
+            />
+          </div>
+        ) :(
+          <div className="mt-6">
+            <BoxPlotWithNSMeanTest
+              data={datasets.map(dataset => dataset.map(d => d.dataValue))}
+              ctqName={ctqName}
+              means={testResults.normalityResults.map(mean => mean.mean)}
+              Ha={alternateMean}
+              confidenceIntervals={testResults.meanTest.anovaconfidenceIntervals}
+              title={`Multiple-Sample Mean ANOVA Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+              pValue={testResults.meanTest.anovapValue}
+              alphalevel={significanceLevel}
+              descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
+              equalVariances={false}
+            />
+          </div> 
+        )}    
         </div>
       </CardContent>
     </Card>
