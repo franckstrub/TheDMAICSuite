@@ -21,6 +21,7 @@ import {multipleSVarianceTest} from "./multipleSVarianceTest";
 import {multipleSMedianTest} from "./multipleSMedianTest";
 import { stdev } from 'jstat';
 import BoxPlotWithNSMeanTest from './BoxPlotWithNSMeanTest.tsx';
+import ConfidenceIntervalsNSMean from './ConfidenceIntervalsNSMean.tsx';
 
 interface DataPoint {
   indexNumber: number;
@@ -2463,22 +2464,44 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         {/* multiple sample mean test BoxPlot visualization when showBoxPlot is true */}
                   
         {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && (
-          <div className="mt-6">
-            <BoxPlotWithNSMeanTest
-              data={datasets.map(dataset => dataset.map(d => d.dataValue))}
-              ctqName={ctqName}
-              means={testResults.normalityResults.map(mean => mean.mean)}
-              Ha={alternateMean}
-              confidenceIntervals={testResults.meanTest.studentTestdone ? testResults.meanTest.studentmeanCI : testResults.meanTest.anovaconfidenceIntervals}
-              title={testResults.meanTest.studentTestdone ? `Multiple-Sample Mean Student Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`
-                    : `Multiple-Sample Mean Anova Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
-              pValue={testResults.meanTest.studentTestdone ? testResults.meanTest.studentpValue
-                    : testResults.meanTest.anovapValue}
-              alphalevel={significanceLevel}
-              descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
-              equalVariances={testResults.meanTest.studentpValue ? testResults.meanTest.studentVarEquality
-                : true}
-            />
+          <div className="mt-6 space-y-6">
+            {/* Box Plots */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="boxplot-section">
+              <h3 className="text-lg font-semibold mb-4">Box Plot Analysis</h3>
+              <BoxPlotWithNSMeanTest
+                data={datasets.map(dataset => dataset.map(d => d.dataValue))}
+                ctqName={ctqName}
+                means={testResults.normalityResults.map(mean => mean.mean)}
+                Ha={alternateMean}
+                title={testResults.meanTest.studentTestdone ? `Multiple-Sample Mean Student Test (Box Plots)`
+                      : `Multiple-Sample Mean Anova Test (Box Plots)`}
+                pValue={testResults.meanTest.studentTestdone ? testResults.meanTest.studentpValue
+                      : testResults.meanTest.anovapValue}
+                alphalevel={significanceLevel}
+                descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
+                equalVariances={testResults.meanTest.studentpValue ? testResults.meanTest.studentVarEquality
+                  : true}
+              />
+            </div>
+            
+            {/* Confidence Intervals */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="confidence-intervals-section">
+              <h3 className="text-lg font-semibold mb-4">Confidence Intervals</h3>
+              <ConfidenceIntervalsNSMean
+                ctqName={ctqName}
+                means={testResults.meanTest.anovagroupMeans}
+                confidenceIntervals={testResults.meanTest.studentTestdone ? testResults.meanTest.studentmeanCI : testResults.meanTest.anovaconfidenceIntervals}
+                Ha={alternateMean}
+                title={testResults.meanTest.studentTestdone ? `Multiple-Sample Mean Student Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`
+                      : `Multiple-Sample Mean Anova Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.meanTest.studentTestdone ? testResults.meanTest.studentpValue
+                      : testResults.meanTest.anovapValue}
+                alphalevel={significanceLevel}
+                descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
+                equalVariances={testResults.meanTest.studentpValue ? testResults.meanTest.studentVarEquality
+                  : true}
+              />
+            </div>
           </div>
         )}    
         </div>
