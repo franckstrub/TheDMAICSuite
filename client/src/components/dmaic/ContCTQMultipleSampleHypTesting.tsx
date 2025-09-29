@@ -2462,36 +2462,24 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         )}  
         {/* multiple sample mean test BoxPlot visualization when showBoxPlot is true */}
                   
-        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest.studentTestdone ? (
+        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && (
           <div className="mt-6">
             <BoxPlotWithNSMeanTest
               data={datasets.map(dataset => dataset.map(d => d.dataValue))}
               ctqName={ctqName}
               means={testResults.normalityResults.map(mean => mean.mean)}
               Ha={alternateMean}
-              confidenceIntervals={testResults.meanTest.studentmeanCI}
-              title={`Multiple-Sample Mean Student Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
-              pValue={testResults.meanTest.studentpValue}
+              confidenceIntervals={testResults.meanTest.studentTestdone ? testResults.meanTest.studentmeanCI : testResults.meanTest.anovaconfidenceIntervals}
+              title={testResults.meanTest.studentTestdone ? `Multiple-Sample Mean Student Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`
+                    : `Multiple-Sample Mean Anova Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+              pValue={testResults.meanTest.studentTestdone ? testResults.meanTest.studentpValue
+                    : testResults.meanTest.anovapValue}
               alphalevel={significanceLevel}
               descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
-              equalVariances={testResults.meanTest.studentVarEquality}
+              equalVariances={testResults.meanTest.studentpValue ? testResults.meanTest.studentVarEquality
+                : true}
             />
           </div>
-        ) :(
-          <div className="mt-6">
-            <BoxPlotWithNSMeanTest
-              data={datasets.map(dataset => dataset.map(d => d.dataValue))}
-              ctqName={ctqName}
-              means={testResults.normalityResults.map(mean => mean.mean)}
-              Ha={alternateMean}
-              confidenceIntervals={testResults.meanTest.anovaconfidenceIntervals}
-              title={`Multiple-Sample Mean ANOVA Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
-              pValue={testResults.meanTest.anovapValue}
-              alphalevel={significanceLevel}
-              descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
-              equalVariances={false}
-            />
-          </div> 
         )}    
         </div>
       </CardContent>
