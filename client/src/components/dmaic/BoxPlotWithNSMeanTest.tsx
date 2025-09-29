@@ -6,10 +6,6 @@ interface BoxPlotWithNSMeanTestProps {
   ctqName: string;
   means: number[];
   Ha: string;
-  confidenceIntervals?: Array<{
-    lower: number;
-    upper: number;
-  }>;
   title?: string;
   pValue: number;
   alphalevel: string;
@@ -22,7 +18,6 @@ export default function BoxPlotWithNSMeanTest({
   ctqName,
   means,
   Ha,
-  confidenceIntervals,
   title,
   pValue,
   alphalevel,
@@ -119,9 +114,6 @@ export default function BoxPlotWithNSMeanTest({
   // Create annotations for means
   const annotations: any[] = [];
   
-  // Initialize shapes array for confidence intervals
-  let shapes: any[] = [];
-  
   // Add mean value annotations
   means.forEach((mean, index) => {
     annotations.push({
@@ -135,62 +127,6 @@ export default function BoxPlotWithNSMeanTest({
       yshift: 5,
     });
   });
-
-  // Add confidence intervals if available
-  if (confidenceIntervals && confidenceIntervals.length > 0) {
-    
-    confidenceIntervals.forEach((ci, index) => {
-      if (ci && typeof ci === 'object' && 'lower' in ci && 'upper' in ci) {
-        // Vertical line for CI
-        shapes.push({
-          type: 'line',
-          xref: 'x',
-          x0: index + 0.3,
-          x1: index + 0.3,
-          yref: 'y',
-          y0: ci.lower,
-          y1: ci.upper,
-          line: {
-            color: 'black',
-            width: 1,
-            dash: 'solid'
-          },
-        });
-        
-        // Lower bound horizontal line
-        shapes.push({
-          type: 'line',
-          xref: 'x',
-          x0: index + 0.275,
-          x1: index + 0.325,
-          yref: 'y',
-          y0: ci.lower,
-          y1: ci.lower,
-          line: {
-            color: 'black',
-            width: 1,
-            dash: 'solid'
-          },
-        });
-        
-        // Upper bound horizontal line
-        shapes.push({
-          type: 'line',
-          xref: 'x',
-          x0: index + 0.275,
-          x1: index + 0.325,
-          yref: 'y',
-          y0: ci.upper,
-          y1: ci.upper,
-          line: {
-            color: 'black',
-            width: 1,
-            dash: 'solid'
-          }
-        });
-      }
-    });
-  }
 
   // Add badge annotation
   annotations.push({
@@ -226,7 +162,7 @@ export default function BoxPlotWithNSMeanTest({
             },
             showline: true,
           },
-          shapes: shapes, // Confidence interval shapes
+          shapes: [], // No shapes needed for boxplots only
           annotations: annotations,
           showlegend: false,
         }}
