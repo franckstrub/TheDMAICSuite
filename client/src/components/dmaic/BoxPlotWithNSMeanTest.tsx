@@ -80,6 +80,7 @@ export default function BoxPlotWithNSMeanTest({
     
     // Add box plot
     plotData.push({
+      x: new Array(dataset.length).fill(index), // Explicit x positioning
       y: dataset,
       type: 'box',
       name: description,
@@ -112,11 +113,14 @@ export default function BoxPlotWithNSMeanTest({
   const tickvals = Array.from({ length: data.length }, (_, i) => i);
   const ticktext = data.map((_, index) => {
     const description = descriptions?.[index] || `Dataset #${index + 1}`;
-    return `Boxplot of ${description}`;
+    return `${description}`;
   });
 
   // Create annotations for means
   const annotations: any[] = [];
+  
+  // Initialize shapes array for confidence intervals
+  let shapes: any[] = [];
   
   // Add mean value annotations
   means.forEach((mean, index) => {
@@ -134,7 +138,6 @@ export default function BoxPlotWithNSMeanTest({
 
   // Add confidence intervals if available
   if (confidenceIntervals && confidenceIntervals.length > 0) {
-    const shapes: any[] = [];
     
     confidenceIntervals.forEach((ci, index) => {
       if (ci && typeof ci === 'object' && 'lower' in ci && 'upper' in ci) {
@@ -208,13 +211,14 @@ export default function BoxPlotWithNSMeanTest({
           title: {text: boldTitle, font: { size: 16} },
           height: 360,
           width: Math.max(860, data.length * 150), // Dynamic width based on number of datasets
-          margin: { l: 70, r: 160, t: 30, b: 20 },
+          margin: { l: 70, r: 160, t: 30, b: 60 },
           xaxis: {
             tickvals: tickvals,
             ticktext: ticktext,
             range: [-0.5, data.length - 0.5],
             showline: true,
             zeroline: false,
+            tickfont: { size: 8 }
           },
           yaxis: { 
             title: {
@@ -222,7 +226,7 @@ export default function BoxPlotWithNSMeanTest({
             },
             showline: true,
           },
-          shapes: confidenceIntervals ? [] : [], // Will be populated above if CIs exist
+          shapes: shapes, // Confidence interval shapes
           annotations: annotations,
           showlegend: false,
         }}
