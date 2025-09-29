@@ -102,6 +102,23 @@ export default function ConfidenceIntervalsNSMean({
     }
   ];
 
+  // Add connection lines between means if there are multiple means
+  if (means.length > 1) {
+    plotData.push({
+      x: xPositions,
+      y: means,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Mean Connection',
+      line: { 
+        color: 'red', 
+        width: 2,
+        dash: 'dash'
+      },
+      showlegend: false,
+    } as any);
+  }
+
   // Add mean value annotations
   const annotations: any[] = [];
   
