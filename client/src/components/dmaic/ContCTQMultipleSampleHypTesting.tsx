@@ -276,19 +276,12 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName)) {
-        
-        console.log('Ctrl+V detected! Active tab:', activeTab, 'CTQ Name:', ctqName);
-        
         // Check if this Multiple Sample component should handle the paste based on global context
         const focusedComponent = (window as any).focusedComponent;
-        
-        console.log('Focused component:', focusedComponent);
-        console.log('Num datasets:', numDatasets);
         
         // Check if any of our datasets is focused
         for (let i = 0; i < numDatasets; i++) {
           if (focusedComponent === `multiple-sample-dataset${i}`) {
-            console.log('Match found! Processing dataset', i);
             event.preventDefault();
             navigator.clipboard.readText().then(clipboardData => {
               if (clipboardData.trim()) {
@@ -566,21 +559,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     event.preventDefault();
     const pastedData = event.clipboardData.getData('text/plain');
     
-    console.log('handlePasteData called for dataset:', datasetIndex);
-    console.log('Pasted data:', pastedData);
-    
     if (pastedData.trim()) {
       const lines = pastedData.trim().split('\n');
       
       // Check if this is multi-column data (detect tabs in any line)
       const hasMultipleColumns = lines.some(line => line.includes('\t'));
       
-      console.log('Number of lines:', lines.length);
-      console.log('Has multiple columns (tabs detected):', hasMultipleColumns);
-      
       if (hasMultipleColumns) {
         // Delegate to multi-column paste handler
-        console.log('Delegating to handleFocusedCellPaste for multi-column data');
         handleFocusedCellPaste(datasetIndex, pastedData);
         return;
       }
@@ -660,14 +646,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
   // Handle focused cell paste for multi-column capability
   const handleFocusedCellPaste = (datasetIndex: number, pasteData: string) => {
-    console.log('=== handleFocusedCellPaste called ===');
-    console.log('Dataset index:', datasetIndex);
-    console.log('Focused cells array:', focusedCells);
-    console.log('Focused cell for this dataset:', focusedCells[datasetIndex]);
-    console.log('Paste data length:', pasteData.length);
-    
     if (focusedCells[datasetIndex] === -1) {
-      console.log('STOPPING: No cell focused for dataset', datasetIndex);
       toast({
         title: "No Cell Focused",
         description: "Please click on a data cell first to set the starting position for paste.",
@@ -675,16 +654,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       });
       return;
     }
-    
-    console.log('Cell is focused, proceeding with paste...');
 
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
-    
-    // Debug logging
-    console.log('Paste data rows:', rows.length);
-    console.log('First row:', rows[0]);
-    console.log('First row has tabs?', rows[0].includes('\t'));
     
     // First pass: determine number of columns
     let maxColumns = 0;
@@ -696,9 +668,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       if (row.includes('\t')) {
         // Excel data with tabs - standard Excel copy format
         cells = row.split('\t');
-        if (rowIdx === 0) {
-          console.log('Tab-separated cells:', cells);
-        }
       } else {
         // No tabs - could be single column or comma-separated
         const trimmedRow = row.trim();
@@ -740,18 +709,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           // No commas, treat as single cell
           cells = [trimmedRow];
         }
-        
-        if (rowIdx === 0) {
-          console.log('Non-tab cells:', cells);
-        }
       }
       
       maxColumns = Math.max(maxColumns, cells.length);
       parsedRows.push(cells);
     });
-    
-    console.log('Max columns detected:', maxColumns);
-    console.log('Total rows parsed:', parsedRows.length);
     
     // Create array for ALL columns in clipboard (not limited by current numDatasets)
     const datasetValues: number[][] = Array.from({ length: maxColumns }, () => []);
@@ -915,10 +877,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
   const handleCellPaste = (datasetIndex: number) => (event: React.ClipboardEvent) => {
     event.preventDefault();
     const pastedData = event.clipboardData.getData('text/plain');
-    
-    console.log('Paste triggered! Dataset index:', datasetIndex);
-    console.log('Focused cell for this dataset:', focusedCells[datasetIndex]);
-    console.log('Pasted data length:', pastedData.length);
     
     if (pastedData.trim()) {
       // Use focused cell paste for consistent behavior
@@ -1905,6 +1863,13 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                               <div
                                 className="cursor-pointer hover:bg-blue-50 rounded p-2"
                                 onClick={() => {
+                                  // Clear ALL dataset focus states before focusing this one
+                                  const newFocused = new Array(numDatasets).fill(-1);
+                                  setFocusedCells(newFocused);
+                                  
+                                  const newEditing = new Array(numDatasets).fill(-1);
+                                  setEditingCells(newEditing);
+                                  
                                   document.getElementById(`add-data-input-${datasetIndex}`)?.focus();
                                   (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
                                 }}
@@ -1926,9 +1891,15 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                 className="px-4 py-2 text-xs text-gray-900 cursor-pointer"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  const newFocused = [...focusedCells];
+                                  // Clear ALL dataset focus states, then set only this one
+                                  const newFocused = new Array(numDatasets).fill(-1);
                                   newFocused[datasetIndex] = index;
                                   setFocusedCells(newFocused);
+                                  
+                                  // Also clear editing states for all other datasets
+                                  const newEditing = new Array(numDatasets).fill(-1);
+                                  setEditingCells(newEditing);
+                                  
                                   (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
                                   // Make this div focusable and focus it to maintain focus state
                                   e.currentTarget.focus();
@@ -1944,10 +1915,15 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                 onPaste={handleCellPaste(datasetIndex)}
                                 tabIndex={0}
                                 onFocus={() => {
-                                  // Ensure focused cell is set when this div gets focus
-                                  const newFocused = [...focusedCells];
+                                  // Clear ALL dataset focus states, then set only this one
+                                  const newFocused = new Array(numDatasets).fill(-1);
                                   newFocused[datasetIndex] = index;
                                   setFocusedCells(newFocused);
+                                  
+                                  // Also clear editing states for all other datasets
+                                  const newEditing = new Array(numDatasets).fill(-1);
+                                  setEditingCells(newEditing);
+                                  
                                   (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
                                 }}
                                 style={{
@@ -2034,9 +2010,15 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                 }
                               }}
                               onFocus={() => {
-                                const newFocused = [...focusedCells];
+                                // Clear ALL dataset focus states, then set only this one
+                                const newFocused = new Array(numDatasets).fill(-1);
                                 newFocused[datasetIndex] = datasets[datasetIndex]?.length || 0;
                                 setFocusedCells(newFocused);
+                                
+                                // Also clear editing states for all other datasets
+                                const newEditing = new Array(numDatasets).fill(-1);
+                                setEditingCells(newEditing);
+                                
                                 (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
                               }}
                               onPaste={(e) => {
