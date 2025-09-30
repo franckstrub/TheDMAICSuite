@@ -3014,8 +3014,50 @@ export function anovaOneWay(
   const sampleSizes = datasets.map(group => group.length);
   const totalN = sampleSizes.reduce((sum, n) => sum + n, 0);
 
-  if (k < 2) throw new Error('Need at least 2 groups');
-  if (totalN < k + 1) throw new Error('Insufficient sample size');
+  if (k < 2) {
+    //throw new Error('Need at least 2 groups');
+    return {
+      fStatistic: 0,
+      pValue: 0,
+      dfBetween: 0,
+      dfWithin: 0,
+      ssBetween: 0,
+      ssWithin: 0,
+      msBetween: 0,
+      msWithin: 0,
+      rSquared: 0,
+      rSquaredAdj: 0,
+      rSquaredPred: 0,
+      pooledstdev: 0,
+      grandMean: 0,
+      groupMeans: [],
+      confidenceIntervals: [],
+      equalVariances:true,
+      isSignificant: true,
+    };
+  }
+  if (totalN < k + 1) {
+    //throw new Error('Insufficient sample size');
+    return {
+      fStatistic: 0,
+      pValue: 0,
+      dfBetween: 0,
+      dfWithin: 0,
+      ssBetween: 0,
+      ssWithin: 0,
+      msBetween: 0,
+      msWithin: 0,
+      rSquared: 0,
+      rSquaredAdj: 0,
+      rSquaredPred: 0,
+      pooledstdev: 0,
+      grandMean: 0,
+      groupMeans: [],
+      confidenceIntervals: [],
+      equalVariances:true,
+      isSignificant: true,
+    };
+  }
 
   // Test for equality of variances using proper F-distribution
   const variancesTest = multipleSVarianceTest({
@@ -3151,7 +3193,16 @@ export function bartlettTest(
 ): BartlettTestResult {
   
   if (datasets.length < 2) {
-    throw new Error("Bartlett's test requires at least 2 groups");
+    //throw new Error("Bartlett's test requires at least 2 groups");
+    return {
+    varTestName: "",
+    varStatistic: 0,
+    varp_Value: 0,
+    varCriteria: 0,
+    varianceConfidenceIntervals: [],
+    vardfBarlett: 0,
+    varDF2: 0,
+    };
   }
   
   // Calculate sample sizes, means, and variances for each group
@@ -3161,7 +3212,16 @@ export function bartlettTest(
   
   // Check that all groups have at least 2 observations
   if (sampleSizes.some(n => n < 2)) {
-    throw new Error("Each group must have at least 2 observations");
+    //throw new Error("Each group must have at least 2 observations");
+    return {
+    varTestName: "",
+    varStatistic: 0,
+    varp_Value: 0,
+    varCriteria: 0,
+    varianceConfidenceIntervals: [],
+    vardfBarlett: 0,
+    varDF2: 0,
+    };
   }
   
   // Calculate sample variances for each group
@@ -3261,7 +3321,7 @@ export function bartlettTest(
     varCriteria: criticalValue,
     varianceConfidenceIntervals,
     vardfBarlett: dfBartlett,
-    vardf2: 0,
+    varDF2: 0,
   };
 }
 
@@ -3295,7 +3355,16 @@ export function leveneTest(
 ): LeveneTestResult {
   
   if (datasets.length < 2) {
-    throw new Error("Levene's test requires at least 2 groups");
+    //throw new Error("Levene's test requires at least 2 groups");
+    return {
+    varTestName: ``,
+    varStatistic: 0,
+    varp_Value: 0,
+    varCriteria: 0,
+    varianceConfidenceIntervals:[],
+    vardfWithin: 0,
+    vardfBetween: 0,
+  };
   }
   
   const k = datasets.length;
@@ -3303,7 +3372,16 @@ export function leveneTest(
   const totalN = sampleSizes.reduce((sum, n) => sum + n, 0);
   
   if (sampleSizes.some(n => n < 2)) {
-    throw new Error("Each group must have at least 2 observations");
+    //throw new Error("Each group must have at least 2 observations");
+    return {
+    varTestName: ``,
+    varStatistic: 0,
+    varp_Value: 0,
+    varCriteria: 0,
+    varianceConfidenceIntervals:[],
+    vardfWithin: 0,
+    vardfBetween: 0,
+  };
   }
   
   // Calculate sample variances for confidence intervals
@@ -3447,14 +3525,20 @@ export function Bonferroni(
 ): BonferroniResult {
   
   if (datasets.length < 2) {
-    throw new Error("Bonferroni's CI calculation requires at least 2 groups");
+    return {
+      varianceConfidenceIntervals:[],
+    };
+    //throw new Error("Bonferroni's CI calculation requires at least 2 groups");
   }
   
   const k = datasets.length;
   const sampleSizes = datasets.map(group => group.length);
   
   if (sampleSizes.some(n => n < 2)) {
-    throw new Error("Each group must have at least 2 observations");
+    return {
+      varianceConfidenceIntervals:[],
+    };
+    //throw new Error("Each group must have at least 2 observations");
   }
   
   // Calculate sample variances for confidence intervals
@@ -3521,13 +3605,29 @@ export function kruskalWallisTest(
 ): kruskalWallisTestResult {
   
   if (datasets.length < 2) {
-    throw new Error("Kruskal-Wallis test requires at least 2 groups");
+    //throw new Error("Kruskal-Wallis test requires at least 2 groups");
+    return {
+    medianTestName: ``,
+    medianStatistic: 0,
+    medianp_Value: 0,
+    medianCriteria: 0,
+    medianConfidenceIntervals: [],
+    dfKruskal: 0,
+    };
   }
 
   // Remove empty groups and validate data
   const validDatasets = datasets.filter(group => group.length > 0);
   if (validDatasets.length < 2) {
-    throw new Error("Kruskal-Wallis test requires at least 2 non-empty groups");
+    return {
+    medianTestName: ``,
+    medianStatistic: 0,
+    medianp_Value: 0,
+    medianCriteria: 0,
+    medianConfidenceIntervals: [],
+    dfKruskal: 0,
+    };
+    //throw new Error("Kruskal-Wallis test requires at least 2 non-empty groups");
   }
 
   // Combine all data points with their group labels
@@ -3535,7 +3635,15 @@ export function kruskalWallisTest(
   validDatasets.forEach((group, groupIndex) => {
     group.forEach(value => {
       if (typeof value !== 'number' || isNaN(value)) {
-        throw new Error(`Invalid data point in group ${groupIndex}: ${value}`);
+        //throw new Error(`Invalid data point in group ${groupIndex}: ${value}`);
+        return {
+          medianTestName: ``,
+          medianStatistic: 0,
+          medianp_Value: 0,
+          medianCriteria: 0,
+          medianConfidenceIntervals: [],
+          dfKruskal: 0,
+        };
       }
       allData.push({ value, group: groupIndex });
     });
@@ -3657,7 +3765,15 @@ export function mannWhitneyCI(
   significanceLevel: number
 ): MedianCI[] {
   if (datasets.length !== 2) {
-    throw new Error("Mann–Whitney requires exactly 2 datasets.");
+    return [
+      {
+        groupIndex: 0,
+        median: 0,
+        lower: 0,
+        upper: 0,
+      },
+    ];
+    //  new Error("Mann–Whitney requires exactly 2 datasets.");
   }
 
   const z = jStat.normal.inv(1 - significanceLevel / 2, 0, 1); // critical z for CI

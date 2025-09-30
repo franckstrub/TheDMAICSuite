@@ -2166,7 +2166,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                   μ<sub>{index + 1}</sub>: {mean.toFixed(3)}
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
-                                  [{testResults.meanTest.anovaconfidenceIntervals[index].lower.toFixed(3)}, {testResults.meanTest.anovaconfidenceIntervals[index].upper.toFixed(3)}]
+                                  {testResults.meanTest.anovaconfidenceIntervals && testResults.meanTest.anovaconfidenceIntervals[index] && testResults.meanTest.anovaconfidenceIntervals[index].lower !== undefined && testResults.meanTest.anovaconfidenceIntervals[index].upper !== undefined ? `[${testResults.meanTest.anovaconfidenceIntervals[index].lower.toFixed(3)}, ${testResults.meanTest.anovaconfidenceIntervals[index].upper.toFixed(3)}]` : 'N/A'}
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
                                   {testResults.normalityResults[index].sampleSize}
@@ -2507,7 +2507,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     </Card>
                     )}
 
-                    {ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && testResults.medianTest && (
+                    {ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && testResults.medianTest && numDatasets >= 2 && (
                   <Card className="p-2">                
                     <CardTitle className="text-lg">Multiple Sample Median test:</CardTitle>
                     <div className="text-lg justify-left mb-7">{testResults.medianTest.testName}'s test:</div>                    
@@ -2541,7 +2541,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                   η<sub>{index + 1}</sub>: {result.median.toFixed(3)}
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
-                                  {testResults.medianTest.confidenceIntervals && testResults.medianTest.confidenceIntervals[index] ? `[${testResults.medianTest.confidenceIntervals[index].lower.toFixed(3)}, ${testResults.medianTest.confidenceIntervals[index].upper.toFixed(3)}]` : 'N/A'}
+                                  {testResults.medianTest.confidenceIntervals && testResults.medianTest.confidenceIntervals[index] && testResults.medianTest.confidenceIntervals[index].lower !== undefined && testResults.medianTest.confidenceIntervals[index].upper !== undefined ? `[${testResults.medianTest.confidenceIntervals[index].lower.toFixed(3)}, ${testResults.medianTest.confidenceIntervals[index].upper.toFixed(3)}]` : 'N/A'}
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
                                   {testResults.normalityResults[index].sampleSize}
@@ -2553,7 +2553,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                     )}
                     
-                    {testResults.medianTest.confidenceIntervals && numDatasets === 2 && testResults.medianTest.confidenceIntervals[0] && testResults.medianTest.confidenceIntervals[1] && (
+                    {testResults.medianTest.confidenceIntervals && numDatasets === 2 && testResults.medianTest.confidenceIntervals[0] && testResults.medianTest.confidenceIntervals[1] && testResults.medianTest.confidenceIntervals[0].median !== undefined && testResults.medianTest.confidenceIntervals[1].median !== undefined && (
                     <div className="text-gray-600 font-medium">Difference (η1-η2):&nbsp;
                       {(testResults.medianTest.confidenceIntervals[0].median - testResults.medianTest.confidenceIntervals[1].median).toFixed(3)}</div>
                     )}
