@@ -646,7 +646,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
   // Handle focused cell paste for multi-column capability
   const handleFocusedCellPaste = (datasetIndex: number, pasteData: string) => {
-    if (focusedCells[datasetIndex] === -1) {
+    // If no cell is focused, check if this dataset is the active one (via global focus indicator)
+    const focusedComponent = (window as any).focusedComponent;
+    const isThisDatasetActive = focusedComponent === `multiple-sample-dataset${datasetIndex}`;
+    
+    if (focusedCells[datasetIndex] === -1 && !isThisDatasetActive) {
       toast({
         title: "No Cell Focused",
         description: "Please click on a data cell first to set the starting position for paste.",
@@ -654,6 +658,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       });
       return;
     }
+    
+    // If dataset is empty or no specific cell is focused, start from position 0
+    const startPosition = focusedCells[datasetIndex] === -1 ? 0 : focusedCells[datasetIndex];
 
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
@@ -774,7 +781,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     setUndoStates(newUndoStates);
 
     // Use focused cell as starting position for all datasets
-    const startIndex = focusedCells[datasetIndex];
+    const startIndex = startPosition;
     
     // Extend datasets array if clipboard has more columns than current datasets
     const newDatasets = [...datasets];
