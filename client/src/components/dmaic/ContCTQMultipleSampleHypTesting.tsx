@@ -946,11 +946,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       }));
       setShowUndoButton(true);
       
-      setDatasets(prev => {
-        const newDatasets = [...prev];
-        newDatasets[datasetIndex] = [];
-        return newDatasets;
-      });
+      const newDatasets = [...datasets];
+      newDatasets[datasetIndex] = [];
+      
+      setDatasets(newDatasets);
       
       setInputValues(prev => {
         const newInputValues = [...prev];
@@ -963,6 +962,22 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         newFocused[datasetIndex] = -1;
         return newFocused;
       });
+      
+      // Re-run tests with cleared dataset to update results
+      const currentConfig = ContCTQMultipleSampleHypTestData[ctqId];
+      if (currentConfig && (currentConfig.enableMeanTest || currentConfig.enableVarianceTest || currentConfig.enableMedianTest)) {
+        handleRunTest(
+          currentConfig.enableMeanTest ?? false,
+          currentConfig.enableVarianceTest ?? false,
+          currentConfig.enableMedianTest ?? false,
+          newDatasets,
+          parseFloat(significanceLevel),
+          currentConfig.HaMean || "notEqual",
+          currentConfig.HaVariance || "notEqual",
+          currentConfig.HaMedian || "notEqual",
+          factorOfClassification,
+        );
+      }
       
       toast({
         title: `Dataset ${datasetIndex + 1} Cleared`,
