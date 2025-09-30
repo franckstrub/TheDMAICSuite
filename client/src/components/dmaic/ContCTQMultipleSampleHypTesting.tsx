@@ -277,12 +277,18 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
       if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName)) {
         
+        console.log('Ctrl+V detected! Active tab:', activeTab, 'CTQ Name:', ctqName);
+        
         // Check if this Multiple Sample component should handle the paste based on global context
         const focusedComponent = (window as any).focusedComponent;
+        
+        console.log('Focused component:', focusedComponent);
+        console.log('Num datasets:', numDatasets);
         
         // Check if any of our datasets is focused
         for (let i = 0; i < numDatasets; i++) {
           if (focusedComponent === `multiple-sample-dataset${i}`) {
+            console.log('Match found! Processing dataset', i);
             event.preventDefault();
             navigator.clipboard.readText().then(clipboardData => {
               if (clipboardData.trim()) {
