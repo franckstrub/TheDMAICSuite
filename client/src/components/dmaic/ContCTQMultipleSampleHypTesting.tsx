@@ -649,16 +649,24 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
     
+    // Debug logging
+    console.log('Paste data rows:', rows.length);
+    console.log('First row:', rows[0]);
+    console.log('First row has tabs?', rows[0].includes('\t'));
+    
     // First pass: determine number of columns
     let maxColumns = 0;
     const parsedRows: string[][] = [];
     
-    rows.forEach(row => {
+    rows.forEach((row, rowIdx) => {
       let cells: string[] = [];
       
       if (row.includes('\t')) {
         // Excel data with tabs - standard Excel copy format
         cells = row.split('\t');
+        if (rowIdx === 0) {
+          console.log('Tab-separated cells:', cells);
+        }
       } else {
         // No tabs - could be single column or comma-separated
         const trimmedRow = row.trim();
@@ -700,11 +708,18 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           // No commas, treat as single cell
           cells = [trimmedRow];
         }
+        
+        if (rowIdx === 0) {
+          console.log('Non-tab cells:', cells);
+        }
       }
       
       maxColumns = Math.max(maxColumns, cells.length);
       parsedRows.push(cells);
     });
+    
+    console.log('Max columns detected:', maxColumns);
+    console.log('Total rows parsed:', parsedRows.length);
     
     // Create array for ALL columns in clipboard (not limited by current numDatasets)
     const datasetValues: number[][] = Array.from({ length: maxColumns }, () => []);
