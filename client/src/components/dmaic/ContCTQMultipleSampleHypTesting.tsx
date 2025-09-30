@@ -635,6 +635,200 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     }
   };
 
+  // Handle focused cell paste for multi-column capability
+  const handleFocusedCellPaste = (datasetIndex: number, pasteData: string) => {
+    if (focusedCells[datasetIndex] === -1) {
+      toast({
+        title: "No Cell Focused",
+        description: "Please click on a data cell first to set the starting position for paste.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
+    const rows = pasteData.trim().split('\n');
+    const datasetValues: number[][] = Array.from({ length: numDatasets }, () => []);
+    let maxColumns = 0;
+    
+    rows.forEach(row => {
+      let cells: string[] = [];
+      
+      if (row.includes('\t')) {
+        // Excel data with tabs - standard Excel copy format
+        cells = row.split('\t');
+      } else {
+        // No tabs - could be single column or comma-separated
+        const trimmedRow = row.trim();
+        
+        // Check if this looks like a single French decimal number (digits, optional comma, digits)
+        const frenchDecimalPattern = /^-?\d+,\d+$/;
+        if (frenchDecimalPattern.test(trimmedRow)) {
+          // This is a single French decimal number, don't split by comma
+          cells = [trimmedRow];
+        } else if (trimmedRow.includes(',')) {
+          // Contains commas but doesn't match French decimal pattern
+          // Split by comma but be careful about decimal commas
+          const parts = trimmedRow.split(',');
+          const tempCells = [];
+          
+          for (let i = 0; i < parts.length; i++) {
+            const part = parts[i].trim();
+            
+            // Check if this part combined with next part could be a French decimal
+            if (i < parts.length - 1) {
+              const nextPart = parts[i + 1].trim();
+              const combined = part + ',' + nextPart;
+              
+              // If combined looks like a French decimal, combine them
+              if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
+                tempCells.push(combined);
+                i++; // Skip next part as we combined it
+                continue;
+              }
+            }
+            
+            // Otherwise, treat as separate cell
+            if (part !== '') {
+              tempCells.push(part);
+            }
+          }
+          cells = tempCells;
+        } else {
+          // No commas, treat as single cell
+          cells = [trimmedRow];
+        }
+      }
+      
+      maxColumns = Math.max(maxColumns, cells.length);
+      
+      // Process each column
+      cells.forEach((cell, colIndex) => {
+        if (colIndex < numDatasets) {
+          const trimmedCell = cell.trim();
+          if (!(trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null')) {
+            // Handle different decimal separators and number formats (French regional settings support)
+            let processedValue = trimmedCell;
+            
+            // Handle French decimal format (comma to dot conversion)
+            if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+              processedValue = trimmedCell.replace(',', '.');
+            }
+            
+            // Remove any thousands separators
+            processedValue = processedValue.replace(/[\s']/g, '');
+            
+            // Handle thousands separators with commas (US format)
+            if (processedValue.includes(',') && processedValue.includes('.')) {
+              const parts = processedValue.split('.');
+              if (parts.length === 2) {
+                const integerPart = parts[0].replace(/,/g, '');
+                processedValue = integerPart + '.' + parts[1];
+              }
+            }
+
+            const numericValue = parseFloat(processedValue);
+            if (!isNaN(numericValue) && isFinite(numericValue)) {
+              datasetValues[colIndex].push(numericValue);
+            }
+          }
+        }
+      });
+    });
+
+    // Check if we have any valid data
+    const totalValues = datasetValues.reduce((sum, arr) => sum + arr.length, 0);
+    if (totalValues === 0) {
+      toast({
+        title: "No Valid Data",
+        description: "No valid numeric data found in clipboard.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Save current state for undo for all affected datasets
+    const affectedDatasets = datasetValues
+      .map((values, idx) => ({ idx, values }))
+      .filter(({ values }) => values.length > 0);
+    
+    const newUndoStates = { ...undoStates };
+    affectedDatasets.forEach(({ idx }) => {
+      newUndoStates[idx] = JSON.parse(JSON.stringify(datasets[idx] || []));
+    });
+    setUndoStates(newUndoStates);
+
+    // Use focused cell as starting position for all datasets
+    const startIndex = focusedCells[datasetIndex];
+    
+    // Update all affected datasets
+    const newDatasets = [...datasets];
+    affectedDatasets.forEach(({ idx, values }) => {
+      const updatedPoints = [...(newDatasets[idx] || [])];
+      const endIndex = startIndex + values.length - 1;
+      
+      // Extend array if necessary
+      while (updatedPoints.length <= endIndex) {
+        updatedPoints.push({
+          indexNumber: updatedPoints.length + 1,
+          dataValue: 0
+        });
+      }
+
+      // Paste values
+      values.forEach((value, i) => {
+        const targetIndex = startIndex + i;
+        updatedPoints[targetIndex] = {
+          indexNumber: targetIndex + 1,
+          dataValue: value
+        };
+      });
+
+      newDatasets[idx] = updatedPoints;
+    });
+
+    setDatasets(newDatasets);
+    
+    // Show appropriate toast message
+    if (affectedDatasets.length === 1) {
+      toast({
+        title: `Data Pasted to Dataset ${affectedDatasets[0].idx + 1}`,
+        description: `Pasted ${affectedDatasets[0].values.length} values starting from position ${startIndex + 1}.`,
+      });
+    } else {
+      const datasetNames = affectedDatasets.map(({ idx }) => idx + 1).join(', ');
+      const message = affectedDatasets
+        .map(({ idx, values }) => `Dataset ${idx + 1}: ${values.length} values`)
+        .join(', ');
+      toast({
+        title: "Data Pasted to Multiple Datasets",
+        description: `Pasted to datasets ${datasetNames}. ${message} starting from position ${startIndex + 1}.`,
+      });
+    }
+
+    // Show warning if more columns than datasets were detected
+    if (maxColumns > numDatasets) {
+      setTimeout(() => {
+        toast({
+          title: "Warning",
+          description: `Clipboard contains ${maxColumns} columns but only ${numDatasets} datasets. Only first ${numDatasets} columns were pasted!`,
+          variant: "destructive",
+        });
+      }, 500);
+    }
+  };
+
+  // Handle paste specifically for editing cells
+  const handleCellPaste = (datasetIndex: number) => (event: React.ClipboardEvent) => {
+    event.preventDefault();
+    const pastedData = event.clipboardData.getData('text/plain');
+    
+    if (pastedData.trim()) {
+      // Use focused cell paste for consistent behavior
+      handleFocusedCellPaste(datasetIndex, pastedData);
+    }
+  };
+
   const addDataPoint = (datasetIndex: number, value: string) => {
     if (!value.trim()) return;
     
@@ -970,73 +1164,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     const newEditingCells = [...editingCells];
     newEditingCells[datasetIndex] = -1;
     setEditingCells(newEditingCells);
-  };
-
-  const handleFocusedCellPaste = (datasetIndex: number, clipboardData: string) => {
-    const lines = clipboardData.trim().split('\n');
-    const values: number[] = [];
-    
-    for (const line of lines) {
-      // Handle both comma and tab separated values
-      const parts = line.split(/[\t,]/);
-      for (const part of parts) {
-        const cleanedValue = part.trim().replace(/,/g, '.');
-        const numericValue = parseFloat(cleanedValue);
-        if (!isNaN(numericValue)) {
-          values.push(numericValue);
-        }
-      }
-    }
-    
-    if (values.length === 0) {
-      toast({
-        title: "No Valid Data",
-        description: "No valid numeric data found in clipboard.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Save current state for undo
-    setUndoStates(prev => ({
-      ...prev,
-      [datasetIndex]: [...datasets[datasetIndex]]
-    }));
-    setShowUndoButton(true);
-    
-    setDatasets(prev => {
-      const newDatasets = [...prev];
-      const focusedIndex = focusedCells[datasetIndex];
-      const currentDataset = [...newDatasets[datasetIndex]];
-      
-      // Insert values starting from focused cell
-      values.forEach((value, index) => {
-        const targetIndex = focusedIndex + index;
-        if (targetIndex < currentDataset.length) {
-          // Replace existing value
-          currentDataset[targetIndex] = { ...currentDataset[targetIndex], dataValue: value };
-        } else {
-          // Add new value
-          currentDataset.push({ 
-            indexNumber: currentDataset.length + 1, 
-            dataValue: value 
-          });
-        }
-      });
-      
-      // Reindex the dataset
-      currentDataset.forEach((point, index) => {
-        point.indexNumber = index + 1;
-      });
-      
-      newDatasets[datasetIndex] = currentDataset;
-      return newDatasets;
-    });
-    
-    toast({
-      title: "Data Pasted",
-      description: `${values.length} values pasted successfully into Dataset ${datasetIndex + 1}.`,
-    });
   };
 
   const calculateNormalityTests = (datasets: DataPoint[][]) => {
@@ -1649,11 +1776,11 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   {/* Excel Import Instructions */}
                   <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm mb-4">
                     <div className="text-blue-800 font-medium mb-1">Excel Import Format:</div>
-                    <div className="text-blue-700">Copy single column of numeric values from Excel</div>
+                    <div className="text-blue-700">Copy single or multiple columns of numeric values from Excel</div>
                     <div className="text-blue-600 text-xs mt-1">
-                      Ctrl+V (Cmd+V on Mac) to paste <br></br>
-                      Ctrl+Z (Cmd+Z on Mac) to undo <br></br>
-                      Click any cell in the table to paste
+                      <strong>Multi-column paste:</strong> Click any cell in Dataset 1, then Ctrl+V to paste multiple columns to all datasets<br></br>
+                      Ctrl+V (Cmd+V on Mac) to paste • Ctrl+Z (Cmd+Z on Mac) to undo<br></br>
+                      Click any cell in the table to set paste starting position
                     </div>
                   </div>
 
@@ -1700,11 +1827,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                               </td>
                               <td 
                                 className="px-4 py-2 text-xs text-gray-900 cursor-pointer"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
                                   const newFocused = [...focusedCells];
                                   newFocused[datasetIndex] = index;
                                   setFocusedCells(newFocused);
                                   (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
+                                  // Make this div focusable and focus it to maintain focus state
+                                  e.currentTarget.focus();
                                 }}
                                 onDoubleClick={() => {
                                   const newEditingCells = [...editingCells];
@@ -1714,10 +1844,19 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                   newEditValues[datasetIndex] = datasets[datasetIndex][index].dataValue.toString();
                                   setEditValues(newEditValues);
                                 }}
+                                onPaste={handleCellPaste(datasetIndex)}
+                                tabIndex={0}
+                                onFocus={() => {
+                                  // Ensure focused cell is set when this div gets focus
+                                  const newFocused = [...focusedCells];
+                                  newFocused[datasetIndex] = index;
+                                  setFocusedCells(newFocused);
+                                  (window as any).focusedComponent = `multiple-sample-dataset${datasetIndex}`;
+                                }}
                                 style={{
                                   backgroundColor: focusedCells[datasetIndex] === index ? '#dbeafe' : 'transparent'
                                 }}
-                                title="Click to focus for paste | Double-click to edit value | Use Ctrl+V to paste from focused position"
+                                title="Single click to focus (blue background), then Ctrl+V to paste data starting from this row. Double-click to edit value."
                               >
                                 {editingCells[datasetIndex] === index ? (
                                   <Input
