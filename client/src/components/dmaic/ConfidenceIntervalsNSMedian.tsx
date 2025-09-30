@@ -5,8 +5,6 @@ interface ConfidenceIntervalsNSMedianProps {
   ctqName: string;
   medians: number[];
   confidenceIntervals: Array<{
-    groupIndex: number;
-    median: number;
     lower: number;
     upper: number;
   }>;
@@ -114,7 +112,7 @@ export default function ConfidenceIntervalsNSMedian({
       mode: 'lines',
       name: 'Median Connection',
       line: { 
-        color: 'blue', 
+        color: 'green', 
         width: 2,
         dash: 'dash'
       },
@@ -131,7 +129,7 @@ export default function ConfidenceIntervalsNSMedian({
       y: median,
       text: `η${index + 1}`,
       showarrow: false,
-      font: { size: 12, color: 'blue', weight: 'bold' },
+      font: { size: 12, color: 'green', weight: 'bold' },
       xanchor: 'center',
       yanchor: 'bottom',
       yshift: 8,
