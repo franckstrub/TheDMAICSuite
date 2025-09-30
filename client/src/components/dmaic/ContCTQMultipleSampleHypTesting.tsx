@@ -884,6 +884,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     event.preventDefault();
     const pastedData = event.clipboardData.getData('text/plain');
     
+    console.log('Paste triggered! Dataset index:', datasetIndex);
+    console.log('Focused cell for this dataset:', focusedCells[datasetIndex]);
+    console.log('Pasted data length:', pastedData.length);
+    
     if (pastedData.trim()) {
       // Use focused cell paste for consistent behavior
       handleFocusedCellPaste(datasetIndex, pastedData);
