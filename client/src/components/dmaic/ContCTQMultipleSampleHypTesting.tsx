@@ -660,7 +660,14 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
   // Handle focused cell paste for multi-column capability
   const handleFocusedCellPaste = (datasetIndex: number, pasteData: string) => {
+    console.log('=== handleFocusedCellPaste called ===');
+    console.log('Dataset index:', datasetIndex);
+    console.log('Focused cells array:', focusedCells);
+    console.log('Focused cell for this dataset:', focusedCells[datasetIndex]);
+    console.log('Paste data length:', pasteData.length);
+    
     if (focusedCells[datasetIndex] === -1) {
+      console.log('STOPPING: No cell focused for dataset', datasetIndex);
       toast({
         title: "No Cell Focused",
         description: "Please click on a data cell first to set the starting position for paste.",
@@ -668,6 +675,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       });
       return;
     }
+    
+    console.log('Cell is focused, proceeding with paste...');
 
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
