@@ -648,8 +648,10 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
 
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
-    const datasetValues: number[][] = Array.from({ length: numDatasets }, () => []);
+    
+    // First pass: determine number of columns
     let maxColumns = 0;
+    const parsedRows: string[][] = [];
     
     rows.forEach(row => {
       let cells: string[] = [];
@@ -701,36 +703,40 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       }
       
       maxColumns = Math.max(maxColumns, cells.length);
-      
-      // Process each column
+      parsedRows.push(cells);
+    });
+    
+    // Create array for ALL columns in clipboard (not limited by current numDatasets)
+    const datasetValues: number[][] = Array.from({ length: maxColumns }, () => []);
+    
+    // Second pass: process values into columns
+    parsedRows.forEach(cells => {
       cells.forEach((cell, colIndex) => {
-        if (colIndex < numDatasets) {
-          const trimmedCell = cell.trim();
-          if (!(trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null')) {
-            // Handle different decimal separators and number formats (French regional settings support)
-            let processedValue = trimmedCell;
-            
-            // Handle French decimal format (comma to dot conversion)
-            if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
-              processedValue = trimmedCell.replace(',', '.');
+        const trimmedCell = cell.trim();
+        if (!(trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null')) {
+          // Handle different decimal separators and number formats (French regional settings support)
+          let processedValue = trimmedCell;
+          
+          // Handle French decimal format (comma to dot conversion)
+          if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+            processedValue = trimmedCell.replace(',', '.');
+          }
+          
+          // Remove any thousands separators
+          processedValue = processedValue.replace(/[\s']/g, '');
+          
+          // Handle thousands separators with commas (US format)
+          if (processedValue.includes(',') && processedValue.includes('.')) {
+            const parts = processedValue.split('.');
+            if (parts.length === 2) {
+              const integerPart = parts[0].replace(/,/g, '');
+              processedValue = integerPart + '.' + parts[1];
             }
-            
-            // Remove any thousands separators
-            processedValue = processedValue.replace(/[\s']/g, '');
-            
-            // Handle thousands separators with commas (US format)
-            if (processedValue.includes(',') && processedValue.includes('.')) {
-              const parts = processedValue.split('.');
-              if (parts.length === 2) {
-                const integerPart = parts[0].replace(/,/g, '');
-                processedValue = integerPart + '.' + parts[1];
-              }
-            }
+          }
 
-            const numericValue = parseFloat(processedValue);
-            if (!isNaN(numericValue) && isFinite(numericValue)) {
-              datasetValues[colIndex].push(numericValue);
-            }
+          const numericValue = parseFloat(processedValue);
+          if (!isNaN(numericValue) && isFinite(numericValue)) {
+            datasetValues[colIndex].push(numericValue);
           }
         }
       });
@@ -761,13 +767,18 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     // Use focused cell as starting position for all datasets
     const startIndex = focusedCells[datasetIndex];
     
-    // Update all affected datasets
+    // Extend datasets array if clipboard has more columns than current datasets
     const newDatasets = [...datasets];
+    while (newDatasets.length < maxColumns) {
+      newDatasets.push([]);
+    }
+    
+    // Update all affected datasets - each maintains its own length from clipboard
     affectedDatasets.forEach(({ idx, values }) => {
       const updatedPoints = [...(newDatasets[idx] || [])];
       const endIndex = startIndex + values.length - 1;
       
-      // Extend array if necessary
+      // Extend array if necessary for this specific dataset
       while (updatedPoints.length <= endIndex) {
         updatedPoints.push({
           indexNumber: updatedPoints.length + 1,
@@ -775,7 +786,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         });
       }
 
-      // Paste values
+      // Paste values - respecting the specific length of this column
       values.forEach((value, i) => {
         const targetIndex = startIndex + i;
         updatedPoints[targetIndex] = {
@@ -788,6 +799,52 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     });
 
     setDatasets(newDatasets);
+    
+    // Update numDatasets if we added new datasets
+    if (maxColumns > numDatasets) {
+      setNumDatasets(maxColumns);
+      
+      // Extend other arrays to match
+      setDatasetDescriptions(prev => {
+        const newDescs = [...prev];
+        while (newDescs.length < maxColumns) {
+          newDescs.push(`Dataset ${newDescs.length + 1}`);
+        }
+        return newDescs;
+      });
+      
+      setFocusedCells(prev => {
+        const newFocused = [...prev];
+        while (newFocused.length < maxColumns) {
+          newFocused.push(-1);
+        }
+        return newFocused;
+      });
+      
+      setEditingCells(prev => {
+        const newEditing = [...prev];
+        while (newEditing.length < maxColumns) {
+          newEditing.push(-1);
+        }
+        return newEditing;
+      });
+      
+      setEditValues(prev => {
+        const newEdit = [...prev];
+        while (newEdit.length < maxColumns) {
+          newEdit.push('');
+        }
+        return newEdit;
+      });
+      
+      setInputValues(prev => {
+        const newInputs = [...prev];
+        while (newInputs.length < maxColumns) {
+          newInputs.push('');
+        }
+        return newInputs;
+      });
+    }
     
     // Show appropriate toast message
     if (affectedDatasets.length === 1) {
@@ -802,19 +859,8 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         .join(', ');
       toast({
         title: "Data Pasted to Multiple Datasets",
-        description: `Pasted to datasets ${datasetNames}. ${message} starting from position ${startIndex + 1}.`,
+        description: `Pasted to ${affectedDatasets.length} datasets. ${message} starting from position ${startIndex + 1}.`,
       });
-    }
-
-    // Show warning if more columns than datasets were detected
-    if (maxColumns > numDatasets) {
-      setTimeout(() => {
-        toast({
-          title: "Warning",
-          description: `Clipboard contains ${maxColumns} columns but only ${numDatasets} datasets. Only first ${numDatasets} columns were pasted!`,
-          variant: "destructive",
-        });
-      }, 500);
     }
   };
 
@@ -2130,7 +2176,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               </div>
               )}              
               <div className="pl-4 pr-4 grid grid-cols-3 gap-1 text-sm">
-                {ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest && (
+                {ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && testResults.meanTest &&
+                ContCTQMultipleSampleHypTestData[ctqId]?.datasets.length > 1 &&
+                testResults.normalityResults &&
+                testResults.normalityResults.length > 1 &&
+                testResults.normalityResults[0] &&
+                testResults.normalityResults[1] && 
+                testResults.normalityResults[0].sampleSize > 1 &&
+                testResults.normalityResults[1].sampleSize > 1 &&
+                ContCTQMultipleSampleHypTestData[ctqId]?.datasets[0].length > 1 && 
+                ContCTQMultipleSampleHypTestData[ctqId]?.datasets[1].length > 1 && (
                   <Card className="p-2">                
                     <CardTitle className="text-lg">Multiple Sample Mean test:</CardTitle>
                     {!testResults.meanTest.studentTestdone ? (
@@ -2166,7 +2221,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                                   μ<sub>{index + 1}</sub>: {mean.toFixed(3)}
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 font-medium text-[10px]">
-                                  {testResults.meanTest.anovaconfidenceIntervals && testResults.meanTest.anovaconfidenceIntervals[index] && testResults.meanTest.anovaconfidenceIntervals[index].lower !== undefined && testResults.meanTest.anovaconfidenceIntervals[index].upper !== undefined ? `[${testResults.meanTest.anovaconfidenceIntervals[index].lower.toFixed(3)}, ${testResults.meanTest.anovaconfidenceIntervals[index].upper.toFixed(3)}]` : 'N/A'}
+                                  [{testResults.meanTest.anovaconfidenceIntervals[index].lower.toFixed(3)}, {testResults.meanTest.anovaconfidenceIntervals[index].upper.toFixed(3)}]
                                 </td>
                                 <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[10px]">
                                   {testResults.normalityResults[index].sampleSize}
@@ -2390,7 +2445,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                   </Card>                
                 )}
 
-                {ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && testResults.varianceTest && (
+                {ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && testResults.varianceTest && 
+                ContCTQMultipleSampleHypTestData[ctqId]?.datasets.length > 1 &&
+                testResults.normalityResults &&
+                testResults.normalityResults.length > 1 &&
+                testResults.normalityResults[0] &&
+                testResults.normalityResults[1] && 
+                testResults.normalityResults[0].sampleSize > 1 &&
+                testResults.normalityResults[1].sampleSize > 1 &&
+                ContCTQMultipleSampleHypTestData[ctqId]?.datasets[0].length > 1 && 
+                ContCTQMultipleSampleHypTestData[ctqId]?.datasets[1].length > 1 && (
                   <Card className="p-2">                
                     <CardTitle className="text-lg">Multiple Sample Variance test:</CardTitle>
                     <div className="text-lg justify-left">{testResults.varianceTest.testName}'s test for Homogeneity of Variance:</div>                    
@@ -2507,7 +2571,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                     </Card>
                     )}
 
-                    {ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && testResults.medianTest && numDatasets >= 2 && (
+                    {ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && testResults.medianTest && 
+                    ContCTQMultipleSampleHypTestData[ctqId]?.datasets.length > 1 &&
+                    testResults.normalityResults &&
+                    testResults.normalityResults.length > 1 &&
+                    testResults.normalityResults[0] &&
+                    testResults.normalityResults[1] && 
+                    testResults.normalityResults[0].sampleSize > 1 &&
+                    testResults.normalityResults[1].sampleSize > 1 &&
+                    ContCTQMultipleSampleHypTestData[ctqId]?.datasets[0].length > 1 && 
+                    ContCTQMultipleSampleHypTestData[ctqId]?.datasets[1].length > 1 && (
                   <Card className="p-2">                
                     <CardTitle className="text-lg">Multiple Sample Median test:</CardTitle>
                     <div className="text-lg justify-left mb-7">{testResults.medianTest.testName}'s test:</div>                    
@@ -2553,7 +2626,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                       </div>
                     )}
                     
-                    {testResults.medianTest.confidenceIntervals && numDatasets === 2 && testResults.medianTest.confidenceIntervals[0] && testResults.medianTest.confidenceIntervals[1] && testResults.medianTest.confidenceIntervals[0].median !== undefined && testResults.medianTest.confidenceIntervals[1].median !== undefined && (
+                    {testResults.medianTest.confidenceIntervals && numDatasets === 2 && testResults.medianTest.confidenceIntervals[0] && testResults.medianTest.confidenceIntervals[1] && (
                     <div className="text-gray-600 font-medium">Difference (η1-η2):&nbsp;
                       {(testResults.medianTest.confidenceIntervals[0].median - testResults.medianTest.confidenceIntervals[1].median).toFixed(3)}</div>
                     )}
@@ -2609,7 +2682,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         )}  
         {/* multiple sample mean test BoxPlot visualization when showBoxPlot is true */}
                   
-        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest && (
+        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest &&
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets.length > 1 &&
+        testResults.normalityResults &&
+        testResults.normalityResults.length > 1 &&
+        testResults.normalityResults[0] &&
+        testResults.normalityResults[1] && 
+        testResults.normalityResults[0].sampleSize > 1 &&
+        testResults.normalityResults[1].sampleSize > 1 &&
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets[0].length > 1 && 
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets[1].length > 1 && (
           <div className="mt-6 space-y-6">
             {/* Box Plots */}
             <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="boxplot-section">
@@ -2650,7 +2732,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             </div>
           </div>
         )} 
-        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && (
+        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && 
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets.length > 1 &&
+        testResults.normalityResults &&
+        testResults.normalityResults.length > 1 &&
+        testResults.normalityResults[0] &&
+        testResults.normalityResults[1] && 
+        testResults.normalityResults[0].sampleSize > 1 &&
+        testResults.normalityResults[1].sampleSize > 1 &&
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets[0].length > 1 && 
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets[1].length > 1 && (
           <div className="mt-6 g-white rounded-lg border border-gray-200 p-4" data-testid="confidence-intervals-var-section">
             <h3 className="text-lg font-semibold mb-4">Confidence Intervals</h3>
             <ConfidenceIntervalsNSVariance
@@ -2667,7 +2758,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             />
           </div>  
         )}  
-        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && (
+        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && 
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets.length > 1 &&
+        testResults.normalityResults &&
+        testResults.normalityResults.length > 1 &&
+        testResults.normalityResults[0] &&
+        testResults.normalityResults[1] && 
+        testResults.normalityResults[0].sampleSize > 1 &&
+        testResults.normalityResults[1].sampleSize > 1 &&
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets[0].length > 1 && 
+        ContCTQMultipleSampleHypTestData[ctqId]?.datasets[1].length > 1 && (
           <div className="mt-6 space-y-6">
             {/* Box Plots */}
             <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="boxplot-median-section">
