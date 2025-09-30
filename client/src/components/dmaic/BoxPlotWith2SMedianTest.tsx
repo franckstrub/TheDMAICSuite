@@ -114,7 +114,7 @@ export default function BoxPlotWith2SMedianTest({
                   type: 'scatter',
                   mode: 'markers',
                   name: 'η1',
-                  marker: { color: 'red', size: 8, symbol: 'circle' },
+                  marker: { color: 'blue', size: 8, symbol: 'diamond' },
                 },
                 {
                   y: data1,
@@ -132,7 +132,7 @@ export default function BoxPlotWith2SMedianTest({
                   type: 'scatter',
                   mode: 'markers',
                   name: 'η2',
-                  marker: { color: 'red', size: 8, symbol: 'circle' },
+                  marker: { color: 'blue', size: 8, symbol: 'diamond' },
                 },
                 {
                   y: data2,
@@ -152,7 +152,7 @@ export default function BoxPlotWith2SMedianTest({
                   mode: 'lines',
                   name: 'Median Connection',
                   line: { 
-                    color: 'red', 
+                    color: 'blue', 
                     width: 1,
                     dash: 'dash' // Optional: makes it a dashed line
                   },
