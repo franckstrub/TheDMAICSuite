@@ -36,7 +36,7 @@ export default function BoxPlotWithNSMedianTest({
   const yBadge = (Math.max(...allValues) - Math.min(...allValues)) + Math.min(...allValues) + yExtraScale;
 
   // Build hypothesis text for multiple samples
-  let BadgetextH0 = 'H0: M1 = M2 = ... = Mn';
+  let BadgetextH0 = 'H0: (η1 = η2 = ... = ηn)';
   let Badgetext = BadgetextH0 + '<br>Ha: At least one median is different';
   
   if (df1 !== undefined) {
@@ -70,7 +70,7 @@ export default function BoxPlotWithNSMedianTest({
       type: 'scatter',
       mode: 'markers',
       name: `M${index + 1}`,
-      marker: { color: 'red', size: 8, symbol: 'circle' },
+      marker: { color: 'green', size: 8, symbol: 'diamond' },
       showlegend: false,
     });
     
@@ -97,7 +97,7 @@ export default function BoxPlotWithNSMedianTest({
       mode: 'lines',
       name: 'Median Connection',
       line: { 
-        color: 'red', 
+        color: 'green', 
         width: 1,
         dash: 'dash'
       },
@@ -120,7 +120,7 @@ export default function BoxPlotWithNSMedianTest({
     annotations.push({
       x: index,
       y: median,
-      text: `M${index + 1}`,
+      text: `η${index + 1}`,
       showarrow: false,
       font: { size: 12, color: 'red' },
       xanchor: 'center',

@@ -24,6 +24,7 @@ import BoxPlotWithNSMeanTest from './BoxPlotWithNSMeanTest.tsx';
 import ConfidenceIntervalsNSMean from './ConfidenceIntervalsNSMean.tsx';
 import ConfidenceIntervalsNSVariance from './ConfidenceIntervalsNSVariance';
 import BoxPlotWithNSMedianTest from './BoxPlotWithNSMedianTest';
+import ConfidenceIntervalsNSMedian from './ConfidenceIntervalsNSMedian.tsx';
 
 interface DataPoint {
   indexNumber: number;
@@ -2542,6 +2543,19 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 alphalevel={significanceLevel}
                 descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
                 df1={testResults.medianTest.df1}
+              />
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="boxplot-median-section">
+              <h3 className="text-lg font-semibold mb-4">Confidence Intervals</h3>
+              <ConfidenceIntervalsNSMedian
+                ctqName={ctqName}
+                medians={testResults.normalityResults.map(median => median.median)}
+                confidenceIntervals={testResults.medianTest.confidenceIntervals || []}
+                descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}                
+                title={`Multiple-Sample Median ${testResults.medianTest.testName}'s Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.medianTest.pValue}
+                alphalevel={significanceLevel}
+                Ha={alternateMedian}                
               />
             </div>
           </div>
