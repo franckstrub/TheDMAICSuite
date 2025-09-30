@@ -122,7 +122,7 @@ export default function BoxPlotWithNSMedianTest({
       y: median,
       text: `η${index + 1}`,
       showarrow: false,
-      font: { size: 12, color: 'red' },
+      font: { size: 12, color: 'green' },
       xanchor: 'center',
       yanchor: 'bottom',
       yshift: 5,

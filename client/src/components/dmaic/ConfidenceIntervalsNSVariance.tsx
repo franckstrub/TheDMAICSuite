@@ -116,7 +116,7 @@ export default function ConfidenceIntervalsNSVariance({
       mode: 'lines',
       name: 'StDev Connection',
       line: { 
-        color: 'red', 
+        color: 'blue', 
         width: 2,
         dash: 'dash'
       },
@@ -133,7 +133,7 @@ export default function ConfidenceIntervalsNSVariance({
       y: stdev,
       text: `σ${index + 1}`,
       showarrow: false,
-      font: { size: 12, color: 'red', weight: 'bold' },
+      font: { size: 12, color: 'blue', weight: 'bold' },
       xanchor: 'center',
       yanchor: 'bottom',
       yshift: 8,
