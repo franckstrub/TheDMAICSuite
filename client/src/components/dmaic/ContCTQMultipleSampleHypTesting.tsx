@@ -87,6 +87,7 @@ interface TestResults {
     lower: number;
     upper: number;
   }>;
+  anovaEqualVariances: boolean;
   studentTestdone: boolean;
   studentStatistic: number;
   studentpooledSE: number;
@@ -187,6 +188,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               anovarSquaredPred: 0,
               anovapValue: 0,
               anovaconfidenceIntervals: [],
+              anovaEqualVariances: true,
               studentTestdone: false,
               studentStatistic: 0,
               studentpooledSE: 0,
@@ -854,6 +856,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
       anovaFStatistic: multipleSMeanTestResult.anovaFStatistic,
       anovapValue: multipleSMeanTestResult.anovapValue,
       anovaconfidenceIntervals: multipleSMeanTestResult.anovaconfidenceIntervals,
+      anovaEqualVariances: multipleSMeanTestResult.anovaEqualVariances,
       studentTestdone: multipleSMeanTestResult.studentTestdone,
       studentStatistic: multipleSMeanTestResult.studentStatistic,
       studentpooledSE: multipleSMeanTestResult.studentpooledSE,
@@ -1117,6 +1120,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           anovaFStatistic: 0,
           anovapValue: 0,
           anovaconfidenceIntervals: [],
+          anovaEqualVariances: true,
           studentTestdone: false,
           studentStatistic: 0,
           studentpooledSE: 0,
@@ -2480,7 +2484,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 alphalevel={significanceLevel}
                 descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
                 equalVariances={testResults.meanTest.studentpValue ? testResults.meanTest.studentVarEquality
-                  : true}
+                  : testResults.meanTest.anovaEqualVariances}
               />
             </div>
             
@@ -2489,7 +2493,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               <h3 className="text-lg font-semibold mb-4">Confidence Intervals</h3>
               <ConfidenceIntervalsNSMean
                 ctqName={ctqName}
-                means={testResults.meanTest.anovagroupMeans}
+                means={testResults.normalityResults.map(mean => mean.mean)}
                 confidenceIntervals={testResults.meanTest.studentTestdone ? testResults.meanTest.studentmeanCI : testResults.meanTest.anovaconfidenceIntervals}
                 Ha={alternateMean}
                 title={testResults.meanTest.studentTestdone ? `Multiple-Sample Mean Student Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`
@@ -2499,7 +2503,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
                 alphalevel={significanceLevel}
                 descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
                 equalVariances={testResults.meanTest.studentpValue ? testResults.meanTest.studentVarEquality
-                  : true}
+                  : testResults.meanTest.anovaEqualVariances}
               />
             </div>
           </div>

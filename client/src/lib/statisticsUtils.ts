@@ -2988,14 +2988,25 @@ interface anovaOneWayResult {
     lower: number;
     upper: number;
   }>;
+  equalVariances: boolean;
   isSignificant: boolean;    // whether result is significant
 } 
+import {multipleSVarianceTest} from "@/components/dmaic/multipleSVarianceTest";
 // One-way ANOVA test implementation
 export function anovaOneWay(
   datasets: number[][], 
+  normalityResults: Array<{
+        sampleSize: number;
+        mean: number;
+        stdev: number;
+        median: number;
+        adValue: number;
+        adPValue: number;
+      }>,
   significanceLevel: number, 
   alternative: string
 ): anovaOneWayResult {
+  //import {multipleSVarianceTest} from "@/components/dmaic/multipleSVarianceTest";
   const alpha = significanceLevel;
   const k = datasets.length; // number of groups
 
@@ -3006,6 +3017,13 @@ export function anovaOneWay(
   if (k < 2) throw new Error('Need at least 2 groups');
   if (totalN < k + 1) throw new Error('Insufficient sample size');
 
+  // Test for equality of variances using proper F-distribution
+  const variancesTest = multipleSVarianceTest({
+  datasets,
+  normalityResults,
+  significanceLevel,
+  alternative,
+  });
   // Calculate group means
   const groupMeans = datasets.map(group => 
       group.reduce((sum, val) => sum + val, 0) / group.length
@@ -3101,6 +3119,7 @@ export function anovaOneWay(
       grandMean,
       groupMeans,
       confidenceIntervals,
+      equalVariances:variancesTest.pValue >= significanceLevel,
       isSignificant: pValue < alpha
   };
 }

@@ -24,6 +24,7 @@ interface MeanTestResults {
     lower: number;
     upper: number;
   }>;
+  anovaEqualVariances: boolean;
   studentTestdone: boolean;
   studentStatistic: number;
   studentpooledSE: number;
@@ -87,7 +88,7 @@ export function multipleSMeanTest({
         });
   }
   else { //do an ANOVA 1-way
-    anovaResults = anovaOneWay(datasets, significanceLevel, alternative);
+    anovaResults = anovaOneWay(datasets, normalityResults, significanceLevel, alternative);
   }
   
   return {
@@ -106,6 +107,7 @@ export function multipleSMeanTest({
     anovaFStatistic: anovaResults?.fStatistic || 0,
     anovapValue: anovaResults?.pValue || 0,
     anovaconfidenceIntervals: anovaResults?.confidenceIntervals || [],
+    anovaEqualVariances: anovaResults?.equalVariances,
     studentTestdone: studentTestdone,
     studentStatistic: meanTestResult?.tStatistic || 0,
     studentpooledSE: meanTestResult?.pooledSE || 0,

@@ -39,12 +39,16 @@ export default function ConfidenceIntervalsNSMean({
   const yMin = Math.min(...allYValues);
   const yMax = Math.max(...allYValues);
   const yRange = yMax - yMin;
-  const yBadge = yMax + (yRange * 0.15);
+  const yBadge = yMax + (yRange * 0.20);
 
   // Create badge text
-  let Badgetext = `<b>α = ${alphalevel}</b>`;
-  Badgetext += `<br>Ha: ${Ha}`;
-  Badgetext += `<br>Equal Variances: ${equalVariances ? 'Yes' : 'No'}`;
+  let textequalityofvariances = "Equal Variances";
+  if (!equalVariances) { textequalityofvariances = "Unequal Variances"; }
+  let Badgetext = textequalityofvariances + '<br>H0: μ1 = μ2 = ... = μn';
+  Badgetext += '<br>Ha: At least one mean is different';
+  //let Badgetext = `<b>α = ${alphalevel}</b>`;
+  //let Badgetext = textequalityofvariances + `<br>Ha: ${Ha}`;
+  //Badgetext += `<br>` + textequalityofvariances;
   
   if (pValue < parseFloat(alphalevel)) {
     Badgetext += `<br>Result => Reject H0. Accept Ha (P-Value ${pValue.toFixed(4)} < ${alphalevel})`;
@@ -153,7 +157,7 @@ export default function ConfidenceIntervalsNSMean({
         layout={{
           title: { text: boldTitle, font: { size: 16 } },
           height: 360,
-          width: Math.max(600, means.length * 120),
+          width: Math.max(860, means.length * 10),
           margin: { l: 70, r: 160, t: 30, b: 60 },
           xaxis: {
             tickvals: xPositions,
