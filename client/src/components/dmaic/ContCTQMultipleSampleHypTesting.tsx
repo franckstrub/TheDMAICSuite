@@ -23,6 +23,7 @@ import { stdev } from 'jstat';
 import BoxPlotWithNSMeanTest from './BoxPlotWithNSMeanTest.tsx';
 import ConfidenceIntervalsNSMean from './ConfidenceIntervalsNSMean.tsx';
 import ConfidenceIntervalsNSVariance from './ConfidenceIntervalsNSVariance';
+import BoxPlotWithNSMedianTest from './BoxPlotWithNSMedianTest';
 
 interface DataPoint {
   indexNumber: number;
@@ -2517,16 +2518,34 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               stdevs={testResults.normalityResults.map(stdev => stdev.stdev)}
               confidenceIntervals={testResults.varianceTest.confidenceIntervals}
               Ha={alternateVariance}
-              title={`Multiple-Sample ${testResults.varianceTest.testName}'s Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+              title={`Multiple-Sample ${testResults.varianceTest.testName}'s Test for homogeneity of variances (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
               pValue={testResults.varianceTest.pValue}
               alphalevel={significanceLevel}
               descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
               df1={testResults.varianceTest.df1}
               df2={testResults.varianceTest.df2}
             />
-          </div>
-          
+          </div>  
         )}  
+        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest && (
+          <div className="mt-6 space-y-6">
+            {/* Box Plots */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="boxplot-median-section">
+              <h3 className="text-lg font-semibold mb-4">Box Plot Analysis</h3>
+              <BoxPlotWithNSMedianTest
+                data={datasets.map(dataset => dataset.map(d => d.dataValue))}
+                ctqName={ctqName}
+                medians={testResults.normalityResults.map(median => median.median)}
+                Ha={alternateMedian}
+                title={`Multiple-Sample Median ${testResults.medianTest.testName}'s Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+                pValue={testResults.medianTest.pValue}
+                alphalevel={significanceLevel}
+                descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
+                df1={testResults.medianTest.df1}
+              />
+            </div>
+          </div>
+        )} 
         </div>
       </CardContent>
     </Card>
