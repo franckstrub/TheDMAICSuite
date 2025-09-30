@@ -560,8 +560,25 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     event.preventDefault();
     const pastedData = event.clipboardData.getData('text/plain');
     
+    console.log('handlePasteData called for dataset:', datasetIndex);
+    console.log('Pasted data:', pastedData);
+    
     if (pastedData.trim()) {
       const lines = pastedData.trim().split('\n');
+      
+      // Check if this is multi-column data (detect tabs in any line)
+      const hasMultipleColumns = lines.some(line => line.includes('\t'));
+      
+      console.log('Number of lines:', lines.length);
+      console.log('Has multiple columns (tabs detected):', hasMultipleColumns);
+      
+      if (hasMultipleColumns) {
+        // Delegate to multi-column paste handler
+        console.log('Delegating to handleFocusedCellPaste for multi-column data');
+        handleFocusedCellPaste(datasetIndex, pastedData);
+        return;
+      }
+      
       const newDataPoints: DataPoint[] = [];
       
       lines.forEach((line, index) => {
