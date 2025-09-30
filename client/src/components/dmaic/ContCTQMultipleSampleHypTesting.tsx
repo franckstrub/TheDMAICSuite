@@ -22,6 +22,7 @@ import {multipleSMedianTest} from "./multipleSMedianTest";
 import { stdev } from 'jstat';
 import BoxPlotWithNSMeanTest from './BoxPlotWithNSMeanTest.tsx';
 import ConfidenceIntervalsNSMean from './ConfidenceIntervalsNSMean.tsx';
+import ConfidenceIntervalsNSVariance from './ConfidenceIntervalsNSVariance';
 
 interface DataPoint {
   indexNumber: number;
@@ -2507,7 +2508,25 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               />
             </div>
           </div>
-        )}    
+        )} 
+        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest && (
+          <div className="mt-6 g-white rounded-lg border border-gray-200 p-4" data-testid="confidence-intervals-var-section">
+            <h3 className="text-lg font-semibold mb-4">Confidence Intervals</h3>
+            <ConfidenceIntervalsNSVariance
+              ctqName={ctqName}
+              stdevs={testResults.normalityResults.map(stdev => stdev.stdev)}
+              confidenceIntervals={testResults.varianceTest.confidenceIntervals}
+              Ha={alternateVariance}
+              title={`Multiple-Sample ${testResults.varianceTest.testName}'s Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+              pValue={testResults.varianceTest.pValue}
+              alphalevel={significanceLevel}
+              descriptions={ContCTQMultipleSampleHypTestData[ctqId]?.datasetDescriptions}
+              df1={testResults.varianceTest.df1}
+              df2={testResults.varianceTest.df2}
+            />
+          </div>
+          
+        )}  
         </div>
       </CardContent>
     </Card>
