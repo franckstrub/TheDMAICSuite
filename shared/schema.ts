@@ -1656,3 +1656,58 @@ export type InsertHypothesisTestingConfig = z.infer<
 >;
 export type HypothesisTestingConfig =
   typeof hypothesisTestingConfig.$inferSelect;
+
+// Multi-Vari Chart Configuration - stores multi-vari chart analysis data
+export const multiVariChartConfig = pgTable(
+  "multi_vari_chart_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Factor definitions
+    factor1Name: text("factor1_name").default("Factor 1"),
+    factor2Name: text("factor2_name").default("Factor 2"),
+    factor3Name: text("factor3_name").default("Factor 3"),
+
+    // Data storage as JSON: array of measurements with factor levels
+    // Structure: [{ factor1: string, factor2: string, factor3: string, response: number }]
+    data: jsonb("data")
+      .$type<Array<{ 
+        factor1: string; 
+        factor2: string; 
+        factor3: string | null; 
+        response: number 
+      }>>()
+      .default([]),
+
+    // Chart configuration
+    chartType: text("chart_type").default("line"), // line, scatter, box
+    showMean: boolean("show_mean").default(true),
+    showRange: boolean("show_range").default(true),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertMultiVariChartConfigSchema = createInsertSchema(
+  multiVariChartConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertMultiVariChartConfig = z.infer<
+  typeof insertMultiVariChartConfigSchema
+>;
+export type MultiVariChartConfig =
+  typeof multiVariChartConfig.$inferSelect;

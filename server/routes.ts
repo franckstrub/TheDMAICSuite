@@ -13,8 +13,8 @@ import {
   insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
   insertUserSchema, insertRootCausePrioritizationSchema, insertCauseEffectMatrixSchema,
   insertContinuousCtqAnalysisConfigSchema, insertOneSampleHypothesisConfigSchema,
-  insertTwoSampleHypothesisConfigSchema, insertPairedSampleHypothesisConfigSchema, insertMultipleSampleHypothesisConfigSchema, insertHypothesisTestingConfigSchema
-
+  insertTwoSampleHypothesisConfigSchema, insertPairedSampleHypothesisConfigSchema, insertMultipleSampleHypothesisConfigSchema, insertHypothesisTestingConfigSchema,
+  insertMultiVariChartConfigSchema
 } from "@shared/schema";
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
@@ -25,7 +25,8 @@ import {
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
   customerRequirements, businessRequirements, msaAnalysis, processCapability,
   fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization, causeEffectMatrix,
-  continuousCtqAnalysisConfig, oneSampleHypothesisConfig, twoSampleHypothesisConfig, pairedSampleHypothesisConfig, multipleSampleHypothesisConfig, hypothesisTestingConfig
+  continuousCtqAnalysisConfig, oneSampleHypothesisConfig, twoSampleHypothesisConfig, pairedSampleHypothesisConfig, multipleSampleHypothesisConfig, hypothesisTestingConfig,
+  multiVariChartConfig
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -4839,6 +4840,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create new configuration
         [savedConfig] = await db
           .insert(hypothesisTestingConfig)
+          .values(validatedData)
+          .returning();
+      }
+      
+      return res.status(201).json({ config: savedConfig });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Multi-Vari Chart Configuration Routes
+  app.get("/api/projects/:projectId/ctq/:ctqId/multi-vari-config", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      const [config] = await db
+        .select()
+        .from(multiVariChartConfig)
+        .where(and(
+          eq(multiVariChartConfig.projectId, projectId),
+          eq(multiVariChartConfig.ctqId, ctqId),
+          eq(multiVariChartConfig.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      if (!config) {
+        return res.status(404).json({ message: "Configuration not found" });
+      }
+      
+      return res.status(200).json(config);
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/ctq/:ctqId/multi-vari-config", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      const [ctsRecord] = await db
+        .select({ ctq: ctsCharacteristics.ctq })
+        .from(ctsCharacteristics)
+        .where(eq(ctsCharacteristics.id, ctqId))
+        .limit(1);
+      
+      if (!ctsRecord) {
+        return res.status(404).json({ message: "CTQ not found" });
+      }
+      
+      const configData = {
+        projectId,
+        ctqId,
+        organizationId: userRecord.organizationId,
+        ctq: ctsRecord.ctq,
+        ...req.body
+      };
+      
+      const validatedData = insertMultiVariChartConfigSchema.parse(configData);
+      
+      const [existingConfig] = await db
+        .select()
+        .from(multiVariChartConfig)
+        .where(and(
+          eq(multiVariChartConfig.projectId, projectId),
+          eq(multiVariChartConfig.ctqId, ctqId),
+          eq(multiVariChartConfig.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      let savedConfig;
+      if (existingConfig) {
+        [savedConfig] = await db
+          .update(multiVariChartConfig)
+          .set({
+            ...validatedData,
+            lastUpdated: new Date()
+          })
+          .where(eq(multiVariChartConfig.id, existingConfig.id))
+          .returning();
+      } else {
+        [savedConfig] = await db
+          .insert(multiVariChartConfig)
           .values(validatedData)
           .returning();
       }
