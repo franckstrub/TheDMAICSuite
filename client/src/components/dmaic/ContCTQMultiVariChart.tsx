@@ -56,7 +56,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   // Save configuration mutation
   const saveMutation = useMutation({
     mutationFn: async (config: Partial<MultiVariChartConfig>) => {
-      return apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/multi-vari-config`, 'POST', config);
+      return apiRequest('POST', `/api/projects/${projectId}/ctq/${ctqId}/multi-vari-config`, config);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/multi-vari-config`] });
@@ -65,10 +65,11 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
         description: "Multi-vari chart configuration has been saved.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Save error:", error);
       toast({
         title: "Save Failed",
-        description: "Failed to save configuration. Please try again.",
+        description: error?.message || "Failed to save configuration. Please try again.",
         variant: "destructive",
       });
     },
