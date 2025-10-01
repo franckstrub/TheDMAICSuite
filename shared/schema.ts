@@ -1691,6 +1691,7 @@ export const multiVariChartConfig = pgTable(
     chartType: text("chart_type").default("line"), // line, scatter, box
     showMean: boolean("show_mean").default(true),
     showRange: boolean("show_range").default(true),
+    useFactor3: boolean("use_factor3").default(false),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
