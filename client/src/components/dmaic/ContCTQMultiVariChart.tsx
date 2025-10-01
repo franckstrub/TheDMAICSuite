@@ -90,16 +90,8 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
       setShowMean(configData.showMean ?? true);
       setShowRange(configData.showRange ?? true);
       
-      // Check if factor 3 is being used - either has data with factor3 or has a custom factor3 name
-      const hasCustomFactor3Name = configData.factor3Name && 
-        configData.factor3Name !== "3rd factor" && 
-        configData.factor3Name !== "Factor 3" &&
-        configData.factor3Name.trim() !== "";
-      const hasDataWithFactor3 = configData.data && configData.data.some(d => d.factor3 !== null && d.factor3 !== "");
-      
-      if (hasCustomFactor3Name || hasDataWithFactor3) {
-        setUseFactor3(true);
-      }
+      // Use the saved useFactor3 state from database
+      setUseFactor3(configData.useFactor3 ?? false);
     }
   }, [configData]);
 
@@ -276,6 +268,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
       chartType,
       showMean,
       showRange,
+      useFactor3,
     });
   };
 
