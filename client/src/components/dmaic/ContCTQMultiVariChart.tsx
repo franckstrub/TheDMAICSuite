@@ -46,6 +46,10 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   const [newFactor2, setNewFactor2] = useState("");
   const [newFactor3, setNewFactor3] = useState("");
   const [newResponse, setNewResponse] = useState("");
+  
+  // Editing state
+  const [editingCell, setEditingCell] = useState<{ row: number; field: string } | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   // Load configuration from database
   const { data: configData } = useQuery<MultiVariChartConfig>({
@@ -78,9 +82,9 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   // Load saved data
   useEffect(() => {
     if (configData) {
-      setFactor1Name(configData.factor1Name || "Position");
-      setFactor2Name(configData.factor2Name || "Time");
-      setFactor3Name(configData.factor3Name || "Operator");
+      setFactor1Name(configData.factor1Name || "1st factor");
+      setFactor2Name(configData.factor2Name || "2nd factor");
+      setFactor3Name(configData.factor3Name || "3rd factor");
       setData(configData.data || []);
       setChartType((configData.chartType as "line" | "scatter") || "line");
       setShowMean(configData.showMean ?? true);
@@ -98,7 +102,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
     if (!newFactor1 || !newFactor2 || !newResponse) {
       toast({
         title: "Missing Data",
-        description: "Please fill in Factor 1, Factor 2, and Response values.",
+        description: "Please fill in Factor 1, Factor 2, Factor 3 (optional) and Response/CTQ values.",
         variant: "destructive",
       });
       return;
@@ -202,6 +206,55 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
       title: "Data Cleared",
       description: "All data points have been removed.",
     });
+  };
+
+  // Start editing a cell
+  const startEditing = (rowIndex: number, field: string, currentValue: string | number) => {
+    setEditingCell({ row: rowIndex, field });
+    setEditValue(String(currentValue));
+  };
+
+  // Save edited value
+  const saveEdit = () => {
+    if (!editingCell) return;
+
+    const { row, field } = editingCell;
+    const updatedData = [...data];
+    
+    if (field === 'response') {
+      const responseNum = parseFloat(editValue.replace(',', '.'));
+      if (isNaN(responseNum)) {
+        toast({
+          title: "Invalid Response",
+          description: "Response must be a valid number.",
+          variant: "destructive",
+        });
+        setEditingCell(null);
+        return;
+      }
+      updatedData[row] = { ...updatedData[row], response: responseNum };
+    } else {
+      if (!editValue.trim()) {
+        toast({
+          title: "Invalid Value",
+          description: "Factor value cannot be empty.",
+          variant: "destructive",
+        });
+        setEditingCell(null);
+        return;
+      }
+      updatedData[row] = { ...updatedData[row], [field]: editValue };
+    }
+    
+    setData(updatedData);
+    setEditingCell(null);
+    setEditValue("");
+  };
+
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingCell(null);
+    setEditValue("");
   };
 
   // Save configuration
@@ -309,6 +362,9 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                 <BarChart3 className="h-5 w-5" />
                 Multi-Vari Chart Analysis
               </CardTitle>
+              <p className="mt-2">
+                Graphical representation of the relationships between 2 or 3 attribute factors and a response (CTQ)
+              </p>
               <p className="text-sm text-muted-foreground mt-2">
                 CTQ: {ctqName}
               </p>
@@ -533,10 +589,96 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                       data.map((point, index) => (
                         <TableRow key={index} data-testid={`row-datapoint-${index}`}>
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell>{point.factor1}</TableCell>
-                          <TableCell>{point.factor2}</TableCell>
-                          {useFactor3 && <TableCell>{point.factor3 || '-'}</TableCell>}
-                          <TableCell>{point.response}</TableCell>
+                          <TableCell 
+                            className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                            onClick={() => startEditing(index, 'factor1', point.factor1)}
+                            data-testid={`cell-factor1-${index}`}
+                          >
+                            {editingCell?.row === index && editingCell?.field === 'factor1' ? (
+                              <Input
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={saveEdit}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveEdit();
+                                  if (e.key === 'Escape') cancelEdit();
+                                }}
+                                autoFocus
+                                className="h-8"
+                                data-testid={`input-edit-factor1-${index}`}
+                              />
+                            ) : (
+                              point.factor1
+                            )}
+                          </TableCell>
+                          <TableCell 
+                            className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                            onClick={() => startEditing(index, 'factor2', point.factor2)}
+                            data-testid={`cell-factor2-${index}`}
+                          >
+                            {editingCell?.row === index && editingCell?.field === 'factor2' ? (
+                              <Input
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={saveEdit}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveEdit();
+                                  if (e.key === 'Escape') cancelEdit();
+                                }}
+                                autoFocus
+                                className="h-8"
+                                data-testid={`input-edit-factor2-${index}`}
+                              />
+                            ) : (
+                              point.factor2
+                            )}
+                          </TableCell>
+                          {useFactor3 && (
+                            <TableCell 
+                              className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                              onClick={() => startEditing(index, 'factor3', point.factor3 || '')}
+                              data-testid={`cell-factor3-${index}`}
+                            >
+                              {editingCell?.row === index && editingCell?.field === 'factor3' ? (
+                                <Input
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onBlur={saveEdit}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') saveEdit();
+                                    if (e.key === 'Escape') cancelEdit();
+                                  }}
+                                  autoFocus
+                                  className="h-8"
+                                  data-testid={`input-edit-factor3-${index}`}
+                                />
+                              ) : (
+                                point.factor3 || '-'
+                              )}
+                            </TableCell>
+                          )}
+                          <TableCell 
+                            className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                            onClick={() => startEditing(index, 'response', point.response)}
+                            data-testid={`cell-response-${index}`}
+                          >
+                            {editingCell?.row === index && editingCell?.field === 'response' ? (
+                              <Input
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={saveEdit}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveEdit();
+                                  if (e.key === 'Escape') cancelEdit();
+                                }}
+                                autoFocus
+                                className="h-8"
+                                data-testid={`input-edit-response-${index}`}
+                              />
+                            ) : (
+                              point.response
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
