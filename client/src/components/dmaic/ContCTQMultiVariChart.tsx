@@ -32,9 +32,9 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   const { toast } = useToast();
   
   // State management
-  const [factor1Name, setFactor1Name] = useState("Position");
-  const [factor2Name, setFactor2Name] = useState("Time");
-  const [factor3Name, setFactor3Name] = useState("Operator");
+  const [factor1Name, setFactor1Name] = useState("1st factor");
+  const [factor2Name, setFactor2Name] = useState("2nd factor");
+  const [factor3Name, setFactor3Name] = useState("3rd factor");
   const [data, setData] = useState<DataPoint[]>([]);
   const [chartType, setChartType] = useState<"line" | "scatter">("line");
   const [showMean, setShowMean] = useState(true);
