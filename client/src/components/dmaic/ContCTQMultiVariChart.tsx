@@ -279,66 +279,100 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
     });
   };
 
-  // Prepare chart data
-  const getChartData = () => {
-    if (!data.length) return [];
+  // Prepare chart data for 2-factor multi-vari chart
+  const getTwoFactorChartData = () => {
+    if (!data.length) return { points: [], meanLines: [] };
 
-    // Group by factor1 and factor2
-    const grouped = data.reduce((acc, point) => {
-      const key = `${point.factor1}_${point.factor2}`;
-      if (!acc[key]) {
-        acc[key] = {
-          factor1: point.factor1,
-          factor2: point.factor2,
-          values: [],
-        };
-      }
-      acc[key].values.push(point.response);
-      return acc;
-    }, {} as Record<string, { factor1: string; factor2: string; values: number[] }>);
+    const uniqueFactor1Sorted = Array.from(new Set(data.map(d => d.factor1))).sort();
+    const uniqueFactor2Sorted = Array.from(new Set(data.map(d => d.factor2))).sort();
 
-    // Calculate statistics for each group
-    return Object.values(grouped).map(group => {
-      const mean = group.values.reduce((sum, val) => sum + val, 0) / group.values.length;
-      const min = Math.min(...group.values);
-      const max = Math.max(...group.values);
-      const range = max - min;
-      
-      return {
-        name: `${group.factor1} - ${group.factor2}`,
-        factor1: group.factor1,
-        factor2: group.factor2,
-        mean: parseFloat(mean.toFixed(2)),
-        min: parseFloat(min.toFixed(2)),
-        max: parseFloat(max.toFixed(2)),
-        range: parseFloat(range.toFixed(2)),
-        values: group.values,
-      };
+    // Prepare individual data points
+    const points: any[] = [];
+    data.forEach((point, idx) => {
+      points.push({
+        id: idx,
+        factor1: point.factor1,
+        factor2: point.factor2,
+        response: point.response,
+      });
     });
+
+    // Calculate means for each factor2 across factor1 levels
+    const meanLines: any[] = [];
+    uniqueFactor2Sorted.forEach((f2) => {
+      const means = uniqueFactor1Sorted.map((f1) => {
+        const values = data.filter(d => d.factor1 === f1 && d.factor2 === f2).map(d => d.response);
+        const mean = values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : null;
+        return { factor1: f1, factor2: f2, mean };
+      });
+      meanLines.push({ factor2: f2, means });
+    });
+
+    return { points, meanLines, uniqueFactor1Sorted, uniqueFactor2Sorted };
+  };
+
+  // Prepare chart data for 3-factor multi-vari chart (paneled)
+  const getThreeFactorChartData = () => {
+    if (!data.length) return { panels: [] };
+
+    const uniqueFactor3Sorted = Array.from(new Set(data.map(d => d.factor3).filter(f => f))).sort();
+    
+    const panels = uniqueFactor3Sorted.map(f3 => {
+      const panelData = data.filter(d => d.factor3 === f3);
+      const uniqueFactor1 = Array.from(new Set(panelData.map(d => d.factor1))).sort();
+      const uniqueFactor2 = Array.from(new Set(panelData.map(d => d.factor2))).sort();
+
+      // Group data by factor2, then factor1
+      const groups: any[] = [];
+      uniqueFactor2.forEach(f2 => {
+        uniqueFactor1.forEach(f1 => {
+          const values = panelData.filter(d => d.factor1 === f1 && d.factor2 === f2).map(d => d.response);
+          if (values.length > 0) {
+            groups.push({
+              factor1: f1,
+              factor2: f2,
+              values,
+              mean: values.reduce((sum, v) => sum + v, 0) / values.length,
+            });
+          }
+        });
+      });
+
+      return { factor3: f3, groups, uniqueFactor1, uniqueFactor2 };
+    });
+
+    return { panels };
   };
 
   // Calculate variation components
   const calculateVariationAnalysis = () => {
     if (data.length < 2) return null;
 
-    const chartData = getChartData();
     const allValues = data.map(d => d.response);
     const grandMean = allValues.reduce((sum, val) => sum + val, 0) / allValues.length;
     
     // Total variation
     const totalSS = allValues.reduce((sum, val) => sum + Math.pow(val - grandMean, 2), 0);
     
+    // Group data by factor1 and factor2 for between-group calculation
+    const grouped = data.reduce((acc, point) => {
+      const key = `${point.factor1}_${point.factor2}`;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(point.response);
+      return acc;
+    }, {} as Record<string, number[]>);
+
     // Between-group variation
-    const betweenSS = chartData.reduce((sum, group) => {
-      const groupMean = group.mean;
-      const count = group.values.length;
-      return sum + count * Math.pow(groupMean - grandMean, 2);
+    const betweenSS = Object.values(grouped).reduce((sum, values) => {
+      const groupMean = values.reduce((s, v) => s + v, 0) / values.length;
+      return sum + values.length * Math.pow(groupMean - grandMean, 2);
     }, 0);
     
     // Within-group variation
     const withinSS = totalSS - betweenSS;
     
-    const totalPercent = 100;
     const betweenPercent = (betweenSS / totalSS) * 100;
     const withinPercent = (withinSS / totalSS) * 100;
     
@@ -351,7 +385,8 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
     };
   };
 
-  const chartData = getChartData();
+  const twoFactorData = useFactor3 ? null : getTwoFactorChartData();
+  const threeFactorData = useFactor3 ? getThreeFactorChartData() : null;
   const variationAnalysis = calculateVariationAnalysis();
 
   // Get unique factor levels for filter options
@@ -708,54 +743,72 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
 
             {/* Chart Tab */}
             <TabsContent value="chart" className="space-y-4">
-              {chartData.length === 0 ? (
+              {data.length === 0 ? (
                 <div className="border rounded-lg p-12 text-center text-gray-500">
                   <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                   <p>No data available to display chart.</p>
                   <p className="text-sm mt-2">Add data in the Data Input tab to see the multi-vari chart.</p>
                 </div>
-              ) : (
+              ) : !useFactor3 && twoFactorData ? (
                 <div className="space-y-4">
+                  <div className="text-center font-semibold text-lg mb-2">
+                    Multi-Vari Chart for {ctqName} by {factor1Name} - {factor2Name}
+                  </div>
                   <div className="h-96 border rounded-lg p-4">
                     <ResponsiveContainer width="100%" height="100%">
-                      {chartType === "line" ? (
-                        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="name" 
-                            angle={-45} 
-                            textAnchor="end" 
-                            height={80}
-                            interval={0}
-                          />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          {showMean && <Line type="monotone" dataKey="mean" stroke="#8884d8" strokeWidth={2} name="Mean" />}
-                          {showRange && (
-                            <>
-                              <Line type="monotone" dataKey="max" stroke="#82ca9d" strokeDasharray="5 5" name="Max" />
-                              <Line type="monotone" dataKey="min" stroke="#ffc658" strokeDasharray="5 5" name="Min" />
-                            </>
-                          )}
-                        </LineChart>
-                      ) : (
-                        <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis type="category" dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} />
-                          <YAxis type="number" dataKey="mean" name="Response" />
-                          <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                          <Legend />
-                          <Scatter name="Mean" data={chartData} fill="#8884d8" />
-                        </ScatterChart>
-                      )}
+                      <LineChart margin={{ top: 20, right: 80, left: 20, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="factor1" 
+                          type="category" 
+                          allowDuplicatedCategory={false}
+                          label={{ value: factor1Name, position: 'insideBottom', offset: -10 }}
+                        />
+                        <YAxis label={{ value: ctqName, angle: -90, position: 'insideLeft' }} />
+                        <Tooltip />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        
+                        {/* Individual data points by factor2 */}
+                        {twoFactorData.uniqueFactor2Sorted.map((f2, idx) => {
+                          const color = idx === 0 ? '#3b82f6' : idx === 1 ? '#ef4444' : '#10b981';
+                          const pointsForF2 = twoFactorData.points.filter(p => p.factor2 === f2);
+                          return (
+                            <Scatter 
+                              key={f2} 
+                              name={f2}
+                              data={pointsForF2}
+                              fill={color}
+                              line={false}
+                            />
+                          );
+                        })}
+                        
+                        {/* Mean lines (dashed) */}
+                        {showMean && twoFactorData.meanLines.map((line, idx) => {
+                          const color = idx === 0 ? '#3b82f6' : idx === 1 ? '#ef4444' : '#10b981';
+                          return (
+                            <Line
+                              key={`mean-${line.factor2}`}
+                              type="linear"
+                              dataKey="mean"
+                              data={line.means}
+                              stroke={color}
+                              strokeWidth={2}
+                              strokeDasharray="5 5"
+                              dot={false}
+                              name={`${line.factor2} (mean)`}
+                              connectNulls
+                            />
+                          );
+                        })}
+                      </LineChart>
                     </ResponsiveContainer>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card>
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm">Unique Factor Levels</CardTitle>
+                        <CardTitle className="text-sm">Factor Levels</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         <div>
@@ -789,6 +842,87 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                       </CardContent>
                     </Card>
                   </div>
+                </div>
+              ) : useFactor3 && threeFactorData && threeFactorData.panels.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="text-center font-semibold text-lg mb-2">
+                    Multi-Vari Chart for {ctqName} by {factor1Name} - {factor2Name} - {factor3Name}
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {threeFactorData.panels.map((panel) => (
+                      <div key={panel.factor3} className="border rounded-lg p-4">
+                        <div className="text-center font-medium mb-2">Panel variable: {factor3Name} = {panel.factor3}</div>
+                        <div className="h-80">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart margin={{ top: 20, right: 80, left: 20, bottom: 60 }}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis 
+                                dataKey="label"
+                                type="category"
+                                label={{ value: factor2Name, position: 'insideBottom', offset: -10 }}
+                              />
+                              <YAxis label={{ value: ctqName, angle: -90, position: 'insideLeft' }} />
+                              <Tooltip />
+                              <Legend />
+                              
+                              {/* Plot points for each factor2 */}
+                              {panel.uniqueFactor2.map((f2, f2Idx) => {
+                                const color = f2Idx === 0 ? '#3b82f6' : '#ef4444';
+                                const groupData = panel.groups
+                                  .filter(g => g.factor2 === f2)
+                                  .map(g => ({
+                                    label: `${g.factor2}-${g.factor1}`,
+                                    ...g,
+                                    response: g.values[0] || g.mean,
+                                    mean: g.mean,
+                                  }));
+                                
+                                return (
+                                  <Scatter 
+                                    key={`${f2}-points`}
+                                    name={f2}
+                                    data={groupData}
+                                    fill={color}
+                                    dataKey="response"
+                                  />
+                                );
+                              })}
+                              
+                              {/* Mean lines */}
+                              {showMean && panel.uniqueFactor2.map((f2, f2Idx) => {
+                                const color = f2Idx === 0 ? '#3b82f6' : '#ef4444';
+                                const meanData = panel.groups
+                                  .filter(g => g.factor2 === f2)
+                                  .map(g => ({
+                                    label: `${g.factor2}-${g.factor1}`,
+                                    mean: g.mean,
+                                  }));
+                                
+                                return (
+                                  <Line
+                                    key={`${f2}-mean`}
+                                    type="linear"
+                                    dataKey="mean"
+                                    data={meanData}
+                                    stroke={color}
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    dot={false}
+                                    name={`${f2} (mean)`}
+                                  />
+                                );
+                              })}
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="border rounded-lg p-12 text-center text-gray-500">
+                  <p>Insufficient data for visualization.</p>
+                  <p className="text-sm mt-2">Add more data points to see the chart.</p>
                 </div>
               )}
             </TabsContent>
