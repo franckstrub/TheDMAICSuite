@@ -972,9 +972,9 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
           currentConfig.enableMedianTest ?? false,
           newDatasets,
           parseFloat(significanceLevel),
-          currentConfig.HaMean || "notEqual",
-          currentConfig.HaVariance || "notEqual",
-          currentConfig.HaMedian || "notEqual",
+          currentConfig.alternateMean || "Different",
+          currentConfig.alternateVariance || "Different",
+          currentConfig.alternateMedian || "Different",
           factorOfClassification,
         );
       }
