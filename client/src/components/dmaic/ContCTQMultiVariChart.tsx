@@ -793,6 +793,8 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                           type="category" 
                           allowDuplicatedCategory={false}
                           label={{ value: factor1Name, position: 'insideBottom', offset: -10 }}
+                          ticks={[0.5, 1.5]}
+                          domain={[0, 2]}
                         />
                         <YAxis label={{ value: ctqName, angle: -90, position: 'insideLeft' }} />
                         <Tooltip />
@@ -890,6 +892,8 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                                 dataKey="label"
                                 type="category"
                                 label={{ value: factor2Name, position: 'insideBottom', offset: -10 }}
+                                ticks={[0.5, 1.5, 2.5]}
+                                domain={[0, 3]}
                               />
                               <YAxis label={{ value: ctqName, angle: -90, position: 'insideLeft' }} />
                               <Tooltip />
