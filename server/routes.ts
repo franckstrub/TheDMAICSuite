@@ -4893,6 +4893,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectId = parseInt(req.params.projectId);
       const ctqId = parseInt(req.params.ctqId);
       
+      console.log("Multi-vari config save request:", { projectId, ctqId, body: req.body });
+      
       const userClaims = (req.user as any)?.claims;
       const userId = userClaims?.sub;
       
@@ -4923,7 +4925,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body
       };
       
+      console.log("Config data before validation:", configData);
+      
       const validatedData = insertMultiVariChartConfigSchema.parse(configData);
+      
+      console.log("Validated data:", validatedData);
       
       const [existingConfig] = await db
         .select()
@@ -4935,8 +4941,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ))
         .limit(1);
       
+      console.log("Existing config:", existingConfig);
+      
       let savedConfig;
       if (existingConfig) {
+        console.log("Updating existing config...");
         [savedConfig] = await db
           .update(multiVariChartConfig)
           .set({
@@ -4946,14 +4955,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .where(eq(multiVariChartConfig.id, existingConfig.id))
           .returning();
       } else {
+        console.log("Inserting new config...");
         [savedConfig] = await db
           .insert(multiVariChartConfig)
           .values(validatedData)
           .returning();
       }
       
+      console.log("Saved config:", savedConfig);
+      
       return res.status(201).json({ config: savedConfig });
     } catch (err) {
+      console.error("Multi-vari config save error:", err);
       return handleErrors(err, res);
     }
   });
