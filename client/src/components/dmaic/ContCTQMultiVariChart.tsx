@@ -389,6 +389,43 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   const threeFactorData = useFactor3 ? getThreeFactorChartData() : null;
   const variationAnalysis = calculateVariationAnalysis();
 
+  // Calculate group statistics for analysis tab
+  const getGroupStatistics = () => {
+    if (data.length === 0) return [];
+
+    const grouped = data.reduce((acc, point) => {
+      const key = `${point.factor1}_${point.factor2}`;
+      if (!acc[key]) {
+        acc[key] = {
+          factor1: point.factor1,
+          factor2: point.factor2,
+          values: [],
+        };
+      }
+      acc[key].values.push(point.response);
+      return acc;
+    }, {} as Record<string, { factor1: string; factor2: string; values: number[] }>);
+
+    return Object.values(grouped).map(group => {
+      const mean = group.values.reduce((sum, val) => sum + val, 0) / group.values.length;
+      const min = Math.min(...group.values);
+      const max = Math.max(...group.values);
+      const range = max - min;
+      
+      return {
+        factor1: group.factor1,
+        factor2: group.factor2,
+        mean: parseFloat(mean.toFixed(2)),
+        min: parseFloat(min.toFixed(2)),
+        max: parseFloat(max.toFixed(2)),
+        range: parseFloat(range.toFixed(2)),
+        values: group.values,
+      };
+    });
+  };
+
+  const groupStats = getGroupStatistics();
+
   // Get unique factor levels for filter options
   const uniqueFactor1 = Array.from(new Set(data.map(d => d.factor1)));
   const uniqueFactor2 = Array.from(new Set(data.map(d => d.factor2)));
@@ -769,7 +806,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                         <Legend wrapperStyle={{ paddingTop: '20px' }} />
                         
                         {/* Individual data points by factor2 */}
-                        {twoFactorData.uniqueFactor2Sorted.map((f2, idx) => {
+                        {twoFactorData.uniqueFactor2Sorted?.map((f2, idx) => {
                           const color = idx === 0 ? '#3b82f6' : idx === 1 ? '#ef4444' : '#10b981';
                           const pointsForF2 = twoFactorData.points.filter(p => p.factor2 === f2);
                           return (
@@ -1006,7 +1043,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {chartData.map((group, index) => (
+                            {groupStats.map((group, index) => (
                               <TableRow key={index}>
                                 <TableCell>{group.factor1}</TableCell>
                                 <TableCell>{group.factor2}</TableCell>
