@@ -786,7 +786,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                   </div>
                   <div className="h-96 border rounded-lg p-4">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart margin={{ top: 20, right: 100, left: 60, bottom: 60 }}>
+                      <LineChart margin={{ top: 20, right: 80, left: 20, bottom: 60 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis 
                           dataKey="factor1" 
@@ -884,7 +884,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                         <div className="text-center font-medium mb-2">Panel variable: {factor3Name} = {panel.factor3}</div>
                         <div className="h-80">
                           <ResponsiveContainer width="100%" height="100%">
-                            <LineChart margin={{ top: 20, right: 100, left: 60, bottom: 60 }}>
+                            <LineChart margin={{ top: 20, right: 80, left: 20, bottom: 60 }}>
                               <CartesianGrid strokeDasharray="3 3" />
                               <XAxis 
                                 dataKey="label"
