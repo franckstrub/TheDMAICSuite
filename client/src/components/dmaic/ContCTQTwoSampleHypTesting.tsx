@@ -3144,6 +3144,7 @@ useEffect(() => {
                         {testResults.sampleSize1.toFixed(0)}
                       </td>
                     </tr> 
+                    <tr className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-[10px]">
                         {ContCTQTwoSampleHypTestData[ctqId]?.dataset2description ? (
                             ContCTQTwoSampleHypTestData[ctqId]?.dataset2description
@@ -3163,6 +3164,7 @@ useEffect(() => {
                       <td className="border border-gray-300 px-1 py-1 text-gray-600 text-center text-[8px]">
                         {testResults.sampleSize2.toFixed(0)}
                       </td>                   
+                    </tr>
                   </tbody>
                 </table> 
                 
