@@ -35,7 +35,7 @@ export async function generateMitigationPlan(
     
     // Create a generative model instance - using Gemini Pro
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro",
+      model: "gemini-2.5-pro",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -126,7 +126,7 @@ export async function generateElevatorSpeech(
     
     // Create a generative model instance
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro",
+      model: "gemini-2.5-pro",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -222,7 +222,7 @@ export async function generateEngagementStrategy(
     
     // Create a generative model instance
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro",
+      model: "gemini-2.5-pro",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,

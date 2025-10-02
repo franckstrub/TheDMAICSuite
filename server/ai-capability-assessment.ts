@@ -142,7 +142,7 @@ Keep the analysis concise, professional, data-driven, and actionable for process
     console.log("Sending request to Google AI API for capability analysis...");
 
     // Create a generative model instance
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
     
     // Generate content
     const result = await model.generateContent(prompt);
