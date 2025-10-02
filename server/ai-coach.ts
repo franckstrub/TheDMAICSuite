@@ -1,7 +1,26 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
-// Initialize Gemini AI
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "AIzaSyBnsicEhplNpyB-NihS2j9buy6bcV1plU4" });
+// Initialize the Google Generative AI client with proper API key validation
+// Prioritize GOOGLE_API_KEY, fallback to GEMINI_API_KEY
+const getApiKey = () => {
+  if (process.env.GOOGLE_API_KEY) {
+    console.log("Using GOOGLE_API_KEY for AI Coach");
+    return process.env.GOOGLE_API_KEY;
+  }
+  if (process.env.GEMINI_API_KEY) {
+    console.log("Using GEMINI_API_KEY for AI Coach");
+    return process.env.GEMINI_API_KEY;
+  }
+  return null;
+};
+
+let genAI: GoogleGenerativeAI | null = null;
+const apiKey = getApiKey();
+if (apiKey) {
+  genAI = new GoogleGenerativeAI(apiKey);
+} else {
+  console.warn('Warning: Neither GOOGLE_API_KEY nor GEMINI_API_KEY is set. AI Coach will not function.');
+}
 
 const LEAN_SIX_SIGMA_CONTEXT = `
 You are an AI Master Black Belt Coach specializing in Lean Six Sigma methodology. You have extensive experience in:
@@ -35,10 +54,41 @@ export async function generateAICoachResponse(userMessage: string): Promise<stri
   try {
     console.log("Processing AI coach request for message:", userMessage);
     
-    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyBnsicEhplNpyB-NihS2j9buy6bcV1plU4";
+    // Check if API key is available
     if (!apiKey) {
-      throw new Error("Gemini API key not configured");
+      console.error('No Google API key is set in environment variables');
+      throw new Error('API key is missing. Please set GOOGLE_API_KEY or GEMINI_API_KEY in your environment variables.');
     }
+    
+    // Check if Google AI client was initialized
+    if (!genAI) {
+      throw new Error('Google AI client not initialized. Check your API key.');
+    }
+
+    console.log("Using Google AI API to generate AI Coach response");
+    
+    // Create a generative model instance
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-pro",
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ],
+    });
 
     const prompt = `${LEAN_SIX_SIGMA_CONTEXT}
 
@@ -46,21 +96,22 @@ User Question: ${userMessage}
 
 Please provide a helpful, expert response as an AI Master Black Belt Coach:`;
 
-    console.log("Sending request to Gemini API...");
+    console.log("Sending request to Google AI API...");
     
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: prompt,
-    });
+    // Generate content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    console.log("Gemini API response received:", response.text?.substring(0, 100) + "...");
+    console.log("Google AI API response received:", text?.substring(0, 100) + "...");
 
-    return response.text || "I apologize, but I'm having trouble processing your question right now. Please try rephrasing your question or ask about a specific Lean Six Sigma topic.";
+    return text || "I apologize, but I'm having trouble processing your question right now. Please try rephrasing your question or ask about a specific Lean Six Sigma topic.";
     
   } catch (error) {
     console.error("Error generating AI coach response:", error);
-    console.error("Error details:", error.message);
-    throw new Error(`Failed to generate response from AI Coach: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error details:", errorMessage);
+    throw new Error(`Failed to generate response from AI Coach: ${errorMessage}`);
   }
 }
 
