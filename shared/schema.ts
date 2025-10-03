@@ -595,6 +595,7 @@ export const storageConfigs = pgTable("storage_configs", {
 
 export const insertConfigSchema = createInsertSchema(storageConfigs).pick({
   userId: true,
+  organizationId: true,
   cloudEnabled: true,
   cloudRegion: true,
   cloudRetention: true,
