@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { 
@@ -96,7 +96,6 @@ function App() {
   const [currentTab, setCurrentTab] = useState("dashboard");
   const [activePhase, setActivePhase] = useState("define");
   const [currentProject, setCurrentProjectState] = useState<any>(null);
-  const { isAuthenticated } = useAuth();
   
   // Wrapper for setCurrentProject that also saves to localStorage
   const setCurrentProject = (project: any) => {
@@ -110,20 +109,6 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currency, setCurrency] = useState<CurrencyType>("$");
   const [implementationStatus, setImplementationStatus] = useState<ImplementationStatusType>("all");
-
-  // Fetch user settings from database
-  const { data: userSettings } = useQuery<any>({
-    queryKey: ['/api/settings'],
-    enabled: isAuthenticated,
-  });
-
-  // Update currency when user settings load
-  useEffect(() => {
-    if (userSettings?.currency) {
-      setCurrency(userSettings.currency as CurrencyType);
-      localStorage.setItem("currency", userSettings.currency);
-    }
-  }, [userSettings]);
 
   // Check for authenticated user and settings on app load
   useEffect(() => {
