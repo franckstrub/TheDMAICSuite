@@ -1445,13 +1445,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
+      console.log("DEBUG - configUser:", configUser);
+      console.log("DEBUG - configUser.organizationId:", configUser.organizationId);
+      
       const configData: InsertConfig = {
         ...req.body,
         userId,
         organizationId: configUser.organizationId
       };
       
+      console.log("DEBUG - configData before validation:", configData);
       const validatedData = insertConfigSchema.parse(configData);
+      console.log("DEBUG - validatedData after validation:", validatedData);
       
       // Check if config already exists
       const existingConfig = await storage.getStorageConfig(userId);
