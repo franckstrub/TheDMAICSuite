@@ -91,6 +91,7 @@ export interface IStorage {
   deleteDataCollectionPlan(id: number): Promise<boolean>;
 
   // Storage Config operations
+  getStorageConfig(userId: number): Promise<StorageConfig | undefined>;
   getStorageConfigs(userId: number): Promise<StorageConfig[]>;
   createStorageConfig(config: InsertConfig): Promise<StorageConfig>;
   updateStorageConfig(id: number, config: Partial<StorageConfig>): Promise<StorageConfig | undefined>;
@@ -426,6 +427,11 @@ export class DatabaseStorage implements IStorage {
   async deleteDataCollectionPlan(id: number): Promise<boolean> {
     const result = await db.delete(dataCollectionPlans).where(eq(dataCollectionPlans.id, id));
     return result.rowCount > 0;
+  }
+
+  async getStorageConfig(userId: number): Promise<StorageConfig | undefined> {
+    const [config] = await db.select().from(storageConfigs).where(eq(storageConfigs.userId, userId)).limit(1);
+    return config || undefined;
   }
 
   async getStorageConfigs(userId: number): Promise<StorageConfig[]> {

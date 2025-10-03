@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAppContext } from "@/store/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -25,7 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function StorageConfig() {
-  const { user } = useAppContext();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("locations");
 
