@@ -2,6 +2,7 @@ import {
   users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements,
   datasets, dataCollectionPlans, storageConfigs, activityLogs, processData, projectRaciMatrix,
   gateReviewDeliverables, gateReviewValidators, ganttTasks, multipleSampleHypothesisConfig,
+  userSettings,
   type InsertUser,
   type Project, type InsertProject,
   type ProjectCharter, type InsertCharter,
@@ -17,7 +18,8 @@ import {
   type GateReviewDeliverable, type InsertGateReviewDeliverable,
   type GateReviewValidator, type InsertGateReviewValidator,
   type GanttTask, type InsertGanttTask,
-  type MultipleSampleHypothesisConfig, type InsertMultipleSampleHypothesisConfig
+  type MultipleSampleHypothesisConfig, type InsertMultipleSampleHypothesisConfig,
+  type UserSettings, type InsertUserSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, gt, sql } from "drizzle-orm";
@@ -124,6 +126,10 @@ export interface IStorage {
   createGanttTask(task: InsertGanttTask): Promise<GanttTask>;
   updateGanttTask(id: number, task: Partial<GanttTask>): Promise<GanttTask | undefined>;
   deleteGanttTask(id: number): Promise<boolean>;
+
+  // User Settings operations
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  upsertUserSettings(userId: string, organizationId: number, settings: Partial<UserSettings>): Promise<UserSettings>;
 }
 
 // DatabaseStorage implementation using Drizzle ORM
@@ -649,6 +655,36 @@ export class DatabaseStorage implements IStorage {
     }
     
     return result.rowCount > 0;
+  }
+
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const [settings] = await db.select().from(userSettings).where(eq(userSettings.userId, userId));
+    return settings || undefined;
+  }
+
+  async upsertUserSettings(userId: string, organizationId: number, settings: Partial<UserSettings>): Promise<UserSettings> {
+    const existingSettings = await this.getUserSettings(userId);
+    
+    if (existingSettings) {
+      // Update existing settings
+      const [updatedSettings] = await db
+        .update(userSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(userSettings.userId, userId))
+        .returning();
+      return updatedSettings;
+    } else {
+      // Create new settings with defaults
+      const [newSettings] = await db
+        .insert(userSettings)
+        .values({
+          userId,
+          organizationId,
+          ...settings,
+        })
+        .returning();
+      return newSettings;
+    }
   }
 }
 
