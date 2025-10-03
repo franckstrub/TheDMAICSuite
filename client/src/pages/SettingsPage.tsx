@@ -14,13 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import MainLayout from "@/components/layout/MainLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useAppContext, CurrencyType } from "@/store/AppContext";
+import { useAppContext, CurrencyType, currencyISOToSymbol, UserSettingsType } from "@/store/AppContext";
 
 export default function SettingsPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { setCurrency } = useAppContext();
+  const { setCurrency, setUserSettings } = useAppContext();
   
   // Fetch settings from database
   const { data: dbSettings, isLoading } = useQuery<any>({
@@ -84,10 +84,24 @@ export default function SettingsPage() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
       
-      // Update the AppContext currency immediately
-      if (variables.currency) {
-        setCurrency(variables.currency as CurrencyType);
-      }
+      // Update AppContext with full userSettings
+      const updatedSettings: UserSettingsType = {
+        emailNotifications: variables.emailNotifications,
+        projectUpdates: variables.projectUpdates,
+        phaseReminders: variables.phaseReminders,
+        weeklyReports: variables.weeklyReports,
+        theme: variables.theme,
+        language: variables.language,
+        timezone: variables.timezone,
+        currency: currencyISOToSymbol(variables.currency),
+        dateFormat: variables.dateFormat,
+        profileVisibility: variables.profileVisibility,
+        dataSharing: variables.dataSharing,
+        analyticsOptIn: variables.analyticsOptIn,
+      };
+      
+      setUserSettings(updatedSettings);
+      setCurrency(updatedSettings.currency);
       
       toast({
         title: "Settings Saved",
