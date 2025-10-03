@@ -191,10 +191,28 @@ export function registerGateReviewRoutes(app: Express, dbStorage: any) {
       // Remove lastUpdated from request body to prevent timestamp formatting issues
       const { lastUpdated, ...updateData } = req.body;
       
-      // Convert validatedDate string to Date object if present
-      if (updateData.validatedDate && typeof updateData.validatedDate === 'string') {
-        updateData.validatedDate = new Date(updateData.validatedDate);
+      // Debug: Log what we're receiving
+      console.log("Update data received:", JSON.stringify(updateData));
+      
+      // Convert validatedDate string to Date object if present and not null
+      if (updateData.validatedDate) {
+        if (typeof updateData.validatedDate === 'string') {
+          // Handle "null" string or empty string
+          if (updateData.validatedDate === 'null' || updateData.validatedDate === '') {
+            updateData.validatedDate = null;
+          } else {
+            updateData.validatedDate = new Date(updateData.validatedDate);
+          }
+        } else if (!(updateData.validatedDate instanceof Date)) {
+          // If it's not a string and not a Date, set to null
+          updateData.validatedDate = null;
+        }
       }
+      
+      console.log("Update data after conversion:", JSON.stringify({
+        ...updateData,
+        validatedDate: updateData.validatedDate instanceof Date ? updateData.validatedDate.toISOString() : updateData.validatedDate
+      }));
       
       const updatedValidator = await dbStorage.updateGateReviewValidator(id, updateData);
       res.json({ validator: updatedValidator });
