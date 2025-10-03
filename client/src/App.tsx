@@ -139,8 +139,10 @@ function App() {
     }
   }, []);
 
-  // Fetch and load currency from database settings (runs after user is loaded)
+  // Fetch and load currency from database settings when user is available
   useEffect(() => {
+    if (!user) return;
+
     const loadCurrencyFromSettings = async () => {
       try {
         const response = await fetch('/api/settings', {
@@ -170,16 +172,8 @@ function App() {
       }
     };
 
-    // Delay to ensure authentication is complete
-    const timer = setTimeout(() => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser && storedUser !== 'null' && storedUser !== 'undefined') {
-        loadCurrencyFromSettings();
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
+    loadCurrencyFromSettings();
+  }, [user]);
 
   const login = (userData: any) => {
     setUser(userData);
