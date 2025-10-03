@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDateForInput } from "@/lib/utils";
 import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle, MinusCircle, Sparkles } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -941,13 +941,13 @@ export default function DefinePhase() {
           : currentProject?.targetEndDate 
             ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
             : "",
-        // Add milestone dates
-        kick_off_date: charter.charter.kick_off_date || "",
-        define_phase_date: charter.charter.define_phase_date || "",
-        measure_phase_date: charter.charter.measure_phase_date || "",
-        analyze_phase_date: charter.charter.analyze_phase_date || "",
-        improve_phase_date: charter.charter.improve_phase_date || "",
-        control_phase_date: charter.charter.control_phase_date || "",
+        // Add milestone dates - convert to YYYY-MM-DD format for date inputs
+        kick_off_date: formatDateForInput(charter.charter.kick_off_date),
+        define_phase_date: formatDateForInput(charter.charter.define_phase_date),
+        measure_phase_date: formatDateForInput(charter.charter.measure_phase_date),
+        analyze_phase_date: formatDateForInput(charter.charter.analyze_phase_date),
+        improve_phase_date: formatDateForInput(charter.charter.improve_phase_date),
+        control_phase_date: formatDateForInput(charter.charter.control_phase_date),
         savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
         workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
         waccPercentage: charter.charter.waccPercentage?.toString() || "10",

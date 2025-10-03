@@ -245,6 +245,27 @@ export function formatMilestoneDate(dateString: string | null, dateFormat: strin
 }
 
 /**
+ * Convert a date to YYYY-MM-DD format for HTML date inputs
+ * @param dateValue Date string or Date object or null
+ * @returns Formatted date string in YYYY-MM-DD format, or empty string if invalid
+ */
+export function formatDateForInput(dateValue: string | Date | null): string {
+  if (!dateValue) return '';
+  
+  try {
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) return '';
+    
+    // Convert to YYYY-MM-DD format
+    return date.toISOString().split('T')[0];
+  } catch (error) {
+    return '';
+  }
+}
+
+/**
  * Calculates the overall DMAIC progress based on the phases status
  * @param phases The project phases with their status and progress
  * @returns Number between 0-100 representing overall progress
