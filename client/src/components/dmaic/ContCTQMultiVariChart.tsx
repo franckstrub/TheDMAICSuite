@@ -31,6 +31,12 @@ interface DataPoint {
 export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: ContCTQMultiVariChartProps) {
   const { toast } = useToast();
   
+  // Persistent tab state
+  const [currentPane, setCurrentPane] = useState<string>(() => {
+    const saved = localStorage.getItem(`multiVariPane_${projectId}_${ctqId}`);
+    return saved || "setup";
+  });
+  
   // State management
   const [factor1Name, setFactor1Name] = useState("1st factor");
   const [factor2Name, setFactor2Name] = useState("2nd factor");
@@ -50,6 +56,12 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   // Editing state
   const [editingCell, setEditingCell] = useState<{ row: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
+  
+  // Save current pane to localStorage when it changes
+  const handlePaneChange = (value: string) => {
+    setCurrentPane(value);
+    localStorage.setItem(`multiVariPane_${projectId}_${ctqId}`, value);
+  };
 
   // Load configuration from database
   const { data: configData } = useQuery<MultiVariChartConfig>({
@@ -451,7 +463,7 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="setup" className="w-full">
+          <Tabs value={currentPane} onValueChange={handlePaneChange} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="setup">Setup</TabsTrigger>
               <TabsTrigger value="data">Data Input</TabsTrigger>
