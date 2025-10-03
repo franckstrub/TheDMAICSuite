@@ -145,6 +145,33 @@ function App() {
     }
   }, []);
 
+  // Fetch and load currency from database settings
+  useEffect(() => {
+    const loadCurrencyFromSettings = async () => {
+      try {
+        const response = await fetch('/api/settings', {
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const settings = await response.json();
+          if (settings?.currency) {
+            setCurrency(settings.currency as CurrencyType);
+            localStorage.setItem("currency", settings.currency);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load currency from settings:', error);
+      }
+    };
+
+    // Only load if we have a stored user (authenticated)
+    const storedUser = localStorage.getItem("user");
+    if (storedUser && storedUser !== 'null' && storedUser !== 'undefined') {
+      loadCurrencyFromSettings();
+    }
+  }, []);
+
   const login = (userData: any) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
