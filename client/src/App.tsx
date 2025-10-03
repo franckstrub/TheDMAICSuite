@@ -94,7 +94,8 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
+  const { user: authUser, isAuthenticated } = useAuth();
   const [user, setUser] = useState<any>(null);
   const [currentTab, setCurrentTab] = useState("dashboard");
   const [activePhase, setActivePhase] = useState("define");
@@ -143,14 +144,14 @@ function App() {
     }
   }, []);
 
-  // Fetch and load userSettings from database when user is available
+  // Fetch and load userSettings from database when authenticated user is available
   useEffect(() => {
-    if (!user) {
-      console.log('No user, skipping settings load');
+    if (!isAuthenticated || !authUser) {
+      console.log('Not authenticated or no auth user, skipping settings load');
       return;
     }
 
-    console.log('User found, loading settings for user:', user.id);
+    console.log('Authenticated user found, loading settings for user:', authUser.id);
 
     const loadUserSettings = async () => {
       try {
@@ -192,7 +193,7 @@ function App() {
     };
 
     loadUserSettings();
-  }, [user]);
+  }, [isAuthenticated, authUser]);
 
   const login = (userData: any) => {
     setUser(userData);
@@ -211,33 +212,39 @@ function App() {
   };
 
   return (
+    <AppContext.Provider 
+      value={{ 
+        user, 
+        setUser: login, 
+        logout,
+        currentTab, 
+        setCurrentTab,
+        activePhase,
+        setActivePhase,
+        currentProject,
+        setCurrentProject,
+        sidebarOpen,
+        setSidebarOpen,
+        currency,
+        setCurrency: handleSetCurrency,
+        implementationStatus,
+        setImplementationStatus,
+        userSettings,
+        setUserSettings
+      }}
+    >
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
+    </AppContext.Provider>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      <AppContext.Provider 
-        value={{ 
-          user, 
-          setUser: login, 
-          logout,
-          currentTab, 
-          setCurrentTab,
-          activePhase,
-          setActivePhase,
-          currentProject,
-          setCurrentProject,
-          sidebarOpen,
-          setSidebarOpen,
-          currency,
-          setCurrency: handleSetCurrency,
-          implementationStatus,
-          setImplementationStatus,
-          userSettings,
-          setUserSettings
-        }}
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </AppContext.Provider>
+      <AppContent />
     </QueryClientProvider>
   );
 }
