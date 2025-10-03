@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatDateByUserSetting } from "@/lib/utils";
+import { formatCurrency, formatDateForInput } from "@/lib/utils";
 import { Image, Trash2, X, ChevronUp, ChevronDown, Download, PlusCircle, MinusCircle, Sparkles } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -47,7 +47,7 @@ import { Stakeholder } from "@shared/schema";
 import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
 
 export default function DefinePhase() {
-  const { currentProject, currency, userSettings } = useAppContext();
+  const { currentProject, currency } = useAppContext();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const params = useParams<{ projectId?: string }>();
@@ -174,13 +174,6 @@ export default function DefinePhase() {
       scope: "",
       startDate: "",
       targetEndDate: "",
-      // Milestone dates
-      kick_off_date: "",
-      define_phase_date: "",
-      measure_phase_date: "",
-      analyze_phase_date: "",
-      improve_phase_date: "",
-      control_phase_date: "",
       savingsPerYear: "",
       workingCapitalGains: "",
       waccPercentage: "10",
@@ -948,13 +941,13 @@ export default function DefinePhase() {
           : currentProject?.targetEndDate 
             ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] 
             : "",
-        // Add milestone dates
-        kick_off_date: charter.charter.kick_off_date || "",
-        define_phase_date: charter.charter.define_phase_date || "",
-        measure_phase_date: charter.charter.measure_phase_date || "",
-        analyze_phase_date: charter.charter.analyze_phase_date || "",
-        improve_phase_date: charter.charter.improve_phase_date || "",
-        control_phase_date: charter.charter.control_phase_date || "",
+        // Add milestone dates - convert to YYYY-MM-DD format for date inputs
+        kick_off_date: formatDateForInput(charter.charter.kick_off_date),
+        define_phase_date: formatDateForInput(charter.charter.define_phase_date),
+        measure_phase_date: formatDateForInput(charter.charter.measure_phase_date),
+        analyze_phase_date: formatDateForInput(charter.charter.analyze_phase_date),
+        improve_phase_date: formatDateForInput(charter.charter.improve_phase_date),
+        control_phase_date: formatDateForInput(charter.charter.control_phase_date),
         savingsPerYear: charter.charter.savingsPerYear?.toString() || "",
         workingCapitalGains: charter.charter.workingCapitalGains?.toString() || "",
         waccPercentage: charter.charter.waccPercentage?.toString() || "10",
@@ -3170,11 +3163,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("kick_off_date")}
                       />
-                      {charterForm.watch("kick_off_date") && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateByUserSetting(charterForm.watch("kick_off_date"), userSettings.dateFormat)}
-                        </p>
-                      )}
                     </div>
                     <div>
                       <Label htmlFor="define_phase_date">Define Phase</Label>
@@ -3183,11 +3171,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("define_phase_date")}
                       />
-                      {charterForm.watch("define_phase_date") && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateByUserSetting(charterForm.watch("define_phase_date"), userSettings.dateFormat)}
-                        </p>
-                      )}
                     </div>
                     <div>
                       <Label htmlFor="measure_phase_date">Measure Phase</Label>
@@ -3196,11 +3179,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("measure_phase_date")}
                       />
-                      {charterForm.watch("measure_phase_date") && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateByUserSetting(charterForm.watch("measure_phase_date"), userSettings.dateFormat)}
-                        </p>
-                      )}
                     </div>
                     <div>
                       <Label htmlFor="analyze_phase_date">Analyze Phase</Label>
@@ -3209,11 +3187,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("analyze_phase_date")}
                       />
-                      {charterForm.watch("analyze_phase_date") && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateByUserSetting(charterForm.watch("analyze_phase_date"), userSettings.dateFormat)}
-                        </p>
-                      )}
                     </div>
                     <div>
                       <Label htmlFor="improve_phase_date">Improve Phase</Label>
@@ -3222,11 +3195,6 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("improve_phase_date")}
                       />
-                      {charterForm.watch("improve_phase_date") && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateByUserSetting(charterForm.watch("improve_phase_date"), userSettings.dateFormat)}
-                        </p>
-                      )}
                     </div>
                     <div>
                       <Label htmlFor="control_phase_date">Control Phase</Label>
@@ -3236,11 +3204,6 @@ export default function DefinePhase() {
                         value={charterForm.watch("control_phase_date") || (currentProject?.targetEndDate ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] : "")}
                         onChange={(e) => charterForm.setValue("control_phase_date", e.target.value)}
                       />
-                      {charterForm.watch("control_phase_date") && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateByUserSetting(charterForm.watch("control_phase_date"), userSettings.dateFormat)}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
