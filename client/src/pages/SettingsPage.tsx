@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import MainLayout from "@/components/layout/MainLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAppContext, CurrencyType } from "@/store/AppContext";
 
 export default function SettingsPage() {
   const { user, isAuthenticated } = useAuth();
