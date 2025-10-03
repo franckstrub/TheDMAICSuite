@@ -207,19 +207,41 @@ export function calculateMilestoneProgress(startDate: string | Date | null, endD
 }
 
 /**
- * Format date for display in milestone timelines
- * @param dateString Date string
- * @returns Formatted date string (e.g. "May 15, 2025")
+ * Format date according to user's preferred date format setting
+ * @param dateString Date string or Date object
+ * @param dateFormat User's preferred date format (MM/DD/YYYY or DD/MM/YYYY)
+ * @returns Formatted date string
  */
-export function formatMilestoneDate(dateString: string | null): string {
+export function formatDateByUserSetting(dateString: string | Date | null, dateFormat: string = "MM/DD/YYYY"): string {
   if (!dateString) return 'N/A';
   
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    month: 'short',
-    day: 'numeric', 
-    year: 'numeric'
-  });
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) return 'N/A';
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  if (dateFormat === "DD/MM/YYYY") {
+    return `${day}/${month}/${year}`;
+  } else {
+    // Default to MM/DD/YYYY
+    return `${month}/${day}/${year}`;
+  }
+}
+
+/**
+ * Format date for display in milestone timelines
+ * @param dateString Date string
+ * @param dateFormat User's preferred date format (MM/DD/YYYY or DD/MM/YYYY)
+ * @returns Formatted date string (e.g. "05/15/2025" or "15/05/2025")
+ */
+export function formatMilestoneDate(dateString: string | null, dateFormat: string = "MM/DD/YYYY"): string {
+  if (!dateString) return 'N/A';
+  
+  return formatDateByUserSetting(dateString, dateFormat);
 }
 
 /**

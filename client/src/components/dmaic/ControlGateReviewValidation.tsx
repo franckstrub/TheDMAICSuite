@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAppContext } from "@/store/AppContext";
 import { 
   Card, 
   CardContent, 
@@ -34,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from '@/lib/queryClient';
+import { formatDateByUserSetting } from '@/lib/utils';
 import { CheckCircle, XCircle, Clock, Plus, Trash2, Paperclip, File, Download, ClipboardList, Edit } from 'lucide-react';
 import { Project, DeliverableRequirementType, deliverableRequirementTypes } from '@shared/schema';
 
@@ -235,6 +237,7 @@ export default function controlGateReviewValidation({ projectId }: controlGateRe
   const { project_type_in_project } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userSettings } = useAppContext();
   const phase = "control"; // This component is for the control phase
 
   // States for form handling
@@ -1086,11 +1089,7 @@ export default function controlGateReviewValidation({ projectId }: controlGateRe
                       <TableCell>
                         {validator.status !== "Pending" && validator.validatedDate ? (
                           <span className="text-sm">
-                            {new Date(validator.validatedDate).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}
+                            {formatDateByUserSetting(validator.validatedDate, userSettings.dateFormat)}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-sm">—</span>

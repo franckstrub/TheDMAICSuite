@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppContext } from "@/store/AppContext";
 import { formatMilestoneDate, calculateMilestoneProgress, getTimelineColor } from '@/lib/utils';
 
 interface MilestoneTimelineProps {
@@ -14,6 +15,8 @@ export default function MilestoneTimeline({
   label,
   className = '' 
 }: MilestoneTimelineProps) {
+  const { userSettings } = useAppContext();
+  
   // Don't render if we don't have both dates
   if (!startDate || !endDate) return null;
   
@@ -23,8 +26,8 @@ export default function MilestoneTimeline({
   return (
     <div className={`flex flex-col space-y-1 ${className}`}>
       <div className="flex justify-between text-xs text-gray-500">
-        <span>{formatMilestoneDate(startDate)}</span>
-        <span>{formatMilestoneDate(endDate)}</span>
+        <span>{formatMilestoneDate(startDate, userSettings.dateFormat)}</span>
+        <span>{formatMilestoneDate(endDate, userSettings.dateFormat)}</span>
       </div>
       <div className="relative pt-1">
         <div className="flex items-center justify-between">
