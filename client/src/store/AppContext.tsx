@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import { UserSettings } from "@shared/schema";
 
 export type CurrencyType = 
   | "$" | "€" | "£" | "¥" | "₩" | "CHF" | "₹" | "₽" | "₺" | "A$" 
@@ -6,6 +7,50 @@ export type CurrencyType =
   | "AED" | "zł" | "Ft" | "RM" | "S$" | "₲" | "ƒ" | "CLP" | "¥" 
   | "CN¥" | "DKK" | "SEK" | "NOK" | "ISK" | "₫" | "MXN" | "ARS"
   | "RON" | "CZK" | "BGN" | "ILS" | "EGP";
+
+export function currencyISOToSymbol(iso: string): CurrencyType {
+  const map: Record<string, CurrencyType> = {
+    "USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "KRW": "₩",
+    "CHF": "CHF", "INR": "₹", "RUB": "₽", "TRY": "₺", "AUD": "A$",
+    "CAD": "C$", "HKD": "HK$", "BRL": "R$", "ZAR": "R", "PHP": "₱",
+    "UAH": "₴", "THB": "฿", "NGN": "₦", "SAR": "SAR", "AED": "AED",
+    "PLN": "zł", "HUF": "Ft", "MYR": "RM", "SGD": "S$", "PYG": "₲",
+    "AWG": "ƒ", "CLP": "CLP", "CNY": "CN¥", "DKK": "DKK", "SEK": "SEK",
+    "NOK": "NOK", "ISK": "ISK", "VND": "₫", "MXN": "MXN", "ARS": "ARS",
+    "RON": "RON", "CZK": "CZK", "BGN": "BGN", "ILS": "ILS", "EGP": "EGP"
+  };
+  return map[iso] || "$";
+}
+
+export type UserSettingsType = {
+  emailNotifications: boolean;
+  projectUpdates: boolean;
+  phaseReminders: boolean;
+  weeklyReports: boolean;
+  theme: string;
+  language: string;
+  timezone: string;
+  currency: CurrencyType;
+  dateFormat: string;
+  profileVisibility: string;
+  dataSharing: boolean;
+  analyticsOptIn: boolean;
+};
+
+export const defaultUserSettings: UserSettingsType = {
+  emailNotifications: true,
+  projectUpdates: true,
+  phaseReminders: false,
+  weeklyReports: true,
+  theme: "light",
+  language: "en",
+  timezone: "UTC",
+  currency: "$",
+  dateFormat: "MM/DD/YYYY",
+  profileVisibility: "team",
+  dataSharing: false,
+  analyticsOptIn: true,
+};
 
 export type ImplementationStatusType = 
   | "all"                  // All projects
@@ -110,6 +155,8 @@ type AppContextType = {
   setCurrency: (currency: CurrencyType) => void;
   implementationStatus: ImplementationStatusType;
   setImplementationStatus: (status: ImplementationStatusType) => void;
+  userSettings: UserSettingsType;
+  setUserSettings: (settings: UserSettingsType) => void;
 };
 
 export const AppContext = createContext<AppContextType>({
@@ -127,7 +174,9 @@ export const AppContext = createContext<AppContextType>({
   currency: "$",
   setCurrency: () => {},
   implementationStatus: "all",
-  setImplementationStatus: () => {}
+  setImplementationStatus: () => {},
+  userSettings: defaultUserSettings,
+  setUserSettings: () => {},
 });
 
 export const useAppContext = () => useContext(AppContext);

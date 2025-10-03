@@ -8,6 +8,9 @@ import {
   AppContext, 
   CurrencyType, 
   ImplementationStatusType, 
+  UserSettingsType,
+  defaultUserSettings,
+  currencyISOToSymbol,
   saveCurrentProjectToStorage, 
   getStoredCurrentProject,
   saveRouteToStorage,
@@ -109,6 +112,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currency, setCurrency] = useState<CurrencyType>("$");
   const [implementationStatus, setImplementationStatus] = useState<ImplementationStatusType>("all");
+  const [userSettings, setUserSettings] = useState<UserSettingsType>(defaultUserSettings);
 
   // Check for authenticated user and settings on app load
   useEffect(() => {
@@ -139,40 +143,43 @@ function App() {
     }
   }, []);
 
-  // Fetch and load currency from database settings when user is available
+  // Fetch and load userSettings from database when user is available
   useEffect(() => {
     if (!user) return;
 
-    const loadCurrencyFromSettings = async () => {
+    const loadUserSettings = async () => {
       try {
         const response = await fetch('/api/settings', {
           credentials: 'include',
         });
         
         if (response.ok) {
-          const settings = await response.json();
-          if (settings?.currency) {
-            setCurrency(settings.currency as CurrencyType);
-            localStorage.setItem("currency", settings.currency);
-          }
-        } else {
-          // Fallback to localStorage if API fails
-          const storedCurrency = localStorage.getItem("currency");
-          if (storedCurrency && ["$", "€", "£", "¥", "₩", "CHF"].includes(storedCurrency)) {
-            setCurrency(storedCurrency as CurrencyType);
-          }
+          const dbSettings = await response.json();
+          
+          const loadedSettings: UserSettingsType = {
+            emailNotifications: dbSettings.emailNotifications ?? defaultUserSettings.emailNotifications,
+            projectUpdates: dbSettings.projectUpdates ?? defaultUserSettings.projectUpdates,
+            phaseReminders: dbSettings.phaseReminders ?? defaultUserSettings.phaseReminders,
+            weeklyReports: dbSettings.weeklyReports ?? defaultUserSettings.weeklyReports,
+            theme: dbSettings.theme ?? defaultUserSettings.theme,
+            language: dbSettings.language ?? defaultUserSettings.language,
+            timezone: dbSettings.timezone ?? defaultUserSettings.timezone,
+            currency: dbSettings.currency ? currencyISOToSymbol(dbSettings.currency) : defaultUserSettings.currency,
+            dateFormat: dbSettings.dateFormat ?? defaultUserSettings.dateFormat,
+            profileVisibility: dbSettings.profileVisibility ?? defaultUserSettings.profileVisibility,
+            dataSharing: dbSettings.dataSharing ?? defaultUserSettings.dataSharing,
+            analyticsOptIn: dbSettings.analyticsOptIn ?? defaultUserSettings.analyticsOptIn,
+          };
+          
+          setUserSettings(loadedSettings);
+          setCurrency(loadedSettings.currency);
         }
       } catch (error) {
-        console.error('Failed to load currency from settings:', error);
-        // Fallback to localStorage on error
-        const storedCurrency = localStorage.getItem("currency");
-        if (storedCurrency && ["$", "€", "£", "¥", "₩", "CHF"].includes(storedCurrency)) {
-          setCurrency(storedCurrency as CurrencyType);
-        }
+        console.error('Failed to load user settings:', error);
       }
     };
 
-    loadCurrencyFromSettings();
+    loadUserSettings();
   }, [user]);
 
   const login = (userData: any) => {
@@ -209,7 +216,9 @@ function App() {
           currency,
           setCurrency: handleSetCurrency,
           implementationStatus,
-          setImplementationStatus
+          setImplementationStatus,
+          userSettings,
+          setUserSettings
         }}
       >
         <TooltipProvider>
