@@ -190,6 +190,12 @@ export function registerGateReviewRoutes(app: Express, dbStorage: any) {
       
       // Remove lastUpdated from request body to prevent timestamp formatting issues
       const { lastUpdated, ...updateData } = req.body;
+      
+      // Convert validatedDate string to Date object if present
+      if (updateData.validatedDate && typeof updateData.validatedDate === 'string') {
+        updateData.validatedDate = new Date(updateData.validatedDate);
+      }
+      
       const updatedValidator = await dbStorage.updateGateReviewValidator(id, updateData);
       res.json({ validator: updatedValidator });
     } catch (error) {
