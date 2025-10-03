@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { setCurrency } = useAppContext();
   
   // Fetch settings from database
   const { data: dbSettings, isLoading } = useQuery<any>({
@@ -80,8 +81,14 @@ export default function SettingsPage() {
     mutationFn: async (settingsData: any) => {
       return await apiRequest('PUT', '/api/settings', settingsData);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      
+      // Update the AppContext currency immediately
+      if (variables.currency) {
+        setCurrency(variables.currency as CurrencyType);
+      }
+      
       toast({
         title: "Settings Saved",
         description: "Your preferences have been updated successfully.",
