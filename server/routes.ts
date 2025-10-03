@@ -1438,14 +1438,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users/:userId/storage-config", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      // Get user's organization ID
-      const user = req.user as any;
-      const organizationId = user?.organizationId || 1; // Fallback to default org
+      
+      // Get user from database to get organizationId
+      const configUser = await storage.getUser(userId.toString());
+      if (!configUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
       
       const configData: InsertConfig = {
         ...req.body,
         userId,
-        organizationId
+        organizationId: configUser.organizationId
       };
       
       const validatedData = insertConfigSchema.parse(configData);
@@ -1460,16 +1463,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await storage.createStorageConfig(validatedData);
       
       // Log activity
-      const configUser = await storage.getUser(userId);
-      if (configUser) {
-        await storage.createActivityLog({
-            organizationId: configUser.organizationId,
-          userId,
-          projectId: null,
-          action: "update_storage_config",
-          details: "Updated storage configuration"
-        });
-      }
+      await storage.createActivityLog({
+        organizationId: configUser.organizationId,
+        userId,
+        projectId: null,
+        action: "update_storage_config",
+        details: "Updated storage configuration"
+      });
       
       return res.status(201).json({ config });
     } catch (err) {
