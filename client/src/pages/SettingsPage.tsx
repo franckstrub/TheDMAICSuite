@@ -77,7 +77,7 @@ export default function SettingsPage() {
   // Mutation to save settings
   const saveSettingsMutation = useMutation({
     mutationFn: async (settingsData: any) => {
-      return await apiRequest('/api/settings', 'PUT', settingsData);
+      return await apiRequest('PUT', '/api/settings', settingsData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
