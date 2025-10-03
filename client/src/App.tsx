@@ -131,12 +131,6 @@ function App() {
       }
     }
     
-    // Load currency preference from localStorage as fallback
-    const storedCurrency = localStorage.getItem("currency");
-    if (storedCurrency && ["$", "€", "£", "¥", "₩", "CHF"].includes(storedCurrency)) {
-      setCurrency(storedCurrency as CurrencyType);
-    }
-    
     // Load stored project if available
     const storedProject = getStoredCurrentProject();
     if (storedProject) {
@@ -145,7 +139,7 @@ function App() {
     }
   }, []);
 
-  // Fetch and load currency from database settings
+  // Fetch and load currency from database settings (runs after user is loaded)
   useEffect(() => {
     const loadCurrencyFromSettings = async () => {
       try {
@@ -159,17 +153,32 @@ function App() {
             setCurrency(settings.currency as CurrencyType);
             localStorage.setItem("currency", settings.currency);
           }
+        } else {
+          // Fallback to localStorage if API fails
+          const storedCurrency = localStorage.getItem("currency");
+          if (storedCurrency && ["$", "€", "£", "¥", "₩", "CHF"].includes(storedCurrency)) {
+            setCurrency(storedCurrency as CurrencyType);
+          }
         }
       } catch (error) {
         console.error('Failed to load currency from settings:', error);
+        // Fallback to localStorage on error
+        const storedCurrency = localStorage.getItem("currency");
+        if (storedCurrency && ["$", "€", "£", "¥", "₩", "CHF"].includes(storedCurrency)) {
+          setCurrency(storedCurrency as CurrencyType);
+        }
       }
     };
 
-    // Only load if we have a stored user (authenticated)
-    const storedUser = localStorage.getItem("user");
-    if (storedUser && storedUser !== 'null' && storedUser !== 'undefined') {
-      loadCurrencyFromSettings();
-    }
+    // Delay to ensure authentication is complete
+    const timer = setTimeout(() => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser && storedUser !== 'null' && storedUser !== 'undefined') {
+        loadCurrencyFromSettings();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const login = (userData: any) => {
