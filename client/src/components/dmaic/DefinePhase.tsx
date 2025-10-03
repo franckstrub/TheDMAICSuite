@@ -3163,6 +3163,11 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("kick_off_date")}
                       />
+                      {charterForm.watch("kick_off_date") && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDateByUserSetting(charterForm.watch("kick_off_date"), userSettings.dateFormat)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="define_phase_date">Define Phase</Label>
@@ -3171,6 +3176,11 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("define_phase_date")}
                       />
+                      {charterForm.watch("define_phase_date") && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDateByUserSetting(charterForm.watch("define_phase_date"), userSettings.dateFormat)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="measure_phase_date">Measure Phase</Label>
@@ -3179,6 +3189,11 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("measure_phase_date")}
                       />
+                      {charterForm.watch("measure_phase_date") && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDateByUserSetting(charterForm.watch("measure_phase_date"), userSettings.dateFormat)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="analyze_phase_date">Analyze Phase</Label>
@@ -3187,6 +3202,11 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("analyze_phase_date")}
                       />
+                      {charterForm.watch("analyze_phase_date") && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDateByUserSetting(charterForm.watch("analyze_phase_date"), userSettings.dateFormat)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="improve_phase_date">Improve Phase</Label>
@@ -3195,6 +3215,11 @@ export default function DefinePhase() {
                         type="date"
                         {...charterForm.register("improve_phase_date")}
                       />
+                      {charterForm.watch("improve_phase_date") && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDateByUserSetting(charterForm.watch("improve_phase_date"), userSettings.dateFormat)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="control_phase_date">Control Phase</Label>
@@ -3204,6 +3229,11 @@ export default function DefinePhase() {
                         value={charterForm.watch("control_phase_date") || (currentProject?.targetEndDate ? new Date(currentProject.targetEndDate).toISOString().split('T')[0] : "")}
                         onChange={(e) => charterForm.setValue("control_phase_date", e.target.value)}
                       />
+                      {charterForm.watch("control_phase_date") && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDateByUserSetting(charterForm.watch("control_phase_date"), userSettings.dateFormat)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
