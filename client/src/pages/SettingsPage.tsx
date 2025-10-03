@@ -9,14 +9,23 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Bell, Shield, Database, Palette, Globe } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import MainLayout from "@/components/layout/MainLayout";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function SettingsPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
+  // Fetch settings from database
+  const { data: dbSettings, isLoading } = useQuery<any>({
+    queryKey: ['/api/settings'],
+    enabled: isAuthenticated,
+  });
+
   // Settings state
   const [settings, setSettings] = useState({
     notifications: {
@@ -39,6 +48,53 @@ export default function SettingsPage() {
     }
   });
 
+  // Update local state when database settings load
+  useEffect(() => {
+    if (dbSettings) {
+      setSettings({
+        notifications: {
+          emailNotifications: dbSettings.emailNotifications ?? true,
+          projectUpdates: dbSettings.projectUpdates ?? true,
+          phaseReminders: dbSettings.phaseReminders ?? false,
+          weeklyReports: dbSettings.weeklyReports ?? true,
+        },
+        preferences: {
+          theme: dbSettings.theme ?? "light",
+          language: dbSettings.language ?? "en",
+          timezone: dbSettings.timezone ?? "UTC",
+          currency: dbSettings.currency ?? "USD",
+          dateFormat: dbSettings.dateFormat ?? "MM/DD/YYYY",
+        },
+        privacy: {
+          profileVisibility: dbSettings.profileVisibility ?? "team",
+          dataSharing: dbSettings.dataSharing ?? false,
+          analyticsOptIn: dbSettings.analyticsOptIn ?? true,
+        }
+      });
+    }
+  }, [dbSettings]);
+
+  // Mutation to save settings
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (settingsData: any) => {
+      return await apiRequest('/api/settings', 'PUT', settingsData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      toast({
+        title: "Settings Saved",
+        description: "Your preferences have been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save settings",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (!isAuthenticated || !user) {
     return (
       <MainLayout>
@@ -50,10 +106,23 @@ export default function SettingsPage() {
   }
 
   const handleSaveSettings = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your preferences have been updated successfully.",
-    });
+    // Flatten settings for API
+    const settingsPayload = {
+      emailNotifications: settings.notifications.emailNotifications,
+      projectUpdates: settings.notifications.projectUpdates,
+      phaseReminders: settings.notifications.phaseReminders,
+      weeklyReports: settings.notifications.weeklyReports,
+      theme: settings.preferences.theme,
+      language: settings.preferences.language,
+      timezone: settings.preferences.timezone,
+      currency: settings.preferences.currency,
+      dateFormat: settings.preferences.dateFormat,
+      profileVisibility: settings.privacy.profileVisibility,
+      dataSharing: settings.privacy.dataSharing,
+      analyticsOptIn: settings.privacy.analyticsOptIn,
+    };
+    
+    saveSettingsMutation.mutate(settingsPayload);
   };
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -356,8 +425,13 @@ export default function SettingsPage() {
         </Tabs>
 
         <div className="flex justify-end mt-6">
-          <Button onClick={handleSaveSettings} className="px-6">
-            Save All Settings
+          <Button 
+            onClick={handleSaveSettings} 
+            className="px-6"
+            disabled={saveSettingsMutation.isPending || isLoading}
+            data-testid="button-save-settings"
+          >
+            {saveSettingsMutation.isPending ? "Saving..." : "Save All Settings"}
           </Button>
         </div>
       </div>

@@ -1712,3 +1712,50 @@ export type InsertMultiVariChartConfig = z.infer<
 >;
 export type MultiVariChartConfig =
   typeof multiVariChartConfig.$inferSelect;
+
+// User Settings Table
+export const userSettings = pgTable(
+  "user_settings",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .references(() => users.id)
+      .notNull(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    
+    // Notification preferences
+    emailNotifications: boolean("email_notifications").default(true),
+    projectUpdates: boolean("project_updates").default(true),
+    phaseReminders: boolean("phase_reminders").default(false),
+    weeklyReports: boolean("weekly_reports").default(true),
+    
+    // General preferences
+    theme: text("theme").default("light"),
+    language: text("language").default("en"),
+    timezone: text("timezone").default("UTC"),
+    currency: text("currency").default("USD"),
+    dateFormat: text("date_format").default("MM/DD/YYYY"),
+    
+    // Privacy settings
+    profileVisibility: text("profile_visibility").default("team"),
+    dataSharing: boolean("data_sharing").default(false),
+    analyticsOptIn: boolean("analytics_opt_in").default(true),
+    
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueUserSettings: unique().on(table.userId),
+  }),
+);
+
+export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+export type UserSettings = typeof userSettings.$inferSelect;

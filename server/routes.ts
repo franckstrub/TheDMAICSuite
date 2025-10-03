@@ -392,6 +392,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Settings Routes
+  app.get('/api/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settings = await storage.getUserSettings(userId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put('/api/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settingsData = req.body;
+      
+      // Get current user to get organizationId
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Create or update settings
+      const updatedSettings = await storage.upsertUserSettings(userId, currentUser.organizationId, settingsData);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
   app.post('/api/auth/upload-profile-image', isAuthenticated, upload.single('profileImage'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
