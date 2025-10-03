@@ -174,6 +174,13 @@ export default function DefinePhase() {
       scope: "",
       startDate: "",
       targetEndDate: "",
+      // Milestone dates
+      kick_off_date: "",
+      define_phase_date: "",
+      measure_phase_date: "",
+      analyze_phase_date: "",
+      improve_phase_date: "",
+      control_phase_date: "",
       savingsPerYear: "",
       workingCapitalGains: "",
       waccPercentage: "10",
