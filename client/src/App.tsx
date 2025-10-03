@@ -145,16 +145,25 @@ function App() {
 
   // Fetch and load userSettings from database when user is available
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user, skipping settings load');
+      return;
+    }
+
+    console.log('User found, loading settings for user:', user.id);
 
     const loadUserSettings = async () => {
       try {
+        console.log('Fetching /api/settings...');
         const response = await fetch('/api/settings', {
           credentials: 'include',
         });
         
+        console.log('Settings response status:', response.status);
+        
         if (response.ok) {
           const dbSettings = await response.json();
+          console.log('Loaded settings from database:', dbSettings);
           
           const loadedSettings: UserSettingsType = {
             emailNotifications: dbSettings.emailNotifications ?? defaultUserSettings.emailNotifications,
@@ -171,8 +180,11 @@ function App() {
             analyticsOptIn: dbSettings.analyticsOptIn ?? defaultUserSettings.analyticsOptIn,
           };
           
+          console.log('Converted currency from', dbSettings.currency, 'to', loadedSettings.currency);
+          
           setUserSettings(loadedSettings);
           setCurrency(loadedSettings.currency);
+          console.log('Currency set to:', loadedSettings.currency);
         }
       } catch (error) {
         console.error('Failed to load user settings:', error);
