@@ -47,7 +47,7 @@ import { Stakeholder } from "@shared/schema";
 import PdfStakeholderList from "@/components/stakeholders/PdfStakeholderList";
 
 export default function DefinePhase() {
-  const { currentProject, currency } = useAppContext();
+  const { currentProject, currency, userSettings } = useAppContext();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const params = useParams<{ projectId?: string }>();
