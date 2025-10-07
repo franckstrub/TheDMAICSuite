@@ -181,7 +181,7 @@ export default function ConfidenceIntervalsNSVariance({
           responsive: true,
           displayModeBar: true,
           displaylogo: false,
-          modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+          modeBarButtonsToRemove: ['lasso2d', 'select2d'],
           toImageButtonOptions: {
             format: 'png',
             filename: 'Confidence-Intervals-Multiple-Sample-Variances',

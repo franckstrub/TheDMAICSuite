@@ -279,7 +279,7 @@ export default function OneSVarianceTestCI({
           config={{ responsive: true,
                     displayModeBar: true,
                     displaylogo: false, // Remove Plotly logo
-                    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'], // Remove specific tools
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d'], // Remove specific tools
                     toImageButtonOptions: {
                         format: 'png',
                         filename: '1-sample Variance test',
