@@ -171,7 +171,7 @@ export default function BoxPlotWithNSMedianTest({
           responsive: true,
           displayModeBar: true,
           displaylogo: false,
-          modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+          modeBarButtonsToRemove: ['lasso2d', 'select2d'],
           toImageButtonOptions: {
             format: 'png',
             filename: 'Multiple-sample-Median-test',

@@ -208,44 +208,44 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="theme">Theme</Label>
-                    <Select value={settings.preferences.theme} onValueChange={(value) => handlePreferenceChange('theme', value)}>
+                    <Select value={settings.preferences.theme} disabled onValueChange={(value) => handlePreferenceChange('theme', value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
+                        {/*<SelectItem value="dark">Dark</SelectItem>
+                        <SelectItem value="system">System</SelectItem>*/}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="language">Language</Label>
-                    <Select value={settings.preferences.language} onValueChange={(value) => handlePreferenceChange('language', value)}>
+                    <Select value={settings.preferences.language} disabled onValueChange={(value) => handlePreferenceChange('language', value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="fr">Français</SelectItem>
+                        {/*<SelectItem value="fr">Français</SelectItem>
                         <SelectItem value="es">Español</SelectItem>
-                        <SelectItem value="de">Deutsch</SelectItem>
+                        <SelectItem value="de">Deutsch</SelectItem>*/}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Timezone</Label>
-                    <Select value={settings.preferences.timezone} onValueChange={(value) => handlePreferenceChange('timezone', value)}>
+                    <Select value={settings.preferences.timezone} disabled onValueChange={(value) => handlePreferenceChange('timezone', value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="UTC">UTC</SelectItem>
-                        <SelectItem value="EST">Eastern Time</SelectItem>
+                        {/*<SelectItem value="EST">Eastern Time</SelectItem>
                         <SelectItem value="PST">Pacific Time</SelectItem>
-                        <SelectItem value="CET">Central European Time</SelectItem>
+                        <SelectItem value="CET">Central European Time</SelectItem>*/}
                       </SelectContent>
                     </Select>
                   </div>
@@ -265,6 +265,7 @@ export default function SettingsPage() {
                     </Select>
                   </div>
 
+                  {/*
                   <div className="space-y-2">
                     <Label htmlFor="dateFormat">Date Format</Label>
                     <Select value={settings.preferences.dateFormat} onValueChange={(value) => handlePreferenceChange('dateFormat', value)}>
@@ -278,6 +279,7 @@ export default function SettingsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  */}
                 </div>
               </CardContent>
             </Card>
@@ -299,6 +301,7 @@ export default function SettingsPage() {
                       <p className="text-sm text-gray-500">Receive notifications via email</p>
                     </div>
                     <Switch
+                      disabled
                       checked={settings.notifications.emailNotifications}
                       onCheckedChange={(checked) => handleNotificationChange('emailNotifications', checked)}
                     />
@@ -312,6 +315,7 @@ export default function SettingsPage() {
                       <p className="text-sm text-gray-500">Get notified when projects are updated</p>
                     </div>
                     <Switch
+                      disabled
                       checked={settings.notifications.projectUpdates}
                       onCheckedChange={(checked) => handleNotificationChange('projectUpdates', checked)}
                     />
@@ -323,6 +327,7 @@ export default function SettingsPage() {
                       <p className="text-sm text-gray-500">Reminders for upcoming phase deadlines</p>
                     </div>
                     <Switch
+                      disabled
                       checked={settings.notifications.phaseReminders}
                       onCheckedChange={(checked) => handleNotificationChange('phaseReminders', checked)}
                     />
@@ -334,6 +339,7 @@ export default function SettingsPage() {
                       <p className="text-sm text-gray-500">Weekly summary of your projects</p>
                     </div>
                     <Switch
+                      disabled
                       checked={settings.notifications.weeklyReports}
                       onCheckedChange={(checked) => handleNotificationChange('weeklyReports', checked)}
                     />
@@ -355,14 +361,14 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="profileVisibility">Profile Visibility</Label>
-                    <Select value={settings.privacy.profileVisibility} onValueChange={(value) => handlePrivacyChange('profileVisibility', value)}>
+                    <Select value={settings.privacy.profileVisibility} disabled onValueChange={(value) => handlePrivacyChange('profileVisibility', value)}>
                       <SelectTrigger className="mt-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="public">Public</SelectItem>
+                        {/*<SelectItem value="public">Public</SelectItem>*/}
                         <SelectItem value="team">Team Only</SelectItem>
-                        <SelectItem value="private">Private</SelectItem>
+                        {/*<SelectItem value="private">Private</SelectItem>*/}
                       </SelectContent>
                     </Select>
                   </div>
@@ -375,6 +381,7 @@ export default function SettingsPage() {
                       <p className="text-sm text-gray-500">Share anonymized usage data to improve the platform</p>
                     </div>
                     <Switch
+                      disabled
                       checked={settings.privacy.dataSharing}
                       onCheckedChange={(checked) => handlePrivacyChange('dataSharing', checked)}
                     />
@@ -386,6 +393,7 @@ export default function SettingsPage() {
                       <p className="text-sm text-gray-500">Allow analytics tracking for product improvements</p>
                     </div>
                     <Switch
+                      disabled
                       checked={settings.privacy.analyticsOptIn}
                       onCheckedChange={(checked) => handlePrivacyChange('analyticsOptIn', checked)}
                     />
@@ -407,17 +415,17 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" defaultValue={user?.firstName || ""} />
+                    <Input disabled id="firstName" defaultValue={user?.firstName || ""} />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" defaultValue={user?.lastName || ""} />
+                    <Input disabled id="lastName" defaultValue={user?.lastName || ""} />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" defaultValue={user?.email || ""} disabled />
+                    <Input disabled id="email" defaultValue={user?.email || ""} />
                   </div>
 
                   <div className="space-y-2">
@@ -433,13 +441,13 @@ export default function SettingsPage() {
                 <Separator />
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="font-medium text-red-800 mb-2">Danger Zone</h4>
+                  <h4 className="font-medium text-red-800 mb-2">Note:</h4>
                   <p className="text-sm text-red-600 mb-3">
-                    Account deletion and data management are handled through your authentication provider.
+                    Account is managed in User's Profile. Deletion is handled through your Admin.
                   </p>
-                  <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
+                  {/*<Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
                     Contact Support
-                  </Button>
+                  </Button>*/}
                 </div>
               </CardContent>
             </Card>
