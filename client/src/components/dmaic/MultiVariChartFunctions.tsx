@@ -79,7 +79,7 @@ export function TwoFactorMultiVariChart({
   const layoutTitle = `<b>Multi-Vari Chart for ${ctqName} by ${factor1Name} - ${factor2Name}</b>`;
   const uniqueFactor1 = Array.from(new Set(data.map(d => d.factor1))).sort();
   const uniqueFactor2 = Array.from(new Set(data.map(d => d.factor2))).sort();
-  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
 
   const traces: any[] = [];
 
@@ -91,7 +91,6 @@ export function TwoFactorMultiVariChart({
     const pointsX: number[] = [];
     const pointsY: number[] = [];
     const pointsText: string[] = [];
-    let xOffset = 0;
 
     data.filter(d => d.factor2 === f2).forEach(d => {
       const xPos =  + uniqueFactor1.indexOf(d.factor1) + 1;
@@ -118,43 +117,6 @@ export function TwoFactorMultiVariChart({
       hovertemplate: '%{text}<extra></extra>',
       legendgroup: 'f2',
     });
-
-    // Calculate and add mean points of factor2
-   /* if (showMean) {
-      const meanX: number[] = [];
-      const meanY: number[] = [];
-      const meanText: string[] = [];
-
-      uniqueFactor1.forEach((f1, idx) => {
-        const values = data
-          .filter(d => d.factor1 === f1 && d.factor2 === f2)
-          .map(d => d.response);
-        
-        if (values.length > 0) {
-          const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-          meanX.push(idx + 1 + xOffset);
-          meanY.push(mean);
-          meanText.push(`${f1} - ${f2}<br>Mean: ${mean.toFixed(2)}`);
-        }
-      });
-
-      traces.push({
-        x: meanX,
-        y: meanY,
-        mode: 'markers',
-        name: `${f2} (mean)`,
-        marker: {
-          color: color,
-          size: 8,
-          symbol: 'diamond',
-        },
-        text: meanText,
-        hovertemplate: '%{text}<extra></extra>',
-        //legendgroup: f2,
-        legendgroup: 'means',
-        showlegend: false,
-      });
-    }*/
   });
 
   // Add overall mean line (red dashed)
@@ -169,9 +131,8 @@ export function TwoFactorMultiVariChart({
       const meanX: number[] = [];
       const meanY: number[] = [];
       const meanText: string[] = [];
-      const color = colors[idx % colors.length];
+      //const color = colors[idx % colors.length];
       
-      let xOffset =0;
       uniqueFactor2.forEach((f2, f2Idx) => {
         
         const values = data
@@ -187,8 +148,7 @@ export function TwoFactorMultiVariChart({
           //meanText.push(`${f2} mean line`);
           meanText.push(`${f1} - ${f2}<br>Mean: ${mean.toFixed(2)}`);
           legendgroupText.push(f2);
-        }  
-        
+        }          
       });
 
       traces.push({
@@ -352,23 +312,22 @@ export function ThreeFactorMultiVariChart({
         const layoutTitle = `<b>Multi-Vari Chart for ${ctqName} by ${factor1Name} - ${factor2Name}</b><br>${factor3Name} = ${f3}`;
         const traces: any[] = [];
 
-        // Create traces for each Factor1 level (individual points)
-        uniqueFactor1.forEach((f1, f1Idx) => {
-          const color = colors[f1Idx % colors.length];
+        uniqueFactor2.forEach((f2, f2Idx) => {
+          const color = colors[f2Idx % colors.length];
 
-          // Individual data points for this factor1
+          // Individual data points for this factor2
           const pointsX: number[] = [];
           const pointsY: number[] = [];
           const pointsText: string[] = [];
 
-          panelData.filter(d => d.factor1 === f1).forEach(d => {
-            const xPos = uniqueFactor2.indexOf(d.factor2) + 1;
-            const f1Index = uniqueFactor1.indexOf(d.factor1);
-            const xOffset = calculateXOffset(f1Index, uniqueFactor1.length);
+          panelData.filter(d => d.factor2 === f2).forEach(d => {
+            const xPos =  + uniqueFactor1.indexOf(d.factor1) + 1;
+            const f2Index = uniqueFactor2.indexOf(f2);
+            const xOffset = calculateXOffset(f2Index, uniqueFactor2.length);
             
-            pointsX.push(xPos + xOffset);
+            pointsX.push(xPos+xOffset);
             pointsY.push(d.response);
-            pointsText.push(`${d.factor2} - ${d.factor1}<br>Response: ${d.response.toFixed(2)}`);
+            pointsText.push(`${d.factor1} - ${d.factor2}<br>Response: ${d.response.toFixed(2)}`);
           });
 
           // Add scatter trace for individual points
@@ -377,47 +336,56 @@ export function ThreeFactorMultiVariChart({
             y: pointsY,
             mode: 'markers',
             type: 'scatter',
-            name: f1,
+            name: f2,
             marker: {
               color: color,
               size: 8,
-              symbol: 'circle',
             },
             text: pointsText,
             hovertemplate: '%{text}<extra></extra>',
-            legendgroup: 'f1',
+            legendgroup: 'f2',
           });
         });
 
-        // Add Factor1 mean lines (gray dashed diamonds) - connecting means within each Factor2
+        // Add overall mean line (red dashed)
         if (showMean) {
-          uniqueFactor2.forEach((f2, f2Idx) => {
+          const overallMeanX: number[] = [];
+          const overallMeanY: number[] = [];
+          const overallMeanText: string[] = [];
+          const legendgroupText: string[] = [];
+
+          uniqueFactor1.forEach((f1, idx) => {
+
             const meanX: number[] = [];
             const meanY: number[] = [];
             const meanText: string[] = [];
-
-            uniqueFactor1.forEach((f1, f1Idx) => {
+            const color = colors[idx % colors.length];
+            
+            uniqueFactor2.forEach((f2, f2Idx) => {
+              
               const values = panelData
                 .filter(d => d.factor1 === f1 && d.factor2 === f2)
                 .map(d => d.response);
-              
-              const xOffset = calculateXOffset(f1Idx, uniqueFactor1.length);
+              const f2Index = uniqueFactor2.indexOf(f2);
+              const xOffset = calculateXOffset(f2Index, uniqueFactor2.length);
 
               if (values.length > 0) {
                 const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-                meanX.push(f2Idx + 1 + xOffset);
+                meanX.push(idx + 1 + xOffset);
                 meanY.push(mean);
-                meanText.push(`${f2} - ${f1}<br>Mean: ${mean.toFixed(2)}`);
-              }
+                //meanText.push(`${f2} mean line`);
+                meanText.push(`${f1} - ${f2}<br>Mean: ${mean.toFixed(2)}`);
+                legendgroupText.push(f2);
+              }  
+              
             });
 
-            if (meanX.length > 0) {
-              traces.push({
+            traces.push({
                 x: meanX,
                 y: meanY,
                 mode: 'lines+markers',
                 type: 'scatter',
-                name: `${factor1Name} ${f2} means`,
+                name: `${factor2Name} ${f1} means`,
                 line: {
                   color: 'gray',
                   width: 2,
@@ -428,38 +396,26 @@ export function ThreeFactorMultiVariChart({
                   size: 8,
                   symbol: 'diamond',
                 },
-                legendgroup: 'f1means',
+                legendgroup: 'means',
                 showlegend: true,
                 text: meanText,
                 hovertemplate: '%{text}<extra></extra>',
               });
-            }
-          });
-
-          // Add Factor2 mean line (black dashed diamonds) - connecting Factor2 means
-          const f2MeanX: number[] = [];
-          const f2MeanY: number[] = [];
-          const f2MeanText: string[] = [];
-
-          uniqueFactor2.forEach((f2, f2Idx) => {
-            const values = panelData
-              .filter(d => d.factor2 === f2)
-              .map(d => d.response);
             
-            if (values.length > 0) {
-              const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-              f2MeanX.push(f2Idx + 1);
-              f2MeanY.push(mean);
-              f2MeanText.push(`${f2}<br>${factor2Name} Mean: ${mean.toFixed(2)}`);
-            }
+            const values = panelData.filter(d => d.factor1 === f1).map(d => d.response);
+            const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+            overallMeanX.push(idx + 1);
+            overallMeanY.push(mean);
+            overallMeanText.push(`${f1}<br>Overall Mean: ${mean.toFixed(2)}`);
+
           });
 
           traces.push({
-            x: f2MeanX,
-            y: f2MeanY,
+            x: overallMeanX,
+            y: overallMeanY,
             mode: 'lines+markers',
             type: 'scatter',
-            name: `${factor2Name} Means`,
+            name: `${factor1Name} Means`,
             line: {
               color: '#222222ff',
               width: 2,
@@ -470,47 +426,9 @@ export function ThreeFactorMultiVariChart({
               size: 8,
               symbol: 'diamond',
             },
-            text: f2MeanText,
+            text: overallMeanText,
             hovertemplate: '%{text}<extra></extra>',
-            legendgroup: 'f2means',
-          });
-
-          // Add overall Factor3 mean (green diamonds with solid line)
-          const f3MeanX: number[] = [];
-          const f3MeanY: number[] = [];
-          const f3MeanText: string[] = [];
-
-          uniqueFactor2.forEach((f2, f2Idx) => {
-            const values = panelData
-              .filter(d => d.factor2 === f2)
-              .map(d => d.response);
-            
-            if (values.length > 0) {
-              const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-              f3MeanX.push(f2Idx + 1);
-              f3MeanY.push(mean);
-              f3MeanText.push(`${f2}<br>${factor3Name} ${f3} Mean: ${mean.toFixed(2)}`);
-            }
-          });
-
-          traces.push({
-            x: f3MeanX,
-            y: f3MeanY,
-            mode: 'lines+markers',
-            type: 'scatter',
-            name: `${factor3Name} ${f3} Mean`,
-            line: {
-              color: '#10b981',
-              width: 2.5,
-            },
-            marker: {
-              color: '#10b981',
-              size: 10,
-              symbol: 'diamond',
-            },
-            text: f3MeanText,
-            hovertemplate: '%{text}<extra></extra>',
-            legendgroup: 'f3means',
+            legendgroup: 'means',
           });
         }
 
