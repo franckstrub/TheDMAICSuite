@@ -111,7 +111,7 @@ export function TwoFactorMultiVariChart({
       name: f2,
       marker: {
         color: color,
-        size: 8,
+        size: 10,
       },
       text: pointsText,
       hovertemplate: '%{text}<extra></extra>',
@@ -163,7 +163,7 @@ export function TwoFactorMultiVariChart({
             dash: 'dash',
           },
           marker: {
-            color: '#727171f3',
+            color: 'gray',
             size: 8,
             symbol: 'diamond',
           },
@@ -339,7 +339,7 @@ export function ThreeFactorMultiVariChart({
             name: f2,
             marker: {
               color: color,
-              size: 8,
+              size: 10,
             },
             text: pointsText,
             hovertemplate: '%{text}<extra></extra>',
@@ -392,7 +392,7 @@ export function ThreeFactorMultiVariChart({
                   dash: 'dash',
                 },
                 marker: {
-                  color: '#727171f3',
+                  color: 'gray',
                   size: 8,
                   symbol: 'diamond',
                 },
@@ -440,11 +440,11 @@ export function ThreeFactorMultiVariChart({
                 title: { text: layoutTitle },
                 xaxis: {
                   title: {
-                    text: factor2Name
+                    text: factor1Name
                   },
                   tickmode: 'array',
-                  tickvals: uniqueFactor2.map((_, i) => i + 1),
-                  ticktext: uniqueFactor2,
+                  tickvals: uniqueFactor1.map((_, i) => i + 1),
+                  ticktext: uniqueFactor1,
                   showgrid: true,
                   gridcolor: '#e0e0e0',
                 },
@@ -459,11 +459,11 @@ export function ThreeFactorMultiVariChart({
                   y: 1,
                   xanchor: 'left',
                   yanchor: 'top',
-                  title: { text: factor1Name },
+                  title: { text: factor2Name },
                 },
                 plot_bgcolor: 'white',
                 paper_bgcolor: 'white',
-                margin: { l: 60, r: 150, t: 80, b: 60 },
+                margin: { l: 60, r: 150, t: 40, b: 60 },
                 hovermode: 'closest',
                 autosize: true,
               }}
@@ -475,12 +475,12 @@ export function ThreeFactorMultiVariChart({
                 toImageButtonOptions: {
                   format: 'png',
                   filename: `Multi-Vari_chart_${f3}`,
-                  height: 500,
-                  width: 900,
+                  height: 400,
+                  width: 800,
                   scale: 1
                 }
               }}
-              style={{ width: '100%', height: '500px' }}
+              style={{ width: '100%', height: '400px' }}
               useResizeHandler={true}
             />
           </div>
