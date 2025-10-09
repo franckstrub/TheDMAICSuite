@@ -1689,7 +1689,6 @@ export const multiVariChartConfig = pgTable(
       .default([]),
 
     // Chart configuration
-    chartType: text("chart_type").default("line"), // line, scatter, box
     showMean: boolean("show_mean").default(true),
     useFactor3: boolean("use_factor3").default(false),
     
