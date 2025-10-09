@@ -15,7 +15,6 @@ export interface TwoFactorChartProps {
   factor2Name: string;
   ctqName: string;
   showMean?: boolean;
-  showRange?: boolean;
 }
 
 export interface ThreeFactorChartProps {
@@ -25,7 +24,6 @@ export interface ThreeFactorChartProps {
   factor3Name: string;
   ctqName: string;
   showMean?: boolean;
-  showRange?: boolean;
 }
 
 // Dynamic x-offset calculation for n levels of Factor 2 (n between 2-7)
@@ -67,7 +65,6 @@ export function TwoFactorMultiVariChart({
   factor2Name,
   ctqName,
   showMean = true,
-  showRange = false,
 }: TwoFactorChartProps) {
   if (!data || data.length === 0) {
     return (
@@ -272,7 +269,6 @@ export function ThreeFactorMultiVariChart({
   factor3Name,
   ctqName,
   showMean = true,
-  showRange = false,
 }: ThreeFactorChartProps) {
   if (!data || data.length === 0) {
     return (

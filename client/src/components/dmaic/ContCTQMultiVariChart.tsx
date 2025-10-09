@@ -573,57 +573,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
 
             {/* Data Input Tab */}
             <TabsContent value="data" className="space-y-4">
-              <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
-                <h3 className="font-semibold mb-2">Quick Data Entry</h3>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                  <div>
-                    <Label className="text-xs">{factor1Name}</Label>
-                    <Input
-                      value={newFactor1}
-                      onChange={(e) => setNewFactor1(e.target.value)}
-                      placeholder="e.g., Top"
-                      data-testid="input-new-factor1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">{factor2Name}</Label>
-                    <Input
-                      value={newFactor2}
-                      onChange={(e) => setNewFactor2(e.target.value)}
-                      placeholder="e.g., AM"
-                      data-testid="input-new-factor2"
-                    />
-                  </div>
-                  {useFactor3 && (
-                    <div>
-                      <Label className="text-xs">{factor3Name}</Label>
-                      <Input
-                        value={newFactor3}
-                        onChange={(e) => setNewFactor3(e.target.value)}
-                        placeholder="e.g., Operator A"
-                        data-testid="input-new-factor3"
-                      />
-                    </div>
-                  )}
-                  <div>
-                    <Label className="text-xs">Response</Label>
-                    <Input
-                      value={newResponse}
-                      onChange={(e) => setNewResponse(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addDataPoint()}
-                      placeholder="e.g., 7.5"
-                      data-testid="input-new-response"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button onClick={addDataPoint} className="w-full" data-testid="button-add-datapoint">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex gap-2">
                 <div 
                   onPaste={handlePaste} 
@@ -782,6 +731,56 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
               <p className="text-sm text-gray-600">
                 Total data points: <span className="font-semibold">{data.length}</span>
               </p>
+              <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
+                <h3 className="font-semibold mb-2">Quick Data Entry</h3>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <div>
+                    <Label className="text-xs">{factor1Name}</Label>
+                    <Input
+                      value={newFactor1}
+                      onChange={(e) => setNewFactor1(e.target.value)}
+                      placeholder="e.g., Top"
+                      data-testid="input-new-factor1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">{factor2Name}</Label>
+                    <Input
+                      value={newFactor2}
+                      onChange={(e) => setNewFactor2(e.target.value)}
+                      placeholder="e.g., AM"
+                      data-testid="input-new-factor2"
+                    />
+                  </div>
+                  {useFactor3 && (
+                    <div>
+                      <Label className="text-xs">{factor3Name}</Label>
+                      <Input
+                        value={newFactor3}
+                        onChange={(e) => setNewFactor3(e.target.value)}
+                        placeholder="e.g., Operator A"
+                        data-testid="input-new-factor3"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-xs">Response</Label>
+                    <Input
+                      value={newResponse}
+                      onChange={(e) => setNewResponse(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addDataPoint()}
+                      placeholder="e.g., 7.5"
+                      data-testid="input-new-response"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={addDataPoint} className="w-full" data-testid="button-add-datapoint">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
 
             {/* Chart Tab */}
