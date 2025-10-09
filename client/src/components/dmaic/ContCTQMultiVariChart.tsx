@@ -45,7 +45,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   const [data, setData] = useState<DataPoint[]>([]);
   const [chartType, setChartType] = useState<"line" | "scatter">("line");
   const [showMean, setShowMean] = useState(true);
-  const [showRange, setShowRange] = useState(true);
   const [useFactor3, setUseFactor3] = useState(false);
   
   // Form inputs for adding data
@@ -101,7 +100,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
       setData(configData.data || []);
       setChartType((configData.chartType as "line" | "scatter") || "line");
       setShowMean(configData.showMean ?? true);
-      setShowRange(configData.showRange ?? true);
       
       // Use the saved useFactor3 state from database
       setUseFactor3(configData.useFactor3 ?? false);
@@ -280,7 +278,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
       data,
       chartType,
       showMean,
-      showRange,
       useFactor3,
     });
   };
@@ -557,17 +554,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                   />
                   <Label htmlFor="show-mean" className="cursor-pointer">Show Mean</Label>
                 </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="show-range"
-                    checked={showRange}
-                    onChange={(e) => setShowRange(e.target.checked)}
-                    className="rounded border-gray-300"
-                    data-testid="checkbox-show-range"
-                  />
-                  <Label htmlFor="show-range" className="cursor-pointer">Show Range</Label>
-                </div>
               </div>
             </TabsContent>
 
@@ -802,7 +788,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                     factor2Name={factor2Name}
                     ctqName={ctqName}
                     showMean={showMean}
-                    showRange={showRange}
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -855,7 +840,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                     factor3Name={factor3Name}
                     ctqName={ctqName}
                     showMean={showMean}
-                    showRange={showRange}
                   />
                 </div>
               )}
