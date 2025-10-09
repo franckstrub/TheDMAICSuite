@@ -43,7 +43,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
   const [factor2Name, setFactor2Name] = useState("2nd factor");
   const [factor3Name, setFactor3Name] = useState("3rd factor");
   const [data, setData] = useState<DataPoint[]>([]);
-  const [chartType, setChartType] = useState<"line" | "scatter">("line");
   const [showMean, setShowMean] = useState(true);
   const [useFactor3, setUseFactor3] = useState(false);
   
@@ -98,7 +97,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
       setFactor2Name(configData.factor2Name || "2nd factor");
       setFactor3Name(configData.factor3Name || "3rd factor");
       setData(configData.data || []);
-      setChartType((configData.chartType as "line" | "scatter") || "line");
       setShowMean(configData.showMean ?? true);
       
       // Use the saved useFactor3 state from database
@@ -276,7 +274,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
       factor2Name,
       factor3Name,
       data,
-      chartType,
       showMean,
       useFactor3,
     });
@@ -526,19 +523,6 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                   <p className="text-xs text-muted-foreground">
                     Add a third factor for more detailed analysis
                   </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="chart-type">Chart Type</Label>
-                  <Select value={chartType} onValueChange={(val) => setChartType(val as "line" | "scatter")}>
-                    <SelectTrigger id="chart-type" data-testid="select-chart-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="line">Line Chart</SelectItem>
-                      <SelectItem value="scatter">Scatter Plot</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
