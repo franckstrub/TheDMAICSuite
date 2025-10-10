@@ -569,7 +569,11 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
                       <li>• Top Category: {group.data[0]?.category} ({group.data[0]?.percentage.toFixed(1)}%)</li>
                       <li>• 80% Rule: First {group.data.findIndex(item => item.cumulativePercentage >= 80) + 1} {group.data.findIndex(item => item.cumulativePercentage >= 80) + 1 === 1 ? 'category accounts' : 'categories account'} for 80%+ of {getCategoryLabel().toLowerCase()}</li>
                       <li title="Categories that contribute the most to overall rate">
-                        • Vital Few: {group.data.filter(d => d.cumulativePercentage <= 80).map(d => d.category).join(', ')}
+                        • Vital Few: {(() => {
+                          const index80 = group.data.findIndex(item => item.cumulativePercentage >= 80);
+                          const vitalFewCount = index80 >= 0 ? index80 + 1 : Math.max(1, group.data.length);
+                          return group.data.slice(0, vitalFewCount).map(d => d.category).join(', ');
+                        })()}
                       </li>
                     </ul>
                   </div>
