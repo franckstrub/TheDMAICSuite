@@ -1712,6 +1712,54 @@ export type InsertMultiVariChartConfig = z.infer<
 export type MultiVariChartConfig =
   typeof multiVariChartConfig.$inferSelect;
 
+// Pareto Analysis for DMAIC Analyze Phase
+export const paretoAnalysis = pgTable(
+  "pareto_analysis",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Category type selection
+    categoryType: text("category_type").notNull().default("Defects"), // "Defects", "Complaints", "Causes", "Others"
+    categoryTypeCustom: text("category_type_custom"), // Custom text if "Others" is selected
+    
+    // Frequency type selection
+    frequencyType: text("frequency_type").notNull().default("Count"), // "Count", "Costs", "Others"
+    frequencyTypeCustom: text("frequency_type_custom"), // Custom text if "Others" is selected
+    
+    // Variable selection (optional)
+    selectedVariable: text("selected_variable"),
+    
+    // Pareto data storage as JSON: array of categories with frequencies
+    // Structure: [{ category: string, frequency: number }]
+    paretoData: jsonb("pareto_data")
+      .$type<Array<{ category: string; frequency: number }>>()
+      .default([]),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqPareto: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertParetoAnalysisSchema = createInsertSchema(
+  paretoAnalysis,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertParetoAnalysis = z.infer<typeof insertParetoAnalysisSchema>;
+export type ParetoAnalysis = typeof paretoAnalysis.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",
