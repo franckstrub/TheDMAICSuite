@@ -127,14 +127,59 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
     });
   };
 
-  // Calculate Pareto chart data
+  // Calculate Pareto chart data - groups by variable if specified
   const calculateParetoData = () => {
     // Filter out empty or zero frequency items
     const validData = paretoData.filter(d => d.category.trim() !== "" && d.frequency > 0);
     
     if (validData.length === 0) return null;
 
-    // Sort by frequency descending
+    // If variable is specified and data has variable values, group by variable
+    if (selectedVariable && validData.some(d => d.variable && d.variable.trim() !== "")) {
+      // Group data by variable value
+      const groupedByVariable: { [key: string]: typeof validData } = {};
+      
+      validData.forEach(item => {
+        const varValue = item.variable?.trim() || "Unspecified";
+        if (!groupedByVariable[varValue]) {
+          groupedByVariable[varValue] = [];
+        }
+        groupedByVariable[varValue].push(item);
+      });
+
+      // Create chart data for each variable value
+      const chartsByVariable = Object.entries(groupedByVariable).map(([variableValue, items]) => {
+        // Sort by frequency descending
+        const sorted = [...items].sort((a, b) => b.frequency - a.frequency);
+        
+        // Calculate total for this variable
+        const total = sorted.reduce((sum, item) => sum + item.frequency, 0);
+        
+        // Calculate percentages and cumulative percentages
+        let cumulative = 0;
+        const data = sorted.map(item => {
+          const percentage = (item.frequency / total) * 100;
+          cumulative += percentage;
+          return {
+            category: item.category,
+            variable: item.variable,
+            frequency: item.frequency,
+            percentage: percentage,
+            cumulativePercentage: cumulative
+          };
+        });
+
+        return {
+          variableValue,
+          data,
+          total
+        };
+      });
+
+      return chartsByVariable;
+    }
+
+    // No variable specified - create single chart
     const sorted = [...validData].sort((a, b) => b.frequency - a.frequency);
     
     // Calculate total
@@ -154,10 +199,14 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
       };
     });
 
-    return chartData;
+    return [{
+      variableValue: null,
+      data: chartData,
+      total
+    }];
   };
 
-  const chartData = calculateParetoData();
+  const chartDataGroups = calculateParetoData();
 
   // Get display names for category and frequency types
   const getCategoryLabel = () => {
@@ -331,130 +380,128 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
             </Button>
           </div>
 
-          {/* Pareto Chart */}
-          {chartData && chartData.length > 0 && (
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-md p-4">
-                <h3 className="text-lg font-semibold text-center mb-4">
-                  PARETO CHART - {getCategoryLabel().toUpperCase()}
-                </h3>
-                <Plot
-                  data={[
-                    {
-                      x: chartData.map(d => d.category),
-                      y: chartData.map(d => d.frequency),
-                      type: 'bar',
-                      name: getFrequencyLabel(),
-                      marker: { color: '#3b82f6' },
-                      yaxis: 'y1',
-                    },
-                    {
-                      x: chartData.map(d => d.category),
-                      y: chartData.map(d => d.cumulativePercentage),
-                      type: 'scatter',
-                      mode: 'lines+markers',
-                      name: 'Cumulative %',
-                      line: { color: '#f97316', width: 3 },
-                      marker: { size: 8 },
-                      yaxis: 'y2',
-                    },
-                  ]}
-                  layout={{
-                    autosize: true,
-                    height: 400,
-                    xaxis: {
-                      title: { text: getCategoryLabel() },
-                      tickangle: -30,
-                    },
-                    yaxis: {
-                      title: { text: getFrequencyLabel() },
-                      side: 'left',
-                    },
-                    yaxis2: {
-                      title: { text: 'Cumulative %' },
-                      side: 'right',
-                      overlaying: 'y',
-                      range: [0, 100],
-                    },
-                    legend: {
-                      x: 0.5,
-                      y: -0.3,
-                      xanchor: 'center',
-                      orientation: 'h',
-                    },
-                    margin: { l: 60, r: 60, t: 40, b: 100 },
-                  }}
-                  config={{
-                    responsive: true,
-                    displayModeBar: true,
-                    displaylogo: false,
-                  }}
-                  style={{ width: '100%' }}
-                />
-              </div>
+          {/* Pareto Charts - One per variable value */}
+          {chartDataGroups && chartDataGroups.length > 0 && (
+            <div className="space-y-8">
+              {chartDataGroups.map((group, groupIndex) => (
+                <div key={groupIndex} className="space-y-4">
+                  {/* Chart */}
+                  <div className="border border-gray-200 rounded-md p-4">
+                    <h3 className="text-lg font-semibold text-center mb-4">
+                      PARETO CHART - {getCategoryLabel().toUpperCase()}
+                      {group.variableValue && ` (${selectedVariable}: ${group.variableValue})`}
+                    </h3>
+                    <Plot
+                      data={[
+                        {
+                          x: group.data.map(d => d.category),
+                          y: group.data.map(d => d.frequency),
+                          type: 'bar',
+                          name: getFrequencyLabel(),
+                          marker: { color: '#3b82f6' },
+                          yaxis: 'y1',
+                        },
+                        {
+                          x: group.data.map(d => d.category),
+                          y: group.data.map(d => d.cumulativePercentage),
+                          type: 'scatter',
+                          mode: 'lines+markers',
+                          name: 'Cumulative %',
+                          line: { color: '#f97316', width: 3 },
+                          marker: { size: 8 },
+                          yaxis: 'y2',
+                        },
+                      ]}
+                      layout={{
+                        autosize: true,
+                        height: 400,
+                        xaxis: {
+                          title: { text: getCategoryLabel() },
+                          tickangle: -30,
+                        },
+                        yaxis: {
+                          title: { text: getFrequencyLabel() },
+                          side: 'left',
+                        },
+                        yaxis2: {
+                          title: { text: 'Cumulative %' },
+                          side: 'right',
+                          overlaying: 'y',
+                          range: [0, 100],
+                        },
+                        legend: {
+                          x: 0.5,
+                          y: -0.3,
+                          xanchor: 'center',
+                          orientation: 'h',
+                        },
+                        margin: { l: 60, r: 60, t: 40, b: 100 },
+                      }}
+                      config={{
+                        responsive: true,
+                        displayModeBar: true,
+                        displaylogo: false,
+                      }}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
 
-              {/* Results Table */}
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        {getCategoryLabel()}
-                      </th>
-                      {selectedVariable && (
-                        <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                          {selectedVariable}
-                        </th>
-                      )}
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        {getFrequencyLabel()}
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Percentage
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Cumulative %
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200">
-                    {chartData.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {item.category}
-                        </td>
-                        {selectedVariable && (
-                          <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                            {item.variable || '-'}
-                          </td>
-                        )}
-                        <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                          {frequencyType === "Costs" ? item.frequency.toFixed(2) : item.frequency}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                          {item.percentage.toFixed(1)}%
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                          {item.cumulativePercentage.toFixed(1)}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  {/* Results Table */}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            {getCategoryLabel()}
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            {getFrequencyLabel()}
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            Percentage
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            Cumulative %
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200">
+                        {group.data.map((item, index) => (
+                          <tr key={index}>
+                            <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {item.category}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                              {frequencyType === "Costs" ? item.frequency.toFixed(2) : item.frequency}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                              {item.percentage.toFixed(1)}%
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                              {item.cumulativePercentage.toFixed(1)}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-              {/* Key Insights */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Key Insights</h4>
-                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                  <li>• Total {getFrequencyLabel()}: {chartData.reduce((sum, d) => sum + d.frequency, 0).toFixed(frequencyType === "Costs" ? 2 : 0)}</li>
-                  <li>• Top Category: {chartData[0]?.category} ({chartData[0]?.percentage.toFixed(1)}%)</li>
-                  <li>• 80% Rule: First {chartData.findIndex(item => item.cumulativePercentage >= 80) + 1} {chartData.findIndex(item => item.cumulativePercentage >= 80) + 1 === 1 ? 'category accounts' : 'categories account'} for 80%+ of {getCategoryLabel().toLowerCase()}</li>
-                  <li title="Categories that contribute the most to overall rate">
-                    • Vital Few: {chartData.filter(d => d.cumulativePercentage <= 80).map(d => d.category).join(', ')}
-                  </li>
-                </ul>
-              </div>
+                  {/* Key Insights */}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      Key Insights{group.variableValue && ` - ${selectedVariable}: ${group.variableValue}`}
+                    </h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Total {getFrequencyLabel()}: {group.total.toFixed(frequencyType === "Costs" ? 2 : 0)}</li>
+                      <li>• Top Category: {group.data[0]?.category} ({group.data[0]?.percentage.toFixed(1)}%)</li>
+                      <li>• 80% Rule: First {group.data.findIndex(item => item.cumulativePercentage >= 80) + 1} {group.data.findIndex(item => item.cumulativePercentage >= 80) + 1 === 1 ? 'category accounts' : 'categories account'} for 80%+ of {getCategoryLabel().toLowerCase()}</li>
+                      <li title="Categories that contribute the most to overall rate">
+                        • Vital Few: {group.data.filter(d => d.cumulativePercentage <= 80).map(d => d.category).join(', ')}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
