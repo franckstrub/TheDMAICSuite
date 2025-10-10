@@ -5003,6 +5003,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pareto Analysis Routes
+  app.get("/api/projects/:projectId/ctq/:ctqId/pareto-analysis", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not found in session" });
+      }
+      
+      const userRecord = await storage.getUser(userId);
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      const [analysis] = await db
+        .select()
+        .from(paretoAnalysis)
+        .where(and(
+          eq(paretoAnalysis.projectId, projectId),
+          eq(paretoAnalysis.ctqId, ctqId),
+          eq(paretoAnalysis.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      if (!analysis) {
+        return res.status(404).json({ message: "Pareto analysis not found" });
+      }
+      
+      return res.json(analysis);
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/ctq/:ctqId/pareto-analysis", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not found in session" });
+      }
+      
+      const userRecord = await storage.getUser(userId);
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+
+      // Get CTQ name from CTS characteristics
+      const [ctqRecord] = await db
+        .select()
+        .from(ctsCharacteristics)
+        .where(and(
+          eq(ctsCharacteristics.id, ctqId),
+          eq(ctsCharacteristics.projectId, projectId)
+        ))
+        .limit(1);
+
+      if (!ctqRecord) {
+        return res.status(404).json({ message: "CTQ not found" });
+      }
+
+      const analysisData = {
+        projectId,
+        ctqId,
+        ctq: ctqRecord.ctq,
+        organizationId: userRecord.organizationId,
+        ...req.body
+      };
+      
+      const validatedData = insertParetoAnalysisSchema.parse(analysisData);
+      
+      const [existingAnalysis] = await db
+        .select()
+        .from(paretoAnalysis)
+        .where(and(
+          eq(paretoAnalysis.projectId, projectId),
+          eq(paretoAnalysis.ctqId, ctqId),
+          eq(paretoAnalysis.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      let savedAnalysis;
+      if (existingAnalysis) {
+        [savedAnalysis] = await db
+          .update(paretoAnalysis)
+          .set({
+            ...validatedData,
+            lastUpdated: new Date()
+          })
+          .where(eq(paretoAnalysis.id, existingAnalysis.id))
+          .returning();
+      } else {
+        [savedAnalysis] = await db
+          .insert(paretoAnalysis)
+          .values(validatedData)
+          .returning();
+      }
+      
+      return res.status(201).json({ analysis: savedAnalysis });
+    } catch (err) {
+      console.error("Pareto analysis save error:", err);
+      return handleErrors(err, res);
+    }
+  });
+
   // Create http server
   // Register the Gate Review routes
   registerGateReviewRoutes(app, storage);
