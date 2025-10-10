@@ -55,15 +55,16 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab, onSave }:
                   
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="data-select">Select Data</Label>
+                      <Label htmlFor="data-select">Select Pareto categories</Label>
                       <Select defaultValue={selectedData} onValueChange={setSelectedData}>
                         <SelectTrigger id="data-select">
                           <SelectValue placeholder="Select data" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Process Defects">Process Defects</SelectItem>
-                          <SelectItem value="Customer Complaints">Customer Complaints</SelectItem>
-                          <SelectItem value="Delay Causes">Delay Causes</SelectItem>
+                          <SelectItem value="Process Defects">Defects</SelectItem>
+                          <SelectItem value="Customer Complaints">Complaints</SelectItem>
+                          <SelectItem value="Delay Causes">Causes</SelectItem>
+                          <SelectItem value="Delay Causes">Others</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
