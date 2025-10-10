@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -40,6 +41,12 @@ interface ParetoAnalysisData {
 export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoAnalysisProps) {
   const { toast } = useToast();
   
+  // Persistent tab state
+  const [currentPane, setCurrentPane] = useState<string>(() => {
+    const saved = localStorage.getItem(`paretoPane_${projectId}_${ctqId}`);
+    return saved || "setup";
+  });
+  
   // State for category and frequency types
   const [categoryType, setCategoryType] = useState<string>("Defects");
   const [categoryTypeCustom, setCategoryTypeCustom] = useState<string>("");
@@ -51,6 +58,12 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
   const [paretoData, setParetoData] = useState<ParetoDataPoint[]>([
     { category: "", frequency: 0 }
   ]);
+
+  // Save current pane to localStorage when it changes
+  const handlePaneChange = (value: string) => {
+    setCurrentPane(value);
+    localStorage.setItem(`paretoPane_${projectId}_${ctqId}`, value);
+  };
 
   // Load pareto analysis from database
   const { data: analysisData } = useQuery<ParetoAnalysisData>({
@@ -259,19 +272,37 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pareto Analysis</CardTitle>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Pareto Analysis</CardTitle>
+            <p className="text-sm text-gray-500 mt-2">
+              CTQ: {ctqName}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Identify the vital few causes that account for the majority of problems.
+            </p>
+          </div>
+          <Button
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+            data-testid="button-save"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saveMutation.isPending ? "Saving..." : "Save Configuration"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-gray-500 mb-4">
-          CTQ: {ctqName}
-        </p>
-        <p className="text-sm text-gray-500 mb-6">
-          Identify the vital few causes that account for the majority of problems.
-        </p>
-        
-        <div className="space-y-6">
-          {/* Configuration Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <Tabs value={currentPane} onValueChange={handlePaneChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="setup">Setup</TabsTrigger>
+            <TabsTrigger value="data">Data Input</TabsTrigger>
+            <TabsTrigger value="chart">Chart</TabsTrigger>
+          </TabsList>
+
+          {/* Setup Tab */}
+          <TabsContent value="setup" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             {/* Category Type */}
             <div className="space-y-2">
               <Label htmlFor="category-type">Category Type</Label>
@@ -319,21 +350,23 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
               )}
             </div>
 
-            {/* Variable Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="variable">By Variable (Optional)</Label>
-              <Input
-                id="variable"
-                placeholder="e.g., Product Line, Shift"
-                value={selectedVariable}
-                onChange={(e) => setSelectedVariable(e.target.value)}
-                data-testid="input-variable"
-              />
+              {/* Variable Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="variable">By Variable (Optional)</Label>
+                <Input
+                  id="variable"
+                  placeholder="e.g., Product Line, Shift"
+                  value={selectedVariable}
+                  onChange={(e) => setSelectedVariable(e.target.value)}
+                  data-testid="input-variable"
+                />
+              </div>
             </div>
-          </div>
+          </TabsContent>
 
-          {/* Data Entry Section */}
-          <div>
+          {/* Data Input Tab */}
+          <TabsContent value="data" className="space-y-4">
+            <div>
             <div className="flex justify-between items-center mb-3">
               <Label className="text-base font-semibold">Data Entry</Label>
               <Button
@@ -403,20 +436,11 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
                 </div>
               ))}
             </div>
-          </div>
+            </div>
+          </TabsContent>
 
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSave}
-              disabled={saveMutation.isPending}
-              data-testid="button-save"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saveMutation.isPending ? "Saving..." : "Save Pareto Analysis"}
-            </Button>
-          </div>
-
+          {/* Chart Tab */}
+          <TabsContent value="chart" className="space-y-4">
           {/* Pareto Charts - One per variable value */}
           {chartDataGroups && chartDataGroups.length > 0 && (
             <div className="space-y-8">
@@ -553,7 +577,8 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
               ))}
             </div>
           )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
