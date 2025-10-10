@@ -176,7 +176,44 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
         };
       });
 
-      return chartsByVariable;
+      // Create global chart - aggregate all data by category
+      const globalByCategory: { [category: string]: number } = {};
+      validData.forEach(item => {
+        if (!globalByCategory[item.category]) {
+          globalByCategory[item.category] = 0;
+        }
+        globalByCategory[item.category] += item.frequency;
+      });
+
+      // Convert to array and sort
+      const globalSorted = Object.entries(globalByCategory)
+        .map(([category, frequency]) => ({ category, frequency }))
+        .sort((a, b) => b.frequency - a.frequency);
+
+      const globalTotal = globalSorted.reduce((sum, item) => sum + item.frequency, 0);
+      
+      let globalCumulative = 0;
+      const globalData = globalSorted.map(item => {
+        const percentage = (item.frequency / globalTotal) * 100;
+        globalCumulative += percentage;
+        return {
+          category: item.category,
+          variable: undefined,
+          frequency: item.frequency,
+          percentage: percentage,
+          cumulativePercentage: globalCumulative
+        };
+      });
+
+      // Return individual charts followed by global chart
+      return [
+        ...chartsByVariable,
+        {
+          variableValue: "Global",
+          data: globalData,
+          total: globalTotal
+        }
+      ];
     }
 
     // No variable specified - create single chart
@@ -386,10 +423,18 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
               {chartDataGroups.map((group, groupIndex) => (
                 <div key={groupIndex} className="space-y-4">
                   {/* Chart */}
-                  <div className="border border-gray-200 rounded-md p-4">
+                  <div className={`border rounded-md p-4 ${group.variableValue === "Global" ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : 'border-gray-200'}`}>
                     <h3 className="text-lg font-semibold text-center mb-4">
-                      PARETO CHART - {getCategoryLabel().toUpperCase()}
-                      {group.variableValue && ` (${selectedVariable}: ${group.variableValue})`}
+                      {group.variableValue === "Global" ? (
+                        <span className="text-green-700 dark:text-green-400">
+                          GLOBAL PARETO CHART - {getCategoryLabel().toUpperCase()} (All {selectedVariable} Combined)
+                        </span>
+                      ) : (
+                        <>
+                          PARETO CHART - {getCategoryLabel().toUpperCase()}
+                          {group.variableValue && ` (${selectedVariable}: ${group.variableValue})`}
+                        </>
+                      )}
                     </h3>
                     <Plot
                       data={[
@@ -487,11 +532,15 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
                   </div>
 
                   {/* Key Insights */}
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                      Key Insights{group.variableValue && ` - ${selectedVariable}: ${group.variableValue}`}
+                  <div className={`p-4 border rounded-lg ${group.variableValue === "Global" ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'}`}>
+                    <h4 className={`font-medium mb-2 ${group.variableValue === "Global" ? 'text-green-900 dark:text-green-100' : 'text-blue-900 dark:text-blue-100'}`}>
+                      {group.variableValue === "Global" ? (
+                        `Global Key Insights (All ${selectedVariable} Combined)`
+                      ) : (
+                        `Key Insights${group.variableValue && ` - ${selectedVariable}: ${group.variableValue}`}`
+                      )}
                     </h4>
-                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <ul className={`text-sm space-y-1 ${group.variableValue === "Global" ? 'text-green-800 dark:text-green-200' : 'text-blue-800 dark:text-blue-200'}`}>
                       <li>• Total {getFrequencyLabel()}: {group.total.toFixed(frequencyType === "Costs" ? 2 : 0)}</li>
                       <li>• Top Category: {group.data[0]?.category} ({group.data[0]?.percentage.toFixed(1)}%)</li>
                       <li>• 80% Rule: First {group.data.findIndex(item => item.cumulativePercentage >= 80) + 1} {group.data.findIndex(item => item.cumulativePercentage >= 80) + 1 === 1 ? 'category accounts' : 'categories account'} for 80%+ of {getCategoryLabel().toLowerCase()}</li>
