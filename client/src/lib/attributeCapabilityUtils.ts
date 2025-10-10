@@ -267,12 +267,19 @@ export function calculateParetoOfDefects(defectCategories: Array<{
   let cumulativeCount = 0;
   const vitalFew: string[] = [];
   const trivialMany: string[] = [];
+  let hasReached80 = false;
   
-  const sortedCategories = sorted.map(category => {
+  const sortedCategories = sorted.map((category, index) => {
     cumulativeCount += category.count;
     const percentage = totalDefects > 0 ? (category.count / totalDefects) * 100 : 0;
     const cumulativePercentage = totalDefects > 0 ? (cumulativeCount / totalDefects) * 100 : 0;
-    const isVital = cumulativePercentage <= 80;
+    
+    // Ensure at least the first category is always vital, and include all up to the first reaching 80%
+    const isVital = index === 0 || (!hasReached80 && cumulativePercentage <= 80);
+    
+    if (cumulativePercentage >= 80 && !hasReached80) {
+      hasReached80 = true;
+    }
     
     if (isVital) {
       vitalFew.push(category.category);
