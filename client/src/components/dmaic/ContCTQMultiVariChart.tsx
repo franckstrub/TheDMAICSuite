@@ -441,9 +441,10 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
                 Multi-Vari Chart Analysis
               </CardTitle>
               <p className="mt-2">
-                Graphical representation of the relationships between 2 or 3 attribute factors and a response (CTQ)
+                Graphical representation of the relationships between two or three attribute factors and a response (CTQ).<br></br>
+                We recommend two to seven attributes per factor for better visualization
               </p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-medium text-muted-foreground mt-2">
                 CTQ: {ctqName}
               </p>
             </div>
@@ -764,7 +765,9 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
               ) : !useFactor3 ? (
                 // Two-Factor Multi-Vari Chart
                 <div className="space-y-4">
-                  
+                  {!showMean ? <p className ="text-[12px] mb-1">Click any data point in the legend to show/hide the data points.</p>
+                  : <p className ="text-[12px] mb-1">Click any data point in the legend to show/hide the data points. Click on any mean line in the legend to show/hide the mean lines.</p>
+                  }
                   {/* Call the TwoFactorMultiVariChart function */}
                   <TwoFactorMultiVariChart
                     data={data}
@@ -815,7 +818,9 @@ export function ContCTQMultiVariChart({ projectId, ctqId, ctqName, activeTab }: 
               ) : (
                 // Three-Factor Multi-Vari Chart
                 <div className="space-y-4">
-                  
+                  {!showMean ? <p className ="text-[12px] mb-1">Click any data point in the legend to show/hide the data points.</p>
+                  : <p className ="text-[12px] mb-1">Click any data point in the legend to show/hide the data points. Click on any mean line in the legend to show/hide the mean lines.</p>
+                  }
                   {/* Call the ThreeFactorMultiVariChart function */}
                   <ThreeFactorMultiVariChart
                     data={data}
