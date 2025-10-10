@@ -333,7 +333,7 @@ useEffect(() => {
           
             {/* Pareto Analysis */}
             {ctqAnalysisData[ctqId]?.enablePareto && (
-              <ParetoAnalysis projectId={projectId} ctqId={ctqId} ctqName={ctqName} />
+              <ParetoAnalysis projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
             )}
           </div> 
         </CardContent>
