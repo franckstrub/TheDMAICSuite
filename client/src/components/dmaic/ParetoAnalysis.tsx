@@ -21,6 +21,7 @@ interface ParetoAnalysisProps {
 interface ParetoDataPoint {
   category: string;
   frequency: number;
+  variable?: string;
 }
 
 interface ParetoAnalysisData {
@@ -105,7 +106,7 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
   };
 
   // Update data point
-  const updateDataPoint = (index: number, field: 'category' | 'frequency', value: string | number) => {
+  const updateDataPoint = (index: number, field: 'category' | 'frequency' | 'variable', value: string | number) => {
     const updated = [...paretoData];
     updated[index] = { ...updated[index], [field]: value };
     setParetoData(updated);
@@ -146,6 +147,7 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
       cumulative += percentage;
       return {
         category: item.category,
+        variable: item.variable,
         frequency: item.frequency,
         percentage: percentage,
         cumulativePercentage: cumulative
@@ -261,20 +263,29 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
             </div>
             
             <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className={`grid ${selectedVariable ? 'grid-cols-4' : 'grid-cols-3'} gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider`}>
                 <div>{getCategoryLabel()}</div>
+                {selectedVariable && <div>{selectedVariable}</div>}
                 <div>{getFrequencyLabel()}</div>
                 <div className="text-center">Action</div>
               </div>
               
               {paretoData.map((item, index) => (
-                <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                <div key={index} className={`grid ${selectedVariable ? 'grid-cols-4' : 'grid-cols-3'} gap-2 items-center`}>
                   <Input
                     placeholder={`e.g., ${categoryType === "Defects" ? "Documentation Errors" : "Category"}`}
                     value={item.category}
                     onChange={(e) => updateDataPoint(index, 'category', e.target.value)}
                     data-testid={`input-category-${index}`}
                   />
+                  {selectedVariable && (
+                    <Input
+                      placeholder={`e.g., ${selectedVariable === 'Shift' ? 'Morning' : 'Value'}`}
+                      value={item.variable || ""}
+                      onChange={(e) => updateDataPoint(index, 'variable', e.target.value)}
+                      data-testid={`input-variable-${index}`}
+                    />
+                  )}
                   <Input
                     type="number"
                     min="0"
@@ -390,6 +401,11 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
                       <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                         {getCategoryLabel()}
                       </th>
+                      {selectedVariable && (
+                        <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          {selectedVariable}
+                        </th>
+                      )}
                       <th className="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                         {getFrequencyLabel()}
                       </th>
@@ -407,6 +423,11 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
                         <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                           {item.category}
                         </td>
+                        {selectedVariable && (
+                          <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                            {item.variable || '-'}
+                          </td>
+                        )}
                         <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
                           {frequencyType === "Costs" ? item.frequency.toFixed(2) : item.frequency}
                         </td>
