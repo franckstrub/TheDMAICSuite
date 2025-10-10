@@ -14,7 +14,7 @@ import {
   insertUserSchema, insertRootCausePrioritizationSchema, insertCauseEffectMatrixSchema,
   insertContinuousCtqAnalysisConfigSchema, insertOneSampleHypothesisConfigSchema,
   insertTwoSampleHypothesisConfigSchema, insertPairedSampleHypothesisConfigSchema, insertMultipleSampleHypothesisConfigSchema, insertHypothesisTestingConfigSchema,
-  insertMultiVariChartConfigSchema
+  insertMultiVariChartConfigSchema, insertParetoAnalysisSchema
 } from "@shared/schema";
 import { 
   CustomerRequirement, BusinessRequirement, DataCollectionPlan, Dataset, InsertCharter, 
@@ -26,7 +26,7 @@ import {
   customerRequirements, businessRequirements, msaAnalysis, processCapability,
   fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization, causeEffectMatrix,
   continuousCtqAnalysisConfig, oneSampleHypothesisConfig, twoSampleHypothesisConfig, pairedSampleHypothesisConfig, multipleSampleHypothesisConfig, hypothesisTestingConfig,
-  multiVariChartConfig
+  multiVariChartConfig, paretoAnalysis
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
