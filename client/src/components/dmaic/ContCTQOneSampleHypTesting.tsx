@@ -14,6 +14,7 @@ import { BetaRawContentBlockDeltaEvent } from '@anthropic-ai/sdk/resources/beta/
 import {onesampleMeanHypothesisTest} from "./onesampleMeanHypothesisTest";
 import {onesampleVarianceHypothesisTest} from "./onesampleVarianceHypothesisTest";
 import {onesampleMedianHypothesisTest} from "./onesampleMedianHypothesisTest";
+import { HypothesisTestingTabs } from "./common/HypothesisTestingTabs";
 import { 
   mean, 
   standardDeviation, 
