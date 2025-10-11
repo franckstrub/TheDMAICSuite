@@ -25,6 +25,7 @@ import ConfidenceIntervalsNSMean from './ConfidenceIntervalsNSMean.tsx';
 import ConfidenceIntervalsNSVariance from './ConfidenceIntervalsNSVariance';
 import BoxPlotWithNSMedianTest from './BoxPlotWithNSMedianTest';
 import ConfidenceIntervalsNSMedian from './ConfidenceIntervalsNSMedian.tsx';
+import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 
 interface DataPoint {
   indexNumber: number;
@@ -1491,20 +1492,12 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
     }
   }, []); // Empty dependency array means this runs only on mount
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Multiple-Sample Hypothesis Testing</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-500 mb-4">
-            CTQ: {ctqName}
-        </p>
-        <p className="text-sm text-gray-500 mb-4">
-          Validate or invalidate assumptions and determine if differences are statistically significant or insignificant in N samples.
-        </p>
-        
-        <div className="space-y-4">
+  // Setup tab content
+  const setupContent = (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500 mb-4">
+        Validate or invalidate assumptions and determine if differences are statistically significant or insignificant in N samples.
+      </p>
           <label className="block text-sm font-medium mb-3">
             Statistical parameter to test (Select Multiple)
           </label>
@@ -1669,95 +1662,98 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             )}
             </div>
         </div>
-        {(ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanMultipleSPower) && (    
-          <Button 
-              className="w-full" 
-              onClick={saveConfiguration} 
-              disabled={saveConfigMutation.isPending}
-              //variant="outline"
-            >
-              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
-          </Button>
-        )} 
-                 
-        {((ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest)) && (  
-        <div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+      {(ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanMultipleSPower) && (    
+        <Button 
+            className="w-full" 
+            onClick={saveConfiguration} 
+            disabled={saveConfigMutation.isPending}
+          >
+            {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+        </Button>
+      )} 
+               
+      {((ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableVarianceTest) || (ContCTQMultipleSampleHypTestData[ctqId]?.enableMedianTest)) && (  
+        <div className="grid grid-cols-2 gap-4">
+          <div>
             <Label htmlFor="significance">Significance Level (α)</Label>
             <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
-            <SelectTrigger id="significance">
+              <SelectTrigger id="significance">
                 <SelectValue placeholder="Select significance level" />
-            </SelectTrigger>
-            <SelectContent>
+              </SelectTrigger>
+              <SelectContent>
                 <SelectItem value="0.01">1%</SelectItem>
                 <SelectItem value="0.05">5%</SelectItem>
                 <SelectItem value="0.10">10%</SelectItem>
-            </SelectContent>
+              </SelectContent>
             </Select>
-            </div>
-            <div>
+          </div>
+          <div>
             <Label htmlFor="alternativeHa">Alternative Ha (applies to all tests)</Label>
             <Select value="Different" onValueChange={(value) => {
-              // Always set all three alternatives to the selected value
               setAlternateMean(value);
               setAlternateVariance(value);
               setAlternateMedian(value);
             }}>
-            <SelectTrigger id="alternativeHa">
+              <SelectTrigger id="alternativeHa">
                 <SelectValue placeholder="Select alternative" />
-            </SelectTrigger>
-            <SelectContent>
+              </SelectTrigger>
+              <SelectContent>
                 <SelectItem value="Different">Different</SelectItem>
-            </SelectContent>
+              </SelectContent>
             </Select>
-            </div>
           </div>
+        </div>
+      )}
 
-          <div>
-          {/* Data Input Section for Multiple Sample Hypothesis Test */}
-          <div className="mt-2 space-y-1">
-            <h3 className="text-lg font-semibold">Data Input</h3>
-            
-            {/* Number of Datasets Control */}
-            <div className="grid grid-cols-2 gap-4">
-              <div> 
-                <Label htmlFor="num-datasets">Number of Datasets (Maximum: 13)</Label>                           
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setNumDatasets(Math.max(2, numDatasets - 1))}
-                    disabled={numDatasets <= 2}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium w-12 text-center">
-                    {numDatasets}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setNumDatasets(Math.min(13, numDatasets + 1))}
-                    disabled={numDatasets >= 13}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="text-sm mb-4">Factor used for dataset classifications:
-                <Input
-                  id={`dataset-desc-${factorOfClassification}`}
-                  type="text"
-                  value={factorOfClassification || ""}
-                  onChange={(e) => {
-                    setFactorOfClassification(e.target.value);
-                  }}
-                  placeholder={`Factor used for dataset classifications`}
-                  className="text-sm"
-                />
-              </div>              
-            </div>
+      {/* Number of Datasets Control */}
+      <div className="grid grid-cols-2 gap-4">
+        <div> 
+          <Label htmlFor="num-datasets">Number of Datasets (Maximum: 13)</Label>                           
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setNumDatasets(Math.max(2, numDatasets - 1))}
+              disabled={numDatasets <= 2}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium w-12 text-center">
+              {numDatasets}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setNumDatasets(Math.min(13, numDatasets + 1))}
+              disabled={numDatasets >= 13}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="text-sm mb-4">
+          <Label htmlFor="factor-classification">Factor used for dataset classifications:</Label>
+          <Input
+            id="factor-classification"
+            type="text"
+            value={factorOfClassification || ""}
+            onChange={(e) => {
+              setFactorOfClassification(e.target.value);
+            }}
+            placeholder="Factor used for dataset classifications"
+            className="text-sm mt-1"
+          />
+        </div>              
+      </div>
+    </div>
+  );
+
+  // Data tab content  
+  const dataContent = (
+    <div className="space-y-4">
+      {/* Data Input Section for Multiple Sample Hypothesis Test */}
+      <div className="mt-2 space-y-1">
+        <h3 className="text-lg font-semibold">Dataset Entry Tables</h3>
 
             {/* Dataset Descriptions and Data Input Tables */}
             <div className="flex gap-6 overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
@@ -2158,19 +2154,22 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               </Button>
               </div>            
   
-            <Button 
-                className="w-full" 
-                onClick={saveConfiguration} 
-                disabled={saveConfigMutation.isPending}
-                //variant="outline"
-              >
-                {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
-            </Button>
-          </div>          
-          </div>
-          
-          {/* Results for Multiple Sample Hypothesis Test of Means, Variances and Medians */}
-          {testResults && (
+        <Button 
+            className="w-full" 
+            onClick={saveConfiguration} 
+            disabled={saveConfigMutation.isPending}
+          >
+            {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+        </Button>
+      </div>          
+    </div>
+  );
+
+  // Analysis tab content
+  const analysisContent = (
+    <div className="space-y-4">
+      {/* Results for Multiple Sample Hypothesis Test of Means, Variances and Medians */}
+      {testResults && (
             <div className="space-y-6 mt-8 border border-gray-200 rounded-md bg-gray-50">
               {/* Normality Test Results */}
               {testResults?.normalityResults && testResults.normalityResults.length > 0 && (
@@ -2732,12 +2731,16 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
               </div>
             </div>
           )}  
-          </div>
         </div>
-        )}  
-        {/* multiple sample mean test BoxPlot visualization when showBoxPlot is true */}
-                  
-        {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest &&
+      )
+    </div>
+  );
+
+  // Chart tab content
+  const chartContent = (
+    <div className="space-y-4">
+      {/* multiple sample mean test BoxPlot visualization */}
+      {datasets.length > 1 && ContCTQMultipleSampleHypTestData[ctqId]?.enableMeanTest &&
         ContCTQMultipleSampleHypTestData[ctqId]?.datasets.length > 1 &&
         testResults.normalityResults &&
         testResults.normalityResults.length > 1 &&
@@ -2854,7 +2857,28 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             </div>
           </div>
         )} 
-        </div>
+    </div>
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Multiple-Sample Hypothesis Testing</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-500 mb-4">
+          CTQ: {ctqName}
+        </p>
+
+        <HypothesisTestingTabs
+          projectId={projectId}
+          ctqId={ctqId}
+          testType="multiple-sample"
+          setupContent={setupContent}
+          dataContent={dataContent}
+          chartContent={chartContent}
+          analysisContent={analysisContent}
+        />
       </CardContent>
     </Card>
   );
