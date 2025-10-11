@@ -1264,20 +1264,12 @@ useEffect(() => {
     }
   };
 
-  return (
-    <Card data-component="one-sample">
-      <CardHeader>
-        <CardTitle>One-Sample Hypothesis Testing</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-500 mb-4">
-            CTQ: {ctqName}
-        </p>
-
-        <p className="text-sm text-gray-500 mb-4">
-          Validate or invalidate assumptions and determine if differences are statistically significant or insignificant between a sample and a target.
-        </p>
-        <div className="space-y-4">
+  // Setup tab content
+  const setupContent = (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500 mb-4">
+        Validate or invalidate assumptions and determine if differences are statistically significant or insignificant between a sample and a target.
+      </p>
           <label className="block text-sm font-medium mb-3">
             Statistical parameter to test (Select Multiple)
           </label>
@@ -1791,7 +1783,14 @@ useEffect(() => {
             />
             </div>
            </div>
+    </div>
+  );
 
+  // Data tab content  
+  const dataContent = (
+    <div className="space-y-4">
+      {(ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest || ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest || ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) && (
+           <div className="space-y-4">
            {/* Data Input Section for One Sample Hypothesis Test */}
            <div className="space-y-4">
             <div>
@@ -2074,34 +2073,14 @@ useEffect(() => {
             >
               {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
             </Button>
-{/* Run Test Button 
-            <Button
-              className={`w-full ${(!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && !ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest && !ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={!ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest &&
-                !ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest &&
-                !ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest}
-              onClick={() => { // Use a block to perform multiple actions
-                  const results = handleRunTest(
-                      ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ?? false,
-                      ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ?? false, // Matches corrected function signature
-                      ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest ?? false,
-                      dataPoints,
-                      parseFloat(significanceLevel),
-                      Ha(alternativemean),
-                      Ha(alternativevariance),
-                      Ha(alternativemedian),
-                      ContCTQOneSampleHypTestData[ctqId]?.targetMean ?? 0,
-                      ContCTQOneSampleHypTestData[ctqId]?.targetstdev ?? 0,
-                      ContCTQOneSampleHypTestData[ctqId]?.targetMedian ?? 0
-                  );
-                  setTestResults(results); // Store the returned results in your state
-                  setShowBoxPlot(true); // Show the BoxPlot component after running the test
-              }}
-            >
-                Run Test
-            </Button>
-            */}
            </div>
+           )}
+    </div>
+  );
+
+  // Chart & Analysis tab content
+  const analysisContent = (
+    <div className="space-y-4">
            {((ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest ||
             ContCTQOneSampleHypTestData[ctqId]?.enableVarianceTest ||
             ContCTQOneSampleHypTestData[ctqId]?.enableMedianTest) && (onesampleMeanTestresult || onesampleVarianceTestresult || onesampleMedianTestresult) && ( testResults.sampleSize > 1)) && ( 
@@ -2344,9 +2323,28 @@ useEffect(() => {
               />
             </div>
            )}
-          </div> 
-          )}        
-        </div>
+           )}
+    </div>
+  );
+
+  return (
+    <Card data-component="one-sample">
+      <CardHeader>
+        <CardTitle>One-Sample Hypothesis Testing</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-500 mb-4">
+          CTQ: {ctqName}
+        </p>
+
+        <HypothesisTestingTabs
+          projectId={projectId}
+          ctqId={ctqId}
+          testType="one-sample"
+          setupContent={setupContent}
+          dataContent={dataContent}
+          analysisContent={analysisContent}
+        />
       </CardContent>
     </Card>
   );
