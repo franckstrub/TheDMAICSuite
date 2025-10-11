@@ -192,6 +192,9 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
     <div className="w-full">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mt-2">
+            CTQ Cause & Effect Analysis
+          </p>  
           {isLoaded ? 'Fishbone diagram Editor Ready' : 'Loading Fishone diagram Editor...'}
         </div>
         <div className="flex space-x-2">

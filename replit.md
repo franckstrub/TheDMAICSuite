@@ -33,6 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **AI Integration**: Google Gemini AI for coaching and analysis.
 - **Data Management**: VOC, CTQ, SIPOC, Risk Assessment, Gantt Charts.
 - **Visualizations**: BoxPlot, Pareto Chart, Draw.io integration for process maps and fishbone diagrams.
+- **Tabbed Interfaces**: Pareto Analysis and Hypothesis Testing use 4-tab structure (Setup/Data/Chart/Analysis) with localStorage persistence.
 
 ### Design Principles
 - Type-safe development across frontend and backend.

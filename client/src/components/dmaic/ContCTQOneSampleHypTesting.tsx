@@ -1783,6 +1783,8 @@ useEffect(() => {
             />
             </div>
            </div>
+          </div>
+          )}
     </div>
   );
 
@@ -1794,7 +1796,7 @@ useEffect(() => {
            {/* Data Input Section for One Sample Hypothesis Test */}
            <div className="space-y-4">
             <div>
-            <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center">
                 <label className="block text-sm font-medium mb-2">Data Input</label>
                 {/* Clear All Data, Undo and Paste from Excel Section */}
                 <div className="flex gap-2 mt-2 mb-2">
@@ -2054,7 +2056,7 @@ useEffect(() => {
                 <div>• <strong>Paste data</strong> using Ctrl+V (or Cmd+V on Mac) - data will start from the focused cell</div>
                 <div>• <strong>Undo changes</strong> using Ctrl+Z (or Cmd+Z on Mac) after pasting</div>
                 <div>• <strong>Data will automatically create new rows</strong> if needed</div>
-            </div>
+              </div>
             
               {dataPoints.length > 0 && (
                 <div className="text-sm text-gray-600 mt-2">
@@ -2074,7 +2076,8 @@ useEffect(() => {
               {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
             </Button>
            </div>
-           )}
+            </div>
+      )}
     </div>
   );
 
@@ -2272,7 +2275,12 @@ useEffect(() => {
             </div>
            </div>
            )}
+    </div>
+  );
 
+  // Chart tab content (Box plots)
+  const chartContent = (
+    <div className="space-y-4">
            {/* 1 sample Student mean test BoxPlot visualization when showBoxPlot is true */}
            {showBoxPlot && dataPoints.length > 1 && ContCTQOneSampleHypTestData[ctqId]?.enableMeanTest && (
             <div className="mt-6">
@@ -2323,7 +2331,6 @@ useEffect(() => {
               />
             </div>
            )}
-           )}
     </div>
   );
 
@@ -2343,6 +2350,7 @@ useEffect(() => {
           testType="one-sample"
           setupContent={setupContent}
           dataContent={dataContent}
+          chartContent={chartContent}
           analysisContent={analysisContent}
         />
       </CardContent>
