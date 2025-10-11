@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {onesampleMeanHypothesisTest} from "./onesampleMeanHypothesisTest";
 import BoxPlotWithPairedSMeanTest from './BoxPlotWithPairedSMeanTest';
+import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 import { 
   mean, 
   standardDeviation, 
@@ -1539,258 +1540,237 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
   };
   const mu_subscript_d = 'μ<sub>d</sub>';
   
-  return (
-    <Card data-component="paired-sample">
-      <CardHeader>
-        <CardTitle>Paired-Sample Hypothesis Testing</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-500 mb-4">
-            CTQ: {ctqName}
-        </p>
+  // Setup tab content
+  const setupContent = (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500 mb-4">
+        CTQ: {ctqName}
+      </p>
 
-        <p className="text-sm text-gray-500 mb-4">
-          Determine whether the mean of the differences between two paired samples differs from 0 (or a target value) and is statistically significant or insignificant.
-        </p>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-12 items-stretch">
-              <div className="flex items-top ml-1 h-full space-x-1">
-              <Checkbox
-                id={`${ctqId}-enableMean1SPower`}
-                checked={ContCTQPairedSampleHypTestData[ctqId]?.enableMean1SPower || false}
-                onCheckedChange={(checked) => updateContCTQPairedSampleHypTestDataField(ctqId, "enableMean1SPower", checked)}
-              />
-              {!ContCTQPairedSampleHypTestData[ctqId]?.enableMean1SPower ? (
-                <Label htmlFor={`${ctqId}-enableMean1SPower`} className="items-top text-sm font-sm text-gray-400">
-                  Power & Sample Size
-                </Label>
-                ) : (
-                <div>
-                  <Label htmlFor={`${ctqId}-enableMean1SPower`} className="text-sm font-medium text-gray-700">
-                  Power & Sample Size
-                  </Label>
-                  <Card className="bg-gray-50 min-h-[540px] flex flex-col">
-                    <CardHeader>
-                      <CardTitle className="text-sm">Power & Sample Size Paired-Sample Mean Hypothesis Testing</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-xs">
-                      <div>
-                      
-                        <Label htmlFor='power1SMeanPower'>Power of test(1-β):</Label>
-                        
-                        <Select value={power1SMeanPower} onValueChange={(value: string) => {
-                          setPower1SMeanPower(value);
-                          //updateContCTQPairedSampleHypTestDataField(ctqId, 'power1SMeanPower', value);
-                        }}>
-                        <SelectTrigger id='power1SMeanPower'>
-                            <SelectValue placeholder="Select Power of test" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.99">99%</SelectItem>
-                          <SelectItem value="0.95">95%</SelectItem>
-                          <SelectItem value="0.90">90%</SelectItem>
-                          <SelectItem value="0.85">85%</SelectItem>
-                          <SelectItem value="0.80">80%</SelectItem>
-                        </SelectContent>
-                        </Select>  
-                       
-                      </div>
-                      <div>
-                      
-                        <Label htmlFor="power1SMeanHa">Ha:</Label>
-                        
-                        <Select value={power1SMeanHa} onValueChange={(value: string) => {
-                          setPower1SMeanHa(value);
-                          //updateContCTQPairedSampleHypTestDataField(ctqId, 'power1SMeanHa', value);
-                        }}>
-                        <SelectTrigger id="power1SMeanHa">
-                            <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value=">">&gt; 0</SelectItem>
-                          <SelectItem value="≠">≠ 0</SelectItem>
-                          <SelectItem value="<">&lt; 0</SelectItem>
-                        </SelectContent>
-                        </Select> 
-                        
-                      </div>
-                      <div>                      
-                        <Label htmlFor="power1SMeanAlpha">Alpha (α):</Label> 
-                        
-                        <Select value={power1SMeanAlpha} onValueChange={(value: string) => {
-                          setPower1SMeanAlpha(value);
-                        }}>
-                        <SelectTrigger id="power1SMeanAlpha">
-                            <SelectValue placeholder="Select Alpha significance level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0.01">1%</SelectItem>
-                          <SelectItem value="0.05">5%</SelectItem>
-                          <SelectItem value="0.10">10%</SelectItem>
-                          <SelectItem value="0.15">15%</SelectItem>
-                          <SelectItem value="0.20">20%</SelectItem>
-                        </SelectContent>
-                        </Select> 
-                        
-                      </div>
-                      
-                      <div>
-                      Mean of paired difference (μ<sub>d</sub>): 
-                        
-                        <Input
-                          type="number"
-                          step="any"
-                          value={ContCTQPairedSampleHypTestData[ctqId]?.power1SMeanMean ?? ''}
-                          onChange={(e) => updateContCTQPairedSampleHypTestDataField(
-                              ctqId, 
-                              "power1SMeanMean", 
-                              e.target.value === '' ? '' : parseFloat(e.target.value)
-                          )}
-                          placeholder="Enter mean of difference (μsub>d</sub>)"
-                          className="mt-1"
-                        />
-                        
-                      </div>
-                      <div>
-                      Standard Deviation of paired difference (σ<sub>d</sub>): 
-                        
-                        <Input
-                          type="number"
-                          min="0"
-                          step="any"
-                          value={ContCTQPairedSampleHypTestData[ctqId]?.power1SMeanStdev ?? ''}
-                          onChange={(e) => updateContCTQPairedSampleHypTestDataField(
-                              ctqId, 
-                              "power1SMeanStdev", 
-                              e.target.value === '' ? '' : parseFloat(e.target.value)
-                          )}
-                          placeholder="Enter standard deviation of difference (σ<sub>d</sub>)"
-                          className="mt-1"
-                        />
-                        
-                      </div>
-                     
-                      <div>                      
-                        Hypothesized difference δ0 (H0): 0
-                      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        Determine whether the mean of the differences between two paired samples differs from 0 (or a target value) and is statistically significant or insignificant.
+      </p>
 
-                      <div className="font-medium text-sm">
-                      
-                      <Badge
-                        variant="default"
-                        className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
-                        title={ "Estimated minimum size of each data sample and and Actual Power of the test" }
-                      >
-                        Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(0)} <br />
-                        Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower*100).toFixed(2)}%
-                      </Badge>
-                      
-                      </div>
-                      
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-              </div>
-          </div>
-          {(ContCTQPairedSampleHypTestData[ctqId]?.enableMean1SPower) && (    
-          <Button 
-              className="w-full" 
-              onClick={saveConfiguration} 
-              disabled={saveConfigMutation.isPending}
-              //variant="outline"
-            >
-              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
-          </Button>
+      <div className="grid grid-cols-1 gap-12 items-stretch">
+        <div className="flex items-top ml-1 h-full space-x-1">
+          <Checkbox
+            id={`${ctqId}-enableMean1SPower`}
+            checked={ContCTQPairedSampleHypTestData[ctqId]?.enableMean1SPower || false}
+            onCheckedChange={(checked) => updateContCTQPairedSampleHypTestDataField(ctqId, "enableMean1SPower", checked)}
+          />
+          {!ContCTQPairedSampleHypTestData[ctqId]?.enableMean1SPower ? (
+            <Label htmlFor={`${ctqId}-enableMean1SPower`} className="items-top text-sm font-sm text-gray-400">
+              Power & Sample Size
+            </Label>
+          ) : (
+            <div>
+              <Label htmlFor={`${ctqId}-enableMean1SPower`} className="text-sm font-medium text-gray-700">
+                Power & Sample Size
+              </Label>
+              <Card className="bg-gray-50 min-h-[540px] flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-sm">Power & Sample Size Paired-Sample Mean Hypothesis Testing</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs">
+                  <div>
+                    <Label htmlFor='power1SMeanPower'>Power of test(1-β):</Label>
+                    <Select value={power1SMeanPower} onValueChange={(value: string) => {
+                      setPower1SMeanPower(value);
+                    }}>
+                      <SelectTrigger id='power1SMeanPower'>
+                        <SelectValue placeholder="Select Power of test" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0.99">99%</SelectItem>
+                        <SelectItem value="0.95">95%</SelectItem>
+                        <SelectItem value="0.90">90%</SelectItem>
+                        <SelectItem value="0.85">85%</SelectItem>
+                        <SelectItem value="0.80">80%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="power1SMeanHa">Ha:</Label>
+                    <Select value={power1SMeanHa} onValueChange={(value: string) => {
+                      setPower1SMeanHa(value);
+                    }}>
+                      <SelectTrigger id="power1SMeanHa">
+                        <SelectValue placeholder="Select Ha (Alternative Hypothesis)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value=">">&gt; 0</SelectItem>
+                        <SelectItem value="≠">≠ 0</SelectItem>
+                        <SelectItem value="<">&lt; 0</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="power1SMeanAlpha">Alpha (α):</Label>
+                    <Select value={power1SMeanAlpha} onValueChange={(value: string) => {
+                      setPower1SMeanAlpha(value);
+                    }}>
+                      <SelectTrigger id="power1SMeanAlpha">
+                        <SelectValue placeholder="Select Alpha significance level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0.01">1%</SelectItem>
+                        <SelectItem value="0.05">5%</SelectItem>
+                        <SelectItem value="0.10">10%</SelectItem>
+                        <SelectItem value="0.15">15%</SelectItem>
+                        <SelectItem value="0.20">20%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    Mean of paired difference (μ<sub>d</sub>):
+                    <Input
+                      type="number"
+                      step="any"
+                      value={ContCTQPairedSampleHypTestData[ctqId]?.power1SMeanMean ?? ''}
+                      onChange={(e) => updateContCTQPairedSampleHypTestDataField(
+                        ctqId,
+                        "power1SMeanMean",
+                        e.target.value === '' ? '' : parseFloat(e.target.value)
+                      )}
+                      placeholder="Enter mean of difference (μsub>d</sub>)"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    Standard Deviation of paired difference (σ<sub>d</sub>):
+                    <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={ContCTQPairedSampleHypTestData[ctqId]?.power1SMeanStdev ?? ''}
+                      onChange={(e) => updateContCTQPairedSampleHypTestDataField(
+                        ctqId,
+                        "power1SMeanStdev",
+                        e.target.value === '' ? '' : parseFloat(e.target.value)
+                      )}
+                      placeholder="Enter standard deviation of difference (σ<sub>d</sub>)"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    Hypothesized difference δ0 (H0): 0
+                  </div>
+                  <div className="font-medium text-sm">
+                    <Badge
+                      variant="default"
+                      className={`mt-2 font-medium text-sm text-center justify-center text-white bg-blue-400`}
+                      title={"Estimated minimum size of each data sample and and Actual Power of the test"}
+                    >
+                      Sample Size (n): {PowerSampleSizeResults.oneSMeansampleSize.toFixed(0)} <br />
+                      Actual Power: {(PowerSampleSizeResults.oneSMeanactualPower * 100).toFixed(2)}%
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
-          <div className="flex flex-wrap items-end"> {/* Changed from space-y-3 to flexbox */}
-            
-          <div className="w-1/2 min-w-[200px] pr-4">
-            <Label>Hypothesized difference δ0 (H0):</Label>
-            <Input
-                type="number"
-                step="any"
-                value={ContCTQPairedSampleHypTestData[ctqId]?.H0difference ?? ''}
-                onChange={(e) => updateContCTQPairedSampleHypTestDataField(
-                    ctqId, 
-                    "H0difference", 
-                    e.target.value === '' ? '' : parseFloat(e.target.value)
-                )}
-                placeholder="Enter Hypothesized difference δ0 (H0)"
-                className="mt-1"
-            />
-          </div>
-          
-          {/* <div className="grid grid-cols-3 pr-10 gap-12"> */}
-            
-          <div className="w-1/2 min-w-[200px] pr-4">
+        </div>
+      </div>
+
+      {(ContCTQPairedSampleHypTestData[ctqId]?.enableMean1SPower) && (
+        <Button
+          className="w-full"
+          onClick={saveConfiguration}
+          disabled={saveConfigMutation.isPending}
+        >
+          {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+        </Button>
+      )}
+
+      <div className="flex flex-wrap items-end">
+        <div className="w-1/2 min-w-[200px] pr-4">
+          <Label>Hypothesized difference δ0 (H0):</Label>
+          <Input
+            type="number"
+            step="any"
+            value={ContCTQPairedSampleHypTestData[ctqId]?.H0difference ?? ''}
+            onChange={(e) => updateContCTQPairedSampleHypTestDataField(
+              ctqId,
+              "H0difference",
+              e.target.value === '' ? '' : parseFloat(e.target.value)
+            )}
+            placeholder="Enter Hypothesized difference δ0 (H0)"
+            className="mt-1"
+          />
+        </div>
+
+        <div className="w-1/2 min-w-[200px] pr-4">
           <Label htmlFor="alternativemean">Ha hypothesis for Mean</Label>
           <Select value={alternativemean} onValueChange={setAlternativemean}>
-          <SelectTrigger id="alternativemean">
+            <SelectTrigger id="alternativemean">
               <SelectValue placeholder="Select Ha hypothesis for mean" />
-          </SelectTrigger>
-          <SelectContent>
+            </SelectTrigger>
+            <SelectContent>
               <SelectItem value="Different">Different</SelectItem>
               <SelectItem value="Less than">Less than</SelectItem>
               <SelectItem value="Greater than">Greater than</SelectItem>
-          </SelectContent>
+            </SelectContent>
           </Select>
-          </div>
-          </div> 
-          {/*</div>*/}
+        </div>
+      </div>
 
-          <div>
-           <div className="grid grid-cols-1 gap-4 pr-4">
-            <div>
-            <Label htmlFor="significance">Significance Level (α)</Label>
-            <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
+      <div className="grid grid-cols-1 gap-4 pr-4">
+        <div>
+          <Label htmlFor="significance">Significance Level (α)</Label>
+          <Select value={significanceLevel} onValueChange={setSignificanceLevel}>
             <SelectTrigger id="significance">
-                <SelectValue placeholder="Select significance level" />
+              <SelectValue placeholder="Select significance level" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="0.01">1%</SelectItem>
-                <SelectItem value="0.05">5%</SelectItem>
-                <SelectItem value="0.10">10%</SelectItem>
+              <SelectItem value="0.01">1%</SelectItem>
+              <SelectItem value="0.05">5%</SelectItem>
+              <SelectItem value="0.10">10%</SelectItem>
             </SelectContent>
-            </Select>
-            </div>
-           </div>
+          </Select>
+        </div>
+      </div>
 
-           {/* Data Input Section for Paired Sample Hypothesis Test */}
-           <div className="grid grid-cols-2 gap-4 pr-4">
-            <div>
-            <Label>Description of your dataset 1:</Label>
-            <Input
-                type="text"
-                value={ContCTQPairedSampleHypTestData[ctqId]?.dataset1description || ""}
-                onChange={(e) => updateContCTQPairedSampleHypTestDataField(
-                    ctqId, 
-                    "dataset1description", 
-                    e.target.value
-                )}
-                placeholder="Enter a description of your dataset 1"
-                className="mt-0"
-            />
-            </div>
-            <div>
-            <Label>Description of your dataset 2:</Label>
-            <Input
-                type="text"
-                value={ContCTQPairedSampleHypTestData[ctqId]?.dataset2description || ""}
-                onChange={(e) => updateContCTQPairedSampleHypTestDataField(
-                    ctqId, 
-                    "dataset2description", 
-                    e.target.value
-                )}
-                placeholder="Enter a description of your dataset 2"
-                className="mt-0"
-            />
-            </div>            
-            
-            <label className="block text-sm font-medium">Dataset 1 Input:</label>            
-            <label className="block text-sm font-medium">Dataset 2 Input:</label>
+      <div className="grid grid-cols-2 gap-4 pr-4">
+        <div>
+          <Label>Description of your dataset 1:</Label>
+          <Input
+            type="text"
+            value={ContCTQPairedSampleHypTestData[ctqId]?.dataset1description || ""}
+            onChange={(e) => updateContCTQPairedSampleHypTestDataField(
+              ctqId,
+              "dataset1description",
+              e.target.value
+            )}
+            placeholder="Enter a description of your dataset 1"
+            className="mt-0"
+          />
+        </div>
+        <div>
+          <Label>Description of your dataset 2:</Label>
+          <Input
+            type="text"
+            value={ContCTQPairedSampleHypTestData[ctqId]?.dataset2description || ""}
+            onChange={(e) => updateContCTQPairedSampleHypTestDataField(
+              ctqId,
+              "dataset2description",
+              e.target.value
+            )}
+            placeholder="Enter a description of your dataset 2"
+            className="mt-0"
+          />
+        </div>
+      </div>
+    </div>
+  );
 
-          {/* Data Input Section for Two Sample Hypothesis Test */}
+  // Data tab content
+  const dataContent = (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4 pr-4">
+        <label className="block text-sm font-medium">Dataset 1 Input:</label>
+        <label className="block text-sm font-medium">Dataset 2 Input:</label>
+
+        {/* Data Input Section for Paired Sample Hypothesis Test - Dataset 1 */}
           <div className="space-y-4" data-dataset="1">
             <div>
             <div className="flex justify-between items-center">
@@ -2283,19 +2263,24 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
             )}
             </div>
           </div>
-          </div>
+        </div>
 
-           <div className="mt-2 mb-3">
-            <Button 
-              className="w-full" 
-              onClick={saveConfiguration} 
-              disabled={saveConfigMutation.isPending}
-              //variant="outline"
-            >
-              {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
-            </Button>
-           </div>
-           {((pairedsampleMeanTestresult) && ( testResults.sampleSize > 1) && ( testResults.sampleSize1 > 1) && ( testResults.sampleSize2 > 1)) && ( 
+        <div className="mt-2 mb-3">
+          <Button
+            className="w-full"
+            onClick={saveConfiguration}
+            disabled={saveConfigMutation.isPending}
+          >
+            {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
+          </Button>
+        </div>
+    </div>
+  );
+
+  // Analysis tab content
+  const analysisContent = (
+    <div className="space-y-4">
+      {((pairedsampleMeanTestresult) && ( testResults.sampleSize > 1) && ( testResults.sampleSize1 > 1) && ( testResults.sampleSize2 > 1)) && ( 
            <div className="p-4 border border-gray-200 rounded-md bg-gray-50 grid grid-cols-1 gap-2 text-sm">
             <div className =  "p-4 grid grid-cols-2 gap-4 text-sm">
               <Card className="p-2">
@@ -2428,30 +2413,49 @@ export function ContCTQPairedSampleHypTesting({ projectId, ctqId, ctqName, activ
                 {testResults.meanCI_minus.toFixed(3)}, {testResults.meanCI_plus.toFixed(3)}]</div>
               </Card>       
             </div>
-           </div>
-           )}
+          </div>
+        )}
+    </div>
+  );
 
-           {/* Paired sample Student mean test BoxPlot visualization when showBoxPlot is true */}
-           {showBoxPlot && testResults.dataValues.length > 1 && (
-            <div className="mt-6">
-              <BoxPlotWithPairedSMeanTest
-                data={testResults.dataValues}
-                ctqName={ctqName}
-                mean={testResults.meanValue}
-                Ha={Ha(alternativemean)}
-                h0Value={ContCTQPairedSampleHypTestData[ctqId]?.H0difference ?? 0}
-                confidenceInterval={[testResults.meanCI_minus, testResults.meanCI_plus]}
-                title={`Paired-Sample Mean T-Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
-                pValue={testResults.tp_Value}
-                alphalevel={significanceLevel}
-                description1={ContCTQPairedSampleHypTestData[ctqId]?.dataset1description}
-                description2={ContCTQPairedSampleHypTestData[ctqId]?.dataset2description}
-              />
-            </div>
-           )}
-          </div> 
-                 
+  // Chart tab content
+  const chartContent = (
+    <div className="space-y-4">
+      {showBoxPlot && testResults.dataValues.length > 1 && (
+        <div className="mt-6">
+          <BoxPlotWithPairedSMeanTest
+            data={testResults.dataValues}
+            ctqName={ctqName}
+            mean={testResults.meanValue}
+            Ha={Ha(alternativemean)}
+            h0Value={ContCTQPairedSampleHypTestData[ctqId]?.H0difference ?? 0}
+            confidenceInterval={[testResults.meanCI_minus, testResults.meanCI_plus]}
+            title={`Paired-Sample Mean T-Test (Conf. Level: ${(100-(parseFloat(significanceLevel) * 100)).toFixed(0)}%)`}
+            pValue={testResults.tp_Value}
+            alphalevel={significanceLevel}
+            description1={ContCTQPairedSampleHypTestData[ctqId]?.dataset1description}
+            description2={ContCTQPairedSampleHypTestData[ctqId]?.dataset2description}
+          />
         </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Card data-component="paired-sample">
+      <CardHeader>
+        <CardTitle>Paired-Sample Hypothesis Testing</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <HypothesisTestingTabs
+          projectId={projectId}
+          ctqId={ctqId}
+          testType="paired-sample"
+          setupContent={setupContent}
+          dataContent={dataContent}
+          chartContent={chartContent}
+          analysisContent={analysisContent}
+        />
       </CardContent>
     </Card>
   );
