@@ -469,7 +469,16 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
                           y: group.data.map(d => d.frequency),
                           type: 'bar',
                           name: getFrequencyLabel(),
-                          marker: { color: '#3b82f6' },
+                          marker: { 
+                            color: group.variableValue === "Global" 
+                              ? '#22c55e' // Green for Global chart
+                              : group.variableValue 
+                                ? group.data.map((_, index) => {
+                                    const colors = ['#3b82f6', '#eab308', '#22c55e', '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'];
+                                    return colors[index % colors.length];
+                                  })
+                                : '#3b82f6' // Single blue if no variable
+                          },
                           yaxis: 'y1',
                         },
                         {
