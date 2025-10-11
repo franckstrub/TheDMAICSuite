@@ -269,6 +269,8 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
     return frequencyType;
   };
 
+  const filename = `Pareto Analysis - ` + getCategoryLabel().toUpperCase();
+
   return (
     <Card>
       <CardHeader>
@@ -504,12 +506,21 @@ export function ParetoAnalysis({ projectId, ctqId, ctqName, activeTab }: ParetoA
                           xanchor: 'center',
                           orientation: 'h',
                         },
-                        margin: { l: 60, r: 60, t: 40, b: 100 },
+                        margin: { l: 60, r: 110, t: 40, b: 100 },
                       }}
                       config={{
                         responsive: true,
                         displayModeBar: true,
                         displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: group.variableValue === "Global" 
+                            ? `Pareto Analysis - ${getCategoryLabel().toUpperCase()} - GLOBAL`
+                            : group.variableValue 
+                              ? `Pareto Analysis - ${getCategoryLabel().toUpperCase()} - ${selectedVariable} ${group.variableValue}`
+                              : `Pareto Analysis - ${getCategoryLabel().toUpperCase()}`,
+                          scale: 1
+                        }
                       }}
                       style={{ width: '100%' }}
                     />
