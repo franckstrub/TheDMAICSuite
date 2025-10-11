@@ -30,7 +30,7 @@ import AttributeCTQAnalysis from "./AttributeCTQAnalysis";
 import ContinuousCTQAnalysis from "./ContinuousCTQAnalysis";
 import CauseEffectMatrix from "./CauseEffectMatrix"
 import AnalyzeGateReviewValidation from "./AnalyzeGateReviewValidation";
-import FishboneIcon from '@/assets/fishboneicon.svg';
+//import FishboneIcon from '@/assets/fishboneicon.svg';
 
 interface CtqWithType {
   ctq: string;
@@ -119,12 +119,12 @@ export default function AnalyzePhase() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            Root Cause Analysis
+            CTQ Analysis
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No CTQ available. Please define your CTQ(s) in CTS characteristics table to create Root Cause Analysis.
+            No CTQ available. Please define first your CTQ(s) in CTS characteristics table to perform a CTQ Root Cause Analysis.
           </div>
         </CardContent>
       </Card>
@@ -157,18 +157,9 @@ export default function AnalyzePhase() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-                <img 
-                  src={FishboneIcon} 
-                  alt="Fishbone Diagram icon" 
-                  width={60} 
-                  height={30}
-                  style={{ maxWidth: '100%', height: 'auto' }}
-                />
+                
             CTQ Analysis
           </CardTitle>
-          <p className="text-sm text-gray-600 mt-2">
-            One Cause & Effect Analysis per CTQ defined in MEASURE, in CTS Characteristics table
-          </p>          
         </CardHeader>
         <CardContent>
           {/* Only show scroll indicator if 6+ CTQs exist */}
