@@ -2163,6 +2163,7 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
         </Button>
       </div>          
     </div>
+  </div>
   );
 
   // Analysis tab content
@@ -2732,8 +2733,6 @@ export function ContCTQMultipleSampleHypTesting({ projectId, ctqId, ctqName, act
             </div>
           )}  
         </div>
-      )
-    </div>
   );
 
   // Chart tab content
