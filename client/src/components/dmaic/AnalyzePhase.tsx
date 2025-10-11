@@ -212,6 +212,7 @@ export default function AnalyzePhase() {
           </Tabs>
         </CardContent>
       </Card>
+      Global Analysis
       <CauseEffectMatrix projectId={projectId} ctqlist={ctqList}/>
       <AnalyzeGateReviewValidation projectId={projectId} />
     </div>
