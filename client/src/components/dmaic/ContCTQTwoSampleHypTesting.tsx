@@ -38,6 +38,7 @@ import {
 import BoxPlotWith2SMeanTest from './BoxPlotWith2SMeanTest';
 import BoxPlotWith2SMedianTest from './BoxPlotWith2SMedianTest';
 import TwoSVarianceTestCI from './twoSVarianceTestCI';
+import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 
 interface DataPoint {
   indexNumber: number;
@@ -1890,16 +1891,9 @@ useEffect(() => {
     }
   };
 
-  return (
-    <Card data-component="two-sample">
-      <CardHeader>
-        <CardTitle>Two-Sample Hypothesis Testing</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-500 mb-4">
-            CTQ: {ctqName}
-        </p>
-
+  // Setup tab content
+  const setupContent = (
+    <div className="space-y-4">
         <p className="text-sm text-gray-500 mb-4">
           Validate or invalidate assumptions and determine if differences are statistically significant or insignificant between two samples.
         </p>
@@ -2391,10 +2385,22 @@ useEffect(() => {
                 className="mt-0"
             />
             </div>            
-            
+           </div>
+          </div>
+          )}       
+        </div>
+    </div>
+  );
+
+  // Data tab content  
+  const dataContent = (
+    <div className="space-y-4">
+      {(ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest || ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest || ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest) && (
+           <>
+           <div className="grid grid-cols-2 gap-4 pr-4">          
             <label className="block text-sm font-medium">Dataset 1 Input:</label>            
             <label className="block text-sm font-medium">Dataset 2 Input:</label>
-
+           </div>
            {/* Data Input Section for Two Sample Hypothesis Test */}
            <div className="space-y-4" data-dataset="1">
             <div>
@@ -2889,47 +2895,24 @@ useEffect(() => {
             </div>
            </div>
 
-          </div>
-          
-          <div className="mt-2 mb-3">
+           <div className="mt-2 mb-3">
             <Button 
               className="w-full" 
               onClick={saveConfiguration} 
               disabled={saveConfigMutation.isPending}
-              //variant="outline"
             >
               {saveConfigMutation.isPending ? "Saving..." : "Save Configuration and Data"}
             </Button>
-            {/* Run Test Button 
-            <Button
-              className={`w-full ${(!ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && !ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest && !ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest) ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={!ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest &&
-                !ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest &&
-                !ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest}
-              onClick={() => { // Use a block to perform multiple actions
-                  const results = handleRunTest(
-                      ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest ?? false,
-                      ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest ?? false, // Matches corrected function signature
-                      ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest ?? false,
-                      dataSet1,
-                      dataSet2,
-                      parseFloat(significanceLevel),
-                      Ha(alternativemean),
-                      Ha(alternativevariance),
-                      Ha(alternativemedian),
-                      ContCTQTwoSampleHypTestData[ctqId]?.targetMean ?? 0,
-                      ContCTQTwoSampleHypTestData[ctqId]?.targetstdev ?? 0,
-                      ContCTQTwoSampleHypTestData[ctqId]?.targetMedian ?? 0
-                  );
-                  setTestResults(results); // Store the returned results in your state
-                  setShowBoxPlot(true); // Show the BoxPlot comptwont after running the test
-              }}
-            >
-                Run Test
-            </Button>
-            */}
-          </div>
-          {((twosampleMeanTestresult || twosampleVarianceTestresult || twosampleMedianTestresult)  && ( testResults.sampleSize1 > 1) && ( testResults.sampleSize2 > 1)) && ( 
+           </div>
+           </>
+      )}
+    </div>
+  );
+
+  // Analysis tab content
+  const analysisContent = (
+    <div className="space-y-4">
+           {((twosampleMeanTestresult || twosampleVarianceTestresult || twosampleMedianTestresult)  && ( testResults.sampleSize1 > 1) && ( testResults.sampleSize2 > 1)) && ( 
           <div className="border border-gray-200 rounded-md bg-gray-50">          
             <div className =  "p-4 grid grid-cols-2 gap-4 text-sm">
             <Card className="p-2">
@@ -3325,7 +3308,12 @@ useEffect(() => {
             </div>
           </div>
           )}
+    </div>
+  );
 
+  // Chart tab content (Box plots)
+  const chartContent = (
+    <div className="space-y-4">
           {/* 2 sample Student mean test BoxPlot visualization when showBoxPlot is true */}
           
           {showBoxPlot && dataSet1.length > 1 && dataSet2.length > 1 && ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest && (
@@ -3390,10 +3378,28 @@ useEffect(() => {
               />
             </div>
           )}
-          
-          </div>  
-          )}       
-        </div>
+    </div>
+  );
+
+  return (
+    <Card data-component="two-sample">
+      <CardHeader>
+        <CardTitle>Two-Sample Hypothesis Testing</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-500 mb-4">
+          CTQ: {ctqName}
+        </p>
+
+        <HypothesisTestingTabs
+          projectId={projectId}
+          ctqId={ctqId}
+          testType="two-sample"
+          setupContent={setupContent}
+          dataContent={dataContent}
+          chartContent={chartContent}
+          analysisContent={analysisContent}
+        />
       </CardContent>
     </Card>
   );

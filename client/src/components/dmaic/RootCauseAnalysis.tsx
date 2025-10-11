@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle } from "lucide-react";
 import RootCausesPrioritization from "./RootCausesPrioritization";
+import FishboneIcon from '@/assets/fishboneicon.svg';
 
 interface RootCauseAnalysisProps {
   projectId: number;
@@ -192,9 +193,16 @@ export default function RootCauseAnalysis({ projectId, ctqId, ctqName, onSave }:
     <div className="w-full">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-600">
+          <img 
+                  src={FishboneIcon} 
+                  alt="Fishbone Diagram icon" 
+                  width={60} 
+                  height={30}
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                />
           <p className="text-sm text-gray-600 mt-2">
             CTQ Cause & Effect Analysis
-          </p>  
+          </p> 
           {isLoaded ? 'Fishbone diagram Editor Ready' : 'Loading Fishone diagram Editor...'}
         </div>
         <div className="flex space-x-2">
