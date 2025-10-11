@@ -164,7 +164,7 @@ export default function AnalyzePhase() {
                   height={30}
                   style={{ maxWidth: '100%', height: 'auto' }}
                 />
-            Cause & Effect Analysis
+            CTQ Analysis
           </CardTitle>
           <p className="text-sm text-gray-600 mt-2">
             One Cause & Effect Analysis per CTQ defined in MEASURE, in CTS Characteristics table
