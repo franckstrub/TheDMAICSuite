@@ -2337,7 +2337,7 @@ useEffect(() => {
   return (
     <Card data-component="one-sample">
       <CardHeader>
-        <CardTitle>One-Sample Hypothesis Testing</CardTitle>
+        <CardTitle>Two-Proportion Hypothesis Testing</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
@@ -2347,7 +2347,7 @@ useEffect(() => {
         <HypothesisTestingTabs
           projectId={projectId}
           ctqId={ctqId}
-          testType="one-sample"
+          testType="two-proportion-test"
           setupContent={setupContent}
           dataContent={dataContent}
           chartContent={chartContent}
