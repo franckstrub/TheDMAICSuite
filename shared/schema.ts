@@ -1317,6 +1317,47 @@ export type InsertContinuousCtqAnalysisConfig = z.infer<
 export type ContinuousCtqAnalysisConfig =
   typeof continuousCtqAnalysisConfig.$inferSelect;
 
+// Attribute CTQ Analysis Configuration - stores user choices for attribute analysis types
+export const attributeCtqAnalysisConfig = pgTable(
+  "attribute_ctq_analysis_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
+
+    // Analysis type enablers
+    enableAttrYHypothesisTest: boolean("enable_attr_y_hypothesis_test").default(
+      false,
+    ),
+    enablePareto: boolean("enable_pareto").default(false),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertAttributeCtqAnalysisConfigSchema = createInsertSchema(
+  attributeCtqAnalysisConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertAttributeCtqAnalysisConfig = z.infer<
+  typeof insertAttributeCtqAnalysisConfigSchema
+>;
+export type AttributeCtqAnalysisConfig =
+  typeof attributeCtqAnalysisConfig.$inferSelect;
+
 // One Sample Hypothesis Testing Configuration - stores user data and settings for one-sample tests
 export const oneSampleHypothesisConfig = pgTable(
   "one_sample_hypothesis_config",
