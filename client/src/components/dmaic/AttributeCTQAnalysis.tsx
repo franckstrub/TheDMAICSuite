@@ -1,135 +1,316 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { BarChart3 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Table2, AlertTriangle } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ParetoAnalysis } from "./ParetoAnalysis";
+import { AttrCTQHypTesting } from "./AttrCTQHypTesting";
+
+interface CTQAnalysisData {
+  id?: number;
+  ctq: string;
+  ctqId?: number; // Foreign key to CTS characteristics
+  // Boolean enablers for each analysis type
+  enableAttrYHypothesisTest?: boolean;
+  enablePareto?: boolean;
+}
+
+interface SavedConfigData {
+  id?: number;
+  ctq?: string;
+  ctqId?: number;
+  enableAttrYHypothesisTest?: boolean;
+  enablePareto?: boolean;
+}
 
 interface AttributeCTQAnalysisProps {
   projectId: number;
   ctqId: number;
   ctqName: string;
+  activeTab?: string;
   onSave?: (data: string) => void;
 }
 
-export default function AttributeCTQAnalysis({ projectId, ctqId, ctqName, onSave }: AttributeCTQAnalysisProps) {
+export default function AttributeCTQAnalysis({ projectId, ctqId, ctqName, activeTab, onSave }: AttributeCTQAnalysisProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  // Default configuration fallback
+    const getDefaultConfig = () => ({
+      ctq: ctqName,
+      ctqId: ctqId,
+      enableAttrYHypothesisTest: false,
+      enablePareto: false,
+    });
+  
+    const [ctqAnalysisData, setCTQAnalysisData] = useState<{ [ctqId: number]: CTQAnalysisData }>(() => {
+      // Initialize with default config to prevent undefined state
+      return {
+        [ctqId]: getDefaultConfig(),
+      };
+    });
+  
+    // Query to fetch saved configuration
+    const { data: savedConfig, isLoading, refetch } = useQuery<SavedConfigData>({
+      queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/attribute-analysis-config`],
+      enabled: !!projectId && !!ctqId,
+      staleTime: 0, // Always refetch when component mounts
+      cacheTime: 0, // Don't cache the result
+      retry: (failureCount, error) => {
+        // Don't retry on 404 errors - this means no configuration exists yet
+        // Check for 404 in various possible error structures
+        const is404 = error?.message?.includes('404') || 
+                     error?.toString()?.includes('404') ||
+                     (error as any)?.response?.status === 404 ||
+                     (error as any)?.status === 404;
+        
+        if (is404) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    });
+  
+  // SIMPLE SOLUTION - Remove cache invalidation to prevent UI clearing
+  
+  // Save mutation - SIMPLE VERSION
+  const saveConfigMutation = useMutation({
+    mutationFn: async (configData: any) => {
+      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/attribute-analysis-config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(configData),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: (savedData) => {
+      toast({
+        title: "Configuration Saved",
+        description: "Attribute CTQ analysis configuration has been saved successfully.",
+      });
+      
+      // Update the local state with the saved data (server returns { config: configData })
+      if (savedData && savedData.config) {
+        setCTQAnalysisData(prev => ({
+          ...prev,
+          [ctqId]: {
+            ...prev[ctqId],
+            id: savedData.config.id, // Update with the ID from server
+            // Keep the current values since they're already in state
+          }
+        }));
+      }
+      
+      // DON'T invalidate the cache - this was causing the clearing
+      // The data is already correct in our local state
+    },
+    onError: (error: any) => {
+      console.error('Save configuration error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        response: error?.response,
+        projectId,
+        ctqId,
+        configData: ctqAnalysisData[ctqId]
+      });
+      toast({
+        title: "Save Failed",
+        description: `Failed to save analysis configuration: ${error?.message || 'Please try again.'}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Initialize state from saved configuration with proper timing
+  useEffect(() => {
+    if (isLoading) return; // Wait until loading is complete
+    
+    if (savedConfig && savedConfig.config) {
+      // We have saved config - use it (server returns { config: configData })
+      const config = savedConfig.config;
+      
+      // Use setTimeout to ensure state update happens in next tick
+      // This prevents race conditions with React's batching
+      setTimeout(() => {
+        setCTQAnalysisData({
+          [ctqId]: {
+            id: config.id,
+            ctq: config.ctq ?? ctqName,
+            ctqId: config.ctqId ?? ctqId,
+            enableAttrYHypothesisTest: config.enableAttrYHypothesisTest ?? false,
+            enablePareto: config.enablePareto ?? false,
+          },
+        });
+      }, 0);
+    } else {
+      // No saved config - use defaults
+      setTimeout(() => {
+        setCTQAnalysisData({
+          [ctqId]: getDefaultConfig(),
+        });
+      }, 0);
+    }
+  }, [savedConfig, isLoading, ctqId, ctqName]);
+  
+    const updateCTQAnalysisField = (ctqId: number, field: keyof CTQAnalysisData, value: any) => {
+      setCTQAnalysisData(prev => {
+        const updated = {
+          ...prev,
+          [ctqId]: {
+            ...prev[ctqId],
+            [field]: value,
+          },
+        };
+        return updated;
+      });
+    };
+  
+    const handleSaveAnalysis = () => {
+      const currentConfig = ctqAnalysisData[ctqId];
+      if (currentConfig) {
+        // Prepare the data for saving (exclude UI-only fields)
+        const configToSave = {
+          enableAttrYHypothesisTest: currentConfig.enableAttrYHypothesisTest,
+          enablePareto: currentConfig.enablePareto,
+        };
+        
+        
+        saveConfigMutation.mutate(configToSave);
+      }
+  
+      // Also call the legacy onSave if provided
+      if (onSave) {
+        onSave(JSON.stringify(ctqAnalysisData));
+      }
+    };
+  
+    const handleClearAll = () => {
+      setCTQAnalysisData({
+        [ctqId]: getDefaultConfig(),
+      });
+    };
+  
+    // Add this right before the return statement:
+    if (isLoading) {
+      return (
+        <div className="w-full mt-4 p-4 flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <span className="ml-3">Loading configuration...</span>
+        </div>
+      );
+    }
+  
+    // Ensure we have data before rendering
+    if (!ctqAnalysisData[ctqId]) {
+      return (
+        <div className="w-full mt-4 p-4 text-center text-gray-500">
+          Initializing analysis configuration...
+        </div>
+      );
+    }
   return (
     <div className="w-full mt-4">
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Table2 className="h-5 w-5" />
-          Attribute CTQ Analysis
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-500 mb-4">
-          Attribute CTQ Analysis
-        </p>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr>
-                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Root Cause</th>
-                <th className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votes</th>
-                <th className="px-0 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              
-            </tbody>
-          </table>
-        </div>
-        
-        <div className="mt-4 flex justify-between">
-          <Button
-            variant="outline"
-            //onClick={addCharacteristic}
-            className="flex items-center space-x-2"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Add Root Cause</span>
-          </Button>
-          
-          <Button
-            //onClick={handleSave}
-            //disabled={saveMutation.isPending}
-          >
-            {/*{saveMutation.isPending ? "Saving..." : "Save Root Causes Prioritization table"}*/}
-          </Button>
-        </div>
-        
-        <div className="mt-4 text-xs text-gray-500">
-          <p>• Root Causes must be defined by User from Fishbone diagram</p>
-        </div>
-
-        {/* CTQ Deletion Confirmation Dialog */}
-        <AlertDialog 
-        /*open={deletingCtqIndex !== null} onOpenChange={() => setDeletingCtqIndex(null)}*/
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                Delete CTQ - Data Loss Warning
-              </AlertDialogTitle>
-              <AlertDialogDescription className="space-y-3">
-                <p>
-                  {/*You are about to delete the Root Cause "{deletingRootIndex !== null ? RootCause[deletingCtqIndex]?.ctq : ''}" */}
-                  and all its associated data.
-                </p>
-                <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                  <p className="font-medium text-red-800 mb-2">This action will permanently delete:</p>
-                  <ul className="text-red-700 text-sm space-y-1">
-                    <li>• All ......... for this CTQ</li>
-                    
-                  </ul>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Attribute CTQ Statistical Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            CTQ: {ctqName}
+          </p>
+          <div>
+            <label className="block text-sm font-medium mb-3">
+              Attribute CTQ Analysis Types (Select Multiple)
+            </label>
+            <div className="max-w-4xl">
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${ctqId}-AttrYHypothesisTest`}
+                    checked={ctqAnalysisData[ctqId]?.enableAttrYHypothesisTest || false}
+                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enableAttrYHypothesisTest", checked)}
+                  />
+                  <Label htmlFor={`${ctqId}-AttrYHypothesisTest`} className="text-sm font-medium text-gray-700">
+                     Hypothesis Testing
+                  </Label>
                 </div>
-                <p className="font-medium">
-                  This action cannot be undone. Are you sure you want to continue?
-                </p>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              {/*<AlertDialogCancel
-                onClick={handleCancelDelete}>
-                Cancel
-              </AlertDialogCancel>
-              
-              <AlertDialogAction
-                onClick={handleConfirmDelete}
-                className="bg-red-600 hover:bg-red-700 text-white"
-                disabled={deleteCTQMutation.isPending}
-              >
-                {deleteCTQMutation.isPending ? "Deleting..." : "Delete Root Cause & All Data"}
-              </AlertDialogAction>
-              */}
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardContent>
-    </Card>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${ctqId}-pareto`}
+                    checked={ctqAnalysisData[ctqId]?.enablePareto || false}
+                    onCheckedChange={(checked) => updateCTQAnalysisField(ctqId, "enablePareto", checked)}
+                  />
+                  <Label htmlFor={`${ctqId}-pareto`} className="text-sm font-medium text-gray-700">
+                    Pareto Analysis
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Show selected analysis types */}
+          {(ctqAnalysisData[ctqId]?.enableAttrYHypothesisTest || 
+            ctqAnalysisData[ctqId]?.enablePareto) && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="text-sm font-medium mb-2">Selected Analysis Types:</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {ctqAnalysisData[ctqId]?.enableAttrYHypothesisTest && (
+                  <li>• Hypothesis Testing Analysis</li>
+                )}
+                {ctqAnalysisData[ctqId]?.enablePareto && (
+                  <li>• Pareto Analysis</li>
+                )}
+              </ul>
+            </div>
+          )}
+          
+          <div className="mt-6 flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleClearAll}
+            >
+              Clear All
+            </Button>
+            <Button 
+              onClick={handleSaveAnalysis}
+              disabled={saveConfigMutation.isPending}
+            >
+              {saveConfigMutation.isPending ? 'Saving...' : 'Save Analysis Configuration'}
+            </Button>
+          </div>   
+
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-2 mt-4">
+            {/* Hypothesis Testing */}
+            {ctqAnalysisData[ctqId]?.enableAttrYHypothesisTest && (
+              <AttrCTQHypTesting projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+
+            {/* Pareto Analysis */}
+            {ctqAnalysisData[ctqId]?.enablePareto && (
+              <ParetoAnalysis projectId={projectId} ctqId={ctqId} ctqName={ctqName} activeTab={activeTab} />
+            )}
+          </div> 
+        </CardContent>
+      </Card>       
     </div>
-      
   );
 }
