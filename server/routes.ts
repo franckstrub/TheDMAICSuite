@@ -4458,6 +4458,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/projects/:projectId/ctq/:ctqId/attribute-hypothesis-testing-config", isAuthenticated, async (req: Request, res: Response) => {
     try {
+      console.log("=== ATTRIBUTE HYPOTHESIS TESTING CONFIG POST ===");
+      console.log("Request body:", req.body);
+      
       const projectId = parseInt(req.params.projectId);
       const ctqId = parseInt(req.params.ctqId);
       
@@ -4485,6 +4488,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "CTQ not found" });
       }
       
+      console.log("About to validate data:", {
+        ...req.body,
+        organizationId: userRecord.organizationId,
+        projectId,
+        ctqId,
+        ctq: ctqRecord.ctq
+      });
+      
       // Validate request body
       const validatedData = insertAttributeHypothesisTestingConfigSchema.parse({
         ...req.body,
@@ -4493,6 +4504,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ctqId,
         ctq: ctqRecord.ctq
       });
+      
+      console.log("Validated data:", validatedData);
       
       // Check if configuration already exists
       const [existingConfig] = await db
