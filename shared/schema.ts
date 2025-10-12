@@ -1358,6 +1358,48 @@ export type InsertAttributeCtqAnalysisConfig = z.infer<
 export type AttributeCtqAnalysisConfig =
   typeof attributeCtqAnalysisConfig.$inferSelect;
 
+// Attribute Hypothesis Testing Configuration - stores user choices for attribute hypothesis tests
+export const attributeHypothesisTestingConfig = pgTable(
+  "attribute_hypothesis_testing_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(), // CTQ name for reference
+
+    // Test type
+    testType: text("test_type").default("Attribute Hyp-Test"),
+
+    // Test enablers
+    enableTwoProportionTest: boolean("enable_two_proportion_test").default(true),
+    enableChiSquareTest: boolean("enable_chi_square_test").default(false),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    // Unique constraint to ensure one config per CTQ
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertAttributeHypothesisTestingConfigSchema = createInsertSchema(
+  attributeHypothesisTestingConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertAttributeHypothesisTestingConfig = z.infer<
+  typeof insertAttributeHypothesisTestingConfigSchema
+>;
+export type AttributeHypothesisTestingConfig =
+  typeof attributeHypothesisTestingConfig.$inferSelect;
+
 // One Sample Hypothesis Testing Configuration - stores user data and settings for one-sample tests
 export const oneSampleHypothesisConfig = pgTable(
   "one_sample_hypothesis_config",
