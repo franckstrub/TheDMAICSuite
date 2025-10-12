@@ -144,6 +144,7 @@ export function AttrCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
     }
 
     const configToSave = {
+      testType: currentConfig.testType || "Attribute Hyp-Test",
       enableTwoProportionTest: currentConfig.enableTwoProportionTest ?? true,
       enableChiSquareTest: currentConfig.enableChiSquareTest ?? false,
     };
