@@ -156,8 +156,7 @@ export default function AnalyzePhase() {
       {/* Cause & Effect Analysis */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-                
+          <CardTitle className="flex items-center gap-2">                
             CTQ Analysis
           </CardTitle>
         </CardHeader>
@@ -193,7 +192,7 @@ export default function AnalyzePhase() {
                     <RootCauseAnalysis projectId={projectId} ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq} />
                     
                     {ctqItem.ctqType === 'Attribute' ? (                    
-                      <AttributeCTQAnalysis projectId={projectId} ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq}  />
+                      <AttributeCTQAnalysis projectId={projectId} ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq} activeTab={activeTab} />
                     ) : (                        
                       <ContinuousCTQAnalysis projectId={projectId}  ctqId={ctqItem.ctqId} ctqName={ctqItem.ctq} activeTab={activeTab} />                      
                     )}
@@ -203,8 +202,16 @@ export default function AnalyzePhase() {
           </Tabs>
         </CardContent>
       </Card>
-      Global Analysis
-      <CauseEffectMatrix projectId={projectId} ctqlist={ctqList}/>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">                
+            Global Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>       
+          <CauseEffectMatrix projectId={projectId} ctqlist={ctqList}/>          
+        </CardContent>
+      </Card>
       <AnalyzeGateReviewValidation projectId={projectId} />
     </div>
   );
