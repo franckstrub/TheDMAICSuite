@@ -105,13 +105,24 @@ export default function AnalyzePhase() {
   
   const ctqList = getCtqsWithTypes();
   
-  // Ensure we have an active tab when CTQs are available using useEffect
+  // Ensure we have an active tab when CTQs are available, restoring from localStorage if possible
   useEffect(() => {
     if (!activeTab && ctqList.length > 0) {
-      const firstCtq = ctqList[0].ctq;
-      setActiveTab(firstCtq);
+      // Try to restore the last selected tab from localStorage
+      const savedTab = localStorage.getItem(`analyze-active-tab-${projectId}`);
+      
+      // Check if the saved tab still exists in the current CTQ list
+      const savedTabExists = savedTab && ctqList.some(ctq => ctq.ctq === savedTab);
+      
+      if (savedTabExists) {
+        setActiveTab(savedTab);
+      } else {
+        // Fall back to the first CTQ if saved tab doesn't exist
+        const firstCtq = ctqList[0].ctq;
+        setActiveTab(firstCtq);
+      }
     }
-  }, [activeTab, ctqList]);
+  }, [activeTab, ctqList, projectId]);
   
   if (ctqList.length === 0) {
     return (
