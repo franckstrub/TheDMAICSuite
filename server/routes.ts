@@ -12,7 +12,7 @@ import {
   insertRiskSchema, insertRaciSchema, insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema, insertMsaAnalysisSchema, insertProcessCapabilitySchema,
   insertUserSchema, insertRootCausePrioritizationSchema, insertCauseEffectMatrixSchema,
-  insertContinuousCtqAnalysisConfigSchema, insertAttributeCtqAnalysisConfigSchema, insertOneSampleHypothesisConfigSchema,
+  insertContinuousCtqAnalysisConfigSchema, insertAttributeCtqAnalysisConfigSchema, insertAttributeHypothesisTestingConfigSchema, insertOneSampleHypothesisConfigSchema,
   insertTwoSampleHypothesisConfigSchema, insertPairedSampleHypothesisConfigSchema, insertMultipleSampleHypothesisConfigSchema, insertHypothesisTestingConfigSchema,
   insertMultiVariChartConfigSchema, insertParetoAnalysisSchema
 } from "@shared/schema";
@@ -25,7 +25,7 @@ import {
   processMaps, ctsCharacteristics, insertCtsCharacteristicsSchema,
   customerRequirements, businessRequirements, msaAnalysis, processCapability,
   fishboneDiagrams, insertFishboneDiagramSchema, rootCausePrioritization, causeEffectMatrix,
-  continuousCtqAnalysisConfig, attributeCtqAnalysisConfig, oneSampleHypothesisConfig, twoSampleHypothesisConfig, pairedSampleHypothesisConfig, multipleSampleHypothesisConfig, hypothesisTestingConfig,
+  continuousCtqAnalysisConfig, attributeCtqAnalysisConfig, attributeHypothesisTestingConfig, oneSampleHypothesisConfig, twoSampleHypothesisConfig, pairedSampleHypothesisConfig, multipleSampleHypothesisConfig, hypothesisTestingConfig,
   multiVariChartConfig, paretoAnalysis
 } from "@shared/schema";
 import { db } from "./db";
@@ -4407,6 +4407,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create new configuration
         [savedConfig] = await db
           .insert(attributeCtqAnalysisConfig)
+          .values(validatedData)
+          .returning();
+      }
+      
+      return res.status(201).json({ config: savedConfig });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  // Attribute Hypothesis Testing Configuration routes
+  app.get("/api/projects/:projectId/ctq/:ctqId/attribute-hypothesis-testing-config", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+      
+      const [config] = await db
+        .select()
+        .from(attributeHypothesisTestingConfig)
+        .where(and(
+          eq(attributeHypothesisTestingConfig.projectId, projectId),
+          eq(attributeHypothesisTestingConfig.ctqId, ctqId),
+          eq(attributeHypothesisTestingConfig.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      if (!config) {
+        return res.status(404).json({ message: "Configuration not found" });
+      }
+      
+      return res.status(200).json({ config });
+    } catch (err) {
+      return handleErrors(err, res);
+    }
+  });
+
+  app.post("/api/projects/:projectId/ctq/:ctqId/attribute-hypothesis-testing-config", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const ctqId = parseInt(req.params.ctqId);
+      
+      // Get user's organization ID
+      const userClaims = (req.user as any)?.claims;
+      const userId = userClaims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const userRecord = await storage.getUser(parseInt(userId));
+      if (!userRecord || !userRecord.organizationId) {
+        return res.status(400).json({ message: "User organization not found" });
+      }
+
+      // Get CTQ name
+      const [ctqRecord] = await db
+        .select()
+        .from(ctsCharacteristics)
+        .where(eq(ctsCharacteristics.id, ctqId))
+        .limit(1);
+      
+      if (!ctqRecord) {
+        return res.status(404).json({ message: "CTQ not found" });
+      }
+      
+      // Validate request body
+      const validatedData = insertAttributeHypothesisTestingConfigSchema.parse({
+        ...req.body,
+        organizationId: userRecord.organizationId,
+        projectId,
+        ctqId,
+        ctq: ctqRecord.ctq
+      });
+      
+      // Check if configuration already exists
+      const [existingConfig] = await db
+        .select()
+        .from(attributeHypothesisTestingConfig)
+        .where(and(
+          eq(attributeHypothesisTestingConfig.projectId, projectId),
+          eq(attributeHypothesisTestingConfig.ctqId, ctqId),
+          eq(attributeHypothesisTestingConfig.organizationId, userRecord.organizationId)
+        ))
+        .limit(1);
+      
+      let savedConfig;
+      if (existingConfig) {
+        // Update existing configuration
+        [savedConfig] = await db
+          .update(attributeHypothesisTestingConfig)
+          .set({
+            ...validatedData,
+            lastUpdated: new Date()
+          })
+          .where(eq(attributeHypothesisTestingConfig.id, existingConfig.id))
+          .returning();
+      } else {
+        // Create new configuration
+        [savedConfig] = await db
+          .insert(attributeHypothesisTestingConfig)
           .values(validatedData)
           .returning();
       }
