@@ -121,7 +121,7 @@ export default function AttributeCTQAnalysis({ projectId, ctqId, ctqName, active
       // The data is already correct in our local state
     },
     onError: (error: any) => {
-      console.error('Save configuration error:', error);
+      console.error('Attr. CTQ Save configuration error:', error);
       console.error('Error details:', {
         message: error?.message,
         response: error?.response,
@@ -131,7 +131,7 @@ export default function AttributeCTQAnalysis({ projectId, ctqId, ctqName, active
       });
       toast({
         title: "Save Failed",
-        description: `Failed to save analysis configuration: ${error?.message || 'Please try again.'}`,
+        description: `Failed to save Attribute CTQ analysis configuration: ${error?.message || 'Please try again.'}`,
         variant: "destructive",
       });
     },

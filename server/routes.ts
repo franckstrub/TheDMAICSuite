@@ -4378,7 +4378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         organizationId: userRecord.organizationId,
         projectId,
         ctqId,
-        ctq: ctqRecord.characteristic
+        ctq: ctqRecord.ctq
       });
       
       // Check if configuration already exists
