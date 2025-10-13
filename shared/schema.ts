@@ -1422,12 +1422,12 @@ export const twoProportionHypothesisConfig = pgTable(
 
     // Sample 1 data
     sample1Size: integer("sample_1_size"),
-    sample1Successes: integer("sample_1_successes"),
+    sample1Events: integer("sample_1_events"),
     sample1Description: text("sample_1_description"),
 
     // Sample 2 data
     sample2Size: integer("sample_2_size"),
-    sample2Successes: integer("sample_2_successes"),
+    sample2Events: integer("sample_2_events"),
     sample2Description: text("sample_2_description"),
 
     // Power analysis fields

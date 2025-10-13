@@ -18,9 +18,9 @@ interface AttrCTQTwoProportionHypTestData {
   testType: string;
   hypothesizedDifference?: number;
   sample1Size?: number;
-  sample1Successes?: number;
+  sample1Events?: number;
   sample2Size?: number;
-  sample2Successes?: number;
+  sample2Events?: number;
   sample1Description?: string;
   sample2Description?: string;
   enablePowerAnalysis: boolean;
@@ -80,9 +80,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
     testType: "Two-Proportion Test",
     hypothesizedDifference: 0,
     sample1Size: 0,
-    sample1Successes: 0,
+    sample1Events: 0,
     sample2Size: 0,
-    sample2Successes: 0,
+    sample2Events: 0,
     sample1Description: "",
     sample2Description: "",
     enablePowerAnalysis: false,
@@ -150,9 +150,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
         ...prev,
         hypothesizedDifference: config.hypothesizedDifference ?? 0,
         sample1Size: config.sample1Size ?? 0,
-        sample1Successes: config.sample1Successes ?? 0,
+        sample1Events: config.sample1Events ?? 0,
         sample2Size: config.sample2Size ?? 0,
-        sample2Successes: config.sample2Successes ?? 0,
+        sample2Events: config.sample2Events ?? 0,
         sample1Description: config.sample1Description || "",
         sample2Description: config.sample2Description || "",
         enablePowerAnalysis: config.enablePowerAnalysis ?? false,
@@ -244,9 +244,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
 
   // Run the hypothesis test
   const runTest = () => {
-    const { sample1Size, sample1Successes, sample2Size, sample2Successes, hypothesizedDifference } = twoProportionData;
+    const { sample1Size, sample1Events, sample2Size, sample2Events, hypothesizedDifference } = twoProportionData;
     
-    if (!sample1Size || !sample2Size || sample1Successes === undefined || sample2Successes === undefined) {
+    if (!sample1Size || !sample2Size || sample1Events === undefined || sample2Events === undefined) {
       toast({
         title: "Missing Data",
         description: "Please enter all sample data before running the test.",
@@ -255,19 +255,19 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
       return;
     }
 
-    if (sample1Successes > sample1Size || sample2Successes > sample2Size) {
+    if (sample1Events > sample1Size || sample2Events > sample2Size) {
       toast({
         title: "Invalid Data",
-        description: "Number of successes cannot exceed sample size.",
+        description: "Number of events cannot exceed sample size.",
         variant: "destructive",
       });
       return;
     }
 
-    const p1 = sample1Successes / sample1Size;
-    const p2 = sample2Successes / sample2Size;
+    const p1 = sample1Events / sample1Size;
+    const p2 = sample2Events / sample2Size;
     const pDiff = p1 - p2;
-    const pooledP = (sample1Successes + sample2Successes) / (sample1Size + sample2Size);
+    const pooledP = (sample1Events + sample2Events) / (sample1Size + sample2Size);
     
     // Standard error using pooled proportion (for hypothesis testing)
     const sePooled = Math.sqrt(pooledP * (1 - pooledP) * (1 / sample1Size + 1 / sample2Size));
@@ -324,9 +324,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
       significanceLevel,
       alternative,
       sample1Size: twoProportionData.sample1Size,
-      sample1Successes: twoProportionData.sample1Successes,
+      sample1Events: twoProportionData.sample1Events,
       sample2Size: twoProportionData.sample2Size,
-      sample2Successes: twoProportionData.sample2Successes,
+      sample2Events: twoProportionData.sample2Events,
       sample1Description: twoProportionData.sample1Description,
       sample2Description: twoProportionData.sample2Description,
       enablePowerAnalysis: twoProportionData.enablePowerAnalysis,
@@ -527,7 +527,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   const dataContent = (
     <div className="space-y-6">
       <p className="text-sm text-gray-500 mb-4">
-        Enter the sample size and number of successes for each group.
+        Enter the sample size and number of events for each group.
       </p>
 
       {/* Sample 1 */}
@@ -556,26 +556,26 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 min="0"
                 value={twoProportionData.sample1Size ?? ''}
                 onChange={(e) => updateField('sample1Size', e.target.value === '' ? '' : parseInt(e.target.value))}
-                placeholder="Total sample size"
+                placeholder="Total sample size in proportion 1"
               />
             </div>
 
             <div>
-              <Label htmlFor="sample1Successes">Number of Successes (x1)</Label>
+              <Label htmlFor="sample1Events">Number of Events (x1)</Label>
               <Input
-                id="sample1Successes"
+                id="sample1Events"
                 type="number"
                 min="0"
-                value={twoProportionData.sample1Successes ?? ''}
-                onChange={(e) => updateField('sample1Successes', e.target.value === '' ? '' : parseInt(e.target.value))}
-                placeholder="Number of successes"
+                value={twoProportionData.sample1Events ?? ''}
+                onChange={(e) => updateField('sample1Events', e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder="Number of events in proportion 1"
               />
             </div>
           </div>
 
           {twoProportionData.sample1Size && twoProportionData.sample1Size > 0 && (
             <div className="text-sm text-gray-600">
-              <strong>Sample 1 Proportion (p1):</strong> {(twoProportionData.sample1Successes! / twoProportionData.sample1Size).toFixed(4)}
+              <strong>Sample 1 Proportion (p1):</strong> {(twoProportionData.sample1Events! / twoProportionData.sample1Size).toFixed(4)}
             </div>
           )}
         </CardContent>
@@ -607,26 +607,26 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 min="0"
                 value={twoProportionData.sample2Size ?? ''}
                 onChange={(e) => updateField('sample2Size', e.target.value === '' ? '' : parseInt(e.target.value))}
-                placeholder="Total sample size"
+                placeholder="Total sample size in proportion 2"
               />
             </div>
 
             <div>
-              <Label htmlFor="sample2Successes">Number of Successes (x2)</Label>
+              <Label htmlFor="sample2Events">Number of Events (x2)</Label>
               <Input
-                id="sample2Successes"
+                id="sample2Events"
                 type="number"
                 min="0"
-                value={twoProportionData.sample2Successes ?? ''}
-                onChange={(e) => updateField('sample2Successes', e.target.value === '' ? '' : parseInt(e.target.value))}
-                placeholder="Number of successes"
+                value={twoProportionData.sample2Events ?? ''}
+                onChange={(e) => updateField('sample2Events', e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder="Number of events in proportion 2"
               />
             </div>
           </div>
 
           {twoProportionData.sample2Size && twoProportionData.sample2Size > 0 && (
             <div className="text-sm text-gray-600">
-              <strong>Sample 2 Proportion (p2):</strong> {(twoProportionData.sample2Successes! / twoProportionData.sample2Size).toFixed(4)}
+              <strong>Sample 2 Proportion (p2):</strong> {(twoProportionData.sample2Events! / twoProportionData.sample2Size).toFixed(4)}
             </div>
           )}
         </CardContent>
@@ -733,7 +733,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                   <div className="ml-2">
                     <div>Description: {twoProportionData.sample1Description || "N/A"}</div>
                     <div>Size (n1): {twoProportionData.sample1Size}</div>
-                    <div>Successes (x1): {twoProportionData.sample1Successes}</div>
+                    <div>Events (x1): {twoProportionData.sample1Events}</div>
                     <div>Proportion (p1): {testResults.p1.toFixed(4)}</div>
                   </div>
                 </div>
@@ -743,7 +743,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                   <div className="ml-2">
                     <div>Description: {twoProportionData.sample2Description || "N/A"}</div>
                     <div>Size (n2): {twoProportionData.sample2Size}</div>
-                    <div>Successes (x2): {twoProportionData.sample2Successes}</div>
+                    <div>Events (x2): {twoProportionData.sample2Events}</div>
                     <div>Proportion (p2): {testResults.p2.toFixed(4)}</div>
                   </div>
                 </div>
