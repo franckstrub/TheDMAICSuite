@@ -555,7 +555,12 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 type="number"
                 min="0"
                 value={twoProportionData.sample1Size ?? ''}
-                onChange={(e) => updateField('sample1Size', e.target.value === '' ? '' : parseInt(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? '' : parseInt(e.target.value);
+                  if (value === '' || (typeof value === 'number' && value >= 0)) {
+                    updateField('sample1Size', value);
+                  }
+                }}
                 placeholder="Total sample size in proportion 1"
               />
             </div>
@@ -606,7 +611,12 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 type="number"
                 min="0"
                 value={twoProportionData.sample2Size ?? ''}
-                onChange={(e) => updateField('sample2Size', e.target.value === '' ? '' : parseInt(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? '' : parseInt(e.target.value);
+                  if (value === '' || (typeof value === 'number' && value >= 0)) {
+                    updateField('sample2Size', value);
+                  }
+                }}
                 placeholder="Total sample size in proportion 2"
               />
             </div>
