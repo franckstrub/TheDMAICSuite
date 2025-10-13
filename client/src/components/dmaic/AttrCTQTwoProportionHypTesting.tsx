@@ -388,8 +388,8 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
           type="number"
           step="any"
           value={twoProportionData.hypothesizedDifference ?? ''}
-          onChange={(e) => updateField('hypothesizedDifference', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-          placeholder="Enter hypothesized difference (usually 0)"
+          onChange={(e) => updateField('hypothesizedDifference', e.target.value === '' ? '' : parseFloat(e.target.value))}
+          placeholder="Enter hypothesized difference of the two proportions (usually 0)"
         />
       </div>
 
@@ -462,12 +462,12 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
               <Input
                 id="powerP1"
                 type="number"
-                step="0.01"
+                step="0.0001"
                 min="0"
                 max="1"
                 value={twoProportionData.powerP1 ?? ''}
-                onChange={(e) => updateField('powerP1', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                placeholder="Enter expected proportion 1 (0-1)"
+                onChange={(e) => updateField('powerP1', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                placeholder="Enter expected proportion 1 (0.00-1.00)"
               />
             </div>
 
@@ -476,17 +476,17 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
               <Input
                 id="powerP2"
                 type="number"
-                step="0.01"
+                step="0.0001"
                 min="0"
                 max="1"
                 value={twoProportionData.powerP2 ?? ''}
-                onChange={(e) => updateField('powerP2', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                placeholder="Enter expected proportion 2 (0-1)"
+                onChange={(e) => updateField('powerP2', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                placeholder="Enter expected proportion 2 (0.00-1.00)"
               />
             </div>
 
             <div className="font-medium text-sm mt-3">
-              δ = |p1 - p2|: {Math.abs((twoProportionData.powerP1 || 0) - (twoProportionData.powerP2 || 0)).toFixed(3)}
+              δ = |p1 - p2|: {Math.abs((twoProportionData.powerP1 || 0) - (twoProportionData.powerP2 || 0)).toFixed(4)}
             </div>
 
             <Badge
@@ -545,7 +545,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 type="number"
                 min="0"
                 value={twoProportionData.sample1Size ?? ''}
-                onChange={(e) => updateField('sample1Size', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                onChange={(e) => updateField('sample1Size', e.target.value === '' ? '' : parseInt(e.target.value))}
                 placeholder="Total sample size"
               />
             </div>
@@ -557,7 +557,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 type="number"
                 min="0"
                 value={twoProportionData.sample1Successes ?? ''}
-                onChange={(e) => updateField('sample1Successes', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                onChange={(e) => updateField('sample1Successes', e.target.value === '' ? '' : parseInt(e.target.value))}
                 placeholder="Number of successes"
               />
             </div>
@@ -596,7 +596,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 type="number"
                 min="0"
                 value={twoProportionData.sample2Size ?? ''}
-                onChange={(e) => updateField('sample2Size', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                onChange={(e) => updateField('sample2Size', e.target.value === '' ? '' : parseInt(e.target.value))}
                 placeholder="Total sample size"
               />
             </div>
@@ -608,7 +608,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 type="number"
                 min="0"
                 value={twoProportionData.sample2Successes ?? ''}
-                onChange={(e) => updateField('sample2Successes', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                onChange={(e) => updateField('sample2Successes', e.target.value === '' ? '' : parseInt(e.target.value))}
                 placeholder="Number of successes"
               />
             </div>

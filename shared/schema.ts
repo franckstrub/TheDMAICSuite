@@ -1400,6 +1400,64 @@ export type InsertAttributeHypothesisTestingConfig = z.infer<
 export type AttributeHypothesisTestingConfig =
   typeof attributeHypothesisTestingConfig.$inferSelect;
 
+// Two-Proportion Hypothesis Testing Configuration - stores user data and settings for two-proportion tests
+export const twoProportionHypothesisConfig = pgTable(
+  "two_proportion_hypothesis_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    testType: text("test_type").default("Two-Proportion Test"),
+    hypothesizedDifference: real("hypothesized_difference").default(0),
+    significanceLevel: text("significance_level").default("0.05"),
+    alternative: text("alternative").default("Different"),
+
+    // Sample 1 data
+    sample1Size: integer("sample_1_size"),
+    sample1Successes: integer("sample_1_successes"),
+    sample1Description: text("sample_1_description"),
+
+    // Sample 2 data
+    sample2Size: integer("sample_2_size"),
+    sample2Successes: integer("sample_2_successes"),
+    sample2Description: text("sample_2_description"),
+
+    // Power analysis fields
+    enablePowerAnalysis: boolean("enable_power_analysis").default(false),
+    powerTargetPower: real("power_target_power"),
+    powerAlpha: real("power_alpha"),
+    powerHa: text("power_ha"),
+    powerP1: real("power_p1"),
+    powerP2: real("power_p2"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertTwoProportionHypothesisConfigSchema = createInsertSchema(
+  twoProportionHypothesisConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertTwoProportionHypothesisConfig = z.infer<
+  typeof insertTwoProportionHypothesisConfigSchema
+>;
+export type TwoProportionHypothesisConfig =
+  typeof twoProportionHypothesisConfig.$inferSelect;
+
 // One Sample Hypothesis Testing Configuration - stores user data and settings for one-sample tests
 export const oneSampleHypothesisConfig = pgTable(
   "one_sample_hypothesis_config",
