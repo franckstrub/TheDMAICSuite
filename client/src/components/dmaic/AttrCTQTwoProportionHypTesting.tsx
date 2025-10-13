@@ -466,7 +466,12 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 min="0"
                 max="1"
                 value={twoProportionData.powerP1 ?? ''}
-                onChange={(e) => updateField('powerP1', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? '' : parseFloat(e.target.value);
+                  if (value === '' || (typeof value === 'number' && value >= 0 && value <= 1)) {
+                    updateField('powerP1', value);
+                  }
+                }}
                 placeholder="Enter expected proportion 1 (0.00-1.00)"
               />
             </div>
@@ -480,7 +485,12 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 min="0"
                 max="1"
                 value={twoProportionData.powerP2 ?? ''}
-                onChange={(e) => updateField('powerP2', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? '' : parseFloat(e.target.value);
+                  if (value === '' || (typeof value === 'number' && value >= 0 && value <= 1)) {
+                    updateField('powerP2', value);
+                  }
+                }}
                 placeholder="Enter expected proportion 2 (0.00-1.00)"
               />
             </div>
