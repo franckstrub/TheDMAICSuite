@@ -90,7 +90,7 @@ export default function TwoSVarianceTestCI({
   else {
     Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} ≥ ${alphalevel})`;
   }
-  const ctq1 = ctqName + ' - ' + description1 || ctqName + ' Dataset #1';
+  const ctq1 = ctqName + ' - ' + description1 || ' Dataset #1';
   const ctq2 = description2 || 'Dataset #2';
   const CItext = Hatext + ' (' + ctq1 + ' vs ' + ctq2 + ')';
   
