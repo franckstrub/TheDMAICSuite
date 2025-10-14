@@ -2397,13 +2397,11 @@ useEffect(() => {
     <div className="space-y-4">
       {(ContCTQTwoSampleHypTestData[ctqId]?.enableMeanTest || ContCTQTwoSampleHypTestData[ctqId]?.enableVarianceTest || ContCTQTwoSampleHypTestData[ctqId]?.enableMedianTest) && (
            <>
-           <div className="grid grid-cols-2 gap-4 pr-4">          
-            <label className="block text-sm font-medium">Dataset 1 Input:</label>            
-            <label className="block text-sm font-medium">Dataset 2 Input:</label>
-           </div>
+           <div className="grid grid-cols-2 gap-4">
            {/* Data Input Section for Two Sample Hypothesis Test */}
            <div className="space-y-4" data-dataset="1">
             <div>
+            <label className="block text-sm font-medium mb-2">Dataset 1 Input:</label>
             <div className="flex justify-between items-center">
                 
                 {/* Clear All Data, Undo and Paste from Excel Section */}
@@ -2652,6 +2650,7 @@ useEffect(() => {
 
            <div className="space-y-4" data-dataset="2">
             <div>
+            <label className="block text-sm font-medium mb-2">Dataset 2 Input:</label>
             <div className="flex justify-between items-center">
                 
                 {/* Clear All Data, Undo and Paste from Excel Section */}
@@ -2893,6 +2892,7 @@ useEffect(() => {
                 </div>
             )}
             </div>
+           </div>
            </div>
 
            <div className="mt-2 mb-3">
