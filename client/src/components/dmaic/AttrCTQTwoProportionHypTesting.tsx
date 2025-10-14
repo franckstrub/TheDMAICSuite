@@ -728,50 +728,158 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   const chartContent = (
     <div className="space-y-4">
       {testResults ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Proportion Comparison Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-end justify-center gap-8">
-              {/* Sample 1 Bar */}
-              <div className="flex flex-col items-center gap-2">
-                <div 
-                  className="w-24 bg-blue-500 rounded-t-md transition-all"
-                  style={{ height: `${testResults.p1 * 200}px` }}
-                />
-                <div className="text-center">
-                  <div className="font-medium">{twoProportionData.sample1Description || "Sample 1"}</div>
-                  <div className="text-sm text-gray-600">p1 = {testResults.p1.toFixed(3)}</div>
-                  <div className="text-xs text-gray-500">n = {twoProportionData.sample1Size}</div>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Left Side - Pie Charts */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Proportion Pie Charts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Sample 1 Pie Chart */}
+              <div className="flex flex-col items-center">
+                <div className="font-medium mb-2">{twoProportionData.sample1Description || "Sample 1"}</div>
+                <svg width="180" height="180" viewBox="0 0 180 180">
+                  <circle cx="90" cy="90" r="80" fill="#e5e7eb" />
+                  <path
+                    d={`M 90 90 L 90 10 A 80 80 0 ${testResults.p1 > 0.5 ? 1 : 0} 1 ${
+                      90 + 80 * Math.sin(2 * Math.PI * testResults.p1)
+                    } ${90 - 80 * Math.cos(2 * Math.PI * testResults.p1)} Z`}
+                    fill="#3b82f6"
+                  />
+                  <text x="90" y="95" textAnchor="middle" className="text-xl font-bold" fill="#1f2937">
+                    {(testResults.p1 * 100).toFixed(1)}%
+                  </text>
+                </svg>
+                <div className="mt-2 text-sm text-gray-600">
+                  <div>Events: {twoProportionData.sample1Events} / {twoProportionData.sample1Size}</div>
+                  <div>p1 = {testResults.p1.toFixed(4)}</div>
                 </div>
               </div>
 
-              {/* Sample 2 Bar */}
-              <div className="flex flex-col items-center gap-2">
-                <div 
-                  className="w-24 bg-green-500 rounded-t-md transition-all"
-                  style={{ height: `${testResults.p2 * 200}px` }}
-                />
-                <div className="text-center">
-                  <div className="font-medium">{twoProportionData.sample2Description || "Sample 2"}</div>
-                  <div className="text-sm text-gray-600">p2 = {testResults.p2.toFixed(3)}</div>
-                  <div className="text-xs text-gray-500">n = {twoProportionData.sample2Size}</div>
+              {/* Sample 2 Pie Chart */}
+              <div className="flex flex-col items-center">
+                <div className="font-medium mb-2">{twoProportionData.sample2Description || "Sample 2"}</div>
+                <svg width="180" height="180" viewBox="0 0 180 180">
+                  <circle cx="90" cy="90" r="80" fill="#e5e7eb" />
+                  <path
+                    d={`M 90 90 L 90 10 A 80 80 0 ${testResults.p2 > 0.5 ? 1 : 0} 1 ${
+                      90 + 80 * Math.sin(2 * Math.PI * testResults.p2)
+                    } ${90 - 80 * Math.cos(2 * Math.PI * testResults.p2)} Z`}
+                    fill="#10b981"
+                  />
+                  <text x="90" y="95" textAnchor="middle" className="text-xl font-bold" fill="#1f2937">
+                    {(testResults.p2 * 100).toFixed(1)}%
+                  </text>
+                </svg>
+                <div className="mt-2 text-sm text-gray-600">
+                  <div>Events: {twoProportionData.sample2Events} / {twoProportionData.sample2Size}</div>
+                  <div>p2 = {testResults.p2.toFixed(4)}</div>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="mt-6 p-4 bg-gray-50 rounded-md">
-              <div className="text-sm space-y-1">
-                <div><strong>Difference (p1 - p2):</strong> {testResults.pDiff.toFixed(4)}</div>
-                <div><strong>95% CI for Difference:</strong> [{testResults.ciLower.toFixed(4)}, {testResults.ciUpper.toFixed(4)}]</div>
+          {/* Right Side - Difference and CI */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Difference & Confidence Interval</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Difference visualization */}
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-full">
+                  <div className="text-center mb-4">
+                    <div className="text-lg font-semibold">Difference (p1 - p2)</div>
+                    <div className="text-3xl font-bold text-blue-600 mt-2">
+                      {testResults.pDiff.toFixed(4)}
+                    </div>
+                  </div>
+
+                  {/* Confidence Interval Chart */}
+                  <div className="mt-8">
+                    <div className="text-sm font-medium mb-2 text-center">95% Confidence Interval</div>
+                    <div className="relative h-32 flex items-center">
+                      {/* Scale line */}
+                      <div className="w-full">
+                        {/* Calculate scale */}
+                        {(() => {
+                          const range = Math.max(Math.abs(testResults.ciLower), Math.abs(testResults.ciUpper));
+                          const scale = range > 0 ? range * 1.2 : 1;
+                          const ciLowerPercent = ((testResults.ciLower / scale) + 1) * 50;
+                          const ciUpperPercent = ((testResults.ciUpper / scale) + 1) * 50;
+                          const diffPercent = ((testResults.pDiff / scale) + 1) * 50;
+                          const zeroPercent = 50;
+
+                          return (
+                            <>
+                              {/* Zero line */}
+                              <div className="absolute h-full border-l-2 border-gray-400" style={{ left: `${zeroPercent}%` }}>
+                                <div className="absolute -bottom-6 -left-3 text-xs text-gray-600">0</div>
+                              </div>
+
+                              {/* CI Bar */}
+                              <div 
+                                className="absolute h-3 bg-blue-200 rounded"
+                                style={{ 
+                                  left: `${Math.min(ciLowerPercent, ciUpperPercent)}%`, 
+                                  width: `${Math.abs(ciUpperPercent - ciLowerPercent)}%`
+                                }}
+                              />
+
+                              {/* CI endpoints */}
+                              <div className="absolute w-1 h-8 bg-blue-600" style={{ left: `${ciLowerPercent}%`, top: '50%', transform: 'translateY(-50%)' }}>
+                                <div className="absolute -bottom-8 -left-8 text-xs text-gray-600 w-16 text-center">
+                                  {testResults.ciLower.toFixed(3)}
+                                </div>
+                              </div>
+                              <div className="absolute w-1 h-8 bg-blue-600" style={{ left: `${ciUpperPercent}%`, top: '50%', transform: 'translateY(-50%)' }}>
+                                <div className="absolute -bottom-8 -left-8 text-xs text-gray-600 w-16 text-center">
+                                  {testResults.ciUpper.toFixed(3)}
+                                </div>
+                              </div>
+
+                              {/* Point estimate */}
+                              <div 
+                                className="absolute w-3 h-3 bg-red-600 rounded-full"
+                                style={{ left: `${diffPercent}%`, top: '50%', transform: 'translate(-50%, -50%)' }}
+                              >
+                                <div className="absolute -top-8 -left-8 text-xs font-semibold text-red-600 w-16 text-center">
+                                  {testResults.pDiff.toFixed(3)}
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-12 p-3 bg-gray-50 rounded-md text-sm">
+                    <div className="space-y-1">
+                      <div><strong>Point Estimate:</strong> {testResults.pDiff.toFixed(4)}</div>
+                      <div><strong>Lower Bound:</strong> {testResults.ciLower.toFixed(4)}</div>
+                      <div><strong>Upper Bound:</strong> {testResults.ciUpper.toFixed(4)}</div>
+                      <div className="mt-2 pt-2 border-t">
+                        {testResults.ciLower > 0 || testResults.ciUpper < 0 ? (
+                          <span className="text-green-700 font-medium">
+                            ✓ CI does not include 0 (significant difference)
+                          </span>
+                        ) : (
+                          <span className="text-gray-600">
+                            CI includes 0 (no significant difference)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <div className="text-center text-gray-500 py-8">
-          Run the test in the Data tab to see visualization
+          Enter setup configuration and data in tabs to see visualization
         </div>
       )}
     </div>
@@ -866,7 +974,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 )}
               </p>
               <p>
-                The 95% confidence interval for the difference (p1 - p2) is [{testResults.ciLower.toFixed(4)}, {testResults.ciUpper.toFixed(4)}].
+                The {(1-parseFloat(significanceLevel))*100}% confidence interval for the difference (p1 - p2) is [{testResults.ciLower.toFixed(4)}, {testResults.ciUpper.toFixed(4)}].
                 {testResults.ciLower <= (twoProportionData.hypothesizedDifference || 0) && 
                  testResults.ciUpper >= (twoProportionData.hypothesizedDifference || 0) ? (
                   <> This interval contains the hypothesized difference, supporting the conclusion.</>
@@ -879,7 +987,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
         </>
       ) : (
         <div className="text-center text-gray-500 py-8">
-          Run the test in the Data tab to see analysis results
+          Enter setup configuration and data in tabs to see visualization
         </div>
       )}
     </div>
