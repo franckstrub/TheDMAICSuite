@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
 import { parseNumericValue } from "@/lib/statisticsUtils";
 import { HypothesisTestingTabs } from "./common/HypothesisTestingTabs";
+import Plot from 'react-plotly.js';
 
 interface AttrCTQTwoProportionHypTestData {
   id?: number;
@@ -736,45 +737,77 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Sample 1 Pie Chart */}
-              <div className="flex flex-col items-center">
-                <div className="font-medium mb-2">{twoProportionData.sample1Description || "Sample 1"}</div>
-                <svg width="180" height="180" viewBox="0 0 180 180">
-                  <circle cx="90" cy="90" r="80" fill="#e5e7eb" />
-                  <path
-                    d={`M 90 90 L 90 10 A 80 80 0 ${testResults.p1 > 0.5 ? 1 : 0} 1 ${
-                      90 + 80 * Math.sin(2 * Math.PI * testResults.p1)
-                    } ${90 - 80 * Math.cos(2 * Math.PI * testResults.p1)} Z`}
-                    fill="#3b82f6"
-                  />
-                  <text x="90" y="95" textAnchor="middle" className="text-xl font-bold" fill="#1f2937">
-                    {(testResults.p1 * 100).toFixed(1)}%
-                  </text>
-                </svg>
-                <div className="mt-2 text-sm text-gray-600">
-                  <div>Events: {twoProportionData.sample1Events} / {twoProportionData.sample1Size}</div>
-                  <div>p1 = {testResults.p1.toFixed(4)}</div>
-                </div>
+              <div>
+                <div className="font-medium mb-2 text-center">{twoProportionData.sample1Description || "Sample 1"}</div>
+                <Plot
+                  data={[
+                    {
+                      type: 'pie',
+                      values: [testResults.p1, 1 - testResults.p1],
+                      labels: ['Events', 'Non-Events'],
+                      marker: {
+                        colors: ['#3b82f6', '#e5e7eb']
+                      },
+                      textinfo: 'label+percent',
+                      textposition: 'inside',
+                      hovertemplate: '%{label}: %{percent}<extra></extra>',
+                    }
+                  ]}
+                  layout={{
+                    height: 250,
+                    showlegend: true,
+                    margin: { t: 20, b: 20, l: 20, r: 20 },
+                    annotations: [{
+                      text: `p1 = ${testResults.p1.toFixed(4)}<br>${twoProportionData.sample1Events}/${twoProportionData.sample1Size}`,
+                      showarrow: false,
+                      x: 0.5,
+                      y: -0.15,
+                      xref: 'paper',
+                      yref: 'paper',
+                      xanchor: 'center',
+                      yanchor: 'top'
+                    }]
+                  }}
+                  config={{ displayModeBar: false }}
+                  style={{ width: '100%' }}
+                />
               </div>
 
               {/* Sample 2 Pie Chart */}
-              <div className="flex flex-col items-center">
-                <div className="font-medium mb-2">{twoProportionData.sample2Description || "Sample 2"}</div>
-                <svg width="180" height="180" viewBox="0 0 180 180">
-                  <circle cx="90" cy="90" r="80" fill="#e5e7eb" />
-                  <path
-                    d={`M 90 90 L 90 10 A 80 80 0 ${testResults.p2 > 0.5 ? 1 : 0} 1 ${
-                      90 + 80 * Math.sin(2 * Math.PI * testResults.p2)
-                    } ${90 - 80 * Math.cos(2 * Math.PI * testResults.p2)} Z`}
-                    fill="#10b981"
-                  />
-                  <text x="90" y="95" textAnchor="middle" className="text-xl font-bold" fill="#1f2937">
-                    {(testResults.p2 * 100).toFixed(1)}%
-                  </text>
-                </svg>
-                <div className="mt-2 text-sm text-gray-600">
-                  <div>Events: {twoProportionData.sample2Events} / {twoProportionData.sample2Size}</div>
-                  <div>p2 = {testResults.p2.toFixed(4)}</div>
-                </div>
+              <div>
+                <div className="font-medium mb-2 text-center">{twoProportionData.sample2Description || "Sample 2"}</div>
+                <Plot
+                  data={[
+                    {
+                      type: 'pie',
+                      values: [testResults.p2, 1 - testResults.p2],
+                      labels: ['Events', 'Non-Events'],
+                      marker: {
+                        colors: ['#10b981', '#e5e7eb']
+                      },
+                      textinfo: 'label+percent',
+                      textposition: 'inside',
+                      hovertemplate: '%{label}: %{percent}<extra></extra>',
+                    }
+                  ]}
+                  layout={{
+                    height: 250,
+                    showlegend: true,
+                    margin: { t: 20, b: 20, l: 20, r: 20 },
+                    annotations: [{
+                      text: `p2 = ${testResults.p2.toFixed(4)}<br>${twoProportionData.sample2Events}/${twoProportionData.sample2Size}`,
+                      showarrow: false,
+                      x: 0.5,
+                      y: -0.15,
+                      xref: 'paper',
+                      yref: 'paper',
+                      xanchor: 'center',
+                      yanchor: 'top'
+                    }]
+                  }}
+                  config={{ displayModeBar: false }}
+                  style={{ width: '100%' }}
+                />
               </div>
             </CardContent>
           </Card>
@@ -785,92 +818,87 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
               <CardTitle>Difference & Confidence Interval</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Difference visualization */}
-              <div className="flex flex-col items-center space-y-4">
-                <div className="w-full">
-                  <div className="text-center mb-4">
-                    <div className="text-lg font-semibold">Difference (p1 - p2)</div>
-                    <div className="text-3xl font-bold text-blue-600 mt-2">
-                      {testResults.pDiff.toFixed(4)}
-                    </div>
-                  </div>
+              <div className="text-center mb-4">
+                <div className="text-lg font-semibold">Difference (p1 - p2)</div>
+                <div className="text-3xl font-bold text-blue-600 mt-2">
+                  {testResults.pDiff.toFixed(4)}
+                </div>
+              </div>
 
-                  {/* Confidence Interval Chart */}
-                  <div className="mt-8">
-                    <div className="text-sm font-medium mb-2 text-center">95% Confidence Interval</div>
-                    <div className="relative h-32 flex items-center">
-                      {/* Scale line */}
-                      <div className="w-full">
-                        {/* Calculate scale */}
-                        {(() => {
-                          const range = Math.max(Math.abs(testResults.ciLower), Math.abs(testResults.ciUpper));
-                          const scale = range > 0 ? range * 1.2 : 1;
-                          const ciLowerPercent = ((testResults.ciLower / scale) + 1) * 50;
-                          const ciUpperPercent = ((testResults.ciUpper / scale) + 1) * 50;
-                          const diffPercent = ((testResults.pDiff / scale) + 1) * 50;
-                          const zeroPercent = 50;
+              <Plot
+                data={[
+                  {
+                    type: 'scatter',
+                    x: [testResults.pDiff],
+                    y: ['Difference'],
+                    error_x: {
+                      type: 'data',
+                      symmetric: false,
+                      array: [testResults.ciUpper - testResults.pDiff],
+                      arrayminus: [testResults.pDiff - testResults.ciLower],
+                      color: '#3b82f6',
+                      thickness: 3,
+                      width: 8
+                    },
+                    mode: 'markers',
+                    marker: {
+                      size: 12,
+                      color: '#ef4444'
+                    },
+                    name: 'Point Estimate',
+                    hovertemplate: 'Difference: %{x:.4f}<extra></extra>'
+                  },
+                  {
+                    type: 'scatter',
+                    x: [0, 0],
+                    y: [-0.5, 0.5],
+                    mode: 'lines',
+                    line: {
+                      color: 'rgba(0,0,0,0.3)',
+                      width: 2,
+                      dash: 'dash'
+                    },
+                    name: 'Zero Reference',
+                    hoverinfo: 'skip',
+                    showlegend: false
+                  }
+                ]}
+                layout={{
+                  height: 300,
+                  xaxis: {
+                    title: {
+                      text: 'Difference (p1 - p2)'
+                    },
+                    zeroline: false,
+                    gridcolor: '#f0f0f0'
+                  },
+                  yaxis: {
+                    showticklabels: false,
+                    zeroline: false,
+                    range: [-0.5, 0.5]
+                  },
+                  showlegend: false,
+                  margin: { t: 20, b: 60, l: 60, r: 40 }
+                }}
+                config={{ displayModeBar: false }}
+                style={{ width: '100%' }}
+              />
 
-                          return (
-                            <>
-                              {/* Zero line */}
-                              <div className="absolute h-full border-l-2 border-gray-400" style={{ left: `${zeroPercent}%` }}>
-                                <div className="absolute -bottom-6 -left-3 text-xs text-gray-600">0</div>
-                              </div>
-
-                              {/* CI Bar */}
-                              <div 
-                                className="absolute h-3 bg-blue-200 rounded"
-                                style={{ 
-                                  left: `${Math.min(ciLowerPercent, ciUpperPercent)}%`, 
-                                  width: `${Math.abs(ciUpperPercent - ciLowerPercent)}%`
-                                }}
-                              />
-
-                              {/* CI endpoints */}
-                              <div className="absolute w-1 h-8 bg-blue-600" style={{ left: `${ciLowerPercent}%`, top: '50%', transform: 'translateY(-50%)' }}>
-                                <div className="absolute -bottom-8 -left-8 text-xs text-gray-600 w-16 text-center">
-                                  {testResults.ciLower.toFixed(3)}
-                                </div>
-                              </div>
-                              <div className="absolute w-1 h-8 bg-blue-600" style={{ left: `${ciUpperPercent}%`, top: '50%', transform: 'translateY(-50%)' }}>
-                                <div className="absolute -bottom-8 -left-8 text-xs text-gray-600 w-16 text-center">
-                                  {testResults.ciUpper.toFixed(3)}
-                                </div>
-                              </div>
-
-                              {/* Point estimate */}
-                              <div 
-                                className="absolute w-3 h-3 bg-red-600 rounded-full"
-                                style={{ left: `${diffPercent}%`, top: '50%', transform: 'translate(-50%, -50%)' }}
-                              >
-                                <div className="absolute -top-8 -left-8 text-xs font-semibold text-red-600 w-16 text-center">
-                                  {testResults.pDiff.toFixed(3)}
-                                </div>
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-12 p-3 bg-gray-50 rounded-md text-sm">
-                    <div className="space-y-1">
-                      <div><strong>Point Estimate:</strong> {testResults.pDiff.toFixed(4)}</div>
-                      <div><strong>Lower Bound:</strong> {testResults.ciLower.toFixed(4)}</div>
-                      <div><strong>Upper Bound:</strong> {testResults.ciUpper.toFixed(4)}</div>
-                      <div className="mt-2 pt-2 border-t">
-                        {testResults.ciLower > 0 || testResults.ciUpper < 0 ? (
-                          <span className="text-green-700 font-medium">
-                            ✓ CI does not include 0 (significant difference)
-                          </span>
-                        ) : (
-                          <span className="text-gray-600">
-                            CI includes 0 (no significant difference)
-                          </span>
-                        )}
-                      </div>
-                    </div>
+              <div className="mt-4 p-3 bg-gray-50 rounded-md text-sm">
+                <div className="space-y-1">
+                  <div><strong>Point Estimate:</strong> {testResults.pDiff.toFixed(4)}</div>
+                  <div><strong>{(1-parseFloat(significanceLevel))*100}% CI Lower Bound:</strong> {testResults.ciLower.toFixed(4)}</div>
+                  <div><strong>{(1-parseFloat(significanceLevel))*100}% CI Upper Bound:</strong> {testResults.ciUpper.toFixed(4)}</div>
+                  <div className="mt-2 pt-2 border-t">
+                    {testResults.ciLower > 0 || testResults.ciUpper < 0 ? (
+                      <span className="text-green-700 font-medium">
+                        ✓ CI does not include 0 (significant difference)
+                      </span>
+                    ) : (
+                      <span className="text-gray-600">
+                        CI includes 0 (no significant difference)
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
