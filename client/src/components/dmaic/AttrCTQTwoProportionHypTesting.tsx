@@ -580,6 +580,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                   }
                 }}
                 placeholder="Number of events in proportion 1"
+                disabled={!twoProportionData.sample1Size || twoProportionData.sample1Size <= 0}
               />
             </div>
           </div>
@@ -642,6 +643,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                   }
                 }}
                 placeholder="Number of events in proportion 2"
+                disabled={!twoProportionData.sample2Size || twoProportionData.sample2Size <= 0}
               />
             </div>
           </div>
