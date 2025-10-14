@@ -185,7 +185,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
     alpha: number
   ): PowerSampleSizeResults => {
     // Prevent division by zero and invalid probabilities
-    if (p1 <= 0 || p1 >= 1 || p2 <= 0 || p2 >= 1 || p1 === p2) {
+    if (p1 < 0 || p1 > 1 || p2 < 0 || p2 > 1 || p1 === p2) {
       return { sampleSize: 0, actualPower: 0 };
     }
 
@@ -343,6 +343,62 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   const updateField = (field: keyof AttrCTQTwoProportionHypTestData, value: any) => {
     setTwoProportionData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Auto-run test when valid data is present
+  useEffect(() => {
+    const { sample1Size, sample1Events, sample2Size, sample2Events, hypothesizedDifference } = twoProportionData;
+    
+    // Check if all required data is valid
+    if (!sample1Size || !sample2Size || sample1Events === undefined || sample2Events === undefined) {
+      return;
+    }
+
+    if (sample1Events > sample1Size || sample2Events > sample2Size) {
+      return;
+    }
+
+    // All data is valid, run the test
+    const p1 = sample1Events / sample1Size;
+    const p2 = sample2Events / sample2Size;
+    const pDiff = p1 - p2;
+    const pooledP = (sample1Events + sample2Events) / (sample1Size + sample2Size);
+    
+    const sePooled = Math.sqrt(pooledP * (1 - pooledP) * (1 / sample1Size + 1 / sample2Size));
+    const zStatistic = (pDiff - (hypothesizedDifference || 0)) / sePooled;
+    
+    const alpha = parseFloat(significanceLevel);
+    let zCritical: number | { lower: number; upper: number };
+    let pValue: number;
+
+    if (alternative === "Different") {
+      zCritical = { lower: inverseNormalCDF(alpha / 2), upper: inverseNormalCDF(1 - alpha / 2) };
+      pValue = 2 * (1 - normalCDF(Math.abs(zStatistic)));
+    } else if (alternative === "Less than") {
+      zCritical = inverseNormalCDF(alpha);
+      pValue = normalCDF(zStatistic);
+    } else {
+      zCritical = inverseNormalCDF(1 - alpha);
+      pValue = 1 - normalCDF(zStatistic);
+    }
+
+    const seUnpooled = Math.sqrt(p1 * (1 - p1) / sample1Size + p2 * (1 - p2) / sample2Size);
+    const zCriticalCI = inverseNormalCDF(1 - alpha / 2);
+    const ciLower = pDiff - zCriticalCI * seUnpooled;
+    const ciUpper = pDiff + zCriticalCI * seUnpooled;
+
+    setTestResults({
+      p1,
+      p2,
+      pDiff,
+      pooledP,
+      se: sePooled,
+      zStatistic,
+      zCritical,
+      pValue,
+      ciLower,
+      ciUpper,
+    });
+  }, [twoProportionData.sample1Size, twoProportionData.sample1Events, twoProportionData.sample2Size, twoProportionData.sample2Events, twoProportionData.hypothesizedDifference, significanceLevel, alternative]);
 
   // Setup tab content
   const setupContent = (
@@ -658,16 +714,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
 
       <div className="flex gap-3">
         <Button 
-          className="flex-1" 
-          onClick={runTest}
-        >
-          Run Test
-        </Button>
-        <Button 
-          className="flex-1" 
+          className="w-full" 
           onClick={saveConfiguration}
           disabled={saveConfigMutation.isPending}
-          variant="outline"
         >
           {saveConfigMutation.isPending ? "Saving..." : "Save Data"}
         </Button>
