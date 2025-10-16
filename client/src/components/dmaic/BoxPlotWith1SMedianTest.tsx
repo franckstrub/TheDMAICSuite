@@ -100,6 +100,7 @@ export default function BoxPlotWith1SMedianTest({
             mode: 'markers',
             name: 'Median (η)',
             marker: { color: 'blue', size: 8, symbol: 'square' },
+            hovertemplate: 'η: %{y:.2f}<extra></extra>',
           },
           {
             y: data,
@@ -118,6 +119,7 @@ export default function BoxPlotWith1SMedianTest({
             mode: 'markers',
             name: 'Median (η)',
             marker: { color: 'blue', size: 8, symbol: 'square' },
+            hovertemplate: 'η: %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -126,6 +128,7 @@ export default function BoxPlotWith1SMedianTest({
             mode: 'markers',
             name: 'H0',
             marker: { color: 'black', size: 8, symbol: 'square' },
+            hovertemplate: 'H0: %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -134,6 +137,7 @@ export default function BoxPlotWith1SMedianTest({
             mode: 'markers',
             name: 'CI-',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI-: %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -142,6 +146,7 @@ export default function BoxPlotWith1SMedianTest({
             mode: 'markers',
             name: 'CI+',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI+: %{y:.2f}<extra></extra>',
           },
         ]}
         layout={{

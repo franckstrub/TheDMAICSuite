@@ -110,6 +110,7 @@ export default function BoxPlotWithPairedSMeanTest({
             mode: 'markers',
             name: mu_subscript_d,
             marker: { color: 'red', size: 8, symbol: 'circle' },
+            hovertemplate: 'μd: %{y:.2f}<extra></extra>',
           },
           {
             y: data,
@@ -128,6 +129,7 @@ export default function BoxPlotWithPairedSMeanTest({
             mode: 'markers',
             name: mu_subscript_d,
             marker: { color: 'red', size: 8, symbol: 'circle' },
+            hovertemplate: 'μd: %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -136,6 +138,7 @@ export default function BoxPlotWithPairedSMeanTest({
             mode: 'markers',
             name: 'δ0 (H0)',
             marker: { color: 'black', size: 8, symbol: 'square' },
+            hovertemplate: 'δ0 (H0): %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -144,6 +147,7 @@ export default function BoxPlotWithPairedSMeanTest({
             mode: 'markers',
             name: 'CI-',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI-: %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -152,6 +156,7 @@ export default function BoxPlotWithPairedSMeanTest({
             mode: 'markers',
             name: 'CI+',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI+: %{y:.2f}<extra></extra>',
           },
         ]}
         layout={{

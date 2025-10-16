@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { parseNumericValue } from "@/lib/statisticsUtils";
 import { HypothesisTestingTabs } from "./common/HypothesisTestingTabs";
 import Plot from 'react-plotly.js';
+import { twoProportionHypothesisConfig } from '@shared/schema';
+import { max } from 'jstat';
 
 interface AttrCTQTwoProportionHypTestData {
   id?: number;
@@ -400,7 +402,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
       ciUpper,
     });
   }, [twoProportionData.sample1Size, twoProportionData.sample1Events, twoProportionData.sample2Size, twoProportionData.sample2Events, twoProportionData.hypothesizedDifference, significanceLevel, alternative]);
-
+  
   // Setup tab content
   const setupContent = (
     <div className="space-y-4">
@@ -447,7 +449,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
           value={twoProportionData.hypothesizedDifference ?? ''}
           onChange={(e) => {
                   const value = e.target.value === '' ? '' : parseFloat(e.target.value);
-                  if (value === '' || (typeof value === 'number' && value >= 0 && value <= 1)) {
+                  if (value === '' || (typeof value === 'number' && value >= -1 && value <= 1)) {
                     updateField('hypothesizedDifference', value);
                   }
                 }}
@@ -733,250 +735,371 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   // Chart tab content
   const chartContent = (
     <div className="space-y-4">
-      {testResults ? (
-        <div className="grid grid-cols-2 gap-4">
-          {/* Left Side - Pie Charts */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Proportion Pie Charts</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Sample 1 Pie Chart */}
-              <div>
-                <div className="font-medium mb-2 text-center">Sample 1</div>
+      {testResults ? (() => {
+          // === START: Hypothesis annotations ===
+          const boldTitle = `<b>Two-Proportion test</b>`;
+            //Difference (p1 - p2): ${testResults.pDiff.toFixed(4)}<br>
+            //${(1 - parseFloat(significanceLevel)) * 100}% CI: (${testResults.ciLower.toFixed(4)}, ${testResults.ciUpper.toFixed(4)})*/}
+            
+          let haText: string;
+          switch (alternative) {
+            case "Less than":
+              haText = `Ha: (p1 - p2) < ${twoProportionData.hypothesizedDifference}`;
+              break;
+            case "Greater than":
+              haText = `Ha: (p1 - p2) > ${twoProportionData.hypothesizedDifference}`;
+              break;
+            default:
+              haText = `Ha: (p1 - p2) ≠ ${twoProportionData.hypothesizedDifference}`;
+          }
+
+          let badgeText = `<br>Confidence Level: ${(1 - parseFloat(significanceLevel)) * 100}%<br>H0: (p1 - p2) ${
+            alternative === 'Less than'
+              ? `≥ ${twoProportionData.hypothesizedDifference}`
+              : alternative === 'Greater than'
+              ? `≤ ${twoProportionData.hypothesizedDifference}`
+              : `= ${twoProportionData.hypothesizedDifference}`
+          }`;
+
+          badgeText += `<br>${haText}`;
+
+          if (testResults.pValue < parseFloat(significanceLevel)) {
+            badgeText += `<br>Result ⇒ Reject H₀. Accept Hₐ<br>(p-value ${testResults.pValue.toFixed(4)} < ${significanceLevel})`;
+          } else {
+            badgeText += `<br>Result ⇒ Accept H₀. Reject Hₐ<br>(p-value ${testResults.pValue.toFixed(4)} ≥ ${significanceLevel})`;
+          }
+          //const yExtraScale = (Math.max(twoProportionData.hypothesizedDifference!, testResults.pDiff,testResults.ciUpper)-Math.min(twoProportionData.hypothesizedDifference!, testResults.pDiff,testResults.ciLower))/5;  
+          const maxX = Math.max(twoProportionData.hypothesizedDifference!, testResults.pDiff, testResults.ciUpper);
+          const minX = Math.min(twoProportionData.hypothesizedDifference!, testResults.pDiff, testResults.ciLower);  
+          const xBadge = minX + (maxX - minX) / 2;
+          const xExtra = Math.abs(maxX - minX) / 10;
+          
+          // === END: Hypothesis annotations ===
+          return (
+          <div className="grid grid-cols-2 gap-4">
+            {/* Left Side - Pie Charts */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Proportion Pie Charts</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Sample 1 Pie Chart */}
+                <div>
+                  <div className="font-medium mb-2 text-center">Sample 1</div>
+                  <Plot
+                    data={[
+                      {
+                        type: 'pie',
+                        values: [testResults.p1, 1 - testResults.p1],
+                        labels: ['Events', 'Non-Events'],
+                        marker: {
+                          colors: ['#3b82f6', '#e5e7eb']
+                        },
+                        textinfo: 'label+percent',
+                        texttemplate: '%{label}<br>%{percent:.2%}',
+                        textposition: 'inside',
+                        hovertemplate: '%{label}: %{percent:.2%}<extra></extra>',
+                      }
+                    ]}
+                    layout={{
+                      title: {text: twoProportionData.sample1Description || "Sample 1", font: { size: 16} },
+                      height: 250,
+                      width: 350,
+                      showlegend: true,
+                      legend: {
+                        x: 1,           // 👈 horizontal position (0 = left, 1 = right)
+                        y: 1,         // 👈 vertical position (0 = bottom, 1 = top)
+                        xanchor: 'left', // 👈 align legend box relative to x/y point
+                        yanchor: 'middle',
+                        orientation: 'v', // or 'h' for horizontal
+                        font: { size: 12 },
+                      },
+                      margin: { t: 20, b: 40, l: 20, r: 30 },
+                      annotations: [{
+                        text: `p1 = ${testResults.p1.toFixed(4)}<br>${twoProportionData.sample1Events}/${twoProportionData.sample1Size}`,
+                        showarrow: false,
+                        x: 0.5,
+                        y: -0.05,
+                        xref: 'paper',
+                        yref: 'paper',
+                        xanchor: 'center',
+                        yanchor: 'top'
+                      }]
+                    }}
+                    config={{ responsive: true,
+                      displayModeBar: true,
+                      displaylogo: false, // Remove Plotly logo
+                      modeBarButtonsToRemove: ['lasso2d', 'select2d'], // Remove specific tools
+                      toImageButtonOptions: {
+                          format: 'png',
+                          filename: 'Two-Proportion-Test-Sample 1',
+                          height: 200,
+                          width: 250,
+                          scale: 1
+                      },
+                    }}
+                    style={{
+                      width: "100%", height: "100%",
+                      border: '1px solid #ddd', // Additional div border
+                      borderRadius: '8px',
+                      padding: '10px'
+                      }}
+                  />
+                </div>
+
+                {/* Sample 2 Pie Chart */}
+                <div>
+                  <div className="font-medium mb-2 text-center">Sample 2</div>
+                  <Plot
+                    data={[
+                      {
+                        type: 'pie',
+                        values: [testResults.p2, 1 - testResults.p2],
+                        labels: ['Events', 'Non-Events'],
+                        marker: {
+                          colors: ['#10b981', '#e5e7eb']
+                        },
+                        textinfo: 'label+percent',
+                        texttemplate: '%{label}<br>%{percent:.2%}',
+                        textposition: 'inside',
+                        hovertemplate: '%{label}: %{percent:.2%}<extra></extra>',
+                      }
+                    ]}
+                    layout={{
+                      title: {text: twoProportionData.sample2Description || "Sample 2", font: { size: 16} },
+                      height: 250,
+                      width: 350,
+                      showlegend: true,
+                      legend: {
+                        x: 1,           // 👈 horizontal position (0 = left, 1 = right)
+                        y: 1,         // 👈 vertical position (0 = bottom, 1 = top)
+                        xanchor: 'left', // 👈 align legend box relative to x/y point
+                        yanchor: 'middle',
+                        orientation: 'v', // or 'h' for horizontal
+                        font: { size: 12 },
+                      },
+                      margin: { t: 20, b: 40, l: 20, r: 30 },
+                      annotations: [{
+                        text: `p2 = ${testResults.p2.toFixed(4)}<br>${twoProportionData.sample2Events}/${twoProportionData.sample2Size}`,
+                        showarrow: false,
+                        x: 0.5,
+                        y: -0.05,
+                        xref: 'paper',
+                        yref: 'paper',
+                        xanchor: 'center',
+                        yanchor: 'top'
+                      }]
+                    }}
+                    config={{ responsive: true,
+                      displayModeBar: true,
+                      displaylogo: false, // Remove Plotly logo
+                      modeBarButtonsToRemove: ['lasso2d', 'select2d'], // Remove specific tools
+                      toImageButtonOptions: {
+                          format: 'png',
+                          filename: 'Two-Proportion-Test-Sample 2',
+                          height: 200,
+                          width: 250,
+                          scale: 1
+                      },
+                    }}
+                    style={{
+                      width: "100%", height: "100%",
+                      border: '1px solid #ddd', // Additional div border
+                      borderRadius: '8px',
+                      padding: '10px'
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Right Side - Difference and CI */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Difference & Confidence Interval</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="font-medium mt-8 mb-2 text-center"></div>
                 <Plot
                   data={[
                     {
-                      type: 'pie',
-                      values: [testResults.p1, 1 - testResults.p1],
-                      labels: ['Events', 'Non-Events'],
-                      marker: {
-                        colors: ['#3b82f6', '#e5e7eb']
+                      type: 'scatter',
+                      x: [testResults.pDiff],
+                      y: ['Difference'],
+                      error_x: {
+                        type: 'data',
+                        symmetric: false,
+                        array: [testResults.ciUpper - testResults.pDiff],
+                        arrayminus: [testResults.pDiff - testResults.ciLower],
+                        color: '#3b82f6',
+                        thickness: 3,
+                        width: 8
                       },
-                      textinfo: 'label+percent',
-                      texttemplate: '%{label}<br>%{percent:.2%}',
-                      textposition: 'inside',
-                      hovertemplate: '%{label}: %{percent:.2%}<extra></extra>',
-                    }
+                      mode: 'markers',
+                      marker: {
+                        size: 12,
+                        color: '#ef4444'
+                      },
+                      name: 'Point Estimate',
+                      hovertemplate: 'Difference: %{x:.4f}<extra></extra>'
+                    },
+                    {
+                      type: 'scatter',
+                      x: [twoProportionData.hypothesizedDifference || 0],
+                      y: ['Difference'],
+                      mode: 'markers',
+                      marker: {
+                        color: 'rgba(0,0,0,0.3)',
+                        size: 10,
+                      },
+                      name: 'Zero Reference',
+                      hovertemplate: 'H0: %{x:.4f}<extra></extra>',
+                      showlegend: false
+                    },
+                    {
+                      type: 'scatter',
+                      x: [testResults.ciLower || 0],
+                      y: ['Difference'],
+                      mode: 'markers',
+                      marker: {
+                        color: '#3b82f6',
+                        size: 4,
+                      },
+                      name: 'CI-',
+                      hovertemplate: 'CI-: %{x:.4f}<extra></extra>',
+                      showlegend: false
+                    },
+                    {
+                      type: 'scatter',
+                      x: [testResults.ciUpper || 1],
+                      y: ['Difference'],
+                      mode: 'markers',
+                      marker: {
+                        color: '#3b82f6',
+                        size: 4,
+                      },
+                      name: 'CI+',
+                      hovertemplate: 'CI+: %{x:.4f}<extra></extra>',
+                      showlegend: false
+                    },
                   ]}
                   layout={{
-                    title: {text: twoProportionData.sample1Description || "Sample 1", font: { size: 16} },
-                    height: 250,
-                    width:350,
-                    showlegend: true,
-                    legend: {
-                      x: 1,           // 👈 horizontal position (0 = left, 1 = right)
-                      y: 1,         // 👈 vertical position (0 = bottom, 1 = top)
-                      xanchor: 'left', // 👈 align legend box relative to x/y point
-                      yanchor: 'middle',
-                      orientation: 'v', // or 'h' for horizontal
-                      font: { size: 12 },
+                    title: { text: boldTitle, font: { size: 16 } },
+                    height: 290,
+                    width: 350,
+                    xaxis: {
+                      title: {
+                        text: 'Difference (p1 - p2)'
+                      },
+                      range: [(minX-xExtra),(maxX+xExtra)],
+                      zeroline: false,
+                      gridcolor: '#f0f0f0',
+                      
                     },
-                    margin: { t: 20, b: 40, l: 20, r: 30 },
-                    annotations: [{
-                      text: `p1 = ${testResults.p1.toFixed(4)}<br>${twoProportionData.sample1Events}/${twoProportionData.sample1Size}`,
-                      showarrow: false,
-                      x: 0.5,
-                      y: -0.05,
-                      xref: 'paper',
-                      yref: 'paper',
-                      xanchor: 'center',
-                      yanchor: 'top'
-                    }]
+                    yaxis: {
+                      showticklabels: false,
+                      zeroline: false,
+                      range: [-0.5, 0.5]
+                    },
+                    showlegend: false,
+                    margin: { t: 40, b: 60, l: 50, r: 50 },
+                    annotations: [
+                      {
+                        x: xBadge,
+                        y: 0.37,
+                        text: badgeText,
+                        showarrow: false,
+                        font: { size: 12, color: 'black' },
+                        xanchor: 'center',
+                        yanchor: 'middle'
+                      },
+                      {
+                        x: twoProportionData.hypothesizedDifference || 0,
+                        y: 0,
+                        text: 'H0',
+                        showarrow: false,
+                        font: { size: 12, color: 'black' },
+                        xanchor: 'center',
+                        yanchor: 'bottom',
+                        yshift: 6,
+                      },
+                      {
+                        x: testResults.pDiff || 0,
+                        y: 0,
+                        text: 'Diff.',
+                        showarrow: false,
+                        font: { size: 12, color: 'red' },
+                        xanchor: 'center',
+                        yanchor: 'bottom',
+                        yshift: 6,
+                      },
+                      {
+                        x: testResults.ciLower || 0,
+                        y: 0,
+                        text: 'CI-',
+                        showarrow: false,
+                        font: { size: 12, color: 'blue' },
+                        xanchor: 'center',
+                        yanchor: 'bottom',
+                        yshift: 6,
+                      },
+                      {
+                        x: testResults.ciUpper || 0,
+                        y: 0,
+                        text: 'CI+',
+                        showarrow: false,
+                        font: { size: 12, color: 'blue' },
+                        xanchor: 'center',
+                        yanchor: 'bottom',
+                        yshift: 6,
+                      },
+                    ],                                        
                   }}
                   config={{ responsive: true,
-                    displayModeBar: true,
-                    displaylogo: false, // Remove Plotly logo
-                    modeBarButtonsToRemove: ['lasso2d', 'select2d'], // Remove specific tools
-                    toImageButtonOptions: {
-                        format: 'png',
-                        filename: 'Two-Proportion-Test-Sample 1',
-                        height: 200,
-                        width: 250,
-                        scale: 1
-                    },
-                  }}
-                  style={{
-                    width: "100%", height: "100%",
-                    border: '1px solid #ddd', // Additional div border
-                    borderRadius: '8px',
-                    padding: '10px'
+                      displayModeBar: true,
+                      displaylogo: false, // Remove Plotly logo
+                      modeBarButtonsToRemove: ['lasso2d', 'select2d'], // Remove specific tools
+                      toImageButtonOptions: {
+                          format: 'png',
+                          filename: 'Two-Proportion-Test-Difference-and-CI',
+                          height: 400,
+                          width: 300,
+                          scale: 1
+                      },
+                    }}
+                    style={{
+                      width: "100%", height: "100%",
+                      border: '1px solid #ddd', // Additional div border
+                      borderRadius: '8px',
+                      padding: '10px'
                     }}
                 />
-              </div>
 
-              {/* Sample 2 Pie Chart */}
-              <div>
-                <div className="font-medium mb-2 text-center">Sample 2</div>
-                <Plot
-                  data={[
-                    {
-                      type: 'pie',
-                      values: [testResults.p2, 1 - testResults.p2],
-                      labels: ['Events', 'Non-Events'],
-                      marker: {
-                        colors: ['#10b981', '#e5e7eb']
-                      },
-                      textinfo: 'label+percent',
-                      texttemplate: '%{label}<br>%{percent:.2%}',
-                      textposition: 'inside',
-                      hovertemplate: '%{label}: %{percent:.2%}<extra></extra>',
-                    }
-                  ]}
-                  layout={{
-                    title: {text: twoProportionData.sample2Description || "Sample 2", font: { size: 16} },
-                    height: 250,
-                    width: 350,
-                    showlegend: true,
-                    legend: {
-                      x: 1,           // 👈 horizontal position (0 = left, 1 = right)
-                      y: 1,         // 👈 vertical position (0 = bottom, 1 = top)
-                      xanchor: 'left', // 👈 align legend box relative to x/y point
-                      yanchor: 'middle',
-                      orientation: 'v', // or 'h' for horizontal
-                      font: { size: 12 },
-                    },
-                    margin: { t: 20, b: 40, l: 20, r: 30 },
-                    annotations: [{
-                      text: `p2 = ${testResults.p2.toFixed(4)}<br>${twoProportionData.sample2Events}/${twoProportionData.sample2Size}`,
-                      showarrow: false,
-                      x: 0.5,
-                      y: -0.05,
-                      xref: 'paper',
-                      yref: 'paper',
-                      xanchor: 'center',
-                      yanchor: 'top'
-                    }]
-                  }}
-                  config={{ responsive: true,
-                    displayModeBar: true,
-                    displaylogo: false, // Remove Plotly logo
-                    modeBarButtonsToRemove: ['lasso2d', 'select2d'], // Remove specific tools
-                    toImageButtonOptions: {
-                        format: 'png',
-                        filename: 'Two-Proportion-Test-Sample 2',
-                        height: 200,
-                        width: 250,
-                        scale: 1
-                    },
-                  }}
-                  style={{
-                    width: "100%", height: "100%",
-                    border: '1px solid #ddd', // Additional div border
-                    borderRadius: '8px',
-                    padding: '10px'
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Right Side - Difference and CI */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Difference & Confidence Interval</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Plot
-                data={[
-                  {
-                    type: 'scatter',
-                    x: [testResults.pDiff],
-                    y: ['Difference'],
-                    error_x: {
-                      type: 'data',
-                      symmetric: false,
-                      array: [testResults.ciUpper - testResults.pDiff],
-                      arrayminus: [testResults.pDiff - testResults.ciLower],
-                      color: '#3b82f6',
-                      thickness: 3,
-                      width: 8
-                    },
-                    mode: 'markers',
-                    marker: {
-                      size: 12,
-                      color: '#ef4444'
-                    },
-                    name: 'Point Estimate',
-                    hovertemplate: 'Difference: %{x:.4f}<extra></extra>'
-                  },
-                  {
-                    type: 'scatter',
-                    x: [0, 0],
-                    y: [-0.5, 0.5],
-                    mode: 'lines',
-                    line: {
-                      color: 'rgba(0,0,0,0.3)',
-                      width: 2,
-                      dash: 'dash'
-                    },
-                    name: 'Zero Reference',
-                    hoverinfo: 'skip',
-                    showlegend: false
-                  }
-                ]}
-                layout={{
-                  title: { text: 'Difference (p1 - p2): ' + testResults.pDiff.toFixed(4) + '<br></br>' + (1-parseFloat(significanceLevel))*100 + '% CI: (' + testResults.ciLower.toFixed(4) + ',' + testResults.ciUpper.toFixed(4) + ')', font: { size: 16 } },
-                  height: 300,
-                  width: 350,
-                  xaxis: {
-                    title: {
-                      text: 'Difference (p1 - p2)'
-                    },
-                    zeroline: false,
-                    gridcolor: '#f0f0f0',
-                    
-                  },
-                  yaxis: {
-                    showticklabels: false,
-                    zeroline: false,
-                    range: [-0.5, 0.5]
-                  },
-                  showlegend: false,
-                  margin: { t: 40, b: 60, l: 40, r: 80 }
-                }}
-                config={{ responsive: true,
-                    displayModeBar: true,
-                    displaylogo: false, // Remove Plotly logo
-                    modeBarButtonsToRemove: ['lasso2d', 'select2d'], // Remove specific tools
-                    toImageButtonOptions: {
-                        format: 'png',
-                        filename: 'Two-Proportion-Test-Difference-and-CI',
-                        height: 400,
-                        width: 250,
-                        scale: 1
-                    },
-                  }}
-                  style={{
-                    width: "100%", height: "100%",
-                    border: '1px solid #ddd', // Additional div border
-                    borderRadius: '8px',
-                    padding: '10px'
-                  }}
-              />
-
-              <div className="mt-4 p-3 bg-gray-50 rounded-md text-sm">
-                <div className="space-y-1">
-                  <div><strong>Difference:</strong> {testResults.pDiff.toFixed(4)}</div>
-                  <div><strong>{(1-parseFloat(significanceLevel))*100}% CI Lower Bound:</strong> {testResults.ciLower.toFixed(4)}</div>
-                  <div><strong>{(1-parseFloat(significanceLevel))*100}% CI Upper Bound:</strong> {testResults.ciUpper.toFixed(4)}</div>
-                  <div className="mt-2 pt-2 border-t">
-                    {testResults.ciLower > 0 || testResults.ciUpper < 0 ? (
-                      <span className="text-green-700 font-medium">
-                        ✓ CI does not include {twoProportionData.hypothesizedDifference} (significant difference)
-                      </span>
-                    ) : (
-                      <span className="text-gray-600">
-                        CI includes {twoProportionData.hypothesizedDifference} (no significant difference)
-                      </span>
-                    )}
+                <div className="mt-4 p-3 bg-gray-50 rounded-md text-sm">
+                  <div className="space-y-1">
+                    <div><strong>p1: </strong> {testResults.p1.toFixed(4)} ({twoProportionData.sample1Events}/{twoProportionData.sample1Size})</div>
+                    <div><strong>p2: </strong> {testResults.p2.toFixed(4)} ({twoProportionData.sample2Events}/{twoProportionData.sample2Size})</div>
+                    <div><strong>Difference (p1 - p2):</strong> {testResults.pDiff.toFixed(4)}</div>
+                    <div><strong>&nbsp; . {(1-parseFloat(significanceLevel))*100}% CI Lower Bound:</strong> {testResults.ciLower.toFixed(4)}</div>
+                    <div><strong>&nbsp; . {(1-parseFloat(significanceLevel))*100}% CI Upper Bound:</strong> {testResults.ciUpper.toFixed(4)}</div>
+                    <div className="mt-2 pt-2 border-t">
+                      {twoProportionData.hypothesizedDifference! < testResults.ciLower || twoProportionData.hypothesizedDifference! > testResults.ciUpper ? (
+                        <span className="text-green-700 font-medium">
+                          ✓ {(1-parseFloat(significanceLevel))*100}% CI does not include H0 (Hypotesized difference = {twoProportionData.hypothesizedDifference}) =&gt; significant difference!
+                        </span>
+                      ) : (
+                        <span className="text-gray-600">
+                           ✓ {(1-parseFloat(significanceLevel))*100}%CI includes H0 (Hypotesized difference = {twoProportionData.hypothesizedDifference}) =&gt; no significant difference!
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })() : (
         <div className="text-center text-gray-500 py-8">
           Enter setup configuration and data in tabs to see visualization
         </div>
@@ -991,21 +1114,11 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Test Results</CardTitle>
+              <CardTitle>Two-Proportion Test Results</CardTitle>
+              <div className="text-lg justify-left">(using Normal Approximation):</div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Badge
-                variant="default"
-                className={`p-2 font-medium text-sm ${
-                  testResults.pValue < parseFloat(significanceLevel) 
-                    ? "bg-red-600 text-white" 
-                    : "bg-green-600 text-white"
-                }`}
-              >
-                {testResults.pValue < parseFloat(significanceLevel)
-                  ? "Reject H0: Statistically Significant Difference"
-                  : "Fail to Reject H0: No Statistically Significant Difference"}
-              </Badge>
+              
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -1032,6 +1145,27 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
               <div className="border-t pt-4 space-y-2 text-sm">
                 <div><strong>Hypothesized Difference (H0):</strong> {twoProportionData.hypothesizedDifference}</div>
                 <div><strong>Observed Difference (p1 - p2):</strong> {testResults.pDiff.toFixed(4)}</div>
+                <div><strong>Significance Level (α):</strong> {parseFloat(significanceLevel)*100}%</div>
+                <Badge
+                  variant="default"
+                  className={`mt-4 mb-4 p-2 font-medium text-xs text-center justify-center ${testResults.pValue < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
+                  title={
+                    testResults.pValue < parseFloat(significanceLevel)
+                      ? `Reject H0. Accept Ha (P-Value ${testResults.pValue.toFixed(4)} < ${significanceLevel}). Statistically Significant Difference!`
+                      : `Accept H0. Reject Ha (P-Value ${testResults.pValue.toFixed(4)} ≥ ${significanceLevel}). No Statistically Significant Difference!`
+                  }
+                  >
+                  {alternative==='Less than' ? "H0: (p1 - p2) ≥ "
+                  : ( alternative==='Greater than' ? "H0: (p1 - p2) ≤ "
+                    :"H0: (p1 - p2) = " )} {twoProportionData.hypothesizedDifference}<br></br>
+                  {alternative==='Less than' ? "Ha: (p1 - p2) < "
+                  : ( alternative==='Greater than' ? "Ha: (p1 - p2) > "
+                    :"Ha: (p1 - p2) ≠ " )} {twoProportionData.hypothesizedDifference}<br></br>
+                  {testResults.pValue < parseFloat(significanceLevel)
+                    ? `Result => Reject H0. Accept Ha (P-Value ${testResults.pValue.toFixed(4)} < ${significanceLevel}). Statistically Significant Difference!`
+                    : `Result => Accept H0. Reject Ha (P-Value ${testResults.pValue.toFixed(4)} ≥ ${significanceLevel}). No Statistically Significant Difference!`}
+                  
+                </Badge>
                 <div><strong>Pooled Proportion:</strong> {testResults.pooledP.toFixed(4)}</div>
                 <div><strong>Standard Error:</strong> {testResults.se.toFixed(4)}</div>
                 <div><strong>Z-Statistic:</strong> {testResults.zStatistic.toFixed(3)}</div>
@@ -1042,7 +1176,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                     : `[${testResults.zCritical.lower.toFixed(3)}, ${testResults.zCritical.upper.toFixed(3)}]`}
                 </div>
                 <div><strong>P-Value:</strong> {testResults.pValue.toFixed(4)}</div>
-                <div><strong>Significance Level (α):</strong> {significanceLevel}</div>
+                
                 <div>
                   <strong>95% Confidence Interval for Difference:</strong>{' '}
                   [{testResults.ciLower.toFixed(4)}, {testResults.ciUpper.toFixed(4)}]
@@ -1053,22 +1187,29 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
 
           <Card>
             <CardHeader>
-              <CardTitle>Interpretation</CardTitle>
+              <CardTitle>Analysis</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
               <p>
                 {testResults.pValue < parseFloat(significanceLevel) ? (
                   <>
                     The p-value ({testResults.pValue.toFixed(4)}) is less than the significance level ({significanceLevel}),
-                    so we <strong>reject the null hypothesis</strong>. There is statistically significant evidence that
-                    the proportion in {twoProportionData.sample1Description || "Sample 1"} is different from the proportion
-                    in {twoProportionData.sample2Description || "Sample 2"}.
+                    so we <strong>reject the null hypothesis</strong> and we <strong>accept Ha</strong>. There is statistically significant evidence that
+                     (proportion p1 in {twoProportionData.sample1Description || "Sample 1"} - the proportion p2 in {twoProportionData.sample2Description || "Sample 2"}) is 
+                    {alternative==='Less than' ? " < "
+                    : ( alternative==='Greater than' ? " > "
+                      :" ≠ " )} 
+                    {twoProportionData.hypothesizedDifference || 0} (Hypothesized difference).
                   </>
                 ) : (
                   <>
                     The p-value ({testResults.pValue.toFixed(4)}) is greater than or equal to the significance level ({significanceLevel}),
-                    so we <strong>fail to reject the null hypothesis</strong>. There is not enough evidence to conclude
-                    that the proportions are different.
+                    so we <strong>fail to reject the null hypothesis</strong> (we accept H0 and reject Ha). There is not enough evidence to conclude that
+                    (proportion p1 in {twoProportionData.sample1Description || "Sample 1"} - the proportion p2 in {twoProportionData.sample2Description || "Sample 2"}) is 
+                    {alternative==='Less than' ? " < "
+                    : ( alternative==='Greater than' ? " > "
+                      :" ≠ " )} 
+                    {twoProportionData.hypothesizedDifference || 0} (Hypothesized difference).
                   </>
                 )}
               </p>
@@ -1076,9 +1217,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
                 The {(1-parseFloat(significanceLevel))*100}% confidence interval for the difference (p1 - p2) is [{testResults.ciLower.toFixed(4)}, {testResults.ciUpper.toFixed(4)}].
                 {testResults.ciLower <= (twoProportionData.hypothesizedDifference || 0) && 
                  testResults.ciUpper >= (twoProportionData.hypothesizedDifference || 0) ? (
-                  <> This interval contains the hypothesized difference, supporting the conclusion.</>
+                  <> This interval contains the hypothesized difference ({twoProportionData.hypothesizedDifference}), supporting the acceptation of H0 and rejection of Ha.</>
                 ) : (
-                  <> This interval does not contain the hypothesized difference, supporting the rejection of H0.</>
+                  <> This interval does not contain the hypothesized difference ({twoProportionData.hypothesizedDifference}), supporting the rejection of H0 and acceptation of Ha.</>
                 )}
               </p>
             </CardContent>
@@ -1086,7 +1227,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
         </>
       ) : (
         <div className="text-center text-gray-500 py-8">
-          Enter setup configuration and data in tabs to see visualization
+          Enter setup configuration and data in tabs to see Analysis
         </div>
       )}
     </div>

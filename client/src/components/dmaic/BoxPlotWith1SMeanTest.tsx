@@ -98,8 +98,9 @@ export default function BoxPlotWith1SMeanTest({
             y: [mean],
             type: 'scatter',
             mode: 'markers',
-            name: 'Mean',
+            name: 'mean',
             marker: { color: 'red', size: 8, symbol: 'circle' },
+            hovertemplate: 'μ: %{y:.2f}<extra></extra>',
           },
           {
             y: data,
@@ -118,6 +119,7 @@ export default function BoxPlotWith1SMeanTest({
             mode: 'markers',
             name: 'μ',
             marker: { color: 'red', size: 8, symbol: 'circle' },
+            hovertemplate: 'μ: %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -126,6 +128,7 @@ export default function BoxPlotWith1SMeanTest({
             mode: 'markers',
             name: 'μ0 (H0)',
             marker: { color: 'black', size: 8, symbol: 'square' },
+            hovertemplate: 'μ0 (H0): %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -134,6 +137,7 @@ export default function BoxPlotWith1SMeanTest({
             mode: 'markers',
             name: 'CI-',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI-: %{y:.2f}<extra></extra>',
           },
           {
             x:[1],
@@ -142,6 +146,7 @@ export default function BoxPlotWith1SMeanTest({
             mode: 'markers',
             name: 'CI+',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI+: %{y:.2f}<extra></extra>',
           },
         ]}
         layout={{

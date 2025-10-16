@@ -90,9 +90,9 @@ export default function TwoSVarianceTestCI({
   else {
     Badgetext = Badgetext + `<br>Result => Accept H0. Reject Ha (P-Value ${pValue.toFixed(4)} ≥ ${alphalevel})`;
   }
-  const ctq1 = ctqName + ' - ' + description1 || ' Dataset #1';
-  const ctq2 = description2 || 'Dataset #2';
-  const CItext = Hatext + ' (' + ctq1 + ' vs ' + ctq2 + ')';
+  const ctq1 = ' std dev of ' + (description1 || ' Dataset #1');
+  const ctq2 = ' std dev of ' + (description2 || 'Dataset #2');
+  const CItext = Hatext + ' (' + ctq1 + ' / ' + ctq2 + ')';
   
   return (
     <div className="w-full h-[400px]">
@@ -126,6 +126,7 @@ export default function TwoSVarianceTestCI({
             mode: 'markers',
             name: 'σ1/σ2',
             marker: { color: 'green', size: 8, symbol: 'square' },
+            hovertemplate: 'σ1/σ2: %{y:.2f}<extra></extra>',
           },
           {
             x:[0],
@@ -134,6 +135,7 @@ export default function TwoSVarianceTestCI({
             mode: 'markers',
             name: 'ratio (H0)',
             marker: { color: 'black', size: 8, symbol: 'square' },
+            hovertemplate: 'Hypothesized ratio (H0): %{y:.2f}<extra></extra>',
           },
           {
             x:[0],
@@ -142,6 +144,7 @@ export default function TwoSVarianceTestCI({
             mode: 'markers',
             name: 'CI-',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI-: %{y:.2f}<extra></extra>',
           },
           {
             x:[0],
@@ -150,6 +153,7 @@ export default function TwoSVarianceTestCI({
             mode: 'markers',
             name: 'CI+',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI+: %{y:.2f}<extra></extra>',
           },
         ]}
         layout={{
@@ -245,7 +249,7 @@ export default function TwoSVarianceTestCI({
               {
                 x: 0.03,
                 y: ratioVariance0,
-                text: 'ratio (H0)',
+                text: 'Hypothesized ratio (H0)',
                 showarrow: false,
                 font: { size: 12, color: 'black' },
                 xanchor: 'left',

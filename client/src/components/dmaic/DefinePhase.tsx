@@ -542,7 +542,7 @@ export default function DefinePhase() {
   const handleFteParamChange = (param: string, value: number | string) => {
     // First, ensure the value is properly converted
     const convertedValue = typeof value === 'string' ? 
-      (param === 'timeUnit' ? value : parseFloat(value) || 0) : 
+      (param === 'timeUnit' ? value : (value === "0" ? 0 : parseFloat(value) || "")) : 
       parseFloat(value.toString()) || 0;
     
     // Update the state with the new parameter
@@ -554,8 +554,8 @@ export default function DefinePhase() {
     // Immediately calculate the FTE values
     const { workingDaysPerWeek, workingHoursPerDay, timeUnit, savedHours, fteCostPerYear } = newParams;
     // 52 weeks in a year, so multiply days/week by 52 to get annual working days
-    const workingDaysPerYear = workingDaysPerWeek * 52;
-    const totalAnnualHours = workingDaysPerYear * workingHoursPerDay;
+    const workingDaysPerYear = workingDaysPerWeek * 52 || 0;
+    const totalAnnualHours = workingDaysPerYear * workingHoursPerDay || 0;
     
     let annualSavedHours = 0;
     
@@ -569,8 +569,8 @@ export default function DefinePhase() {
     }
     
     // Calculate FTE and monetary value
-    const calculatedFte = annualSavedHours / totalAnnualHours;
-    const calculatedValue = calculatedFte * fteCostPerYear;
+    const calculatedFte = annualSavedHours / totalAnnualHours || 0;
+    const calculatedValue = calculatedFte * fteCostPerYear || 0;
     
     // Format the values
     const formattedFte = parseFloat(calculatedFte.toFixed(3));
@@ -3226,7 +3226,7 @@ export default function DefinePhase() {
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
                         if (value < 0 || isNaN(value)) {
-                          charterForm.setValue("savingsPerYear", "0");
+                          charterForm.setValue("savingsPerYear", "");
                         } else {
                           charterForm.setValue("savingsPerYear", e.target.value);
                         }
@@ -3247,7 +3247,7 @@ export default function DefinePhase() {
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
                         if (value < 0 || isNaN(value)) {
-                          charterForm.setValue("workingCapitalGains", "0");
+                          charterForm.setValue("workingCapitalGains", "");
                         } else {
                           charterForm.setValue("workingCapitalGains", e.target.value);
                         }
@@ -3277,7 +3277,7 @@ export default function DefinePhase() {
                         onChange={(e) => {
                           const value = parseFloat(e.target.value);
                           if (value < 0 || isNaN(value)) {
-                            charterForm.setValue("waccPercentage", "0");
+                            charterForm.setValue("waccPercentage", "");
                           } else {
                             charterForm.setValue("waccPercentage", e.target.value);
                           }
@@ -3324,8 +3324,8 @@ export default function DefinePhase() {
                               value={fteParams.workingDaysPerWeek}
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
-                                if (value < 0 || isNaN(value)) {
-                                  handleFteParamChange('workingDaysPerWeek', "0");
+                                if(value < 0 || isNaN(value)) {
+                                  handleFteParamChange('workingDaysPerWeek', "");
                                 } else {
                                   handleFteParamChange('workingDaysPerWeek', e.target.value);
                                 }
@@ -3346,7 +3346,7 @@ export default function DefinePhase() {
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (value < 0 || isNaN(value)) {
-                                  handleFteParamChange('workingHoursPerDay', "0");
+                                  handleFteParamChange('workingHoursPerDay', "");
                                 } else {
                                   handleFteParamChange('workingHoursPerDay', e.target.value);
                                 }
@@ -3388,12 +3388,12 @@ export default function DefinePhase() {
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (value < 0 || isNaN(value)) {
-                                  handleFteParamChange('savedHours', "0");
+                                  handleFteParamChange('savedHours', "");
                                 } else {
                                   handleFteParamChange('savedHours', e.target.value);
                                 }
                               }}
-                              placeholder="Hours saved"
+                              placeholder="e.g. 2 Hours Saved"
                               className="h-8 text-sm"
                               data-pdf-value={fteParams.savedHours}
                             />
@@ -3482,7 +3482,7 @@ export default function DefinePhase() {
                                 onChange={(e) => {
                                   const value = parseFloat(e.target.value);
                                   if (value < 0 || isNaN(value)) {
-                                    handleFteParamChange('fteCostPerYear', "0");
+                                    handleFteParamChange('fteCostPerYear', "");
                                   } else {
                                     handleFteParamChange('fteCostPerYear', e.target.value);
                                   }
@@ -3614,7 +3614,7 @@ export default function DefinePhase() {
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (value < 0 || isNaN(value)) {
-                                  charterForm.setValue("oneOffPeopleCost", "0");
+                                  charterForm.setValue("oneOffPeopleCost", "");
                                 } else {
                                   charterForm.setValue("oneOffPeopleCost", e.target.value);
                                 }
@@ -3634,7 +3634,7 @@ export default function DefinePhase() {
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (value < 0 || isNaN(value)) {
-                                  charterForm.setValue("oneOffTechnologyCost", "0");
+                                  charterForm.setValue("oneOffTechnologyCost", "");
                                 } else {
                                   charterForm.setValue("oneOffTechnologyCost", e.target.value);
                                 }
@@ -3654,7 +3654,7 @@ export default function DefinePhase() {
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (value < 0 || isNaN(value)) {
-                                  charterForm.setValue("oneOffOtherCost", "0");
+                                  charterForm.setValue("oneOffOtherCost", "");
                                 } else {
                                   charterForm.setValue("oneOffOtherCost", e.target.value);
                                 }
@@ -3690,7 +3690,7 @@ export default function DefinePhase() {
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (value < 0 || isNaN(value)) {
-                                  charterForm.setValue("capexCost", "0");
+                                  charterForm.setValue("capexCost", "");
                                 } else {
                                   charterForm.setValue("capexCost", e.target.value);
                                 }

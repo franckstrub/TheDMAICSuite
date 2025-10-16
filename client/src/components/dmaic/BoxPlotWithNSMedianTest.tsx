@@ -72,6 +72,7 @@ export default function BoxPlotWithNSMedianTest({
       name: `M${index + 1}`,
       marker: { color: 'green', size: 8, symbol: 'diamond' },
       showlegend: false,
+      hovertemplate: `η${index + 1}: %{y:.2f}<extra></extra>`,
     });
     
     // Add box plot

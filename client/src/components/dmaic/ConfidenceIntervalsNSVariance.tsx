@@ -104,6 +104,10 @@ export default function ConfidenceIntervalsNSVariance({
         width: 3,
       },
       showlegend: false,
+      hovertemplate: `%{text}<extra></extra>`,
+      text: stdevs.map((stdev, index) => {
+        const ci = confidenceIntervals[index];return `σ${index + 1}: ${stdev.toFixed(2)}<br>CI: [${isFinite(ci.lower) ? ci.lower.toFixed(2) : '-∞'}, ${isFinite(ci.upper) ? ci.upper.toFixed(2) : '∞'}]`;
+      }),
     }
   ];
 

@@ -115,6 +115,7 @@ export default function BoxPlotWith2SMedianTest({
                   mode: 'markers',
                   name: 'η1',
                   marker: { color: 'blue', size: 8, symbol: 'diamond' },
+                  hovertemplate: 'η1: %{y:.2f}<extra></extra>',
                 },
                 {
                   y: data1,
@@ -133,6 +134,7 @@ export default function BoxPlotWith2SMedianTest({
                   mode: 'markers',
                   name: 'η2',
                   marker: { color: 'blue', size: 8, symbol: 'diamond' },
+                  hovertemplate: 'η2: %{y:.2f}<extra></extra>',
                 },
                 {
                   y: data2,
@@ -173,6 +175,7 @@ export default function BoxPlotWith2SMedianTest({
                     line: { color: 'black', width: 1 } // Optional border
                 },
                 showlegend: false,
+                hovertemplate: 'Grand Median (ηG): %{y:.2f}<extra></extra>',
                 },  
                    
               ]}

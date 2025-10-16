@@ -1940,6 +1940,10 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                           }
                           
                           const parsed = parseFloat(processedValue);
+                          console.log ("Parsed tolerance:", parsed);
+                          if(isNaN(parsed)){
+                            console.log("Invalid tolerance input:", parsed);
+                          }
                           updateContinuousMsaField(ctqItem.ctq, 'tolerance', !isNaN(parsed) ? parsed : undefined);
                         }}
                       />
