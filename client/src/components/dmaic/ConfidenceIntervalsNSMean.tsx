@@ -103,6 +103,10 @@ export default function ConfidenceIntervalsNSMean({
         width: 3,
       },
       showlegend: false,
+      hovertemplate: `%{text}<extra></extra>`,
+      text: means.map((mean, index) => {
+        const ci = confidenceIntervals[index];return `μ${index + 1}: ${mean.toFixed(2)}<br>CI: [${isFinite(ci.lower) ? ci.lower.toFixed(2) : '-∞'}, ${isFinite(ci.upper) ? ci.upper.toFixed(2) : '∞'}]`;
+      }),
     }
   ];
 

@@ -121,14 +121,16 @@ export default function OneSVarianceTestCI({
             mode: 'markers',
             name: 'Standard Deviation',
             marker: { color: 'green', size: 8, symbol: 'square' },
+            hovertemplate: 'σ: %{y:.2f}<extra></extra>',
           },
           {
             x:[0],
             y: [h0Value],
             type: 'scatter',
             mode: 'markers',
-            name: 'H0',
+            name: 'σ0 (H0)',
             marker: { color: 'black', size: 8, symbol: 'square' },
+            hovertemplate: 'σ0 (H0): %{y:.2f}<extra></extra>',
           },
           {
             x:[0],
@@ -137,6 +139,7 @@ export default function OneSVarianceTestCI({
             mode: 'markers',
             name: 'CI-',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI-: %{y:.2f}<extra></extra>',
           },
           {
             x:[0],
@@ -145,6 +148,7 @@ export default function OneSVarianceTestCI({
             mode: 'markers',
             name: 'CI+',
             marker: { color: 'black', size: 8, symbol: 'line-ns' },
+            hovertemplate: 'CI+: %{y:.2f}<extra></extra>',
           },
         ]}
         layout={{

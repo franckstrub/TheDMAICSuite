@@ -100,6 +100,10 @@ export default function ConfidenceIntervalsNSMedian({
         width: 3,
       },
       showlegend: false,
+      hovertemplate: `%{text}<extra></extra>`,
+      text: medians.map((median, index) => {
+        const ci = confidenceIntervals[index];return `η${index + 1}: ${median.toFixed(2)}<br>CI: [${isFinite(ci.lower) ? ci.lower.toFixed(2) : '-∞'}, ${isFinite(ci.upper) ? ci.upper.toFixed(2) : '∞'}]`;
+      }), 
     }
   ];
 

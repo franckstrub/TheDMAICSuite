@@ -120,6 +120,7 @@ export default function BoxPlotWith2SMeanTest({
             mode: 'markers',
             name: 'μ1',
             marker: { color: 'red', size: 8, symbol: 'circle' },
+            hovertemplate: 'μ1: %{y:.2f}<extra></extra>',
           },
           {
             y: data1,
@@ -138,6 +139,7 @@ export default function BoxPlotWith2SMeanTest({
             mode: 'markers',
             name: 'μ2',
             marker: { color: 'red', size: 8, symbol: 'circle' },
+            hovertemplate: 'μ2: %{y:.2f}<extra></extra>',
           },
           {
             y: data2,

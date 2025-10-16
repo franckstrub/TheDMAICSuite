@@ -71,6 +71,7 @@ export default function BoxPlotWithNSMeanTest({
       name: `μ${index + 1}`,
       marker: { color: 'red', size: 8, symbol: 'circle' },
       showlegend: false,
+      hovertemplate: `μ${index + 1}: %{y:.2f}<extra></extra>`,
     });
     
     // Add box plot
