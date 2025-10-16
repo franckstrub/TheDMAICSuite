@@ -97,12 +97,12 @@ export const calculateNonConformityResults = (ctq: string, capabilityData: any) 
         if (data.dataSetTerm === "Short Term") {
           // Z short term is typically 1.5 sigma higher than long term
           zValue_ST = zValue;
-          zValue_LT = zValue_ST - (data.zShift || 1.5);
+          zValue_LT = zValue_ST - (data.zShift ?? 1.5);
         }
         else {
           // Z long term term is typically 1.5 sigma lower than short term
           zValue_LT = zValue;
-          zValue_ST = zValue_LT + (data.zShift || 1.5);
+          zValue_ST = zValue_LT + (data.zShift ?? 1.5);
         }
         
         // Ensure positive Z value
@@ -170,14 +170,14 @@ export const calculateNonConformityResults = (ctq: string, capabilityData: any) 
           if (data.dataSetTerm === "Short Term") {
             // Z short term is typically 1.5 sigma higher than long term
             zDPMOValue_ST = zValue;
-            zDPMOValue_LT = zDPMOValue_ST - (data.zShift || 1.5);
+            zDPMOValue_LT = zDPMOValue_ST - (data.zShift ?? 1.5);
             DPMOValue_ST = dpo*1000000;
             DPMOValue_LT = (1 - normalCDF(zDPMOValue_LT))*1000000;            
           }
           else {
             // Z long term term is typically 1.5 sigma lower than short term
             zDPMOValue_LT = zValue;
-            zDPMOValue_ST = zDPMOValue_LT + (data.zShift || 1.5);
+            zDPMOValue_ST = zDPMOValue_LT + (data.zShift ?? 1.5);
             DPMOValue_LT = dpo*1000000;
             DPMOValue_ST = (1 - normalCDF(zDPMOValue_ST))*1000000; 
           }
@@ -246,14 +246,14 @@ export const calculateNonConformityResults = (ctq: string, capabilityData: any) 
           if (data.dataSetTerm === "Short Term") {
             // Z short term is typically 1.5 sigma higher than long term
             zDPUValue_ST = zValue;
-            zDPUValue_LT = zDPUValue_ST - (data.zShift || 1.5);
+            zDPUValue_LT = zDPUValue_ST - (data.zShift ?? 1.5);
             DPUValue_ST = dpu;
             DPUValue_LT = (1 - normalCDF(zDPUValue_LT));            
           }
           else {
             // Z long term term is typically 1.5 sigma lower than short term
             zDPUValue_LT = zValue;
-            zDPUValue_ST = zDPUValue_LT + (data.zShift || 1.5);
+            zDPUValue_ST = zDPUValue_LT + (data.zShift ?? 1.5);
             DPUValue_LT = dpu;
             DPUValue_ST = (1 - normalCDF(zDPUValue_ST)); 
           }

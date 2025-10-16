@@ -2315,6 +2315,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                         </div>
                                       )}
                                     </div>
+                                    <div title="Z-shift value used in calculation" className="font-medium"> 
+                                        Z-shift: <span className="text-blue-700 ml-1">{capabilityData[ctq]?.zShift !== undefined ? capabilityData[ctq]?.zShift.toFixed(2) : '1.5'}</span>
+                                    </div>
                                     <div>
                                     {capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
                                     <div title="Z Short Term = Z value in Z-table for Non-Conform probability">
@@ -2458,6 +2461,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                       </div>
                                       )}                                      
                                       
+                                    </div>
+                                    <div title="Z-shift value used in calculation" className="font-medium"> 
+                                        Z-shift: <span className="text-blue-700 ml-1">{capabilityData[ctq]?.zShift !== undefined ? capabilityData[ctq]?.zShift.toFixed(2) : '1.5'}</span>
                                     </div>
                                     <div className="mt-2">
                                       {capabilityData[ctq]?.dataSetTerm === "Short Term" ? (
@@ -2625,6 +2631,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                                             </div>
                                             )}
                                             
+                                          </div>
+                                          <div title="Z-shift value used in calculation" className="font-medium"> 
+                                              Z-shift: <span className="text-blue-700 ml-1">{capabilityData[ctq]?.zShift !== undefined ? capabilityData[ctq]?.zShift.toFixed(2) : '1.5'}</span>
                                           </div>
                                           <div className="mt-2">
                                             {capabilityData[ctq]?.dataSetTerm === "Short Term" ? (

@@ -11,8 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { parseNumericValue } from "@/lib/statisticsUtils";
 import { HypothesisTestingTabs } from "./common/HypothesisTestingTabs";
 import Plot from 'react-plotly.js';
-import { twoProportionHypothesisConfig } from '@shared/schema';
-import { max } from 'jstat';
 
 interface AttrCTQTwoProportionHypTestData {
   id?: number;

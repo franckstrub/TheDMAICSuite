@@ -1458,6 +1458,56 @@ export type InsertTwoProportionHypothesisConfig = z.infer<
 export type TwoProportionHypothesisConfig =
   typeof twoProportionHypothesisConfig.$inferSelect;
 
+// Chi-Square Test of Independence Configuration - stores data for chi-square independence tests
+export const chiSquareIndependenceConfig = pgTable(
+  "chi_square_independence_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    testType: text("test_type").default("Chi-Square Independence Test"),
+    significanceLevel: text("significance_level").default("0.05"),
+
+    // Variable 1 configuration
+    variable1Name: text("variable_1_name"),
+    variable1Categories: text("variable_1_categories").array(), // Array of category names (up to 13)
+
+    // Variable 2 configuration
+    variable2Name: text("variable_2_name"),
+    variable2Categories: text("variable_2_categories").array(), // Array of category names (up to 13)
+
+    // Contingency table data (observed frequencies)
+    // Stored as JSON: { "row_col": frequency } e.g., { "0_0": 10, "0_1": 15, ... }
+    observedFrequencies: text("observed_frequencies"), // JSON string
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertChiSquareIndependenceConfigSchema = createInsertSchema(
+  chiSquareIndependenceConfig,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertChiSquareIndependenceConfig = z.infer<
+  typeof insertChiSquareIndependenceConfigSchema
+>;
+export type ChiSquareIndependenceConfig =
+  typeof chiSquareIndependenceConfig.$inferSelect;
+
 // One Sample Hypothesis Testing Configuration - stores user data and settings for one-sample tests
 export const oneSampleHypothesisConfig = pgTable(
   "one_sample_hypothesis_config",

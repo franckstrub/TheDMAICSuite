@@ -35,6 +35,7 @@ import {
   insertHypothesisTestingConfigSchema,
   insertMultiVariChartConfigSchema,
   insertParetoAnalysisSchema,
+  insertChiSquareIndependenceConfigSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -87,6 +88,7 @@ import {
   hypothesisTestingConfig,
   multiVariChartConfig,
   paretoAnalysis,
+  chiSquareIndependenceConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -5455,6 +5457,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create new configuration
           [savedConfig] = await db
             .insert(twoProportionHypothesisConfig)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json({ config: savedConfig });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Chi-Square Independence Test Configuration routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/chi-square-independence-config",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not authenticated" });
+        }
+
+        const userRecord = await storage.getUser(parseInt(userId));
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(chiSquareIndependenceConfig)
+          .where(
+            and(
+              eq(chiSquareIndependenceConfig.projectId, projectId),
+              eq(chiSquareIndependenceConfig.ctqId, ctqId),
+              eq(
+                chiSquareIndependenceConfig.organizationId,
+                userRecord.organizationId,
+              ),
+            ),
+          )
+          .limit(1);
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.status(200).json({ config });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/chi-square-independence-config",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not authenticated" });
+        }
+
+        const userRecord = await storage.getUser(parseInt(userId));
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        // Get CTQ name
+        const [ctqRecord] = await db
+          .select()
+          .from(ctsCharacteristics)
+          .where(eq(ctsCharacteristics.id, ctqId))
+          .limit(1);
+
+        if (!ctqRecord) {
+          return res.status(404).json({ message: "CTQ not found" });
+        }
+
+        // Validate request body
+        const validatedData = insertChiSquareIndependenceConfigSchema.parse({
+          ...req.body,
+          organizationId: userRecord.organizationId,
+          projectId,
+          ctqId,
+          ctq: ctqRecord.ctq,
+        });
+
+        // Check if configuration already exists
+        const [existingConfig] = await db
+          .select()
+          .from(chiSquareIndependenceConfig)
+          .where(
+            and(
+              eq(chiSquareIndependenceConfig.projectId, projectId),
+              eq(chiSquareIndependenceConfig.ctqId, ctqId),
+              eq(
+                chiSquareIndependenceConfig.organizationId,
+                userRecord.organizationId,
+              ),
+            ),
+          )
+          .limit(1);
+
+        let savedConfig;
+        if (existingConfig) {
+          // Update existing configuration
+          [savedConfig] = await db
+            .update(chiSquareIndependenceConfig)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(eq(chiSquareIndependenceConfig.id, existingConfig.id))
+            .returning();
+        } else {
+          // Create new configuration
+          [savedConfig] = await db
+            .insert(chiSquareIndependenceConfig)
             .values(validatedData)
             .returning();
         }

@@ -3811,3 +3811,106 @@ export function mannWhitneyCI(
 
   return results;
 }
+
+/**
+ * Chi-Square Test of Independence
+ * Tests whether two categorical variables are independent
+ * @param observedFrequencies - 2D array of observed frequencies [rows][columns]
+ * @param significanceLevel - Significance level (default 0.05)
+ * @returns Test results including chi-square statistic, p-value, expected frequencies, etc.
+ */
+export function chiSquareTestOfIndependence(
+  observedFrequencies: number[][],
+  significanceLevel: number = 0.05
+): {
+  chiSquareStatistic: number;
+  degreesOfFreedom: number;
+  pValue: number;
+  criticalValue: number;
+  expectedFrequencies: number[][];
+  rowTotals: number[];
+  columnTotals: number[];
+  grandTotal: number;
+  isSignificant: boolean;
+  effectSize: number; // Cramér's V
+} {
+  const rows = observedFrequencies.length;
+  const cols = observedFrequencies[0]?.length || 0;
+
+  if (rows < 2 || cols < 2) {
+    throw new Error("Contingency table must have at least 2 rows and 2 columns");
+  }
+
+  // Calculate row totals
+  const rowTotals = observedFrequencies.map(row => 
+    row.reduce((sum, freq) => sum + freq, 0)
+  );
+
+  // Calculate column totals
+  const columnTotals: number[] = [];
+  for (let col = 0; col < cols; col++) {
+    let colSum = 0;
+    for (let row = 0; row < rows; row++) {
+      colSum += observedFrequencies[row][col];
+    }
+    columnTotals.push(colSum);
+  }
+
+  // Calculate grand total
+  const grandTotal = rowTotals.reduce((sum, total) => sum + total, 0);
+
+  if (grandTotal === 0) {
+    throw new Error("Contingency table cannot be empty");
+  }
+
+  // Calculate expected frequencies
+  const expectedFrequencies: number[][] = [];
+  for (let row = 0; row < rows; row++) {
+    expectedFrequencies[row] = [];
+    for (let col = 0; col < cols; col++) {
+      const expected = (rowTotals[row] * columnTotals[col]) / grandTotal;
+      expectedFrequencies[row][col] = expected;
+    }
+  }
+
+  // Calculate chi-square statistic
+  let chiSquareStatistic = 0;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const observed = observedFrequencies[row][col];
+      const expected = expectedFrequencies[row][col];
+      if (expected > 0) {
+        chiSquareStatistic += Math.pow(observed - expected, 2) / expected;
+      }
+    }
+  }
+
+  // Degrees of freedom
+  const degreesOfFreedom = (rows - 1) * (cols - 1);
+
+  // Calculate p-value using chi-square distribution
+  const pValue = 1 - jStat.chisquare.cdf(chiSquareStatistic, degreesOfFreedom);
+
+  // Calculate critical value
+  const criticalValue = jStat.chisquare.inv(1 - significanceLevel, degreesOfFreedom);
+
+  // Determine if result is significant
+  const isSignificant = chiSquareStatistic > criticalValue;
+
+  // Calculate Cramér's V (effect size)
+  const minDim = Math.min(rows - 1, cols - 1);
+  const effectSize = Math.sqrt(chiSquareStatistic / (grandTotal * minDim));
+
+  return {
+    chiSquareStatistic,
+    degreesOfFreedom,
+    pValue,
+    criticalValue,
+    expectedFrequencies,
+    rowTotals,
+    columnTotals,
+    grandTotal,
+    isSignificant,
+    effectSize,
+  };
+}
