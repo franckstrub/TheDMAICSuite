@@ -1917,7 +1917,7 @@ export default function MsaAnalysis({ projectId }: MsaAnalysisProps) {
                         type="number"
                         step="0.01"
                         placeholder="Enter tolerance"
-                        value={continuousMsaData[ctqItem.ctq]?.tolerance || ""}
+                        value={continuousMsaData[ctqItem.ctq]?.tolerance ?? ""}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (!value) {
