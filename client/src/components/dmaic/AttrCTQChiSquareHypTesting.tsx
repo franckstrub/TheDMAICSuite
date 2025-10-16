@@ -606,7 +606,11 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-3">
-                For each cell: Observed frequency, Expected frequency, and Chi-square contribution
+                For each cell: Observed frequency, Expected frequency, and Chi-square contribution. 
+                <span className="inline-flex items-center gap-1 ml-2">
+                  <span className="inline-block w-3 h-3 bg-amber-200 border border-amber-400"></span>
+                  <span className="text-xs">Top 3 contributors highlighted</span>
+                </span>
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -624,37 +628,68 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                     </tr>
                   </thead>
                   <tbody>
-                    {variable1Categories.map((rowCat, rowIndex) => (
-                      <tr key={rowIndex}>
-                        <td className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
-                          {rowCat}
-                        </td>
-                        {variable2Categories.map((colCat, colIndex) => {
+                    {(() => {
+                      // Calculate all contributions and find top 3
+                      const allContributions: { row: number; col: number; value: number }[] = [];
+                      variable1Categories.forEach((_, rowIndex) => {
+                        variable2Categories.forEach((_, colIndex) => {
                           const observed = getFrequency(rowIndex, colIndex);
                           const expected = testResults.expectedFrequencies[rowIndex][colIndex];
                           const contribution = Math.pow(observed - expected, 2) / expected;
-                          
-                          return (
-                            <td key={colIndex} className="border border-gray-300 p-2 text-xs">
-                              <div className="flex flex-col gap-0.5">
-                                <div className="text-gray-700">
-                                  <span className="font-semibold">O:</span> {observed}
+                          allContributions.push({ row: rowIndex, col: colIndex, value: contribution });
+                        });
+                      });
+                      
+                      // Sort and get top 3
+                      const top3 = allContributions
+                        .sort((a, b) => b.value - a.value)
+                        .slice(0, 3)
+                        .map(item => `${item.row}_${item.col}`);
+                      
+                      return variable1Categories.map((rowCat, rowIndex) => (
+                        <tr key={rowIndex}>
+                          <td className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
+                            {rowCat}
+                          </td>
+                          {variable2Categories.map((colCat, colIndex) => {
+                            const observed = getFrequency(rowIndex, colIndex);
+                            const expected = testResults.expectedFrequencies[rowIndex][colIndex];
+                            const contribution = Math.pow(observed - expected, 2) / expected;
+                            const isTopContributor = top3.includes(`${rowIndex}_${colIndex}`);
+                            const rank = top3.indexOf(`${rowIndex}_${colIndex}`) + 1;
+                            
+                            return (
+                              <td 
+                                key={colIndex} 
+                                className={`border border-gray-300 p-2 text-xs ${
+                                  isTopContributor ? 'bg-amber-50 border-amber-400' : ''
+                                }`}
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="text-gray-700">
+                                    <span className="font-semibold">O:</span> {observed}
+                                  </div>
+                                  <div className="text-gray-600">
+                                    <span className="font-semibold">E:</span> {expected.toFixed(2)}
+                                  </div>
+                                  <div className={isTopContributor ? "text-amber-700 font-bold" : "text-blue-600"}>
+                                    <span className="font-semibold">χ²:</span> {contribution.toFixed(3)}
+                                    {isTopContributor && (
+                                      <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0 bg-amber-200 text-amber-900">
+                                        #{rank}
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="text-gray-600">
-                                  <span className="font-semibold">E:</span> {expected.toFixed(2)}
-                                </div>
-                                <div className="text-blue-600">
-                                  <span className="font-semibold">χ²:</span> {contribution.toFixed(3)}
-                                </div>
-                              </div>
-                            </td>
-                          );
-                        })}
-                        <td className="border border-gray-300 bg-blue-50 p-2 text-center font-semibold">
-                          {testResults.rowTotals[rowIndex].toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
+                              </td>
+                            );
+                          })}
+                          <td className="border border-gray-300 bg-blue-50 p-2 text-center font-semibold">
+                            {testResults.rowTotals[rowIndex].toFixed(2)}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
                     <tr>
                       <td className="border border-gray-300 bg-blue-100 p-2 text-sm font-semibold">
                         Column Total
