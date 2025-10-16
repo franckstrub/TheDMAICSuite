@@ -602,9 +602,12 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Expected Frequencies</CardTitle>
+              <CardTitle className="text-base">Cell Analysis</CardTitle>
             </CardHeader>
             <CardContent>
+              <p className="text-sm text-gray-600 mb-3">
+                For each cell: Observed frequency, Expected frequency, and Chi-square contribution
+              </p>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
@@ -626,11 +629,27 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                         <td className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
                           {rowCat}
                         </td>
-                        {variable2Categories.map((colCat, colIndex) => (
-                          <td key={colIndex} className="border border-gray-300 p-2 text-center">
-                            {testResults.expectedFrequencies[rowIndex][colIndex].toFixed(2)}
-                          </td>
-                        ))}
+                        {variable2Categories.map((colCat, colIndex) => {
+                          const observed = getFrequency(rowIndex, colIndex);
+                          const expected = testResults.expectedFrequencies[rowIndex][colIndex];
+                          const contribution = Math.pow(observed - expected, 2) / expected;
+                          
+                          return (
+                            <td key={colIndex} className="border border-gray-300 p-2 text-xs">
+                              <div className="flex flex-col gap-0.5">
+                                <div className="text-gray-700">
+                                  <span className="font-semibold">O:</span> {observed}
+                                </div>
+                                <div className="text-gray-600">
+                                  <span className="font-semibold">E:</span> {expected.toFixed(2)}
+                                </div>
+                                <div className="text-blue-600">
+                                  <span className="font-semibold">χ²:</span> {contribution.toFixed(3)}
+                                </div>
+                              </div>
+                            </td>
+                          );
+                        })}
                         <td className="border border-gray-300 bg-blue-50 p-2 text-center font-semibold">
                           {testResults.rowTotals[rowIndex].toFixed(2)}
                         </td>
