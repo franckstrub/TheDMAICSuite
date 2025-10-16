@@ -1165,7 +1165,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         lsl: capData?.lsl || "",
         usl: capData?.usl || "",
         target: capData?.target || "",
-        zShift: capData?.zShift || 1.5,
+        zShift: capData?.zShift ?? 1.5,
         dataSetTerm: capData?.dataSetTerm || "Long Term"
       };
 
@@ -1212,7 +1212,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     if (!data) return <Badge variant="secondary">No Data</Badge>;
     
     const hasSpecs = data.lsl || data.usl || data.target;
-    const hasConfiguration = data.capabilityIndex && data.zShift;
+    const hasConfiguration = data.capabilityIndex && (data.zShift !== null && data.zShift !== undefined);
     
     if (hasSpecs && hasConfiguration) {
       return <Badge variant="default" className="bg-green-600">Configured</Badge>;
@@ -1392,7 +1392,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const lsl = parseNumericValue(data.lsl, undefined);
     const usl = parseNumericValue(data.usl, undefined);
     const target = parseNumericValue(data.target, undefined);
-    const zShift = data.zShift || 1.5;
+    const zShift = data.zShift ?? 1.5;
     
     if (lsl === 0 && usl === 0) {
       return null; // No specification limits defined
@@ -1518,7 +1518,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         lsl: (data.lsl && typeof data.lsl === 'string' && data.lsl.trim() !== '') ? String(data.lsl) : null,
         usl: (data.usl && typeof data.usl === 'string' && data.usl.trim() !== '') ? String(data.usl) : null,
         target: (data.target && typeof data.target === 'string' && data.target.trim() !== '') ? String(data.target) : null,
-        zShift: Number(data.zShift) || 1.5,
+        zShift: (data.zShift !== undefined && data.zShift !== null && String(data.zShift).trim() !== '') ? Number(data.zShift) : 1.5,
         dataSetTerm: data.dataSetTerm || "Long Term",
         capabilityIndex: data.capabilityIndex || "Z",
         showPercentage: Boolean(data.showPercentage),
@@ -1973,11 +1973,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     <Input
                       type="number"
                       step="0.1"
-                      value={capabilityData[ctq]?.zShift || 1.5}
+                      min="0"
+                      value={capabilityData[ctq]?.zShift ?? undefined}
                       onChange={(e) => {
                         const value = e.target.value;
                         if (!value) {
-                          updateCapabilityField(ctq, "zShift", 1.5);
+                          updateCapabilityField(ctq, "zShift", undefined);
                           return;
                         }
                         
@@ -1996,9 +1997,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                         }
                         
                         const parsed = parseFloat(processedValue);
-                        updateCapabilityField(ctq, "zShift", !isNaN(parsed) ? parsed : 1.5);
+                        updateCapabilityField(ctq, "zShift", (!isNaN(parsed) && parsed >= 0) ? parsed : 1.5);
                       }}
-                      placeholder="1.5"
+                      placeholder="e.g. 1.5"
                     />
                   </div>
                   ) : (
@@ -2070,11 +2071,12 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <Input
                         type="number"
                         step="0.1"
-                        value={capabilityData[ctq]?.zShift || 1.5}
+                        min="0"
+                        value={capabilityData[ctq]?.zShift ?? undefined}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (!value) {
-                            updateCapabilityField(ctq, "zShift", 1.5);
+                            updateCapabilityField(ctq, "zShift", undefined);
                             return;
                           }
                           
@@ -2093,9 +2095,9 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                           }
                           
                           const parsed = parseFloat(processedValue);
-                          updateCapabilityField(ctq, "zShift", !isNaN(parsed) ? parsed : 1.5);
+                          updateCapabilityField(ctq, "zShift", (!isNaN(parsed) && parsed >= 0) ? parsed : 1.5);
                         }}
-                        placeholder="1.5"
+                        placeholder="e.g. 1.5"
                       />
                       </>
                       )}
