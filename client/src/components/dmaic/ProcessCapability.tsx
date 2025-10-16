@@ -1146,8 +1146,8 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         cpk: calculatedStats.cpk || null,
         pp: calculatedStats.pp || null,
         ppk: calculatedStats.ppk || null,
-        zShortTerm: calculatedStats.isNormal ? calculatedStats.zShortTerm || null : calculatedStats.ZequivST || null,
-        zLongTerm: calculatedStats.isNormal ? calculatedStats.zLongTerm || null : calculatedStats.ZequivST || null,
+        zShortTerm: calculatedStats.isNormal ? calculatedStats.zShortTerm || null : calculatedStats.ZequivST ?? null,
+        zLongTerm: calculatedStats.isNormal ? calculatedStats.zLongTerm || null : calculatedStats.ZequivLT || null,
         zLSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.zLSL_LT || null : calculatedStats.zLSL_ST || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.ZequivLSL_LT || null : calculatedStats.ZequivLSL_ST || null),
         zUSL: calculatedStats.isNormal ? (capData.dataSetTerm === "Long Term" ? calculatedStats.zUSL_LT || null : calculatedStats.zUSL_ST || null ) : (capData.dataSetTerm === "Long Term" ? calculatedStats.ZequivUSL_LT || null : calculatedStats.ZequivUSL_ST || null),       
         isNormal: calculatedStats.isNormal,
@@ -1165,7 +1165,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         lsl: capData?.lsl || "",
         usl: capData?.usl || "",
         target: capData?.target || "",
-        zShift: capData?.zShift || 1.5,
+        zShift: capData?.zShift ?? 1.5,
         dataSetTerm: capData?.dataSetTerm || "Long Term"
       };
 
@@ -1392,7 +1392,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
     const lsl = parseNumericValue(data.lsl, undefined);
     const usl = parseNumericValue(data.usl, undefined);
     const target = parseNumericValue(data.target, undefined);
-    const zShift = data.zShift || 1.5;
+    const zShift = data.zShift ?? 1.5;
     
     if (lsl === 0 && usl === 0) {
       return null; // No specification limits defined
@@ -1518,7 +1518,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
         lsl: (data.lsl && typeof data.lsl === 'string' && data.lsl.trim() !== '') ? String(data.lsl) : null,
         usl: (data.usl && typeof data.usl === 'string' && data.usl.trim() !== '') ? String(data.usl) : null,
         target: (data.target && typeof data.target === 'string' && data.target.trim() !== '') ? String(data.target) : null,
-        zShift: Number(data.zShift) || 1.5,
+        zShift: Number(data.zShift) ?? 1.5,
         dataSetTerm: data.dataSetTerm || "Long Term",
         capabilityIndex: data.capabilityIndex || "Z",
         showPercentage: Boolean(data.showPercentage),
@@ -1973,11 +1973,11 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                     <Input
                       type="number"
                       step="0.1"
-                      value={capabilityData[ctq]?.zShift || 1.5}
+                      value={capabilityData[ctq]?.zShift ?? ""}
                       onChange={(e) => {
                         const value = e.target.value;
                         if (!value) {
-                          updateCapabilityField(ctq, "zShift", 1.5);
+                          updateCapabilityField(ctq, "zShift", "");
                           return;
                         }
                         
@@ -2070,7 +2070,7 @@ export default function ProcessCapability({ projectId }: ProcessCapabilityProps)
                       <Input
                         type="number"
                         step="0.1"
-                        value={capabilityData[ctq]?.zShift || 1.5}
+                        value={capabilityData[ctq]?.zShift ?? ""}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (!value) {
