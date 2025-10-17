@@ -313,6 +313,33 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
           color: percentLoading.map(p => p > 100 ? '#ef4444' : p > 80 ? '#f59e0b' : '#10b981')
         },
         name: '% Loading',
+        yaxis: 'y',
+        hovertemplate: '<b>%{x}</b><br>' +
+          '% Loading: %{y:.1f}%<br>' +
+          'Cycle Time: %{customdata:.2f} hours<br>' +
+          '<extra></extra>',
+        customdata: cycleTimes,
+      },
+      {
+        type: 'scatter' as const,
+        mode: 'lines+markers' as const,
+        x: taskNames,
+        y: cycleTimes,
+        marker: {
+          color: '#6366f1',
+          size: 8,
+        },
+        line: {
+          color: '#6366f1',
+          width: 2,
+        },
+        name: 'Cycle Time (hours)',
+        yaxis: 'y2',
+        hovertemplate: '<b>%{x}</b><br>' +
+          'Cycle Time: %{y:.2f} hours<br>' +
+          '% Loading: %{customdata:.1f}%<br>' +
+          '<extra></extra>',
+        customdata: percentLoading,
       },
     ];
   };
@@ -661,7 +688,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                         layout={{
                           title: { text: 'Percent Loading Chart' },
                           xaxis: { title: { text: 'Task' } },
-                          yaxis: { title: { text: '% Loading' } },
+                          yaxis: { 
+                            title: { text: '% Loading' },
+                            side: 'left',
+                          },
+                          yaxis2: {
+                            title: { text: 'Cycle Time (hours)' },
+                            overlaying: 'y',
+                            side: 'right',
+                          },
                           shapes: [
                             {
                               type: 'line',
@@ -675,6 +710,19 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                                 dash: 'dash',
                               },
                             },
+                            {
+                              type: 'line',
+                              x0: -0.5,
+                              y0: taktTime,
+                              x1: taskData.length - 0.5,
+                              y1: taktTime,
+                              yref: 'y2',
+                              line: {
+                                color: '#6366f1',
+                                width: 2,
+                                dash: 'dash',
+                              },
+                            },
                           ],
                           annotations: [
                             {
@@ -682,11 +730,22 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                               y: 100,
                               xref: 'x',
                               yref: 'y',
-                              text: `Takt Time: ${taktTime.toFixed(2)} hours`,
+                              text: `100% Loading`,
                               showarrow: true,
                               arrowhead: 2,
                               ax: 0,
                               ay: -40,
+                            },
+                            {
+                              x: taskData.length - 1,
+                              y: taktTime,
+                              xref: 'x',
+                              yref: 'y2',
+                              text: `Takt Time: ${taktTime.toFixed(2)} hours`,
+                              showarrow: true,
+                              arrowhead: 2,
+                              ax: 0,
+                              ay: 40,
                             },
                           ],
                           autosize: true,
