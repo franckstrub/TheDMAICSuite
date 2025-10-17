@@ -219,7 +219,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
 
     return [
       {
-        type: 'bar',
+        type: 'bar' as const,
         x: taskNames,
         y: percentLoading,
         marker: {

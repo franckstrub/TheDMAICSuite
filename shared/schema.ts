@@ -1951,6 +1951,57 @@ export const insertParetoAnalysisSchema = createInsertSchema(
 export type InsertParetoAnalysis = z.infer<typeof insertParetoAnalysisSchema>;
 export type ParetoAnalysis = typeof paretoAnalysis.$inferSelect;
 
+// Value & Time Analysis for DMAIC Analyze/Improve Phase
+export const valueTimeAnalysis = pgTable(
+  "value_time_analysis",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    
+    // Analysis type selection
+    analysisType: text("analysis_type", { enum: ["value", "time"] })
+      .notNull()
+      .default("value"),
+    
+    // Process Value Analysis fields
+    vaTime: real("va_time"), // Value Added time
+    bvaTime: real("bva_time"), // Business Value Added time
+    nvaTime: real("nva_time"), // Non Value Added time
+    pce: real("pce"), // Process Cycle Efficiency (calculated)
+    
+    // Process Time Analysis fields
+    customerDemand: real("customer_demand"), // Units demanded
+    effectiveWorkingTime: real("effective_working_time"), // Minutes per shift
+    numberOfShifts: integer("number_of_shifts").default(1),
+    taktTime: real("takt_time"), // Calculated Takt Time
+    wip: real("wip"), // Work In Process
+    plt: real("plt"), // Process Lead Time (calculated)
+    
+    // Task data for percent loading chart
+    taskData: jsonb("task_data")
+      .$type<Array<{ taskName: string; cycleTime: number }>>()
+      .default([]),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectAnalysis: unique().on(table.projectId),
+  }),
+);
+
+export const insertValueTimeAnalysisSchema = createInsertSchema(
+  valueTimeAnalysis,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertValueTimeAnalysis = z.infer<typeof insertValueTimeAnalysisSchema>;
+export type ValueTimeAnalysis = typeof valueTimeAnalysis.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",
