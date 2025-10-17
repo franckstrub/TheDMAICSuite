@@ -51,7 +51,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   
   // Process Time Analysis states
   const [customerDemand, setCustomerDemand] = useState<string>("");
-  const [effectiveWorkingTime, setEffectiveWorkingTime] = useState<string>("");
+  const [effectiveWorkingTime, setEffectiveWorkingTime] = useState<string>("8");
   const [numberOfShifts, setNumberOfShifts] = useState<string>("1");
   const [taktTime, setTaktTime] = useState<number | null>(null);
   const [wip, setWip] = useState<string>("");
@@ -109,6 +109,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     const bva = Number(bvaTime.replace(",", ".")) || 0;
     const nva = Number(nvaTime.replace(",", ".")) || 0;
     
+    // Validate non-negative values
+    if (va < 0 || bva < 0 || nva < 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Time values cannot be negative",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const total = va + bva + nva;
     if (total > 0) {
       const calculatedPCE = (va / total) * 100;
@@ -129,14 +139,24 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     const workingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
     const shifts = Number(numberOfShifts) || 1;
     
-    if (demand > 0) {
+    // Validate non-negative values
+    if (demand < 0 || workingTime < 0 || shifts < 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Values cannot be negative",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (demand > 0 && workingTime > 0) {
       const calculatedTaktTime = (workingTime * shifts) / demand;
       setTaktTime(calculatedTaktTime);
     } else {
       setTaktTime(null);
       toast({
         title: "Invalid Input",
-        description: "Customer demand must be greater than 0",
+        description: "Customer demand and effective working time must be greater than 0",
         variant: "destructive",
       });
     }
@@ -145,6 +165,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   // Calculate PLT using Little's Law
   const calculatePLT = () => {
     const wipValue = Number(wip.replace(",", ".")) || 0;
+    
+    // Validate non-negative WIP
+    if (wipValue < 0) {
+      toast({
+        title: "Invalid Input",
+        description: "WIP cannot be negative",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (taktTime && taktTime > 0) {
       const calculatedPLT = wipValue / taktTime;
@@ -266,7 +296,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
               
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="va-time">VA (Value Added) Time</Label>
+                  <Label htmlFor="va-time">VA (Value Added) Time (hours)</Label>
                   <Input
                     id="va-time"
                     type="text"
@@ -277,7 +307,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   />
                 </div>
                 <div>
-                  <Label htmlFor="bva-time">BVA (Business Value Added) Time</Label>
+                  <Label htmlFor="bva-time">BVA (Business Value Added) Time (hours)</Label>
                   <Input
                     id="bva-time"
                     type="text"
@@ -288,7 +318,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   />
                 </div>
                 <div>
-                  <Label htmlFor="nva-time">NVA (Non Value Added) Time</Label>
+                  <Label htmlFor="nva-time">NVA (Non Value Added) Time (hours)</Label>
                   <Input
                     id="nva-time"
                     type="text"
@@ -358,13 +388,13 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       />
                     </div>
                     <div>
-                      <Label htmlFor="working-time">Effective Working Time (min/shift)</Label>
+                      <Label htmlFor="working-time">Effective Working Time (hours/shift)</Label>
                       <Input
                         id="working-time"
                         type="text"
                         value={effectiveWorkingTime}
                         onChange={(e) => setEffectiveWorkingTime(e.target.value.replace(",", "."))}
-                        placeholder="0"
+                        placeholder="8"
                         data-testid="input-working-time"
                       />
                     </div>
@@ -388,7 +418,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   {taktTime !== null && (
                     <div className="bg-blue-50 p-4 rounded-md">
                       <p className="text-lg font-semibold text-blue-700">
-                        Takt Time: {taktTime.toFixed(2)} min/unit
+                        Takt Time: {taktTime.toFixed(2)} hours/unit
                       </p>
                     </div>
                   )}
@@ -428,7 +458,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   {plt !== null && (
                     <div className="bg-green-50 p-4 rounded-md">
                       <p className="text-lg font-semibold text-green-700">
-                        Process Lead Time: {plt.toFixed(2)} minutes
+                        Process Lead Time: {plt.toFixed(2)} hours
                       </p>
                     </div>
                   )}
@@ -458,7 +488,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                           />
                         </div>
                         <div className="flex-1">
-                          <Label>Cycle Time (min)</Label>
+                          <Label>Cycle Time (hours)</Label>
                           <Input
                             type="text"
                             value={task.cycleTime || ""}
@@ -516,7 +546,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                               y: 100,
                               xref: 'x',
                               yref: 'y',
-                              text: `Takt Time: ${taktTime.toFixed(2)} min`,
+                              text: `Takt Time: ${taktTime.toFixed(2)} hours`,
                               showarrow: true,
                               arrowhead: 2,
                               ax: 0,
