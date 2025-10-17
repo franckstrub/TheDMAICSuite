@@ -214,16 +214,45 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     };
 
     if (analysisType === "value") {
-      dataToSave.vaTime = Number(vaTime.replace(",", ".")) || 0;
-      dataToSave.bvaTime = Number(bvaTime.replace(",", ".")) || 0;
-      dataToSave.nvaTime = Number(nvaTime.replace(",", ".")) || 0;
+      const va = Number(vaTime.replace(",", ".")) || 0;
+      const bva = Number(bvaTime.replace(",", ".")) || 0;
+      const nva = Number(nvaTime.replace(",", ".")) || 0;
+      
+      // Validate non-negative values for Process Value Analysis
+      if (va < 0 || bva < 0 || nva < 0) {
+        toast({
+          title: "Invalid Input",
+          description: "Time values cannot be negative",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      dataToSave.vaTime = va;
+      dataToSave.bvaTime = bva;
+      dataToSave.nvaTime = nva;
       dataToSave.pce = pce || undefined;
     } else {
-      dataToSave.customerDemand = Number(customerDemand.replace(",", ".")) || 0;
-      dataToSave.effectiveWorkingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
-      dataToSave.numberOfShifts = Number(numberOfShifts) || 1;
+      const demand = Number(customerDemand.replace(",", ".")) || 0;
+      const workingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
+      const shifts = Number(numberOfShifts) || 1;
+      const wipValue = Number(wip.replace(",", ".")) || 0;
+      
+      // Validate non-negative values for Process Time Analysis
+      if (demand < 0 || workingTime < 0 || shifts < 0 || wipValue < 0) {
+        toast({
+          title: "Invalid Input",
+          description: "Values cannot be negative",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      dataToSave.customerDemand = demand;
+      dataToSave.effectiveWorkingTime = workingTime;
+      dataToSave.numberOfShifts = shifts;
       dataToSave.taktTime = taktTime || undefined;
-      dataToSave.wip = Number(wip.replace(",", ".")) || 0;
+      dataToSave.wip = wipValue;
       dataToSave.plt = plt || undefined;
       dataToSave.taskData = taskData;
     }
