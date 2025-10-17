@@ -105,15 +105,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       setVaTime(analysisData.vaTime?.toString() || "");
       setBvaTime(analysisData.bvaTime?.toString() || "");
       setNvaTime(analysisData.nvaTime?.toString() || "");
-      setPce(analysisData.pce || null);
+      // Don't set calculated values from DB - let useEffect recalculate them
       setCustomerDemand(analysisData.customerDemand?.toString() || "");
       setDemandPeriodicity(analysisData.demandPeriodicity || "year");
       setWorkingDaysPerPeriod(analysisData.workingDaysPerPeriod?.toString() || "");
       setEffectiveWorkingTime(analysisData.effectiveWorkingTime?.toString() || "8");
       setNumberOfShifts(analysisData.numberOfShifts?.toString() || "1");
-      setTaktTime(analysisData.taktTime || null);
+      // Don't set calculated taktTime from DB - let useEffect recalculate it
       setWip(analysisData.wip?.toString() || "");
-      setPlt(analysisData.plt || null);
+      // Don't set calculated plt from DB - let useEffect recalculate it
       setTaskData(analysisData.taskData || [{ taskName: "", cycleTime: 0 }]);
     }
   }, [analysisData]);
