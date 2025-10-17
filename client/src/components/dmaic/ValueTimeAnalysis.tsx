@@ -111,19 +111,21 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     }
   }, [analysisData]);
 
-  // Calculate PCE for Process Value Analysis
-  const calculatePCE = () => {
+  // Auto-calculate PCE when VA, BVA, or NVA changes
+  useEffect(() => {
     const va = Number(vaTime.replace(",", ".")) || 0;
     const bva = Number(bvaTime.replace(",", ".")) || 0;
     const nva = Number(nvaTime.replace(",", ".")) || 0;
     
+    // Skip if all values are zero or empty
+    if (va === 0 && bva === 0 && nva === 0) {
+      setPce(null);
+      return;
+    }
+    
     // Validate non-negative values
     if (va < 0 || bva < 0 || nva < 0) {
-      toast({
-        title: "Invalid Input",
-        description: "Time values cannot be negative",
-        variant: "destructive",
-      });
+      setPce(null);
       return;
     }
     
@@ -133,27 +135,24 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       setPce(calculatedPCE);
     } else {
       setPce(null);
-      toast({
-        title: "Invalid Input",
-        description: "Total time must be greater than 0",
-        variant: "destructive",
-      });
     }
-  };
+  }, [vaTime, bvaTime, nvaTime]);
 
-  // Calculate Takt Time for Process Time Analysis
-  const calculateTaktTime = () => {
+  // Auto-calculate Takt Time when inputs change
+  useEffect(() => {
     const demand = Number(customerDemand.replace(",", ".")) || 0;
     const workingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
     const shifts = Number(numberOfShifts) || 1;
     
+    // Skip if essential values are zero
+    if (demand === 0 || workingTime === 0) {
+      setTaktTime(null);
+      return;
+    }
+    
     // Validate non-negative values
     if (demand < 0 || workingTime < 0 || shifts < 0) {
-      toast({
-        title: "Invalid Input",
-        description: "Values cannot be negative",
-        variant: "destructive",
-      });
+      setTaktTime(null);
       return;
     }
     
@@ -162,25 +161,22 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       setTaktTime(calculatedTaktTime);
     } else {
       setTaktTime(null);
-      toast({
-        title: "Invalid Input",
-        description: "Customer demand and effective working time must be greater than 0",
-        variant: "destructive",
-      });
     }
-  };
+  }, [customerDemand, effectiveWorkingTime, numberOfShifts]);
 
-  // Calculate PLT using Little's Law
-  const calculatePLT = () => {
+  // Auto-calculate PLT when WIP or Takt Time changes
+  useEffect(() => {
     const wipValue = Number(wip.replace(",", ".")) || 0;
+    
+    // Skip if WIP is zero or empty
+    if (wipValue === 0) {
+      setPlt(null);
+      return;
+    }
     
     // Validate non-negative WIP
     if (wipValue < 0) {
-      toast({
-        title: "Invalid Input",
-        description: "WIP cannot be negative",
-        variant: "destructive",
-      });
+      setPlt(null);
       return;
     }
     
@@ -188,13 +184,9 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       const calculatedPLT = wipValue / taktTime;
       setPlt(calculatedPLT);
     } else {
-      toast({
-        title: "Calculate Takt Time First",
-        description: "Please calculate Takt Time before calculating PLT",
-        variant: "destructive",
-      });
+      setPlt(null);
     }
-  };
+  }, [wip, taktTime]);
 
   // Add task
   const addTask = () => {
@@ -240,13 +232,11 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       dataToSave.vaTime = va;
       dataToSave.bvaTime = bva;
       dataToSave.nvaTime = nva;
-      dataToSave.pce = pce || undefined;
     } else {
       // Clear value analysis data if not selected
       dataToSave.vaTime = undefined;
       dataToSave.bvaTime = undefined;
       dataToSave.nvaTime = undefined;
-      dataToSave.pce = undefined;
     }
 
     // Save Process Time Analysis data if selected
@@ -269,9 +259,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       dataToSave.customerDemand = demand;
       dataToSave.effectiveWorkingTime = workingTime;
       dataToSave.numberOfShifts = shifts;
-      dataToSave.taktTime = taktTime || undefined;
       dataToSave.wip = wipValue;
-      dataToSave.plt = plt || undefined;
       dataToSave.taskData = taskData;
     } else {
       // Clear time analysis data if not selected
@@ -361,9 +349,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   <Label htmlFor="va-time">VA (Value Added) Time (hours)</Label>
                   <Input
                     id="va-time"
-                    type="text"
+                    type="number"
+                    min="0"
+                    step="any"
                     value={vaTime}
-                    onChange={(e) => setVaTime(e.target.value.replace(",", "."))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || Number(value) >= 0) {
+                        setVaTime(value);
+                      }
+                    }}
                     placeholder="0"
                     data-testid="input-va-time"
                   />
@@ -372,9 +367,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   <Label htmlFor="bva-time">BVA (Business Value Added) Time (hours)</Label>
                   <Input
                     id="bva-time"
-                    type="text"
+                    type="number"
+                    min="0"
+                    step="any"
                     value={bvaTime}
-                    onChange={(e) => setBvaTime(e.target.value.replace(",", "."))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || Number(value) >= 0) {
+                        setBvaTime(value);
+                      }
+                    }}
                     placeholder="0"
                     data-testid="input-bva-time"
                   />
@@ -383,18 +385,21 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   <Label htmlFor="nva-time">NVA (Non Value Added) Time (hours)</Label>
                   <Input
                     id="nva-time"
-                    type="text"
+                    type="number"
+                    min="0"
+                    step="any"
                     value={nvaTime}
-                    onChange={(e) => setNvaTime(e.target.value.replace(",", "."))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || Number(value) >= 0) {
+                        setNvaTime(value);
+                      }
+                    }}
                     placeholder="0"
                     data-testid="input-nva-time"
                   />
                 </div>
               </div>
-
-              <Button onClick={calculatePCE} data-testid="button-calculate-pce">
-                Calculate PCE
-              </Button>
 
               {pce !== null && (
                 <Card className="bg-blue-50">
@@ -473,10 +478,6 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                     </div>
                   </div>
 
-                  <Button onClick={calculateTaktTime} data-testid="button-calculate-takt">
-                    Calculate Takt Time
-                  </Button>
-
                   {taktTime !== null && (
                     <div className="bg-blue-50 p-4 rounded-md">
                       <p className="text-lg font-semibold text-blue-700">
@@ -508,14 +509,6 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       data-testid="input-wip"
                     />
                   </div>
-
-                  <Button 
-                    onClick={calculatePLT} 
-                    disabled={!taktTime}
-                    data-testid="button-calculate-plt"
-                  >
-                    Calculate PLT
-                  </Button>
 
                   {plt !== null && (
                     <div className="bg-green-50 p-4 rounded-md">
