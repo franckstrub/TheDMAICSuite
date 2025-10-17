@@ -447,9 +447,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       <Label htmlFor="customer-demand">Customer Demand (units)</Label>
                       <Input
                         id="customer-demand"
-                        type="text"
+                        type="number"
+                        min="0"
+                        step="any"
                         value={customerDemand}
-                        onChange={(e) => setCustomerDemand(e.target.value.replace(",", "."))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || Number(value) >= 0) {
+                            setCustomerDemand(value);
+                          }
+                        }}
                         placeholder="0"
                         data-testid="input-customer-demand"
                       />
@@ -458,9 +465,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       <Label htmlFor="working-time">Effective Working Time (hours/shift)</Label>
                       <Input
                         id="working-time"
-                        type="text"
+                        type="number"
+                        min="0"
+                        step="any"
                         value={effectiveWorkingTime}
-                        onChange={(e) => setEffectiveWorkingTime(e.target.value.replace(",", "."))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || Number(value) >= 0) {
+                            setEffectiveWorkingTime(value);
+                          }
+                        }}
                         placeholder="8"
                         data-testid="input-working-time"
                       />
@@ -470,8 +484,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       <Input
                         id="shifts"
                         type="number"
+                        min="0"
+                        step="1"
                         value={numberOfShifts}
-                        onChange={(e) => setNumberOfShifts(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || Number(value) >= 0) {
+                            setNumberOfShifts(value);
+                          }
+                        }}
                         placeholder="1"
                         data-testid="input-shifts"
                       />
@@ -502,9 +523,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                     <Label htmlFor="wip">WIP (Work In Process - units)</Label>
                     <Input
                       id="wip"
-                      type="text"
+                      type="number"
+                      min="0"
+                      step="any"
                       value={wip}
-                      onChange={(e) => setWip(e.target.value.replace(",", "."))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || Number(value) >= 0) {
+                          setWip(value);
+                        }
+                      }}
                       placeholder="0"
                       data-testid="input-wip"
                     />
@@ -545,11 +573,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                         <div className="flex-1">
                           <Label>Cycle Time (hours)</Label>
                           <Input
-                            type="text"
+                            type="number"
+                            min="0"
+                            step="any"
                             value={task.cycleTime || ""}
                             onChange={(e) => {
-                              const val = e.target.value.replace(",", ".");
-                              updateTask(index, 'cycleTime', Number(val) || 0);
+                              const value = e.target.value;
+                              if (value === "" || Number(value) >= 0) {
+                                updateTask(index, 'cycleTime', Number(value) || 0);
+                              }
                             }}
                             placeholder="0"
                             data-testid={`input-task-cycle-${index}`}
