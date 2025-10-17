@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Plot from "react-plotly.js";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ValueTimeAnalysisProps {
   projectId: number;
@@ -41,7 +41,9 @@ interface ValueTimeData {
 export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps) {
   const { toast } = useToast();
   
-  const [analysisType, setAnalysisType] = useState<"value" | "time">("value");
+  // Analysis selection states
+  const [showValueAnalysis, setShowValueAnalysis] = useState<boolean>(false);
+  const [showTimeAnalysis, setShowTimeAnalysis] = useState<boolean>(false);
   
   // Process Value Analysis states
   const [vaTime, setVaTime] = useState<string>("");
@@ -88,13 +90,19 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   // Load saved data
   useEffect(() => {
     if (analysisData) {
-      setAnalysisType(analysisData.analysisType || "value");
+      // Determine which analyses to show based on saved data
+      const hasValueData = analysisData.vaTime !== null && analysisData.vaTime !== undefined;
+      const hasTimeData = analysisData.customerDemand !== null && analysisData.customerDemand !== undefined;
+      
+      setShowValueAnalysis(hasValueData);
+      setShowTimeAnalysis(hasTimeData);
+      
       setVaTime(analysisData.vaTime?.toString() || "");
       setBvaTime(analysisData.bvaTime?.toString() || "");
       setNvaTime(analysisData.nvaTime?.toString() || "");
       setPce(analysisData.pce || null);
       setCustomerDemand(analysisData.customerDemand?.toString() || "");
-      setEffectiveWorkingTime(analysisData.effectiveWorkingTime?.toString() || "");
+      setEffectiveWorkingTime(analysisData.effectiveWorkingTime?.toString() || "8");
       setNumberOfShifts(analysisData.numberOfShifts?.toString() || "1");
       setTaktTime(analysisData.taktTime || null);
       setWip(analysisData.wip?.toString() || "");
@@ -210,10 +218,11 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   const handleSave = () => {
     const dataToSave: Partial<ValueTimeData> = {
       projectId,
-      analysisType,
+      analysisType: showValueAnalysis ? "value" : "time", // Keep for compatibility
     };
 
-    if (analysisType === "value") {
+    // Save Process Value Analysis data if selected
+    if (showValueAnalysis) {
       const va = Number(vaTime.replace(",", ".")) || 0;
       const bva = Number(bvaTime.replace(",", ".")) || 0;
       const nva = Number(nvaTime.replace(",", ".")) || 0;
@@ -233,6 +242,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       dataToSave.nvaTime = nva;
       dataToSave.pce = pce || undefined;
     } else {
+      // Clear value analysis data if not selected
+      dataToSave.vaTime = undefined;
+      dataToSave.bvaTime = undefined;
+      dataToSave.nvaTime = undefined;
+      dataToSave.pce = undefined;
+    }
+
+    // Save Process Time Analysis data if selected
+    if (showTimeAnalysis) {
       const demand = Number(customerDemand.replace(",", ".")) || 0;
       const workingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
       const shifts = Number(numberOfShifts) || 1;
@@ -255,6 +273,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       dataToSave.wip = wipValue;
       dataToSave.plt = plt || undefined;
       dataToSave.taskData = taskData;
+    } else {
+      // Clear time analysis data if not selected
+      dataToSave.customerDemand = undefined;
+      dataToSave.effectiveWorkingTime = undefined;
+      dataToSave.numberOfShifts = undefined;
+      dataToSave.taktTime = undefined;
+      dataToSave.wip = undefined;
+      dataToSave.plt = undefined;
+      dataToSave.taskData = [];
     }
 
     saveMutation.mutate(dataToSave);
@@ -298,25 +325,31 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
         <div className="space-y-6">
           {/* Analysis Type Selection */}
           <div>
-            <Label>Select Analysis Type</Label>
-            <RadioGroup 
-              value={analysisType} 
-              onValueChange={(value: "value" | "time") => setAnalysisType(value)}
-              className="flex gap-4 mt-2"
-            >
+            <Label>Select Analysis Type (you can select both)</Label>
+            <div className="flex gap-6 mt-2">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="value" id="value" data-testid="radio-value-analysis" />
-                <Label htmlFor="value" className="cursor-pointer">Process Value Analysis</Label>
+                <Checkbox
+                  id="value-analysis"
+                  checked={showValueAnalysis}
+                  onCheckedChange={(checked) => setShowValueAnalysis(checked === true)}
+                  data-testid="checkbox-value-analysis"
+                />
+                <Label htmlFor="value-analysis" className="cursor-pointer">Process Value Analysis</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="time" id="time" data-testid="radio-time-analysis" />
-                <Label htmlFor="time" className="cursor-pointer">Process Time Analysis</Label>
+                <Checkbox
+                  id="time-analysis"
+                  checked={showTimeAnalysis}
+                  onCheckedChange={(checked) => setShowTimeAnalysis(checked === true)}
+                  data-testid="checkbox-time-analysis"
+                />
+                <Label htmlFor="time-analysis" className="cursor-pointer">Process Time Analysis</Label>
               </div>
-            </RadioGroup>
+            </div>
           </div>
 
           {/* Process Value Analysis */}
-          {analysisType === "value" && (
+          {showValueAnalysis && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Process Value Analysis</h3>
               <p className="text-sm text-gray-600">
@@ -390,7 +423,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
           )}
 
           {/* Process Time Analysis */}
-          {analysisType === "time" && (
+          {showTimeAnalysis && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold">Process Time Analysis</h3>
               
