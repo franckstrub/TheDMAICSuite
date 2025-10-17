@@ -40,6 +40,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
   const [variable2Categories, setVariable2Categories] = useState<string[]>(["Category 1", "Category 2"]);
   const [observedFrequencies, setObservedFrequencies] = useState<{ [key: string]: number }>({});
   const [testResults, setTestResults] = useState<any>(null);
+  const [percentageType, setPercentageType] = useState<"row" | "column" | "total">("row");
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading } = useQuery({
@@ -634,13 +635,28 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
               <CardTitle className="text-base">Cell Analysis</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                For each cell: Observed frequency, Expected frequency, and Chi-square contribution. 
-                <span className="inline-flex items-center gap-1 ml-2">
-                  <span className="inline-block w-3 h-3 bg-amber-200 border border-amber-400"></span>
-                  <span className="text-xs">Top 3 contributors highlighted</span>
-                </span>
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-gray-600">
+                  For each cell: Observed frequency, Expected frequency, Chi-square contribution, and Percentage. 
+                  <span className="inline-flex items-center gap-1 ml-2">
+                    <span className="inline-block w-3 h-3 bg-amber-200 border border-amber-400"></span>
+                    <span className="text-xs">Top 3 contributors highlighted</span>
+                  </span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm whitespace-nowrap">Percentage Type:</Label>
+                  <Select value={percentageType} onValueChange={(value: any) => setPercentageType(value)}>
+                    <SelectTrigger className="w-[180px]" data-testid="select-percentage-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="row">Row %</SelectItem>
+                      <SelectItem value="column">Column %</SelectItem>
+                      <SelectItem value="total">Total %</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
@@ -687,6 +703,22 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                             const isTopContributor = top3.includes(`${rowIndex}_${colIndex}`);
                             const rank = top3.indexOf(`${rowIndex}_${colIndex}`) + 1;
                             
+                            // Calculate percentage based on selected type
+                            let percentage = 0;
+                            if (percentageType === "row") {
+                              percentage = testResults.rowTotals[rowIndex] > 0 
+                                ? (observed / testResults.rowTotals[rowIndex]) * 100 
+                                : 0;
+                            } else if (percentageType === "column") {
+                              percentage = testResults.columnTotals[colIndex] > 0 
+                                ? (observed / testResults.columnTotals[colIndex]) * 100 
+                                : 0;
+                            } else {
+                              percentage = testResults.grandTotal > 0 
+                                ? (observed / testResults.grandTotal) * 100 
+                                : 0;
+                            }
+                            
                             return (
                               <td 
                                 key={colIndex} 
@@ -708,6 +740,9 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                                         #{rank}
                                       </Badge>
                                     )}
+                                  </div>
+                                  <div className="text-green-700">
+                                    <span className="font-semibold">%:</span> {percentage.toFixed(1)}%
                                   </div>
                                 </div>
                               </td>
