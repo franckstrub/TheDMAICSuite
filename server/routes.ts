@@ -36,6 +36,7 @@ import {
   insertMultiVariChartConfigSchema,
   insertParetoAnalysisSchema,
   insertChiSquareIndependenceConfigSchema,
+  insertValueTimeAnalysisSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -89,6 +90,7 @@ import {
   multiVariChartConfig,
   paretoAnalysis,
   chiSquareIndependenceConfig,
+  valueTimeAnalysis,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -6570,6 +6572,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(201).json({ analysis: savedAnalysis });
       } catch (err) {
         console.error("Pareto analysis save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Value & Time Analysis Routes
+  app.get(
+    "/api/projects/:projectId/value-time-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const [analysis] = await db
+          .select()
+          .from(valueTimeAnalysis)
+          .where(
+            and(
+              eq(valueTimeAnalysis.projectId, projectId),
+              eq(valueTimeAnalysis.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (!analysis) {
+          return res.status(404).json({ message: "Value & Time analysis not found" });
+        }
+
+        return res.json(analysis);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/value-time-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const analysisData = {
+          projectId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertValueTimeAnalysisSchema.parse(analysisData);
+
+        const [existingAnalysis] = await db
+          .select()
+          .from(valueTimeAnalysis)
+          .where(
+            and(
+              eq(valueTimeAnalysis.projectId, projectId),
+              eq(valueTimeAnalysis.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        let savedAnalysis;
+        if (existingAnalysis) {
+          [savedAnalysis] = await db
+            .update(valueTimeAnalysis)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(eq(valueTimeAnalysis.id, existingAnalysis.id))
+            .returning();
+        } else {
+          [savedAnalysis] = await db
+            .insert(valueTimeAnalysis)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedAnalysis);
+      } catch (err) {
+        console.error("Value & Time analysis save error:", err);
         return handleErrors(err, res);
       }
     },
