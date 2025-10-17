@@ -1974,7 +1974,9 @@ export const valueTimeAnalysis = pgTable(
     
     // Process Time Analysis fields
     customerDemand: real("customer_demand"), // Units demanded
-    effectiveWorkingTime: real("effective_working_time"), // Minutes per shift
+    demandPeriodicity: text("demand_periodicity", { enum: ["month", "year"] }).default("year"), // Periodicity of customer demand
+    workingDaysPerPeriod: real("working_days_per_period"), // Number of working days per period
+    effectiveWorkingTime: real("effective_working_time"), // Hours per shift
     numberOfShifts: integer("number_of_shifts").default(1),
     taktTime: real("takt_time"), // Calculated Takt Time
     wip: real("wip"), // Work In Process

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -30,6 +31,8 @@ interface ValueTimeData {
   pce?: number;
   // Process Time Analysis fields
   customerDemand?: number;
+  demandPeriodicity?: "month" | "year";
+  workingDaysPerPeriod?: number;
   effectiveWorkingTime?: number;
   numberOfShifts?: number;
   taktTime?: number;
@@ -53,6 +56,8 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   
   // Process Time Analysis states
   const [customerDemand, setCustomerDemand] = useState<string>("");
+  const [demandPeriodicity, setDemandPeriodicity] = useState<"month" | "year">("year");
+  const [workingDaysPerPeriod, setWorkingDaysPerPeriod] = useState<string>("");
   const [effectiveWorkingTime, setEffectiveWorkingTime] = useState<string>("8");
   const [numberOfShifts, setNumberOfShifts] = useState<string>("1");
   const [taktTime, setTaktTime] = useState<number | null>(null);
@@ -102,6 +107,8 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       setNvaTime(analysisData.nvaTime?.toString() || "");
       setPce(analysisData.pce || null);
       setCustomerDemand(analysisData.customerDemand?.toString() || "");
+      setDemandPeriodicity(analysisData.demandPeriodicity || "year");
+      setWorkingDaysPerPeriod(analysisData.workingDaysPerPeriod?.toString() || "");
       setEffectiveWorkingTime(analysisData.effectiveWorkingTime?.toString() || "8");
       setNumberOfShifts(analysisData.numberOfShifts?.toString() || "1");
       setTaktTime(analysisData.taktTime || null);
@@ -143,26 +150,27 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     const demand = Number(customerDemand.replace(",", ".")) || 0;
     const workingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
     const shifts = Number(numberOfShifts) || 1;
+    const workingDays = Number(workingDaysPerPeriod.replace(",", ".")) || 0;
     
     // Skip if essential values are zero
-    if (demand === 0 || workingTime === 0) {
+    if (demand === 0 || workingTime === 0 || workingDays === 0) {
       setTaktTime(null);
       return;
     }
     
     // Validate non-negative values
-    if (demand < 0 || workingTime < 0 || shifts < 0) {
+    if (demand < 0 || workingTime < 0 || shifts < 0 || workingDays < 0) {
       setTaktTime(null);
       return;
     }
     
-    if (demand > 0 && workingTime > 0) {
-      const calculatedTaktTime = (workingTime * shifts) / demand;
+    if (demand > 0 && workingTime > 0 && workingDays > 0) {
+      const calculatedTaktTime = (workingTime * shifts * workingDays) / demand;
       setTaktTime(calculatedTaktTime);
     } else {
       setTaktTime(null);
     }
-  }, [customerDemand, effectiveWorkingTime, numberOfShifts]);
+  }, [customerDemand, effectiveWorkingTime, numberOfShifts, workingDaysPerPeriod]);
 
   // Auto-calculate PLT when WIP or Takt Time changes
   useEffect(() => {
@@ -242,12 +250,13 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     // Save Process Time Analysis data if selected
     if (showTimeAnalysis) {
       const demand = Number(customerDemand.replace(",", ".")) || 0;
+      const workingDays = Number(workingDaysPerPeriod.replace(",", ".")) || 0;
       const workingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
       const shifts = Number(numberOfShifts) || 1;
       const wipValue = Number(wip.replace(",", ".")) || 0;
       
       // Validate non-negative values for Process Time Analysis
-      if (demand < 0 || workingTime < 0 || shifts < 0 || wipValue < 0) {
+      if (demand < 0 || workingDays < 0 || workingTime < 0 || shifts < 0 || wipValue < 0) {
         toast({
           title: "Invalid Input",
           description: "Values cannot be negative",
@@ -257,6 +266,8 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       }
       
       dataToSave.customerDemand = demand;
+      dataToSave.demandPeriodicity = demandPeriodicity;
+      dataToSave.workingDaysPerPeriod = workingDays;
       dataToSave.effectiveWorkingTime = workingTime;
       dataToSave.numberOfShifts = shifts;
       dataToSave.wip = wipValue;
@@ -264,6 +275,8 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     } else {
       // Clear time analysis data if not selected
       dataToSave.customerDemand = undefined;
+      dataToSave.demandPeriodicity = undefined;
+      dataToSave.workingDaysPerPeriod = undefined;
       dataToSave.effectiveWorkingTime = undefined;
       dataToSave.numberOfShifts = undefined;
       dataToSave.taktTime = undefined;
@@ -439,10 +452,10 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-gray-600">
-                    Takt Time = (Effective Working Time × Number of Shifts) / Customer Demand
+                    Takt Time = (Effective Working Time × Number of Shifts × Working Days per Period) / Customer Demand
                   </p>
                   
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="customer-demand">Customer Demand (units)</Label>
                       <Input
@@ -459,6 +472,42 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                         }}
                         placeholder="0"
                         data-testid="input-customer-demand"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="demand-periodicity">Demand Periodicity</Label>
+                      <Select
+                        value={demandPeriodicity}
+                        onValueChange={(value: "month" | "year") => setDemandPeriodicity(value)}
+                      >
+                        <SelectTrigger id="demand-periodicity" data-testid="select-demand-periodicity">
+                          <SelectValue placeholder="Select periodicity" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="month">Per Month</SelectItem>
+                          <SelectItem value="year">Per Year</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="working-days">Working Days per {demandPeriodicity === "month" ? "Month" : "Year"}</Label>
+                      <Input
+                        id="working-days"
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={workingDaysPerPeriod}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || Number(value) >= 0) {
+                            setWorkingDaysPerPeriod(value);
+                          }
+                        }}
+                        placeholder="0"
+                        data-testid="input-working-days"
                       />
                     </div>
                     <div>
