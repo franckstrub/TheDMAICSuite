@@ -263,8 +263,17 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
   const setupContent = (
     <div className="space-y-4">
       <p className="text-sm text-gray-500 mb-4">
-        Test whether two categorical variables are independent. Configure the variables and their categories.
+        Test whether two categorical variables are independent. Configure the variables and their categories (13 categories maximum).
       </p>
+
+      <div className="space-y-2">
+        <div className="border border-gray-300 rounded-sm p-1 shadow-sm bg-white">
+          H₀: categorical variables are independent (no association, no difference in observations)
+        </div>
+        <div className="border border-gray-300 rounded-sm p-1 shadow-sm bg-white">
+          Hₐ: categorical variables are dependent (association & difference in observations)
+        </div>
+      </div>
 
       <div>
         <Label htmlFor="significanceLevel">Significance Level (α)</Label>
@@ -527,10 +536,22 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
         <>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Test Statistics</CardTitle>
+              <CardTitle className="text-base">Chi Square (χ²) Test Statistics</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm text-gray-600">Variable 1: </Label>
+                  <p className="text-lg font-semibold" data-testid="text-chi-square-variable1">
+                    {variable1Name} <span className='text-sm'>({variable1Categories.length} categories)</span>
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Variable 2: </Label>
+                  <p className="text-lg font-semibold" data-testid="text-chi-square-variable2">
+                    {variable2Name} <span className='text-sm'>({variable2Categories.length} categories)</span>
+                  </p>
+                </div>
                 <div>
                   <Label className="text-sm text-gray-600">Chi-Square Statistic (χ²)</Label>
                   <p className="text-lg font-semibold" data-testid="text-chi-square-statistic">
@@ -550,7 +571,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-600">Critical Value (α = {significanceLevel})</Label>
+                  <Label className="text-sm text-gray-600">Chi Square Critical Value (χ²<sub>critical</sub>) (α = {significanceLevel})</Label>
                   <p className="text-lg font-semibold" data-testid="text-critical-value">
                     {testResults.criticalValue.toFixed(4)}
                   </p>
@@ -565,13 +586,21 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
             </CardHeader>
             <CardContent>
               <Badge
-                variant={testResults.isSignificant ? "destructive" : "default"}
-                className="text-sm p-2"
+                variant="default"
+                className={`mt-4 mb-4 p-2 font-medium text-sm text-center justify-center ${testResults.pValue < parseFloat(significanceLevel) ? "text-white bg-blue-500 " : "text-white bg-blue-500"}`}
                 data-testid="badge-decision"
-              >
-                {testResults.isSignificant
-                  ? "Reject H₀ - Variables are dependent"
-                  : "Fail to Reject H₀ - Variables are independent"}
+                title={
+                  testResults.pValue < parseFloat(significanceLevel)
+                    ? `Reject H₀. Accept Ha (P-Value ${testResults.pValue.toFixed(6)} < ${significanceLevel}). Categorical variables are dependent (association). At least one cell is significantly ≠ the other cells!`
+                    : `Accept H₀. Reject Ha (P-Value ${testResults.pValue.toFixed(6)} ≥ ${significanceLevel}). Categorical variables are independent (no association). There are no significant differences between cells!`
+                }
+                >
+                H₀: Categorical variables are independent (no association). There are no differences between cells<br></br>
+                Ha: Categorical variables are dependent (association). At least one cell is ≠ the other cells<br></br>
+                {testResults.pValue < parseFloat(significanceLevel)
+                  ? `Result => Reject H₀. Accept Ha (P-Value ${testResults.pValue.toFixed(6)} < ${significanceLevel}). Categorical variables are dependent (association). At least one cell is significantly ≠ the other cells!`
+                  : `Result => Accept H₀. Reject Ha (P-Value ${testResults.pValue.toFixed(6)} ≥ ${significanceLevel}). Categorical variables are independent (no association). There are no significant differences between cells!`}
+                
               </Badge>
               <p className="text-sm text-gray-600 mt-2">
                 {testResults.isSignificant
