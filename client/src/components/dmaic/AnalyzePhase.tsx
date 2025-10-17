@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RootCauseAnalysis from "./RootCauseAnalysis";
 import AttributeCTQAnalysis from "./AttributeCTQAnalysis";
 import ContinuousCTQAnalysis from "./ContinuousCTQAnalysis";
+import ValueTimeAnalysis from "./ValueTimeAnalysis"
 import CauseEffectMatrix from "./CauseEffectMatrix"
 import AnalyzeGateReviewValidation from "./AnalyzeGateReviewValidation";
 //import FishboneIcon from '@/assets/fishboneicon.svg';
@@ -211,6 +212,16 @@ export default function AnalyzePhase() {
                 ))}
             </div>
           </Tabs>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">                
+            Process Value and Time Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>       
+          <ValueTimeAnalysis projectId={projectId}/>          
         </CardContent>
       </Card>
       <Card>
