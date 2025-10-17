@@ -679,8 +679,8 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                       variable1Categories.forEach((_, rowIndex) => {
                         variable2Categories.forEach((_, colIndex) => {
                           const observed = getFrequency(rowIndex, colIndex);
-                          const expected = testResults.expectedFrequencies[rowIndex][colIndex];
-                          const contribution = Math.pow(observed - expected, 2) / expected;
+                          const expected = testResults.expectedFrequencies?.[rowIndex]?.[colIndex] ?? 0;
+                          const contribution = expected > 0 ? Math.pow(observed - expected, 2) / expected : 0;
                           allContributions.push({ row: rowIndex, col: colIndex, value: contribution });
                         });
                       });
@@ -698,25 +698,22 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                           </td>
                           {variable2Categories.map((colCat, colIndex) => {
                             const observed = getFrequency(rowIndex, colIndex);
-                            const expected = testResults.expectedFrequencies[rowIndex][colIndex];
-                            const contribution = Math.pow(observed - expected, 2) / expected;
+                            const expected = testResults.expectedFrequencies?.[rowIndex]?.[colIndex] ?? 0;
+                            const contribution = expected > 0 ? Math.pow(observed - expected, 2) / expected : 0;
                             const isTopContributor = top3.includes(`${rowIndex}_${colIndex}`);
                             const rank = top3.indexOf(`${rowIndex}_${colIndex}`) + 1;
                             
                             // Calculate percentage based on selected type
                             let percentage = 0;
                             if (percentageType === "row") {
-                              percentage = testResults.rowTotals[rowIndex] > 0 
-                                ? (observed / testResults.rowTotals[rowIndex]) * 100 
-                                : 0;
+                              const rowTotal = testResults.rowTotals?.[rowIndex] ?? 0;
+                              percentage = rowTotal > 0 ? (observed / rowTotal) * 100 : 0;
                             } else if (percentageType === "column") {
-                              percentage = testResults.columnTotals[colIndex] > 0 
-                                ? (observed / testResults.columnTotals[colIndex]) * 100 
-                                : 0;
+                              const colTotal = testResults.columnTotals?.[colIndex] ?? 0;
+                              percentage = colTotal > 0 ? (observed / colTotal) * 100 : 0;
                             } else {
-                              percentage = testResults.grandTotal > 0 
-                                ? (observed / testResults.grandTotal) * 100 
-                                : 0;
+                              const grandTotal = testResults.grandTotal ?? 0;
+                              percentage = grandTotal > 0 ? (observed / grandTotal) * 100 : 0;
                             }
                             
                             return (
@@ -749,7 +746,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                             );
                           })}
                           <td className="border border-gray-300 bg-blue-50 p-2 text-center font-semibold">
-                            {testResults.rowTotals[rowIndex].toFixed(2)}
+                            {(testResults.rowTotals?.[rowIndex] ?? 0).toFixed(2)}
                           </td>
                         </tr>
                       ));
@@ -760,11 +757,11 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                       </td>
                       {variable2Categories.map((_, colIndex) => (
                         <td key={colIndex} className="border border-gray-300 bg-blue-50 p-2 text-center font-semibold">
-                          {testResults.columnTotals[colIndex].toFixed(2)}
+                          {(testResults.columnTotals?.[colIndex] ?? 0).toFixed(2)}
                         </td>
                       ))}
                       <td className="border border-gray-300 bg-blue-200 p-2 text-center font-bold">
-                        {testResults.grandTotal.toFixed(2)}
+                        {(testResults.grandTotal ?? 0).toFixed(2)}
                       </td>
                     </tr>
                   </tbody>
