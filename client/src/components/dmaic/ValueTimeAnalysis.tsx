@@ -23,21 +23,19 @@ interface TaskData {
 interface ValueTimeData {
   id?: number;
   projectId: number;
-  analysisType: "value" | "time";
+  showValueAnalysis?: boolean;
+  showTimeAnalysis?: boolean;
   // Process Value Analysis fields
   vaTime?: number;
   bvaTime?: number;
   nvaTime?: number;
-  pce?: number;
   // Process Time Analysis fields
   customerDemand?: number;
   demandPeriodicity?: "month" | "year";
   workingDaysPerPeriod?: number;
   effectiveWorkingTime?: number;
   numberOfShifts?: number;
-  taktTime?: number;
   wip?: number;
-  plt?: number;
   taskData?: TaskData[];
 }
 
@@ -95,25 +93,22 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   // Load saved data
   useEffect(() => {
     if (analysisData) {
-      // Determine which analyses to show based on saved data
-      const hasValueData = analysisData.vaTime !== null && analysisData.vaTime !== undefined;
-      const hasTimeData = analysisData.customerDemand !== null && analysisData.customerDemand !== undefined;
+      // Load user's analysis selection
+      setShowValueAnalysis(analysisData.showValueAnalysis ?? false);
+      setShowTimeAnalysis(analysisData.showTimeAnalysis ?? false);
       
-      setShowValueAnalysis(hasValueData);
-      setShowTimeAnalysis(hasTimeData);
-      
+      // Load Process Value Analysis data
       setVaTime(analysisData.vaTime?.toString() || "");
       setBvaTime(analysisData.bvaTime?.toString() || "");
       setNvaTime(analysisData.nvaTime?.toString() || "");
-      // Don't set calculated values from DB - let useEffect recalculate them
+      
+      // Load Process Time Analysis data
       setCustomerDemand(analysisData.customerDemand?.toString() || "");
       setDemandPeriodicity(analysisData.demandPeriodicity || "year");
       setWorkingDaysPerPeriod(analysisData.workingDaysPerPeriod?.toString() || "");
       setEffectiveWorkingTime(analysisData.effectiveWorkingTime?.toString() || "8");
       setNumberOfShifts(analysisData.numberOfShifts?.toString() || "1");
-      // Don't set calculated taktTime from DB - let useEffect recalculate it
       setWip(analysisData.wip?.toString() || "");
-      // Don't set calculated plt from DB - let useEffect recalculate it
       setTaskData(analysisData.taskData || [{ taskName: "", cycleTime: 0 }]);
     }
   }, [analysisData]);
@@ -151,6 +146,13 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     const workingTime = Number(effectiveWorkingTime.replace(",", ".")) || 0;
     const shifts = Number(numberOfShifts) || 1;
     const workingDays = Number(workingDaysPerPeriod.replace(",", ".")) || 0;
+    let demandPeriod = 1;
+    if(analysisData?.demandPeriodicity === "year") {
+      demandPeriod = 1
+    }
+    else {
+      demandPeriod = 12
+    };
     
     // Skip if essential values are zero
     if (demand === 0 || workingTime === 0 || workingDays === 0) {
@@ -165,7 +167,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     }
     
     if (demand > 0 && workingTime > 0 && workingDays > 0) {
-      const calculatedTaktTime = (workingTime * shifts * workingDays) / demand;
+      const calculatedTaktTime = (workingTime * shifts * workingDays) / (demand*demandPeriod);
       setTaktTime(calculatedTaktTime);
     } else {
       setTaktTime(null);
@@ -218,7 +220,8 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   const handleSave = () => {
     const dataToSave: Partial<ValueTimeData> = {
       projectId,
-      analysisType: showValueAnalysis ? "value" : "time", // Keep for compatibility
+      showValueAnalysis,
+      showTimeAnalysis,
     };
 
     // Save Process Value Analysis data if selected
@@ -279,9 +282,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       dataToSave.workingDaysPerPeriod = undefined;
       dataToSave.effectiveWorkingTime = undefined;
       dataToSave.numberOfShifts = undefined;
-      dataToSave.taktTime = undefined;
       dataToSave.wip = undefined;
-      dataToSave.plt = undefined;
       dataToSave.taskData = [];
     }
 
@@ -290,10 +291,10 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
 
   // Get PCE benchmark text and color
   const getPCEBenchmark = (pceValue: number) => {
-    if (pceValue >= 40) return { text: "Excellent (≥40%)", color: "text-green-600" };
-    if (pceValue >= 25) return { text: "Good (25-40%)", color: "text-blue-600" };
-    if (pceValue >= 10) return { text: "Average (10-25%)", color: "text-yellow-600" };
-    return { text: "Poor (<10%)", color: "text-red-600" };
+    if (pceValue >= 10) return { text: "World-Class Excellent (≥10%)", color: "text-green-600" };
+    if (pceValue >= 5) return { text: "Good (5-10%)", color: "text-blue-600" };
+    if (pceValue >= 1) return { text: "Average (1-5%)", color: "text-yellow-600" };
+    return { text: "Poor (<1%)", color: "text-red-600" };
   };
 
   // Prepare percent loading chart data
@@ -310,7 +311,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
         x: taskNames,
         y: percentLoading,
         marker: {
-          color: percentLoading.map(p => p > 100 ? '#ef4444' : p > 80 ? '#f59e0b' : '#10b981')
+          color: percentLoading.map(p => p > 101 ? '#ef4444' : p > 80 ? '#f59e0b' : '#10b981')
         },
         name: '% Loading',
         yaxis: 'y',
@@ -454,10 +455,10 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       <div className="text-sm text-gray-600 mt-4">
                         <p><strong>Benchmark Guidelines:</strong></p>
                         <ul className="list-disc list-inside mt-2 space-y-1">
-                          <li>≥40%: Excellent - World-class process efficiency</li>
-                          <li>25-40%: Good - Above average efficiency</li>
-                          <li>10-25%: Average - Typical manufacturing process</li>
-                          <li>&lt;10%: Poor - Significant improvement needed</li>
+                          <li>≥10%: Excellent - World-class process efficiency</li>
+                          <li>5-10%: Good - Above average process efficiency</li>
+                          <li>1-5%: Average - Typical manufacturing and service process efficiency</li>
+                          <li>&lt;1%: Poor - Process efficiency significant improvement needed</li>
                         </ul>
                       </div>
                     </div>
@@ -479,7 +480,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-gray-600">
-                    Takt Time = (Effective Working Time × Number of Shifts × Working Days per Period) / Customer Demand
+                    Takt Time = (Effective Working Time × Number of Shifts × Working Days per Period) / Customer Demand per period
                   </p>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -538,7 +539,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       />
                     </div>
                     <div>
-                      <Label htmlFor="working-time">Effective Working Time (hours/shift)</Label>
+                      <Label htmlFor="working-time">Effective Working Time per day per shift (hrs)</Label>
                       <Input
                         id="working-time"
                         type="number"
@@ -579,9 +580,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                     <div className="bg-blue-50 p-4 rounded-md">
                       <p className="text-lg font-semibold text-blue-700">
                         Takt Time: {taktTime.toFixed(2)} hours/unit
+                        {taktTime < 1 && (
+                          <> ({(taktTime * 60).toFixed(2)} minutes per unit)</>
+                        )}
+                        {taktTime * 60 < 1 && (
+                          <> ({(taktTime * 60 * 60).toFixed(2)} seconds per unit)</>
+                        )}
                       </p>
                     </div>
                   )}
+
                 </CardContent>
               </Card>
 
@@ -710,7 +718,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                                 dash: 'dash',
                               },
                             },
-                            {
+                            /*{
                               type: 'line',
                               x0: -0.5,
                               y0: taktTime,
@@ -722,7 +730,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                                 width: 2,
                                 dash: 'dash',
                               },
-                            },
+                            },*/
                           ],
                           annotations: [
                             {
@@ -730,22 +738,11 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                               y: 100,
                               xref: 'x',
                               yref: 'y',
-                              text: `100% Loading`,
+                              text: `100% Loading to Takt Time ${taktTime.toFixed(2)} hrs`,
                               showarrow: true,
                               arrowhead: 2,
                               ax: 0,
                               ay: -40,
-                            },
-                            {
-                              x: taskData.length - 1,
-                              y: taktTime,
-                              xref: 'x',
-                              yref: 'y2',
-                              text: `Takt Time: ${taktTime.toFixed(2)} hours`,
-                              showarrow: true,
-                              arrowhead: 2,
-                              ax: 0,
-                              ay: 40,
                             },
                           ],
                           autosize: true,
@@ -755,6 +752,12 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       />
                       <p className="text-sm text-gray-600 mt-2">
                         * Red bars indicate tasks exceeding 100% loading (bottlenecks)
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        * Orange bars indicate tasks in [80%,100%] loading range   
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        * Green bars indicate tasks below 80% loading range   
                       </p>
                     </div>
                   )}
