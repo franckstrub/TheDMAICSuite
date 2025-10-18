@@ -702,8 +702,9 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                     const yMaxRight = (yMaxLeft / 100) * taktTime;
                     
                     return (
-                      <div className="mt-6">
+                      <div className="mt-6" key={`chart-${showTimeAnalysis}-${taktTime}-${taskData.length}`}>
                         <Plot
+                          key={`plot-${taktTime}-${JSON.stringify(taskData)}`}
                           data={percentLoadingChartData() || []}
                           layout={{
                             title: { text: 'Percent Loading Chart' },                            
