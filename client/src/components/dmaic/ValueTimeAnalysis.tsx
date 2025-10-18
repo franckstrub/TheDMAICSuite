@@ -699,22 +699,31 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                     Add Task
                   </Button>
 
-                  {taktTime && taskData.some(t => t.cycleTime > 0) && (
-                    <div className="mt-6">
-                      <Plot
-                        data={percentLoadingChartData() || []}
-                        layout={{
-                          title: { text: 'Percent Loading Chart' },
-                          xaxis: { title: { text: 'Task' } },
-                          yaxis: { 
-                            title: { text: '% Loading' },
-                            side: 'left',
-                          },
-                          yaxis2: {
-                            title: { text: 'Cycle Time (hours)' },
-                            overlaying: 'y',
-                            side: 'right',
-                          },
+                  {taktTime && taskData.some(t => t.cycleTime > 0) && (() => {
+                    const cycleTimes = taskData.map(t => t.cycleTime || 0);
+                    const percentLoading = cycleTimes.map(ct => (ct / taktTime) * 100);
+                    const maxPercent = Math.max(100, ...percentLoading);
+                    const yMaxLeft = Math.ceil(maxPercent / 10) * 10; // Round up to nearest 10
+                    const yMaxRight = (yMaxLeft / 100) * taktTime;
+                    
+                    return (
+                      <div className="mt-6">
+                        <Plot
+                          data={percentLoadingChartData() || []}
+                          layout={{
+                            title: { text: 'Percent Loading Chart' },
+                            xaxis: { title: { text: 'Task' } },
+                            yaxis: { 
+                              title: { text: '% Loading' },
+                              side: 'left',
+                              range: [0, yMaxLeft],
+                            },
+                            yaxis2: {
+                              title: { text: 'Cycle Time (hours)' },
+                              overlaying: 'y',
+                              side: 'right',
+                              range: [0, yMaxRight],
+                            },
                           shapes: [
                             {
                               type: 'line',
@@ -770,7 +779,8 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                         * Green bars indicate tasks below 80% loading range   
                       </p>
                     </div>
-                  )}
+                  );
+                  })()}
                 </CardContent>
               </Card>
             </div>
