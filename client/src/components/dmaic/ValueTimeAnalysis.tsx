@@ -10,6 +10,7 @@ import { Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Plot from "react-plotly.js";
+import { M } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 interface ValueTimeAnalysisProps {
   projectId: number;
@@ -23,21 +24,19 @@ interface TaskData {
 interface ValueTimeData {
   id?: number;
   projectId: number;
-  analysisType: "value" | "time";
+  showValueAnalysis?: boolean;
+  showTimeAnalysis?: boolean;
   // Process Value Analysis fields
   vaTime?: number;
   bvaTime?: number;
   nvaTime?: number;
-  pce?: number;
   // Process Time Analysis fields
   customerDemand?: number;
   demandPeriodicity?: "week" | "month" | "year";
   workingDaysPerPeriod?: number;
   effectiveWorkingTime?: number;
   numberOfShifts?: number;
-  taktTime?: number;
   wip?: number;
-  plt?: number;
   taskData?: TaskData[];
 }
 
@@ -228,7 +227,8 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   const handleSave = () => {
     const dataToSave: Partial<ValueTimeData> = {
       projectId,
-      analysisType: showValueAnalysis ? "value" : "time", // Keep for compatibility
+      showValueAnalysis,
+      showTimeAnalysis,
     };
 
     // Save Process Value Analysis data if selected
@@ -289,9 +289,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       dataToSave.workingDaysPerPeriod = undefined;
       dataToSave.effectiveWorkingTime = undefined;
       dataToSave.numberOfShifts = undefined;
-      dataToSave.taktTime = undefined;
       dataToSave.wip = undefined;
-      dataToSave.plt = undefined;
       dataToSave.taskData = [];
     }
 
@@ -711,7 +709,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                         <Plot
                           data={percentLoadingChartData() || []}
                           layout={{
-                            title: { text: 'Percent Loading Chart' },
+                            title: { text: 'Percent Loading Chart' },                            
                             xaxis: { title: { text: 'Task' } },
                             yaxis: { 
                               title: { text: '% Loading' },
@@ -737,7 +735,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                                 dash: 'dash',
                               },
                             },
-                            /*{
+                            {
                               type: 'line',
                               x0: -0.5,
                               y0: taktTime,
@@ -749,7 +747,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                                 width: 2,
                                 dash: 'dash',
                               },
-                            },*/
+                            },
                           ],
                           annotations: [
                             {
@@ -757,14 +755,23 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                               y: 100,
                               xref: 'x',
                               yref: 'y',
-                              text: `100% Loading to Takt Time ${taktTime.toFixed(2)} hrs`,
+                              text: `100% Loading to Takt Time: ${taktTime.toFixed(2)} hrs`,
                               showarrow: true,
                               arrowhead: 2,
                               ax: 0,
-                              ay: -40,
+                              ay: -30,
                             },
                           ],
                           autosize: true,
+                          showlegend: true,
+                          legend: {
+                            x: 1,           // 👈 horizontal position (0 = left, 1 = right)
+                            y: 0,         // 👈 vertical position (0 = bottom, 1 = top)
+                            xanchor: 'left', // 👈 align legend box relative to x/y point
+                            yanchor: 'middle',
+                            orientation: 'v', // or 'h' for horizontal
+                            font: { size: 12 },
+                          },
                         }}
                         config={{ responsive: true }}
                         style={{ width: '100%', height: '400px' }}
