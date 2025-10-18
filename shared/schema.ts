@@ -1961,16 +1961,14 @@ export const valueTimeAnalysis = pgTable(
       .notNull(),
     projectId: integer("project_id").notNull(),
     
-    // Analysis type selection
-    analysisType: text("analysis_type", { enum: ["value", "time"] })
-      .notNull()
-      .default("value"),
+    // User's analysis selection
+    showValueAnalysis: boolean("show_value_analysis").default(false),
+    showTimeAnalysis: boolean("show_time_analysis").default(false),
     
     // Process Value Analysis fields
     vaTime: real("va_time"), // Value Added time
     bvaTime: real("bva_time"), // Business Value Added time
     nvaTime: real("nva_time"), // Non Value Added time
-    pce: real("pce"), // Process Cycle Efficiency (calculated)
     
     // Process Time Analysis fields
     customerDemand: real("customer_demand"), // Units demanded
@@ -1978,9 +1976,7 @@ export const valueTimeAnalysis = pgTable(
     workingDaysPerPeriod: real("working_days_per_period"), // Number of working days per period
     effectiveWorkingTime: real("effective_working_time"), // Hours per shift
     numberOfShifts: integer("number_of_shifts").default(1),
-    taktTime: real("takt_time"), // Calculated Takt Time
     wip: real("wip"), // Work In Process
-    plt: real("plt"), // Process Lead Time (calculated)
     
     // Task data for percent loading chart
     taskData: jsonb("task_data")
