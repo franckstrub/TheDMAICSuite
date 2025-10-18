@@ -23,19 +23,21 @@ interface TaskData {
 interface ValueTimeData {
   id?: number;
   projectId: number;
-  showValueAnalysis?: boolean;
-  showTimeAnalysis?: boolean;
+  analysisType: "value" | "time";
   // Process Value Analysis fields
   vaTime?: number;
   bvaTime?: number;
   nvaTime?: number;
+  pce?: number;
   // Process Time Analysis fields
   customerDemand?: number;
-  demandPeriodicity?: "month" | "year";
+  demandPeriodicity?: "week" | "month" | "year";
   workingDaysPerPeriod?: number;
   effectiveWorkingTime?: number;
   numberOfShifts?: number;
+  taktTime?: number;
   wip?: number;
+  plt?: number;
   taskData?: TaskData[];
 }
 
@@ -54,7 +56,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   
   // Process Time Analysis states
   const [customerDemand, setCustomerDemand] = useState<string>("");
-  const [demandPeriodicity, setDemandPeriodicity] = useState<"month" | "year">("year");
+  const [demandPeriodicity, setDemandPeriodicity] = useState<"week" | "month" | "year">("year");
   const [workingDaysPerPeriod, setWorkingDaysPerPeriod] = useState<string>("");
   const [effectiveWorkingTime, setEffectiveWorkingTime] = useState<string>("8");
   const [numberOfShifts, setNumberOfShifts] = useState<string>("1");
@@ -93,22 +95,25 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   // Load saved data
   useEffect(() => {
     if (analysisData) {
-      // Load user's analysis selection
-      setShowValueAnalysis(analysisData.showValueAnalysis ?? false);
-      setShowTimeAnalysis(analysisData.showTimeAnalysis ?? false);
+      // Determine which analyses to show based on saved data
+      const hasValueData = analysisData.vaTime !== null && analysisData.vaTime !== undefined;
+      const hasTimeData = analysisData.customerDemand !== null && analysisData.customerDemand !== undefined;
       
-      // Load Process Value Analysis data
+      setShowValueAnalysis(hasValueData);
+      setShowTimeAnalysis(hasTimeData);
+      
       setVaTime(analysisData.vaTime?.toString() || "");
       setBvaTime(analysisData.bvaTime?.toString() || "");
       setNvaTime(analysisData.nvaTime?.toString() || "");
-      
-      // Load Process Time Analysis data
+      // Don't set calculated values from DB - let useEffect recalculate them
       setCustomerDemand(analysisData.customerDemand?.toString() || "");
       setDemandPeriodicity(analysisData.demandPeriodicity || "year");
       setWorkingDaysPerPeriod(analysisData.workingDaysPerPeriod?.toString() || "");
       setEffectiveWorkingTime(analysisData.effectiveWorkingTime?.toString() || "8");
       setNumberOfShifts(analysisData.numberOfShifts?.toString() || "1");
+      // Don't set calculated taktTime from DB - let useEffect recalculate it
       setWip(analysisData.wip?.toString() || "");
+      // Don't set calculated plt from DB - let useEffect recalculate it
       setTaskData(analysisData.taskData || [{ taskName: "", cycleTime: 0 }]);
     }
   }, [analysisData]);
@@ -147,13 +152,16 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
     const shifts = Number(numberOfShifts) || 1;
     const workingDays = Number(workingDaysPerPeriod.replace(",", ".")) || 0;
     let demandPeriod = 1;
-    if(analysisData?.demandPeriodicity === "year") {
-      demandPeriod = 1
+    switch (analysisData?.demandPeriodicity) {
+      case "year": 
+        demandPeriod = 1;      
+      case "month": 
+        demandPeriod = 12;
+      case "week":       
+        demandPeriod = 52;     
+      default:  
+        demandPeriod =  1;
     }
-    else {
-      demandPeriod = 12
-    };
-    
     // Skip if essential values are zero
     if (demand === 0 || workingTime === 0 || workingDays === 0) {
       setTaktTime(null);
@@ -220,8 +228,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   const handleSave = () => {
     const dataToSave: Partial<ValueTimeData> = {
       projectId,
-      showValueAnalysis,
-      showTimeAnalysis,
+      analysisType: showValueAnalysis ? "value" : "time", // Keep for compatibility
     };
 
     // Save Process Value Analysis data if selected
@@ -282,7 +289,9 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
       dataToSave.workingDaysPerPeriod = undefined;
       dataToSave.effectiveWorkingTime = undefined;
       dataToSave.numberOfShifts = undefined;
+      dataToSave.taktTime = undefined;
       dataToSave.wip = undefined;
+      dataToSave.plt = undefined;
       dataToSave.taskData = [];
     }
 
@@ -506,14 +515,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       <Label htmlFor="demand-periodicity">Demand Periodicity</Label>
                       <Select
                         value={demandPeriodicity}
-                        onValueChange={(value: "month" | "year") => setDemandPeriodicity(value)}
+                        onValueChange={(value: "week" | "month" | "year") => setDemandPeriodicity(value)}
                       >
                         <SelectTrigger id="demand-periodicity" data-testid="select-demand-periodicity">
                           <SelectValue placeholder="Select periodicity" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="month">Per Month</SelectItem>
+                        <SelectContent>                          
                           <SelectItem value="year">Per Year</SelectItem>
+                          <SelectItem value="month">Per Month</SelectItem>
+                          <SelectItem value="week">Per Week</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -521,7 +531,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="working-days">Working Days per {demandPeriodicity === "month" ? "Month" : "Year"}</Label>
+                      <Label htmlFor="working-days">Working Days per {demandPeriodicity === "month" ? "Month" : (demandPeriodicity === "year" ? "Year" : (demandPeriodicity === "week" ? "Week": "Year"))}</Label>
                       <Input
                         id="working-days"
                         type="number"
@@ -539,7 +549,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       />
                     </div>
                     <div>
-                      <Label htmlFor="working-time">Effective Working Time per day per shift (hrs)</Label>
+                      <Label htmlFor="working-time">Effective Work Time per day per shift (hours)</Label>
                       <Input
                         id="working-time"
                         type="number"
