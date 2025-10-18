@@ -94,25 +94,22 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
   // Load saved data
   useEffect(() => {
     if (analysisData) {
-      // Determine which analyses to show based on saved data
-      const hasValueData = analysisData.vaTime !== null && analysisData.vaTime !== undefined;
-      const hasTimeData = analysisData.customerDemand !== null && analysisData.customerDemand !== undefined;
+      // Load user's analysis selection from database
+      setShowValueAnalysis(analysisData.showValueAnalysis ?? false);
+      setShowTimeAnalysis(analysisData.showTimeAnalysis ?? false);
       
-      setShowValueAnalysis(hasValueData);
-      setShowTimeAnalysis(hasTimeData);
-      
+      // Load Process Value Analysis data
       setVaTime(analysisData.vaTime?.toString() || "");
       setBvaTime(analysisData.bvaTime?.toString() || "");
       setNvaTime(analysisData.nvaTime?.toString() || "");
-      // Don't set calculated values from DB - let useEffect recalculate them
+      
+      // Load Process Time Analysis data
       setCustomerDemand(analysisData.customerDemand?.toString() || "");
       setDemandPeriodicity(analysisData.demandPeriodicity || "year");
       setWorkingDaysPerPeriod(analysisData.workingDaysPerPeriod?.toString() || "");
       setEffectiveWorkingTime(analysisData.effectiveWorkingTime?.toString() || "8");
       setNumberOfShifts(analysisData.numberOfShifts?.toString() || "1");
-      // Don't set calculated taktTime from DB - let useEffect recalculate it
       setWip(analysisData.wip?.toString() || "");
-      // Don't set calculated plt from DB - let useEffect recalculate it
       setTaskData(analysisData.taskData || [{ taskName: "", cycleTime: 0 }]);
     }
   }, [analysisData]);
