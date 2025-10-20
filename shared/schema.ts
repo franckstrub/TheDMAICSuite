@@ -2000,6 +2000,58 @@ export const insertValueTimeAnalysisSchema = createInsertSchema(
 export type InsertValueTimeAnalysis = z.infer<typeof insertValueTimeAnalysisSchema>;
 export type ValueTimeAnalysis = typeof valueTimeAnalysis.$inferSelect;
 
+// FMEA (Failure Mode and Effect Analysis) for DMAIC Analyze Phase
+export const fmeaAnalysis = pgTable(
+  "fmea_analysis",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    
+    // FMEA rows stored as JSONB array
+    // Each row contains: processStep, failureMode, effects, severity, causes, occurrence, currentControls, detection, rpn, recommendedActions, responsibility, targetDate, actionsTaken, newSeverity, newOccurrence, newDetection, newRpn
+    fmeaRows: jsonb("fmea_rows")
+      .$type<Array<{
+        id: string;
+        processStep: string;
+        failureMode: string;
+        effects: string;
+        severity: number;
+        causes: string;
+        occurrence: number;
+        currentControls: string;
+        detection: number;
+        rpn: number;
+        recommendedActions: string;
+        responsibility: string;
+        targetDate: string;
+        actionsTaken: string;
+        newSeverity: number | null;
+        newOccurrence: number | null;
+        newDetection: number | null;
+        newRpn: number | null;
+      }>>()
+      .default([]),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectFmea: unique().on(table.projectId),
+  }),
+);
+
+export const insertFmeaAnalysisSchema = createInsertSchema(
+  fmeaAnalysis,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertFmeaAnalysis = z.infer<typeof insertFmeaAnalysisSchema>;
+export type FmeaAnalysis = typeof fmeaAnalysis.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",

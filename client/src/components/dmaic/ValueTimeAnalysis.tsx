@@ -484,7 +484,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-gray-600">
-                    Takt Time = (Effective Working Time × Number of Shifts × Working Days per Period) / Customer Demand per period
+                    Takt Time = (Effective Working Time per Day & per Shift * Number of Shifts * Working Days per Period) / Customer Demand per period
                   </p>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -544,7 +544,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                       />
                     </div>
                     <div>
-                      <Label htmlFor="working-time">Effective Work Time per day per shift (hours)</Label>
+                      <Label htmlFor="working-time">Effective Work Time per day & per shift (hours)</Label>
                       <Input
                         id="working-time"
                         type="number"
@@ -584,7 +584,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   {taktTime !== null && (
                     <div className="bg-blue-50 p-4 rounded-md">
                       <p className="text-lg font-semibold text-blue-700">
-                        Takt Time: {taktTime.toFixed(2)} hours/unit
+                        Takt Time: {taktTime.toFixed(3)} hours/unit
                         {taktTime < 1 && (
                           <> ({(taktTime * 60).toFixed(2)} minutes per unit)</>
                         )}
@@ -630,7 +630,15 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                   {plt !== null && (
                     <div className="bg-green-50 p-4 rounded-md">
                       <p className="text-lg font-semibold text-green-700">
-                        Process Lead Time: {plt.toFixed(2)} hours
+                        {plt >= 24 && (
+                          <> Process Lead Time: {(plt / 24).toFixed(2)} days per unit</>
+                        )}
+                        {plt < 24 && plt >= 1 && (
+                          <> Process Lead Time: {plt.toFixed(2)} hours per unit</>
+                        )}
+                        {plt < 1 && (
+                          <> Process Lead Time: {(plt * 60).toFixed(2)} minutes per unit</>
+                        )}
                       </p>
                     </div>
                   )}

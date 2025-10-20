@@ -29,6 +29,7 @@ import RootCauseAnalysis from "./RootCauseAnalysis";
 import AttributeCTQAnalysis from "./AttributeCTQAnalysis";
 import ContinuousCTQAnalysis from "./ContinuousCTQAnalysis";
 import ValueTimeAnalysis from "./ValueTimeAnalysis"
+import FMEAAnalysis from "./FMEAAnalysis"
 import CauseEffectMatrix from "./CauseEffectMatrix"
 import AnalyzeGateReviewValidation from "./AnalyzeGateReviewValidation";
 //import FishboneIcon from '@/assets/fishboneicon.svg';
@@ -222,6 +223,16 @@ export default function AnalyzePhase() {
         </CardHeader>
         <CardContent>       
           <ValueTimeAnalysis projectId={projectId}/>          
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">                
+            Failure Mode and Effect Analysis (FMEA)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>       
+          <FMEAAnalysis projectId={projectId}/>          
         </CardContent>
       </Card>
       <Card>
