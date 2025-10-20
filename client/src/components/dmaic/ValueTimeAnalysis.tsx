@@ -484,7 +484,7 @@ export default function ValueTimeAnalysis({ projectId }: ValueTimeAnalysisProps)
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm text-gray-600">
-                    Takt Time = (Effective Working Time per Day & per Shift * Number of Shifts * Working Days per Period) / Customer Demand per period
+                    Takt Time = (Effective Working Time per Day & per Shift × Number of Shifts × Working Days per Period) / Customer Demand per period
                   </p>
                   
                   <div className="grid grid-cols-2 gap-4">
