@@ -132,13 +132,6 @@ const getDefaultImproveDeliverables = (projectType?: string): Omit<Deliverable, 
     const greenBeltDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
         {
             phase: "Improve",
-            name: "Solution Benefit-Effort matrix",
-            description: "Solution Benefit-Effort matrix completed",
-            isRequired: "Required",
-            isCompleted: false
-        },
-        {
-            phase: "Improve",
             name: "Implementation plan",
             description: "Implementation plan defined",
             isRequired: "Required",
@@ -153,13 +146,21 @@ const getDefaultImproveDeliverables = (projectType?: string): Omit<Deliverable, 
         },
     ];
 
-    // Insert Green Belt and Black Belt specific deliverables before the Gate Review
-    // This keeps the Gate Review as the last item
-    const insertIndex = baseDeliverables.length - 1;
+    // Insert Solution Benefit-Effort matrix at position 2 (index 1)
+    // Insert other Green Belt deliverables before the Gate Review
+    const gateReviewIndex = baseDeliverables.length - 1;
     return [
-      ...baseDeliverables.slice(0, insertIndex),
+      baseDeliverables[0],
+      {
+        phase: "Improve",
+        name: "Solution Benefit-Effort matrix",
+        description: "Solution Benefit-Effort matrix completed",
+        isRequired: "Required",
+        isCompleted: false
+      },
+      ...baseDeliverables.slice(1, gateReviewIndex),
       ...greenBeltDeliverables,
-      baseDeliverables[insertIndex]
+      baseDeliverables[gateReviewIndex]
     ];
   }
 
