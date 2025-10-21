@@ -106,6 +106,13 @@ const getDefaultImproveDeliverables = (projectType?: string): Omit<Deliverable, 
   },
   {
     phase: "Improve",
+    name: "Implementation plan",
+    description: "Implementation plan defined",
+    isRequired: "Required",
+    isCompleted: false
+  },
+  {
+    phase: "Improve",
     name: "TO BE process mapped",
     description: "TO BE process mapped with improvements",
     isRequired: "Required",
@@ -130,13 +137,6 @@ const getDefaultImproveDeliverables = (projectType?: string): Omit<Deliverable, 
  // Add Green Belt and Black Belt specific deliverables
   if (projectType === "Green Belt" || projectType === "Black Belt") {
     const greenBeltDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
-        {
-            phase: "Improve",
-            name: "Implementation plan",
-            description: "Implementation plan defined",
-            isRequired: "Required",
-            isCompleted: false
-        },
         {
         phase: "Improve",
         name: "Proof of Improvement",
