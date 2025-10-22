@@ -32,6 +32,7 @@ import MilestoneTimeline from "./MilestoneTimeline";
 import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ImproveGateReviewValidation from '@/components/dmaic/ImproveGateReviewValidation';
+import SolutionGeneration from '@/components/dmaic/SolutionGeneration';
 
 interface CtqWithType {
   ctq: string;
@@ -120,30 +121,7 @@ export default function ImprovePhase() {
       </div>
       
       {/* Solution Generation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Solution Generation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Generate potential solutions for each considered critical root cause.
-          </p>         
-        </CardContent>
-      </Card>
-
-      {/* Benefit-Effort Matrix (for Green Belt and Black Belt projects only) */}
-      {(projectType === 'Green Belt' || projectType === 'Black Belt') && (
-      <Card>
-        <CardHeader>
-          <CardTitle>Benefit-Effort Matrix</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Generate and prioritize potential solutions based on effort and cost.
-          </p>         
-        </CardContent>
-      </Card>
-      )}
+      <SolutionGeneration projectId={projectId} projectType={projectType} />
       
       {/* Improvement Action Designs */}
       <Card>
@@ -161,38 +139,26 @@ export default function ImprovePhase() {
       {/* Implementation Plan */}
       <Card>
         <CardHeader>
-          <CardTitle>Implementation Plan</CardTitle>
+          <CardTitle>Implementation and Pilot Plan</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            Develop a detailed plan for implementing the selected solutions.
+            Develop a detailed plan for implementing and piloting the selected solutions.
           </p>          
         </CardContent>
       </Card>
       
       {projectType === 'Green Belt' || projectType === 'Black Belt' && (
-      <div>
         <Card>
           <CardHeader>
             <CardTitle>Proof of Improvement</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500 mb-4">
-              Generate and prioritize potential solutions based on effort and cost.
+              Generate proof of improvement with statistical tests.
             </p>         
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Benefit-Effort Matrix</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
-              Generate and prioritize potential solutions based on effort and cost.
-            </p>         
-          </CardContent>
-        </Card>
-      </div>
       )}
 
       <ImproveGateReviewValidation projectId={projectId} />
