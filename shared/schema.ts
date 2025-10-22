@@ -2052,6 +2052,53 @@ export const insertFmeaAnalysisSchema = createInsertSchema(
 export type InsertFmeaAnalysis = z.infer<typeof insertFmeaAnalysisSchema>;
 export type FmeaAnalysis = typeof fmeaAnalysis.$inferSelect;
 
+// Solution categories for Improve phase
+export const solutionCategories = [
+  "Technology",
+  "Process",
+  "People",
+  "Organization",
+] as const;
+export type SolutionCategory = (typeof solutionCategories)[number];
+
+// Benefit and Effort levels for Green Belt and Black Belt projects
+export const benefitEffortLevels = ["Low", "Medium", "High"] as const;
+export type BenefitEffortLevel = (typeof benefitEffortLevels)[number];
+
+// Solutions for DMAIC Improve Phase
+export const solutions = pgTable(
+  "solutions",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    
+    // Solution fields
+    solutionId: text("solution_id").notNull(), // S1, S2, S3, etc.
+    solution: text("solution").notNull(),
+    category: text("category", { enum: solutionCategories }).notNull(),
+    criticalRootCauses: text("critical_root_causes").notNull(),
+    
+    // For Green Belt and Black Belt only
+    benefit: text("benefit", { enum: benefitEffortLevels }),
+    effort: text("effort", { enum: benefitEffortLevels }),
+    
+    comments: text("comments"),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+);
+
+export const insertSolutionSchema = createInsertSchema(solutions).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSolution = z.infer<typeof insertSolutionSchema>;
+export type Solution = typeof solutions.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",

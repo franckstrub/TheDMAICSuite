@@ -38,6 +38,7 @@ import {
   insertChiSquareIndependenceConfigSchema,
   insertValueTimeAnalysisSchema,
   insertFmeaAnalysisSchema,
+  insertSolutionSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -93,6 +94,7 @@ import {
   chiSquareIndependenceConfig,
   valueTimeAnalysis,
   fmeaAnalysis,
+  solutions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -6792,6 +6794,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(201).json(savedAnalysis);
       } catch (err) {
         console.error("FMEA analysis save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Solutions Routes (DMAIC Improve Phase)
+  app.get(
+    "/api/projects/:projectId/solutions",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const solutionsList = await db
+          .select()
+          .from(solutions)
+          .where(
+            and(
+              eq(solutions.projectId, projectId),
+              eq(solutions.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(solutions.solutionId));
+
+        return res.json({ solutions: solutionsList });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solutions",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const solutionData = {
+          projectId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertSolutionSchema.parse(solutionData);
+
+        const [savedSolution] = await db
+          .insert(solutions)
+          .values(validatedData)
+          .returning();
+
+        return res.status(201).json(savedSolution);
+      } catch (err) {
+        console.error("Solution creation error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.put(
+    "/api/solutions/:solutionId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const solutionId = parseInt(req.params.solutionId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const updateData = {
+          ...req.body,
+          lastUpdated: new Date(),
+        };
+
+        const [updatedSolution] = await db
+          .update(solutions)
+          .set(updateData)
+          .where(
+            and(
+              eq(solutions.id, solutionId),
+              eq(solutions.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updatedSolution) {
+          return res.status(404).json({ message: "Solution not found" });
+        }
+
+        return res.json(updatedSolution);
+      } catch (err) {
+        console.error("Solution update error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/solutions/:solutionId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const solutionId = parseInt(req.params.solutionId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        await db
+          .delete(solutions)
+          .where(
+            and(
+              eq(solutions.id, solutionId),
+              eq(solutions.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        return res.json({ message: "Solution deleted successfully" });
+      } catch (err) {
+        console.error("Solution deletion error:", err);
         return handleErrors(err, res);
       }
     },
