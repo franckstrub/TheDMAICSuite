@@ -58,10 +58,27 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/solutions`] });
-      toast({ title: "Success", description: "Solution updated successfully" });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update solution", variant: "destructive" });
+    },
+  });
+
+  // Save all solutions mutation
+  const saveAllMutation = useMutation({
+    mutationFn: async (solutionsToSave: Solution[]) => {
+      const updatePromises = solutionsToSave
+        .filter(sol => sol.id) // Only update existing solutions
+        .map(({ id, ...solution }) => apiRequest('PUT', `/api/solutions/${id}`, solution));
+      
+      return Promise.all(updatePromises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/solutions`] });
+      toast({ title: "Success", description: "All solutions saved successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save solutions", variant: "destructive" });
     },
   });
 
@@ -107,12 +124,9 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
     setSolutions(updatedSolutions);
   };
 
-  // Save solution
-  const saveSolution = (index: number) => {
-    const solution = solutions[index];
-    if (solution.id) {
-      updateSolutionMutation.mutate(solution);
-    }
+  // Save all solutions
+  const saveAllSolutions = () => {
+    saveAllMutation.mutate(solutions);
   };
 
   // Delete solution
@@ -142,10 +156,20 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Solution Generation</span>
-            <Button onClick={addSolution} data-testid="button-add-solution">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Solution
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={saveAllSolutions} 
+                disabled={saveAllMutation.isPending || solutions.length === 0}
+                data-testid="button-save-table"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {saveAllMutation.isPending ? "Saving..." : "Save Table"}
+              </Button>
+              <Button onClick={addSolution} data-testid="button-add-solution">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Solution
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -164,7 +188,7 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
                     </>
                   )}
                   <TableHead className="min-w-[150px]">Comments</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -256,25 +280,15 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => saveSolution(index)}
-                          disabled={updateSolutionMutation.isPending}
-                          data-testid={`button-save-${index}`}
-                        >
-                          <Save className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteSolution(index)}
-                          disabled={deleteSolutionMutation.isPending}
-                          data-testid={`button-delete-${index}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteSolution(index)}
+                        disabled={deleteSolutionMutation.isPending}
+                        data-testid={`button-delete-${index}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
