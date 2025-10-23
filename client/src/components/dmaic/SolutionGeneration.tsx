@@ -179,7 +179,7 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
     const indexInGroup = sameCombination.findIndex(sol => sol.id === solution.id);
     
     // Arrange solutions in a circle pattern around the base position
-    const radius = 3; // Spread radius in percentage points
+    const radius = 3.0; // Spread radius in percentage points
     const angleStep = (2 * Math.PI) / sameCombination.length;
     const angle = indexInGroup * angleStep;
     
@@ -195,20 +195,6 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Solution Generation</span>
-            <div className="flex gap-2">
-              <Button 
-                onClick={saveAllSolutions} 
-                disabled={saveAllMutation.isPending || solutions.length === 0}
-                data-testid="button-save-table"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saveAllMutation.isPending ? "Saving..." : "Save Table"}
-              </Button>
-              <Button onClick={addSolution} data-testid="button-add-solution">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Solution
-              </Button>
-            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -334,6 +320,22 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
               </TableBody>
             </Table>
           </div>
+          <div className="flex justify-between mt-4">
+            <Button onClick={addSolution} data-testid="button-add-solution">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Solution
+            </Button>
+          {/*</div>
+          <div className="mt-4">*/}
+            <Button 
+              onClick={saveAllSolutions} 
+              disabled={saveAllMutation.isPending || solutions.length === 0}
+              data-testid="button-save-table"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {saveAllMutation.isPending ? "Saving..." : "Save Solutions"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -350,7 +352,7 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
                 {/* High Benefit, Low Effort - Quick Wins */}
                 <div className="border border-gray-200 bg-yellow-100/20"></div>
                 <div className="border border-gray-200 bg-green-100/20"></div>
-                <div className="border border-gray-200 bg-green-100/40"></div>
+                <div className="border border-gray-200 bg-green-100/80"></div>
                                
                 {/* Medium Benefit */}
                 <div className="border border-gray-200 bg-red-100/20"></div>
