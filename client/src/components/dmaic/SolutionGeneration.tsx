@@ -154,16 +154,38 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
     }
   };
 
-  // Get position on Benefit-Effort Matrix
-  const getMatrixPosition = (benefit?: string, effort?: string) => {
+  // Get position on Benefit-Effort Matrix with adjustment for overlapping solutions
+  const getMatrixPosition = (solution: Solution, allSolutions: Solution[]) => {
+    const { benefit, effort } = solution;
     if (!benefit || !effort) return { x: 50, y: 50 };
     
-    const benefitMap = { Low: 16.67, Medium: 50, High: 83.33 };
-    const effortMap = { Low: 83.33, Medium: 50, High: 16.67 }; // Inverted for Y axis
+    const effortMap = { Low: 83.33, Medium: 50, High: 16.67 }; // Inverted for X axis
+    const benefitMap = { Low: 16.67, Medium: 50, High: 83.33 }; // Y axis (Low at bottom, High at top)
     
-    return { 
-      x: effortMap[effort as keyof typeof effortMap] || 50, 
-      y: benefitMap[benefit as keyof typeof benefitMap] || 50 
+    const baseX = effortMap[effort as keyof typeof effortMap] || 50;
+    const baseY = benefitMap[benefit as keyof typeof benefitMap] || 50;
+    
+    // Find all solutions with same benefit-effort combination
+    const sameCombination = allSolutions.filter(
+      sol => sol.benefit === benefit && sol.effort === effort && sol.id
+    );
+    
+    // If only one solution at this position, no adjustment needed
+    if (sameCombination.length <= 1) {
+      return { x: baseX, y: baseY };
+    }
+    
+    // Find index of current solution in the group
+    const indexInGroup = sameCombination.findIndex(sol => sol.id === solution.id);
+    
+    // Arrange solutions in a circle pattern around the base position
+    const radius = 3; // Spread radius in percentage points
+    const angleStep = (2 * Math.PI) / sameCombination.length;
+    const angle = indexInGroup * angleStep;
+    
+    return {
+      x: baseX + radius * Math.cos(angle),
+      y: baseY + radius * Math.sin(angle)
     };
   };
 
@@ -322,46 +344,47 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
             <CardTitle>Benefit-Effort Matrix</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="relative w-full h-[500px] border-2 border-gray-300 bg-gradient-to-br from-red-50 via-yellow-50 to-green-50">
+            <div className="ml-2 mb-2 mr-2 relative w-full h-[500px] border-2 border-gray-300 bg-gradient-to-br from-red-50 via-yellow-50 to-green-50">
               {/* Matrix quadrants */}
-              <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+              <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 m-4 ml-14">
+                {/* High Benefit, Low Effort - Quick Wins */}
+                <div className="border border-gray-200 bg-yellow-100/20"></div>
+                <div className="border border-gray-200 bg-green-100/20"></div>
+                <div className="border border-gray-200 bg-green-100/40"></div>
+                               
+                {/* Medium Benefit */}
+                <div className="border border-gray-200 bg-red-100/20"></div>
+                <div className="border border-gray-200 bg-yellow-100/30"></div>
+                <div className="border border-gray-200 bg-green-100/20"></div>
+                
                 {/* Low Benefit, High Effort - Avoid */}
                 <div className="border border-gray-200 bg-red-100/30"></div>
                 <div className="border border-gray-200 bg-red-100/20"></div>
                 <div className="border border-gray-200 bg-yellow-100/20"></div>
                 
-                {/* Medium Benefit */}
-                <div className="border border-gray-200 bg-red-100/20"></div>
-                <div className="border border-gray-200 bg-yellow-100/30"></div>
-                <div className="border border-gray-200 bg-yellow-100/20"></div>
-                
-                {/* High Benefit, Low Effort - Quick Wins */}
-                <div className="border border-gray-200 bg-yellow-100/20"></div>
-                <div className="border border-gray-200 bg-yellow-100/20"></div>
-                <div className="border border-gray-200 bg-green-100/40"></div>
               </div>
 
               {/* Axis labels */}
-              <div className="absolute -left-20 top-1/2 -translate-y-1/2 -rotate-90 font-semibold text-gray-700">
+              <div className="absolute -left-14 top-1/2 -translate-y-1/2 -rotate-90 font-semibold text-gray-700">
                 Benefit →
               </div>
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-8 font-semibold text-gray-700">
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-9 font-semibold text-gray-700">
                 ← Effort
               </div>
 
               {/* Y-axis labels */}
-              <div className="absolute -left-12 top-[8%] text-sm text-gray-600">High</div>
-              <div className="absolute -left-12 top-1/2 -translate-y-1/2 text-sm text-gray-600">Medium</div>
-              <div className="absolute -left-12 bottom-[8%] text-sm text-gray-600">Low</div>
+              <div className="absolute -left-0 top-[8%] text-sm text-gray-600">High</div>
+              <div className="absolute -left-0 top-1/2 -translate-y-1/2 text-sm text-gray-600">Medium</div>
+              <div className="absolute -left-0 bottom-[8%] text-sm text-gray-600">Low</div>
 
               {/* X-axis labels */}
-              <div className="absolute top-full mt-2 left-[8%] text-sm text-gray-600">High</div>
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-sm text-gray-600">Medium</div>
-              <div className="absolute top-full mt-2 right-[8%] text-sm text-gray-600">Low</div>
+              <div className="absolute top-full mt-0 left-[8%] text-sm text-gray-600">High</div>
+              <div className="absolute top-full mt-0 left-1/2 -translate-x-1/2 text-sm text-gray-600">Medium</div>
+              <div className="absolute top-full mt-0 right-[8%] text-sm text-gray-600">Low</div>
 
               {/* Plot solutions */}
               {solutions.map((sol, index) => {
-                const pos = getMatrixPosition(sol.benefit, sol.effort);
+                const pos = getMatrixPosition(sol, solutions);
                 return (
                   <div
                     key={sol.id || index}
@@ -382,17 +405,17 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
               })}
 
               {/* Quadrant labels */}
-              <div className="absolute top-2 right-2 text-xs font-semibold text-green-700 bg-white/80 px-2 py-1 rounded">
+              <div className="absolute top-6 right-6 text-xs font-semibold text-green-700 bg-white/80 px-2 py-1 rounded">
                 Quick Wins
               </div>
-              <div className="absolute top-2 left-2 text-xs font-semibold text-red-700 bg-white/80 px-2 py-1 rounded">
-                Avoid
-              </div>
-              <div className="absolute bottom-2 right-2 text-xs font-semibold text-yellow-700 bg-white/80 px-2 py-1 rounded">
+              <div className="absolute top-6 left-16 text-xs font-semibold text-red-700 bg-white/80 px-2 py-1 rounded">
                 Major Projects
               </div>
-              <div className="absolute bottom-2 left-2 text-xs font-semibold text-yellow-700 bg-white/80 px-2 py-1 rounded">
-                Fill-Ins
+              <div className="absolute bottom-6 right-6 text-xs font-semibold text-yellow-700 bg-white/80 px-2 py-1 rounded">
+                Fill-ins
+              </div>
+              <div className="absolute bottom-6 left-16 text-xs font-semibold text-yellow-700 bg-white/80 px-2 py-1 rounded">
+                Avoid
               </div>
             </div>
           </CardContent>
