@@ -161,12 +161,8 @@ export default function ImplementationPlan({ projectId }: ImplementationPlanProp
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">
-          {isPilot ? "Pilot Plan Tasks" : "Implementation Tasks"}
+          {isPilot ? "Pilot Tasks" : "Implementation Tasks"}
         </h3>
-        <Button onClick={() => addTask(isPilot)} size="sm" data-testid={`button-add-${isPilot ? 'pilot' : 'implementation'}-task`}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add {isPilot ? "Pilot" : "Implementation"} Task
-        </Button>
       </div>
 
       <div className="overflow-x-auto">
@@ -235,6 +231,7 @@ export default function ImplementationPlan({ projectId }: ImplementationPlanProp
                     <Input
                       type="date"
                       value={task.endDate || ""}
+                      min={task.startDate || undefined}
                       onChange={(e) => updateTaskField(index, 'endDate', e.target.value)}
                       data-testid={`input-end-date-${index}`}
                     />
@@ -296,6 +293,20 @@ export default function ImplementationPlan({ projectId }: ImplementationPlanProp
           </TableBody>
         </Table>
       </div>
+      <div className="flex justify-between mt-4">
+        <Button onClick={() => addTask(isPilot)} size="sm" data-testid={`button-add-${isPilot ? 'pilot' : 'implementation'}-task`}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add {isPilot ? "Pilot" : "Implementation"} Task
+        </Button>
+        <Button 
+            onClick={saveAllTasks} 
+            disabled={saveAllMutation.isPending || tasks.length === 0}
+            data-testid="button-save-all-tasks"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saveAllMutation.isPending ? "Saving..." : "Save All Tasks"}
+          </Button>
+        </div>
 
       {taskList.length === 0 && (
         <div className="text-center py-8 text-gray-500">
@@ -310,14 +321,6 @@ export default function ImplementationPlan({ projectId }: ImplementationPlanProp
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Implementation and Pilot Plan</span>
-          <Button 
-            onClick={saveAllTasks} 
-            disabled={saveAllMutation.isPending || tasks.length === 0}
-            data-testid="button-save-all-tasks"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {saveAllMutation.isPending ? "Saving..." : "Save All Tasks"}
-          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
