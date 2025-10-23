@@ -2122,6 +2122,7 @@ export const implementationPlanTasks = pgTable(
     // Task fields
     taskName: text("task_name").notNull(),
     description: text("description"),
+    solutionId: text("solution_id"), // e.g., S1, S2, S3
     owner: text("owner").notNull(),
     startDate: date("start_date"),
     endDate: date("end_date"),
