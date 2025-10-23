@@ -20,6 +20,7 @@ interface Task {
   id?: number;
   taskName: string;
   description?: string;
+  solutionId?: string;
   owner: string;
   startDate?: string;
   endDate?: string;
@@ -174,7 +175,8 @@ export default function ImplementationPlan({ projectId }: ImplementationPlanProp
             <TableRow>
               <TableHead className="min-w-[200px]">Task Name</TableHead>
               <TableHead className="min-w-[200px]">Description</TableHead>
-              <TableHead className="w-[150px]">Owner</TableHead>
+              <TableHead className="w-[120px]">Solution ID</TableHead>
+              <TableHead className="min-w-[200px]">Owner</TableHead>
               <TableHead className="w-[130px]">Start Date</TableHead>
               <TableHead className="w-[130px]">End Date</TableHead>
               <TableHead className="w-[130px]">Status</TableHead>
@@ -203,6 +205,14 @@ export default function ImplementationPlan({ projectId }: ImplementationPlanProp
                       placeholder="Task description"
                       className="min-h-[60px]"
                       data-testid={`textarea-description-${index}`}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={task.solutionId || ""}
+                      onChange={(e) => updateTaskField(index, 'solutionId', e.target.value)}
+                      placeholder="S1, S2, etc."
+                      data-testid={`input-solution-id-${index}`}
                     />
                   </TableCell>
                   <TableCell>
