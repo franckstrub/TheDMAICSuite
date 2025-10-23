@@ -39,6 +39,7 @@ import {
   insertValueTimeAnalysisSchema,
   insertFmeaAnalysisSchema,
   insertSolutionSchema,
+  insertImplementationPlanTaskSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -95,6 +96,7 @@ import {
   valueTimeAnalysis,
   fmeaAnalysis,
   solutions,
+  implementationPlanTasks,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -6963,6 +6965,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "Solution deleted successfully" });
       } catch (err) {
         console.error("Solution deletion error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Implementation Plan Tasks Routes (DMAIC Improve Phase)
+  app.get(
+    "/api/projects/:projectId/implementation-plan-tasks",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const tasks = await db
+          .select()
+          .from(implementationPlanTasks)
+          .where(
+            and(
+              eq(implementationPlanTasks.projectId, projectId),
+              eq(implementationPlanTasks.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(implementationPlanTasks.startDate));
+
+        return res.json({ tasks });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/implementation-plan-tasks",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const taskData = {
+          projectId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertImplementationPlanTaskSchema.parse(taskData);
+
+        const [savedTask] = await db
+          .insert(implementationPlanTasks)
+          .values(validatedData)
+          .returning();
+
+        return res.status(201).json(savedTask);
+      } catch (err) {
+        console.error("Implementation plan task creation error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.put(
+    "/api/implementation-plan-tasks/:taskId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const taskId = parseInt(req.params.taskId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const updateData = {
+          ...req.body,
+          lastUpdated: new Date(),
+        };
+
+        const [updatedTask] = await db
+          .update(implementationPlanTasks)
+          .set(updateData)
+          .where(
+            and(
+              eq(implementationPlanTasks.id, taskId),
+              eq(implementationPlanTasks.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updatedTask) {
+          return res.status(404).json({ message: "Task not found" });
+        }
+
+        return res.json(updatedTask);
+      } catch (err) {
+        console.error("Implementation plan task update error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/implementation-plan-tasks/:taskId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const taskId = parseInt(req.params.taskId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        await db
+          .delete(implementationPlanTasks)
+          .where(
+            and(
+              eq(implementationPlanTasks.id, taskId),
+              eq(implementationPlanTasks.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        return res.json({ message: "Task deleted successfully" });
+      } catch (err) {
+        console.error("Implementation plan task deletion error:", err);
         return handleErrors(err, res);
       }
     },

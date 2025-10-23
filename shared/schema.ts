@@ -2099,6 +2099,51 @@ export const insertSolutionSchema = createInsertSchema(solutions).omit({
 export type InsertSolution = z.infer<typeof insertSolutionSchema>;
 export type Solution = typeof solutions.$inferSelect;
 
+// Task status for Implementation Plan
+export const taskStatuses = [
+  "Not Started",
+  "In Progress",
+  "Completed",
+  "On Hold",
+  "Cancelled",
+] as const;
+export type TaskStatus = (typeof taskStatuses)[number];
+
+// Implementation Plan Tasks for DMAIC Improve Phase
+export const implementationPlanTasks = pgTable(
+  "implementation_plan_tasks",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    
+    // Task fields
+    taskName: text("task_name").notNull(),
+    description: text("description"),
+    owner: text("owner").notNull(),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
+    status: text("status", { enum: taskStatuses }).notNull().default("Not Started"),
+    isPilotTask: boolean("is_pilot_task").default(false), // Differentiate pilot tasks from implementation tasks
+    
+    // Progress tracking
+    progressPercentage: integer("progress_percentage").default(0),
+    notes: text("notes"),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+);
+
+export const insertImplementationPlanTaskSchema = createInsertSchema(implementationPlanTasks).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertImplementationPlanTask = z.infer<typeof insertImplementationPlanTaskSchema>;
+export type ImplementationPlanTask = typeof implementationPlanTasks.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",

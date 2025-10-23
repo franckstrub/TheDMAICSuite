@@ -33,6 +33,7 @@ import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ImproveGateReviewValidation from '@/components/dmaic/ImproveGateReviewValidation';
 import SolutionGeneration from '@/components/dmaic/SolutionGeneration';
+import ImplementationPlan from '@/components/dmaic/ImplementationPlan';
 
 interface CtqWithType {
   ctq: string;
@@ -91,17 +92,6 @@ export default function ImprovePhase() {
     }
   }, [charter]);
 
-  // Solution Generation
-  
-  //Benefit-Effort Matrix (for Green Belt and Black Belt projects only)
-
-  //Improvement Action Designs (one by one)
-
-  //Implementation plan including eventually Pilot plan
-
-  // CTQ by CTQ proof of improvement (with statistical hypothesis tests - for Green Belt and Black Belt projects only)
-  
-
   return (
     <div className="space-y-6">
       {/* Phase Milestone Timeline */}
@@ -136,17 +126,8 @@ export default function ImprovePhase() {
         </CardContent>
       </Card>
       
-      {/* Implementation Plan */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Implementation and Pilot Plan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Develop a detailed plan for implementing and piloting the selected solutions.
-          </p>          
-        </CardContent>
-      </Card>
+      {/* Implementation and Pilot Plan */}
+      <ImplementationPlan projectId={projectId} />
       
       {projectType === 'Green Belt' || projectType === 'Black Belt' && (
         <Card>
