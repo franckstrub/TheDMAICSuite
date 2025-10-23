@@ -84,12 +84,24 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
 
   // Delete solution mutation
   const deleteSolutionMutation = useMutation({
-    mutationFn: async (solutionId: number) => {
-      return apiRequest('DELETE', `/api/solutions/${solutionId}`, {});
+    mutationFn: async ({ solutionId, remainingSolutions }: { solutionId: number, remainingSolutions: Solution[] }) => {
+      // First delete the solution
+      await apiRequest('DELETE', `/api/solutions/${solutionId}`, {});
+      
+      // Then reindex remaining solutions
+      const reindexPromises = remainingSolutions.map((sol, index) => {
+        const newSolutionId = `S${index + 1}`;
+        if (sol.id && sol.solutionId !== newSolutionId) {
+          return apiRequest('PUT', `/api/solutions/${sol.id}`, { ...sol, solutionId: newSolutionId });
+        }
+        return Promise.resolve();
+      });
+      
+      return Promise.all(reindexPromises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/solutions`] });
-      toast({ title: "Success", description: "Solution deleted successfully" });
+      toast({ title: "Success", description: "Solution deleted and table reindexed" });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete solution", variant: "destructive" });
@@ -133,7 +145,12 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
   const deleteSolution = (index: number) => {
     const solution = solutions[index];
     if (solution.id) {
-      deleteSolutionMutation.mutate(solution.id);
+      // Get remaining solutions after deletion
+      const remainingSolutions = solutions.filter((_, i) => i !== index);
+      deleteSolutionMutation.mutate({ 
+        solutionId: solution.id, 
+        remainingSolutions 
+      });
     }
   };
 
