@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ImproveGateReviewValidation from '@/components/dmaic/ImproveGateReviewValidation';
 import SolutionGeneration from '@/components/dmaic/SolutionGeneration';
 import ImplementationPlan from '@/components/dmaic/ImplementationPlan';
+import ProofOfImprovement from '@/components/dmaic/ProofOfImprovement';
 
 interface CtqWithType {
   ctq: string;
@@ -129,18 +130,8 @@ export default function ImprovePhase() {
       {/* Implementation and Pilot Plan */}
       <ImplementationPlan projectId={projectId} />
       
-      {projectType === 'Green Belt' || projectType === 'Black Belt' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Proof of Improvement</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-4">
-              Generate proof of improvement with statistical tests.
-            </p>         
-          </CardContent>
-        </Card>
-      )}
+      {/* Proof of Improvement */}
+      <ProofOfImprovement projectId={projectId} />
 
       <ImproveGateReviewValidation projectId={projectId} />
     </div>
