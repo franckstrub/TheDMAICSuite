@@ -422,7 +422,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
           <thead>
             <tr>
               <th className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
-                {variable1Name} / {variable2Name}
+                {variable1Name} ↓ / {variable2Name} →
               </th>
               {variable2Categories.map((cat, index) => (
                 <th key={index} className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
@@ -669,7 +669,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                   <thead>
                     <tr>
                       <th className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
-                        {variable1Name} / {variable2Name}
+                        {variable1Name} ↓ / {variable2Name} →
                       </th>
                       {variable2Categories.map((cat, index) => (
                         <th key={index} className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
