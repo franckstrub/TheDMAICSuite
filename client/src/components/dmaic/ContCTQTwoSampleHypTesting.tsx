@@ -1720,7 +1720,7 @@ useEffect(() => {
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName)) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (!activeTab || activeTab === ctqName)) {
         
         // Check if this Two Sample component should handle the paste based on global context
         const focusedComponent = (window as any).focusedComponent;
@@ -1769,7 +1769,7 @@ useEffect(() => {
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (activeTab === ctqName)) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (!activeTab || activeTab === ctqName)) {
         event.preventDefault();
         
         // Determine which dataset to undo based on which input field is focused
