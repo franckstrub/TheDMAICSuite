@@ -461,6 +461,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     if (!currentConfig) return;
     
     const configToSave = {
+      ctq: ctqName,
       testType: currentConfig.testType,
       enableMeanTest: currentConfig.enableMeanTest,
       enableVarianceTest: currentConfig.enableVarianceTest,
