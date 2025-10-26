@@ -129,10 +129,12 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
   // Save preferences mutation
   const savePreferencesMutation = useMutation({
     mutationFn: async ({ ctqId, preferences }: { ctqId: number; preferences: { enableTwoProportionTest: boolean; enableChiSquareTest: boolean } }) => {
-      return apiRequest(`/api/projects/${projectId}/ctq/${ctqId}/proof-improvement-preferences`, {
-        method: 'POST',
-        body: JSON.stringify(preferences),
-      });
+      const response = await apiRequest(
+        'POST',
+        `/api/projects/${projectId}/ctq/${ctqId}/proof-improvement-preferences`,
+        preferences
+      );
+      return response.json();
     },
     onSuccess: () => {
       toast({
