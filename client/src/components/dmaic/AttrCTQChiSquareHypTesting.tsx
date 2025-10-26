@@ -18,6 +18,7 @@ interface AttrCTQChiSquareHypTestingProps {
   ctqName: string;
   activeTab?: string;
   onSave?: (data: string) => void;
+  apiEndpoint?: string;
 }
 
 interface ChiSquareConfig {
@@ -29,9 +30,12 @@ interface ChiSquareConfig {
   observedFrequencies: string;
 }
 
-export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: AttrCTQChiSquareHypTestingProps) {
+export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTab, onSave, apiEndpoint }: AttrCTQChiSquareHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use provided apiEndpoint or default to the Analyze phase endpoint
+  const effectiveApiEndpoint = apiEndpoint || `/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`;
   
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
   const [variable1Name, setVariable1Name] = useState("Variable 1");
@@ -44,7 +48,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`],
+    queryKey: [effectiveApiEndpoint],
     enabled: !!projectId && !!ctqId,
     retry: false,
   });
@@ -52,7 +56,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
     mutationFn: async (configData: any) => {
-      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`, {
+      const response = await fetch(effectiveApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +77,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
         title: "Configuration Saved",
         description: "Chi-square test configuration has been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`] });
+      queryClient.invalidateQueries({ queryKey: [effectiveApiEndpoint] });
     },
     onError: (error: any) => {
       toast({

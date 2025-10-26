@@ -2145,6 +2145,199 @@ export const insertImplementationPlanTaskSchema = createInsertSchema(implementat
 export type InsertImplementationPlanTask = z.infer<typeof insertImplementationPlanTaskSchema>;
 export type ImplementationPlanTask = typeof implementationPlanTasks.$inferSelect;
 
+// Proof of Improvement - Before/After Continuous CTQ Two-Sample Test
+export const beforeAfterContCTQTwoSampleTest = pgTable(
+  "before_after_cont_ctq_two_sample_test",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    testType: text("test_type").default("Before-After Two Sample Test"),
+
+    // Statistical parameter enablers
+    enableMeanTest: boolean("enable_mean_test").default(true),
+    enableVarianceTest: boolean("enable_variance_test").default(false),
+    enableMedianTest: boolean("enable_median_test").default(false),
+
+    // Target values for hypothesis tests
+    deltaMean0: real("delta_mean_0").default(0),
+    ratioVariance0: real("ratio_variance_0").default(1),
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternativemean: text("alternativemean").default("Less than"),
+    alternativevariance: text("alternativevariance").default("Less than"),
+    alternativemedian: text("alternativemedian").default("Less than"),
+
+    // Data points - Before (dataSet1) and After (dataSet2)
+    dataSet1: jsonb("data_set_1")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+    dataSet2: jsonb("data_set_2")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+
+    // Dataset descriptions
+    dataset1Description: text("dataset_1_description").default("Before"),
+    dataset2Description: text("dataset_2_description").default("After"),
+
+    // Power analysis fields for Mean Test
+    enableMean2SPower: boolean("enable_mean_2s_power").default(false),
+    power2SMeanPower: text("power_2s_mean_power"),
+    power2SMeanHa: text("power_2s_mean_ha"),
+    power2SMeanMean1: real("power_2s_mean_mean_1"),
+    power2SMeanMean2: real("power_2s_mean_mean_2"),
+    power2SMeanStdev: real("power_2s_mean_stdev"),
+    power2SMeanAlpha: text("power_2s_mean_alpha"),
+
+    // Power analysis fields for Variance Test
+    enableVariance2SPower: boolean("enable_variance_2s_power").default(false),
+    power2SVariancePower: text("power_2s_variance_power"),
+    power2SVarianceHa: text("power_2s_variance_ha"),
+    power2SVarianceStdev1: real("power_2s_variance_stdev_1"),
+    power2SVarianceStdev2: real("power_2s_variance_stdev_2"),
+    power2SVarianceAlpha: text("power_2s_variance_alpha"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertBeforeAfterContCTQTwoSampleTestSchema = createInsertSchema(
+  beforeAfterContCTQTwoSampleTest,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertBeforeAfterContCTQTwoSampleTest = z.infer<
+  typeof insertBeforeAfterContCTQTwoSampleTestSchema
+>;
+export type BeforeAfterContCTQTwoSampleTest =
+  typeof beforeAfterContCTQTwoSampleTest.$inferSelect;
+
+// Proof of Improvement - Before/After Two Proportion Test
+export const beforeAfterTwoProportionTest = pgTable(
+  "before_after_two_proportion_test",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    testType: text("test_type").default("Before-After Two Proportion Test"),
+    hypothesizedDifference: real("hypothesized_difference").default(0),
+
+    // Sample data - Before (sample1) and After (sample2)
+    sample1Size: integer("sample1_size"),
+    sample1Events: integer("sample1_events"),
+    sample2Size: integer("sample2_size"),
+    sample2Events: integer("sample2_events"),
+
+    // Sample descriptions
+    sample1Description: text("sample1_description").default("Before"),
+    sample2Description: text("sample2_description").default("After"),
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternative: text("alternative").default("Different"),
+
+    // Power analysis fields
+    enablePowerAnalysis: boolean("enable_power_analysis").default(false),
+    powerTargetPower: real("power_target_power"),
+    powerAlpha: real("power_alpha"),
+    powerHa: text("power_ha"),
+    powerP1: real("power_p1"),
+    powerP2: real("power_p2"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertBeforeAfterTwoProportionTestSchema = createInsertSchema(
+  beforeAfterTwoProportionTest,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertBeforeAfterTwoProportionTest = z.infer<
+  typeof insertBeforeAfterTwoProportionTestSchema
+>;
+export type BeforeAfterTwoProportionTest =
+  typeof beforeAfterTwoProportionTest.$inferSelect;
+
+// Proof of Improvement - Before/After Chi-Square Test
+export const beforeAfterChiSquareTest = pgTable(
+  "before_after_chi_square_test",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    significanceLevel: text("significance_level").default("0.05"),
+    
+    // Variable names
+    variable1Name: text("variable1_name").default("Time Period"),
+    variable2Name: text("variable2_name").default("Outcome"),
+    
+    // Categories
+    variable1Categories: jsonb("variable1_categories")
+      .$type<string[]>()
+      .default(["Before", "After"]),
+    variable2Categories: jsonb("variable2_categories")
+      .$type<string[]>()
+      .default(["Category 1", "Category 2"]),
+    
+    // Observed frequencies as string (for compatibility with existing component)
+    observedFrequencies: text("observed_frequencies").default(""),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertBeforeAfterChiSquareTestSchema = createInsertSchema(
+  beforeAfterChiSquareTest,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertBeforeAfterChiSquareTest = z.infer<
+  typeof insertBeforeAfterChiSquareTestSchema
+>;
+export type BeforeAfterChiSquareTest =
+  typeof beforeAfterChiSquareTest.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",
