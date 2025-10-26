@@ -90,8 +90,9 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // Load configuration data from database when available
   useEffect(() => {
-    if (configData && (configData as any).config && !isLoading) {
-      const config = (configData as any).config;
+    if (configData && !isLoading) {
+      // Handle both formats: { config: {...} } and direct {...}
+      const config = (configData as any).config || configData;
       
       if (config.significanceLevel) setSignificanceLevel(config.significanceLevel);
       if (config.variable1Name) setVariable1Name(config.variable1Name);

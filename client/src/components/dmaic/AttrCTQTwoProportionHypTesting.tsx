@@ -142,8 +142,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
 
   // Load configuration data from database when available
   useEffect(() => {
-    if (configData && (configData as any).config && !isLoading) {
-      const config = (configData as any).config;
+    if (configData && !isLoading) {
+      // Handle both formats: { config: {...} } and direct {...}
+      const config = (configData as any).config || configData;
       
       if (config.significanceLevel) setSignificanceLevel(config.significanceLevel);
       if (config.alternative) setAlternative(config.alternative);
