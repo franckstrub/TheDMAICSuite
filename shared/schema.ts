@@ -2338,6 +2338,43 @@ export type InsertBeforeAfterChiSquareTest = z.infer<
 export type BeforeAfterChiSquareTest =
   typeof beforeAfterChiSquareTest.$inferSelect;
 
+// Proof of Improvement - Test Preferences (which tests to display)
+export const proofOfImprovementPreferences = pgTable(
+  "proof_of_improvement_preferences",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    
+    // Test preferences for Attribute CTQs
+    enableTwoProportionTest: boolean("enable_two_proportion_test").default(true),
+    enableChiSquareTest: boolean("enable_chi_square_test").default(true),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqPreferences: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertProofOfImprovementPreferencesSchema = createInsertSchema(
+  proofOfImprovementPreferences,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertProofOfImprovementPreferences = z.infer<
+  typeof insertProofOfImprovementPreferencesSchema
+>;
+export type ProofOfImprovementPreferences =
+  typeof proofOfImprovementPreferences.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",

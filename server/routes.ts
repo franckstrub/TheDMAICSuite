@@ -43,6 +43,7 @@ import {
   insertBeforeAfterContCTQTwoSampleTestSchema,
   insertBeforeAfterTwoProportionTestSchema,
   insertBeforeAfterChiSquareTestSchema,
+  insertProofOfImprovementPreferencesSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -103,6 +104,7 @@ import {
   beforeAfterContCTQTwoSampleTest,
   beforeAfterTwoProportionTest,
   beforeAfterChiSquareTest,
+  proofOfImprovementPreferences,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -7455,6 +7457,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(201).json(savedConfig);
       } catch (err) {
         console.error("Before/After chi-square test save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Test Preferences Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/proof-improvement-preferences",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [preferences] = await db
+          .select()
+          .from(proofOfImprovementPreferences)
+          .where(
+            and(
+              eq(proofOfImprovementPreferences.projectId, projectId),
+              eq(proofOfImprovementPreferences.ctqId, ctqId),
+              eq(proofOfImprovementPreferences.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!preferences) {
+          // Return default preferences if none exist
+          return res.json({
+            enableTwoProportionTest: true,
+            enableChiSquareTest: true,
+          });
+        }
+
+        return res.json(preferences);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/proof-improvement-preferences",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const preferencesData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertProofOfImprovementPreferencesSchema.parse(preferencesData);
+
+        const [existingPreferences] = await db
+          .select()
+          .from(proofOfImprovementPreferences)
+          .where(
+            and(
+              eq(proofOfImprovementPreferences.projectId, projectId),
+              eq(proofOfImprovementPreferences.ctqId, ctqId),
+              eq(proofOfImprovementPreferences.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedPreferences;
+        if (existingPreferences) {
+          [savedPreferences] = await db
+            .update(proofOfImprovementPreferences)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(proofOfImprovementPreferences.id, existingPreferences.id))
+            .returning();
+        } else {
+          [savedPreferences] = await db
+            .insert(proofOfImprovementPreferences)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedPreferences);
+      } catch (err) {
+        console.error("Proof of improvement preferences save error:", err);
         return handleErrors(err, res);
       }
     },
