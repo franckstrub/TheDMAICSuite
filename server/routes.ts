@@ -40,6 +40,9 @@ import {
   insertFmeaAnalysisSchema,
   insertSolutionSchema,
   insertImplementationPlanTaskSchema,
+  insertBeforeAfterContCTQTwoSampleTestSchema,
+  insertBeforeAfterTwoProportionTestSchema,
+  insertBeforeAfterChiSquareTestSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -97,6 +100,9 @@ import {
   fmeaAnalysis,
   solutions,
   implementationPlanTasks,
+  beforeAfterContCTQTwoSampleTest,
+  beforeAfterTwoProportionTest,
+  beforeAfterChiSquareTest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -7134,6 +7140,321 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "Task deleted successfully" });
       } catch (err) {
         console.error("Implementation plan task deletion error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Before/After Continuous CTQ Two-Sample Test Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-cont-two-sample",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(beforeAfterContCTQTwoSampleTest)
+          .where(
+            and(
+              eq(beforeAfterContCTQTwoSampleTest.projectId, projectId),
+              eq(beforeAfterContCTQTwoSampleTest.ctqId, ctqId),
+              eq(beforeAfterContCTQTwoSampleTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json(config);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-cont-two-sample",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertBeforeAfterContCTQTwoSampleTestSchema.parse(configData);
+
+        const [existingConfig] = await db
+          .select()
+          .from(beforeAfterContCTQTwoSampleTest)
+          .where(
+            and(
+              eq(beforeAfterContCTQTwoSampleTest.projectId, projectId),
+              eq(beforeAfterContCTQTwoSampleTest.ctqId, ctqId),
+              eq(beforeAfterContCTQTwoSampleTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedConfig;
+        if (existingConfig) {
+          [savedConfig] = await db
+            .update(beforeAfterContCTQTwoSampleTest)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(beforeAfterContCTQTwoSampleTest.id, existingConfig.id))
+            .returning();
+        } else {
+          [savedConfig] = await db
+            .insert(beforeAfterContCTQTwoSampleTest)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedConfig);
+      } catch (err) {
+        console.error("Before/After continuous test save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Before/After Two Proportion Test Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-two-proportion",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(beforeAfterTwoProportionTest)
+          .where(
+            and(
+              eq(beforeAfterTwoProportionTest.projectId, projectId),
+              eq(beforeAfterTwoProportionTest.ctqId, ctqId),
+              eq(beforeAfterTwoProportionTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json(config);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-two-proportion",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertBeforeAfterTwoProportionTestSchema.parse(configData);
+
+        const [existingConfig] = await db
+          .select()
+          .from(beforeAfterTwoProportionTest)
+          .where(
+            and(
+              eq(beforeAfterTwoProportionTest.projectId, projectId),
+              eq(beforeAfterTwoProportionTest.ctqId, ctqId),
+              eq(beforeAfterTwoProportionTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedConfig;
+        if (existingConfig) {
+          [savedConfig] = await db
+            .update(beforeAfterTwoProportionTest)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(beforeAfterTwoProportionTest.id, existingConfig.id))
+            .returning();
+        } else {
+          [savedConfig] = await db
+            .insert(beforeAfterTwoProportionTest)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedConfig);
+      } catch (err) {
+        console.error("Before/After two proportion test save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Before/After Chi-Square Test Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-chi-square",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(beforeAfterChiSquareTest)
+          .where(
+            and(
+              eq(beforeAfterChiSquareTest.projectId, projectId),
+              eq(beforeAfterChiSquareTest.ctqId, ctqId),
+              eq(beforeAfterChiSquareTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json(config);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-chi-square",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertBeforeAfterChiSquareTestSchema.parse(configData);
+
+        const [existingConfig] = await db
+          .select()
+          .from(beforeAfterChiSquareTest)
+          .where(
+            and(
+              eq(beforeAfterChiSquareTest.projectId, projectId),
+              eq(beforeAfterChiSquareTest.ctqId, ctqId),
+              eq(beforeAfterChiSquareTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedConfig;
+        if (existingConfig) {
+          [savedConfig] = await db
+            .update(beforeAfterChiSquareTest)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(beforeAfterChiSquareTest.id, existingConfig.id))
+            .returning();
+        } else {
+          [savedConfig] = await db
+            .insert(beforeAfterChiSquareTest)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedConfig);
+      } catch (err) {
+        console.error("Before/After chi-square test save error:", err);
         return handleErrors(err, res);
       }
     },

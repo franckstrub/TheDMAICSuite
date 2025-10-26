@@ -38,6 +38,7 @@ interface AttrCTQTwoProportionHypTestingProps {
   ctqName: string;
   activeTab?: string;
   onSave?: (data: string) => void;
+  apiEndpoint?: string;
 }
 
 interface PowerSampleSizeResults {
@@ -58,9 +59,12 @@ interface TestResults {
   ciUpper: number;
 }
 
-export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: AttrCTQTwoProportionHypTestingProps) {
+export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, activeTab, onSave, apiEndpoint }: AttrCTQTwoProportionHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use provided apiEndpoint or default to the Analyze phase endpoint
+  const effectiveApiEndpoint = apiEndpoint || `/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`;
   
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
   const [alternative, setAlternative] = useState("Different");
@@ -96,7 +100,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`],
+    queryKey: [effectiveApiEndpoint],
     enabled: !!projectId && !!ctqId,
     retry: false,
   });
@@ -104,7 +108,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
     mutationFn: async (configData: any) => {
-      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`, {
+      const response = await fetch(effectiveApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +129,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
         title: "Configuration Saved",
         description: "Two-proportion hypothesis testing configuration has been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`] });
+      queryClient.invalidateQueries({ queryKey: [effectiveApiEndpoint] });
     },
     onError: (error: any) => {
       toast({

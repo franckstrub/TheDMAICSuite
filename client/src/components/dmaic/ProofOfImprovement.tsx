@@ -8,9 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3 } from "lucide-react";
-import { ContCTQTwoSampleHypTesting } from "./ContCTQTwoSampleHypTesting";
-import { AttrCTQTwoProportionHypTesting } from "./AttrCTQTwoProportionHypTesting";
-import { AttrCTQChiSquareHypTesting } from "./AttrCTQChiSquareHypTesting";
 import {
   Select,
   SelectContent,
@@ -19,6 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+
+// Import wrapper components for proof of improvement
+import BeforeAfterContTwoSampleTest from "./proof-improvement/BeforeAfterContTwoSampleTest";
+import BeforeAfterTwoProportionTest from "./proof-improvement/BeforeAfterTwoProportionTest";
+import BeforeAfterChiSquareTest from "./proof-improvement/BeforeAfterChiSquareTest";
 
 interface CtqWithType {
   ctq: string;
@@ -199,11 +201,10 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                         <strong>Continuous CTQ Test:</strong> Compare the Mean, Variance, or Median between "Before" (Dataset 1) and "After" (Dataset 2) implementation to prove statistical improvement.
                       </p>
                     </div>
-                    <ContCTQTwoSampleHypTesting
+                    <BeforeAfterContTwoSampleTest
                       projectId={projectId}
                       ctqId={ctq.ctqId}
                       ctqName={ctq.ctq}
-                      activeTab={activeTab}
                     />
                   </div>
                 )}
@@ -215,11 +216,10 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                         <strong>Two Proportion Test:</strong> Compare the proportion of defects or success rates between "Before" (Sample 1) and "After" (Sample 2) implementation to prove statistical improvement.
                       </p>
                     </div>
-                    <AttrCTQTwoProportionHypTesting
+                    <BeforeAfterTwoProportionTest
                       projectId={projectId}
                       ctqId={ctq.ctqId}
                       ctqName={ctq.ctq}
-                      activeTab={activeTab}
                     />
                   </div>
                 )}
@@ -231,11 +231,10 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                         <strong>Chi-Square Test:</strong> Test the relationship between two categorical variables (e.g., Time Period [Before/After] and Outcome Categories) to prove that the improvement initiative has changed the distribution of outcomes.
                       </p>
                     </div>
-                    <AttrCTQChiSquareHypTesting
+                    <BeforeAfterChiSquareTest
                       projectId={projectId}
                       ctqId={ctq.ctqId}
                       ctqName={ctq.ctq}
-                      activeTab={activeTab}
                     />
                   </div>
                 )}

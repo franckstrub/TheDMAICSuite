@@ -74,6 +74,7 @@ interface ContCTQTwoSampleHypTestingProps {
   ctqName: string;
   activeTab?: string;
   onSave?: (data: string) => void;
+  apiEndpoint?: string;
 }
 
 interface PowerSampleSizeResults {
@@ -183,9 +184,12 @@ interface MedianTestResults {
   median2CI: { lower: number, upper: number };
 }
 
-export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQTwoSampleHypTestingProps) {
+export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave, apiEndpoint }: ContCTQTwoSampleHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use provided apiEndpoint or default to the Analyze phase endpoint
+  const effectiveApiEndpoint = apiEndpoint || `/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`;
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
   const [alternativemean, setAlternativemean] = useState("Less than");
   const [alternativevariance, setAlternativevariance] = useState("Less than");
@@ -299,7 +303,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading, error } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`],
+    queryKey: [effectiveApiEndpoint],
     enabled: !!projectId && !!ctqId,
     retry: false,
   });
@@ -307,7 +311,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
     mutationFn: async (configData: any) => {
-      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`, {
+      const response = await fetch(effectiveApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -329,7 +333,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         description: "Two-sample hypothesis testing configuration has been saved successfully.",
       });
       // Invalidate the query to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`] });
+      queryClient.invalidateQueries({ queryKey: [effectiveApiEndpoint] });
     },
     onError: (error: any) => {
       toast({

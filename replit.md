@@ -32,6 +32,8 @@ Preferred communication style: Simple, everyday language.
 - **Measurement System Analysis (MSA)**: Continuous and attribute systems, Gage R&R.
 - **AI Integration**: Google Gemini AI for coaching and analysis.
 - **Data Management**: VOC, CTQ, SIPOC, Risk Assessment, Gantt Charts.
+- **Improve Phase Tools**: Solution Generation, FMEA Analysis, Value & Time Analysis, Implementation Planning, Proof of Improvement (Before vs After testing).
+- **Proof of Improvement**: Dedicated database tables (before_after_cont_ctq_two_sample_test, before_after_two_proportion_test, before_after_chi_square_test) for "Before vs After" statistical testing, separate from Analyze phase hypothesis testing.
 - **Visualizations**: BoxPlot, Pareto Chart, Draw.io integration for process maps and fishbone diagrams.
 - **Tabbed Interfaces**: Pareto Analysis and Hypothesis Testing use 4-tab structure (Setup/Data/Chart/Analysis) with localStorage persistence.
 
