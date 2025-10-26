@@ -34,7 +34,6 @@ interface ProofOfImprovementProps {
 
 export default function ProofOfImprovement({ projectId }: ProofOfImprovementProps) {
   const [activeTab, setActiveTab] = useState<string>("");
-  const [selectedTestType, setSelectedTestType] = useState<{ [key: string]: string }>({});
 
   // Load CTQs with types from CTS characteristics
   const { data: ctsData, isLoading: ctsLoading } = useQuery({
@@ -80,34 +79,6 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
     setActiveTab(tabValue);
     localStorage.setItem(`proof-improvement-active-tab-${projectId}`, tabValue);
   };
-
-  // Handle test type selection for each CTQ
-  const handleTestTypeChange = (ctqName: string, testType: string) => {
-    setSelectedTestType(prev => ({
-      ...prev,
-      [ctqName]: testType
-    }));
-    localStorage.setItem(`proof-improvement-test-type-${projectId}-${ctqName}`, testType);
-  };
-
-  // Restore test type from localStorage
-  useEffect(() => {
-    const restored: { [key: string]: string } = {};
-    ctqList.forEach(ctq => {
-      const savedTestType = localStorage.getItem(`proof-improvement-test-type-${projectId}-${ctq.ctq}`);
-      if (savedTestType) {
-        restored[ctq.ctq] = savedTestType;
-      } else {
-        // Set default test type based on CTQ type
-        if (ctq.ctqType === "Continuous") {
-          restored[ctq.ctq] = "mean-variance-median";
-        } else {
-          restored[ctq.ctq] = "two-proportions";
-        }
-      }
-    });
-    setSelectedTestType(restored);
-  }, [ctqList, projectId]);
 
   if (ctqList.length === 0) {
     return (
@@ -162,39 +133,8 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                   </div>
                 </div>
 
-                {/* Test Type Selection */}
-                <div className="p-4 border rounded-lg bg-white">
-                  <Label className="text-base font-semibold mb-3 block">
-                    Select Test Type for Before vs After Comparison
-                  </Label>
-                  <Select
-                    value={selectedTestType[ctq.ctq] || (ctq.ctqType === "Continuous" ? "mean-variance-median" : "two-proportions")}
-                    onValueChange={(value) => handleTestTypeChange(ctq.ctq, value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ctq.ctqType === "Continuous" ? (
-                        <SelectItem value="mean-variance-median">
-                          Test Mean, Variance, or Median (Before vs After)
-                        </SelectItem>
-                      ) : (
-                        <>
-                          <SelectItem value="two-proportions">
-                            Test Two Proportions (Before vs After)
-                          </SelectItem>
-                          <SelectItem value="chi-square">
-                            Chi-Square Test of Independence (Multiple Categories)
-                          </SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Render appropriate test component based on CTQ type and selected test */}
-                {ctq.ctqType === "Continuous" && selectedTestType[ctq.ctq] === "mean-variance-median" && (
+                {/* Render appropriate test components based on CTQ type */}
+                {ctq.ctqType === "Continuous" ? (
                   <div className="mt-4">
                     <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
                       <p className="text-sm text-blue-800">
@@ -207,35 +147,35 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                       ctqName={ctq.ctq}
                     />
                   </div>
-                )}
-
-                {ctq.ctqType === "Attribute" && selectedTestType[ctq.ctq] === "two-proportions" && (
-                  <div className="mt-4">
-                    <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 rounded">
-                      <p className="text-sm text-green-800">
-                        <strong>Two Proportion Test:</strong> Compare the proportion of defects or success rates between "Before" (Sample 1) and "After" (Sample 2) implementation to prove statistical improvement.
-                      </p>
+                ) : (
+                  <div className="space-y-6 mt-4">
+                    {/* Two Proportions Test */}
+                    <div>
+                      <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+                        <p className="text-sm text-green-800">
+                          <strong>Two Proportion Test:</strong> Compare the proportion of defects or success rates between "Before" (Sample 1) and "After" (Sample 2) implementation to prove statistical improvement.
+                        </p>
+                      </div>
+                      <BeforeAfterTwoProportionTest
+                        projectId={projectId}
+                        ctqId={ctq.ctqId}
+                        ctqName={ctq.ctq}
+                      />
                     </div>
-                    <BeforeAfterTwoProportionTest
-                      projectId={projectId}
-                      ctqId={ctq.ctqId}
-                      ctqName={ctq.ctq}
-                    />
-                  </div>
-                )}
 
-                {ctq.ctqType === "Attribute" && selectedTestType[ctq.ctq] === "chi-square" && (
-                  <div className="mt-4">
-                    <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 rounded">
-                      <p className="text-sm text-green-800">
-                        <strong>Chi-Square Test:</strong> Test the relationship between two categorical variables (e.g., Time Period [Before/After] and Outcome Categories) to prove that the improvement initiative has changed the distribution of outcomes.
-                      </p>
+                    {/* Chi-Square Test */}
+                    <div>
+                      <div className="mb-4 p-3 bg-purple-50 border-l-4 border-purple-500 rounded">
+                        <p className="text-sm text-purple-800">
+                          <strong>Chi-Square Test:</strong> Test the relationship between two categorical variables (e.g., Time Period [Before/After] and Outcome Categories) to prove that the improvement initiative has changed the distribution of outcomes.
+                        </p>
+                      </div>
+                      <BeforeAfterChiSquareTest
+                        projectId={projectId}
+                        ctqId={ctq.ctqId}
+                        ctqName={ctq.ctq}
+                      />
                     </div>
-                    <BeforeAfterChiSquareTest
-                      projectId={projectId}
-                      ctqId={ctq.ctqId}
-                      ctqName={ctq.ctq}
-                    />
                   </div>
                 )}
               </div>
