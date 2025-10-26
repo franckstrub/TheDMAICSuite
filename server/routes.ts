@@ -7181,7 +7181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Configuration not found" });
         }
 
-        return res.json(config);
+        return res.json({ config });
       } catch (err) {
         return handleErrors(err, res);
       }
@@ -7286,7 +7286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Configuration not found" });
         }
 
-        return res.json(config);
+        return res.json({ config });
       } catch (err) {
         return handleErrors(err, res);
       }
@@ -7391,7 +7391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Configuration not found" });
         }
 
-        return res.json(config);
+        return res.json({ config });
       } catch (err) {
         return handleErrors(err, res);
       }
