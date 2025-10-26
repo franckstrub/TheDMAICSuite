@@ -1506,7 +1506,7 @@ useEffect(() => {
     }
   };
 
-  // Handle focused cell paste for Dataset 2
+  // Handle focused cell paste for Dataset 2 (with dual-column paste capability from Dataset 2 to both datasets)
   const handleFocusedCellPaste2 = (pasteData: string) => {
     if (focusedCell2 === -1) {
       toast({
@@ -1519,8 +1519,9 @@ useEffect(() => {
 
     // Parse the pasted data with robust Excel format support (tab-separated and multi-line)
     const rows = pasteData.trim().split('\n');
-    const newValues: number[] = [];
-    let hasMultipleColumns = false;
+    const dataset2Values: number[] = [];
+    const dataset1Values: number[] = [];
+    let hasMoreThanTwoColumns = false;
     
     rows.forEach(row => {
       let cells: string[] = [];
@@ -1528,25 +1529,26 @@ useEffect(() => {
       if (row.includes('\t')) {
         // Excel data with tabs - standard Excel copy format
         const allCells = row.split('\t');
-        // Check if there are multiple columns
-        if (allCells.length > 1) {
-          hasMultipleColumns = true;
-          // Only use the first column for Dataset 2
-          cells = [allCells[0]];
+        
+        // Support up to 2 columns
+        if (allCells.length === 1) {
+          cells = allCells; // Single column
+        } else if (allCells.length === 2) {
+          cells = allCells; // Two columns - perfect!
         } else {
-          cells = allCells;
+          // More than 2 columns - take first two and warn
+          hasMoreThanTwoColumns = true;
+          cells = [allCells[0], allCells[1]];
         }
       } else {
         // No tabs - could be single column or comma-separated
         const trimmedRow = row.trim();
         
-        // Check if this looks like a single French decimal number (digits, optional comma, digits)
+        // Check if this looks like a single French decimal number
         const frenchDecimalPattern = /^-?\d+,\d+$/;
         if (frenchDecimalPattern.test(trimmedRow)) {
-          // This is a single French decimal number, don't split by comma
           cells = [trimmedRow];
         } else if (trimmedRow.includes(',')) {
-          // Contains commas but doesn't match French decimal pattern
           // Split by comma but be careful about decimal commas
           const parts = trimmedRow.split(',');
           const tempCells = [];
@@ -1554,74 +1556,70 @@ useEffect(() => {
           for (let i = 0; i < parts.length; i++) {
             const part = parts[i].trim();
             
-            // Check if this part combined with next part could be a French decimal
             if (i < parts.length - 1) {
               const nextPart = parts[i + 1].trim();
               const combined = part + ',' + nextPart;
               
-              // If combined looks like a French decimal, combine them
               if (/^-?\d+,\d+$/.test(combined) && !part.includes(' ') && !nextPart.includes(' ')) {
                 tempCells.push(combined);
-                i++; // Skip next part as we combined it
+                i++;
                 continue;
               }
             }
             
-            // Otherwise, treat as separate cell
             if (part !== '') {
               tempCells.push(part);
             }
           }
           
-          // Check if there are multiple columns after processing
-          if (tempCells.length > 1) {
-            hasMultipleColumns = true;
-            // Only use the first column
-            cells = [tempCells[0]];
-          } else {
+          if (tempCells.length === 1) {
             cells = tempCells;
+          } else if (tempCells.length === 2) {
+            cells = tempCells;
+          } else if (tempCells.length > 2) {
+            hasMoreThanTwoColumns = true;
+            cells = [tempCells[0], tempCells[1]];
           }
         } else {
-          // No commas, treat as single cell
           cells = [trimmedRow];
         }
       }
       
-      // Process each cell value (first column only)
-      cells.forEach(cell => {
-        const trimmedCell = cell.trim();
+      // Process values for Dataset 2 (first column) and Dataset 1 (second column if exists)
+      for (let colIndex = 0; colIndex < cells.length && colIndex < 2; colIndex++) {
+        const trimmedCell = cells[colIndex].trim();
         if (trimmedCell === '' || trimmedCell === '-' || trimmedCell.toLowerCase() === 'null') {
-          return; // Skip empty cells
-        } else {
-          // Handle different decimal separators and number formats (French regional settings support)
-          let processedValue = trimmedCell;
-          
-          // Handle French decimal format (comma to dot conversion)
-          if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
-            processedValue = trimmedCell.replace(',', '.');
-          }
-          
-          // Remove any thousands separators
-          processedValue = processedValue.replace(/[\s']/g, '');
-          
-          // Handle thousands separators with commas (US format)
-          if (processedValue.includes(',') && processedValue.includes('.')) {
-            const parts = processedValue.split('.');
-            if (parts.length === 2) {
-              const integerPart = parts[0].replace(/,/g, '');
-              processedValue = integerPart + '.' + parts[1];
-            }
-          }
-
-          const numericValue = parseFloat(processedValue);
-          if (!isNaN(numericValue)) {
-            newValues.push(numericValue);
+          continue;
+        }
+        
+        let processedValue = trimmedCell;
+        
+        if (trimmedCell.includes(',') && !trimmedCell.includes('.')) {
+          processedValue = trimmedCell.replace(',', '.');
+        }
+        
+        processedValue = processedValue.replace(/[\s']/g, '');
+        
+        if (processedValue.includes(',') && processedValue.includes('.')) {
+          const parts = processedValue.split('.');
+          if (parts.length === 2) {
+            const integerPart = parts[0].replace(/,/g, '');
+            processedValue = integerPart + '.' + parts[1];
           }
         }
-      });
+
+        const numericValue = parseFloat(processedValue);
+        if (!isNaN(numericValue) && isFinite(numericValue)) {
+          if (colIndex === 0) {
+            dataset2Values.push(numericValue);
+          } else if (colIndex === 1) {
+            dataset1Values.push(numericValue);
+          }
+        }
+      }
     });
 
-    if (newValues.length === 0) {
+    if (dataset2Values.length === 0) {
       toast({
         title: "No Valid Data",
         description: "No valid numeric data found in clipboard.",
@@ -1632,43 +1630,68 @@ useEffect(() => {
 
     // Save current state for undo
     setUndoState2(JSON.parse(JSON.stringify(dataSet2)));
-    setIsDualColumnPaste(false); // Clear dual-column flag for single-dataset operation
+    if (dataset1Values.length > 0) {
+      setUndoState1(JSON.parse(JSON.stringify(dataSet1)));
+      setIsDualColumnPaste(true);
+    } else {
+      setIsDualColumnPaste(false);
+    }
 
-    // Use focused cell as starting position (like One Sample component)
     const startIndex = focusedCell2;
-    const updatedPoints = [...dataSet2];
     
-    // Extend array if necessary
-    const endIndex = startIndex + newValues.length - 1;
-    while (updatedPoints.length <= endIndex) {
-      updatedPoints.push({
-        indexNumber: updatedPoints.length + 1,
+    // Update Dataset 2
+    const updatedPoints2 = [...dataSet2];
+    const endIndex2 = startIndex + dataset2Values.length - 1;
+    while (updatedPoints2.length <= endIndex2) {
+      updatedPoints2.push({
+        indexNumber: updatedPoints2.length + 1,
         dataValue: 0
       });
     }
-
-    // Replace/insert values starting from focused position
-    newValues.forEach((value, i) => {
+    dataset2Values.forEach((value, i) => {
       const targetIndex = startIndex + i;
-      updatedPoints[targetIndex] = {
+      updatedPoints2[targetIndex] = {
         indexNumber: targetIndex + 1,
         dataValue: value
       };
     });
+    setDataSet2(updatedPoints2);
 
-    setDataSet2(updatedPoints);
-    
-    toast({
-      title: "Data Pasted to Dataset 2",
-      description: `Pasted ${newValues.length} values starting from position ${focusedCell2 + 1}.`,
-    });
+    // Update Dataset 1 if second column exists
+    if (dataset1Values.length > 0) {
+      const updatedPoints1 = [...dataSet1];
+      const endIndex1 = startIndex + dataset1Values.length - 1;
+      while (updatedPoints1.length <= endIndex1) {
+        updatedPoints1.push({
+          indexNumber: updatedPoints1.length + 1,
+          dataValue: 0
+        });
+      }
+      dataset1Values.forEach((value, i) => {
+        const targetIndex = startIndex + i;
+        updatedPoints1[targetIndex] = {
+          indexNumber: targetIndex + 1,
+          dataValue: value
+        };
+      });
+      setDataSet1(updatedPoints1);
 
-    // Show warning if multiple columns were detected
-    if (hasMultipleColumns) {
+      toast({
+        title: "Dual-Column Data Pasted",
+        description: `Pasted ${dataset2Values.length} values to Dataset 2 (Before) and ${dataset1Values.length} values to Dataset 1 (After) starting from position ${startIndex + 1}.`,
+      });
+    } else {
+      toast({
+        title: "Data Pasted to Dataset 2",
+        description: `Pasted ${dataset2Values.length} values starting from position ${focusedCell2 + 1}.`,
+      });
+    }
+
+    if (hasMoreThanTwoColumns) {
       setTimeout(() => {
         toast({
           title: "Warning",
-          description: "Warning: only first copied column was pasted!",
+          description: "Warning: Clipboard contains more than two columns. Only two first copied columns were pasted!",
           variant: "destructive",
         });
       }, 500);
