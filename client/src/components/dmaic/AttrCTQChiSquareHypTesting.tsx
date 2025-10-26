@@ -231,6 +231,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
   const saveConfiguration = () => {
     const configToSave = {
+      ctq: ctqName,
       testType: "Chi-Square Independence Test",
       significanceLevel,
       variable1Name,

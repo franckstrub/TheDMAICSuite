@@ -324,6 +324,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   // Save configuration
   const saveConfiguration = () => {
     const configToSave = {
+      ctq: ctqName,
       testType: twoProportionData.testType,
       hypothesizedDifference: twoProportionData.hypothesizedDifference,
       significanceLevel,
