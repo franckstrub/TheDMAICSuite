@@ -346,9 +346,10 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // Load configuration data from database when available
   useEffect(() => {
-    if (configData && (configData as any).config && !isLoading) {
+    if (configData && !isLoading) {
       setTimeout(() => {
-        const config = (configData as any).config;
+        // Handle both formats: { config: {...} } and direct {...}
+        const config = (configData as any).config || configData;
         
         // Update significanceLevel and alternative options from database
         if (config.significanceLevel) {
