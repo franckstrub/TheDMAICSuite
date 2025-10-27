@@ -44,6 +44,7 @@ import {
   insertBeforeAfterTwoProportionTestSchema,
   insertBeforeAfterChiSquareTestSchema,
   insertProofOfImprovementPreferencesSchema,
+  insertSolutionDesignTrackingSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -100,6 +101,7 @@ import {
   valueTimeAnalysis,
   fmeaAnalysis,
   solutions,
+  solutionDesignTracking,
   implementationPlanTasks,
   beforeAfterContCTQTwoSampleTest,
   beforeAfterTwoProportionTest,
@@ -6973,6 +6975,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "Solution deleted successfully" });
       } catch (err) {
         console.error("Solution deletion error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Solution Design Tracking Routes (DMAIC Improve Phase)
+  app.get(
+    "/api/projects/:projectId/solution-design-tracking",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const trackingList = await db
+          .select()
+          .from(solutionDesignTracking)
+          .where(
+            and(
+              eq(solutionDesignTracking.projectId, projectId),
+              eq(solutionDesignTracking.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(solutionDesignTracking.solutionId));
+
+        return res.json({ tracking: trackingList });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solution-design-tracking",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const trackingData = {
+          projectId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
+
+        // Check if tracking already exists for this solution
+        const existing = await db
+          .select()
+          .from(solutionDesignTracking)
+          .where(
+            and(
+              eq(solutionDesignTracking.projectId, projectId),
+              eq(solutionDesignTracking.solutionId, validatedData.solutionId),
+              eq(solutionDesignTracking.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (existing.length > 0) {
+          // Update existing tracking
+          const [updated] = await db
+            .update(solutionDesignTracking)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(
+              and(
+                eq(solutionDesignTracking.projectId, projectId),
+                eq(solutionDesignTracking.solutionId, validatedData.solutionId),
+                eq(solutionDesignTracking.organizationId, userRecord.organizationId),
+              ),
+            )
+            .returning();
+          return res.json(updated);
+        } else {
+          // Insert new tracking
+          const [saved] = await db
+            .insert(solutionDesignTracking)
+            .values(validatedData)
+            .returning();
+          return res.status(201).json(saved);
+        }
+      } catch (err) {
+        console.error("Solution design tracking error:", err);
         return handleErrors(err, res);
       }
     },

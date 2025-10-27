@@ -2145,6 +2145,44 @@ export const insertImplementationPlanTaskSchema = createInsertSchema(implementat
 export type InsertImplementationPlanTask = z.infer<typeof insertImplementationPlanTaskSchema>;
 export type ImplementationPlanTask = typeof implementationPlanTasks.$inferSelect;
 
+// Solution Design Tracking - tracks implementation aspects for each solution
+export const solutionDesignTracking = pgTable(
+  "solution_design_tracking",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(), // e.g., S1, S2, S3
+    
+    // Design and implementation tracking checkboxes
+    toBeProcessMap: boolean("to_be_process_map").default(false),
+    toBeProcessRaci: boolean("to_be_process_raci").default(false),
+    sop: boolean("sop").default(false),
+    newLayout: boolean("new_layout").default(false),
+    fiveS: boolean("five_s").default(false),
+    trainingPlan: boolean("training_plan").default(false),
+    pokaYokeDesign: boolean("poka_yoke_design").default(false),
+    transferFunction: boolean("transfer_function").default(false),
+    otherDesign: boolean("other_design").default(false),
+    solutionNotPursued: boolean("solution_not_pursued").default(false),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionDesign: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertSolutionDesignTrackingSchema = createInsertSchema(solutionDesignTracking).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSolutionDesignTracking = z.infer<typeof insertSolutionDesignTrackingSchema>;
+export type SolutionDesignTracking = typeof solutionDesignTracking.$inferSelect;
+
 // Proof of Improvement - Before/After Continuous CTQ Two-Sample Test
 export const beforeAfterContCTQTwoSampleTest = pgTable(
   "before_after_cont_ctq_two_sample_test",
