@@ -17,6 +17,8 @@ export default function BeforeAfterContTwoSampleTest({
       ctqId={ctqId}
       ctqName={ctqName}
       apiEndpoint={`/api/projects/${projectId}/ctq/${ctqId}/before-after-cont-two-sample`}
+      defaultDataset1Description="BEFORE"
+      defaultDataset2Description="AFTER"
     />
   );
 }
