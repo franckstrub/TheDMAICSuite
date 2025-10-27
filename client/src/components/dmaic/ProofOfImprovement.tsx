@@ -34,7 +34,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for test preferences (which tests to show for each CTQ)
+  // State for test preferences (which tests to show for each CTQ) - initialized with defaults
   const [testPreferences, setTestPreferences] = useState<{ [ctqId: number]: { enableTwoProportionTest: boolean; enableChiSquareTest: boolean } }>({});
 
   // Load CTQs with types from CTS characteristics
@@ -82,7 +82,27 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
     localStorage.setItem(`proof-improvement-active-tab-${projectId}`, tabValue);
   };
 
-  // Load preferences for all CTQs
+  // Initialize default preferences for all Attribute CTQs
+  useEffect(() => {
+    if (ctqList.length > 0) {
+      const newPreferences: { [ctqId: number]: { enableTwoProportionTest: boolean; enableChiSquareTest: boolean } } = {};
+      
+      ctqList.forEach(ctq => {
+        if (ctq.ctqType === "Attribute" && !testPreferences[ctq.ctqId]) {
+          newPreferences[ctq.ctqId] = {
+            enableTwoProportionTest: true,
+            enableChiSquareTest: true,
+          };
+        }
+      });
+      
+      if (Object.keys(newPreferences).length > 0) {
+        setTestPreferences(prev => ({ ...prev, ...newPreferences }));
+      }
+    }
+  }, [ctqList]);
+
+  // Load preferences from database for each Attribute CTQ
   useEffect(() => {
     if (ctqList.length > 0) {
       ctqList.forEach(async (ctq) => {
@@ -94,33 +114,19 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
             
             if (response.ok) {
               const data = await response.json();
-              setTestPreferences(prev => ({
-                ...prev,
-                [ctq.ctqId]: {
-                  enableTwoProportionTest: data.enableTwoProportionTest ?? true,
-                  enableChiSquareTest: data.enableChiSquareTest ?? true,
-                }
-              }));
-            } else {
-              // Set default values if not found
-              setTestPreferences(prev => ({
-                ...prev,
-                [ctq.ctqId]: {
-                  enableTwoProportionTest: true,
-                  enableChiSquareTest: true,
-                }
-              }));
+              // Use setTimeout to avoid React timing issues (same pattern as AttrCTQHypTesting)
+              setTimeout(() => {
+                setTestPreferences(prev => ({
+                  ...prev,
+                  [ctq.ctqId]: {
+                    enableTwoProportionTest: data.enableTwoProportionTest ?? true,
+                    enableChiSquareTest: data.enableChiSquareTest ?? true,
+                  }
+                }));
+              }, 0);
             }
           } catch (error) {
             console.error('Error loading preferences:', error);
-            // Set default values on error
-            setTestPreferences(prev => ({
-              ...prev,
-              [ctq.ctqId]: {
-                enableTwoProportionTest: true,
-                enableChiSquareTest: true,
-              }
-            }));
           }
         }
       });
