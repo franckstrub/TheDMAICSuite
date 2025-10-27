@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -36,6 +36,9 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
   
   // State for test preferences (which tests to show for each CTQ) - initialized with defaults
   const [testPreferences, setTestPreferences] = useState<{ [ctqId: number]: { enableTwoProportionTest: boolean; enableChiSquareTest: boolean } }>({});
+  
+  // Track which CTQs have been loaded from database to prevent re-fetching
+  const loadedCtqsRef = useRef<Set<number>>(new Set());
 
   // Load CTQs with types from CTS characteristics
   const { data: ctsData, isLoading: ctsLoading } = useQuery({
@@ -102,11 +105,15 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
     }
   }, [ctqList]);
 
-  // Load preferences from database for each Attribute CTQ
+  // Load preferences from database for each Attribute CTQ (only once per CTQ)
   useEffect(() => {
     if (ctqList.length > 0) {
       ctqList.forEach(async (ctq) => {
-        if (ctq.ctqType === "Attribute") {
+        // Only load if it's an Attribute CTQ AND we haven't loaded it yet
+        if (ctq.ctqType === "Attribute" && !loadedCtqsRef.current.has(ctq.ctqId)) {
+          // Mark as loaded immediately to prevent duplicate fetches
+          loadedCtqsRef.current.add(ctq.ctqId);
+          
           try {
             const response = await fetch(`/api/projects/${projectId}/ctq/${ctq.ctqId}/proof-improvement-preferences`, {
               credentials: 'include',
