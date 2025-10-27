@@ -17,6 +17,9 @@ export default function BeforeAfterChiSquareTest({
       ctqId={ctqId}
       ctqName={ctqName}
       apiEndpoint={`/api/projects/${projectId}/ctq/${ctqId}/before-after-chi-square`}
+      defaultVariable1Name="Time Period"
+      defaultVariable1Categories={["BEFORE", "AFTER"]}
+      defaultVariable2Name="Outcome Categories"
     />
   );
 }

@@ -39,6 +39,8 @@ interface AttrCTQTwoProportionHypTestingProps {
   activeTab?: string;
   onSave?: (data: string) => void;
   apiEndpoint?: string;
+  defaultSample1Description?: string;
+  defaultSample2Description?: string;
 }
 
 interface PowerSampleSizeResults {
@@ -59,7 +61,16 @@ interface TestResults {
   ciUpper: number;
 }
 
-export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, activeTab, onSave, apiEndpoint }: AttrCTQTwoProportionHypTestingProps) {
+export function AttrCTQTwoProportionHypTesting({ 
+  projectId, 
+  ctqId, 
+  ctqName, 
+  activeTab, 
+  onSave, 
+  apiEndpoint,
+  defaultSample1Description = "",
+  defaultSample2Description = ""
+}: AttrCTQTwoProportionHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -88,8 +99,8 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
     sample1Events: 0,
     sample2Size: 0,
     sample2Events: 0,
-    sample1Description: "",
-    sample2Description: "",
+    sample1Description: defaultSample1Description,
+    sample2Description: defaultSample2Description,
     enablePowerAnalysis: false,
     powerTargetPower: 0.90,
     powerAlpha: 0.05,

@@ -19,6 +19,9 @@ interface AttrCTQChiSquareHypTestingProps {
   activeTab?: string;
   onSave?: (data: string) => void;
   apiEndpoint?: string;
+  defaultVariable1Name?: string;
+  defaultVariable1Categories?: string[];
+  defaultVariable2Name?: string;
 }
 
 interface ChiSquareConfig {
@@ -30,7 +33,17 @@ interface ChiSquareConfig {
   observedFrequencies: string;
 }
 
-export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTab, onSave, apiEndpoint }: AttrCTQChiSquareHypTestingProps) {
+export function AttrCTQChiSquareHypTesting({ 
+  projectId, 
+  ctqId, 
+  ctqName, 
+  activeTab, 
+  onSave, 
+  apiEndpoint,
+  defaultVariable1Name = "Variable 1",
+  defaultVariable1Categories = ["Category 1", "Category 2"],
+  defaultVariable2Name = "Variable 2"
+}: AttrCTQChiSquareHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -38,9 +51,9 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
   const effectiveApiEndpoint = apiEndpoint || `/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`;
   
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
-  const [variable1Name, setVariable1Name] = useState("Variable 1");
-  const [variable1Categories, setVariable1Categories] = useState<string[]>(["Category 1", "Category 2"]);
-  const [variable2Name, setVariable2Name] = useState("Variable 2");
+  const [variable1Name, setVariable1Name] = useState(defaultVariable1Name);
+  const [variable1Categories, setVariable1Categories] = useState<string[]>(defaultVariable1Categories);
+  const [variable2Name, setVariable2Name] = useState(defaultVariable2Name);
   const [variable2Categories, setVariable2Categories] = useState<string[]>(["Category 1", "Category 2"]);
   const [observedFrequencies, setObservedFrequencies] = useState<{ [key: string]: number }>({});
   const [testResults, setTestResults] = useState<any>(null);

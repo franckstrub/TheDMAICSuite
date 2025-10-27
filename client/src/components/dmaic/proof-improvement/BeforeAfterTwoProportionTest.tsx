@@ -17,6 +17,8 @@ export default function BeforeAfterTwoProportionTest({
       ctqId={ctqId}
       ctqName={ctqName}
       apiEndpoint={`/api/projects/${projectId}/ctq/${ctqId}/before-after-two-proportion`}
+      defaultSample1Description="BEFORE"
+      defaultSample2Description="AFTER"
     />
   );
 }
