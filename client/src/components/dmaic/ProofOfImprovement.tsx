@@ -7,9 +7,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Save, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -138,33 +139,48 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
     },
     onSuccess: () => {
       toast({
-        title: "Preferences Saved",
-        description: "Test preferences have been saved successfully.",
+        title: "Test Selections Saved",
+        description: "Your test preferences have been saved successfully.",
       });
     },
     onError: () => {
       toast({
         title: "Save Failed",
-        description: "Failed to save preferences. Please try again.",
+        description: "Failed to save test preferences. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  // Handle checkbox changes
+  // Handle checkbox changes (no auto-save)
   const handleTestPreferenceChange = (ctqId: number, testType: 'enableTwoProportionTest' | 'enableChiSquareTest', checked: boolean) => {
-    const newPreferences = {
-      ...testPreferences[ctqId],
-      [testType]: checked,
-    };
-    
     setTestPreferences(prev => ({
       ...prev,
-      [ctqId]: newPreferences,
+      [ctqId]: {
+        ...prev[ctqId],
+        [testType]: checked,
+      }
     }));
-    
-    // Auto-save when checkbox changes
-    savePreferencesMutation.mutate({ ctqId, preferences: newPreferences });
+  };
+
+  // Clear all checkboxes for a CTQ
+  const handleClearAll = (ctqId: number) => {
+    setTestPreferences(prev => ({
+      ...prev,
+      [ctqId]: {
+        enableTwoProportionTest: false,
+        enableChiSquareTest: false,
+      }
+    }));
+  };
+
+  // Save test selections for a CTQ
+  const handleSaveSelections = (ctqId: number) => {
+    const preferences = testPreferences[ctqId] || {
+      enableTwoProportionTest: true,
+      enableChiSquareTest: true,
+    };
+    savePreferencesMutation.mutate({ ctqId, preferences });
   };
 
   if (ctqList.length === 0) {
@@ -173,12 +189,12 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            Proof of Improvement
+            Proof of Improvement - Before/After Analysis
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-gray-500">
-            No CTQ available. Please define your CTQ(s) in CTS characteristics table to perform Proof of Improvement analysis.
+            No CTQ available. Please define your CTQ(s) in CTS characteristics table in Measure to perform Proof of Improvement Before/After Analysis.
           </div>
         </CardContent>
       </Card>
@@ -190,7 +206,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
-          Proof of Improvement - Before vs After Analysis
+          Proof of Improvement - Before/After Analysis
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -225,7 +241,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                   <div className="mt-4">
                     <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
                       <p className="text-sm text-blue-800">
-                        <strong>Continuous CTQ Test:</strong> Compare the Mean, Variance, or Median between "Before" (Dataset 1) and "After" (Dataset 2) implementation to prove statistical improvement.
+                        <strong>Continuous CTQ Test:</strong> Compare the Mean, Variance, or Median between "Before" (Dataset 1) and "After" (Dataset 2) to prove statistical improvement.
                       </p>
                     </div>
                     <BeforeAfterContTwoSampleTest
@@ -239,7 +255,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                     {/* Test Selection Checkboxes for Attribute CTQs */}
                     <div className="p-4 border rounded-lg bg-gray-50">
                       <Label className="text-base font-semibold mb-3 block">
-                        Select Tests to Display
+                        Select Tests to Display (select multiple)
                       </Label>
                       <div className="space-y-3">
                         <div className="flex items-center space-x-2">
@@ -254,7 +270,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                             htmlFor={`two-proportion-${ctq.ctqId}`}
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                           >
-                            Two Proportion Test (Before vs After)
+                            Two-Proportion Test (Before/After)
                           </label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -269,9 +285,32 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                             htmlFor={`chi-square-${ctq.ctqId}`}
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                           >
-                            Chi-Square Test (Multiple Categories Before vs After)
+                            Chi-Square Test (Multiple Categories Before/After Test of Independence)
                           </label>
                         </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleClearAll(ctq.ctqId)}
+                          className="flex items-center gap-1"
+                        >
+                          <X className="h-4 w-4" />
+                          Clear All
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleSaveSelections(ctq.ctqId)}
+                          disabled={savePreferencesMutation.isPending}
+                          className="flex items-center gap-1"
+                        >
+                          <Save className="h-4 w-4" />
+                          {savePreferencesMutation.isPending ? "Saving..." : "Save Test Selections"}
+                        </Button>
                       </div>
                     </div>
 
@@ -280,7 +319,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
                       <div>
                         <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 rounded">
                           <p className="text-sm text-green-800">
-                            <strong>Two Proportion Test:</strong> Compare the proportion of defects or success rates between "Before" (Sample 1) and "After" (Sample 2) implementation to prove statistical improvement.
+                            <strong>Two-Proportion Test:</strong> Compare the proportion of defects or success rates between "Before" (Sample 1) and "After" (Sample 2) to prove statistical improvement.
                           </p>
                         </div>
                         <BeforeAfterTwoProportionTest
