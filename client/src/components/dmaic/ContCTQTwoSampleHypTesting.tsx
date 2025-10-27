@@ -75,6 +75,8 @@ interface ContCTQTwoSampleHypTestingProps {
   activeTab?: string;
   onSave?: (data: string) => void;
   apiEndpoint?: string;
+  defaultDataset1Description?: string;
+  defaultDataset2Description?: string;
 }
 
 interface PowerSampleSizeResults {
@@ -184,7 +186,16 @@ interface MedianTestResults {
   median2CI: { lower: number, upper: number };
 }
 
-export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave, apiEndpoint }: ContCTQTwoSampleHypTestingProps) {
+export function ContCTQTwoSampleHypTesting({ 
+  projectId, 
+  ctqId, 
+  ctqName, 
+  activeTab, 
+  onSave, 
+  apiEndpoint,
+  defaultDataset1Description = "",
+  defaultDataset2Description = ""
+}: ContCTQTwoSampleHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -289,8 +300,8 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       enableMedianTest: false,
       deltaMean0: 0,
       ratioVariance0: 1,
-      dataset1description: "",
-      dataset2description: "",
+      dataset1description: defaultDataset1Description,
+      dataset2description: defaultDataset2Description,
       enableMean2SPower: false,
       power2SMeanMean1: 0,
       power2SMeanMean2: 0,
