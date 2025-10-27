@@ -664,9 +664,13 @@ export function AttrCTQTwoProportionHypTesting({
             </div>
           </div>
 
-          {twoProportionData.sample1Size && twoProportionData.sample1Size > 0 && (
+          {twoProportionData.sample1Size && twoProportionData.sample1Size > 0 ? (
             <div className="text-sm text-gray-600">
               <strong>Sample 1 Proportion (p1):</strong> {(twoProportionData.sample1Events! / twoProportionData.sample1Size).toFixed(4)}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600">
+              <strong>Sample 1 Proportion (p1):</strong> N/A
             </div>
           )}
         </CardContent>
@@ -727,9 +731,13 @@ export function AttrCTQTwoProportionHypTesting({
             </div>
           </div>
 
-          {twoProportionData.sample2Size && twoProportionData.sample2Size > 0 && (
+          {twoProportionData.sample2Size && twoProportionData.sample2Size > 0 ? (
             <div className="text-sm text-gray-600">
               <strong>Sample 2 Proportion (p2):</strong> {(twoProportionData.sample2Events! / twoProportionData.sample2Size).toFixed(4)}
+            </div>
+          )  : (
+            <div className="text-sm text-gray-600">
+              <strong>Sample 2 Proportion (p1):</strong> N/A
             </div>
           )}
         </CardContent>
