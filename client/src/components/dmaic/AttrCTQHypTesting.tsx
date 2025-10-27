@@ -159,7 +159,7 @@ export function AttrCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       [ctqId]: {
         ctq: ctqName,
         testType: "Attribute Hyp-Test",
-        enableTwoProportionTest: true,
+        enableTwoProportionTest: false,
         enableChiSquareTest: false,
       }
     }));
