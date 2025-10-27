@@ -47,12 +47,12 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
 
   // Fetch solutions
   const { data: solutionsData, isLoading: solutionsLoading } = useQuery<{ solutions: Solution[] }>({
-    queryKey: ["/api/projects", projectId, "solutions"],
+    queryKey: [`/api/projects/${projectId}/solutions`],
   });
 
   // Fetch design tracking
   const { data: trackingData, isLoading: trackingLoading } = useQuery<{ tracking: SolutionDesignTracking[] }>({
-    queryKey: ["/api/projects", projectId, "solution-design-tracking"],
+    queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
   });
 
   const solutions = solutionsData?.solutions || [];
@@ -71,16 +71,16 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       const states: Record<string, CheckboxState> = {};
       tracking.forEach((t) => {
         states[t.solutionId] = {
-          toBeProcessMap: t.toBeProcessMap,
-          toBeProcessRaci: t.toBeProcessRaci,
-          sop: t.sop,
-          newLayout: t.newLayout,
-          fiveS: t.fiveS,
-          trainingPlan: t.trainingPlan,
-          pokaYokeDesign: t.pokaYokeDesign,
-          transferFunction: t.transferFunction,
-          otherDesign: t.otherDesign,
-          solutionNotPursued: t.solutionNotPursued,
+          toBeProcessMap: t.toBeProcessMap || false,
+          toBeProcessRaci: t.toBeProcessRaci || false,
+          sop: t.sop || false,
+          newLayout: t.newLayout || false,
+          fiveS: t.fiveS || false,
+          trainingPlan: t.trainingPlan || false,
+          pokaYokeDesign: t.pokaYokeDesign || false,
+          transferFunction: t.transferFunction || false,
+          otherDesign: t.otherDesign || false,
+          solutionNotPursued: t.solutionNotPursued || false,
         };
       });
       setCheckboxStates(states);
@@ -97,7 +97,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/projects", projectId, "solution-design-tracking"],
+        queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
       });
       toast({
         title: "Success",
