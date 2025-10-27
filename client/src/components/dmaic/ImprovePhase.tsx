@@ -117,11 +117,11 @@ export default function ImprovePhase() {
       {/* Improvement Action Designs */}
       <Card>
         <CardHeader>
-          <CardTitle>Solutions Design</CardTitle>
+          <CardTitle>Solution Design</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            Develop a design for implementing each selected solutions.
+            Develop a design for implementing each retained solutions.
           </p>          
           
         </CardContent>
