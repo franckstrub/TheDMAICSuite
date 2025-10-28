@@ -295,7 +295,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                   {/* TO BE Process RACI - Show when checkbox is selected */}
                   {currentState.toBeProcessRaci && (
                     <div className="mt-6">
-                      <ProcessRaciMatrix projectId={projectId} />
+                      <ProcessRaciMatrix projectId={projectId} solutionId={solution.solutionId} />
                     </div>
                   )}
 
