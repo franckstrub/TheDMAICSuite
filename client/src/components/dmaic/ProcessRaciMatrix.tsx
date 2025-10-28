@@ -11,9 +11,10 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 
 interface ProcessRaciMatrixProps {
   projectId: number;
+  solutionId: string;
 }
 
-const ProcessRaciMatrix = ({ projectId }: ProcessRaciMatrixProps) => {
+const ProcessRaciMatrix = ({ projectId, solutionId }: ProcessRaciMatrixProps) => {
   const { toast } = useToast();
 
   // Default data with empty activities and roles
@@ -24,10 +25,10 @@ const ProcessRaciMatrix = ({ projectId }: ProcessRaciMatrixProps) => {
 
   const [processRaciData, setProcessRaciData] = useState<ProcessRaciMatrixData>(defaultProcessRaciData);
 
-  // Get the process RACI matrix data for the project
+  // Get the process RACI matrix data for the solution
   const { data: processRaciMatrixData, isLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/process-raci-matrix`],
-    enabled: !!projectId,
+    queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/process-raci-matrix`],
+    enabled: !!projectId && !!solutionId,
   });
 
   // Load existing data when it's fetched
@@ -44,16 +45,17 @@ const ProcessRaciMatrix = ({ projectId }: ProcessRaciMatrixProps) => {
   // Save mutation
   const saveProcessRaciMatrixMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/projects/${projectId}/process-raci-matrix`, {
+      return await apiRequest(`/api/projects/${projectId}/solutions/${solutionId}/process-raci-matrix`, {
         method: 'POST',
         body: JSON.stringify({
           projectId,
+          solutionId,
           raciData: processRaciData,
         }),
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/process-raci-matrix`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/process-raci-matrix`] });
       toast({
         title: "Success",
         description: "Process RACI matrix saved successfully",

@@ -111,6 +111,7 @@ import {
   beforeAfterTwoProportionTest,
   beforeAfterChiSquareTest,
   proofOfImprovementPreferences,
+  processRaciMatrix,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
