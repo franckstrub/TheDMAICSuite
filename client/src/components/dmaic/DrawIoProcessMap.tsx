@@ -5,10 +5,11 @@ import { PlusCircle } from "lucide-react";
 
 interface DrawIoProcessMapProps {
   projectId: number;
+  type?: 'AS_IS' | 'TO_BE'; // Type of process map (default: AS_IS)
   onSave?: (data: string) => void;
 }
 
-export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMapProps) {
+export default function DrawIoProcessMap({ projectId, type = 'AS_IS', onSave }: DrawIoProcessMapProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [diagramData, setDiagramData] = useState<string>('');
@@ -17,25 +18,25 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
   useEffect(() => {
     // Load any existing diagram data for this project
     loadDiagramData();
-  }, [projectId]);
+  }, [projectId, type]);
 
   const loadDiagramData = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/process-map`);
+      const response = await fetch(`/api/projects/${projectId}/process-map?type=${type}`);
       if (response.ok) {
         const data = await response.json();
         setDiagramData(data.diagramData || '');
-        console.log('Loaded existing diagram data');
+        console.log(`Loaded existing ${type} diagram data`);
       }
     } catch (error) {
-      console.log('No existing diagram data found, starting with empty diagram');
+      console.log(`No existing ${type} diagram data found, starting with empty diagram`);
     }
   };
 
   const saveDiagramData = async (data: string) => {
     try {
-      console.log('Saving diagram data to server:', data.substring(0, 100) + '...');
-      const response = await fetch(`/api/projects/${projectId}/process-map`, {
+      console.log(`Saving ${type} diagram data to server:`, data.substring(0, 100) + '...');
+      const response = await fetch(`/api/projects/${projectId}/process-map?type=${type}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
