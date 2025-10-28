@@ -631,6 +631,26 @@ export const insertRaciSchema = createInsertSchema(projectRaciMatrix).pick({
   raciData: true,
 });
 
+// Process RACI Matrix for Improve Phase (TO BE Process)
+export const processRaciMatrix = pgTable("process_raci_matrix", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  // Store the matrix as structured JSON with role assignments for TO BE process
+  // Each row represents a team member/stakeholder
+  // Columns represent activities or process steps in the TO BE process
+  raciData: jsonb("raci_data").notNull(),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertProcessRaciSchema = createInsertSchema(processRaciMatrix).pick({
+  organizationId: true,
+  projectId: true,
+  raciData: true,
+});
+
 // Activity Log
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
@@ -833,6 +853,9 @@ export type InsertRisk = z.infer<typeof insertRiskSchema>;
 export type ProjectRaciMatrix = typeof projectRaciMatrix.$inferSelect;
 export type InsertRaciMatrix = z.infer<typeof insertRaciSchema>;
 
+export type ProcessRaciMatrix = typeof processRaciMatrix.$inferSelect;
+export type InsertProcessRaciMatrix = z.infer<typeof insertProcessRaciSchema>;
+
 // RACI matrix data structure
 export type RaciMatrixData = {
   roles: {
@@ -844,6 +867,18 @@ export type RaciMatrixData = {
       analyze: RaciRole | null;
       improve: RaciRole | null;
       control: RaciRole | null;
+    };
+  }[];
+};
+
+// Process RACI matrix data structure for TO BE Process
+export type ProcessRaciMatrixData = {
+  activities: string[]; // Array of activity/step names in the TO BE process
+  roles: {
+    name: string;
+    role: string;
+    responsibilities: {
+      [activityIndex: number]: RaciRole | null; // Key is activity index, value is RACI role
     };
   }[];
 };
