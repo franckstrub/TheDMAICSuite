@@ -19,7 +19,6 @@ interface SolutionDesignProps {
 interface CheckboxState {
   toBeProcessMap: boolean;
   toBeProcessRaci: boolean;
-  pokaYokeDesign: boolean;
   transferFunction: boolean;
   otherDesign: boolean;
   solutionNotPursued: boolean;
@@ -28,7 +27,6 @@ interface CheckboxState {
 const checkboxLabels = [
   { key: "toBeProcessMap", label: "TO BE Process Map" },
   { key: "toBeProcessRaci", label: "RACI" },
-  { key: "pokaYokeDesign", label: "Poka Yoke Design (error-proofing)" },
   { key: "transferFunction", label: "Transfer Function & System Setting" },
   { key: "otherDesign", label: "Other Design" },
   { key: "solutionNotPursued", label: "Solution Not Retained" },
@@ -67,7 +65,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         states[t.solutionId] = {
           toBeProcessMap: t.toBeProcessMap || false,
           toBeProcessRaci: t.toBeProcessRaci || false,
-          pokaYokeDesign: t.pokaYokeDesign || false,
           transferFunction: t.transferFunction || false,
           otherDesign: t.otherDesign || false,
           solutionNotPursued: t.solutionNotPursued || false,
@@ -110,7 +107,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         ...(prev[solutionId] || {
           toBeProcessMap: false,
           toBeProcessRaci: false,
-          pokaYokeDesign: false,
           transferFunction: false,
           otherDesign: false,
           solutionNotPursued: false,
@@ -124,7 +120,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     const checkboxes = checkboxStates[solutionId] || {
       toBeProcessMap: false,
       toBeProcessRaci: false,
-      pokaYokeDesign: false,
       transferFunction: false,
       otherDesign: false,
       solutionNotPursued: false,
@@ -136,7 +131,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     const clearedState: CheckboxState = {
       toBeProcessMap: false,
       toBeProcessRaci: false,
-      pokaYokeDesign: false,
       transferFunction: false,
       otherDesign: false,
       solutionNotPursued: false,
@@ -200,7 +194,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
             const currentState = checkboxStates[solution.solutionId] || {
               toBeProcessMap: false,
               toBeProcessRaci: false,
-              pokaYokeDesign: false,
               transferFunction: false,
               otherDesign: false,
               solutionNotPursued: false,

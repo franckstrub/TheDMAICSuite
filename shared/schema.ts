@@ -2216,7 +2216,6 @@ export const solutionDesignTracking = pgTable(
     // Design and implementation tracking checkboxes
     toBeProcessMap: boolean("to_be_process_map").default(false),
     toBeProcessRaci: boolean("to_be_process_raci").default(false),
-    pokaYokeDesign: boolean("poka_yoke_design").default(false),
     transferFunction: boolean("transfer_function").default(false),
     otherDesign: boolean("other_design").default(false),
     solutionNotPursued: boolean("solution_not_pursued").default(false),
