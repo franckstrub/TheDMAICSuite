@@ -3607,6 +3607,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Solution-specific TO BE Process Map routes for DMAIC Improve Phase
+  // GET: Fetch TO BE process map for a specific solution
+  app.get(
+    "/api/projects/:projectId/solutions/:solutionId/to-be-process-map",
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const [solution] = await db
+          .select()
+          .from(solutions)
+          .where(
+            and(
+              eq(solutions.projectId, projectId),
+              eq(solutions.solutionId, solutionId)
+            )
+          );
+
+        if (!solution) {
+          return res.status(404).json({ message: "Solution not found" });
+        }
+
+        return res.status(200).json({ diagramData: solution.toBeDiagramData || '' });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST: Save TO BE process map for a specific solution
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/to-be-process-map",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+        const { diagramData } = req.body;
+
+        // Get user's organization ID
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(400).json({ message: "User not authenticated" });
+        }
+
+        const userRecord = await storage.getUser(parseInt(userId));
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        // Check if solution exists
+        const [existingSolution] = await db
+          .select()
+          .from(solutions)
+          .where(
+            and(
+              eq(solutions.projectId, projectId),
+              eq(solutions.solutionId, solutionId),
+              eq(solutions.organizationId, userRecord.organizationId)
+            )
+          );
+
+        if (!existingSolution) {
+          return res.status(404).json({ message: "Solution not found" });
+        }
+
+        // Update the TO BE diagram data for this solution
+        const [updatedSolution] = await db
+          .update(solutions)
+          .set({ toBeDiagramData: diagramData })
+          .where(
+            and(
+              eq(solutions.projectId, projectId),
+              eq(solutions.solutionId, solutionId),
+              eq(solutions.organizationId, userRecord.organizationId)
+            )
+          )
+          .returning();
+
+        return res.status(200).json(updatedSolution);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
   // Fishbone Diagrams routes for DMAIC Analyze Phase
   // Delete individual root cause
   app.delete(
