@@ -2594,13 +2594,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Process RACI Matrix routes (for Improve Phase TO BE Process)
+  // Process RACI Matrix routes (for Improve Phase TO BE Process) - Solution-Specific
   app.get(
-    "/api/projects/:projectId/process-raci-matrix",
+    "/api/projects/:projectId/solutions/:solutionId/process-raci-matrix",
     async (req: Request, res: Response) => {
       try {
         const projectId = parseInt(req.params.projectId);
-        const processRaciMatrix = await storage.getProcessRaciMatrix(projectId);
+        const solutionId = req.params.solutionId;
+
+        const [processRaciMatrix] = await db
+          .select()
+          .from(processRaciMatrix)
+          .where(
+            and(
+              eq(processRaciMatrix.projectId, projectId),
+              eq(processRaciMatrix.solutionId, solutionId)
+            )
+          );
 
         if (!processRaciMatrix) {
           return res.status(404).json({ message: "Process RACI matrix not found" });
@@ -2614,11 +2624,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   app.post(
-    "/api/projects/:projectId/process-raci-matrix",
+    "/api/projects/:projectId/solutions/:solutionId/process-raci-matrix",
     isAuthenticated,
     async (req: Request, res: Response) => {
       try {
         const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
 
         // Get user's organization ID
         const userClaims = (req.user as any)?.claims;
@@ -2638,22 +2649,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const processRaciMatrixInput: InsertProcessRaciMatrix = {
           ...req.body,
           projectId,
+          solutionId,
           organizationId: userRecord.organizationId,
         };
 
         const validatedData = insertProcessRaciSchema.parse(processRaciMatrixInput);
 
-        // Check if a process RACI matrix already exists for this project
-        const existingMatrix = await storage.getProcessRaciMatrix(projectId);
-        let processRaciMatrix;
+        // Check if a process RACI matrix already exists for this solution
+        const [existingMatrix] = await db
+          .select()
+          .from(processRaciMatrix)
+          .where(
+            and(
+              eq(processRaciMatrix.projectId, projectId),
+              eq(processRaciMatrix.solutionId, solutionId),
+              eq(processRaciMatrix.organizationId, userRecord.organizationId)
+            )
+          );
+
+        let savedMatrix;
         let isUpdate = false;
 
         if (existingMatrix) {
           // Update existing matrix
           isUpdate = true;
-          processRaciMatrix = await storage.updateProcessRaciMatrix(existingMatrix.id, {
-            raciData: validatedData.raciData,
-          });
+          const [updatedMatrix] = await db
+            .update(processRaciMatrix)
+            .set({ raciData: validatedData.raciData, lastUpdated: new Date() })
+            .where(eq(processRaciMatrix.id, existingMatrix.id))
+            .returning();
+
+          savedMatrix = updatedMatrix;
 
           // Log activity
           await storage.createActivityLog({
@@ -2661,11 +2687,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: parseInt(userId),
             projectId,
             action: "update_process_raci_matrix",
-            details: "Updated process RACI matrix",
+            details: `Updated process RACI matrix for solution ${solutionId}`,
           });
         } else {
           // Create new matrix
-          processRaciMatrix = await storage.createProcessRaciMatrix(validatedData);
+          const [newMatrix] = await db
+            .insert(processRaciMatrix)
+            .values(validatedData)
+            .returning();
+
+          savedMatrix = newMatrix;
 
           // Log activity
           await storage.createActivityLog({
@@ -2673,11 +2704,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: parseInt(userId),
             projectId,
             action: "create_process_raci_matrix",
-            details: "Created process RACI matrix",
+            details: `Created process RACI matrix for solution ${solutionId}`,
           });
         }
 
-        return res.status(201).json({ processRaciMatrix, isUpdate });
+        return res.status(201).json({ processRaciMatrix: savedMatrix, isUpdate });
       } catch (err) {
         return handleErrors(err, res);
       }
