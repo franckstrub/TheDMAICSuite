@@ -1016,7 +1016,8 @@ export const processMaps = pgTable("process_maps", {
     .references(() => organizations.id)
     .notNull(),
   projectId: integer("project_id").notNull(),
-  diagramData: text("diagram_data"), // Store draw.io XML data
+  asIsDiagramData: text("as_is_diagram_data"), // Store draw.io XML data for AS-IS process
+  toBeDiagramData: text("to_be_diagram_data"), // Store draw.io XML data for TO-BE process
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Solution, SolutionDesignTracking } from "@shared/schema";
 import { Loader2 } from "lucide-react";
+import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -168,7 +169,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            No solutions available. Please create solutions first in the Solution Generation section.
+            No solutions available. Please create solutions first in the Solution Generation section before designing them.
           </p>
         </CardContent>
       </Card>
@@ -198,10 +199,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
             const currentState = checkboxStates[solution.solutionId] || {
               toBeProcessMap: false,
               toBeProcessRaci: false,
-              sop: false,
-              newLayout: false,
-              fiveS: false,
-              trainingPlan: false,
               pokaYokeDesign: false,
               transferFunction: false,
               otherDesign: false,
@@ -259,6 +256,20 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                       ))}
                     </div>
                   </div>
+
+                  {/* TO BE Process Map - Show when checkbox is selected */}
+                  {currentState.toBeProcessMap && (
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>TO BE Process Map</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <DrawIoProcessMap projectId={projectId} type="TO_BE" />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 pt-4">
