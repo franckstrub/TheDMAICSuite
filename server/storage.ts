@@ -1,8 +1,8 @@
 import {
   users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements,
   datasets, dataCollectionPlans, storageConfigs, activityLogs, processData, projectRaciMatrix,
-  gateReviewDeliverables, gateReviewValidators, ganttTasks, multipleSampleHypothesisConfig,
-  userSettings,
+  processRaciMatrix, gateReviewDeliverables, gateReviewValidators, ganttTasks, 
+  multipleSampleHypothesisConfig, userSettings,
   type InsertUser,
   type Project, type InsertProject,
   type ProjectCharter, type InsertCharter,
@@ -15,6 +15,7 @@ import {
   type ActivityLog, type InsertLog,
   type ProcessData, type InsertProcessData,
   type ProjectRaciMatrix, type InsertRaciMatrix, type RaciMatrixData,
+  type ProcessRaciMatrix, type InsertProcessRaciMatrix, type ProcessRaciMatrixData,
   type GateReviewDeliverable, type InsertGateReviewDeliverable,
   type GateReviewValidator, type InsertGateReviewValidator,
   type GanttTask, type InsertGanttTask,
@@ -108,6 +109,11 @@ export interface IStorage {
   getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined>;
   createRaciMatrix(matrix: InsertRaciMatrix): Promise<ProjectRaciMatrix>;
   updateRaciMatrix(id: number, matrix: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined>;
+
+  // Process RACI Matrix operations (for Improve Phase TO BE Process)
+  getProcessRaciMatrix(projectId: number): Promise<ProcessRaciMatrix | undefined>;
+  createProcessRaciMatrix(matrix: InsertProcessRaciMatrix): Promise<ProcessRaciMatrix>;
+  updateProcessRaciMatrix(id: number, matrix: Partial<ProcessRaciMatrix>): Promise<ProcessRaciMatrix | undefined>;
 
   // Gate Review operations
   getGateReviewDeliverables(projectId: number, phase?: string): Promise<GateReviewDeliverable[]>;
@@ -509,6 +515,28 @@ export class DatabaseStorage implements IStorage {
       .update(projectRaciMatrix)
       .set({ ...matrix, lastUpdated: new Date() })
       .where(eq(projectRaciMatrix.id, id))
+      .returning();
+    return updatedMatrix || undefined;
+  }
+
+  async getProcessRaciMatrix(projectId: number): Promise<ProcessRaciMatrix | undefined> {
+    const [matrix] = await db.select().from(processRaciMatrix).where(eq(processRaciMatrix.projectId, projectId));
+    return matrix || undefined;
+  }
+
+  async createProcessRaciMatrix(matrix: InsertProcessRaciMatrix): Promise<ProcessRaciMatrix> {
+    const [newMatrix] = await db
+      .insert(processRaciMatrix)
+      .values(matrix)
+      .returning();
+    return newMatrix;
+  }
+
+  async updateProcessRaciMatrix(id: number, matrix: Partial<ProcessRaciMatrix>): Promise<ProcessRaciMatrix | undefined> {
+    const [updatedMatrix] = await db
+      .update(processRaciMatrix)
+      .set({ ...matrix, lastUpdated: new Date() })
+      .where(eq(processRaciMatrix.id, id))
       .returning();
     return updatedMatrix || undefined;
   }
