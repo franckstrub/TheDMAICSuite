@@ -257,6 +257,26 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                     </div>
                   </div>
 
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={() => handleSave(solution.solutionId)}
+                      disabled={saveTrackingMutation.isPending}
+                      data-testid={`button-save-${solution.solutionId}`}
+                    >
+                      {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Design Tools Configuration
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleClearAll(solution.solutionId)}
+                      disabled={saveTrackingMutation.isPending}
+                      data-testid={`button-clear-all-${solution.solutionId}`}
+                    >
+                      Clear All
+                    </Button>
+                  </div>
+
                   {/* TO BE Process Map - Show when checkbox is selected */}
                   {currentState.toBeProcessMap && (
                     <div className="mt-6">
@@ -271,25 +291,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      onClick={() => handleSave(solution.solutionId)}
-                      disabled={saveTrackingMutation.isPending}
-                      data-testid={`button-save-${solution.solutionId}`}
-                    >
-                      {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Save
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleClearAll(solution.solutionId)}
-                      disabled={saveTrackingMutation.isPending}
-                      data-testid={`button-clear-all-${solution.solutionId}`}
-                    >
-                      Clear All
-                    </Button>
-                  </div>
                 </div>
               </TabsContent>
             );
