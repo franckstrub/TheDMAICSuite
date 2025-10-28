@@ -17,10 +17,6 @@ interface SolutionDesignProps {
 interface CheckboxState {
   toBeProcessMap: boolean;
   toBeProcessRaci: boolean;
-  sop: boolean;
-  newLayout: boolean;
-  fiveS: boolean;
-  trainingPlan: boolean;
   pokaYokeDesign: boolean;
   transferFunction: boolean;
   otherDesign: boolean;
@@ -29,15 +25,11 @@ interface CheckboxState {
 
 const checkboxLabels = [
   { key: "toBeProcessMap", label: "TO BE Process Map" },
-  { key: "toBeProcessRaci", label: "TO BE Process RACI" },
-  { key: "sop", label: "SOP" },
-  { key: "newLayout", label: "New Layout" },
-  { key: "fiveS", label: "5S" },
-  { key: "trainingPlan", label: "Training Plan" },
-  { key: "pokaYokeDesign", label: "POKA YOKE Design" },
+  { key: "toBeProcessRaci", label: "RACI" },
+  { key: "pokaYokeDesign", label: "Poka Yoke Design (error-proofing)" },
   { key: "transferFunction", label: "Transfer Function & System Setting" },
   { key: "otherDesign", label: "Other Design" },
-  { key: "solutionNotPursued", label: "Solution Not Pursued" },
+  { key: "solutionNotPursued", label: "Solution Not Retained" },
 ] as const;
 
 export default function SolutionDesign({ projectId }: SolutionDesignProps) {
@@ -73,10 +65,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         states[t.solutionId] = {
           toBeProcessMap: t.toBeProcessMap || false,
           toBeProcessRaci: t.toBeProcessRaci || false,
-          sop: t.sop || false,
-          newLayout: t.newLayout || false,
-          fiveS: t.fiveS || false,
-          trainingPlan: t.trainingPlan || false,
           pokaYokeDesign: t.pokaYokeDesign || false,
           transferFunction: t.transferFunction || false,
           otherDesign: t.otherDesign || false,
@@ -120,10 +108,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         ...(prev[solutionId] || {
           toBeProcessMap: false,
           toBeProcessRaci: false,
-          sop: false,
-          newLayout: false,
-          fiveS: false,
-          trainingPlan: false,
           pokaYokeDesign: false,
           transferFunction: false,
           otherDesign: false,
@@ -138,10 +122,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     const checkboxes = checkboxStates[solutionId] || {
       toBeProcessMap: false,
       toBeProcessRaci: false,
-      sop: false,
-      newLayout: false,
-      fiveS: false,
-      trainingPlan: false,
       pokaYokeDesign: false,
       transferFunction: false,
       otherDesign: false,
@@ -154,10 +134,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     const clearedState: CheckboxState = {
       toBeProcessMap: false,
       toBeProcessRaci: false,
-      sop: false,
-      newLayout: false,
-      fiveS: false,
-      trainingPlan: false,
       pokaYokeDesign: false,
       transferFunction: false,
       otherDesign: false,
@@ -206,7 +182,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
-          Track implementation aspects for each retained solution.
+          Define design aspects for each retained solution.
         </p>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -259,9 +235,9 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                     )}
                   </div>
 
-                  {/* Implementation Checkboxes */}
+                  {/* Design tool Checkboxes */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Implementation Aspects</h3>
+                    <h3 className="font-semibold text-lg">Select Design Tools (select multiple) or confirm that solution is not retained</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {checkboxLabels.map(({ key, label }) => (
                         <div key={key} className="flex items-center space-x-2">
