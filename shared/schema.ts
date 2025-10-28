@@ -631,13 +631,14 @@ export const insertRaciSchema = createInsertSchema(projectRaciMatrix).pick({
   raciData: true,
 });
 
-// Process RACI Matrix for Improve Phase (TO BE Process)
+// Process RACI Matrix for Improve Phase (TO BE Process) - Solution-Specific
 export const processRaciMatrix = pgTable("process_raci_matrix", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id")
     .references(() => organizations.id)
     .notNull(),
   projectId: integer("project_id").notNull(),
+  solutionId: text("solution_id").notNull(),
   // Store the matrix as structured JSON with role assignments for TO BE process
   // Each row represents a team member/stakeholder
   // Columns represent activities or process steps in the TO BE process
@@ -648,6 +649,7 @@ export const processRaciMatrix = pgTable("process_raci_matrix", {
 export const insertProcessRaciSchema = createInsertSchema(processRaciMatrix).pick({
   organizationId: true,
   projectId: true,
+  solutionId: true,
   raciData: true,
 });
 
