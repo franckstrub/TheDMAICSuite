@@ -283,10 +283,10 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                     <div className="mt-6">
                       <Card>
                         <CardHeader>
-                          <CardTitle>TO BE Process Map</CardTitle>
+                          <CardTitle>TO BE Process Map - {solution.solutionId}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <DrawIoProcessMap projectId={projectId} type="TO_BE" />
+                          <DrawIoProcessMap projectId={projectId} type="TO_BE" solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
                     </div>
