@@ -46,6 +46,7 @@ import {
   insertBeforeAfterChiSquareTestSchema,
   insertProofOfImprovementPreferencesSchema,
   insertSolutionDesignTrackingSchema,
+  insertSolutionProcessMapSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -77,6 +78,7 @@ import {
   GanttTask,
   stakeholderAnalysisItems,
   processMaps,
+  solutionProcessMaps,
   ctsCharacteristics,
   insertCtsCharacteristicsSchema,
   customerRequirements,
@@ -3516,14 +3518,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // Process Map routes for DMAIC Measure Phase
-  // GET: Fetch process map - supports both AS_IS (default) and TO_BE via query param
+  // Process Map routes for DMAIC Measure Phase (AS_IS maps only)
+  // GET: Fetch AS_IS process map
   app.get(
     "/api/projects/:projectId/process-map",
     async (req: Request, res: Response) => {
       try {
         const projectId = parseInt(req.params.projectId);
-        const type = req.query.type as string || 'AS_IS'; // Default to AS_IS for backward compatibility
 
         const [processMap] = await db
           .select()
@@ -3534,23 +3535,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Process map not found" });
         }
 
-        // Return the appropriate diagram data based on type
-        const diagramData = type === 'TO_BE' ? processMap.toBeDiagramData : processMap.asIsDiagramData;
-        return res.status(200).json({ ...processMap, diagramData });
+        return res.status(200).json({ ...processMap, diagramData: processMap.asIsDiagramData });
       } catch (err) {
         return handleErrors(err, res);
       }
     },
   );
 
-  // POST: Save process map - supports both AS_IS and TO_BE via query param
+  // POST: Save AS_IS process map
   app.post(
     "/api/projects/:projectId/process-map",
     isAuthenticated,
     async (req: Request, res: Response) => {
       try {
         const projectId = parseInt(req.params.projectId);
-        const type = req.query.type as string || 'AS_IS'; // Default to AS_IS for backward compatibility
         const { diagramData } = req.body;
 
         // Get user's organization ID
@@ -3574,29 +3572,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(processMaps)
           .where(eq(processMaps.projectId, projectId));
 
-        // Prepare update/insert data based on type
-        const updateData = type === 'TO_BE' 
-          ? { toBeDiagramData: diagramData, lastUpdated: new Date() }
-          : { asIsDiagramData: diagramData, lastUpdated: new Date() };
-
         if (existingMap) {
           // Update existing process map
           const [updatedMap] = await db
             .update(processMaps)
-            .set(updateData)
+            .set({ asIsDiagramData: diagramData, lastUpdated: new Date() })
             .where(eq(processMaps.projectId, projectId))
             .returning();
 
           return res.status(200).json(updatedMap);
         } else {
           // Create new process map
-          const insertData = type === 'TO_BE'
-            ? { projectId, organizationId: userRecord.organizationId, toBeDiagramData: diagramData }
-            : { projectId, organizationId: userRecord.organizationId, asIsDiagramData: diagramData };
-          
           const [newMap] = await db
             .insert(processMaps)
-            .values(insertData)
+            .values({ 
+              projectId, 
+              organizationId: userRecord.organizationId, 
+              asIsDiagramData: diagramData 
+            })
             .returning();
 
           return res.status(201).json(newMap);
@@ -3616,21 +3609,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const projectId = parseInt(req.params.projectId);
         const solutionId = req.params.solutionId;
 
-        const [solution] = await db
+        const [processMap] = await db
           .select()
-          .from(solutions)
+          .from(solutionProcessMaps)
           .where(
             and(
-              eq(solutions.projectId, projectId),
-              eq(solutions.solutionId, solutionId)
+              eq(solutionProcessMaps.projectId, projectId),
+              eq(solutionProcessMaps.solutionId, solutionId)
             )
           );
 
-        if (!solution) {
-          return res.status(404).json({ message: "Solution not found" });
-        }
-
-        return res.status(200).json({ diagramData: solution.toBeDiagramData || '' });
+        return res.status(200).json({ diagramData: processMap?.diagramData || '' });
       } catch (err) {
         return handleErrors(err, res);
       }
@@ -3662,36 +3651,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: "User organization not found" });
         }
 
-        // Check if solution exists
-        const [existingSolution] = await db
+        // Check if process map already exists for this solution
+        const [existingMap] = await db
           .select()
-          .from(solutions)
+          .from(solutionProcessMaps)
           .where(
             and(
-              eq(solutions.projectId, projectId),
-              eq(solutions.solutionId, solutionId),
-              eq(solutions.organizationId, userRecord.organizationId)
+              eq(solutionProcessMaps.projectId, projectId),
+              eq(solutionProcessMaps.solutionId, solutionId),
+              eq(solutionProcessMaps.organizationId, userRecord.organizationId)
             )
           );
 
-        if (!existingSolution) {
-          return res.status(404).json({ message: "Solution not found" });
+        if (existingMap) {
+          // Update existing process map
+          const [updatedMap] = await db
+            .update(solutionProcessMaps)
+            .set({ diagramData })
+            .where(eq(solutionProcessMaps.id, existingMap.id))
+            .returning();
+
+          return res.status(200).json(updatedMap);
+        } else {
+          // Create new process map
+          const [newMap] = await db
+            .insert(solutionProcessMaps)
+            .values({
+              projectId,
+              solutionId,
+              organizationId: userRecord.organizationId,
+              diagramData,
+            })
+            .returning();
+
+          return res.status(201).json(newMap);
         }
-
-        // Update the TO BE diagram data for this solution
-        const [updatedSolution] = await db
-          .update(solutions)
-          .set({ toBeDiagramData: diagramData })
-          .where(
-            and(
-              eq(solutions.projectId, projectId),
-              eq(solutions.solutionId, solutionId),
-              eq(solutions.organizationId, userRecord.organizationId)
-            )
-          )
-          .returning();
-
-        return res.status(200).json(updatedSolution);
       } catch (err) {
         return handleErrors(err, res);
       }
