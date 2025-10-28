@@ -170,6 +170,35 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     }));
   };
 
+  const handleSaveExplanation = (solutionId: string) => {
+    const checkboxes = checkboxStates[solutionId] || {
+      toBeProcessMap: false,
+      toBeProcessRaci: false,
+      transferFunction: false,
+      otherDesign: false,
+      solutionNotPursued: false,
+    };
+    const explanation = otherDesignExplanations[solutionId] || "";
+    const file = otherDesignFiles[solutionId] || null;
+    saveTrackingMutation.mutate({ solutionId, checkboxes, explanation, file });
+  };
+
+  const handleClearExplanation = (solutionId: string) => {
+    setOtherDesignExplanations((prev) => ({
+      ...prev,
+      [solutionId]: "",
+    }));
+    setOtherDesignFiles((prev) => ({
+      ...prev,
+      [solutionId]: null,
+    }));
+    // Clear the file input
+    const fileInput = document.getElementById(`file-${solutionId}`) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
+
   if (solutionsLoading || trackingLoading) {
     return (
       <Card>
@@ -380,6 +409,25 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                 </a>
                               </div>
                             )}
+                          </div>
+
+                          <div className="flex gap-2 pt-4">
+                            <Button
+                              onClick={() => handleSaveExplanation(solution.solutionId)}
+                              disabled={saveTrackingMutation.isPending}
+                              data-testid={`button-save-explanation-${solution.solutionId}`}
+                            >
+                              {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Save Explanation
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleClearExplanation(solution.solutionId)}
+                              disabled={saveTrackingMutation.isPending}
+                              data-testid={`button-clear-explanation-${solution.solutionId}`}
+                            >
+                              Clear All Explanation
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
