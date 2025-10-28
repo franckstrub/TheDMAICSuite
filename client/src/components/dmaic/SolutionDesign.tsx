@@ -167,7 +167,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       ...prev,
       [solutionId]: clearedState,
     }));
-    saveTrackingMutation.mutate({ solutionId, checkboxes: clearedState });
   };
 
   if (solutionsLoading || trackingLoading) {
