@@ -4,11 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Solution, SolutionDesignTracking } from "@shared/schema";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText, Download } from "lucide-react";
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 
@@ -36,6 +38,8 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("");
   const [checkboxStates, setCheckboxStates] = useState<Record<string, CheckboxState>>({});
+  const [otherDesignExplanations, setOtherDesignExplanations] = useState<Record<string, string>>({});
+  const [otherDesignFiles, setOtherDesignFiles] = useState<Record<string, File | null>>({});
 
   // Fetch solutions
   const { data: solutionsData, isLoading: solutionsLoading } = useQuery<{ solutions: Solution[] }>({
@@ -57,10 +61,11 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     }
   }, [solutions, activeTab]);
 
-  // Initialize checkbox states from tracking data
+  // Initialize checkbox states and explanations from tracking data
   useEffect(() => {
     if (tracking.length > 0) {
       const states: Record<string, CheckboxState> = {};
+      const explanations: Record<string, string> = {};
       tracking.forEach((t) => {
         states[t.solutionId] = {
           toBeProcessMap: t.toBeProcessMap || false,
@@ -69,18 +74,40 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
           otherDesign: t.otherDesign || false,
           solutionNotPursued: t.solutionNotPursued || false,
         };
+        explanations[t.solutionId] = t.otherDesignExplanation || "";
       });
       setCheckboxStates(states);
+      setOtherDesignExplanations(explanations);
     }
   }, [tracking]);
 
   // Save tracking mutation
   const saveTrackingMutation = useMutation({
-    mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState }) => {
-      return await apiRequest("POST", `/api/projects/${projectId}/solution-design-tracking`, {
-        solutionId: data.solutionId,
-        ...data.checkboxes,
+    mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; explanation: string; file: File | null }) => {
+      const formData = new FormData();
+      formData.append("solutionId", data.solutionId);
+      formData.append("toBeProcessMap", String(data.checkboxes.toBeProcessMap));
+      formData.append("toBeProcessRaci", String(data.checkboxes.toBeProcessRaci));
+      formData.append("transferFunction", String(data.checkboxes.transferFunction));
+      formData.append("otherDesign", String(data.checkboxes.otherDesign));
+      formData.append("solutionNotPursued", String(data.checkboxes.solutionNotPursued));
+      formData.append("otherDesignExplanation", data.explanation);
+      
+      if (data.file) {
+        formData.append("otherDesignFile", data.file);
+      }
+
+      const response = await fetch(`/api/projects/${projectId}/solution-design-tracking`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to save design tracking");
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -124,7 +151,9 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       otherDesign: false,
       solutionNotPursued: false,
     };
-    saveTrackingMutation.mutate({ solutionId, checkboxes });
+    const explanation = otherDesignExplanations[solutionId] || "";
+    const file = otherDesignFiles[solutionId] || null;
+    saveTrackingMutation.mutate({ solutionId, checkboxes, explanation, file });
   };
 
   const handleClearAll = (solutionId: string) => {
@@ -229,7 +258,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                   {/* Design tool Checkboxes */}
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Select Design Tools (select multiple) or confirm that solution is not retained</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {checkboxLabels.map(({ key, label }) => (
                         <div key={key} className="flex items-center space-x-2">
                           <Checkbox
@@ -289,6 +318,71 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                   {currentState.toBeProcessRaci && (
                     <div className="mt-6">
                       <ProcessRaciMatrix projectId={projectId} solutionId={solution.solutionId} />
+                    </div>
+                  )}
+
+                  {/* Other Design Explanation - Show when checkbox is selected */}
+                  {currentState.otherDesign && (
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Other Design Explanation - {solution.solutionId}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label htmlFor={`explanation-${solution.solutionId}`}>Explanation</Label>
+                            <Textarea
+                              id={`explanation-${solution.solutionId}`}
+                              placeholder="Describe your design approach..."
+                              value={otherDesignExplanations[solution.solutionId] || ""}
+                              onChange={(e) => setOtherDesignExplanations(prev => ({
+                                ...prev,
+                                [solution.solutionId]: e.target.value
+                              }))}
+                              rows={6}
+                              className="mt-2"
+                              data-testid={`textarea-explanation-${solution.solutionId}`}
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`file-${solution.solutionId}`}>Attach File (Optional)</Label>
+                            <Input
+                              id={`file-${solution.solutionId}`}
+                              type="file"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setOtherDesignFiles(prev => ({
+                                  ...prev,
+                                  [solution.solutionId]: file
+                                }));
+                              }}
+                              className="mt-2"
+                              data-testid={`input-file-${solution.solutionId}`}
+                            />
+                            {otherDesignFiles[solution.solutionId] && (
+                              <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                {otherDesignFiles[solution.solutionId]?.name}
+                              </p>
+                            )}
+                            {tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile && !otherDesignFiles[solution.solutionId] && (
+                              <div className="mt-2">
+                                <a
+                                  href={tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile || "#"}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary flex items-center gap-2 hover:underline"
+                                  data-testid={`link-existing-file-${solution.solutionId}`}
+                                >
+                                  <Download className="h-4 w-4" />
+                                  View Existing File
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
 
