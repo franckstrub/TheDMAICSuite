@@ -10,6 +10,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Solution, SolutionDesignTracking } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
+import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -288,6 +289,13 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <DrawIoProcessMap projectId={projectId} type="TO_BE" />
                         </CardContent>
                       </Card>
+                    </div>
+                  )}
+
+                  {/* TO BE Process RACI - Show when checkbox is selected */}
+                  {currentState.toBeProcessRaci && (
+                    <div className="mt-6">
+                      <ProcessRaciMatrix projectId={projectId} />
                     </div>
                   )}
 
