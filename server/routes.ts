@@ -2603,7 +2603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const projectId = parseInt(req.params.projectId);
         const solutionId = req.params.solutionId;
 
-        const [processRaciMatrix] = await db
+        const [raciMatrixResult] = await db
           .select()
           .from(processRaciMatrix)
           .where(
@@ -2613,11 +2613,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             )
           );
 
-        if (!processRaciMatrix) {
+        if (!raciMatrixResult) {
           return res.status(404).json({ message: "Process RACI matrix not found" });
         }
 
-        return res.status(200).json({ processRaciMatrix });
+        return res.status(200).json({ processRaciMatrix: raciMatrixResult });
       } catch (err) {
         return handleErrors(err, res);
       }
