@@ -2218,6 +2218,8 @@ export const solutionDesignTracking = pgTable(
     toBeProcessRaci: boolean("to_be_process_raci").default(false),
     transferFunction: boolean("transfer_function").default(false),
     otherDesign: boolean("other_design").default(false),
+    otherDesignExplanation: text("other_design_explanation"),
+    otherDesignFile: text("other_design_file"),
     solutionNotPursued: boolean("solution_not_pursued").default(false),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),

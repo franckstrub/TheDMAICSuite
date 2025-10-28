@@ -204,6 +204,29 @@ const upload = multer({
   },
 });
 
+// Configure multer for solution design files
+const solutionDesignUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = "uploads/solution-design";
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const projectId = (req as any).params.projectId;
+      const solutionId = (req as any).body.solutionId || "unknown";
+      const ext = path.extname(file.originalname);
+      const baseName = path.basename(file.originalname, ext);
+      cb(null, `project${projectId}-${solutionId}-${baseName}-${Date.now()}${ext}`);
+    },
+  }),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+});
+
 // Utility function to sync project benefits and costs from charter data
 async function syncProjectBenefitsFromCharter(
   charter: ProjectCharter,
@@ -7240,6 +7263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     "/api/projects/:projectId/solution-design-tracking",
     isAuthenticated,
+    solutionDesignUpload.single("otherDesignFile"),
     async (req: Request, res: Response) => {
       try {
         const projectId = parseInt(req.params.projectId);
@@ -7258,28 +7282,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: "User organization not found" });
         }
 
-        const trackingData = {
-          projectId,
-          organizationId: userRecord.organizationId,
-          ...req.body,
-        };
-
-        const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
-
         // Check if tracking already exists for this solution
-        const existing = await db
+        const [existingRecord] = await db
           .select()
           .from(solutionDesignTracking)
           .where(
             and(
               eq(solutionDesignTracking.projectId, projectId),
-              eq(solutionDesignTracking.solutionId, validatedData.solutionId),
+              eq(solutionDesignTracking.solutionId, req.body.solutionId),
               eq(solutionDesignTracking.organizationId, userRecord.organizationId),
             ),
           )
           .limit(1);
 
-        if (existing.length > 0) {
+        // Convert string boolean values from FormData to actual booleans
+        const trackingData = {
+          projectId,
+          organizationId: userRecord.organizationId,
+          solutionId: req.body.solutionId,
+          toBeProcessMap: req.body.toBeProcessMap === "true",
+          toBeProcessRaci: req.body.toBeProcessRaci === "true",
+          transferFunction: req.body.transferFunction === "true",
+          otherDesign: req.body.otherDesign === "true",
+          solutionNotPursued: req.body.solutionNotPursued === "true",
+          otherDesignExplanation: req.body.otherDesignExplanation || null,
+          // Preserve existing file if no new file uploaded
+          otherDesignFile: (req as any).file 
+            ? `/${(req as any).file.path}` 
+            : (existingRecord?.otherDesignFile || null),
+        };
+
+        const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
+
+        if (existingRecord) {
           // Update existing tracking
           const [updated] = await db
             .update(solutionDesignTracking)
