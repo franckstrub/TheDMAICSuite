@@ -1052,7 +1052,18 @@ export const processMaps = pgTable("process_maps", {
     .notNull(),
   projectId: integer("project_id").notNull(),
   asIsDiagramData: text("as_is_diagram_data"), // Store draw.io XML data for AS-IS process
-  toBeDiagramData: text("to_be_diagram_data"), // Store draw.io XML data for TO-BE process
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+// Solution Process Maps for DMAIC Improve Phase - TO BE Process Maps per Solution
+export const solutionProcessMaps = pgTable("solution_process_maps", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  solutionId: text("solution_id").notNull(),
+  diagramData: text("diagram_data"), // Store draw.io XML data for TO-BE process
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -1087,6 +1098,14 @@ export const insertProcessMapSchema = createInsertSchema(processMaps).omit({
 
 export type InsertProcessMap = z.infer<typeof insertProcessMapSchema>;
 export type ProcessMap = typeof processMaps.$inferSelect;
+
+export const insertSolutionProcessMapSchema = createInsertSchema(solutionProcessMaps).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSolutionProcessMap = z.infer<typeof insertSolutionProcessMapSchema>;
+export type SolutionProcessMap = typeof solutionProcessMaps.$inferSelect;
 
 // CTQ Type for CTS Characteristics
 export const ctqTypes = ["Attribute", "Continuous"] as const;
