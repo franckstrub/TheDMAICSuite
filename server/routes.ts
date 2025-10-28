@@ -18,6 +18,7 @@ import {
   insertProcessDataSchema,
   insertRiskSchema,
   insertRaciSchema,
+  insertProcessRaciSchema,
   insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema,
   insertMsaAnalysisSchema,
@@ -62,6 +63,7 @@ import {
   InsertSipoc,
   InsertRisk,
   InsertRaciMatrix,
+  InsertProcessRaciMatrix,
   Project,
   ProjectBenefits,
   ProjectCosts,
@@ -2589,6 +2591,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return handleErrors(err, res);
     }
   });
+
+  // Process RACI Matrix routes (for Improve Phase TO BE Process)
+  app.get(
+    "/api/projects/:projectId/process-raci-matrix",
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const processRaciMatrix = await storage.getProcessRaciMatrix(projectId);
+
+        if (!processRaciMatrix) {
+          return res.status(404).json({ message: "Process RACI matrix not found" });
+        }
+
+        return res.status(200).json({ processRaciMatrix });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/process-raci-matrix",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        // Get user's organization ID
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(400).json({ message: "User not authenticated" });
+        }
+
+        const userRecord = await storage.getUser(parseInt(userId));
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const processRaciMatrixInput: InsertProcessRaciMatrix = {
+          ...req.body,
+          projectId,
+          organizationId: userRecord.organizationId,
+        };
+
+        const validatedData = insertProcessRaciSchema.parse(processRaciMatrixInput);
+
+        // Check if a process RACI matrix already exists for this project
+        const existingMatrix = await storage.getProcessRaciMatrix(projectId);
+        let processRaciMatrix;
+        let isUpdate = false;
+
+        if (existingMatrix) {
+          // Update existing matrix
+          isUpdate = true;
+          processRaciMatrix = await storage.updateProcessRaciMatrix(existingMatrix.id, {
+            raciData: validatedData.raciData,
+          });
+
+          // Log activity
+          await storage.createActivityLog({
+            organizationId: userRecord.organizationId,
+            userId: parseInt(userId),
+            projectId,
+            action: "update_process_raci_matrix",
+            details: "Updated process RACI matrix",
+          });
+        } else {
+          // Create new matrix
+          processRaciMatrix = await storage.createProcessRaciMatrix(validatedData);
+
+          // Log activity
+          await storage.createActivityLog({
+            organizationId: userRecord.organizationId,
+            userId: parseInt(userId),
+            projectId,
+            action: "create_process_raci_matrix",
+            details: "Created process RACI matrix",
+          });
+        }
+
+        return res.status(201).json({ processRaciMatrix, isUpdate });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
 
   // Debug route for project data
   app.get("/api/debug/project/:id", async (req: Request, res: Response) => {
