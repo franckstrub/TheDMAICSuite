@@ -26,7 +26,7 @@ const ProcessRaciMatrix = ({ projectId, solutionId }: ProcessRaciMatrixProps) =>
   const [processRaciData, setProcessRaciData] = useState<ProcessRaciMatrixData>(defaultProcessRaciData);
 
   // Get the process RACI matrix data for the solution
-  const { data: processRaciMatrixData, isLoading } = useQuery({
+  const { data: processRaciMatrixData, isLoading } = useQuery<{ processRaciMatrix: ProcessRaciMatrixType }>({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/process-raci-matrix`],
     enabled: !!projectId && !!solutionId,
   });
@@ -45,13 +45,10 @@ const ProcessRaciMatrix = ({ projectId, solutionId }: ProcessRaciMatrixProps) =>
   // Save mutation
   const saveProcessRaciMatrixMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/projects/${projectId}/solutions/${solutionId}/process-raci-matrix`, {
-        method: 'POST',
-        body: JSON.stringify({
-          projectId,
-          solutionId,
-          raciData: processRaciData,
-        }),
+      return await apiRequest("POST", `/api/projects/${projectId}/solutions/${solutionId}/process-raci-matrix`, {
+        projectId,
+        solutionId,
+        raciData: processRaciData,
       });
     },
     onSuccess: () => {
