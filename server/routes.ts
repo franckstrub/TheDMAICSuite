@@ -7306,10 +7306,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           otherDesign: req.body.otherDesign === "true",
           solutionNotPursued: req.body.solutionNotPursued === "true",
           otherDesignExplanation: req.body.otherDesignExplanation || null,
-          // Preserve existing file if no new file uploaded
-          otherDesignFile: (req as any).file 
-            ? `/${(req as any).file.path}` 
-            : (existingRecord?.otherDesignFile || null),
+          // Handle file: new upload, remove file, or preserve existing
+          otherDesignFile: req.body.removeFile === "true"
+            ? null
+            : (req as any).file 
+              ? `/${(req as any).file.path}` 
+              : (existingRecord?.otherDesignFile || null),
         };
 
         const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
