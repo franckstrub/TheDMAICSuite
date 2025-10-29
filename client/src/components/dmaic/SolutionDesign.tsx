@@ -93,7 +93,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
 
   // Save tracking mutation
   const saveTrackingMutation = useMutation({
-    mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; explanation: string; file: File | null }) => {
+    mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; explanation: string; file: File | null; removeFile?: boolean }) => {
       const formData = new FormData();
       formData.append("solutionId", data.solutionId);
       formData.append("toBeProcessMap", String(data.checkboxes.toBeProcessMap));
@@ -105,6 +105,8 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       
       if (data.file) {
         formData.append("otherDesignFile", data.file);
+      } else if (data.removeFile) {
+        formData.append("removeFile", "true");
       }
 
       const response = await fetch(`/api/projects/${projectId}/solution-design-tracking`, {
@@ -190,7 +192,12 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     };
     const explanation = otherDesignExplanations[solutionId] || "";
     const file = otherDesignFiles[solutionId] || null;
-    saveTrackingMutation.mutate({ solutionId, checkboxes, explanation, file });
+    
+    // Check if we need to explicitly remove an existing file
+    const existingFile = tracking.find(t => t.solutionId === solutionId)?.otherDesignFile;
+    const shouldRemoveFile = !!(existingFile && !file);
+    
+    saveTrackingMutation.mutate({ solutionId, checkboxes, explanation, file, removeFile: shouldRemoveFile });
   };
 
   const handleClearExplanation = (solutionId: string) => {
@@ -220,11 +227,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     }
   };
 
-  const handleRemoveFile = async (solutionId: string) => {
-    // Check if this is an existing saved file or just a newly selected one
-    const hasExistingFile = tracking.find(t => t.solutionId === solutionId)?.otherDesignFile;
-    const hasNewlySelectedFile = otherDesignFiles[solutionId];
-    
+  const handleRemoveFile = (solutionId: string) => {
     // Revoke object URL if exists
     if (filePreviewUrls[solutionId]) {
       URL.revokeObjectURL(filePreviewUrls[solutionId]);
@@ -243,56 +246,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     const fileInput = document.getElementById(`file-${solutionId}`) as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
-    }
-
-    // If there's an existing saved file, we need to save with null to remove it from DB
-    if (hasExistingFile && !hasNewlySelectedFile) {
-      const checkboxes = checkboxStates[solutionId] || {
-        toBeProcessMap: false,
-        toBeProcessRaci: false,
-        transferFunction: false,
-        otherDesign: false,
-        solutionNotPursued: false,
-      };
-      const explanation = otherDesignExplanations[solutionId] || "";
-      
-      // Create a special formData that explicitly removes the file
-      const formData = new FormData();
-      formData.append("solutionId", solutionId);
-      formData.append("toBeProcessMap", String(checkboxes.toBeProcessMap));
-      formData.append("toBeProcessRaci", String(checkboxes.toBeProcessRaci));
-      formData.append("transferFunction", String(checkboxes.transferFunction));
-      formData.append("otherDesign", String(checkboxes.otherDesign));
-      formData.append("solutionNotPursued", String(checkboxes.solutionNotPursued));
-      formData.append("otherDesignExplanation", explanation);
-      formData.append("removeFile", "true"); // Signal to remove the file
-      
-      try {
-        const response = await fetch(`/api/projects/${projectId}/solution-design-tracking`, {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to remove file");
-        }
-
-        queryClient.invalidateQueries({
-          queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
-        });
-        
-        toast({
-          title: "Success",
-          description: "File removed successfully",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to remove file",
-          variant: "destructive",
-        });
-      }
     }
   };
 
@@ -470,6 +423,14 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                               data-testid={`textarea-explanation-${solution.solutionId}`}
                             />
                           </div>
+                          <Button
+                              variant="outline"
+                              onClick={() => handleClearExplanation(solution.solutionId)}
+                              disabled={saveTrackingMutation.isPending}
+                              data-testid={`button-clear-explanation-${solution.solutionId}`}
+                            >
+                              Clear All Explanation
+                            </Button>
 
                           <div>
                             <Label htmlFor={`file-${solution.solutionId}`}>Attach File (Optional)</Label>
@@ -564,15 +525,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                               data-testid={`button-save-explanation-${solution.solutionId}`}
                             >
                               {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              Save Explanation
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleClearExplanation(solution.solutionId)}
-                              disabled={saveTrackingMutation.isPending}
-                              data-testid={`button-clear-explanation-${solution.solutionId}`}
-                            >
-                              Clear All Explanation
+                              Save Explanation & Attached file
                             </Button>
                           </div>
                         </CardContent>
