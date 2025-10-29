@@ -2222,6 +2222,13 @@ export const solutionDesignTracking = pgTable(
     otherDesignFile: text("other_design_file"),
     solutionNotPursued: boolean("solution_not_pursued").default(false),
     
+    // Transfer Function Configuration
+    tfSimpleRegression: boolean("tf_simple_regression").default(false),
+    tfAnovaTwoWay: boolean("tf_anova_two_way").default(false),
+    tfMultipleRegression: boolean("tf_multiple_regression").default(false),
+    tfDoe: boolean("tf_doe").default(false),
+    tfLogisticRegression: boolean("tf_logistic_regression").default(false),
+    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({
