@@ -104,7 +104,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save design tracking");
+        throw new Error("Failed to save solution design tracking");
       }
 
       return await response.json();
@@ -115,13 +115,13 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       });
       toast({
         title: "Success",
-        description: "Design tracking saved successfully",
+        description: "Soltion design tracking saved successfully",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to save design tracking",
+        description: error.message || "Failed to save Solution design tracking",
         variant: "destructive",
       });
     },
@@ -222,7 +222,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            No solutions available. Please create solutions first in the Solution Generation section before designing them.
+            No solutions available. Please create solutions in the Solution Generation section before designing them.
           </p>
         </CardContent>
       </Card>
@@ -397,16 +397,22 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                             )}
                             {tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile && !otherDesignFiles[solution.solutionId] && (
                               <div className="mt-2">
-                                <a
-                                  href={tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile || "#"}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary flex items-center gap-2 hover:underline"
-                                  data-testid={`link-existing-file-${solution.solutionId}`}
-                                >
-                                  <Download className="h-4 w-4" />
-                                  View Existing File
-                                </a>
+                                {(() => {
+                                  const filePath = tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile || "";
+                                  const fileName = filePath.split('/').pop() || "file";
+                                  return (
+                                    <a
+                                      href={filePath}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm text-primary flex items-center gap-2 hover:underline"
+                                      data-testid={`link-existing-file-${solution.solutionId}`}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                      <span>Existing file: {fileName}</span>
+                                    </a>
+                                  );
+                                })()}
                               </div>
                             )}
                           </div>
