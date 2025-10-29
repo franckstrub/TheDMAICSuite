@@ -10,7 +10,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Solution, SolutionDesignTracking } from "@shared/schema";
-import { Loader2, FileText, Download } from "lucide-react";
+import { Loader2, FileText, Download, Trash2 } from "lucide-react";
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 
@@ -220,6 +220,82 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     }
   };
 
+  const handleRemoveFile = async (solutionId: string) => {
+    // Check if this is an existing saved file or just a newly selected one
+    const hasExistingFile = tracking.find(t => t.solutionId === solutionId)?.otherDesignFile;
+    const hasNewlySelectedFile = otherDesignFiles[solutionId];
+    
+    // Revoke object URL if exists
+    if (filePreviewUrls[solutionId]) {
+      URL.revokeObjectURL(filePreviewUrls[solutionId]);
+      setFilePreviewUrls((prev) => ({
+        ...prev,
+        [solutionId]: "",
+      }));
+    }
+    
+    setOtherDesignFiles((prev) => ({
+      ...prev,
+      [solutionId]: null,
+    }));
+    
+    // Clear the file input
+    const fileInput = document.getElementById(`file-${solutionId}`) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+
+    // If there's an existing saved file, we need to save with null to remove it from DB
+    if (hasExistingFile && !hasNewlySelectedFile) {
+      const checkboxes = checkboxStates[solutionId] || {
+        toBeProcessMap: false,
+        toBeProcessRaci: false,
+        transferFunction: false,
+        otherDesign: false,
+        solutionNotPursued: false,
+      };
+      const explanation = otherDesignExplanations[solutionId] || "";
+      
+      // Create a special formData that explicitly removes the file
+      const formData = new FormData();
+      formData.append("solutionId", solutionId);
+      formData.append("toBeProcessMap", String(checkboxes.toBeProcessMap));
+      formData.append("toBeProcessRaci", String(checkboxes.toBeProcessRaci));
+      formData.append("transferFunction", String(checkboxes.transferFunction));
+      formData.append("otherDesign", String(checkboxes.otherDesign));
+      formData.append("solutionNotPursued", String(checkboxes.solutionNotPursued));
+      formData.append("otherDesignExplanation", explanation);
+      formData.append("removeFile", "true"); // Signal to remove the file
+      
+      try {
+        const response = await fetch(`/api/projects/${projectId}/solution-design-tracking`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to remove file");
+        }
+
+        queryClient.invalidateQueries({
+          queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
+        });
+        
+        toast({
+          title: "Success",
+          description: "File removed successfully",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to remove file",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   if (solutionsLoading || trackingLoading) {
     return (
       <Card>
@@ -426,7 +502,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                               data-testid={`input-file-${solution.solutionId}`}
                             />
                             {otherDesignFiles[solution.solutionId] && (
-                              <div className="mt-2">
+                              <div className="mt-2 flex items-center gap-2">
                                 <a
                                   href={filePreviewUrls[solution.solutionId] || "#"}
                                   target="_blank"
@@ -437,24 +513,44 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                   <Download className="h-4 w-4" />
                                   <span>View existing file: {otherDesignFiles[solution.solutionId]?.name}</span>
                                 </a>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleRemoveFile(solution.solutionId)}
+                                  data-testid={`button-remove-new-file-${solution.solutionId}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
                               </div>
                             )}
                             {tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile && !otherDesignFiles[solution.solutionId] && (
-                              <div className="mt-2">
+                              <div className="mt-2 flex items-center gap-2">
                                 {(() => {
                                   const filePath = tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile || "";
                                   const fileName = filePath.split('/').pop() || "file";
                                   return (
-                                    <a
-                                      href={filePath}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-primary flex items-center gap-2 hover:underline"
-                                      data-testid={`link-existing-file-${solution.solutionId}`}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                      <span>View existing file: {fileName}</span>
-                                    </a>
+                                    <>
+                                      <a
+                                        href={filePath}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-primary flex items-center gap-2 hover:underline"
+                                        data-testid={`link-existing-file-${solution.solutionId}`}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                        <span>View existing file: {fileName}</span>
+                                      </a>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => handleRemoveFile(solution.solutionId)}
+                                        data-testid={`button-remove-existing-file-${solution.solutionId}`}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    </>
                                   );
                                 })()}
                               </div>
