@@ -10,7 +10,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Solution, SolutionDesignTracking } from "@shared/schema";
-import { Loader2, FileText, Download, Trash2, Paperclip } from "lucide-react";
+import { Loader2, FileText, Download, Trash2, Paperclip, X } from "lucide-react";
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 
@@ -317,11 +317,26 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4 flex-wrap h-auto">
-            {solutions.map((solution) => (
-              <TabsTrigger key={solution.solutionId} value={solution.solutionId} data-testid={`tab-solution-${solution.solutionId}`}>
-                {solution.solutionId}
-              </TabsTrigger>
-            ))}
+            {solutions.map((solution) => {
+              const trackingRecord = tracking.find(t => t.solutionId === solution.solutionId);
+              const isNotRetained = trackingRecord?.solutionNotPursued || false;
+              
+              return (
+                <TabsTrigger 
+                  key={solution.solutionId} 
+                  value={solution.solutionId} 
+                  data-testid={`tab-solution-${solution.solutionId}`}
+                  className={isNotRetained ? "opacity-75 text-muted-foreground" : ""}
+                >
+                  <span className="flex items-center gap-1">
+                    {isNotRetained && <X className="h-3 w-3" />}
+                    <span className={isNotRetained ? "line-through" : ""}>
+                      {solution.solutionId}
+                    </span>
+                  </span>
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
           {solutions.map((solution) => {
