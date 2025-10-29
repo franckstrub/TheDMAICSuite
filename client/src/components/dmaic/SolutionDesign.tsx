@@ -506,10 +506,23 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                               <div className="mt-2 flex items-center gap-2">
                                 {(() => {
                                   const filePath = tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile || "";
-                                  // Extract filename - handles paths like /uploads/solution-design-files/1234567890-file.pdf
+                                  // Extract filename from path like /uploads/solution-design/project26-S1-report-1234567890.pdf
                                   const fileName = filePath.split('/').pop() || "file";
-                                  // Remove timestamp prefix if present (format: timestamp-originalname)
-                                  const displayName = fileName.includes('-') ? fileName.substring(fileName.indexOf('-') + 1) : fileName;
+                                  // Format is: project{id}-{solutionId}-{baseName}-{timestamp}{ext}
+                                  // We need to extract baseName + extension
+                                  const parts = fileName.split('-');
+                                  let displayName = fileName;
+                                  
+                                  if (parts.length >= 4) {
+                                    // Remove first 2 parts (project{id}, {solutionId}) and last part (timestamp)
+                                    const baseNameParts = parts.slice(2, -1);
+                                    const timestamp = parts[parts.length - 1];
+                                    // Get extension from the timestamp part (e.g., "1234567890.pdf" -> ".pdf")
+                                    const extMatch = timestamp.match(/\.[^.]+$/);
+                                    const ext = extMatch ? extMatch[0] : '';
+                                    displayName = baseNameParts.join('-') + ext;
+                                  }
+                                  
                                   return (
                                     <>
                                       <a
