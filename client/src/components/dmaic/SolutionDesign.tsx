@@ -40,6 +40,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   const [checkboxStates, setCheckboxStates] = useState<Record<string, CheckboxState>>({});
   const [otherDesignExplanations, setOtherDesignExplanations] = useState<Record<string, string>>({});
   const [otherDesignFiles, setOtherDesignFiles] = useState<Record<string, File | null>>({});
+  const [filePreviewUrls, setFilePreviewUrls] = useState<Record<string, string>>({});
 
   // Fetch solutions
   const { data: solutionsData, isLoading: solutionsLoading } = useQuery<{ solutions: Solution[] }>({
@@ -80,6 +81,15 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       setOtherDesignExplanations(explanations);
     }
   }, [tracking]);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(filePreviewUrls).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [filePreviewUrls]);
 
   // Save tracking mutation
   const saveTrackingMutation = useMutation({
@@ -188,10 +198,21 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       ...prev,
       [solutionId]: "",
     }));
+    
+    // Revoke object URL if exists
+    if (filePreviewUrls[solutionId]) {
+      URL.revokeObjectURL(filePreviewUrls[solutionId]);
+      setFilePreviewUrls((prev) => ({
+        ...prev,
+        [solutionId]: "",
+      }));
+    }
+    
     setOtherDesignFiles((prev) => ({
       ...prev,
       [solutionId]: null,
     }));
+    
     // Clear the file input
     const fileInput = document.getElementById(`file-${solutionId}`) as HTMLInputElement;
     if (fileInput) {
@@ -381,6 +402,21 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                               type="file"
                               onChange={(e) => {
                                 const file = e.target.files?.[0] || null;
+                                
+                                // Revoke previous object URL if exists
+                                if (filePreviewUrls[solution.solutionId]) {
+                                  URL.revokeObjectURL(filePreviewUrls[solution.solutionId]);
+                                }
+                                
+                                // Create new object URL for the file
+                                if (file) {
+                                  const objectUrl = URL.createObjectURL(file);
+                                  setFilePreviewUrls(prev => ({
+                                    ...prev,
+                                    [solution.solutionId]: objectUrl
+                                  }));
+                                }
+                                
                                 setOtherDesignFiles(prev => ({
                                   ...prev,
                                   [solution.solutionId]: file
@@ -391,10 +427,16 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                             />
                             {otherDesignFiles[solution.solutionId] && (
                               <div className="mt-2">
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                <a
+                                  href={filePreviewUrls[solution.solutionId] || "#"}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary flex items-center gap-2 hover:underline"
+                                  data-testid={`link-new-file-${solution.solutionId}`}
+                                >
                                   <Download className="h-4 w-4" />
                                   <span>View existing file: {otherDesignFiles[solution.solutionId]?.name}</span>
-                                </p>
+                                </a>
                               </div>
                             )}
                             {tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile && !otherDesignFiles[solution.solutionId] && (
