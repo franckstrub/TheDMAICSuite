@@ -390,10 +390,12 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                               data-testid={`input-file-${solution.solutionId}`}
                             />
                             {otherDesignFiles[solution.solutionId] && (
-                              <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-                                <FileText className="h-4 w-4" />
-                                {otherDesignFiles[solution.solutionId]?.name}
-                              </p>
+                              <div className="mt-2">
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <Download className="h-4 w-4" />
+                                  <span>View existing file: {otherDesignFiles[solution.solutionId]?.name}</span>
+                                </p>
+                              </div>
                             )}
                             {tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile && !otherDesignFiles[solution.solutionId] && (
                               <div className="mt-2">
@@ -409,7 +411,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                       data-testid={`link-existing-file-${solution.solutionId}`}
                                     >
                                       <Download className="h-4 w-4" />
-                                      <span>Existing file: {fileName}</span>
+                                      <span>View existing file: {fileName}</span>
                                     </a>
                                   );
                                 })()}
