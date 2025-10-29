@@ -92,6 +92,25 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     };
   }, [filePreviewUrls]);
 
+  // Clear filesMarkedForRemoval when tracking data confirms file is removed
+  useEffect(() => {
+    if (tracking.length > 0) {
+      setFilesMarkedForRemoval((prev) => {
+        const updated = { ...prev };
+        Object.keys(prev).forEach((solutionId) => {
+          if (prev[solutionId]) {
+            const trackingRecord = tracking.find(t => t.solutionId === solutionId);
+            // If the file is actually null in the database, clear the flag
+            if (!trackingRecord?.otherDesignFile) {
+              updated[solutionId] = false;
+            }
+          }
+        });
+        return updated;
+      });
+    }
+  }, [tracking]);
+
   // Save tracking mutation
   const saveTrackingMutation = useMutation({
     mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; explanation: string; file: File | null; removeFile?: boolean }) => {
@@ -126,11 +145,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       queryClient.invalidateQueries({
         queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
       });
-      // Clear the marked for removal flag after successful save
-      setFilesMarkedForRemoval((prev) => ({
-        ...prev,
-        [variables.solutionId]: false,
-      }));
       toast({
         title: "Success",
         description: "Solution design tracking saved successfully",
