@@ -41,6 +41,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   const [otherDesignExplanations, setOtherDesignExplanations] = useState<Record<string, string>>({});
   const [otherDesignFiles, setOtherDesignFiles] = useState<Record<string, File | null>>({});
   const [filePreviewUrls, setFilePreviewUrls] = useState<Record<string, string>>({});
+  const [filesMarkedForRemoval, setFilesMarkedForRemoval] = useState<Record<string, boolean>>({});
 
   // Fetch solutions
   const { data: solutionsData, isLoading: solutionsLoading } = useQuery<{ solutions: Solution[] }>({
@@ -121,13 +122,18 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
 
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
       });
+      // Clear the marked for removal flag after successful save
+      setFilesMarkedForRemoval((prev) => ({
+        ...prev,
+        [variables.solutionId]: false,
+      }));
       toast({
         title: "Success",
-        description: "Soltion design tracking saved successfully",
+        description: "Solution design tracking saved successfully",
       });
     },
     onError: (error: any) => {
@@ -240,6 +246,12 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     setOtherDesignFiles((prev) => ({
       ...prev,
       [solutionId]: null,
+    }));
+    
+    // Mark existing file for removal
+    setFilesMarkedForRemoval((prev) => ({
+      ...prev,
+      [solutionId]: true,
     }));
     
     // Clear the file input
@@ -452,6 +464,11 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                     ...prev,
                                     [solution.solutionId]: objectUrl
                                   }));
+                                  // Reset the marked for removal flag when a new file is selected
+                                  setFilesMarkedForRemoval(prev => ({
+                                    ...prev,
+                                    [solution.solutionId]: false,
+                                  }));
                                 }
                                 
                                 setOtherDesignFiles(prev => ({
@@ -485,11 +502,14 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                 </Button>
                               </div>
                             )}
-                            {tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile && !otherDesignFiles[solution.solutionId] && (
+                            {tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile && !otherDesignFiles[solution.solutionId] && !filesMarkedForRemoval[solution.solutionId] && (
                               <div className="mt-2 flex items-center gap-2">
                                 {(() => {
                                   const filePath = tracking.find(t => t.solutionId === solution.solutionId)?.otherDesignFile || "";
+                                  // Extract filename - handles paths like /uploads/solution-design-files/1234567890-file.pdf
                                   const fileName = filePath.split('/').pop() || "file";
+                                  // Remove timestamp prefix if present (format: timestamp-originalname)
+                                  const displayName = fileName.includes('-') ? fileName.substring(fileName.indexOf('-') + 1) : fileName;
                                   return (
                                     <>
                                       <a
@@ -500,7 +520,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                         data-testid={`link-existing-file-${solution.solutionId}`}
                                       >
                                         <Download className="h-4 w-4" />
-                                        <span>View existing file: {fileName}</span>
+                                        <span>View existing file: {displayName}</span>
                                       </a>
                                       <Button
                                         variant="ghost"
