@@ -26,6 +26,14 @@ interface CheckboxState {
   solutionNotPursued: boolean;
 }
 
+interface TransferFunctionConfig {
+  tfSimpleRegression: boolean;
+  tfAnovaTwoWay: boolean;
+  tfMultipleRegression: boolean;
+  tfDoe: boolean;
+  tfLogisticRegression: boolean;
+}
+
 const checkboxLabels = [
   { key: "toBeProcessMap", label: "TO BE Process Map" },
   { key: "toBeProcessRaci", label: "RACI" },
@@ -34,10 +42,19 @@ const checkboxLabels = [
   { key: "solutionNotPursued", label: "Solution Not Retained" },
 ] as const;
 
+const transferFunctionLabels = [
+  { key: "tfSimpleRegression", label: "Simple Regression" },
+  { key: "tfAnovaTwoWay", label: "ANOVA Two-Way" },
+  { key: "tfMultipleRegression", label: "Multiple Regression" },
+  { key: "tfDoe", label: "Design of Experiment (DOE)" },
+  { key: "tfLogisticRegression", label: "Logistic Regression" },
+] as const;
+
 export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("");
   const [checkboxStates, setCheckboxStates] = useState<Record<string, CheckboxState>>({});
+  const [transferFunctionConfigs, setTransferFunctionConfigs] = useState<Record<string, TransferFunctionConfig>>({});
   const [otherDesignExplanations, setOtherDesignExplanations] = useState<Record<string, string>>({});
   const [otherDesignFiles, setOtherDesignFiles] = useState<Record<string, File | null>>({});
   const [filePreviewUrls, setFilePreviewUrls] = useState<Record<string, string>>({});
@@ -67,6 +84,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   useEffect(() => {
     if (tracking.length > 0) {
       const states: Record<string, CheckboxState> = {};
+      const tfConfigs: Record<string, TransferFunctionConfig> = {};
       const explanations: Record<string, string> = {};
       tracking.forEach((t) => {
         states[t.solutionId] = {
@@ -76,9 +94,17 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
           otherDesign: t.otherDesign || false,
           solutionNotPursued: t.solutionNotPursued || false,
         };
+        tfConfigs[t.solutionId] = {
+          tfSimpleRegression: t.tfSimpleRegression || false,
+          tfAnovaTwoWay: t.tfAnovaTwoWay || false,
+          tfMultipleRegression: t.tfMultipleRegression || false,
+          tfDoe: t.tfDoe || false,
+          tfLogisticRegression: t.tfLogisticRegression || false,
+        };
         explanations[t.solutionId] = t.otherDesignExplanation || "";
       });
       setCheckboxStates(states);
+      setTransferFunctionConfigs(tfConfigs);
       setOtherDesignExplanations(explanations);
     }
   }, [tracking]);
@@ -113,7 +139,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
 
   // Save tracking mutation
   const saveTrackingMutation = useMutation({
-    mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; explanation: string; file: File | null; removeFile?: boolean }) => {
+    mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; tfConfig: TransferFunctionConfig; explanation: string; file: File | null; removeFile?: boolean }) => {
       const formData = new FormData();
       formData.append("solutionId", data.solutionId);
       formData.append("toBeProcessMap", String(data.checkboxes.toBeProcessMap));
@@ -122,6 +148,13 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       formData.append("otherDesign", String(data.checkboxes.otherDesign));
       formData.append("solutionNotPursued", String(data.checkboxes.solutionNotPursued));
       formData.append("otherDesignExplanation", data.explanation);
+      
+      // Transfer Function Configuration
+      formData.append("tfSimpleRegression", String(data.tfConfig.tfSimpleRegression));
+      formData.append("tfAnovaTwoWay", String(data.tfConfig.tfAnovaTwoWay));
+      formData.append("tfMultipleRegression", String(data.tfConfig.tfMultipleRegression));
+      formData.append("tfDoe", String(data.tfConfig.tfDoe));
+      formData.append("tfLogisticRegression", String(data.tfConfig.tfLogisticRegression));
       
       if (data.file) {
         formData.append("otherDesignFile", data.file);
@@ -175,6 +208,55 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     }));
   };
 
+  const handleTransferFunctionChange = (solutionId: string, key: keyof TransferFunctionConfig, checked: boolean) => {
+    setTransferFunctionConfigs((prev) => ({
+      ...prev,
+      [solutionId]: {
+        ...(prev[solutionId] || {
+          tfSimpleRegression: false,
+          tfAnovaTwoWay: false,
+          tfMultipleRegression: false,
+          tfDoe: false,
+          tfLogisticRegression: false,
+        }),
+        [key]: checked,
+      },
+    }));
+  };
+
+  const handleClearTransferFunction = (solutionId: string) => {
+    setTransferFunctionConfigs((prev) => ({
+      ...prev,
+      [solutionId]: {
+        tfSimpleRegression: false,
+        tfAnovaTwoWay: false,
+        tfMultipleRegression: false,
+        tfDoe: false,
+        tfLogisticRegression: false,
+      },
+    }));
+  };
+
+  const handleSaveTransferFunction = (solutionId: string) => {
+    const checkboxes = checkboxStates[solutionId] || {
+      toBeProcessMap: false,
+      toBeProcessRaci: false,
+      transferFunction: false,
+      otherDesign: false,
+      solutionNotPursued: false,
+    };
+    const tfConfig = transferFunctionConfigs[solutionId] || {
+      tfSimpleRegression: false,
+      tfAnovaTwoWay: false,
+      tfMultipleRegression: false,
+      tfDoe: false,
+      tfLogisticRegression: false,
+    };
+    const explanation = otherDesignExplanations[solutionId] || "";
+    const file = otherDesignFiles[solutionId] || null;
+    saveTrackingMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file });
+  };
+
   const handleSave = (solutionId: string) => {
     const checkboxes = checkboxStates[solutionId] || {
       toBeProcessMap: false,
@@ -183,9 +265,16 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       otherDesign: false,
       solutionNotPursued: false,
     };
+    const tfConfig = transferFunctionConfigs[solutionId] || {
+      tfSimpleRegression: false,
+      tfAnovaTwoWay: false,
+      tfMultipleRegression: false,
+      tfDoe: false,
+      tfLogisticRegression: false,
+    };
     const explanation = otherDesignExplanations[solutionId] || "";
     const file = otherDesignFiles[solutionId] || null;
-    saveTrackingMutation.mutate({ solutionId, checkboxes, explanation, file });
+    saveTrackingMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file });
   };
 
   const handleClearAll = (solutionId: string) => {
@@ -440,6 +529,72 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                   {currentState.toBeProcessRaci && (
                     <div className="mt-6">
                       <ProcessRaciMatrix projectId={projectId} solutionId={solution.solutionId} />
+                    </div>
+                  )}
+
+                  {/* Transfer Function & System Setting - Show when checkbox is selected */}
+                  {currentState.transferFunction && (
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Transfer Function & System Setting - {solution.solutionId}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <p className="text-sm text-gray-500">
+                            Select the statistical methods you want to use for this solution:
+                          </p>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {transferFunctionLabels.map(({ key, label }) => {
+                              const currentTfConfig = transferFunctionConfigs[solution.solutionId] || {
+                                tfSimpleRegression: false,
+                                tfAnovaTwoWay: false,
+                                tfMultipleRegression: false,
+                                tfDoe: false,
+                                tfLogisticRegression: false,
+                              };
+                              
+                              return (
+                                <div key={key} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`${solution.solutionId}-${key}`}
+                                    checked={currentTfConfig[key as keyof TransferFunctionConfig]}
+                                    onCheckedChange={(checked) =>
+                                      handleTransferFunctionChange(solution.solutionId, key as keyof TransferFunctionConfig, checked as boolean)
+                                    }
+                                    data-testid={`checkbox-tf-${key}-${solution.solutionId}`}
+                                  />
+                                  <Label
+                                    htmlFor={`${solution.solutionId}-${key}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  >
+                                    {label}
+                                  </Label>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="flex gap-2 pt-4">
+                            <Button
+                              onClick={() => handleSaveTransferFunction(solution.solutionId)}
+                              disabled={saveTrackingMutation.isPending}
+                              data-testid={`button-save-tf-config-${solution.solutionId}`}
+                            >
+                              {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Save Configuration
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleClearTransferFunction(solution.solutionId)}
+                              disabled={saveTrackingMutation.isPending}
+                              data-testid={`button-clear-tf-config-${solution.solutionId}`}
+                            >
+                              Clear All
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
 

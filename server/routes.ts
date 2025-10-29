@@ -7312,6 +7312,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : (req as any).file 
               ? `/${(req as any).file.path}` 
               : (existingRecord?.otherDesignFile || null),
+          // Transfer Function Configuration
+          tfSimpleRegression: req.body.tfSimpleRegression === "true",
+          tfAnovaTwoWay: req.body.tfAnovaTwoWay === "true",
+          tfMultipleRegression: req.body.tfMultipleRegression === "true",
+          tfDoe: req.body.tfDoe === "true",
+          tfLogisticRegression: req.body.tfLogisticRegression === "true",
         };
 
         const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
