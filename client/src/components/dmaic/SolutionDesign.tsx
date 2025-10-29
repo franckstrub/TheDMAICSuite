@@ -10,7 +10,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Solution, SolutionDesignTracking } from "@shared/schema";
-import { Loader2, FileText, Download, Trash2 } from "lucide-react";
+import { Loader2, FileText, Download, Trash2, Paperclip } from "lucide-react";
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 
@@ -459,12 +459,22 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                             </Button>
 
                           <div>
-                            <Label htmlFor={`file-${solution.solutionId}`}>Attach File (Optional)</Label>
-                            <Input
+                            <input
                               id={`file-${solution.solutionId}`}
                               type="file"
                               onChange={(e) => {
                                 const file = e.target.files?.[0] || null;
+                                
+                                // Validate file size (100MB limit)
+                                if (file && file.size > 100 * 1024 * 1024) {
+                                  toast({
+                                    title: "File too large",
+                                    description: "File size must be less than 100MB",
+                                    variant: "destructive",
+                                  });
+                                  e.target.value = "";
+                                  return;
+                                }
                                 
                                 // Revoke previous object URL if exists
                                 if (filePreviewUrls[solution.solutionId]) {
@@ -490,9 +500,19 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                   [solution.solutionId]: file
                                 }));
                               }}
-                              className="mt-2"
+                              className="hidden"
                               data-testid={`input-file-${solution.solutionId}`}
                             />
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById(`file-${solution.solutionId}`)?.click()}
+                              className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                              title="Attach file (100MB limit)"
+                              data-testid={`button-attach-file-${solution.solutionId}`}
+                            >
+                              <Paperclip className="h-4 w-4" />
+                              <span className="text-sm">Attach file (100MB limit)</span>
+                            </button>
                             {otherDesignFiles[solution.solutionId] && (
                               <div className="mt-2 flex items-center gap-2">
                                 <a
