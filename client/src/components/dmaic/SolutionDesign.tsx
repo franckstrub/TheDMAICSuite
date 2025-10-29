@@ -319,7 +319,9 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
           <TabsList className="mb-4 flex-wrap h-auto">
             {solutions.map((solution) => {
               const trackingRecord = tracking.find(t => t.solutionId === solution.solutionId);
-              const isNotRetained = trackingRecord?.solutionNotPursued || false;
+              const currentState = checkboxStates[solution.solutionId];
+              // Check both current checkbox state and saved tracking data
+              const isNotRetained = currentState?.solutionNotPursued ?? trackingRecord?.solutionNotPursued ?? false;
               
               return (
                 <TabsTrigger 
