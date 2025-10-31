@@ -1123,6 +1123,9 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <div>
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{linearResult.equation}</p>
+              <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
+                {datasetYDescription} = {linearResult.a.toFixed(4)} + {linearResult.b.toFixed(4)}({datasetXDescription})
+              </p>
             </div>
             
             <div>
@@ -1227,6 +1230,9 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <div>
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{quadraticResult.equation}</p>
+              <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
+                {datasetYDescription} = {quadraticResult.a.toFixed(4)} + {quadraticResult.b.toFixed(4)}({datasetXDescription}) + {quadraticResult.c.toFixed(4)}({datasetXDescription})²
+              </p>
             </div>
             
             <div>
@@ -1332,6 +1338,9 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <div>
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{cubicResult.equation}</p>
+              <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
+                {datasetYDescription} = {cubicResult.a.toFixed(4)} + {cubicResult.b.toFixed(4)}({datasetXDescription}) + {cubicResult.c.toFixed(4)}({datasetXDescription})² + {cubicResult.d.toFixed(4)}({datasetXDescription})³
+              </p>
             </div>
             
             <div>
