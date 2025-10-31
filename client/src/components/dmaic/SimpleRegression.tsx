@@ -750,17 +750,17 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
           <div className="mt-3 space-y-2 text-sm">
             {linearResult && enableLinear && (
               <div className="font-mono text-red-600 dark:text-red-400">
-                Linear model: {linearResult.equation} (R²={linearResult.r2.toFixed(4)}) (R²-Adj={linearResult.statistics.r2Adjusted.toFixed(4)}) (Pearson correlation coefficient r={linearResult.pearsonR.toFixed(4)})
+                Linear model: {linearResult.equation} (R²={(linearResult.r2*100).toFixed(2)}%) (R²-Adj={(linearResult.statistics.r2Adjusted*100).toFixed(2)}%) (Pearson correlation coefficient r={linearResult.pearsonR.toFixed(4)})
               </div>
             )}
             {quadraticResult && enableQuadratic && (
               <div className="font-mono text-green-600 dark:text-green-400">
-                Quadratic model: {quadraticResult.equation} (R²={quadraticResult.r2.toFixed(4)}) (R²-Adj={quadraticResult.statistics.r2Adjusted.toFixed(4)})
+                Quadratic model: {quadraticResult.equation} (R²={(quadraticResult.r2*100).toFixed(2)}%) (R²-Adj={(quadraticResult.statistics.r2Adjusted*100).toFixed(2)}%)
               </div>
             )}
             {cubicResult && enableCubic && (
               <div className="font-mono text-purple-600 dark:text-purple-400">
-                Cubic model: {cubicResult.equation}  (R²={cubicResult.r2.toFixed(4)}) (R²-Adj={cubicResult.statistics.r2Adjusted.toFixed(4)})
+                Cubic model: {cubicResult.equation}  (R²={(cubicResult.r2*100).toFixed(2)}%) (R²-Adj={(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%)
               </div>
             )}
           </div>
@@ -1124,7 +1124,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{linearResult.equation}</p>
               <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
-                {datasetYDescription} = {linearResult.a.toFixed(4)} + {linearResult.b.toFixed(4)}({datasetXDescription})
+                {datasetYDescription} = {linearResult.a.toFixed(4)} + {linearResult.b.toFixed(4)}*{datasetXDescription}
               </p>
             </div>
             
@@ -1149,11 +1149,11 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">R²:</p>
-                  <p className="font-medium">{linearResult.r2.toFixed(6)}</p>
+                  <p className="font-medium">{(linearResult.r2*100).toFixed(2)}%</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">R² Adjusted:</p>
-                  <p className="font-medium">{linearResult.statistics.r2Adjusted.toFixed(6)}</p>
+                  <p className="font-medium">{(linearResult.statistics.r2Adjusted*100).toFixed(2)}%</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Pearson Correlation coeff. r:</p>
@@ -1261,11 +1261,11 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">R²:</p>
-                  <p className="font-medium">{quadraticResult.r2.toFixed(6)}</p>
+                  <p className="font-medium">{(quadraticResult.r2*100).toFixed(2)}%</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">R² Adjusted:</p>
-                  <p className="font-medium">{quadraticResult.statistics.r2Adjusted.toFixed(6)}</p>
+                  <p className="font-medium">{(quadraticResult.statistics.r2Adjusted*100).toFixed(2)}%</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">SSE:</p>
@@ -1374,11 +1374,11 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">R²:</p>
-                  <p className="font-medium">{cubicResult.r2.toFixed(6)}</p>
+                  <p className="font-medium">{(cubicResult.r2*100).toFixed(2)}%</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">R² Adjusted:</p>
-                  <p className="font-medium">{cubicResult.statistics.r2Adjusted.toFixed(6)}</p>
+                  <p className="font-medium">{(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">SSE:</p>
