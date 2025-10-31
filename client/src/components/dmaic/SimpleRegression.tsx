@@ -1183,10 +1183,10 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <div>
               <p className="font-semibold mb-2">Residuals Analysis:</p>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                {/*<div>
                   <p className="text-sm text-muted-foreground">Mean:</p>
                   <p className="font-medium">{linearResult.statistics.residualMean.toFixed(6)}</p>
-                </div>
+                </div> */}
                 <div>
                   <p className="text-sm text-muted-foreground">Std Deviation:</p>
                   <p className="font-medium">{linearResult.statistics.residualStd.toFixed(6)}</p>
@@ -1291,10 +1291,10 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <div>
               <p className="font-semibold mb-2">Residuals Analysis:</p>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                {/*<div>
                   <p className="text-sm text-muted-foreground">Mean:</p>
                   <p className="font-medium">{quadraticResult.statistics.residualMean.toFixed(6)}</p>
-                </div>
+                </div>*/}
                 <div>
                   <p className="text-sm text-muted-foreground">Std Deviation:</p>
                   <p className="font-medium">{quadraticResult.statistics.residualStd.toFixed(6)}</p>
@@ -1404,10 +1404,10 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <div>
               <p className="font-semibold mb-2">Residuals Analysis:</p>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                {/*<div>
                   <p className="text-sm text-muted-foreground">Mean:</p>
                   <p className="font-medium">{cubicResult.statistics.residualMean.toFixed(6)}</p>
-                </div>
+                </div>*/}
                 <div>
                   <p className="text-sm text-muted-foreground">Std Deviation:</p>
                   <p className="font-medium">{cubicResult.statistics.residualStd.toFixed(6)}</p>
