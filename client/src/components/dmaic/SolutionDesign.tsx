@@ -13,6 +13,7 @@ import type { Solution, SolutionDesignTracking } from "@shared/schema";
 import { Loader2, FileText, Download, Trash2, Paperclip, X } from "lucide-react";
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
+import { SimpleRegression } from "@/components/dmaic/SimpleRegression";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -52,7 +53,10 @@ const transferFunctionLabels = [
 
 export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>("");
+  const storageKey = `solutionDesignTab-${projectId}`;
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    return localStorage.getItem(storageKey) || "";
+  });
   const [checkboxStates, setCheckboxStates] = useState<Record<string, CheckboxState>>({});
   const [transferFunctionConfigs, setTransferFunctionConfigs] = useState<Record<string, TransferFunctionConfig>>({});
   const [otherDesignExplanations, setOtherDesignExplanations] = useState<Record<string, string>>({});
@@ -73,12 +77,26 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   const solutions = solutionsData?.solutions || [];
   const tracking = trackingData?.tracking || [];
 
-  // Set active tab to first solution when solutions load
+  // Set active tab to first solution when solutions load or from localStorage
   useEffect(() => {
-    if (solutions.length > 0 && !activeTab) {
-      setActiveTab(solutions[0].solutionId);
+    if (solutions.length > 0) {
+      const savedTab = localStorage.getItem(storageKey);
+      const tabExists = savedTab && solutions.some(s => s.solutionId === savedTab);
+      
+      if (tabExists) {
+        setActiveTab(savedTab);
+      } else if (!activeTab) {
+        setActiveTab(solutions[0].solutionId);
+      }
     }
-  }, [solutions, activeTab]);
+  }, [solutions, storageKey]);
+
+  // Persist active tab to localStorage
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem(storageKey, activeTab);
+    }
+  }, [activeTab, storageKey]);
 
   // Initialize checkbox states and explanations from tracking data
   useEffect(() => {
@@ -137,60 +155,67 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     }
   }, [tracking]);
 
-  // Save tracking mutation
-  const saveTrackingMutation = useMutation({
-    mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; tfConfig: TransferFunctionConfig; explanation: string; file: File | null; removeFile?: boolean }) => {
-      const formData = new FormData();
-      formData.append("solutionId", data.solutionId);
-      formData.append("toBeProcessMap", String(data.checkboxes.toBeProcessMap));
-      formData.append("toBeProcessRaci", String(data.checkboxes.toBeProcessRaci));
-      formData.append("transferFunction", String(data.checkboxes.transferFunction));
-      formData.append("otherDesign", String(data.checkboxes.otherDesign));
-      formData.append("solutionNotPursued", String(data.checkboxes.solutionNotPursued));
-      formData.append("otherDesignExplanation", data.explanation);
-      
-      // Transfer Function Configuration
-      formData.append("tfSimpleRegression", String(data.tfConfig.tfSimpleRegression));
-      formData.append("tfAnovaTwoWay", String(data.tfConfig.tfAnovaTwoWay));
-      formData.append("tfMultipleRegression", String(data.tfConfig.tfMultipleRegression));
-      formData.append("tfDoe", String(data.tfConfig.tfDoe));
-      formData.append("tfLogisticRegression", String(data.tfConfig.tfLogisticRegression));
-      
-      if (data.file) {
-        formData.append("otherDesignFile", data.file);
-      } else if (data.removeFile) {
-        formData.append("removeFile", "true");
-      }
+  // Shared mutation function
+  const createSaveTrackingMutation = (successMessage: string) => {
+    return useMutation({
+      mutationFn: async (data: { solutionId: string; checkboxes: CheckboxState; tfConfig: TransferFunctionConfig; explanation: string; file: File | null; removeFile?: boolean }) => {
+        const formData = new FormData();
+        formData.append("solutionId", data.solutionId);
+        formData.append("toBeProcessMap", String(data.checkboxes.toBeProcessMap));
+        formData.append("toBeProcessRaci", String(data.checkboxes.toBeProcessRaci));
+        formData.append("transferFunction", String(data.checkboxes.transferFunction));
+        formData.append("otherDesign", String(data.checkboxes.otherDesign));
+        formData.append("solutionNotPursued", String(data.checkboxes.solutionNotPursued));
+        formData.append("otherDesignExplanation", data.explanation);
+        
+        // Transfer Function Configuration
+        formData.append("tfSimpleRegression", String(data.tfConfig.tfSimpleRegression));
+        formData.append("tfAnovaTwoWay", String(data.tfConfig.tfAnovaTwoWay));
+        formData.append("tfMultipleRegression", String(data.tfConfig.tfMultipleRegression));
+        formData.append("tfDoe", String(data.tfConfig.tfDoe));
+        formData.append("tfLogisticRegression", String(data.tfConfig.tfLogisticRegression));
+        
+        if (data.file) {
+          formData.append("otherDesignFile", data.file);
+        } else if (data.removeFile) {
+          formData.append("removeFile", "true");
+        }
 
-      const response = await fetch(`/api/projects/${projectId}/solution-design-tracking`, {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
+        const response = await fetch(`/api/projects/${projectId}/solution-design-tracking`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to save solution design tracking");
-      }
+        if (!response.ok) {
+          throw new Error("Failed to save solution design tracking");
+        }
 
-      return await response.json();
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
-      });
-      toast({
-        title: "Success",
-        description: "Solution design tracking saved successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save Solution design tracking",
-        variant: "destructive",
-      });
-    },
-  });
+        return await response.json();
+      },
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries({
+          queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
+        });
+        toast({
+          title: "Success",
+          description: successMessage,
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to save Solution design tracking",
+          variant: "destructive",
+        });
+      },
+    });
+  };
+
+  // Separate mutations for each save action
+  const saveDesignToolsMutation = createSaveTrackingMutation("Design Tools configuration saved successfully");
+  const saveTransferFunctionMutation = createSaveTrackingMutation("Transfer Function configuration saved successfully");
+  const saveExplanationMutation = createSaveTrackingMutation("Explanation and file saved successfully");
 
   const handleCheckboxChange = (solutionId: string, key: keyof CheckboxState, checked: boolean) => {
     setCheckboxStates((prev) => ({
@@ -238,13 +263,24 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   };
 
   const handleSaveTransferFunction = (solutionId: string) => {
-    const checkboxes = checkboxStates[solutionId] || {
+    // Get current database values for fields we're NOT updating
+    const existingTracking = tracking.find(t => t.solutionId === solutionId);
+    
+    const checkboxes = existingTracking ? {
+      toBeProcessMap: existingTracking.toBeProcessMap || false,
+      toBeProcessRaci: existingTracking.toBeProcessRaci || false,
+      transferFunction: existingTracking.transferFunction || false,
+      otherDesign: existingTracking.otherDesign || false,
+      solutionNotPursued: existingTracking.solutionNotPursued || false,
+    } : {
       toBeProcessMap: false,
       toBeProcessRaci: false,
       transferFunction: false,
       otherDesign: false,
       solutionNotPursued: false,
     };
+    
+    // Use the NEW tfConfig from user input
     const tfConfig = transferFunctionConfigs[solutionId] || {
       tfSimpleRegression: false,
       tfAnovaTwoWay: false,
@@ -252,12 +288,18 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       tfDoe: false,
       tfLogisticRegression: false,
     };
-    const explanation = otherDesignExplanations[solutionId] || "";
-    const file = otherDesignFiles[solutionId] || null;
-    saveTrackingMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file });
+    
+    const explanation = existingTracking?.otherDesignExplanation || "";
+    const file = null; // Don't change file when saving transfer function
+    
+    saveTransferFunctionMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file });
   };
 
   const handleSave = (solutionId: string) => {
+    // Get current database values for fields we're NOT updating
+    const existingTracking = tracking.find(t => t.solutionId === solutionId);
+    
+    // Use the NEW checkboxes from user input
     const checkboxes = checkboxStates[solutionId] || {
       toBeProcessMap: false,
       toBeProcessRaci: false,
@@ -265,16 +307,25 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       otherDesign: false,
       solutionNotPursued: false,
     };
-    const tfConfig = transferFunctionConfigs[solutionId] || {
+    
+    const tfConfig = existingTracking ? {
+      tfSimpleRegression: existingTracking.tfSimpleRegression || false,
+      tfAnovaTwoWay: existingTracking.tfAnovaTwoWay || false,
+      tfMultipleRegression: existingTracking.tfMultipleRegression || false,
+      tfDoe: existingTracking.tfDoe || false,
+      tfLogisticRegression: existingTracking.tfLogisticRegression || false,
+    } : {
       tfSimpleRegression: false,
       tfAnovaTwoWay: false,
       tfMultipleRegression: false,
       tfDoe: false,
       tfLogisticRegression: false,
     };
-    const explanation = otherDesignExplanations[solutionId] || "";
-    const file = otherDesignFiles[solutionId] || null;
-    saveTrackingMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file });
+    
+    const explanation = existingTracking?.otherDesignExplanation || "";
+    const file = null; // Don't change file when saving design tools
+    
+    saveDesignToolsMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file });
   };
 
   const handleClearAll = (solutionId: string) => {
@@ -292,21 +343,46 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   };
 
   const handleSaveExplanation = (solutionId: string) => {
-    const checkboxes = checkboxStates[solutionId] || {
+    // Get current database values for fields we're NOT updating
+    const existingTracking = tracking.find(t => t.solutionId === solutionId);
+    
+    const checkboxes = existingTracking ? {
+      toBeProcessMap: existingTracking.toBeProcessMap || false,
+      toBeProcessRaci: existingTracking.toBeProcessRaci || false,
+      transferFunction: existingTracking.transferFunction || false,
+      otherDesign: existingTracking.otherDesign || false,
+      solutionNotPursued: existingTracking.solutionNotPursued || false,
+    } : {
       toBeProcessMap: false,
       toBeProcessRaci: false,
       transferFunction: false,
       otherDesign: false,
       solutionNotPursued: false,
     };
+    
+    const tfConfig = existingTracking ? {
+      tfSimpleRegression: existingTracking.tfSimpleRegression || false,
+      tfAnovaTwoWay: existingTracking.tfAnovaTwoWay || false,
+      tfMultipleRegression: existingTracking.tfMultipleRegression || false,
+      tfDoe: existingTracking.tfDoe || false,
+      tfLogisticRegression: existingTracking.tfLogisticRegression || false,
+    } : {
+      tfSimpleRegression: false,
+      tfAnovaTwoWay: false,
+      tfMultipleRegression: false,
+      tfDoe: false,
+      tfLogisticRegression: false,
+    };
+    
+    // Use the NEW explanation and file from user input
     const explanation = otherDesignExplanations[solutionId] || "";
     const file = otherDesignFiles[solutionId] || null;
     
     // Check if we need to explicitly remove an existing file
-    const existingFile = tracking.find(t => t.solutionId === solutionId)?.otherDesignFile;
+    const existingFile = existingTracking?.otherDesignFile;
     const shouldRemoveFile = !!(existingFile && !file);
     
-    saveTrackingMutation.mutate({ solutionId, checkboxes, explanation, file, removeFile: shouldRemoveFile });
+    saveExplanationMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file, removeFile: shouldRemoveFile });
   };
 
   const handleClearExplanation = (solutionId: string) => {
@@ -495,16 +571,16 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                   <div className="flex gap-2 pt-4">
                     <Button
                       onClick={() => handleSave(solution.solutionId)}
-                      disabled={saveTrackingMutation.isPending}
+                      disabled={saveDesignToolsMutation.isPending}
                       data-testid={`button-save-${solution.solutionId}`}
                     >
-                      {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {saveDesignToolsMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Save Design Tools Configuration
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => handleClearAll(solution.solutionId)}
-                      disabled={saveTrackingMutation.isPending}
+                      disabled={saveDesignToolsMutation.isPending}
                       data-testid={`button-clear-all-${solution.solutionId}`}
                     >
                       Clear All
@@ -578,21 +654,35 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <div className="flex gap-2 pt-4">
                             <Button
                               onClick={() => handleSaveTransferFunction(solution.solutionId)}
-                              disabled={saveTrackingMutation.isPending}
+                              disabled={saveTransferFunctionMutation.isPending}
                               data-testid={`button-save-tf-config-${solution.solutionId}`}
                             >
-                              {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              {saveTransferFunctionMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                               Save Configuration
                             </Button>
                             <Button
                               variant="outline"
                               onClick={() => handleClearTransferFunction(solution.solutionId)}
-                              disabled={saveTrackingMutation.isPending}
+                              disabled={saveTransferFunctionMutation.isPending}
                               data-testid={`button-clear-tf-config-${solution.solutionId}`}
                             >
                               Clear All
                             </Button>
                           </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Simple Regression - Show when tfSimpleRegression is checked */}
+                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfSimpleRegression && (
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Simple Regression Analysis - {solution.solutionId}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <SimpleRegression projectId={projectId} solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
                     </div>
@@ -624,7 +714,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <Button
                               variant="outline"
                               onClick={() => handleClearExplanation(solution.solutionId)}
-                              disabled={saveTrackingMutation.isPending}
+                              disabled={saveExplanationMutation.isPending}
                               data-testid={`button-clear-explanation-${solution.solutionId}`}
                             >
                               Clear All Explanation
@@ -760,10 +850,10 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <div className="flex gap-2 pt-4">
                             <Button
                               onClick={() => handleSaveExplanation(solution.solutionId)}
-                              disabled={saveTrackingMutation.isPending}
+                              disabled={saveExplanationMutation.isPending}
                               data-testid={`button-save-explanation-${solution.solutionId}`}
                             >
-                              {saveTrackingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              {saveExplanationMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                               Save Explanation & Attached file
                             </Button>
                           </div>

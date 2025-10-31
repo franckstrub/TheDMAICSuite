@@ -2474,6 +2474,48 @@ export type InsertProofOfImprovementPreferences = z.infer<
 export type ProofOfImprovementPreferences =
   typeof proofOfImprovementPreferences.$inferSelect;
 
+// Simple Regression Configuration for Transfer Function Analysis
+export const simpleRegressionConfig = pgTable(
+  "simple_regression_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    
+    // Regression type selection
+    enableLinear: boolean("enable_linear").default(false),
+    enableQuadratic: boolean("enable_quadratic").default(false),
+    enableCubic: boolean("enable_cubic").default(false),
+    
+    // Dataset descriptions
+    datasetYDescription: text("dataset_y_description").default("Y Variable"),
+    datasetXDescription: text("dataset_x_description").default("X Variable"),
+    
+    // Data arrays (stored as jsonb arrays of numbers)
+    dataY: jsonb("data_y").$type<number[]>().default([]),
+    dataX: jsonb("data_x").$type<number[]>().default([]),
+    
+    // Target Y value for solving equations (coefficients and solutions calculated on render)
+    targetY: real("target_y"),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionRegression: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertSimpleRegressionConfigSchema = createInsertSchema(simpleRegressionConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSimpleRegressionConfig = z.infer<typeof insertSimpleRegressionConfigSchema>;
+export type SimpleRegressionConfig = typeof simpleRegressionConfig.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",
